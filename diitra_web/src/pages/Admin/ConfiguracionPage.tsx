@@ -57,12 +57,30 @@ interface ConfigIndicador {
     activo?: boolean;
 }
 
+interface EventoNormativo {
+    uuid?: string;
+    titulo: string;
+    descripcion?: string;
+    tipoEvento: string;
+    fechaInicio: string;
+    fechaFin?: string;
+    esTodoElDia: boolean;
+    recurrenciaAnual: boolean;
+    recurrenciaHasta?: string;
+    rolesVisibles?: string;
+    moduloOrigen?: string;
+    urlAccion?: string;
+    colorHex?: string;
+    alertaDias?: number;
+    activo?: boolean;
+}
+
 const ConfiguracionPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab');
-    const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores') ? tabParam : 'lineas';
+    const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores' || tabParam === 'calendario') ? tabParam : 'lineas';
     
-    const setActiveTab = (tab: 'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores') => {
+    const setActiveTab = (tab: 'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores' | 'calendario') => {
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('tab', tab);
@@ -83,7 +101,25 @@ const ConfiguracionPage = () => {
     const [productos, setProductos] = useState<TipoProducto[]>([]);
     const [dominios, setDominios] = useState<DominioAcademico[]>([]);
     const [indicadores, setIndicadores] = useState<ConfigIndicador[]>([]);
+    const [calendario, setCalendario] = useState<EventoNormativo[]>([]);
 
+    const [isCalendarioModalOpen, setIsCalendarioModalOpen] = useState(false);
+    const [editingCalendario, setEditingCalendario] = useState<EventoNormativo | null>(null);
+    const [calendarioForm, setCalendarioForm] = useState({
+        titulo: '',
+        descripcion: '',
+        tipoEvento: 'Normativo',
+        fechaInicio: '',
+        fechaFin: '',
+        esTodoElDia: true,
+        recurrenciaAnual: false,
+        recurrenciaHasta: '',
+        rolesVisibles: '',
+        moduloOrigen: '',
+        urlAccion: '',
+        colorHex: '#6B7280',
+        alertaDias: 7
+    });
     const [isLineaModalOpen, setIsLineaModalOpen] = useState(false);
     const [editingLinea, setEditingLinea] = useState<LineaInvestigacion | null>(null);
     const [lineaForm, setLineaForm] = useState({
@@ -195,6 +231,27 @@ const ConfiguracionPage = () => {
                     activo: i.activo
                 }));
                 setIndicadores(mappedData);
+            } else if (activeTab === 'calendario') {
+                const res = await api.get('/calendario/normativos');
+                const rawData = res.data || [];
+                const mappedData = rawData.map((e: any) => ({
+                    uuid: e.uuid,
+                    titulo: e.titulo || '',
+                    descripcion: e.descripcion || '',
+                    tipoEvento: e.tipo_evento || 'Normativo',
+                    fechaInicio: e.fecha_inicio || '',
+                    fechaFin: e.fecha_fin || '',
+                    esTodoElDia: e.es_todo_el_dia ?? true,
+                    recurrenciaAnual: e.recurrencia_anual ?? false,
+                    recurrenciaHasta: e.recurrencia_hasta || '',
+                    rolesVisibles: e.roles_visibles || '',
+                    moduloOrigen: e.modulo_origen || '',
+                    urlAccion: e.url_accion || '',
+                    colorHex: e.color_hex || '#6B7280',
+                    alertaDias: e.alerta_dias ?? 7,
+                    activo: e.activo
+                }));
+                setCalendario(mappedData);
             }
         } catch (error) {
             console.error('[DIITRA] Error al cargar configuración:', error);
@@ -230,6 +287,12 @@ const ConfiguracionPage = () => {
         (i.codigoIndicador || '').toLowerCase().includes(search.toLowerCase()) || 
         (i.nombreIndicador || '').toLowerCase().includes(search.toLowerCase()) || 
         (i.descripcion || '').toLowerCase().includes(search.toLowerCase())
+    );
+    
+    const filteredCalendario = calendario.filter(c => 
+        (c.titulo || '').toLowerCase().includes(search.toLowerCase()) || 
+        (c.descripcion || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.tipoEvento || '').toLowerCase().includes(search.toLowerCase())
     );
 
     const handleOpenLineaModal = (item: LineaInvestigacion | null = null) => {
@@ -537,6 +600,92 @@ const ConfiguracionPage = () => {
         }
     };
 
+    const handleOpenCalendarioModal = (item: EventoNormativo | null = null) => {
+        if (item) {
+            setEditingCalendario(item);
+            setCalendarioForm({
+                titulo: item.titulo,
+                descripcion: item.descripcion || '',
+                tipoEvento: item.tipoEvento,
+                fechaInicio: item.fechaInicio,
+                fechaFin: item.fechaFin || '',
+                esTodoElDia: item.esTodoElDia,
+                recurrenciaAnual: item.recurrenciaAnual,
+                recurrenciaHasta: item.recurrenciaHasta || '',
+                rolesVisibles: item.rolesVisibles || '',
+                moduloOrigen: item.moduloOrigen || '',
+                urlAccion: item.urlAccion || '',
+                colorHex: item.colorHex || '#6B7280',
+                alertaDias: item.alertaDias ?? 7
+            });
+        } else {
+            setEditingCalendario(null);
+            setCalendarioForm({
+                titulo: '',
+                descripcion: '',
+                tipoEvento: 'Normativo',
+                fechaInicio: '',
+                fechaFin: '',
+                esTodoElDia: true,
+                recurrenciaAnual: false,
+                recurrenciaHasta: '',
+                rolesVisibles: '',
+                moduloOrigen: '',
+                urlAccion: '',
+                colorHex: '#6B7280',
+                alertaDias: 7
+            });
+        }
+        setIsCalendarioModalOpen(true);
+    };
+
+    const handleSaveCalendario = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                titulo: calendarioForm.titulo,
+                descripcion: calendarioForm.descripcion,
+                tipo_evento: calendarioForm.tipoEvento,
+                fecha_inicio: calendarioForm.fechaInicio,
+                fecha_fin: calendarioForm.fechaFin || null,
+                es_todo_el_dia: calendarioForm.esTodoElDia,
+                recurrencia_anual: calendarioForm.recurrenciaAnual,
+                recurrencia_hasta: calendarioForm.recurrenciaHasta || null,
+                roles_visibles: calendarioForm.rolesVisibles || null,
+                modulo_origen: calendarioForm.moduloOrigen || null,
+                url_accion: calendarioForm.urlAccion || null,
+                color_hex: calendarioForm.colorHex,
+                alerta_dias: calendarioForm.alertaDias ? Number(calendarioForm.alertaDias) : null,
+                activo: editingCalendario ? editingCalendario.activo : true
+            };
+            if (editingCalendario && editingCalendario.uuid) {
+                await api.put(`/calendario/normativos/${editingCalendario.uuid}`, payload);
+            } else {
+                await api.post('/calendario/normativos', payload);
+            }
+            setIsCalendarioModalOpen(false);
+            fetchData();
+        } catch (error: any) {
+            alert('Error al guardar hito: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDeleteCalendario = async (item: EventoNormativo) => {
+        if (!await confirm({
+            title: "Eliminar Hito Normativo",
+            message: `¿Está seguro de eliminar el hito normativo "${item.titulo}" del calendario?`,
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "danger"
+        })) return;
+        try {
+            await api.delete(`/calendario/normativos/${item.uuid}`);
+            fetchData();
+        } catch (error: any) {
+            alert('Error al eliminar hito: ' + error.message);
+        }
+    };
+
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
@@ -609,6 +758,15 @@ const ConfiguracionPage = () => {
                             Nuevo Indicador
                         </button>
                     )}
+                    {activeTab === 'calendario' && (
+                        <button 
+                            onClick={() => handleOpenCalendarioModal()}
+                            className="btn-vercel-primary"
+                        >
+                            <Plus size={14} strokeWidth={3} />
+                            Nuevo Hito
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -657,6 +815,15 @@ const ConfiguracionPage = () => {
                 >
                     <BarChart2 size={14} />
                     <span>Indicadores CACES</span>
+                </button>
+                <button
+                    onClick={() => { setActiveTab('calendario'); setSearch(''); }}
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                        activeTab === 'calendario' ? 'active' : ''
+                    }`}
+                >
+                    <Calendar size={14} />
+                    <span>Hitos CACES</span>
                 </button>
             </div>
 
@@ -993,6 +1160,85 @@ const ConfiguracionPage = () => {
                                         <tr>
                                             <td colSpan={7} className="py-20 text-center text-text-dim text-xs font-mono uppercase">
                                                 No se encontraron indicadores registrados
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {activeTab === 'calendario' && (
+                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
+                                        <th className="p-4 font-semibold tracking-widest">Título Hito</th>
+                                        <th className="p-4 font-semibold tracking-widest">Tipo</th>
+                                        <th className="p-4 font-semibold tracking-widest">Fecha Inicio</th>
+                                        <th className="p-4 font-semibold tracking-widest">Recurrente</th>
+                                        <th className="p-4 font-semibold tracking-widest">Alerta</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border-thin">
+                                    {filteredCalendario.map((c) => (
+                                        <tr key={c.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'calendario' as any, data: c })}>
+                                            <td className="p-4">
+                                                <p className="text-sm font-semibold text-text-main uppercase tracking-tight">{c.titulo}</p>
+                                                {c.descripcion && <p className="text-[10px] text-text-dim truncate max-w-xs">{c.descripcion}</p>}
+                                            </td>
+                                            <td className="p-4 text-xs">
+                                                <span 
+                                                    className="inline-block px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                                                    style={{ backgroundColor: `${c.colorHex}20`, color: c.colorHex || '#6B7280', border: `1px solid ${c.colorHex}40` }}
+                                                >
+                                                    {c.tipoEvento}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-xs font-mono text-text-main">
+                                                {c.fechaInicio}
+                                            </td>
+                                            <td className="p-4 text-xs">
+                                                {c.recurrenciaAnual ? (
+                                                    <span className="badge-vercel badge-vercel-success">Anual</span>
+                                                ) : (
+                                                    <span className="badge-vercel badge-vercel-neutral">No</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-xs font-medium text-text-main">
+                                                {c.alertaDias ? `Anticipada: ${c.alertaDias} d` : 'Ninguna'}
+                                            </td>
+                                            <td className="p-4">
+                                                {c.activo ? (
+                                                    <span className="badge-vercel badge-vercel-success">Activo</span>
+                                                ) : (
+                                                    <span className="badge-vercel badge-vercel-error">Inactivo</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => handleOpenCalendarioModal(c)}
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-text-main transition-all"
+                                                        title="Editar Hito"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteCalendario(c)}
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
+                                                        title="Eliminar Hito"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredCalendario.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="py-20 text-center text-text-dim text-xs font-mono uppercase">
+                                                No se encontraron hitos registrados en el calendario
                                             </td>
                                         </tr>
                                     )}
@@ -1704,6 +1950,48 @@ const ConfiguracionPage = () => {
                                                 <p className="text-sm text-text-main leading-relaxed">{i.descripcion}</p>
                                             </div>
                                         )}
+                                        {detailItem.type === 'calendario' && (() => {
+                                            const c = detailItem.data as EventoNormativo;
+                                            return (
+                                                <>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="bento-card static p-4">
+                                                            <label className="section-label text-text-dim mb-2">Hito Normativo</label>
+                                                            <p className="text-sm font-bold text-text-main">{c.titulo}</p>
+                                                        </div>
+                                                        <div className="bento-card static p-4">
+                                                            <label className="section-label text-text-dim mb-2">Estado</label>
+                                                            {c.activo ? (
+                                                                <span className="badge-vercel badge-vercel-success"><CheckCircle size={10} /> Activo</span>
+                                                            ) : (
+                                                                <span className="badge-vercel badge-vercel-error"><XCircle size={10} /> Inactivo</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-4">
+                                                        <div className="bento-card static p-4">
+                                                            <label className="section-label text-text-dim mb-2">Fecha Inicio</label>
+                                                            <p className="text-sm font-bold text-text-main font-mono">{c.fechaInicio}</p>
+                                                        </div>
+                                                        <div className="bento-card static p-4">
+                                                            <label className="section-label text-text-dim mb-2">Tipo</label>
+                                                            <span className="badge-vercel badge-vercel-brand">{c.tipoEvento}</span>
+                                                        </div>
+                                                        <div className="bento-card static p-4">
+                                                            <label className="section-label text-text-dim mb-2">Recurrente</label>
+                                                            <p className="text-sm font-bold text-text-main">{c.recurrenciaAnual ? 'Sí (Anual)' : 'No'}</p>
+                                                        </div>
+                                                    </div>
+                                                    {c.descripcion && (
+                                                        <div className="bento-card static p-4 space-y-3">
+                                                            <label className="section-label text-text-main"><Calendar size={12} /> Descripción</label>
+                                                            <div className="divider-vercel !my-0" />
+                                                            <p className="text-sm text-text-main leading-relaxed">{c.descripcion}</p>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
                                     </>
                                 );
                             })()}
@@ -1719,6 +2007,7 @@ const ConfiguracionPage = () => {
                                         if (detailItem.type === 'producto') handleOpenProductoModal(detailItem.data as TipoProducto);
                                         if (detailItem.type === 'dominio') handleOpenDominioModal(detailItem.data as DominioAcademico);
                                         if (detailItem.type === 'indicador') handleOpenIndicadorModal(detailItem.data as ConfigIndicador);
+                                        if (detailItem.type === 'calendario' as any) handleOpenCalendarioModal(detailItem.data as EventoNormativo);
                                         setDetailItem(null);
                                     }
                                 }}
@@ -1727,6 +2016,163 @@ const ConfiguracionPage = () => {
                                 <Edit2 size={14} /> Editar
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {isCalendarioModalOpen && (
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200" 
+                        onClick={() => setIsCalendarioModalOpen(false)} 
+                    />
+                    
+                    <div className="relative w-full max-w-lg bg-bg-deep border-l border-border-thin shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300">
+                        <div className="modal-header">
+                            <div>
+                                <span className="text-[10px] uppercase font-mono tracking-widest text-text-dim">Módulo Calendario</span>
+                                <h3 className="text-lg font-semibold text-text-main">
+                                    {editingCalendario ? 'Editar Hito Normativo' : 'Nuevo Hito Normativo'}
+                                </h3>
+                            </div>
+                            <button onClick={() => setIsCalendarioModalOpen(false)} className="btn-close-modal">
+                                <XCircle size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveCalendario} className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Título del Hito *</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    value={calendarioForm.titulo}
+                                    onChange={(e) => setCalendarioForm(prev => ({ ...prev, titulo: e.target.value }))}
+                                    placeholder="Ej. Cierre de Convocatoria CACES 2025"
+                                    className="input-vercel"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Descripción / Directrices</label>
+                                <textarea 
+                                    value={calendarioForm.descripcion}
+                                    onChange={(e) => setCalendarioForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                                    placeholder="Instrucciones específicas..."
+                                    className="textarea-vercel h-24"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Tipo de Evento</label>
+                                    <select 
+                                        value={calendarioForm.tipoEvento}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, tipoEvento: e.target.value }))}
+                                        className="select-vercel"
+                                    >
+                                        <option value="Normativo">Normativo (CACES/CES)</option>
+                                        <option value="Academico">Académico (IST)</option>
+                                        <option value="Institucional">Institucional</option>
+                                        <option value="Feriado">Feriado / Receso</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Color Etiqueta</label>
+                                    <input 
+                                        type="color" 
+                                        value={calendarioForm.colorHex}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, colorHex: e.target.value }))}
+                                        className="w-full h-9 rounded-md border border-border-thin cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Fecha Inicio *</label>
+                                    <input 
+                                        type="date" 
+                                        required
+                                        value={calendarioForm.fechaInicio}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                                        className="input-vercel"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Fecha Fin</label>
+                                    <input 
+                                        type="date" 
+                                        value={calendarioForm.fechaFin}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, fechaFin: e.target.value }))}
+                                        className="input-vercel"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-main">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={calendarioForm.esTodoElDia}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, esTodoElDia: e.target.checked }))}
+                                    />
+                                    <span>Todo el día</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-main">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={calendarioForm.recurrenciaAnual}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, recurrenciaAnual: e.target.checked }))}
+                                    />
+                                    <span>Recurre Anualmente</span>
+                                </label>
+                            </div>
+
+                            {calendarioForm.recurrenciaAnual && (
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Repetir Hasta</label>
+                                    <input 
+                                        type="date" 
+                                        value={calendarioForm.recurrenciaHasta}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, recurrenciaHasta: e.target.value }))}
+                                        className="input-vercel"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Alerta Anticipada (Días)</label>
+                                    <input 
+                                        type="number" 
+                                        min="0"
+                                        value={calendarioForm.alertaDias}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, alertaDias: Number(e.target.value) }))}
+                                        placeholder="Ej. 7"
+                                        className="input-vercel"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Roles Visibles (CSV)</label>
+                                    <input 
+                                        type="text" 
+                                        value={calendarioForm.rolesVisibles}
+                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, rolesVisibles: e.target.value }))}
+                                        placeholder="Ej. DIITRA_ADMIN,DIITRA_DOCENTE"
+                                        className="input-vercel"
+                                    />
+                                </div>
+                            </div>
+
+                            <button type="submit" className="w-full btn-vercel-primary py-3 font-semibold text-sm">
+                                {editingCalendario ? 'Actualizar Hito' : 'Crear Hito'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

@@ -39,6 +39,7 @@ const InformesAvancePage     = lazy(() => import('./pages/Investigacion/Proyecto
 const SettingsPage           = lazy(() => import('./pages/Settings/SettingsPage'));
 const LopdpConsentPage       = lazy(() => import('./pages/Lopdp/LopdpConsentPage'));
 const LopdpAdminPage         = lazy(() => import('./pages/Lopdp/LopdpAdminPage'));
+const CalendarioPage         = lazy(() => import('./pages/Calendario/CalendarioPage').then(m => ({ default: m.CalendarioPage })));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -256,6 +257,7 @@ function App() {
                             </ProtectedRoute>
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/configuracion" element={<SettingsPage />} />
                             <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
                             <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />

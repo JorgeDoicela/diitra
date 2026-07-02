@@ -1,0 +1,377 @@
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using diitra_application.Research;
+using diitra_application.Common.Notifications;
+using diitra_infrastructure.data.models;
+
+namespace diitra_infrastructure.Research;
+
+public class CalendarioService : ICalendarioService
+{
+    private readonly DiitraContext _context;
+    private readonly IEmailEngineService _emailEngine;
+    private readonly ILogger<CalendarioService> _logger;
+
+    public CalendarioService(
+        DiitraContext context,
+        IEmailEngineService emailEngine,
+        ILogger<CalendarioService> logger)
+    {
+        _context = context;
+        _emailEngine = emailEngine;
+        _logger = logger;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EVENTOS — Consulta la vista v_calendario_eventos
+    // ─────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(
+        DateOnly desde, DateOnly hasta, string rolUsuario)
+    {
+        var sql = @"
+            SELECT
+                id_evento_calendario, uuid, titulo, descripcion,
+                categoria_global, subcategoria,
+                fecha_inicio, fecha_fin, es_todo_el_dia, color_hex,
+                id_entidad_origen, uuid_entidad_origen, tipo_entidad_origen,
+                url_accion, roles_visibles
+            FROM v_calendario_eventos
+            WHERE activo = 1
+              AND fecha_inicio <= {1}
+              AND (fecha_fin IS NULL OR fecha_fin >= {0})
+              AND (roles_visibles IS NULL OR FIND_IN_SET({2}, roles_visibles) > 0)
+            ORDER BY fecha_inicio ASC";
+
+        var eventos = await _context.Database
+            .SqlQueryRaw<CalendarioEventoRaw>(sql,
+                desde.ToString("yyyy-MM-dd"),
+                hasta.ToString("yyyy-MM-dd"),
+                rolUsuario)
+            .ToListAsync();
+
+        // Expandir eventos con recurrencia anual de la tabla normativa
+        var normativos = await _context.Set<InvCalendarioEventoNormativo>()
+            .Where(e => e.Activo && e.RecurrenciaAnual)
+            .ToListAsync();
+
+        var resultado = eventos.Select(MapRawToDto).ToList();
+
+        foreach (var norm in normativos)
+        {
+            if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
+                !norm.RolesVisibles.Split(',').Contains(rolUsuario)) continue;
+
+            // Proyectar la recurrencia en el rango solicitado
+            int añoDesde = desde.Year;
+            int añoHasta = hasta.Year;
+            for (int año = añoDesde; año <= añoHasta; año++)
+            {
+                if (norm.RecurrenciaHasta.HasValue && año > norm.RecurrenciaHasta.Value.Year) break;
+                var fechaOcurrencia = new DateOnly(año, norm.FechaInicio.Month, norm.FechaInicio.Day);
+                if (fechaOcurrencia < desde || fechaOcurrencia > hasta) continue;
+
+                // No duplicar si ya existe por el SELECT de la vista (mismo año de creación)
+                var idCompuesto = $"NORM-{norm.IdEvento}-{año}";
+                if (resultado.Any(e => e.IdEventoCalendario == idCompuesto)) continue;
+
+                resultado.Add(new CalendarioEventoDto(
+                    idCompuesto, norm.Uuid, norm.Titulo, norm.Descripcion,
+                    "Normativo", norm.TipoEvento,
+                    fechaOcurrencia, norm.FechaFin.HasValue
+                        ? new DateOnly(año, norm.FechaFin.Value.Month, norm.FechaFin.Value.Day)
+                        : null,
+                    norm.EsTodoElDia, norm.ColorHex,
+                    norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
+                    norm.UrlAccion, norm.RolesVisibles
+                ));
+            }
+        }
+
+        return resultado.OrderBy(e => e.FechaInicio);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // iCAL FEED — RFC 5545
+    // ─────────────────────────────────────────────────────────────────────────
+    public async Task<string?> GenerarIcalFeedAsync(string token)
+    {
+        var record = await _context.Set<InvIcalToken>()
+            .FirstOrDefaultAsync(t => t.Token == token && t.Activo);
+        if (record == null) return null;
+
+        // Actualizar timestamp de uso
+        record.FechaUltimoUso = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // Obtener usuario para determinar su rol
+        var usuario = await _context.Usuarios.FindAsync(record.IdUsuario);
+        var rol = "DIITRA_DOCENTE"; // fallback; el feed público no puede verificar JWT
+
+        var desde = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
+        var hasta = DateOnly.FromDateTime(DateTime.Today.AddMonths(6));
+        var eventos = await GetEventosAsync(desde, hasta, rol);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("BEGIN:VCALENDAR");
+        sb.AppendLine("VERSION:2.0");
+        sb.AppendLine("PRODID:-//DIITRA//IST Traversari//ES");
+        sb.AppendLine("CALSCALE:GREGORIAN");
+        sb.AppendLine("METHOD:PUBLISH");
+        sb.AppendLine("X-WR-CALNAME:DIITRA — Calendario Institucional");
+        sb.AppendLine("X-WR-TIMEZONE:America/Guayaquil");
+
+        foreach (var ev in eventos)
+        {
+            sb.AppendLine("BEGIN:VEVENT");
+            sb.AppendLine($"UID:{ev.IdEventoCalendario}@diitra.isttraversari.edu.ec");
+            sb.AppendLine($"DTSTART;VALUE=DATE:{ev.FechaInicio:yyyyMMdd}");
+            if (ev.FechaFin.HasValue)
+                sb.AppendLine($"DTEND;VALUE=DATE:{ev.FechaFin.Value.AddDays(1):yyyyMMdd}");
+            else
+                sb.AppendLine($"DTEND;VALUE=DATE:{ev.FechaInicio.AddDays(1):yyyyMMdd}");
+            sb.AppendLine($"SUMMARY:{EscapeIcal(ev.Titulo)}");
+            if (!string.IsNullOrEmpty(ev.Descripcion))
+                sb.AppendLine($"DESCRIPTION:{EscapeIcal(ev.Descripcion)}");
+            if (!string.IsNullOrEmpty(ev.UrlAccion))
+                sb.AppendLine($"URL:https://diitra.isttraversari.edu.ec{ev.UrlAccion}");
+            sb.AppendLine($"CATEGORIES:{ev.CategoriaGlobal}");
+            sb.AppendLine("END:VEVENT");
+        }
+
+        sb.AppendLine("END:VCALENDAR");
+        return sb.ToString();
+    }
+
+    public async Task<string> GenerarORegenerarTokenIcalAsync(int idUsuario)
+    {
+        var existing = await _context.Set<InvIcalToken>()
+            .FirstOrDefaultAsync(t => t.IdUsuario == idUsuario);
+
+        var nuevoToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLower();
+
+        if (existing != null)
+        {
+            existing.Token = nuevoToken;
+            existing.FechaGenerado = DateTime.UtcNow;
+            existing.Activo = true;
+        }
+        else
+        {
+            _context.Set<InvIcalToken>().Add(new InvIcalToken
+            {
+                Uuid = Guid.NewGuid().ToString(),
+                IdUsuario = idUsuario,
+                Token = nuevoToken,
+                Activo = true,
+                FechaGenerado = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return nuevoToken;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CRUD Normativos
+    // ─────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<EventoNormativoDto>> GetNormativosAsync()
+    {
+        return await _context.Set<InvCalendarioEventoNormativo>()
+            .OrderBy(e => e.FechaInicio)
+            .Select(e => ToDto(e))
+            .ToListAsync();
+    }
+
+    public async Task<string> CreateNormativoAsync(EventoNormativoDto dto, int idUsuarioAdmin)
+    {
+        var uuid = Guid.NewGuid().ToString();
+        var entity = new InvCalendarioEventoNormativo
+        {
+            Uuid = uuid,
+            Titulo = dto.Titulo,
+            Descripcion = dto.Descripcion,
+            TipoEvento = dto.TipoEvento,
+            FechaInicio = dto.FechaInicio,
+            FechaFin = dto.FechaFin,
+            EsTodoElDia = dto.EsTodoElDia,
+            RecurrenciaAnual = dto.RecurrenciaAnual,
+            RecurrenciaHasta = dto.RecurrenciaHasta,
+            RolesVisibles = dto.RolesVisibles,
+            ModuloOrigen = dto.ModuloOrigen,
+            UrlAccion = dto.UrlAccion,
+            ColorHex = dto.ColorHex ?? "#6B7280",
+            AlertaDias = dto.AlertaDias,
+            Activo = dto.Activo,
+            CreadoPor = idUsuarioAdmin
+        };
+        _context.Set<InvCalendarioEventoNormativo>().Add(entity);
+        await _context.SaveChangesAsync();
+        return uuid;
+    }
+
+    public async Task<bool> UpdateNormativoAsync(string uuid, EventoNormativoDto dto)
+    {
+        var entity = await _context.Set<InvCalendarioEventoNormativo>()
+            .FirstOrDefaultAsync(e => e.Uuid == uuid);
+        if (entity == null) return false;
+
+        entity.Titulo = dto.Titulo;
+        entity.Descripcion = dto.Descripcion;
+        entity.TipoEvento = dto.TipoEvento;
+        entity.FechaInicio = dto.FechaInicio;
+        entity.FechaFin = dto.FechaFin;
+        entity.EsTodoElDia = dto.EsTodoElDia;
+        entity.RecurrenciaAnual = dto.RecurrenciaAnual;
+        entity.RecurrenciaHasta = dto.RecurrenciaHasta;
+        entity.RolesVisibles = dto.RolesVisibles;
+        entity.ModuloOrigen = dto.ModuloOrigen;
+        entity.UrlAccion = dto.UrlAccion;
+        entity.ColorHex = dto.ColorHex ?? "#6B7280";
+        entity.AlertaDias = dto.AlertaDias;
+        entity.Activo = dto.Activo;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteNormativoAsync(string uuid)
+    {
+        var entity = await _context.Set<InvCalendarioEventoNormativo>()
+            .FirstOrDefaultAsync(e => e.Uuid == uuid);
+        if (entity == null) return false;
+        _context.Set<InvCalendarioEventoNormativo>().Remove(entity);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ALERTAS DIARIAS
+    // ─────────────────────────────────────────────────────────────────────────
+    public async Task ProcesarAlertasDiariasAsync()
+    {
+        _logger.LogInformation("[Calendario] Procesando alertas diarias...");
+
+        // Obtener todos los usuarios activos
+        var usuarios = await _context.Usuarios
+            .Where(u => u.Activo == 1)
+            .ToListAsync();
+
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+
+        // Obtener eventos normativos con alerta configurada
+        var normativos = await _context.Set<InvCalendarioEventoNormativo>()
+            .Where(e => e.Activo && e.AlertaDias.HasValue)
+            .ToListAsync();
+
+        foreach (var usuario in usuarios)
+        {
+            // Determinar rol del usuario (simplificado)
+            var rol = "DIITRA_DOCENTE";
+            try
+            {
+                foreach (var evento in normativos)
+                {
+                    if (!string.IsNullOrEmpty(evento.RolesVisibles) &&
+                        !evento.RolesVisibles.Split(',').Contains(rol)) continue;
+
+                    var fechaAlerta = evento.FechaInicio.AddDays(-(evento.AlertaDias ?? 7));
+                    if (fechaAlerta != hoy) continue;
+
+                    var idCompuesto = $"NORM-{evento.IdEvento}";
+
+                    // Verificar si ya se envió esta alerta
+                    var yaEnviada = await _context.Set<InvCalendarioAlertaEnviada>()
+                        .AnyAsync(a =>
+                            a.IdEventoCalendario == idCompuesto &&
+                            a.IdUsuario == usuario.IdUsuario &&
+                            a.FechaEvento == evento.FechaInicio);
+
+                    if (yaEnviada) continue;
+
+                    // Enviar email usando el motor existente
+                    try
+                    {
+                        var diasRestantes = evento.FechaInicio.DayNumber - hoy.DayNumber;
+                        await _emailEngine.EnviarPorCodigoAsync(
+                            "CALENDARIO_ALERTA_EVENTO",
+                            usuario.Email ?? "",
+                            new Dictionary<string, string>
+                            {
+                                ["titulo_evento"] = evento.Titulo,
+                                ["dias_restantes"] = diasRestantes.ToString(),
+                                ["fecha_evento"] = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
+                                ["descripcion_evento"] = evento.Descripcion ?? "",
+                                ["url_accion"] = evento.UrlAccion ?? "/calendario",
+                                ["nombre_usuario"] = usuario.NombreCompleto ?? usuario.Email ?? ""
+                            });
+
+                        // Registrar alerta enviada
+                        _context.Set<InvCalendarioAlertaEnviada>().Add(new InvCalendarioAlertaEnviada
+                        {
+                            IdEventoCalendario = idCompuesto,
+                            IdUsuario = usuario.IdUsuario,
+                            FechaEvento = evento.FechaInicio,
+                            FechaEnvio = DateTime.UtcNow
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[Calendario] Error al enviar alerta al usuario {Id}", usuario.IdUsuario);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Calendario] Error procesando usuario {Id}", usuario.IdUsuario);
+            }
+        }
+
+        _logger.LogInformation("[Calendario] Alertas diarias procesadas.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
+    private static CalendarioEventoDto MapRawToDto(CalendarioEventoRaw r) => new(
+        r.IdEventoCalendario, r.Uuid, r.Titulo, r.Descripcion,
+        r.CategoriaGlobal, r.Subcategoria,
+        r.FechaInicio, r.FechaFin, r.EsTodoElDia, r.ColorHex,
+        r.IdEntidadOrigen, r.UuidEntidadOrigen, r.TipoEntidadOrigen,
+        r.UrlAccion, r.RolesVisibles
+    );
+
+    private static EventoNormativoDto ToDto(InvCalendarioEventoNormativo e) => new(
+        e.Uuid, e.Titulo, e.Descripcion, e.TipoEvento,
+        e.FechaInicio, e.FechaFin, e.EsTodoElDia,
+        e.RecurrenciaAnual, e.RecurrenciaHasta,
+        e.RolesVisibles, e.ModuloOrigen, e.UrlAccion,
+        e.ColorHex, e.AlertaDias, e.Activo
+    );
+
+    private static string EscapeIcal(string s) =>
+        s.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\n", "\\n");
+}
+
+// Clase auxiliar para mapear la vista SQL cruda
+internal class CalendarioEventoRaw
+{
+    public string IdEventoCalendario { get; set; } = "";
+    public string Uuid { get; set; } = "";
+    public string Titulo { get; set; } = "";
+    public string? Descripcion { get; set; }
+    public string CategoriaGlobal { get; set; } = "";
+    public string Subcategoria { get; set; } = "";
+    public DateOnly FechaInicio { get; set; }
+    public DateOnly? FechaFin { get; set; }
+    public bool EsTodoElDia { get; set; }
+    public string? ColorHex { get; set; }
+    public int? IdEntidadOrigen { get; set; }
+    public string? UuidEntidadOrigen { get; set; }
+    public string TipoEntidadOrigen { get; set; } = "";
+    public string? UrlAccion { get; set; }
+    public string? RolesVisibles { get; set; }
+}

@@ -167,12 +167,15 @@ builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<diitra_application.Research.IInformeAvanceService, diitra_infrastructure.Research.InformeAvanceService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<IGroupsService, GroupsService>();
+builder.Services.AddScoped<ICalendarioService, diitra_infrastructure.Research.CalendarioService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();
 builder.Services.AddScoped<diitra_application.Security.IAuditService, diitra_infrastructure.Security.AuditService>();
 builder.Services.AddScoped<diitra_application.Security.ILopdpService, diitra_infrastructure.Security.LopdpService>();
 builder.Services.AddSingleton<diitra_api.Services.BackupBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.BackupBackgroundService>());
+builder.Services.AddSingleton<diitra_api.Services.CalendarioAlertasJob>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.CalendarioAlertasJob>());
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");

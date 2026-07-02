@@ -6,7 +6,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
-
+import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 interface ProyectoResumen {
     uuid: string;
     titulo: string;
@@ -145,6 +145,17 @@ export const EstudianteDashboard: React.FC = () => {
                                 ))}
                             </div>
                         )}
+                    </BentoCard>
+
+                    <BentoCard 
+                        title="Agenda Semanal" 
+                        description="Próximos eventos normativos y del proyecto"
+                        className="md:col-span-2"
+                        isStatic={true}
+                    >
+                        <div className="mt-2">
+                            <ProximosEventosWidget />
+                        </div>
                     </BentoCard>
 
                     <BentoCard 

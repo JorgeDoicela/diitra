@@ -7,7 +7,7 @@ import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
-
+import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 interface DashboardStats {
     mis_proyectos_activos: number;
     mis_proyectos_borrador: number;
@@ -230,9 +230,10 @@ export const DocenteDashboard: React.FC = () => {
                         </div>
 
                     </div>
-
                     {/* Sidebar: Right Column */}
                     <div className="space-y-6">
+                        <ProximosEventosWidget />
+                        
                         <VercelUsageCard 
                             title="Resumen Académico"
                             buttonLabel="Actualizar"

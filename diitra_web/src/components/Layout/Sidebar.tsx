@@ -289,6 +289,7 @@ const Sidebar = ({
     const allMenuItems: MenuItem[] = [
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
+        { name: 'Calendario', icon: Calendar, path: '/calendario', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
         { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
         { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },

@@ -81,13 +81,17 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvConfigGeneral>    InvConfigsGenerales    { get; set; }
     public virtual DbSet<InvBackupLog>        InvBackupLogs          { get; set; }
 
-    // --- Catálogos Nucleares y Configuración ---
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
     public virtual DbSet<InvCatTipoEvidencia>  InvCatTipoEvidencias   { get; set; }
     public virtual DbSet<InvEntidadExterna>    InvEntidadesExternas   { get; set; }
     public virtual DbSet<InvConfigIndicador>   InvConfigIndicadores   { get; set; }
     public virtual DbSet<InvRubricaCriterio>   InvRubricaCriterios    { get; set; }
     public virtual DbSet<InvProyectoExtension> InvProyectoExtensions { get; set; }
+
+    // --- Módulo Calendario ---
+    public virtual DbSet<InvCalendarioEventoNormativo>  InvCalendarioEventosNormativos  { get; set; }
+    public virtual DbSet<InvIcalToken>                  InvIcalTokens                   { get; set; }
+    public virtual DbSet<InvCalendarioAlertaEnviada>    InvCalendarioAlertasEnviadas    { get; set; }
 
     // --- DIITRA Document Engine (Persistence & Audit) ---
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
@@ -1994,6 +1998,60 @@ public partial class DiitraContext : DbContext
 
             entity.HasOne(d => d.IdUsuarioDestinatarioNavigation).WithMany()
                 .HasForeignKey(d => d.IdUsuarioDestinatario).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_email_hist_usuario");
+        });
+
+        modelBuilder.Entity<InvCalendarioEventoNormativo>(entity =>
+        {
+            entity.ToTable("inv_calendario_eventos_normativos");
+            entity.HasKey(e => e.IdEvento);
+            entity.Property(e => e.IdEvento).HasColumnName("idEvento");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.TipoEvento).HasColumnName("tipoEvento").HasColumnType("enum('Normativo','Academico','Institucional','Feriado')").HasDefaultValueSql("'Normativo'");
+            entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio").IsRequired();
+            entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
+            entity.Property(e => e.EsTodoElDia).HasColumnName("esTodoElDia").HasDefaultValue(true);
+            entity.Property(e => e.RecurrenciaAnual).HasColumnName("recurrenciaAnual").HasDefaultValue(false);
+            entity.Property(e => e.RecurrenciaHasta).HasColumnName("recurrenciaHasta");
+            entity.Property(e => e.RolesVisibles).HasColumnName("rolesVisibles").HasMaxLength(255);
+            entity.Property(e => e.ModuloOrigen).HasColumnName("moduloOrigen").HasMaxLength(50);
+            entity.Property(e => e.UrlAccion).HasColumnName("urlAccion").HasMaxLength(255);
+            entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValue("#6B7280");
+            entity.Property(e => e.AlertaDias).HasColumnName("alertaDias").HasDefaultValue(7);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true);
+            entity.Property(e => e.CreadoPor).HasColumnName("creadoPor");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<InvIcalToken>(entity =>
+        {
+            entity.ToTable("inv_ical_tokens");
+            entity.HasKey(e => e.IdToken);
+            entity.Property(e => e.IdToken).HasColumnName("idToken");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").IsRequired();
+            entity.HasIndex(e => e.IdUsuario).IsUnique();
+            entity.Property(e => e.Token).HasColumnName("token").HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true);
+            entity.Property(e => e.FechaGenerado).HasColumnName("fechaGenerado").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaUltimoUso).HasColumnName("fechaUltimoUso");
+        });
+
+        modelBuilder.Entity<InvCalendarioAlertaEnviada>(entity =>
+        {
+            entity.ToTable("inv_calendario_alertas_enviadas");
+            entity.HasKey(e => e.IdAlerta);
+            entity.Property(e => e.IdAlerta).HasColumnName("idAlerta");
+            entity.Property(e => e.IdEventoCalendario).HasColumnName("idEventoCalendario").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").IsRequired();
+            entity.Property(e => e.FechaEvento).HasColumnName("fechaEvento").IsRequired();
+            entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(e => new { e.IdEventoCalendario, e.IdUsuario, e.FechaEvento }).IsUnique().HasDatabaseName("uk_alerta");
         });
 
         OnModelCreatingPartial(modelBuilder);

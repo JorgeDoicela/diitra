@@ -97,7 +97,12 @@ DROP TABLE IF EXISTS
     inv_cat_tipo_producto,
     inv_cat_tipo_evidencia,
     inv_entidades_externas,
-    inv_config_workflow;
+    inv_config_workflow,
+
+    -- Módulo Calendario (orden inverso por FK)
+    inv_calendario_alertas_enviadas,
+    inv_ical_tokens,
+    inv_calendario_eventos_normativos;
 
 -- #############################################################################
 -- SECCIÓN 1: CATÁLOGOS BASE
@@ -2048,3 +2053,311 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
     1
 );
 
+-- #############################################################################
+-- MÓDULO: CALENDARIO INTEGRADO DIITRA
+-- #############################################################################
+-- Arquitectura: Semi-acoplada. Esta sección añade SOLO la tabla de hitos
+-- normativos editables (fuente de datos propia del calendario).
+-- El resto de eventos se agregan dinámicamente a través de la vista
+-- v_calendario_eventos, que consolida las fuentes ya existentes en el
+-- esquema (convocatorias, proyectos, informes de avance, peer reviews).
+--
+-- ADAPTABILIDAD CACES: Cuando el CACES actualiza plazos o ventanas
+-- de autoevaluación, el Admin solo hace INSERT/UPDATE en
+-- inv_calendario_eventos_normativos desde /parametros-normativos.
+-- No se requiere redespliegue del backend.
+-- #############################################################################
+
+CREATE TABLE inv_calendario_eventos_normativos (
+    idEvento          INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid              VARCHAR(36)   NOT NULL UNIQUE,
+    titulo            VARCHAR(255)  NOT NULL  COMMENT 'Nombre visible del evento (ej: Plazo subida SIIES)',
+    descripcion       TEXT          NULL      COMMENT 'Detalle informativo para el usuario',
+    -- Tipo de evento (define color e ícono en el frontend)
+    tipoEvento        ENUM(
+        'Normativo',       -- Hito CACES/SENESCYT/CES (plazos regulatorios)
+        'Academico',       -- Fechas del calendario académico institucional
+        'Institucional',   -- Eventos internos del DIITRA
+        'Feriado'          -- Feriados nacionales o locales
+    ) NOT NULL DEFAULT 'Normativo',
+    -- Fechas del evento
+    fechaInicio       DATE          NOT NULL,
+    fechaFin          DATE          NULL      COMMENT 'NULL si es evento de un solo día',
+    esTodoElDia       TINYINT(1)    NOT NULL DEFAULT 1,
+    -- ⏰ RECURRENCIA ANUAL
+    -- Permite que hitos cíclicos del CACES (autoevaluación, plazos SIIES) se
+    -- repitan cada año automáticamente sin que el Admin los vuelva a crear.
+    recurrenciaAnual  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = el evento se repite cada año en la misma fecha',
+    recurrenciaHasta  DATE          NULL     COMMENT 'Año hasta el que se repite (NULL = indefinidamente)',
+    -- Visibilidad por rol (NULL = visible para todos los roles autenticados)
+    -- Formato CSV: 'DIITRA_ADMIN,DIITRA_DOCENTE' | NULL = todos
+    rolesVisibles     VARCHAR(255)  NULL      COMMENT 'Roles que pueden ver este evento. NULL = todos.',
+    -- Referencia a módulo del sistema (para deep linking desde el calendario)
+    moduloOrigen      VARCHAR(50)   NULL      COMMENT 'Módulo al que aplica: CONVOCATORIAS, PROYECTOS, SIIES, etc.',
+    urlAccion         VARCHAR(255)  NULL      COMMENT 'Ruta interna del sistema (ej: /convocatorias)',
+    colorHex          VARCHAR(7)    NULL DEFAULT '#6B7280' COMMENT 'Color personalizado del evento en el calendario',
+    -- 🔔 ALERTAS AUTOMÁTICAS por email
+    -- El job diario del backend consulta esta columna para disparar correos
+    -- usando el motor inv_email_historial que ya existe.
+    alertaDias        INT           NULL DEFAULT 7 COMMENT 'Días antes del evento para enviar alerta. NULL = sin alerta.',
+    -- Trazabilidad
+    activo            TINYINT(1)    NOT NULL DEFAULT 1,
+    creadoPor         INT(11)       NULL,
+    fechaRegistro     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fechaModificacion TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COMMENT 'Hitos normativos y académicos editables por el Admin sin redespliegue';
+
+-- =============================================================================
+-- TOKENS iCAL: Suscripción al calendario desde Google Calendar / Outlook
+-- =============================================================================
+-- Cada usuario recibe un token único. Con él, puede suscribirse a la URL:
+--   GET /api/calendario/feed/{token}/calendario.ics
+-- y su app de calendario sincronizará automáticamente sin requerir login.
+-- El token es regenerable por el usuario desde /configuracion.
+CREATE TABLE inv_ical_tokens (
+    idToken           INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid              VARCHAR(36)   NOT NULL UNIQUE,
+    idUsuario         INT(11)       NOT NULL UNIQUE COMMENT 'Un token por usuario',
+    token             VARCHAR(64)   NOT NULL UNIQUE COMMENT 'Token seguro de 32 bytes en hex',
+    activo            TINYINT(1)    NOT NULL DEFAULT 1,
+    fechaGenerado     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fechaUltimoUso    TIMESTAMP     NULL     COMMENT 'Fecha de la última solicitud del feed .ics',
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COMMENT 'Tokens de suscripción iCal para Google Calendar / Outlook / iPhone';
+
+DELIMITER $$
+CREATE TRIGGER trg_ical_token_uuid
+BEFORE INSERT ON inv_ical_tokens FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
+
+-- =============================================================================
+-- TRAZABILIDAD DE ALERTAS: Evita alertas duplicadas del job diario
+-- =============================================================================
+-- Cada vez que el cron envía una alerta, registra aquí.
+-- El job verifica esta tabla antes de enviar para no duplicar correos.
+CREATE TABLE inv_calendario_alertas_enviadas (
+    idAlerta          INT           AUTO_INCREMENT PRIMARY KEY,
+    -- Referencia al evento origen (normativo o dinámico)
+    idEventoCalendario VARCHAR(50)  NOT NULL COMMENT 'ID compuesto del evento (ej: NORM-3, INF-12, PROY-FIN-5)',
+    idUsuario         INT(11)       NOT NULL COMMENT 'Usuario al que se envió la alerta',
+    fechaEvento       DATE          NOT NULL COMMENT 'Fecha del evento para el que se alertó',
+    fechaEnvio        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_alerta (idEventoCalendario, idUsuario, fechaEvento),
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COMMENT 'Trazabilidad del cron de alertas — evita correos duplicados';
+
+DELIMITER $$
+CREATE TRIGGER trg_cal_norm_uuid
+BEFORE INSERT ON inv_calendario_eventos_normativos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
+
+-- =============================================================================
+-- VISTA AGREGADORA: v_calendario_eventos
+-- =============================================================================
+-- Consolida en un único dataset TODAS las fuentes de eventos del sistema:
+--   1. Hitos normativos editables (inv_calendario_eventos_normativos)
+--   2. Apertura de convocatorias   (inv_convocatorias.fechaApertura)
+--   3. Cierre de convocatorias     (inv_convocatorias.fechaCierre)
+--   4. Hitos internos de convoc.   (inv_convocatorias_hitos)
+--   5. Inicio y fin de proyectos   (inv_proyectos)
+--   6. Vencimiento informes avance (inv_informes_avance.fechaReporte)
+--   7. Plazos de peer review       (inv_revisiones_pares.fechaLimite)
+--
+-- El CalendarioController solo necesita:
+--   SELECT * FROM v_calendario_eventos WHERE fechaInicio BETWEEN @from AND @to
+--   AND activo = 1 [AND (rolesVisibles IS NULL OR FIND_IN_SET(@rol, rolesVisibles))]
+-- =============================================================================
+
+CREATE OR REPLACE VIEW v_calendario_eventos AS
+
+-- 1. Hitos normativos CACES (editables por el admin)
+SELECT
+    CONCAT('NORM-', idEvento)               AS idEventoCalendario,
+    uuid,
+    titulo,
+    descripcion,
+    'Normativo'                             AS categoriaGlobal,
+    tipoEvento                              AS subcategoria,
+    fechaInicio,
+    fechaFin,
+    esTodoElDia,
+    colorHex,
+    NULL                                    AS idEntidadOrigen,
+    NULL                                    AS uuidEntidadOrigen,
+    'CALENDARIO_NORMATIVO'                  AS tipoEntidadOrigen,
+    urlAccion,
+    rolesVisibles,
+    activo
+FROM inv_calendario_eventos_normativos
+
+UNION ALL
+
+-- 2. Apertura de convocatorias
+SELECT
+    CONCAT('CONV-APE-', idConvocatoria),
+    uuid,
+    CONCAT('Apertura: ', titulo),
+    CONCAT('Convocatoria ', codigoConvocatoria, ' - Inicio del período de postulación.'),
+    'Convocatoria', 'AperturaConvocatoria',
+    fechaApertura, NULL, 1,
+    '#3B82F6',
+    idConvocatoria, uuid, 'CONVOCATORIA',
+    '/convocatorias', NULL,
+    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0)
+FROM inv_convocatorias
+
+UNION ALL
+
+-- 3. Cierre de convocatorias
+SELECT
+    CONCAT('CONV-CIE-', idConvocatoria),
+    uuid,
+    CONCAT('Cierre: ', titulo),
+    CONCAT('Convocatoria ', codigoConvocatoria, ' - Fecha límite de postulación.'),
+    'Convocatoria', 'CierreConvocatoria',
+    fechaCierre, NULL, 1,
+    '#F97316',
+    idConvocatoria, uuid, 'CONVOCATORIA',
+    '/convocatorias', NULL,
+    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0)
+FROM inv_convocatorias
+
+UNION ALL
+
+-- 4. Hitos específicos de convocatoria
+SELECT
+    CONCAT('HITO-', h.idHito),
+    h.uuid,
+    h.nombreHito,
+    COALESCE(h.descripcion, CONCAT('Hito de la convocatoria: ', c.titulo)),
+    'Convocatoria', 'HitoConvocatoria',
+    h.fechaHito, NULL, 1,
+    IF(h.esCritico, '#EF4444', '#F59E0B'),
+    h.idConvocatoria, c.uuid, 'CONVOCATORIA',
+    '/convocatorias', 'DIITRA_ADMIN',
+    1
+FROM inv_convocatorias_hitos h
+JOIN inv_convocatorias c ON c.idConvocatoria = h.idConvocatoria
+
+UNION ALL
+
+-- 5. Inicio de proyectos activos
+SELECT
+    CONCAT('PROY-INI-', idProyecto),
+    uuid,
+    CONCAT('Inicio: ', titulo),
+    CONCAT('Fecha de inicio del proyecto ', COALESCE(codigoInstitucional, uuid)),
+    'Proyecto', 'InicioProyecto',
+    fechaInicio, NULL, 1,
+    '#10B981',
+    idProyecto, uuid, 'PROYECTO',
+    NULL, 'DIITRA_ADMIN',
+    IF(estado NOT IN ('Borrador','Anulado','Rechazado') AND activo = 1, 1, 0)
+FROM inv_proyectos
+WHERE fechaInicio IS NOT NULL
+
+UNION ALL
+
+-- 6. Vencimiento de proyectos activos
+SELECT
+    CONCAT('PROY-FIN-', idProyecto),
+    uuid,
+    CONCAT('Vencimiento: ', titulo),
+    CONCAT('Fecha de cierre planificada del proyecto ', COALESCE(codigoInstitucional, uuid)),
+    'Proyecto', 'VencimientoProyecto',
+    fechaFin, NULL, 1,
+    '#EF4444',
+    idProyecto, uuid, 'PROYECTO',
+    NULL, NULL,
+    IF(estado IN ('En Ejecución','Aprobado') AND activo = 1, 1, 0)
+FROM inv_proyectos
+WHERE fechaFin IS NOT NULL
+
+UNION ALL
+
+-- 7. Entrega de informes de avance pendientes
+SELECT
+    CONCAT('INF-', ia.idInforme),
+    ia.uuid,
+    CONCAT('Informe #', ia.numeroInforme, ': ', p.titulo),
+    CONCAT('Entrega del Informe de Avance N° ', ia.numeroInforme),
+    'Monitoreo', 'InformeAvance',
+    ia.fechaReporte, NULL, 1,
+    '#8B5CF6',
+    ia.idProyecto, p.uuid, 'INFORME_AVANCE',
+    NULL, NULL,
+    IF(ia.estado = 'Pendiente', 1, 0)
+FROM inv_informes_avance ia
+JOIN inv_proyectos p ON p.idProyecto = ia.idProyecto
+
+UNION ALL
+
+-- 8. Plazos de peer review pendientes
+SELECT
+    CONCAT('REV-', r.idRevision),
+    r.uuid,
+    CONCAT('Plazo de evaluación: ', p.titulo),
+    'Fecha límite para completar la evaluación por pares del proyecto.',
+    'PeerReview', 'PlazoPeerReview',
+    r.fechaLimite, NULL, 1,
+    '#EC4899',
+    r.idProyecto, p.uuid, 'PEER_REVIEW',
+    '/revisiones', 'DIITRA_ADMIN,DIITRA_REVISOR_EXTERNO',
+    IF(r.estado = 'Pendiente', 1, 0)
+FROM inv_revisiones_pares r
+JOIN inv_proyectos p ON p.idProyecto = r.idProyecto;
+
+-- =============================================================================
+-- SEMILLAS: Eventos Normativos CACES 2025-2026 (referencia inicial)
+-- Actualizar desde /parametros-normativos cuando el CACES publique cambios.
+-- =============================================================================
+
+INSERT INTO inv_calendario_eventos_normativos
+    (uuid, titulo, descripcion, tipoEvento, fechaInicio, fechaFin, esTodoElDia,
+     rolesVisibles, moduloOrigen, urlAccion, colorHex, alertaDias, activo)
+VALUES
+(
+    UUID(),
+    'Ventana de Autoevaluación Institucional CACES',
+    'Período en que los IST completan la autoevaluación interna para el proceso de acreditación CACES 2025-2026. Asegurar que todos los proyectos y evidencias estén actualizados en DIITRA.',
+    'Normativo', '2025-09-01', '2025-09-30', 1,
+    NULL, 'SIIES', '/analiticas', '#1E3A8A', 14, 1
+),
+(
+    UUID(),
+    'Plazo límite carga masiva SIIES — Indicadores I+D',
+    'Fecha de corte para la subida de evidencias estructuradas (CSV) a la plataforma SIIES del CACES. Exportar reportes desde Analíticas antes de esta fecha.',
+    'Normativo', '2025-10-15', NULL, 1,
+    'DIITRA_ADMIN', 'SIIES', '/analiticas', '#DC2626', 30, 1
+),
+(
+    UUID(),
+    'Inicio del Período Académico 2025-2026 II',
+    'Apertura del segundo período académico. Los docentes deben registrar su distributivo y horas de investigación asignadas.',
+    'Academico', '2025-10-01', NULL, 1,
+    NULL, 'DISTRIBUTIVO', '/investigacion', '#0891B2', 7, 1
+),
+(
+    UUID(),
+    'Cierre de Convocatoria Interna — Proyectos 2025-II',
+    'Fecha máxima para la recepción de protocolos de investigación aplicada del segundo semestre 2025.',
+    'Institucional', '2025-10-31', NULL, 1,
+    NULL, 'CONVOCATORIAS', '/convocatorias', '#D97706', 7, 1
+),
+(
+    UUID(),
+    'Evaluación Externa CACES — Visita de Pares',
+    'Período estimado de la visita de evaluadores externos del CACES. Todas las evidencias deben estar firmadas digitalmente y disponibles en DIITRA.',
+    'Normativo', '2026-03-01', '2026-03-15', 1,
+    NULL, 'SIIES', '/analiticas', '#7C3AED', 45, 1
+);
+
+-- Índices para rendimiento del módulo de calendario
+CREATE INDEX idx_cal_norm_fechas ON inv_calendario_eventos_normativos(fechaInicio, fechaFin);
+CREATE INDEX idx_cal_norm_tipo   ON inv_calendario_eventos_normativos(tipoEvento, activo);

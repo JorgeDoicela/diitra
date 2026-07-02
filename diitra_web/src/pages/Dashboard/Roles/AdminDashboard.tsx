@@ -8,7 +8,7 @@ import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
-
+import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 interface GlobalStats {
     total_proyectos: number;
     proyectos_borrador: number;
@@ -309,6 +309,8 @@ export const AdminDashboard: React.FC = () => {
 
                     {/* Sidebar: Right Column */}
                     <div className="space-y-6">
+                        <ProximosEventosWidget />
+                        
                         <VercelUsageCard 
                             title="Resumen Institucional"
                             buttonLabel="Actualizar"

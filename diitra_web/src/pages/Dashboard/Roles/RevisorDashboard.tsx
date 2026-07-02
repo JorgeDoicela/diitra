@@ -4,6 +4,7 @@ import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { getMyReviews } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
 
@@ -109,6 +110,16 @@ export const RevisorDashboard: React.FC = () => {
                                     );
                                 })
                             )}
+                        </div>
+                    </BentoCard>
+                    <BentoCard 
+                        title="Agenda Semanal" 
+                        description="Próximos eventos normativos y de evaluación"
+                        className="md:col-span-2"
+                        isStatic={true}
+                    >
+                        <div className="mt-2">
+                            <ProximosEventosWidget />
                         </div>
                     </BentoCard>
 

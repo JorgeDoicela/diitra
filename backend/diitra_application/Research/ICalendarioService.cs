@@ -1,0 +1,58 @@
+namespace diitra_application.Research;
+
+public record CalendarioEventoDto(
+    string IdEventoCalendario,
+    string Uuid,
+    string Titulo,
+    string? Descripcion,
+    string CategoriaGlobal,
+    string Subcategoria,
+    DateOnly FechaInicio,
+    DateOnly? FechaFin,
+    bool EsTodoElDia,
+    string? ColorHex,
+    int? IdEntidadOrigen,
+    string? UuidEntidadOrigen,
+    string TipoEntidadOrigen,
+    string? UrlAccion,
+    string? RolesVisibles
+);
+
+public record EventoNormativoDto(
+    string? Uuid,
+    string Titulo,
+    string? Descripcion,
+    string TipoEvento,
+    DateOnly FechaInicio,
+    DateOnly? FechaFin,
+    bool EsTodoElDia,
+    bool RecurrenciaAnual,
+    DateOnly? RecurrenciaHasta,
+    string? RolesVisibles,
+    string? ModuloOrigen,
+    string? UrlAccion,
+    string? ColorHex,
+    int? AlertaDias,
+    bool Activo
+);
+
+public interface ICalendarioService
+{
+    /// <summary>Obtiene todos los eventos del rango indicado, filtrados por rol del usuario.</summary>
+    Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(DateOnly desde, DateOnly hasta, string rolUsuario);
+
+    /// <summary>Genera el feed .ics (iCalendar RFC 5545) para un token de suscripción dado.</summary>
+    Task<string?> GenerarIcalFeedAsync(string token);
+
+    /// <summary>Genera o regenera el token iCal personal del usuario.</summary>
+    Task<string> GenerarORegenerarTokenIcalAsync(int idUsuario);
+
+    // ── CRUD normativos (Admin) ──────────────────────────────────────────────
+    Task<IEnumerable<EventoNormativoDto>> GetNormativosAsync();
+    Task<string> CreateNormativoAsync(EventoNormativoDto dto, int idUsuarioAdmin);
+    Task<bool> UpdateNormativoAsync(string uuid, EventoNormativoDto dto);
+    Task<bool> DeleteNormativoAsync(string uuid);
+
+    /// <summary>Llamado por el job diario: envía alertas por email de eventos próximos.</summary>
+    Task ProcesarAlertasDiariasAsync();
+}
