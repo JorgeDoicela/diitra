@@ -118,8 +118,15 @@ public class ConvocatoriasController : ControllerBase
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Delete(string uuid)
     {
-        var result = await _convocatoriaService.DeleteAsync(uuid);
-        if (!result) return NotFound();
-        return Ok(new { message = "Convocatoria eliminada" });
+        try
+        {
+            var result = await _convocatoriaService.DeleteAsync(uuid);
+            if (!result) return NotFound();
+            return Ok(new { message = "Convocatoria eliminada" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

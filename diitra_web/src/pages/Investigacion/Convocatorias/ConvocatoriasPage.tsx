@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
     Plus, Calendar, DollarSign, FileText, CheckCircle,
     Trash2, Edit2, Activity,
@@ -11,6 +11,7 @@ import {
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 
 interface Convocatoria {
     uuid: string;
@@ -37,6 +38,7 @@ interface Convocatoria {
     lineas_ids: number[];
     hitos: { uuid?: string; nombre_hito: string; fecha_hito: string; es_critico: boolean; descripcion?: string }[];
     documentos_req: { uuid?: string; nombre_documento: string; descripcion?: string; es_obligatorio: boolean }[];
+    proyectos?: { uuid: string; titulo: string; codigo_institucional?: string; estado: string }[];
 }
 
 interface Periodo {
@@ -669,8 +671,10 @@ const ConvocatoriasPage = () => {
         try {
             await api.delete(`/Convocatorias/${uuid}`);
             fetchConvocatorias();
-        } catch (error) {
-            console.error('Error deleting convocatoria:', error);
+            addToast('Convocatoria Eliminada', 'La convocatoria se eliminó correctamente.', 'success');
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.message || 'Ocurrió un error inesperado al intentar eliminar la convocatoria.';
+            addToast('Error al Eliminar', errorMsg, 'error');
         }
     };
 
@@ -1546,6 +1550,54 @@ const ConvocatoriasPage = () => {
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
                                     Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para la evaluación anónima por pares. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
                                 </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-bold text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                                        <FileText size={12} /> Proyectos Asociados
+                                    </h4>
+                                    {selectedConvocatoria.proyectos && selectedConvocatoria.proyectos.length > 0 && (
+                                        <span className="px-2 py-0.5 text-[10px] bg-brand/10 text-brand rounded-full font-bold">
+                                            {selectedConvocatoria.proyectos.length}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    {selectedConvocatoria.proyectos && selectedConvocatoria.proyectos.length > 0 ? (
+                                        selectedConvocatoria.proyectos.map((proyecto, idx) => (
+                                            <Link
+                                                key={idx}
+                                                to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', proyecto.uuid, '', '/investigacion')}
+                                                onClick={() => {
+                                                    setLastActiveUuid(null);
+                                                    setSelectedConvocatoria(null);
+                                                }}
+                                                className="flex items-center justify-between p-3 bento-card static text-xs hover:border-brand transition-all duration-200 group cursor-pointer decoration-none"
+                                            >
+                                                <div className="flex flex-col min-w-0 pr-3">
+                                                    <span className="font-bold text-text-main truncate group-hover:text-brand transition-colors">
+                                                        {proyecto.titulo}
+                                                    </span>
+                                                    {proyecto.codigo_institucional && (
+                                                        <span className="text-[10px] text-text-dim font-mono mt-0.5">
+                                                            {proyecto.codigo_institucional}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-semibold shrink-0 uppercase tracking-wider ${
+                                                    proyecto.estado === 'Aprobado' || proyecto.estado === 'Ejecución' ? 'bg-success/10 text-success' :
+                                                    proyecto.estado === 'Borrador' ? 'bg-text-dim/10 text-text-dim' :
+                                                    'bg-brand/10 text-brand'
+                                                }`}>
+                                                    {proyecto.estado}
+                                                </span>
+                                            </Link>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-text-dim">No hay proyectos registrados en esta convocatoria.</p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="space-y-4">

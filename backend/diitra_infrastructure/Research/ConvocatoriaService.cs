@@ -95,6 +95,12 @@ public class ConvocatoriaService : IConvocatoriaService
                     Descripcion = d.Descripcion,
                     EsObligatorio = d.EsObligatorio ?? false,
                     FormatoAceptado = d.FormatoAceptado
+                }).ToList(),
+                Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
+                    Uuid = p.Uuid,
+                    Titulo = p.Titulo,
+                    CodigoInstitucional = p.CodigoInstitucional,
+                    Estado = p.Estado
                 }).ToList()
             })
             .ToListAsync();
@@ -149,6 +155,12 @@ public class ConvocatoriaService : IConvocatoriaService
                     Descripcion = d.Descripcion,
                     EsObligatorio = d.EsObligatorio ?? false,
                     FormatoAceptado = d.FormatoAceptado
+                }).ToList(),
+                Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
+                    Uuid = p.Uuid,
+                    Titulo = p.Titulo,
+                    CodigoInstitucional = p.CodigoInstitucional,
+                    Estado = p.Estado
                 }).ToList()
             })
             .FirstOrDefaultAsync();
@@ -447,6 +459,13 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
+
+        // Validar si existen proyectos asociados
+        var tieneProyectos = await _context.InvProyectos.AnyAsync(p => p.IdConvocatoria == conv.IdConvocatoria);
+        if (tieneProyectos)
+        {
+            throw new InvalidOperationException("No se puede eliminar la convocatoria porque tiene proyectos asociados.");
+        }
 
         var beforeState = new
         {

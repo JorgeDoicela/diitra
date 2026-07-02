@@ -27,9 +27,18 @@ public class ConvocatoriaDto
     public List<int> LineasIds { get; set; } = new();
     public List<ConvocatoriaHitoDto> Hitos { get; set; } = new();
     public List<ConvocatoriaDocumentoReqDto> DocumentosReq { get; set; } = new();
+    public List<ConvocatoriaProyectoDto> Proyectos { get; set; } = new();
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
     public string Estado { get; set; } = "Borrador";
+}
+
+public class ConvocatoriaProyectoDto
+{
+    public string Uuid { get; set; } = null!;
+    public string Titulo { get; set; } = null!;
+    public string? CodigoInstitucional { get; set; }
+    public string Estado { get; set; } = null!;
 }
 
 public class ConvocatoriaHitoDto
