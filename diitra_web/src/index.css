@@ -583,14 +583,62 @@ select:focus-visible {
     width: 100%;
 }
 
-/* Anular color celeste/amarillo predeterminado por navegadores en autocompletado */
+/* Anular color celeste/amarillo predeterminado por navegadores en autocompletado y mantener estilos */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
+input:-webkit-autofill:active,
+input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--fg) !important;
     transition: background-color 5000s ease-in-out 0s;
+    font-family: var(--font-sans) !important;
+}
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
+    box-shadow: 0 0 0 1000px var(--bg) inset !important;
+    border-color: var(--border) !important;
+}
+
+input:-webkit-autofill:hover {
+    border-color: var(--border-hover) !important;
+}
+
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset, 0 0 0 1px var(--fg) !important;
+    box-shadow: 0 0 0 1000px var(--bg) inset, 0 0 0 1px var(--fg) !important;
+    border-color: var(--fg) !important;
+}
+
+/* Forzar la tipografía oficial para evitar cambios de grosor y tamaño en Chrome/Safari */
+input:-webkit-autofill::first-line {
+    font-family: var(--font-sans) !important;
+}
+
+/* Estándar moderno de autofill para compatibilidad futura */
+input:autofill,
+input:autofill:hover, 
+input:autofill:active,
+input:autofill:focus {
+    transition: background-color 5000s ease-in-out 0s;
+    font-family: var(--font-sans) !important;
+}
+
+input:autofill {
+    box-shadow: 0 0 0 1000px var(--bg) inset !important;
+    border-color: var(--border) !important;
+}
+
+input:autofill:hover {
+    border-color: var(--border-hover) !important;
+}
+
+input:autofill:focus {
+    box-shadow: 0 0 0 1000px var(--bg) inset, 0 0 0 1px var(--fg) !important;
+    border-color: var(--fg) !important;
+}
+
+input:autofill::first-line {
+    font-family: var(--font-sans) !important;
 }
 
 .input-vercel:hover {

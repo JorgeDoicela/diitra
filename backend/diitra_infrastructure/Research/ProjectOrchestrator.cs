@@ -639,7 +639,11 @@ namespace diitra_infrastructure.Research
                 try
                 {
                     var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(p.MetadataCacesJson);
-                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
+                    var deserialized = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (deserialized != null)
+                    {
+                        dto = deserialized;
+                    }
                 }
                 catch
                 {
@@ -868,7 +872,7 @@ namespace diitra_infrastructure.Research
             dto.CodigoInstitucional = p.CodigoInstitucional;
             dto.Estado = p.Estado;
             dto.IdConvocatoria = p.IdConvocatoria;
-            dto.IdCarrera = p.InvProyectosCarreras.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera ?? p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
+            dto.IdCarrera = p.InvProyectosCarreras?.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera ?? p.InvProyectosCarreras?.FirstOrDefault()?.IdCarrera;
             if (dto.IdCarrera.HasValue)
             {
                 var carreraObj = allCarrerasList.FirstOrDefault(c => c.IdCarrera == dto.IdCarrera.Value);

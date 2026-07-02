@@ -516,9 +516,8 @@ const UsersPage = () => {
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
             <style>{`
                 .row-last-active {
-                    border-left-color: var(--brand, #0070f3) !important;
-                    background-color: var(--brand-subtle, rgba(0, 112, 243, 0.06)) !important;
-                    border-left-width: 2px !important;
+                    background-color: rgba(0, 112, 243, 0.08) !important;
+                    border-color: rgba(0, 112, 243, 0.35) !important;
                     transition: all 0.2s ease-in-out;
                 }
             `}</style>
@@ -718,14 +717,13 @@ const UsersPage = () => {
                                     </td>
                                 </tr>
                             ) : users.map((u) => (
-                                <tr key={u.id_profesor} 
-                                    className={`transition-all duration-300 group cursor-pointer border-l-2 ${
-                                        detailUser?.id_profesor === u.id_profesor 
-                                            ? 'bg-brand/10 border-brand' 
+                                <tr key={u.id_profesor}
+                                    className={`transition-all duration-300 group cursor-pointer ${detailUser?.id_profesor === u.id_profesor
+                                            ? 'bg-brand/[0.08] border-brand/35'
                                             : (!detailUser && lastActiveUserId === u.id_profesor)
                                                 ? 'row-last-active'
-                                                : 'border-transparent hover:bg-surface/30'
-                                    }`}
+                                                : 'hover:bg-surface/30'
+                                        }`}
                                     onClick={() => { setDetailUser(u); openedAtRef.current = Date.now(); setLastActiveUserId(null); }}
                                 >
                                     <td className="p-4">

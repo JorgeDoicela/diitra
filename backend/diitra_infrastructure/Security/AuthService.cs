@@ -327,8 +327,12 @@ public class AuthService : IAuthService
 
         var systemsClaim = string.Join(",", sistemas);
 
-        var hasAcceptedLopdp = await _context.InvLopdpConsentimientos
-            .AnyAsync(c => c.IdUsuario == user.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL" && c.Estado == "Otorgado");
+        var lastConsent = await _context.InvLopdpConsentimientos
+            .Where(c => c.IdUsuario == user.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL")
+            .OrderByDescending(c => c.FechaConsentimiento)
+            .FirstOrDefaultAsync();
+
+        var hasAcceptedLopdp = lastConsent != null && lastConsent.Estado == "Otorgado";
 
         var response = new AuthResponse
         {

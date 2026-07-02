@@ -97,5 +97,23 @@ public class LopdpController : ControllerBase
         return Ok(new { message = "Perfil actualizado exitosamente." });
     }
 
-}
+    /// <summary>
+    /// Revoca el consentimiento del usuario para la política de privacidad y firma digital.
+    /// </summary>
+    [HttpPost("revocar")]
+    public async Task<IActionResult> RevocarConsentimiento()
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
 
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+        var userAgent = Request.Headers["User-Agent"].ToString();
+
+        await _lopdpService.RevocarConsentimientoAsync(dbUser.IdUsuario, ip, userAgent);
+
+        return Ok(new { message = "Consentimiento revocado exitosamente." });
+    }
+}

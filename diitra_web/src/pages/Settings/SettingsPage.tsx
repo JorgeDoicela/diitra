@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Loader2, Shield, CheckCircle2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
+import { useAuth } from '../../api/AuthContext';
+import { useConfirm } from '../../api/ConfirmContext';
 
 interface PerfilData {
     orcid_id?: string;
@@ -16,6 +18,8 @@ interface PerfilData {
 
 const SettingsPage: React.FC = () => {
     const { addToast } = useNotifications();
+    const { logout } = useAuth();
+    const confirm = useConfirm();
 
     const [profile, setProfile] = useState<PerfilData>({
         orcid_id: '',
@@ -74,24 +78,51 @@ const SettingsPage: React.FC = () => {
 
     const handleConsentToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
-        if (!checked) return; // Solo se registra cuando otorga el consentimiento
-
-        setIsSavingConsent(true);
-        try {
-            await api.post('/lopdp/consentimiento', {
-                version_politica: 'FIRMA_ELECTRONICA'
+        if (checked) {
+            setIsSavingConsent(true);
+            try {
+                await api.post('/lopdp/consentimiento', {
+                    version_politica: 'FIRMA_ELECTRONICA'
+                });
+                setProfile(prev => ({
+                    ...prev,
+                    acepto_terminos_firma: true,
+                    fecha_consentimiento_firma: new Date().toISOString()
+                }));
+                addToast('Consentimiento Registrado', 'Su autorización para el uso de firma electrónica ha sido guardada conforme a la LOPDP.', 'success');
+            } catch (err) {
+                console.error('Error al registrar consentimiento:', err);
+                addToast('Error', 'No se pudo registrar el consentimiento en este momento.', 'error');
+            } finally {
+                setIsSavingConsent(false);
+            }
+        } else {
+            const confirmar = await confirm({
+                title: 'Revocar Consentimiento',
+                message: '¿Está seguro de que desea revocar su consentimiento de firma electrónica y protección de datos (LOPDP)? Esta acción cerrará su sesión actual y restringirá el acceso al sistema hasta que vuelva a aceptarlo.',
+                confirmText: 'Revocar',
+                cancelText: 'Cancelar',
+                variant: 'destructive'
             });
-            setProfile(prev => ({
-                ...prev,
-                acepto_terminos_firma: true,
-                fecha_consentimiento_firma: new Date().toISOString()
-            }));
-            addToast('Consentimiento Registrado', 'Su autorización para el uso de firma electrónica ha sido guardada conforme a la LOPDP.', 'success');
-        } catch (err) {
-            console.error('Error al registrar consentimiento:', err);
-            addToast('Error', 'No se pudo registrar el consentimiento en este momento.', 'error');
-        } finally {
-            setIsSavingConsent(false);
+            if (!confirmar) {
+                e.target.checked = true;
+                return;
+            }
+
+            setIsSavingConsent(true);
+            try {
+                await api.post('/lopdp/revocar');
+                addToast('Consentimiento Revocado', 'Su consentimiento ha sido revocado. Cerrando sesión...', 'info');
+                setTimeout(async () => {
+                    await logout();
+                }, 1500);
+            } catch (err) {
+                console.error('Error al revocar consentimiento:', err);
+                addToast('Error', 'No se pudo revocar el consentimiento en este momento.', 'error');
+                e.target.checked = true;
+            } finally {
+                setIsSavingConsent(false);
+            }
         }
     };
 
@@ -217,7 +248,7 @@ const SettingsPage: React.FC = () => {
                                     id="termsConsent"
                                     className="mt-1 cursor-pointer accent-brand"
                                     checked={profile.acepto_terminos_firma}
-                                    disabled={profile.acepto_terminos_firma || isSavingConsent}
+                                    disabled={isSavingConsent}
                                     onChange={handleConsentToggle}
                                 />
                                 <label htmlFor="termsConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer select-none">
@@ -231,13 +262,6 @@ const SettingsPage: React.FC = () => {
                                     Consentimiento firmado electrónicamente y activo {profile.fecha_consentimiento_firma && `el ${new Date(profile.fecha_consentimiento_firma).toLocaleDateString()}`}
                                 </div>
                             )}
-
-                            <div className="p-4 bg-brand/5 border border-brand/20 rounded-xl space-y-1.5">
-                                <p className="text-xs font-semibold text-text-main">🔒 Firma sin custodia</p>
-                                <p className="text-[11px] text-text-dim leading-relaxed">
-                                    Bajo esta modalidad, el sistema no almacena credenciales ni claves privadas en base de datos. Cada vez que firme un protocolo, deberá cargar su archivo de firma y digitar su contraseña. Esto garantiza la inmutabilidad de su identidad y el cumplimiento estricto del marco legal de protección de datos.
-                                </p>
-                            </div>
                         </div>
                     </div>
                 )}

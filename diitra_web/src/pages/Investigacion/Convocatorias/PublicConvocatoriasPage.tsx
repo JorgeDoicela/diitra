@@ -149,11 +149,10 @@ const PublicConvocatoriasPage = () => {
                         <div
                             key={c.uuid}
                             onClick={() => setSelectedConvocatoria(c)}
-                            className={`bento-card p-6 group cursor-pointer overflow-hidden border-l-2 ${
-                                selectedConvocatoria?.uuid === c.uuid 
-                                    ? 'bg-brand/10 border-brand' 
-                                    : 'border-transparent'
-                            }`}
+                            className={`bento-card p-6 group cursor-pointer overflow-hidden transition-all ${selectedConvocatoria?.uuid === c.uuid
+                                    ? 'bg-brand/[0.05] border-brand/35 shadow-[0_0_12px_rgba(0,112,243,0.08)]'
+                                    : ''
+                                }`}
                         >
                             <div className="space-y-6 relative z-10">
                                 <div className="flex justify-between items-start">

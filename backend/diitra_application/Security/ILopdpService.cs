@@ -12,5 +12,6 @@ public interface ILopdpService
     Task AuditoriaAccesoDatosAsync(int? idUsuarioActor, int idUsuarioAfectado, string tablaAfectada, string? columnaAfectada, string operacion, string? motivo, string? ip, string? userAgent);
     Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario);
     Task UpdatePerfilAsync(int idUsuario, ActualizarPerfilRequest request);
+    Task RevocarConsentimientoAsync(int idUsuario, string? ip, string? userAgent);
 }
 

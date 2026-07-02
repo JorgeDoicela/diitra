@@ -204,5 +204,48 @@ public class LopdpService : ILopdpService
             throw;
         }
     }
+
+    public async Task RevocarConsentimientoAsync(int idUsuario, string? ip, string? userAgent)
+    {
+        await _semaphore.WaitAsync();
+        try
+        {
+            var politicas = new[] { "LOPDP_GENERAL", "FIRMA_ELECTRONICA" };
+            foreach (var politica in politicas)
+            {
+                var consentimientoRevocado = new InvLopdpConsentimiento
+                {
+                    IdUsuario = idUsuario,
+                    VersionPolitica = politica,
+                    Canal = "Web",
+                    FechaConsentimiento = DateTime.Now,
+                    IpDireccion = ip,
+                    UserAgent = userAgent,
+                    Estado = "Revocado"
+                };
+                _context.InvLopdpConsentimientos.Add(consentimientoRevocado);
+            }
+
+            var metadata = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
+            if (metadata != null)
+            {
+                metadata.AceptoTerminosFirma = false;
+                metadata.FechaConsentimientoFirma = null;
+                metadata.Version++;
+            }
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Evidencia de revocación LOPDP registrada para el Usuario={IdUsuario}", idUsuario);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al registrar revocación LOPDP para el Usuario={IdUsuario}", idUsuario);
+            throw;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
 }
 
