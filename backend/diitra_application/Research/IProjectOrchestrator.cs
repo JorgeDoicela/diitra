@@ -103,6 +103,12 @@ namespace Diitra.Application.Research
         /// Solo administradores del sistema (DIITRA_ADMIN).
         /// </summary>
         Task<SyncResult> ReviewTeamChangeRequestAsync(string projectUuid, string requestUuid, string reviewerSigafiId, TeamChangeReviewDto review);
+
+        /// <summary>
+        /// Resuelve el ID interno de base de datos del usuario a partir de su referencia sigafi del JWT.
+        /// Usado para registrar el actor real en la trazabilidad inmutable del workflow.
+        /// </summary>
+        Task<int?> GetUserInternalIdBySigafiIdAsync(string sigafiId);
     }
 
     public class TransferDirectorRequest

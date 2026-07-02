@@ -5,6 +5,7 @@ using diitra_infrastructure.data.models;
 using Diitra.Application.Research;
 using diitra_application.Security;
 using diitra_application.Common.Notifications;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Diitra.Infrastructure.Research
 {
@@ -13,12 +14,14 @@ namespace Diitra.Infrastructure.Research
         private readonly DiitraContext _context;
         private readonly IAuditService _auditService;
         private readonly INotificationService _notificationService;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public WorkflowEngineService(DiitraContext context, IAuditService auditService, INotificationService notificationService)
+        public WorkflowEngineService(DiitraContext context, IAuditService auditService, INotificationService notificationService, IServiceScopeFactory scopeFactory)
         {
             _context = context;
             _auditService = auditService;
             _notificationService = notificationService;
+            _scopeFactory = scopeFactory;
         }
 
         public async Task<bool> TransicionarEstadoAsync(string proyectoUuid, string nuevoEstado, int idUsuario, string observacion)
@@ -38,11 +41,21 @@ namespace Diitra.Infrastructure.Research
             string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
             // 1. Validación Dinámica vía Base de Datos (Configurable)
-            var esValida = await _context.InvConfigWorkflows
-                .AnyAsync(w => w.Activo && 
-                               w.EstadoOrigen == estadoAnterior && 
-                               w.EstadoDestino == nuevoEstado &&
-                               (w.IdTipoProyecto == null || w.IdTipoProyecto == proyecto.IdTipo));
+            bool esValida = false;
+            if (estadoAnterior == "Prepropuesta" || nuevoEstado == "Prepropuesta" || nuevoEstado == "Prepropuesta Rechazada" || estadoAnterior == "Prepropuesta Rechazada")
+            {
+                esValida = (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador") ||
+                           (estadoAnterior == "Prepropuesta" && nuevoEstado == "Prepropuesta Rechazada") ||
+                           (estadoAnterior == "Prepropuesta Rechazada" && nuevoEstado == "Prepropuesta");
+            }
+            else
+            {
+                esValida = await _context.InvConfigWorkflows
+                    .AnyAsync(w => w.Activo && 
+                                   w.EstadoOrigen == estadoAnterior && 
+                                   w.EstadoDestino == nuevoEstado &&
+                                   (w.IdTipoProyecto == null || w.IdTipoProyecto == proyecto.IdTipo));
+            }
 
             if (!esValida)
             {
@@ -206,19 +219,95 @@ namespace Diitra.Infrastructure.Research
             // Notify admins/directors when a project is submitted
             if (nuevoEstado == "Enviado")
             {
-                try
+                _ = Task.Run(async () =>
                 {
-                    await _notificationService.NotifyByRoleCodesAsync(
-                        "Proyecto Postulado",
-                        $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
-                        new[] { "DIITRA_ADMIN" },
-                        $"/arbitraje/proyecto/{proyecto.Uuid}"
-                    );
-                }
-                catch (Exception ex)
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                        try
+                        {
+                            await notificationService.NotifyByRoleCodesAsync(
+                                "Proyecto Postulado",
+                                $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
+                                new[] { "DIITRA_ADMIN" },
+                                $"/arbitraje/proyecto/{proyecto.Uuid}"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[DIITRA] Error al notificar postulación de proyecto en segundo plano: {ex.Message}");
+                        }
+                    }
+                });
+            }
+            else if (nuevoEstado == "Prepropuesta")
+            {
+                _ = Task.Run(async () =>
                 {
-                    Console.WriteLine($"[DIITRA] Error al notificar postulación de proyecto: {ex.Message}");
-                }
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                        try
+                        {
+                            await notificationService.NotifyByRoleCodesAsync(
+                                "Prepropuesta Registrada",
+                                $"La prepropuesta del proyecto '{proyecto.Titulo}' ha sido registrada/reenviada y está pendiente de aprobación de idea.",
+                                new[] { "DIITRA_ADMIN" },
+                                $"/investigacion"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[DIITRA] Error al notificar prepropuesta en segundo plano: {ex.Message}");
+                        }
+                    }
+                });
+            }
+            else if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador")
+            {
+                _ = Task.Run(async () =>
+                {
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                        try
+                        {
+                            await notificationService.NotifyByRoleCodesAsync(
+                                "Prepropuesta Aprobada",
+                                $"Su prepropuesta '{proyecto.Titulo}' ha sido APROBADA. Ya puede iniciar la formulación completa del proyecto.",
+                                new[] { "DIITRA_DOCENTE" },
+                                $"/investigacion/mis-proyectos/workspace/PROTOCOLO_INVESTIGACION/{proyecto.Uuid}"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[DIITRA] Error al notificar aprobación de prepropuesta en segundo plano: {ex.Message}");
+                        }
+                    }
+                });
+            }
+            else if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Prepropuesta Rechazada")
+            {
+                _ = Task.Run(async () =>
+                {
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                        try
+                        {
+                            await notificationService.NotifyByRoleCodesAsync(
+                                "Prepropuesta Devuelta",
+                                $"Su prepropuesta '{proyecto.Titulo}' ha sido devuelta con observaciones: {observacion}",
+                                new[] { "DIITRA_DOCENTE" },
+                                $"/investigacion/mis-proyectos"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[DIITRA] Error al notificar devolución de prepropuesta en segundo plano: {ex.Message}");
+                        }
+                    }
+                });
             }
 
             return true;

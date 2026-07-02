@@ -327,14 +327,14 @@ const MyProjectsPage: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5">
-                                    {(p.estado === 'Borrador' || p.estado === 'En Corrección') && (
+                                    {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 confirmarEliminar(p.uuid, p.titulo);
                                             }}
                                             className="p-1.5 rounded-lg hover:bg-error-subtle text-text-dim hover:text-error transition-colors"
-                                            title="Eliminar borrador"
+                                            title="Eliminar propuesta"
                                         >
                                             <Trash2 size={13} />
                                         </button>
@@ -441,9 +441,9 @@ const MyProjectsPage: React.FC = () => {
                                     <AlertCircle size={24} />
                                 </div>
                                 <div className="space-y-2">
-                                    <h4 className="font-bold text-text-main text-base">¿Eliminar borrador de investigación?</h4>
+                                    <h4 className="font-bold text-text-main text-base">¿Eliminar propuesta de investigación?</h4>
                                     <p className="text-text-dim text-xs leading-relaxed">
-                                        Esta acción eliminará de forma permanente el borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
+                                        Esta acción eliminará de forma permanente la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
                                     </p>
                                     {deletionError && (
                                         <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">

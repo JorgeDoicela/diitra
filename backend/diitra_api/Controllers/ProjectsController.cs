@@ -409,8 +409,9 @@ namespace diitra_api.Controllers
             }
             try
             {
-                int idUsuarioSimulado = 1;
-                var success = await workflowEngine.TransicionarEstadoAsync(id, newState, idUsuarioSimulado, observation);
+                var userSigafiRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                int idUsuario = (await _projectOrchestrator.GetUserInternalIdBySigafiIdAsync(userSigafiRef ?? "")) ?? 1;
+                var success = await workflowEngine.TransicionarEstadoAsync(id, newState, idUsuario, observation);
                 if (!success) return NotFound("Proyecto no encontrado");
                 return Ok(new { message = $"Proyecto transitado exitosamente a {newState}" });
             }
@@ -796,12 +797,21 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return false;
 
-            // 1. Administradores del sistema tienen control absoluto
+            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (project == null) return false;
+
+            // En fases de Prepropuesta, la edición es exclusiva del docente postulante.
+            // Los administradores evalúan, no editan la idea directamente.
+            if (project.Estado == "Prepropuesta" || project.Estado == "Prepropuesta Rechazada")
+            {
+                return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
+            }
+
+            // 1. Administradores del sistema tienen control absoluto en fase de Borrador/Corrección
             if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
-            // 2. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta para todos en el editor colaborativo
-            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
-            if (project != null && project.Estado != "Borrador" && project.Estado != "En Corrección")
+            // 2. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta
+            if (project.Estado != "Borrador" && project.Estado != "En Corrección")
             {
                 return false;
             }
@@ -818,9 +828,10 @@ namespace diitra_api.Controllers
             // 1. Si es Administrador del Sistema, tiene control absoluto
             if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
-            // 2. Si es el Director de Proyecto del proyecto y el proyecto está en fases de edición
+            // 2. Si es el Director de Proyecto del proyecto y el proyecto está en fases de edición o prepropuesta
             var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
-            if (project != null && (project.Estado == "Borrador" || project.Estado == "En Corrección"))
+            if (project != null && (project.Estado == "Borrador" || project.Estado == "En Corrección" ||
+                                    project.Estado == "Prepropuesta" || project.Estado == "Prepropuesta Rechazada"))
             {
                 return await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
             }

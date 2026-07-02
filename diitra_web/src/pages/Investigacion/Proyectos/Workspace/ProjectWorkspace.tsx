@@ -21,7 +21,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { Shield, Check, RotateCcw, MessageSquare, Calendar } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -117,7 +117,10 @@ export const ProjectWorkspace: React.FC = () => {
     }, [editParam, templateCode, location.search, navigate]);
 
     const [currentProject, setCurrentProject] = useState<any>(null);
+    const isPreproposalState = currentProject?.status === 'Prepropuesta' || currentProject?.status === 'Prepropuesta Rechazada';
     const [isLoading, setIsLoading] = useState(true);
+    const [adminObservation, setAdminObservation] = useState('');
+    const [isSubmittingAdminReview, setIsSubmittingAdminReview] = useState(false);
 
     const setActiveDocument = useCallback((doc: string | null) => {
         const searchParams = new URLSearchParams(location.search);
@@ -193,6 +196,11 @@ export const ProjectWorkspace: React.FC = () => {
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const approvedGroups = availableGroups.filter(g => g.activo && g.estado === 'Aprobado');
     const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN');
+    const [editTitulo, setEditTitulo] = useState('');
+    const [editDescripcion, setEditDescripcion] = useState('');
+    const [isSavingPreproposal, setIsSavingPreproposal] = useState(false);
+    const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
+    const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
 
     // Group detail drawer state and lazy-loaded catalogs
     const [detailGroup, setDetailGroup] = useState<any>(null);
@@ -312,8 +320,8 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
-    const fetchTeamChangeRequests = async (projectUuid?: string) => {
-        const uuidToUse = projectUuid || currentProject?.uuid;
+    const fetchTeamChangeRequests = useCallback(async (projectUuid?: string) => {
+        const uuidToUse = projectUuid || currentProject?.uuid || resolvedProjectUuid;
         if (!uuidToUse) {
             setTeamChangeRequests([]);
             return;
@@ -327,13 +335,13 @@ export const ProjectWorkspace: React.FC = () => {
         } finally {
             setIsLoadingTeamChangeRequests(false);
         }
-    };
+    }, [currentProject?.uuid, resolvedProjectUuid]);
 
     useEffect(() => {
-        if (resolvedProjectUuid) {
+        if (resolvedProjectUuid && !isPreproposalState) {
             fetchProducts(resolvedProjectUuid);
         }
-    }, [resolvedProjectUuid, activeDocument]);
+    }, [resolvedProjectUuid, activeDocument, isPreproposalState]);
 
     useEffect(() => {
         const fetchAvailableUsers = async () => {
@@ -487,101 +495,105 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        const fetchProject = async () => {
-            if (!resolvedProjectUuid) return;
+    const fetchProject = useCallback(async () => {
+        if (!resolvedProjectUuid) return;
 
-            let retries = 3;
-            let success = false;
-            let res: any = null;
-            let forbidden = false;
-            let isNotFound = false;
+        let retries = 3;
+        let success = false;
+        let res: any = null;
+        let forbidden = false;
+        let isNotFound = false;
 
-            while (retries > 0 && !success) {
-                try {
-                    res = await api.get(`/projects/${resolvedProjectUuid}/detail`);
-                    success = true;
-                } catch (e: any) {
-                    retries--;
-                    if (e?.response?.status === 403 || e?.response?.status === 401) {
-                        retries = 0;
-                        forbidden = true;
-                    } else if (e?.response?.status === 404) {
-                        if (retries > 0) {
-                            console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        } else {
-                            isNotFound = true;
-                        }
+        while (retries > 0 && !success) {
+            try {
+                res = await api.get(`/projects/${resolvedProjectUuid}/detail`);
+                success = true;
+            } catch (e: any) {
+                retries--;
+                if (e?.response?.status === 403 || e?.response?.status === 401) {
+                    retries = 0;
+                    forbidden = true;
+                } else if (e?.response?.status === 404) {
+                    if (retries > 0) {
+                        console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                     } else {
-                        retries = 0;
-                        console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
+                        isNotFound = true;
                     }
+                } else {
+                    retries = 0;
+                    console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
                 }
             }
+        }
 
-            if (forbidden) {
-                setIsUnauthorized(true);
-                setIsLoading(false);
-                return;
-            }
-
-            if (success && res) {
-                setCurrentProject({
-                    id: res.data.uuid.substring(0, 8).toUpperCase(),
-                    uuid: res.data.uuid,
-                    title: res.data.titulo?.trim() || '(Sin título)',
-                    status: res.data.estado || 'Borrador',
-                    presupuesto: res.data.costo_total || 0,
-                    linea: res.data.linea_investigacion || 'No definida',
-                    // FIX: fallback seguro — sin datos explícitos, denegamos edición (mínimo privilegio)
-                    puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
-                        (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
-                    puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
-                    puedeFirmar: res.data.puede_firmar ?? res.data.puedeFirmar ?? res.data.PuedeFirmar ?? false,
-                    puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null,
-                    grupoInvestigacion: res.data.grupo_investigacion || res.data.grupoInvestigacion || '',
-                    grupoInvestigacionUuid: res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid || '',
-                    tieneGrupoInvestigacion: !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!(res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid),
-                    dominio: res.data.dominio || ''
-                });
-                setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
-
-                const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_investigacion ?? res.data.grupoInvestigacion ?? '';
-                const hasGroup = !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
-                setTieneGrupo(hasGroup);
-                setGrupoInvestigacion(groupUuid);
-                await fetchTeamChangeRequests(res.data.uuid);
-            } else if (isNotFound) {
-                // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
-                setCurrentProject({
-                    id: resolvedProjectUuid?.substring(0, 8).toUpperCase() || 'NEW',
-                    uuid: resolvedProjectUuid || '',
-                    title: 'Nuevo Proyecto de Investigación',
-                    status: 'Borrador',
-                    presupuesto: 0,
-                    linea: 'No definida',
-                    puedeEditar: true,
-                    puedeSolicitarCambioEquipo: false,
-                    puedeFirmar: true,
-                    grupoInvestigacion: '',
-                    grupoInvestigacionUuid: '',
-                    tieneGrupoInvestigacion: false,
-                    dominio: ''
-                });
-                setInvestigadores([]);
-                setTieneGrupo(false);
-                setGrupoInvestigacion('');
-                setTeamChangeRequests([]);
-            } else {
-                // Ante cualquier otro error (500, Red, etc.), bloqueamos por Fail-Closed
-                setIsUnauthorized(true);
-            }
+        if (forbidden) {
+            setIsUnauthorized(true);
             setIsLoading(false);
-        };
+            return;
+        }
 
+        if (success && res) {
+            setCurrentProject({
+                id: res.data.uuid.substring(0, 8).toUpperCase(),
+                uuid: res.data.uuid,
+                title: res.data.titulo?.trim() || '(Sin título)',
+                status: res.data.estado || 'Borrador',
+                presupuesto: res.data.costo_total || 0,
+                linea: res.data.linea_investigacion || 'No definida',
+                puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
+                    (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección' || res.data.estado === 'Prepropuesta' || res.data.estado === 'Prepropuesta Rechazada'),
+                puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
+                puedeFirmar: res.data.puede_firmar ?? res.data.puedeFirmar ?? res.data.PuedeFirmar ?? false,
+                puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null,
+                grupoInvestigacion: res.data.grupo_investigacion || res.data.grupoInvestigacion || '',
+                grupoInvestigacionUuid: res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid || '',
+                tieneGrupoInvestigacion: !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!(res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid),
+                dominio: res.data.dominio || '',
+                descripcion: res.data.descripcion_proyecto || res.data.descripcionProyecto || '',
+                carrera: res.data.carrera || '',
+                convocatoria: res.data.convocatoria_titulo || res.data.convocatoriaTitulo || ''
+            });
+            setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
+
+            const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_investigacion ?? res.data.grupoInvestigacion ?? '';
+            const hasGroup = !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
+            setTieneGrupo(hasGroup);
+            setGrupoInvestigacion(groupUuid);
+            if (res.data.estado !== 'Prepropuesta' && res.data.estado !== 'Prepropuesta Rechazada') {
+                await fetchTeamChangeRequests(res.data.uuid);
+            }
+        } else if (isNotFound) {
+            // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
+            setCurrentProject({
+                id: resolvedProjectUuid?.substring(0, 8).toUpperCase() || 'NEW',
+                uuid: resolvedProjectUuid || '',
+                title: 'Nuevo Proyecto de Investigación',
+                status: 'Borrador',
+                presupuesto: 0,
+                linea: 'No definida',
+                puedeEditar: true,
+                puedeSolicitarCambioEquipo: false,
+                puedeFirmar: true,
+                grupoInvestigacion: '',
+                grupoInvestigacionUuid: '',
+                tieneGrupoInvestigacion: false,
+                dominio: ''
+            });
+            setInvestigadores([]);
+            setTieneGrupo(false);
+            setGrupoInvestigacion('');
+            setTeamChangeRequests([]);
+        } else {
+            // Ante cualquier otro error (500, Red, etc.), bloqueamos por Fail-Closed
+            setIsUnauthorized(true);
+        }
+        setIsLoading(false);
+    }, [resolvedProjectUuid, fetchTeamChangeRequests]);
+
+    useEffect(() => {
         fetchProject();
-    }, [resolvedProjectUuid, activeDocument]);
+    }, [fetchProject, activeDocument]);
 
     useEffect(() => {
         if (!transferSearchQuery.trim()) {
@@ -602,6 +614,130 @@ export const ProjectWorkspace: React.FC = () => {
         }, 300);
         return () => clearTimeout(delayDebounceFn);
     }, [transferSearchQuery]);
+
+    useEffect(() => {
+        const fetchTrazabilidad = async () => {
+            const status = currentProject?.status;
+            if (!resolvedProjectUuid || (status !== 'Prepropuesta' && status !== 'Prepropuesta Rechazada')) return;
+            setIsLoadingTrazabilidad(true);
+            try {
+                const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
+                setTrazabilidad(res.data || []);
+            } catch (e) {
+                console.error("Error al cargar la trazabilidad", e);
+            } finally {
+                setIsLoadingTrazabilidad(false);
+            }
+        };
+        fetchTrazabilidad();
+    }, [resolvedProjectUuid, currentProject?.status]);
+
+    useEffect(() => {
+        if (currentProject) {
+            setEditTitulo(currentProject.title || '');
+            setEditDescripcion(currentProject.descripcion || '');
+        }
+    }, [currentProject]);
+
+    const handleGuardarYReenviar = async (nuevoTitulo: string, nuevaDescripcion: string) => {
+        if (!nuevoTitulo.trim()) {
+            addToast("Validación", "El título de la prepropuesta es obligatorio.", "warning");
+            return;
+        }
+        if (!nuevaDescripcion.trim()) {
+            addToast("Validación", "La descripción de la prepropuesta es obligatoria.", "warning");
+            return;
+        }
+
+        setIsSavingPreproposal(true);
+        try {
+            const docInstanceRes = await api.get(`/documents/instances/resolve`, {
+                params: {
+                    templateCode: 'PROTOCOLO_INVESTIGACION',
+                    entityUuid: resolvedProjectUuid
+                }
+            });
+            const pInstanceUuid = docInstanceRes.data?.uuid || docInstanceRes.data?.Uuid;
+            if (!pInstanceUuid) throw new Error("No se pudo resolver el expediente del protocolo.");
+
+            const instanceRes = await api.get(`/documents/instances/${pInstanceUuid}`);
+            const currentMetadata = instanceRes.data?.data_snapshot_json 
+                ? JSON.parse(instanceRes.data.data_snapshot_json) 
+                : {};
+
+            const updatedMetadata = {
+                ...currentMetadata,
+                Titulo: nuevoTitulo.trim().toUpperCase(),
+                DescripcionProyecto: nuevaDescripcion.trim(),
+                Estado: 'Prepropuesta'
+            };
+
+            await api.patch(`/documents/instances/${pInstanceUuid}/metadata`, updatedMetadata);
+
+            await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reenvío de prepropuesta corregida")}`);
+
+            addToast("Reenvío Exitoso", "Su prepropuesta ha sido corregida y reenviada para revisión.", "success");
+            await fetchProject();
+        } catch (e: any) {
+            console.error("Error al reenviar prepropuesta", e);
+            addToast("Error al Reenviar", e.response?.data?.message || "Ocurrió un error al intentar reenviar la prepropuesta.", "error");
+        } finally {
+            setIsSavingPreproposal(false);
+        }
+    };
+
+    const handleAdminAprobarPrepropuesta = async () => {
+        if (!currentProject?.uuid) return;
+        if (!await confirm({
+            title: "Aprobar Prepropuesta",
+            message: `¿Está seguro de aprobar la idea del proyecto "${currentProject.title}"? Esto habilitará al docente para iniciar la formulación completa.`,
+            confirmText: "Aprobar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
+        
+        setIsSubmittingAdminReview(true);
+        try {
+            const obs = adminObservation.trim() || "Idea de proyecto aprobada por Dirección de Investigación";
+            await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
+            addToast("Idea Aprobada", "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.", "success");
+            setAdminObservation('');
+            await fetchProject();
+        } catch (e: any) {
+            console.error("Error al aprobar prepropuesta", e);
+            addToast("Error", e.response?.data?.message || "Ocurrió un error al intentar aprobar la prepropuesta.", "error");
+        } finally {
+            setIsSubmittingAdminReview(false);
+        }
+    };
+
+    const handleAdminDevolverPrepropuesta = async () => {
+        if (!currentProject?.uuid) return;
+        if (!adminObservation.trim()) {
+            addToast("Validación", "Debe ingresar una observación detallando los motivos de la devolución.", "warning");
+            return;
+        }
+        if (!await confirm({
+            title: "Devolver Prepropuesta",
+            message: "¿Está seguro de devolver esta prepropuesta al docente para correcciones?",
+            confirmText: "Devolver",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
+
+        setIsSubmittingAdminReview(true);
+        try {
+            await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(adminObservation.trim())}`);
+            addToast("Prepropuesta Devuelta", "La prepropuesta ha sido devuelta al docente con sus observaciones.", "success");
+            setAdminObservation('');
+            await fetchProject();
+        } catch (e: any) {
+            console.error("Error al devolver prepropuesta", e);
+            addToast("Error", e.response?.data?.message || "Ocurrió un error al intentar devolver la prepropuesta.", "error");
+        } finally {
+            setIsSubmittingAdminReview(false);
+        }
+    };
 
     useEffect(() => {
         if (!grupoInvestigacion || approvedGroups.length === 0) return;
@@ -1092,6 +1228,278 @@ export const ProjectWorkspace: React.FC = () => {
                 projectStatus={currentProject.status}
                 canSign={currentProject.puedeFirmar}
             />
+        );
+    }
+
+
+    const ultimaObservacion = isLoadingTrazabilidad 
+        ? "Cargando observaciones..." 
+        : (trazabilidad.find(t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada')?.observacion || 'Sin observaciones especificadas.');
+
+    if (isPreproposalState) {
+        if (isAdmin) {
+            // PANTALLA PERSONALIZADA PARA EL ADMINISTRADOR (EVALUACIÓN Y TRAZABILIDAD)
+            return (
+                <div className="h-screen w-full flex flex-col bg-bg-deep overflow-y-auto pb-20 selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
+                    <WorkspaceHeader
+                        currentProject={currentProject}
+                        isSidebarCollapsed={isSidebarCollapsed}
+                        isPublishingDSpace={false}
+                        urlPrefix={urlPrefix}
+                        navigate={navigate}
+                        onExportCaces={() => {}}
+                        onPublishDSpace={() => {}}
+                    />
+                    
+                    <main className="max-w-6xl mx-auto p-6 md:p-12 animate-fade-up w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Panel Izquierdo: Contenido de la Prepropuesta */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="bento-card p-8 space-y-6 rounded-2xl border border-border-thin shadow-sm bg-surface">
+                                <div className="border-b border-border pb-4 flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Detalle de la Prepropuesta</h3>
+                                        <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
+                                    </div>
+                                    <span className="text-[9px] font-bold bg-brand/10 border border-brand/20 text-brand px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
+                                        Fase de Idea
+                                    </span>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Carrera / Unidad Postulante</label>
+                                        <div className="input-vercel opacity-70 bg-bg-deep select-none">{currentProject.carrera || 'No definida'}</div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tema / Título de la Investigación</label>
+                                        <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase">{currentProject.title}</div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Descripción / Justificación detallada</label>
+                                        <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed">{currentProject.descripcion || 'Sin descripción ingresada.'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Panel Derecho: Panel de Evaluación o Historial */}
+                        <div className="space-y-6">
+                            {currentProject.status === 'Prepropuesta' ? (
+                                <div className="bento-card p-8 rounded-2xl border border-brand/20 bg-brand/[0.01] shadow-md space-y-6">
+                                    <div className="border-b border-border pb-4">
+                                        <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                                            <Shield size={16} className="text-brand" />
+                                            Panel de Evaluación
+                                        </h3>
+                                        <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1">Revisión de Idea de Investigación</p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones / Retroalimentación</label>
+                                            <textarea
+                                                value={adminObservation}
+                                                onChange={(e) => setAdminObservation(e.target.value)}
+                                                placeholder="Ingrese las observaciones sobre el tema o justificación de la idea..."
+                                                className="input-vercel !h-32 !text-xs resize-none"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3 pt-2">
+                                            <button
+                                                onClick={handleAdminAprobarPrepropuesta}
+                                                disabled={isSubmittingAdminReview}
+                                                className="w-full flex items-center justify-center gap-2 btn-vercel-primary py-3 px-6 text-xs font-bold uppercase tracking-wider"
+                                            >
+                                                <Check size={14} />
+                                                Aprobar Prepropuesta
+                                            </button>
+
+                                            <button
+                                                onClick={handleAdminDevolverPrepropuesta}
+                                                disabled={isSubmittingAdminReview || !adminObservation.trim()}
+                                                className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-error/10 text-error border border-error/30 hover:border-error/50 rounded-lg py-3 px-6 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                <RotateCcw size={14} />
+                                                Devolver al Docente
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bento-card p-8 rounded-2xl border border-border-thin shadow-sm space-y-6 bg-surface">
+                                    <div className="border-b border-border pb-4">
+                                        <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                                            <RotateCcw size={16} className="text-error" />
+                                            Prepropuesta Devuelta
+                                        </h3>
+                                        <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1">Esperando Correcciones</p>
+                                    </div>
+
+                                    <div className="bg-error/[0.02] border border-error/20 p-4 rounded-xl space-y-2">
+                                        <h4 className="text-[10px] font-bold text-error uppercase tracking-wider">Última Observación Enviada:</h4>
+                                        <p className="text-xs text-text-main italic font-mono leading-relaxed break-words">{ultimaObservacion}</p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Línea de Tiempo del Estado</label>
+                                        {isLoadingTrazabilidad ? (
+                                            <div className="text-[10px] text-text-dim animate-pulse pl-2 font-mono">Cargando historial...</div>
+                                        ) : trazabilidad.length === 0 ? (
+                                            <div className="text-[10px] text-text-dim italic pl-2">Sin transiciones registradas.</div>
+                                        ) : (
+                                            <div className="space-y-4 pl-2 border-l border-border-thin ml-2">
+                                                {trazabilidad.map((item: any, index: number) => {
+                                                    const statusName = String(item.estadoNuevo ?? item.EstadoNuevo ?? 'Estado Desconocido');
+                                                    const dateStr = item.fechaTransicion ?? item.FechaTransicion;
+                                                    const formattedDate = dateStr ? new Date(dateStr).toLocaleString('es-EC') : '';
+                                                    const observationText = String(item.observacion ?? item.Observacion ?? '');
+                                                    const isErrorState = statusName.toLowerCase().includes('rechazado') || statusName.toLowerCase().includes('devuelto');
+
+                                                    return (
+                                                        <div key={index} className="relative">
+                                                            <div className={`absolute -left-[13px] top-1.5 w-1.5 h-1.5 rounded-full ${
+                                                                isErrorState ? 'bg-error animate-pulse' : 'bg-success'
+                                                            }`} />
+                                                            <div className="space-y-1">
+                                                                <p className="text-[10px] font-black text-text-main uppercase tracking-widest">{statusName}</p>
+                                                                {formattedDate && <p className="text-[8px] text-text-dim font-mono">{formattedDate}</p>}
+                                                                {observationText && (
+                                                                    <p className="text-[10px] text-text-dim italic bg-bg-deep p-2 rounded border border-border-thin mt-1 break-words font-mono">
+                                                                        {observationText}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // PANTALLA PERSONALIZADA PARA EL DOCENTE/AUTOR
+        return (
+            <div className="h-screen w-full flex flex-col bg-bg-deep overflow-y-auto pb-20 selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
+                <WorkspaceHeader
+                    currentProject={currentProject}
+                    isSidebarCollapsed={isSidebarCollapsed}
+                    isPublishingDSpace={false}
+                    urlPrefix={urlPrefix}
+                    navigate={navigate}
+                    onExportCaces={() => {}}
+                    onPublishDSpace={() => {}}
+                />
+                
+                <main className="max-w-4xl mx-auto p-6 md:p-12 space-y-8 animate-fade-up w-full">
+                    {/* Banner de Revisión */}
+                    {currentProject.status === 'Prepropuesta' && (
+                        <div className="bento-card border-brand/35 bg-brand/[0.03] p-6 flex items-start gap-4 rounded-2xl shadow-sm">
+                            <Shield className="text-brand shrink-0 mt-0.5" size={24} />
+                            <div className="space-y-1.5">
+                                <h4 className="text-sm font-bold text-text-main uppercase tracking-wider">Idea de Proyecto en Revisión</h4>
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    Su propuesta de idea de investigación está bajo análisis del Departamento de Investigación e Innovación. 
+                                    Se le notificará en cuanto sea aprobada para proceder con el protocolo completo.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Banner de Devolución */}
+                    {currentProject.status === 'Prepropuesta' ? null : (
+                        <div className="bento-card border-error/30 bg-error/[0.03] p-6 flex flex-col gap-4 rounded-2xl shadow-sm">
+                            <div className="flex items-start gap-4">
+                                <Shield className="text-error shrink-0 mt-0.5" size={24} />
+                                <div className="space-y-1.5 flex-1">
+                                    <h4 className="text-sm font-bold text-error uppercase tracking-wider">Prepropuesta Devuelta / Rechazada</h4>
+                                    <p className="text-xs text-text-dim leading-relaxed">
+                                        Su propuesta ha sido devuelta por la Dirección de Investigación con observaciones.
+                                        Corrija el tema y la descripción en el formulario a continuación y reenvíe la prepropuesta para su revisión.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="border-t border-error/20 pt-3 pl-10">
+                                <p className="text-[10px] font-bold text-error uppercase tracking-wider">Observaciones del Administrador:</p>
+                                <p className="text-xs text-text-main font-medium italic mt-1 font-mono break-words">{ultimaObservacion}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Formulario */}
+                    <div className="bento-card p-8 space-y-6 rounded-2xl border border-border-thin shadow-sm">
+                        <div className="border-b border-border pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Datos de la Prepropuesta</h3>
+                                <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
+                            </div>
+                            {!currentProject.puedeEditar && (
+                                <span className="text-[9px] font-bold bg-surface border border-border-thin text-text-dim px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                    Modo Lectura
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Carrera / Unidad Postulante</label>
+                                <div className="input-vercel opacity-70 bg-bg-deep select-none">{currentProject.carrera || 'No definida'}</div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tema / Título de la Investigación</label>
+                                {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
+                                    <textarea
+                                        value={editTitulo}
+                                        onChange={(e) => setEditTitulo(e.target.value.toUpperCase())}
+                                        className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none"
+                                    />
+                                ) : (
+                                    <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase">{currentProject.title}</div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Descripción / Justificación detallada</label>
+                                {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
+                                    <div className="space-y-1.5">
+                                        <textarea
+                                            value={editDescripcion}
+                                            onChange={(e) => setEditDescripcion(e.target.value)}
+                                            className="input-vercel !h-40 !text-xs resize-none"
+                                        />
+                                        <div className="text-[9px] text-text-dim/60 ml-1 flex justify-end">
+                                            <span>Caracteres ingresados: {editDescripcion.length}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[100px] !h-auto text-xs">{currentProject.descripcion || 'Sin descripción ingresada.'}</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar && (
+                            <div className="pt-4 border-t border-border flex justify-end">
+                                <button
+                                    onClick={() => handleGuardarYReenviar(editTitulo, editDescripcion)}
+                                    disabled={isSavingPreproposal || !editDescripcion.trim() || !editTitulo.trim()}
+                                    className="btn-vercel-primary py-2.5 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSavingPreproposal ? "Guardando..." : "Corregir y Reenviar Prepropuesta"}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </main>
+            </div>
         );
     }
 

@@ -36,6 +36,8 @@ function hexToRgb(hex: string) {
 
 const DEFAULT_ESTADO_CONFIGS: Record<string, { badge: string; dot: string }> = {
     'Borrador': { badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+    'Prepropuesta': { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Prepropuesta Rechazada': { badge: 'badge-vercel-error', dot: 'dot-error' },
     'Enviado': { badge: 'badge-vercel-info', dot: 'dot-info' },
     'En Revisión': { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
     'Aprobado': { badge: 'badge-vercel-success', dot: 'dot-success' },

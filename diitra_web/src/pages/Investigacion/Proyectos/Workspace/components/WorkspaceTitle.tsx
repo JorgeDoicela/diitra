@@ -34,7 +34,7 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             {cfg.label}
                         </span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title?.trim() || '(Sin título)'}</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight break-words">{currentProject.title?.trim() || '(Sin título)'}</h2>
                     {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (
                         <div className="flex items-center gap-1.5 mt-2">
                             <span className="badge-vercel bg-brand/5 border border-brand/20 text-brand text-[10px] font-semibold py-1 px-2.5 rounded-full flex items-center gap-1 animate-fade-in">

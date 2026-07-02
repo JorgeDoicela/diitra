@@ -58,6 +58,10 @@ const ResearchProjectsPage = () => {
     const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
     const [deletingTitle, setDeletingTitle] = useState<string>('');
     const [deletionError, setDeletionError] = useState<string | null>(null);
+    const [rejectingProject, setRejectingProject] = useState<ProyectoResumen | null>(null);
+    const [rejectObservation, setRejectObservation] = useState('');
+    const [reviewError, setReviewError] = useState<string | null>(null);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     const loadProjects = async (isManual = false) => {
         if (isManual) setRefreshing(true);
@@ -152,6 +156,35 @@ const ResearchProjectsPage = () => {
         } catch (err: any) {
             console.error('[DIITRA Admin] Error al eliminar borrador:', err);
             setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador del proyecto.');
+        }
+    };
+
+    const handleAprobarIdea = async (project: ProyectoResumen) => {
+        if (!window.confirm(`¿Está seguro de aprobar la idea del proyecto "${project.titulo}"? Esto habilitará al docente para iniciar la formulación completa.`)) return;
+        try {
+            await api.post(`/projects/${project.uuid}/transition?newState=Borrador&observation=${encodeURIComponent("Idea de proyecto aprobada por Dirección de Investigación")}`);
+            loadProjects();
+        } catch (e: any) {
+            console.error("Error al aprobar prepropuesta", e);
+            alert(e.response?.data?.message || "Ocurrió un error al intentar aprobar la prepropuesta.");
+        }
+    };
+
+    const handleRechazarIdeaSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!rejectObservation.trim() || !rejectingProject) return;
+        setIsSubmittingReview(true);
+        setReviewError(null);
+        try {
+            await api.post(`/projects/${rejectingProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(rejectObservation.trim())}`);
+            setRejectingProject(null);
+            setRejectObservation('');
+            loadProjects();
+        } catch (e: any) {
+            console.error("Error al rechazar prepropuesta", e);
+            setReviewError(e.response?.data?.message || "Ocurrió un error al intentar rechazar la prepropuesta.");
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -350,14 +383,14 @@ const ResearchProjectsPage = () => {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0 ml-2 mt-0.5">
-                                            {(p.estado === 'Borrador' || p.estado === 'En Corrección') && (
+                                            {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         confirmarEliminar(p.uuid, p.titulo);
                                                     }}
                                                     className="p-1.5 rounded-lg hover:bg-error-subtle text-text-dim hover:text-error transition-colors"
-                                                    title="Eliminar borrador"
+                                                    title="Eliminar propuesta"
                                                 >
                                                     <Trash2 size={13} />
                                                 </button>
@@ -376,6 +409,27 @@ const ResearchProjectsPage = () => {
                                             <span className="opacity-60 ml-1">· {p.rol_en_proyecto}</span>
                                         )}
                                     </div>
+
+                                    {p.estado === 'Prepropuesta' && (
+                                        <div className="flex gap-2 pt-1.5" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={() => handleAprobarIdea(p)}
+                                                className="btn-vercel-primary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider bg-brand text-white border-brand hover:bg-transparent hover:text-brand"
+                                            >
+                                                Aprobar Idea
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setRejectingProject(p);
+                                                    setRejectObservation('');
+                                                    setReviewError(null);
+                                                }}
+                                                className="btn-vercel-secondary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider hover:bg-error/10 hover:text-error hover:border-error/30"
+                                            >
+                                                Devolver
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {p.linea_investigacion && (
                                         <div className="flex items-center gap-1.5 text-[10px] text-text-dim">
@@ -483,9 +537,9 @@ const ResearchProjectsPage = () => {
                                     <AlertCircle size={24} />
                                 </div>
                                 <div className="space-y-2">
-                                    <h4 className="font-bold text-text-main text-base">¿Eliminar borrador de investigación?</h4>
+                                    <h4 className="font-bold text-text-main text-base">¿Eliminar propuesta de investigación?</h4>
                                     <p className="text-text-dim text-xs leading-relaxed">
-                                        Esta acción eliminará de forma permanente el borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
+                                        Esta acción eliminará de forma permanente la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
                                     </p>
                                     {deletionError && (
                                         <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
@@ -514,6 +568,58 @@ const ResearchProjectsPage = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            {/* Modal de confirmación de rechazo de prepropuesta */}
+            {rejectingProject && (
+                <div className="modal-overlay animate-fade-in">
+                    <form onSubmit={handleRechazarIdeaSubmit} className="modal-card animate-fade-up">
+                        <div className="modal-body">
+                            <div className="flex items-start gap-4">
+                                <div className="icon-circle-error !p-3 shrink-0">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div className="space-y-3 flex-1">
+                                    <h4 className="font-bold text-text-main text-base">Rechazar / Devolver Prepropuesta</h4>
+                                    <p className="text-text-dim text-xs leading-relaxed">
+                                        Indique detalladamente las observaciones o correcciones requeridas para el tema <strong className="text-text-main">"{rejectingProject.titulo}"</strong>. El docente recibirá esta notificación para poder realizar las correcciones respectivas.
+                                    </p>
+                                    <textarea
+                                        value={rejectObservation}
+                                        onChange={(e) => setRejectObservation(e.target.value)}
+                                        placeholder="Ingrese aquí las observaciones detalladas..."
+                                        className="input-vercel !h-28 !text-xs resize-none w-full"
+                                        required
+                                    />
+                                    {reviewError && (
+                                        <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
+                                            {reviewError}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRejectingProject(null);
+                                    setRejectObservation('');
+                                    setReviewError(null);
+                                }}
+                                className="btn-vercel-secondary py-2"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmittingReview}
+                                className="btn-brand !bg-error !border-error hover:!text-error hover:!bg-transparent py-2"
+                            >
+                                {isSubmittingReview ? "Enviando..." : "Confirmar Devolución"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </main>

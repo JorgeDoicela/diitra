@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check } from 'lucide-react';
+import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
@@ -33,6 +33,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const { user, isDocente, isAdmin } = useAuth();
 
     const [titulo, setTitulo] = useState('');
+    const [descripcion, setDescripcion] = useState('');
     const [idCarrera, setIdCarrera] = useState<number>(0);
     const [idConvocatoria, setIdConvocatoria] = useState<number>(preselectedConvocatoriaId || 0);
     const [careerLocked, setCareerLocked] = useState(false);
@@ -142,6 +143,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
+        if (!descripcion.trim()) return setError("La descripción de la prepropuesta es obligatoria.");
         if (idCarrera === 0) {
             return setError(isDocente
                 ? "No se encontró una carrera vinculada a su perfil docente. Contacte al administrador institucional."
@@ -177,18 +179,18 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 Titulo: titulo.trim().toUpperCase(),
                 IdCarrera: idCarrera,
                 IdConvocatoria: idConvocatoria,
-                DirectorProyecto: user?.nombre_completo || ''
+                DirectorProyecto: user?.nombre_completo || '',
+                DescripcionProyecto: descripcion.trim(),
+                Estado: 'Prepropuesta'
             };
 
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
-            setCreationStepMsg("Preparando el espacio de trabajo institucional...");
-            const isSupervision = window.location.pathname.startsWith('/investigacion') && !window.location.pathname.startsWith('/investigacion/mis-proyectos');
-            const prefix = isSupervision ? '/investigacion' : '/investigacion/mis-proyectos';
+            setCreationStepMsg("Enviando prepropuesta a revisión institucional...");
             
             setTimeout(() => {
-                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '', prefix), { replace: true });
                 window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                navigate('/investigacion/mis-proyectos', { replace: true });
                 onClose();
             }, 800);
 
@@ -265,6 +267,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none !placeholder:text-text-dim/30"
                                     required
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
+                                    <FileText size={10} className="text-text-dim" />
+                                    Descripción / Justificación de la Idea (Prepropuesta)
+                                </label>
+                                <textarea
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                    placeholder="Describa brevemente de qué se trata su propuesta de investigación, la problemática que resuelve y el impacto esperado..."
+                                    className="input-vercel !h-24 !text-xs resize-none !placeholder:text-text-dim/30"
+                                    required
+                                />
+                                <div className="text-[9px] text-text-dim/60 ml-1 flex justify-end">
+                                    <span>Caracteres ingresados: {descripcion.length}</span>
+                                </div>
                             </div>
 
                             <div className="space-y-2" ref={carreraRef}>
@@ -373,7 +392,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     disabled={!!isSelectedExpired}
                                     className="btn-vercel-primary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isSelectedExpired ? "Convocatoria Cerrada" : "Iniciar Formulación"}
+                                    {isSelectedExpired ? "Convocatoria Cerrada" : "Enviar Prepropuesta"}
                                 </button>
                             </div>
                         </form>
