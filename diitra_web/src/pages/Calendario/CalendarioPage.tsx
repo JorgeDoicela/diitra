@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import type { Event as BigCalendarEvent, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { X, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import api from '../../api/axios_config';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarioPage.css';
@@ -50,6 +52,8 @@ export const CalendarioPage: React.FC = () => {
         'Monitoreo': true,
         'PeerReview': true,
     });
+
+    const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
 
     const navigate = useNavigate();
 
@@ -172,7 +176,11 @@ export const CalendarioPage: React.FC = () => {
     };
 
     const handleSelectEvent = (event: CalendarEventExtended) => {
-        const ev = event.resource;
+        setSelectedEvent(event.resource);
+    };
+
+    const handleGoToEventAction = (ev: Evento) => {
+        setSelectedEvent(null);
         if (ev.url_accion) {
             if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
                 window.open(ev.url_accion, '_blank');
@@ -336,6 +344,91 @@ export const CalendarioPage: React.FC = () => {
                     }}
                 />
             </div>
+
+            {selectedEvent && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                        onClick={() => setSelectedEvent(null)}
+                    />
+
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                            <div className="flex items-center gap-3">
+                                <span 
+                                    className="px-2.5 py-1 text-[10px] font-mono uppercase rounded-md border text-white font-bold"
+                                    style={{ backgroundColor: selectedEvent.color_hex || '#6B7280', borderColor: selectedEvent.color_hex || '#6B7280' }}
+                                >
+                                    {selectedEvent.categoria_global}
+                                </span>
+                                {selectedEvent.subcategoria && (
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-brand">
+                                        • {selectedEvent.subcategoria}
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setSelectedEvent(null)}
+                                className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
+                            <div className="space-y-4">
+                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                    {selectedEvent.titulo}
+                                </h2>
+                                <p className="text-sm text-text-dim leading-relaxed font-medium">
+                                    {selectedEvent.descripcion || 'Sin descripción detallada.'}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <CalendarIcon size={12} /> Fecha de Inicio
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-mono">
+                                        {selectedEvent.fecha_inicio}
+                                    </div>
+                                </div>
+                                {selectedEvent.fecha_fin && selectedEvent.fecha_fin !== selectedEvent.fecha_inicio && (
+                                    <div className="bento-card static p-5 space-y-1.5">
+                                        <div className="text-[10px] font-bold text-error uppercase tracking-widest flex items-center gap-1.5">
+                                            <CalendarIcon size={12} /> Fecha de Cierre (Límite)
+                                        </div>
+                                        <div className="text-sm font-bold text-error font-mono">
+                                            {selectedEvent.fecha_fin}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-border-thin bg-surface shrink-0">
+                            {(selectedEvent.url_accion || (selectedEvent.categoria_global === 'Proyecto' && selectedEvent.uuid)) ? (
+                                <button
+                                    onClick={() => handleGoToEventAction(selectedEvent)}
+                                    className="w-full py-3.5 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                >
+                                    Ver Detalle / Acción
+                                    <ArrowRight size={14} />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setSelectedEvent(null)}
+                                    className="w-full py-3.5 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all"
+                                >
+                                    Cerrar Panel
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
