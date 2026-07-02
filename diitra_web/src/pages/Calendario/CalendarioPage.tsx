@@ -310,7 +310,7 @@ export const CalendarioPage: React.FC = () => {
                     events={filteredEventos}
                     startAccessor="start"
                     endAccessor="end"
-                    style={{ height: 'calc(100vh - 160px)' }}
+                    style={{ height: '100%' }}
                     culture="es"
                     view={view}
                     onView={(newView) => setView(newView)}
@@ -318,6 +318,9 @@ export const CalendarioPage: React.FC = () => {
                     date={currentDate}
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
+                    tooltipAccessor={(event: CalendarEventExtended) =>
+                        `${event.title}${event.resource.descripcion ? '\n' + event.resource.descripcion : ''}`
+                    }
                     messages={{
                         next: "Sig. >",
                         previous: "< Ant.",
