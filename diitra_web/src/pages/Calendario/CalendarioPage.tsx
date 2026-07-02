@@ -7,7 +7,6 @@ import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2, CheckCircle, Info } from 'lucide-react';
 import api from '../../api/axios_config';
-import { useAuth } from '../../api/AuthContext';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarioPage.css';
 
@@ -46,7 +45,6 @@ interface CalendarEventExtended extends BigCalendarEvent {
 }
 
 export const CalendarioPage: React.FC = () => {
-    const { user } = useAuth();
     const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
