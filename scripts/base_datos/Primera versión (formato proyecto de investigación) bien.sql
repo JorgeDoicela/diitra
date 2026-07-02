@@ -379,7 +379,7 @@ CREATE TABLE inv_proyectos (
     fechaInicio           DATE,
     fechaFin              DATE,
     tiempoEjecucion       VARCHAR(100),
-    -- ⚙️ ADAPTABILIDAD CACES: VARCHAR en lugar de ENUM.
+    -- ADAPTABILIDAD CACES: VARCHAR en lugar de ENUM.
     -- Agregar nuevos estados solo requiere insertar en inv_config_workflow,
     -- NO requiere alterar esta tabla ni redesplegar el backend.
     estado                VARCHAR(50)   NOT NULL DEFAULT 'Borrador' COMMENT 'Estado del ciclo de vida. Valores válidos definidos en inv_config_workflow.',

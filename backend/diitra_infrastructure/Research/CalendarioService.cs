@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using diitra_application.Research;
 using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.Research;
 
@@ -106,7 +107,7 @@ public class CalendarioService : ICalendarioService
         await _context.SaveChangesAsync();
 
         // Obtener usuario para determinar su rol
-        var usuario = await _context.Usuarios.FindAsync(record.IdUsuario);
+        var usuario = await _context.Users.FindAsync(record.IdUsuario);
         var rol = "DIITRA_DOCENTE"; // fallback; el feed público no puede verificar JWT
 
         var desde = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
@@ -254,8 +255,8 @@ public class CalendarioService : ICalendarioService
         _logger.LogInformation("[Calendario] Procesando alertas diarias...");
 
         // Obtener todos los usuarios activos
-        var usuarios = await _context.Usuarios
-            .Where(u => u.Activo == 1)
+        var usuarios = await _context.Users
+            .Where(u => u.Activo)
             .ToListAsync();
 
         var hoy = DateOnly.FromDateTime(DateTime.Today);
@@ -294,18 +295,22 @@ public class CalendarioService : ICalendarioService
                     try
                     {
                         var diasRestantes = evento.FechaInicio.DayNumber - hoy.DayNumber;
-                        await _emailEngine.EnviarPorCodigoAsync(
-                            "CALENDARIO_ALERTA_EVENTO",
-                            usuario.Email ?? "",
-                            new Dictionary<string, string>
+                        var sendRequest = new EmailSendRequest
+                        {
+                            TemplateCodigo = "CALENDARIO_ALERTA_EVENTO",
+                            DestinatariosEmails = new List<string> { usuario.EmailInstitucional ?? "" },
+                            TemplateData = new Dictionary<string, string>
                             {
-                                ["titulo_evento"] = evento.Titulo,
-                                ["dias_restantes"] = diasRestantes.ToString(),
-                                ["fecha_evento"] = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
-                                ["descripcion_evento"] = evento.Descripcion ?? "",
-                                ["url_accion"] = evento.UrlAccion ?? "/calendario",
-                                ["nombre_usuario"] = usuario.NombreCompleto ?? usuario.Email ?? ""
-                            });
+                                ["[[titulo_evento]]"] = evento.Titulo,
+                                ["[[dias_restantes]]"] = diasRestantes.ToString(),
+                                ["[[fecha_evento]]"] = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
+                                ["[[descripcion_evento]]"] = evento.Descripcion ?? "",
+                                ["[[url_accion]]"] = evento.UrlAccion ?? "/calendario",
+                                ["[[nombre_usuario]]"] = usuario.Nombre ?? usuario.EmailInstitucional ?? ""
+                            }
+                        };
+
+                        await _emailEngine.SendTemplatedEmailAsync(sendRequest);
 
                         // Registrar alerta enviada
                         _context.Set<InvCalendarioAlertaEnviada>().Add(new InvCalendarioAlertaEnviada

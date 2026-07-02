@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api from '../../api/axios_config';
 import './ProximosEventosWidget.css';
 
 interface Evento {

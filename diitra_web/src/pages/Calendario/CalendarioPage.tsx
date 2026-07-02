@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import type { Event as BigCalendarEvent } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import esGD from 'date-fns/locale/es';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api from '../../api/axios_config';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarioPage.css';
 
