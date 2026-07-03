@@ -313,12 +313,27 @@ public class CalendarioService : ICalendarioService
                         !string.IsNullOrEmpty(evento.RolesVisibles) &&
                         !evento.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rol)) continue;
 
-                    var fechaAlerta = evento.FechaInicio.AddDays(-(evento.AlertaDias ?? 0));
-                    if (fechaAlerta != hoy) continue;
+                    // ── Proyección de Recurrencia Anual para la Alerta ───────
+                    DateOnly fechaInicioOcurrencia = evento.FechaInicio;
+                    if (evento.RecurrenciaAnual)
+                    {
+                        // Si ya expiró la recurrencia, la ignoramos
+                        if (evento.RecurrenciaHasta.HasValue && hoy.Year > evento.RecurrenciaHasta.Value.Year) continue;
+                        
+                        fechaInicioOcurrencia = new DateOnly(hoy.Year, evento.FechaInicio.Month, evento.FechaInicio.Day);
+                    }
+
+                    // No alertar si el evento de este año ya pasó antes del día de hoy
+                    if (fechaInicioOcurrencia < hoy) continue;
+
+                    var fechaAlerta = fechaInicioOcurrencia.AddDays(-(evento.AlertaDias ?? 0));
+                    
+                    // Tolerancia a fallos: alertamos si hoy es igual o posterior a la fecha programada
+                    if (fechaAlerta > hoy) continue;
 
                     var idCompuesto = $"NORM-{evento.IdEvento}";
 
-                    // Verificar si ya se envió esta alerta hoy a este usuario
+                    // Verificar si ya se envió esta alerta para la ocurrencia de este año/fecha
                     var yaEnviada = await _context.Set<InvCalendarioAlertaEnviada>()
                         .AnyAsync(a =>
                             a.IdEventoCalendario == idCompuesto &&

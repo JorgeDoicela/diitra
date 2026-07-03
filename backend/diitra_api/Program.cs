@@ -251,5 +251,7 @@ var app = builder.Build();
     app.MapHub<CollaborationHub>("/hubs/collaboration");
     app.MapHub<diitra_infrastructure.Common.Notifications.Hubs.NotificationHub>("/hubs/notifications");
 
+    app.MapGet("/api/ping", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 app.Run();
 

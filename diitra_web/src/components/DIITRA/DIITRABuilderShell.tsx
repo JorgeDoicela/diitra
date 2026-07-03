@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, X, Lock, Unlock, Sun, Moon } from 'lucide-react';
 import api from '../../api/axios_config';
+import { useNotifications } from '../../api/NotificationsContext';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
@@ -740,6 +741,105 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const isSyncing = isSaving || cowork.session.isSyncing;
     const users = cowork.session.connectedUsers;
 
+    const [isSlowConnection, setIsSlowConnection] = useState(false);
+    const { addToast } = useNotifications();
+    const prevIsOnlineRef = useRef(isOnline);
+    const offlineTimeoutRef = useRef<any>(null);
+    const hasShownOfflineRef = useRef(false);
+
+    // ── Monitoreo de Micro-cortes (Anti-Flicker de alertas) ──
+    useEffect(() => {
+        if (!isOnline && prevIsOnlineRef.current) {
+            // Conexión perdida: iniciamos un temporizador de 1.5s antes de alertar
+            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+            
+            offlineTimeoutRef.current = setTimeout(() => {
+                addToast(
+                    'Conexión inestable',
+                    'Tu señal de internet es débil o inestable. Puedes seguir editando; tus cambios se sincronizarán automáticamente al reconectar.',
+                    'warning'
+                );
+                hasShownOfflineRef.current = true;
+            }, 1500); // 1.5s de gracia para evitar spam por microcortes
+        } else if (isOnline && !prevIsOnlineRef.current) {
+            // Conexión recuperada: cancelamos el temporizador si estaba corriendo
+            if (offlineTimeoutRef.current) {
+                clearTimeout(offlineTimeoutRef.current);
+                offlineTimeoutRef.current = null;
+            }
+            setIsSlowConnection(false);
+
+            // Solo mostramos el toast de éxito si llegamos a mostrar el toast de advertencia
+            if (hasShownOfflineRef.current) {
+                addToast(
+                    'Conexión restablecida',
+                    'El editor se ha sincronizado con el servidor correctamente.',
+                    'success'
+                );
+                hasShownOfflineRef.current = false;
+            }
+        }
+        
+        prevIsOnlineRef.current = isOnline;
+
+        return () => {
+            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+        };
+    }, [isOnline, addToast]);
+
+    // ── Monitoreo de calidad/velocidad de red (Poco Internet) ──
+    useEffect(() => {
+        if (!isOnline) {
+            setIsSlowConnection(false);
+            return;
+        }
+
+        let intervalId: any;
+        let lastAlertTime = 0;
+
+        const checkLatency = async () => {
+            try {
+                const start = Date.now();
+                await api.get('/ping', { timeout: 3500 });
+                const rtt = Date.now() - start;
+
+                // Si la latencia supera 1.5 segundos y no hemos alertado en los últimos 60s
+                if (rtt > 1500) {
+                    setIsSlowConnection(true);
+                    const now = Date.now();
+                    if (now - lastAlertTime > 60000) {
+                        addToast(
+                            'Señal de internet débil',
+                            `Hemos detectado que tu conexión es lenta (latencia de ${rtt}ms). La sincronización colaborativa podría experimentar retrasos.`,
+                            'warning'
+                        );
+                        lastAlertTime = now;
+                    }
+                } else {
+                    setIsSlowConnection(false);
+                }
+            } catch (err: any) {
+                if (isOnline) {
+                    setIsSlowConnection(true);
+                }
+                // Silenciar errores normales de desconexión completa (ya manejados por el otro hook)
+                if (err?.code !== 'ECONNABORTED' && isOnline) {
+                    console.warn('[Network Quality] Error al medir latencia:', err);
+                }
+            }
+        };
+
+        // Ejecutar inmediatamente
+        checkLatency();
+
+        // Monitorear cada 4 segundos
+        intervalId = setInterval(checkLatency, 4000);
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isOnline, addToast]);
+
     return (
         <DocumentDataContext.Provider value={formData}>
             <DocumentMetadataContext.Provider value={{ readOnlyReason }}>
@@ -785,15 +885,20 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-1.5 md:py-2 bg-bg-deep rounded-xl border border-border-thin">
                                 {/* Estado de conexión */}
                                 <div className="flex items-center gap-1.5 md:gap-2 pr-2 md:pr-4 border-r border-border-thin">
-                                    {isOnline ? (
+                                    {!isOnline ? (
                                         <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">En línea</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                            <span className="text-[7px] md:text-[9px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
+                                        </>
+                                    ) : isSlowConnection ? (
+                                        <>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                            <span className="text-[7px] md:text-[9px] font-black text-amber-500 uppercase tracking-widest">Señal débil</span>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                            <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">En línea</span>
                                         </>
                                     )}
                                 </div>

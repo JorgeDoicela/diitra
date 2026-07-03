@@ -205,24 +205,39 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         const handleGlobalEnd = () => {
             if (cellDragInfo) {
                 const { activityIndex, startWeek, currentWeek } = cellDragInfo;
-                const minW = Math.min(startWeek, currentWeek);
-                const maxW = Math.max(startWeek, currentWeek);
                 
-                const newSemanas = Array(totalWeeks).fill(false);
-                for (let w = minW; w <= maxW; w++) {
-                    newSemanas[w] = true;
+                const activity = cronograma[activityIndex];
+                const currentSemanas = activity?.Semanas || Array(totalWeeks).fill(false);
+                let newSemanas = [...currentSemanas];
+                
+                // Si es un click simple (no hubo arrastre)
+                if (startWeek === currentWeek) {
+                    newSemanas[startWeek] = !newSemanas[startWeek];
+                } else {
+                    // Si es un arrastre, dibujamos el rango continuo
+                    const minW = Math.min(startWeek, currentWeek);
+                    const maxW = Math.max(startWeek, currentWeek);
+                    newSemanas = Array(totalWeeks).fill(false);
+                    for (let w = minW; w <= maxW; w++) {
+                        newSemanas[w] = true;
+                    }
                 }
                 
                 onUpdate(activityIndex, 'Semanas', newSemanas);
                 
-                if (projectStartDate) {
+                // Sincronizar las fechas de la actividad
+                const { start, end } = getWeekRange(newSemanas);
+                if (start !== -1 && projectStartDate) {
                     const actStart = new Date(projectStartDate.getTime());
-                    actStart.setDate(projectStartDate.getDate() + minW * 7);
+                    actStart.setDate(projectStartDate.getDate() + start * 7);
                     onUpdate(activityIndex, 'FechaInicioPrevista', formatDateForInput(actStart));
                     
                     const actEnd = new Date(projectStartDate.getTime());
-                    actEnd.setDate(projectStartDate.getDate() + (maxW + 1) * 7 - 1);
+                    actEnd.setDate(projectStartDate.getDate() + (end + 1) * 7 - 1);
                     onUpdate(activityIndex, 'FechaFinPrevista', formatDateForInput(actEnd));
+                } else {
+                    onUpdate(activityIndex, 'FechaInicioPrevista', '');
+                    onUpdate(activityIndex, 'FechaFinPrevista', '');
                 }
                 
                 setCellDragInfo(null);
@@ -232,7 +247,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         return () => {
             window.removeEventListener('mouseup', handleGlobalEnd);
         };
-    }, [cellDragInfo, totalWeeks, projectStartDate, onUpdate]);
+    }, [cellDragInfo, totalWeeks, projectStartDate, onUpdate, cronograma]);
 
     // --- CATÁLOGO DE ACTIVIDADES SUGERIDAS (CACES / SENESCYT) ---
     const suggestedCatalog = [
@@ -471,7 +486,12 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         type: 'move' | 'resize-left' | 'resize-right'
     ) => {
         if (readOnly) return;
-        e.preventDefault();
+        
+        // Evitar preventDefault en eventos táctiles al iniciar el gesto (que pueden ser pasivos en React)
+        const isTouch = 'touches' in e;
+        if (!isTouch && e.cancelable) {
+            e.preventDefault();
+        }
         e.stopPropagation();
 
         const activity = cronograma[idx];
@@ -486,7 +506,6 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         const trackRect = trackElement.getBoundingClientRect();
         const cellWidth = trackRect.width / totalWeeks;
         
-        const isTouch = 'touches' in e;
         const initialX = isTouch ? e.touches[0].clientX : e.clientX;
 
         const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
@@ -971,101 +990,110 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                 })}
                                                              {/* Barra de Rango de la Actividad (Draggable & Resizable) */}
                                                              {startW !== -1 && (
-                                                                 <div 
-                                                                     className={`absolute h-[26px] rounded-md flex items-center justify-between px-1 shadow-sm select-none transition-all bg-surface border overflow-hidden ${
-                                                                         idx === expandedCard ? 'border-border-thin shadow' : 'cursor-pointer hover:opacity-90'
-                                                                     }`}
-                                                                     onMouseDown={(e) => {
-                                                                         // En PC (Mouse), permitimos arrastrar desde cualquier parte del cuerpo interno
-                                                                         if (idx === expandedCard && e.button === 0) {
-                                                                             handleGanttBarStart(e, idx, 'move');
-                                                                         }
-                                                                     }}
-                                                                     style={{
-                                                                         left: `${(startW / totalWeeks) * 100}%`,
-                                                                         width: `${((endW - startW + 1) / totalWeeks) * 100}%`,
-                                                                         backgroundColor: `${activityColor}15`,
-                                                                         borderColor: activityColor
-                                                                     }}
-                                                                     onClick={(e) => {
-                                                                         if (idx !== expandedCard) {
-                                                                             e.stopPropagation();
-                                                                             setExpandedCard(idx);
-                                                                         }
-                                                                     }}
-                                                                 >
-                                                                     <div 
-                                                                         className="absolute left-0 top-0 bottom-0 w-[4px] z-10" 
-                                                                         style={{ backgroundColor: activityColor }} 
-                                                                     />
-                                                                     {/* Resize Handle Izquierdo */}
-                                                                     <div 
-                                                                         onMouseDown={(e) => {
-                                                                             if (idx === expandedCard) {
-                                                                                 handleGanttBarStart(e, idx, 'resize-left');
-                                                                             }
-                                                                         }}
-                                                                         onTouchStart={(e) => {
-                                                                             if (idx === expandedCard) {
-                                                                                 handleGanttBarStart(e, idx, 'resize-left');
-                                                                             }
-                                                                         }}
-                                                                         className="w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20" 
-                                                                     />
+                                                                <div 
+                                                                    className={`absolute h-[26px] rounded-md flex items-center justify-between px-1 shadow-sm select-none transition-all bg-surface border ${
+                                                                        idx === expandedCard 
+                                                                            ? 'border-border-thin shadow overflow-visible z-30' 
+                                                                            : 'cursor-pointer hover:opacity-90 overflow-hidden z-10'
+                                                                    }`}
+                                                                    onMouseDown={(e) => {
+                                                                        if (idx === expandedCard && e.button === 0) {
+                                                                            handleGanttBarStart(e, idx, 'move');
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        left: `${(startW / totalWeeks) * 100}%`,
+                                                                        width: `${((endW - startW + 1) / totalWeeks) * 100}%`,
+                                                                        backgroundColor: `${activityColor}15`,
+                                                                        borderColor: activityColor,
+                                                                        touchAction: 'none'
+                                                                    }}
+                                                                    onClick={(e) => {
+                                                                        if (idx !== expandedCard) {
+                                                                            e.stopPropagation();
+                                                                            setExpandedCard(idx);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <div 
+                                                                        className="absolute left-0 top-0 bottom-0 w-[4px] z-10" 
+                                                                        style={{ backgroundColor: activityColor }} 
+                                                                    />
+                                                                    {/* Resize Handle Izquierdo (Absoluto y con Hitbox Ampliada) */}
+                                                                    {idx === expandedCard && !readOnly && (
+                                                                        <div 
+                                                                            onMouseDown={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'resize-left');
+                                                                            }}
+                                                                            onTouchStart={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'resize-left');
+                                                                            }}
+                                                                            style={{ touchAction: 'none' }}
+                                                                            className="absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-ew-resize z-30 flex items-center justify-center group/handle"
+                                                                            title="Arrastrar para extender inicio"
+                                                                        >
+                                                                            <div className="w-1 h-3.5 bg-text-main/30 group-hover/handle:bg-text-main/60 rounded-full transition-colors" />
+                                                                        </div>
+                                                                    )}
 
-                                                                     {/* Grip de arrastre para mover toda la barra */}
-                                                                     {idx === expandedCard && !readOnly && (
-                                                                         <div 
-                                                                             onMouseDown={(e) => {
-                                                                                 e.stopPropagation();
-                                                                                 handleGanttBarStart(e, idx, 'move');
-                                                                             }}
-                                                                             onTouchStart={(e) => {
-                                                                                 e.stopPropagation();
-                                                                                 handleGanttBarStart(e, idx, 'move');
-                                                                             }}
-                                                                             className="p-1 cursor-move text-text-main/40 hover:text-text-main/70 hover:bg-bg-deep/50 rounded shrink-0 z-20 flex items-center justify-center mr-1 ml-0.5"
-                                                                             title="Arrastrar para mover toda la barra"
-                                                                         >
-                                                                             <GripVertical size={11} />
-                                                                         </div>
-                                                                     )}
-                                                                     
-                                                                     <div className="text-[10px] font-bold text-text-main pr-1 pl-1 pointer-events-none select-none flex items-center gap-1 z-10 w-full overflow-hidden">
-                                                                         {_c.Responsable ? (
-                                                                             <div className="flex items-center gap-1.5 min-w-0">
-                                                                                 <span 
-                                                                                     className="px-1.5 py-0.5 rounded-[3px] text-[8.5px] font-black uppercase tracking-wider bg-bg-deep/30 border border-border-thin text-text-main shrink-0"
-                                                                                     title={_c.Responsable}
-                                                                                 >
-                                                                                     {getInitials(_c.Responsable)}
-                                                                                 </span>
-                                                                                 <span className="truncate text-text-main/90 font-medium" title={_c.Responsable}>
-                                                                                     {_c.Responsable.split(' ')[0]}
-                                                                                 </span>
-                                                                             </div>
-                                                                         ) : (
-                                                                             <span className="text-[9px] text-text-dim/60 italic">Sin responsable</span>
-                                                                         )}
-                                                                     </div>
+                                                                    {/* Grip de arrastre para mover toda la barra */}
+                                                                    {idx === expandedCard && !readOnly && (
+                                                                        <div 
+                                                                            onMouseDown={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'move');
+                                                                            }}
+                                                                            onTouchStart={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'move');
+                                                                            }}
+                                                                            style={{ touchAction: 'none' }}
+                                                                            className="p-1 cursor-move text-text-main/40 hover:text-text-main/70 hover:bg-bg-deep/50 rounded shrink-0 z-20 flex items-center justify-center mr-1 ml-0.5"
+                                                                            title="Arrastrar para mover toda la barra"
+                                                                        >
+                                                                            <GripVertical size={11} />
+                                                                        </div>
+                                                                    )}
+                                                                    
+                                                                    <div className="text-[10px] font-bold text-text-main pr-1 pl-1 pointer-events-none select-none flex items-center gap-1 z-10 w-full overflow-hidden">
+                                                                        {_c.Responsable ? (
+                                                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                                                <span 
+                                                                                    className="px-1.5 py-0.5 rounded-[3px] text-[8.5px] font-black uppercase tracking-wider bg-bg-deep/30 border border-border-thin text-text-main shrink-0"
+                                                                                    title={_c.Responsable}
+                                                                                >
+                                                                                    {getInitials(_c.Responsable)}
+                                                                                </span>
+                                                                                <span className="truncate text-text-main/90 font-medium" title={_c.Responsable}>
+                                                                                    {_c.Responsable.split(' ')[0]}
+                                                                                </span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-[9px] text-text-dim/60 italic">Sin responsable</span>
+                                                                        )}
+                                                                    </div>
  
-                                                                     {/* Resize Handle Derecho */}
-                                                                     <div 
-                                                                         onMouseDown={(e) => {
-                                                                             if (idx === expandedCard) {
-                                                                                 handleGanttBarStart(e, idx, 'resize-right');
-                                                                             }
-                                                                         }}
-                                                                         onTouchStart={(e) => {
-                                                                             if (idx === expandedCard) {
-                                                                                 handleGanttBarStart(e, idx, 'resize-right');
-                                                                             }
-                                                                         }}
-                                                                         className={`w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20 ${
-                                                                             idx === expandedCard ? 'block' : 'hidden'
-                                                                         }`}
-                                                                     />
-                                                                 </div>
+                                                                    {/* Resize Handle Derecho (Absoluto y con Hitbox Ampliada) */}
+                                                                    {idx === expandedCard && !readOnly && (
+                                                                        <div 
+                                                                            onMouseDown={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'resize-right');
+                                                                            }}
+                                                                            onTouchStart={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleGanttBarStart(e, idx, 'resize-right');
+                                                                            }}
+                                                                            style={{ touchAction: 'none' }}
+                                                                            className="absolute right-0 top-0 bottom-0 w-4 -mr-2 cursor-ew-resize z-30 flex items-center justify-center group/handle"
+                                                                            title="Arrastrar para extender fin"
+                                                                        >
+                                                                            <div className="w-1 h-3.5 bg-text-main/30 group-hover/handle:bg-text-main/60 rounded-full transition-colors" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                              )}
                                                             </div>
                                                         </div>
