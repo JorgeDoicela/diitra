@@ -560,7 +560,7 @@ export const CalendarioPage: React.FC = () => {
                         event: "Evento",
                         allDay: "Todo el día",
                         noEventsInRange: "No hay eventos en este rango de fechas.",
-                        showMore: (total) => `+ Ver más (${total})`
+                        showMore: (total: number) => `+ Ver más (${total})`
                     }}
                 />
             </div>
