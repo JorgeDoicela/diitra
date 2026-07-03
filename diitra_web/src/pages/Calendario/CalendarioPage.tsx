@@ -1,48 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import type { Event as BigCalendarEvent, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import _withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
+import type { Event as BigCalendarEvent, View, SlotInfo } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, addDays, isAfter, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2, CheckCircle, Info } from 'lucide-react';
-import api from '../../api/axios_config';
+import {
+    X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2,
+    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight
+} from 'lucide-react';
+import {
+    type EventoCalendario,
+    getEventos, createEvento, updateEvento, deleteEvento, getIcalToken,
+    buildPayload, CATEGORIAS_CONFIG, PRIORIDAD_COLORS, ESTADO_LABELS, COLORES_OPCIONES,
+    getContextDescription,
+} from '../../services/calendarioService';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import './CalendarioPage.css';
 
-const locales = {
-    'es': es,
-};
+const locales = { 'es': es };
 
 const localizer = dateFnsLocalizer({
     format,
     parse,
-    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // Lunes primer día de la semana
+    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
     getDay,
     locales,
 });
 
-interface Evento {
-    id_evento_calendario: string;
-    uuid: string;
-    titulo: string;
-    descripcion: string;
-    categoria_global: string;
-    subcategoria: string;
-    fecha_inicio: string;
-    fecha_fin: string | null;
-    es_todo_el_dia: boolean;
-    color_hex: string | null;
-    url_accion: string | null;
-    es_privado: boolean;
-    prioridad: string;
-    estado: string;
-    creado_por: number | null;
-}
+// Resolver problemas de interoperabilidad CommonJS/ESM en Vite
+const withDragAndDrop = (typeof _withDragAndDrop === 'function'
+    ? _withDragAndDrop
+    : (_withDragAndDrop as any).default) as any;
+
+// Calendario con drag & drop
+const DnDCalendar = withDragAndDrop(Calendar as any);
+
+// Alias local para compatibilidad con el resto del componente
+type Evento = EventoCalendario;
 
 interface CalendarEventExtended extends BigCalendarEvent {
     resource: Evento;
 }
+
+// ─── Componente personalizado para el evento en la celda ──────────
+const EventoEnCelda: React.FC<{ event: CalendarEventExtended }> = ({ event }) => {
+    const ev = event.resource;
+    const isCompleted = ev.estado === 'Completado';
+    const isInProgress = ev.estado === 'EnProgreso';
+    const isPersonal = ev.categoria_global === 'Personal';
+
+    return (
+        <span className="evento-celda-inner">
+            {isPersonal && isCompleted && (
+                <CheckCircle size={9} className="evento-estado-icon completado" />
+            )}
+            {isPersonal && isInProgress && (
+                <Clock size={9} className="evento-estado-icon en-progreso" />
+            )}
+            {ev.alerta_dias != null && ev.alerta_dias > 0 && (
+                <Bell size={9} className="evento-estado-icon alerta" />
+            )}
+            <span className={`evento-titulo-text ${isCompleted ? 'completado' : ''}`}>
+                {event.title as string}
+            </span>
+        </span>
+    );
+};
 
 export const CalendarioPage: React.FC = () => {
     const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
@@ -58,7 +84,7 @@ export const CalendarioPage: React.FC = () => {
         'Personal': true,
     });
 
-    const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null);
     const navigate = useNavigate();
 
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -72,30 +98,48 @@ export const CalendarioPage: React.FC = () => {
     const [formFechaInicio, setFormFechaInicio] = useState('');
     const [formFechaFin, setFormFechaFin] = useState('');
     const [formEsTodoElDia, setFormEsTodoElDia] = useState(true);
-    const [formColorHex, setFormColorHex] = useState('#3B82F6');
+    const [formColorHex, setFormColorHex] = useState('#F59E0B');
     const [formEsPrivado, setFormEsPrivado] = useState(true);
     const [formPrioridad, setFormPrioridad] = useState('Media');
     const [formEstado, setFormEstado] = useState('Pendiente');
+    const [formAlertaDias, setFormAlertaDias] = useState<number | ''>('');
+    const [formRecurrenciaAnual, setFormRecurrenciaAnual] = useState(false);
 
     const [icalUrl, setIcalUrl] = useState<string>('');
     const [generatingToken, setGeneratingToken] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const handleNewEventClick = () => {
+    const resetForm = () => {
         setFormTitulo('');
         setFormDescripcion('');
         setFormTipo('Personal');
         setFormFechaInicio(format(new Date(), 'yyyy-MM-dd'));
         setFormFechaFin(format(new Date(), 'yyyy-MM-dd'));
         setFormEsTodoElDia(true);
-        setFormColorHex('#3B82F6');
+        setFormColorHex('#F59E0B');
         setFormEsPrivado(true);
         setFormPrioridad('Media');
         setFormEstado('Pendiente');
+        setFormAlertaDias('');
+        setFormRecurrenciaAnual(false);
         setIsEditing(false);
         setEditingUuid(null);
+    };
+
+    const handleNewEventClick = () => {
+        resetForm();
         setIsFormOpen(true);
     };
+
+    // ─── onSelectSlot: clic/drag en celda vacía ───────────────────
+    const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
+        resetForm();
+        const inicio = format(slotInfo.start, 'yyyy-MM-dd');
+        const fin = format(slotInfo.end instanceof Date ? addDays(slotInfo.end, -1) : slotInfo.start, 'yyyy-MM-dd');
+        setFormFechaInicio(inicio);
+        setFormFechaFin(fin < inicio ? inicio : fin);
+        setIsFormOpen(true);
+    }, []);
 
     const handleEditEventClick = (ev: Evento) => {
         setFormTitulo(ev.titulo);
@@ -104,47 +148,42 @@ export const CalendarioPage: React.FC = () => {
         setFormFechaInicio(ev.fecha_inicio);
         setFormFechaFin(ev.fecha_fin || ev.fecha_inicio);
         setFormEsTodoElDia(ev.es_todo_el_dia);
-        setFormColorHex(ev.color_hex || '#3B82F6');
+        setFormColorHex(ev.color_hex || '#F59E0B');
         setFormEsPrivado(ev.es_privado);
         setFormPrioridad(ev.prioridad || 'Media');
         setFormEstado(ev.estado || 'Pendiente');
+        setFormAlertaDias(ev.alerta_dias ?? '');
+        setFormRecurrenciaAnual(ev.recurrencia_anual ?? false);
         setEditingUuid(ev.uuid);
         setIsEditing(true);
         setIsFormOpen(true);
         setSelectedEvent(null);
     };
 
+    const getFormPayload = () => buildPayload({
+        titulo: formTitulo,
+        descripcion: formDescripcion,
+        tipo: formTipo,
+        fechaInicio: formFechaInicio,
+        fechaFin: formFechaFin,
+        esTodoElDia: formEsTodoElDia,
+        colorHex: formColorHex,
+        esPrivado: formEsPrivado,
+        prioridad: formPrioridad,
+        estado: formEstado,
+        alertaDias: formAlertaDias,
+        recurrenciaAnual: formRecurrenciaAnual,
+    });
+
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formTitulo.trim()) return;
-
-        // payload en snake_case
-        const payload = {
-            titulo: formTitulo,
-            descripcion: formDescripcion,
-            tipo_evento: formTipo,
-            fecha_inicio: formFechaInicio,
-            fecha_fin: formFechaFin || null,
-            es_todo_el_dia: formEsTodoElDia,
-            recurrencia_anual: false,
-            recurrencia_hasta: null,
-            roles_visibles: null,
-            modulo_origen: 'PERSONAL',
-            url_accion: null,
-            color_hex: formColorHex,
-            alerta_dias: null,
-            activo: true,
-            es_privado: formEsPrivado,
-            prioridad: formPrioridad,
-            estado: formEstado
-        };
-
         try {
             setLoading(true);
             if (isEditing && editingUuid) {
-                await api.put(`/calendario/usuario/eventos/${editingUuid}`, payload);
+                await updateEvento(editingUuid, getFormPayload());
             } else {
-                await api.post('/calendario/usuario/eventos', payload);
+                await createEvento(getFormPayload());
             }
             setIsFormOpen(false);
             fetchEventos(currentDate);
@@ -159,7 +198,7 @@ export const CalendarioPage: React.FC = () => {
         if (!window.confirm('¿Está seguro de que desea eliminar este evento/tarea?')) return;
         try {
             setLoading(true);
-            await api.delete(`/calendario/usuario/eventos/${uuid}`);
+            await deleteEvento(uuid);
             setSelectedEvent(null);
             fetchEventos(currentDate);
         } catch (error) {
@@ -170,30 +209,24 @@ export const CalendarioPage: React.FC = () => {
     };
 
     const handleQuickComplete = async (ev: Evento) => {
-        // payload en snake_case
-        const payload = {
+        const payload = buildPayload({
             titulo: ev.titulo,
             descripcion: ev.descripcion,
-            tipo_evento: ev.subcategoria,
-            fecha_inicio: ev.fecha_inicio,
-            fecha_fin: ev.fecha_fin,
-            es_todo_el_dia: ev.es_todo_el_dia,
-            recurrencia_anual: false,
-            recurrencia_hasta: null,
-            roles_visibles: null,
-            modulo_origen: 'PERSONAL',
-            url_accion: ev.url_accion,
-            color_hex: ev.color_hex,
-            alerta_dias: null,
-            activo: true,
-            es_privado: ev.es_privado,
+            tipo: ev.subcategoria,
+            fechaInicio: ev.fecha_inicio,
+            fechaFin: ev.fecha_fin || '',
+            esTodoElDia: ev.es_todo_el_dia,
+            colorHex: ev.color_hex || '#F59E0B',
+            esPrivado: ev.es_privado,
             prioridad: ev.prioridad,
-            estado: 'Completado'
-        };
-
+            estado: 'Completado',
+            alertaDias: ev.alerta_dias ?? '',
+            recurrenciaAnual: ev.recurrencia_anual ?? false,
+            urlAccion: ev.url_accion,
+        });
         try {
             setLoading(true);
-            await api.put(`/calendario/usuario/eventos/${ev.uuid}`, payload);
+            await updateEvento(ev.uuid, payload);
             setSelectedEvent(null);
             fetchEventos(currentDate);
         } catch (error) {
@@ -203,21 +236,82 @@ export const CalendarioPage: React.FC = () => {
         }
     };
 
+    // ─── Drag & Drop: mover evento (solo personales) ──────────────
+    const handleEventDrop = useCallback(async ({ event, start, end }: any) => {
+        const ev: Evento = event.resource;
+        if (ev.categoria_global !== 'Personal') return;
+
+        const nuevaInicio = format(start as Date, 'yyyy-MM-dd');
+        const nuevaFin = format(end as Date, 'yyyy-MM-dd');
+
+        const payload = buildPayload({
+            titulo: ev.titulo,
+            descripcion: ev.descripcion,
+            tipo: ev.subcategoria,
+            fechaInicio: nuevaInicio,
+            fechaFin: nuevaFin,
+            esTodoElDia: ev.es_todo_el_dia,
+            colorHex: ev.color_hex || '#F59E0B',
+            esPrivado: ev.es_privado,
+            prioridad: ev.prioridad,
+            estado: ev.estado,
+            alertaDias: ev.alerta_dias ?? '',
+            recurrenciaAnual: ev.recurrencia_anual ?? false,
+            urlAccion: ev.url_accion,
+        });
+
+        try {
+            await updateEvento(ev.uuid, payload);
+            fetchEventos(currentDate);
+        } catch (error) {
+            console.error('Error al mover evento:', error);
+        }
+    }, [currentDate]);
+
+
+    // ─── Drag & Drop: redimensionar (cambiar fecha fin) ──────────
+    const handleEventResize = useCallback(async ({ event, start, end }: any) => {
+        const ev: Evento = event.resource;
+        if (ev.categoria_global !== 'Personal') return;
+
+        const nuevaInicio = format(start as Date, 'yyyy-MM-dd');
+        const nuevaFin = format(end as Date, 'yyyy-MM-dd');
+
+        const payload = buildPayload({
+            titulo: ev.titulo,
+            descripcion: ev.descripcion,
+            tipo: ev.subcategoria,
+            fechaInicio: nuevaInicio,
+            fechaFin: nuevaFin,
+            esTodoElDia: ev.es_todo_el_dia,
+            colorHex: ev.color_hex || '#F59E0B',
+            esPrivado: ev.es_privado,
+            prioridad: ev.prioridad,
+            estado: ev.estado,
+            alertaDias: ev.alerta_dias ?? '',
+            recurrenciaAnual: ev.recurrencia_anual ?? false,
+            urlAccion: ev.url_accion,
+        });
+        try {
+            await updateEvento(ev.uuid, payload);
+            fetchEventos(currentDate);
+        } catch (error) {
+            console.error('Error al redimensionar evento:', error);
+        }
+    }, [currentDate]);
+
     useEffect(() => {
         const savedUrl = localStorage.getItem('diitra_ical_url');
-        if (savedUrl) {
-            setIcalUrl(savedUrl);
-        }
+        if (savedUrl) setIcalUrl(savedUrl);
     }, []);
 
     const handleGenerarToken = async () => {
         try {
             setGeneratingToken(true);
-            const response = await api.post('/calendario/ical/token');
-            const feedUrl = response.data?.feed_url;
-            if (feedUrl) {
-                setIcalUrl(feedUrl);
-                localStorage.setItem('diitra_ical_url', feedUrl);
+            const data = await getIcalToken();
+            if (data?.feed_url) {
+                setIcalUrl(data.feed_url);
+                localStorage.setItem('diitra_ical_url', data.feed_url);
             }
         } catch (error) {
             console.error('Error al generar enlace iCal:', error);
@@ -229,9 +323,7 @@ export const CalendarioPage: React.FC = () => {
     const fallbackCopyText = (text: string) => {
         const textArea = document.createElement('textarea');
         textArea.value = text;
-        textArea.style.top = '0';
-        textArea.style.left = '0';
-        textArea.style.position = 'fixed';
+        textArea.style.cssText = 'position:fixed;top:0;left:0;';
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
@@ -247,16 +339,10 @@ export const CalendarioPage: React.FC = () => {
 
     const handleCopyIcal = () => {
         if (!icalUrl) return;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
+        if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(icalUrl)
-                .then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                })
-                .catch(err => {
-                    console.error('Error al usar clipboard API:', err);
-                    fallbackCopyText(icalUrl);
-                });
+                .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })
+                .catch(() => fallbackCopyText(icalUrl));
         } else {
             fallbackCopyText(icalUrl);
         }
@@ -265,58 +351,17 @@ export const CalendarioPage: React.FC = () => {
     const fetchEventos = async (date: Date) => {
         try {
             setLoading(true);
-            // Rango amplio del mes actual
-            const desde = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            const hasta = new Date(date.getFullYear(), date.getMonth() + 2, 0);
-
-            const formatLocal = (d: Date) => {
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-            const desdeStr = formatLocal(desde);
-            const hastaStr = formatLocal(hasta);
-
-            const response = await api.get('/calendario/eventos', {
-                params: { desde: desdeStr, hasta: hastaStr }
-            });
-
-            const parsed: CalendarEventExtended[] = (response.data || []).map((ev: any) => {
+            const raw = await getEventos(date);
+            const parsed: CalendarEventExtended[] = raw.map((ev) => {
                 const [yI, mI, dI] = ev.fecha_inicio.split('-').map(Number);
                 const start = new Date(yI, mI - 1, dI);
                 let end = start;
-
                 if (ev.fecha_fin) {
                     const [yF, mF, dF] = ev.fecha_fin.split('-').map(Number);
                     end = new Date(yF, mF - 1, dF);
                 }
-
-                return {
-                    title: ev.titulo,
-                    start,
-                    end,
-                    allDay: ev.es_todo_el_dia,
-                    resource: {
-                        id_evento_calendario: ev.id_evento_calendario,
-                        uuid: ev.uuid,
-                        titulo: ev.titulo,
-                        descripcion: ev.descripcion,
-                        categoria_global: ev.categoria_global,
-                        subcategoria: ev.subcategoria,
-                        fecha_inicio: ev.fecha_inicio,
-                        fecha_fin: ev.fecha_fin,
-                        es_todo_el_dia: ev.es_todo_el_dia,
-                        color_hex: ev.color_hex,
-                        url_accion: ev.url_accion,
-                        es_privado: !!ev.es_privado,
-                        prioridad: ev.prioridad || 'Media',
-                        estado: ev.estado || 'Pendiente',
-                        creado_por: ev.creado_por
-                    },
-                };
+                return { title: ev.titulo, start, end, allDay: ev.es_todo_el_dia, resource: ev };
             });
-
             setEventos(parsed);
         } catch (error) {
             console.error('Error al cargar eventos del calendario:', error);
@@ -325,17 +370,11 @@ export const CalendarioPage: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        fetchEventos(currentDate);
-    }, [currentDate]);
+    useEffect(() => { fetchEventos(currentDate); }, [currentDate]);
 
-    const handleNavigate = (newDate: Date) => {
-        setCurrentDate(newDate);
-    };
+    const handleNavigate = (newDate: Date) => setCurrentDate(newDate);
 
-    const handleSelectEvent = (event: CalendarEventExtended) => {
-        setSelectedEvent(event.resource);
-    };
+    const handleSelectEvent = (event: CalendarEventExtended) => setSelectedEvent(event.resource);
 
     const handleGoToEventAction = (ev: Evento) => {
         setSelectedEvent(null);
@@ -352,34 +391,43 @@ export const CalendarioPage: React.FC = () => {
 
     const eventStyleGetter = (event: CalendarEventExtended) => {
         const ev = event.resource;
-        const isVisible = categoriasVisibles[ev.categoria_global] !== false;
-
+        const isCompleted = ev.estado === 'Completado';
         return {
             style: {
-                backgroundColor: ev.color_hex || '#6B7280',
+                backgroundColor: isCompleted ? 'transparent' : (ev.color_hex || '#6B7280'),
                 borderRadius: '6px',
-                opacity: isVisible ? 1 : 0.15,
-                color: '#ffffff',
-                border: '0px',
+                opacity: categoriasVisibles[ev.categoria_global] !== false ? 1 : 0.15,
+                color: isCompleted ? (ev.color_hex || '#6B7280') : '#ffffff',
+                border: isCompleted ? `1.5px solid ${ev.color_hex || '#6B7280'}` : '0px',
                 display: 'block',
-                fontSize: '12px',
+                fontSize: '11.5px',
                 padding: '2px 6px',
                 fontWeight: '500',
                 transition: 'opacity 0.2s',
+                textDecoration: isCompleted ? 'line-through' : 'none',
             }
         };
     };
 
     const toggleCategoria = (cat: string) => {
-        setCategoriasVisibles(prev => ({
-            ...prev,
-            [cat]: !prev[cat]
-        }));
+        setCategoriasVisibles(prev => ({ ...prev, [cat]: !prev[cat] }));
     };
 
     const filteredEventos = eventos.filter(ev =>
         categoriasVisibles[ev.resource.categoria_global] !== false
     );
+
+    // ─── Panel de próximos eventos ────────────────────────────────
+    const hoy = startOfDay(new Date());
+    const proximosEventos = [...eventos]
+        .filter(ev => isAfter(ev.start as Date, hoy) || format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd'))
+        .sort((a, b) => (a.start as Date).getTime() - (b.start as Date).getTime())
+        .slice(0, 7);
+
+    // ─── Drag & Drop: check si el evento es arrastrable ──────────
+    const isDraggable = (event: object) => {
+        return (event as CalendarEventExtended).resource?.categoria_global === 'Personal';
+    };
 
     return (
         <div className="calendario-page-container">
@@ -392,71 +440,57 @@ export const CalendarioPage: React.FC = () => {
                     Añadir Tarea / Evento
                 </button>
 
+                {/* Filtros */}
                 <div className="sidebar-section">
                     <h3>Filtros de Agenda</h3>
                     <div className="filtros-lista">
-                        <label className="filtro-item" style={{ '--color': '#1E3A8A' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['Normativo']}
-                                onChange={() => toggleCategoria('Normativo')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>CACES / Normativa</span>
-                        </label>
-
-                        <label className="filtro-item" style={{ '--color': '#3B82F6' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['Convocatoria']}
-                                onChange={() => toggleCategoria('Convocatoria')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>Convocatorias</span>
-                        </label>
-
-                        <label className="filtro-item" style={{ '--color': '#10B981' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['Proyecto']}
-                                onChange={() => toggleCategoria('Proyecto')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>Proyectos</span>
-                        </label>
-
-                        <label className="filtro-item" style={{ '--color': '#8B5CF6' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['Monitoreo']}
-                                onChange={() => toggleCategoria('Monitoreo')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>Monitoreo (Informes)</span>
-                        </label>
-
-                        <label className="filtro-item" style={{ '--color': '#EC4899' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['PeerReview']}
-                                onChange={() => toggleCategoria('PeerReview')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>Evaluaciones</span>
-                        </label>
-
-                        <label className="filtro-item" style={{ '--color': '#F59E0B' } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles['Personal']}
-                                onChange={() => toggleCategoria('Personal')}
-                            />
-                            <span className="color-dot"></span>
-                            <span>Mis Tareas / Agenda</span>
-                        </label>
+                        {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
+                            <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
+                                <input
+                                    type="checkbox"
+                                    checked={categoriasVisibles[key]}
+                                    onChange={() => toggleCategoria(key)}
+                                />
+                                <span className="color-dot" />
+                                <span>{label}</span>
+                            </label>
+                        ))}
                     </div>
                 </div>
 
+                {/* Próximos Eventos */}
+                <div className="sidebar-section proximos-section">
+                    <h3>Próximos Eventos</h3>
+                    {proximosEventos.length === 0 ? (
+                        <p className="proximos-empty">Sin eventos próximos</p>
+                    ) : (
+                        <div className="proximos-lista">
+                            {proximosEventos.map(ev => {
+                                const r = ev.resource;
+                                const esMismo = format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd');
+                                return (
+                                    <button
+                                        key={r.uuid}
+                                        className="proximo-item"
+                                        style={{ '--ev-color': r.color_hex || '#6B7280' } as React.CSSProperties}
+                                        onClick={() => setSelectedEvent(r)}
+                                    >
+                                        <span className="proximo-dot" />
+                                        <div className="proximo-info">
+                                            <span className="proximo-titulo">{r.titulo}</span>
+                                            <span className="proximo-fecha">
+                                                {esMismo ? 'Hoy' : format(ev.start as Date, 'd MMM', { locale: es })}
+                                            </span>
+                                        </div>
+                                        <ChevronRight size={12} className="proximo-arrow" />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* iCal */}
                 <div className="sidebar-section ical-section">
                     <h3>Sincronización de Agenda</h3>
                     <p className="ical-help-text">Integra tus hitos en Google Calendar, Outlook o Apple Calendar.</p>
@@ -484,12 +518,11 @@ export const CalendarioPage: React.FC = () => {
                         </button>
                     )}
                 </div>
-
             </div>
 
             <div className="calendario-main">
                 {loading && <div className="calendario-loading-bar">Actualizando eventos...</div>}
-                <Calendar
+                <DnDCalendar
                     localizer={localizer}
                     events={filteredEventos}
                     startAccessor="start"
@@ -497,11 +530,20 @@ export const CalendarioPage: React.FC = () => {
                     style={{ height: '100%' }}
                     culture="es"
                     view={view}
-                    onView={(newView) => setView(newView)}
+                    onView={(newView: View) => setView(newView)}
                     onNavigate={handleNavigate}
                     date={currentDate}
                     onSelectEvent={handleSelectEvent}
+                    onSelectSlot={handleSelectSlot}
+                    selectable
                     eventPropGetter={eventStyleGetter}
+                    onEventDrop={handleEventDrop}
+                    onEventResize={handleEventResize}
+                    resizable
+                    draggableAccessor={isDraggable}
+                    components={{
+                        event: EventoEnCelda as any,
+                    }}
                     tooltipAccessor={(event: CalendarEventExtended) =>
                         `${event.title}${event.resource.descripcion ? '\n' + event.resource.descripcion : ''}`
                     }
@@ -516,12 +558,14 @@ export const CalendarioPage: React.FC = () => {
                         date: "Fecha",
                         time: "Hora",
                         event: "Evento",
-                        noEventsInRange: "No hay eventos en este rango de fechas."
+                        allDay: "Todo el día",
+                        noEventsInRange: "No hay eventos en este rango de fechas.",
+                        showMore: (total) => `+ Ver más (${total})`
                     }}
                 />
             </div>
 
-            {/* Detail Drawer deslizable derecho */}
+            {/* Detail Drawer */}
             {selectedEvent && createPortal(
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
@@ -532,7 +576,7 @@ export const CalendarioPage: React.FC = () => {
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
-                                <span 
+                                <span
                                     className="px-2.5 py-1 text-[10px] font-mono uppercase rounded-md border text-white font-bold"
                                     style={{ backgroundColor: selectedEvent.color_hex || '#6B7280', borderColor: selectedEvent.color_hex || '#6B7280' }}
                                 >
@@ -548,6 +592,11 @@ export const CalendarioPage: React.FC = () => {
                                         Privado
                                     </span>
                                 )}
+                                {selectedEvent.recurrencia_anual && (
+                                    <span className="px-2 py-0.5 bg-brand-subtle text-brand border border-brand/20 text-[9px] font-bold uppercase rounded flex items-center gap-1">
+                                        <RotateCcw size={8} /> Anual
+                                    </span>
+                                )}
                             </div>
                             <button
                                 onClick={() => setSelectedEvent(null)}
@@ -559,7 +608,7 @@ export const CalendarioPage: React.FC = () => {
 
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
                             <div className="space-y-4">
-                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                <h2 className={`text-3xl font-bold tracking-tight text-text-main leading-tight font-sans ${selectedEvent.estado === 'Completado' ? 'line-through opacity-60' : ''}`}>
                                     {selectedEvent.titulo}
                                 </h2>
                                 <p className="text-sm text-text-dim leading-relaxed font-medium">
@@ -567,7 +616,6 @@ export const CalendarioPage: React.FC = () => {
                                 </p>
                             </div>
 
-                            {/* Bento Grid para Organización Profesional de Tareas */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bento-card static p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
@@ -577,6 +625,7 @@ export const CalendarioPage: React.FC = () => {
                                         {selectedEvent.fecha_inicio}
                                     </div>
                                 </div>
+
                                 {selectedEvent.fecha_fin && selectedEvent.fecha_fin !== selectedEvent.fecha_inicio ? (
                                     <div className="bento-card static p-5 space-y-1.5">
                                         <div className="text-[10px] font-bold text-error uppercase tracking-widest flex items-center gap-1.5">
@@ -591,51 +640,66 @@ export const CalendarioPage: React.FC = () => {
                                         <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                             <Info size={12} /> Duración
                                         </div>
-                                        <div className="text-sm font-bold text-text-main">
-                                            Todo el día
-                                        </div>
+                                        <div className="text-sm font-bold text-text-main">Todo el día</div>
                                     </div>
                                 )}
 
-                                {/* Datos organizativos del evento personal */}
-                                {selectedEvent.categoria_global === 'Personal' && (
-                                    <>
-                                        <div className="bento-card static p-5 space-y-1.5">
-                                            <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
-                                                Prioridad
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
-                                                    selectedEvent.prioridad === 'Alta' ? 'bg-error-subtle text-error' :
-                                                    selectedEvent.prioridad === 'Baja' ? 'bg-success-subtle text-success' :
-                                                    'bg-warning-subtle text-warning'
-                                                }`}>
-                                                    {selectedEvent.prioridad}
-                                                </span>
-                                            </div>
-                                        </div>
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Prioridad</div>
+                                    <span className="px-2.5 py-0.5 text-xs font-bold rounded inline-block font-sans"
+                                        style={{
+                                            background: PRIORIDAD_COLORS[selectedEvent.prioridad]?.bg || 'var(--border-thin)',
+                                            color: PRIORIDAD_COLORS[selectedEvent.prioridad]?.text || 'var(--text-dim)',
+                                        }}>
+                                        {selectedEvent.prioridad || 'Media'}
+                                    </span>
+                                </div>
 
-                                        <div className="bento-card static p-5 space-y-1.5">
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Estado</div>
+                                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded inline-block font-sans ${
+                                        selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
+                                        selectedEvent.estado === 'EnProgreso' || selectedEvent.estado === 'En Ejecución' ? 'bg-info-subtle text-info' :
+                                        selectedEvent.estado === 'Cancelado'  ? 'bg-bg-deep text-text-dim' :
+                                        'bg-warning-subtle text-warning'
+                                    }`}>
+                                        {ESTADO_LABELS[selectedEvent.estado] ?? selectedEvent.estado}
+                                    </span>
+                                </div>
+
+                                {/* Contexto de Origen */}
+                                {(() => {
+                                    const desc = getContextDescription(selectedEvent);
+                                    if (!desc) return null;
+                                    return (
+                                        <div className="bento-card static p-5 space-y-2 col-span-2 bg-brand-subtle/10 border border-brand/10">
                                             <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
-                                                Estado
+                                                <Info size={12} /> Detalle de Contexto
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
-                                                    selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
-                                                    selectedEvent.estado === 'EnProgreso' ? 'bg-info-subtle text-info' :
-                                                    selectedEvent.estado === 'Cancelado' ? 'bg-bg-deep text-text-dim' :
-                                                    'bg-warning-subtle text-warning'
-                                                }`}>
-                                                    {selectedEvent.estado === 'EnProgreso' ? 'En Progreso' : selectedEvent.estado}
-                                                </span>
-                                            </div>
+                                            <p className="text-xs text-text-dim leading-relaxed font-sans font-medium">
+                                                {desc}
+                                            </p>
                                         </div>
-                                    </>
+                                    );
+                                })()}
+
+
+                                {/* Alerta */}
+                                {selectedEvent.alerta_dias != null && (
+                                    <div className="bento-card static p-5 space-y-1.5 col-span-2">
+                                        <div className="text-[10px] font-bold text-warning uppercase tracking-widest flex items-center gap-1.5">
+                                            <Bell size={12} /> Recordatorio
+                                        </div>
+                                        <div className="text-sm font-bold text-text-main">
+                                            {selectedEvent.alerta_dias === 0
+                                                ? 'El mismo día del evento'
+                                                : `${selectedEvent.alerta_dias} día${selectedEvent.alerta_dias !== 1 ? 's' : ''} antes`}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Botones de acción del Drawer */}
                         <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex flex-col gap-3">
                             {selectedEvent.categoria_global === 'Personal' ? (
                                 <div className="flex gap-3 w-full">
@@ -644,16 +708,14 @@ export const CalendarioPage: React.FC = () => {
                                             onClick={() => handleQuickComplete(selectedEvent)}
                                             className="flex-1 py-3 bg-success text-white hover:bg-success/90 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
                                         >
-                                            <CheckCircle size={15} />
-                                            Completar
+                                            <CheckCircle size={15} /> Completar
                                         </button>
                                     )}
                                     <button
                                         onClick={() => handleEditEventClick(selectedEvent)}
                                         className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
                                     >
-                                        <Edit2 size={15} />
-                                        Editar
+                                        <Edit2 size={15} /> Editar
                                     </button>
                                     <button
                                         onClick={() => handleDeleteEvent(selectedEvent.uuid)}
@@ -670,8 +732,7 @@ export const CalendarioPage: React.FC = () => {
                                             onClick={() => handleGoToEventAction(selectedEvent)}
                                             className="w-full py-3.5 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
                                         >
-                                            Ver Detalle / Acción
-                                            <ArrowRight size={14} />
+                                            Ver Detalle / Acción <ArrowRight size={14} />
                                         </button>
                                     ) : (
                                         <button
@@ -689,7 +750,7 @@ export const CalendarioPage: React.FC = () => {
                 document.body
             )}
 
-            {/* Form Drawer (Crear / Editar Tareas y Eventos de Usuario) */}
+            {/* Form Drawer */}
             {isFormOpen && createPortal(
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
@@ -717,7 +778,7 @@ export const CalendarioPage: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface">
                             {/* Título */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Título de la Tarea/Evento *</label>
+                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Título *</label>
                                 <input
                                     type="text"
                                     required
@@ -741,7 +802,7 @@ export const CalendarioPage: React.FC = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Tipo de Evento */}
+                                {/* Tipo */}
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Categoría / Tipo</label>
                                     <select
@@ -756,7 +817,7 @@ export const CalendarioPage: React.FC = () => {
                                     </select>
                                 </div>
 
-                                {/* Color Hex */}
+                                {/* Color */}
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Etiqueta Visual (Color)</label>
                                     <select
@@ -764,12 +825,9 @@ export const CalendarioPage: React.FC = () => {
                                         onChange={(e) => setFormColorHex(e.target.value)}
                                         className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
                                     >
-                                        <option value="#F59E0B">Naranja (Predeterminado)</option>
-                                        <option value="#3B82F6">Azul (Reuniones)</option>
-                                        <option value="#10B981">Verde (Hitos)</option>
-                                        <option value="#EC4899">Rosado (Revisiones)</option>
-                                        <option value="#8B5CF6">Morado (Monitoreo)</option>
-                                        <option value="#EF4444">Rojo (Urgente)</option>
+                                        {COLORES_OPCIONES.map(({ value, label }) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -812,7 +870,7 @@ export const CalendarioPage: React.FC = () => {
 
                                 {/* Estado */}
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Estado inicial</label>
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Estado</label>
                                     <select
                                         value={formEstado}
                                         onChange={(e) => setFormEstado(e.target.value)}
@@ -824,10 +882,45 @@ export const CalendarioPage: React.FC = () => {
                                         <option value="Cancelado">Cancelado</option>
                                     </select>
                                 </div>
+
+                                {/* Alerta días */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
+                                        <Bell size={10} /> Recordatorio (días antes)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={90}
+                                        placeholder="Ej: 3 (dejar vacío para no recordar)"
+                                        value={formAlertaDias}
+                                        onChange={(e) => setFormAlertaDias(e.target.value === '' ? '' : Number(e.target.value))}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Recurrencia anual */}
+                                <div className="space-y-2 flex flex-col justify-end">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
+                                        <RotateCcw size={10} /> Repetición
+                                    </label>
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-bg border border-border rounded-xl">
+                                        <input
+                                            type="checkbox"
+                                            id="recurrencia_anual"
+                                            checked={formRecurrenciaAnual}
+                                            onChange={(e) => setFormRecurrenciaAnual(e.target.checked)}
+                                            className="w-4 h-4 accent-brand cursor-pointer"
+                                        />
+                                        <label htmlFor="recurrencia_anual" className="text-sm text-text-main cursor-pointer select-none">
+                                            Se repite cada año
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Es Privado Checkbox */}
-                            <div className="flex items-center gap-3 p-4 bg-bg border border-border rounded-xl mt-4">
+                            {/* Es Privado */}
+                            <div className="flex items-center gap-3 p-4 bg-bg border border-border rounded-xl">
                                 <input
                                     type="checkbox"
                                     id="es_privado"
@@ -840,7 +933,7 @@ export const CalendarioPage: React.FC = () => {
                                         Evento Privado / Personal
                                     </label>
                                     <span className="text-[11px] text-text-dim leading-snug">
-                                        Si está marcado, solo tú podrás ver este evento. Desmárcalo para compartirlo.
+                                        Si está marcado, solo tú podrás ver este evento.
                                     </span>
                                 </div>
                             </div>

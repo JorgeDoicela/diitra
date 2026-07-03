@@ -19,7 +19,9 @@ public record CalendarioEventoDto(
     bool EsPrivado,
     string Prioridad,
     string Estado,
-    int? CreadoPor
+    int? CreadoPor,
+    int? AlertaDias,
+    bool RecurrenciaAnual
 );
 
 public record EventoNormativoDto(

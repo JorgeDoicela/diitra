@@ -2079,7 +2079,7 @@ CREATE TABLE inv_calendario_eventos_normativos (
     fechaInicio       DATE          NOT NULL,
     fechaFin          DATE          NULL      COMMENT 'NULL si es evento de un solo día',
     esTodoElDia       TINYINT(1)    NOT NULL DEFAULT 1,
-    -- ⏰ RECURRENCIA ANUAL
+    -- RECURRENCIA ANUAL
     recurrenciaAnual  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = el evento se repite cada año en la misma fecha',
     recurrenciaHasta  DATE          NULL     COMMENT 'Año hasta el que se repite (NULL = indefinidamente)',
     -- Visibilidad y Privacidad (Organización Profesional)
@@ -2190,7 +2190,9 @@ SELECT
     esPrivado,
     prioridad,
     estado,
-    creadoPor
+    creadoPor,
+    alertaDias,
+    recurrenciaAnual
 FROM inv_calendario_eventos_normativos
 
 UNION ALL
@@ -2210,7 +2212,9 @@ SELECT
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_convocatorias
 
 UNION ALL
@@ -2230,7 +2234,9 @@ SELECT
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_convocatorias
 
 UNION ALL
@@ -2250,7 +2256,9 @@ SELECT
     0                                       AS esPrivado,
     IF(h.esCritico, 'Alta', 'Media')       AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_convocatorias_hitos h
 JOIN inv_convocatorias c ON c.idConvocatoria = h.idConvocatoria
 
@@ -2271,7 +2279,9 @@ SELECT
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_proyectos
 WHERE fechaInicio IS NOT NULL
 
@@ -2292,7 +2302,9 @@ SELECT
     0                                       AS esPrivado,
     'Alta'                                  AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_proyectos
 WHERE fechaFin IS NOT NULL
 
@@ -2313,7 +2325,9 @@ SELECT
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_informes_avance ia
 JOIN inv_proyectos p ON p.idProyecto = ia.idProyecto
 
@@ -2334,9 +2348,12 @@ SELECT
     0                                       AS esPrivado,
     'Alta'                                  AS prioridad,
     'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
 FROM inv_revisiones_pares r
 JOIN inv_proyectos p ON p.idProyecto = r.idProyecto;
+
 
 -- =============================================================================
 -- SEMILLAS: Eventos Normativos CACES 2025-2026 (referencia inicial)

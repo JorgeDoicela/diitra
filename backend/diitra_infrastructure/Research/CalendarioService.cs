@@ -37,7 +37,8 @@ public class CalendarioService : ICalendarioService
                 categoriaGlobal, subcategoria,
                 fechaInicio, fechaFin, esTodoElDia, colorHex,
                 idEntidadOrigen, uuidEntidadOrigen, tipoEntidadOrigen,
-                urlAccion, rolesVisibles, esPrivado, prioridad, estado, creadoPor
+                urlAccion, rolesVisibles, esPrivado, prioridad, estado, creadoPor,
+                alertaDias, recurrenciaAnual
             FROM v_calendario_eventos
             WHERE activo = 1
               AND fechaInicio <= {1}
@@ -91,7 +92,8 @@ public class CalendarioService : ICalendarioService
                     norm.EsTodoElDia, norm.ColorHex,
                     norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
                     norm.UrlAccion, norm.RolesVisibles,
-                    norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor
+                    norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor,
+                    norm.AlertaDias, norm.RecurrenciaAnual
                 ));
             }
         }
@@ -284,9 +286,9 @@ public class CalendarioService : ICalendarioService
 
         var hoy = DateOnly.FromDateTime(DateTime.Today);
 
-        // Obtener eventos normativos con alerta configurada
-        var normativos = await _context.Set<InvCalendarioEventoNormativo>()
-            .Where(e => e.Activo && e.AlertaDias.HasValue)
+        // Obtener TODOS los eventos (normativos y personales) con alerta configurada
+        var eventos = await _context.Set<InvCalendarioEventoNormativo>()
+            .Where(e => e.Activo && e.AlertaDias.HasValue && e.AlertaDias.Value >= 0)
             .ToListAsync();
 
         foreach (var usuario in usuarios)
@@ -300,17 +302,23 @@ public class CalendarioService : ICalendarioService
 
             try
             {
-                foreach (var evento in normativos)
+                foreach (var evento in eventos)
                 {
-                    if (!string.IsNullOrEmpty(evento.RolesVisibles) &&
+                    // ── Filtro de privacidad ──────────────────────────────────
+                    // Eventos privados/personales solo van al creador, no a todos
+                    if (evento.EsPrivado && evento.CreadoPor != usuario.IdUsuario) continue;
+
+                    // ── Filtro de roles (solo para eventos no privados) ───────
+                    if (!evento.EsPrivado &&
+                        !string.IsNullOrEmpty(evento.RolesVisibles) &&
                         !evento.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rol)) continue;
 
-                    var fechaAlerta = evento.FechaInicio.AddDays(-(evento.AlertaDias ?? 7));
+                    var fechaAlerta = evento.FechaInicio.AddDays(-(evento.AlertaDias ?? 0));
                     if (fechaAlerta != hoy) continue;
 
                     var idCompuesto = $"NORM-{evento.IdEvento}";
 
-                    // Verificar si ya se envió esta alerta
+                    // Verificar si ya se envió esta alerta hoy a este usuario
                     var yaEnviada = await _context.Set<InvCalendarioAlertaEnviada>()
                         .AnyAsync(a =>
                             a.IdEventoCalendario == idCompuesto &&
@@ -329,24 +337,24 @@ public class CalendarioService : ICalendarioService
                             DestinatariosEmails = new List<string> { usuario.EmailInstitucional ?? "" },
                             TemplateData = new Dictionary<string, string>
                             {
-                                ["[[titulo_evento]]"] = evento.Titulo,
-                                ["[[dias_restantes]]"] = diasRestantes.ToString(),
-                                ["[[fecha_evento]]"] = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
+                                ["[[titulo_evento]]"]      = evento.Titulo,
+                                ["[[dias_restantes]]"]     = diasRestantes.ToString(),
+                                ["[[fecha_evento]]"]       = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
                                 ["[[descripcion_evento]]"] = evento.Descripcion ?? "",
-                                ["[[url_accion]]"] = evento.UrlAccion ?? "/calendario",
-                                ["[[nombre_usuario]]"] = usuario.Nombre ?? usuario.EmailInstitucional ?? ""
+                                ["[[url_accion]]"]         = evento.UrlAccion ?? "/calendario",
+                                ["[[nombre_usuario]]"]     = usuario.Nombre ?? usuario.EmailInstitucional ?? ""
                             }
                         };
 
                         await _emailEngine.SendTemplatedEmailAsync(sendRequest);
 
-                        // Registrar alerta enviada
+                        // Registrar alerta enviada para no duplicar
                         _context.Set<InvCalendarioAlertaEnviada>().Add(new InvCalendarioAlertaEnviada
                         {
                             IdEventoCalendario = idCompuesto,
-                            IdUsuario = usuario.IdUsuario,
-                            FechaEvento = evento.FechaInicio,
-                            FechaEnvio = DateTime.UtcNow
+                            IdUsuario          = usuario.IdUsuario,
+                            FechaEvento        = evento.FechaInicio,
+                            FechaEnvio         = DateTime.UtcNow
                         });
                     }
                     catch (Exception ex)
@@ -375,7 +383,8 @@ public class CalendarioService : ICalendarioService
         r.FechaInicio, r.FechaFin, r.EsTodoElDia, r.ColorHex,
         r.IdEntidadOrigen, r.UuidEntidadOrigen, r.TipoEntidadOrigen,
         r.UrlAccion, r.RolesVisibles,
-        r.EsPrivado, r.Prioridad, r.Estado, r.CreadoPor
+        r.EsPrivado, r.Prioridad, r.Estado, r.CreadoPor,
+        r.AlertaDias, r.RecurrenciaAnual
     );
 
     private static EventoNormativoDto ToDto(InvCalendarioEventoNormativo e) => new(
@@ -413,4 +422,6 @@ internal class CalendarioEventoRaw
     public string Prioridad { get; set; } = "Media";
     public string Estado { get; set; } = "Pendiente";
     public int? CreadoPor { get; set; }
+    public int? AlertaDias { get; set; }
+    public bool RecurrenciaAnual { get; set; } = false;
 }

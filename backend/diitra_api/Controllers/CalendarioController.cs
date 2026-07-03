@@ -44,6 +44,8 @@ public class CalendarioController : ControllerBase
     {
         var ics = await _calendarioService.GenerarIcalFeedAsync(token);
         if (ics == null) return Unauthorized(new { message = "Token iCal inválido o revocado." });
+        
+        Response.Headers.Append("Content-Disposition", "attachment; filename=\"calendario-institucional-diitra.ics\"");
         return Content(ics, "text/calendar; charset=utf-8");
     }
 
