@@ -274,8 +274,8 @@ export const AdminDashboard: React.FC = () => {
                                                     {/* Col 3: Type Pill */}
                                                     <div className="shrink-0 min-w-[100px]">
                                                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${isInforme
-                                                                ? 'bg-info/10 text-info border border-info/20'
-                                                                : 'bg-brand/10 text-brand border border-brand/20'
+                                                            ? 'bg-info/10 text-info border border-info/20'
+                                                            : 'bg-brand/10 text-brand border border-brand/20'
                                                             }`}>
                                                             {isInforme ? <FileText size={10} /> : <Layers size={10} />}
                                                             {item.tipo}
@@ -308,7 +308,7 @@ export const AdminDashboard: React.FC = () => {
 
                     {/* Sidebar: Right Column */}
                     <div className="flex flex-col gap-6">
-                        <ProximosEventosWidget />
+                        <ProximosEventosWidget style={{ maxHeight: '392px' }} />
 
                         <VercelUsageCard
                             title="Resumen Institucional"

@@ -909,10 +909,10 @@ namespace diitra_infrastructure.Research
                     MotivoCambio = pa.MotivoCambio,
                     Carrera = carreraNom,
                     CarrerasDisponibles = carrerasDisponibles,
-                    HorasSemanales = pa.HorasSemanales
                 });
             }
 
+            dto ??= new ProyectoDto();
             dto.Uuid = p.Uuid;
             dto.CodigoInstitucional = p.CodigoInstitucional;
             dto.Estado = p.Estado;

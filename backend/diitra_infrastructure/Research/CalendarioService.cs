@@ -42,7 +42,7 @@ public class CalendarioService : ICalendarioService
             FROM v_calendario_eventos
             WHERE activo = 1
               AND fechaInicio <= {1}
-              AND (fechaFin IS NULL OR fechaFin >= {0})
+              AND COALESCE(fechaFin, fechaInicio) >= {0}
               AND (rolesVisibles IS NULL OR FIND_IN_SET({2}, rolesVisibles) > 0)
               AND (esPrivado = 0 OR creadoPor = {3})
             ORDER BY fechaInicio ASC";

@@ -17,72 +17,77 @@ interface Evento {
     url_accion: string | null;
 }
 
-export const ProximosEventosWidget: React.FC = () => {
-    const [eventos, setEventos] = useState<Evento[]>([]);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+interface ProximosEventosWidgetProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
 
-    useEffect(() => {
-        const fetchEventos = async () => {
-            try {
-                const hoy = new Date();
-                const dentroDe7Dias = new Date();
-                dentroDe7Dias.setDate(hoy.getDate() + 7);
+export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ className = '', style }) => {
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-                const formatLocal = (d: Date) => {
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    return `${year}-${month}-${day}`;
-                };
-                const desdeStr = formatLocal(hoy);
-                const hastaStr = formatLocal(dentroDe7Dias);
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const hoy = new Date();
+        const dentroDe7Dias = new Date();
+        dentroDe7Dias.setDate(hoy.getDate() + 7);
 
-                const response = await api.get('/calendario/eventos', {
-                    params: { desde: desdeStr, hasta: hastaStr }
-                });
-                setEventos(response.data || []);
-            } catch (error) {
-                console.error('Error al obtener próximos eventos:', error);
-            } finally {
-                setLoading(false);
-            }
+        const formatLocal = (d: Date) => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
         };
+        const desdeStr = formatLocal(hoy);
+        const hastaStr = formatLocal(dentroDe7Dias);
 
-        fetchEventos();
-    }, []);
-
-    const handleEventoClick = (ev: Evento) => {
-        if (ev.url_accion) {
-            if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
-                window.open(ev.url_accion, '_blank');
-            } else {
-                navigate(ev.url_accion);
-            }
-        } else if (ev.categoria_global === 'Proyecto' && ev.uuid) {
-            navigate(`/proyectos/${ev.uuid}`);
-        } else {
-            navigate('/calendario');
-        }
+        const response = await api.get('/calendario/eventos', {
+          params: { desde: desdeStr, hasta: hastaStr }
+        });
+        setEventos(response.data || []);
+      } catch (error) {
+        console.error('Error al obtener próximos eventos:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const formatearFecha = (fechaStr: string) => {
-        const [year, month, day] = fechaStr.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
-    };
+    fetchEventos();
+  }, []);
 
-    if (loading) {
-        return (
-            <div className="widget-proximos-eventos loading">
-                <div className="spinner"></div>
-                <p>Cargando agenda...</p>
-            </div>
-        );
+  const handleEventoClick = (ev: Evento) => {
+    if (ev.url_accion) {
+      if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
+        window.open(ev.url_accion, '_blank');
+      } else {
+        navigate(ev.url_accion);
+      }
+    } else if (ev.categoria_global === 'Proyecto' && ev.uuid) {
+      navigate(`/proyectos/${ev.uuid}`);
+    } else {
+      navigate('/calendario');
     }
+  };
 
+  const formatearFecha = (fechaStr: string) => {
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+  };
+
+  if (loading) {
     return (
-        <div className="widget-proximos-eventos">
+      <div className={`widget-proximos-eventos loading ${className}`} style={style}>
+        <div className="spinner"></div>
+        <p>Cargando agenda...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`widget-proximos-eventos ${className}`} style={style}>
             <div className="widget-header">
                 <h3>Próximos Eventos</h3>
                 <span className="badge-7d">7 días</span>
