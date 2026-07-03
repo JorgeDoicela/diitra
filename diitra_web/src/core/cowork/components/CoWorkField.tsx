@@ -336,6 +336,69 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         };
     }, [ydoc, name, type, historyLoaded, dbValue, readOnly, guardContext.readOnly, cowork.session.readOnly]);
 
+    const [activeUsersEditing, setActiveUsersEditing] = useState<{
+        clientId: number;
+        name: string;
+        initials: string;
+        color: string;
+    }[]>([]);
+
+    useEffect(() => {
+        const awareness = cowork.awareness;
+        if (!awareness) return;
+
+        const updateActiveUsers = () => {
+            const users: any[] = [];
+            const states = awareness.getStates();
+            states.forEach((state: any, clientId: number) => {
+                if (clientId === awareness.clientID) return; // ignorar a sí mismo
+                if (state.focusedField === name && state.user) {
+                    users.push({
+                        clientId,
+                        name: state.user.name || state.user.nombreCompleto || 'Usuario',
+                        initials: state.user.initials || 'U',
+                        color: state.user.color || '#EC4899',
+                    });
+                }
+            });
+            setActiveUsersEditing(users);
+        };
+
+        updateActiveUsers(); // Comprobación inicial
+
+        awareness.on('update', updateActiveUsers);
+        return () => {
+            awareness.off('update', updateActiveUsers);
+        };
+    }, [cowork.awareness, name]);
+
+    // Limpiar focusedField al desmontar
+    useEffect(() => {
+        return () => {
+            if (cowork.awareness) {
+                const currentState = cowork.awareness.getLocalState();
+                if (currentState?.focusedField === name) {
+                    cowork.awareness.setLocalStateField('focusedField', null);
+                }
+            }
+        };
+    }, [cowork.awareness, name]);
+
+    const handleFocus = () => {
+        if (cowork.awareness) {
+            cowork.awareness.setLocalStateField('focusedField', name);
+        }
+    };
+
+    const handleBlur = () => {
+        if (cowork.awareness) {
+            const currentState = cowork.awareness.getLocalState();
+            if (currentState?.focusedField === name) {
+                cowork.awareness.setLocalStateField('focusedField', null);
+            }
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         let newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
         if (mask === 'date' && typeof newValue === 'string') {
@@ -362,6 +425,13 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     };
 
     const isFieldReadOnly = readOnly || guardContext.readOnly;
+    const borderStyle = activeUsersEditing.length > 0 && type !== 'checkbox'
+        ? {
+            borderColor: activeUsersEditing[0].color,
+            boxShadow: `0 0 0 2px ${activeUsersEditing[0].color}33`,
+          }
+        : {};
+
     const commonProps = {
         name,
         placeholder,
@@ -369,12 +439,41 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
             : `${className} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
-        readOnly: isFieldReadOnly
+        readOnly: isFieldReadOnly,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
+        style: borderStyle
     };
 
     return (
         <div className={type === 'checkbox' ? "flex items-center gap-3" : "w-full"}>
             <div className="relative order-1">
+                {activeUsersEditing.length > 0 && type !== 'checkbox' && (
+                    <div className="absolute right-2 -top-2.5 z-50 flex items-center gap-1">
+                        {/* Usuario principal con nombre completo */}
+                        <div 
+                            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[7px] font-black text-white uppercase tracking-widest shadow-md select-none pointer-events-none transition-all duration-300 animate-fade-in"
+                            style={{ backgroundColor: activeUsersEditing[0].color }}
+                        >
+                            <div className="w-2.5 h-2.5 rounded-full bg-white text-bg-deep flex items-center justify-center text-[5.5px] font-black" style={{ color: activeUsersEditing[0].color }}>
+                                {activeUsersEditing[0].initials}
+                            </div>
+                            <span>{activeUsersEditing[0].name.toUpperCase()}</span>
+                        </div>
+
+                        {/* Avatares apilados para los demás usuarios concurrentes en el mismo input */}
+                        {activeUsersEditing.slice(1).map((usr) => (
+                            <div 
+                                key={usr.clientId}
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-[6px] font-black text-white shadow-md border border-surface select-none pointer-events-none transition-all duration-300 animate-fade-in -ml-1.5"
+                                style={{ backgroundColor: usr.color }}
+                                title={usr.name.toUpperCase()}
+                            >
+                                {usr.initials}
+                            </div>
+                        ))}
+                    </div>
+                )}
                 {type === 'text' && <input {...commonProps} type="text" value={displayValue} onChange={handleChange} />}
                 {type === 'textarea' && <textarea {...commonProps} value={displayValue} onChange={handleChange} />}
                 {type === 'select' && (
