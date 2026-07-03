@@ -67,7 +67,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         if (!isAdmin && misCarreras.length === 1) {
             const unica = misCarreras[0];
             const unicaId = unica.id_carrera ?? unica.idCarrera ?? 0;
-            if (Number(formData.IdCarrera) !== unicaId) {
+            if (!formData.IdCarrera || Number(formData.IdCarrera) === 0) {
                 onUpdate('IdCarrera', unicaId);
                 const cname = unica.nombre_carrera ?? unica.carrera1 ?? unica.carrera ?? '';
                 onUpdate('Carrera', cname, { source: 'system' });

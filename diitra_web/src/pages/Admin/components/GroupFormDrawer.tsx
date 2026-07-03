@@ -3,6 +3,8 @@ import {
     Users, Plus, Search, CheckCircle, GraduationCap, User, UserMinus, Shield, Award, Calendar, FileText, ChevronRight, BookOpen, Eye
 } from 'lucide-react';
 import api from '../../../api/axios_config';
+import { CareerLinkageModal } from './CareerLinkageModal';
+
 
 interface GroupMember {
     id_grupo_miembro: number;
@@ -70,7 +72,6 @@ interface GroupFormDrawerProps {
     setConfirmDialog: React.Dispatch<React.SetStateAction<any>>;
     formatUserDetails: (u: any) => string;
     formatCareerName: (name: string) => string;
-    setIsCareerModalOpen: (open: boolean) => void;
     onDraftCleared?: () => void;
 }
 
@@ -94,9 +95,11 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     setConfirmDialog,
     formatUserDetails,
     formatCareerName,
-    setIsCareerModalOpen,
     onDraftCleared
 }) => {
+    // Local modal state
+    const [isLocalCareerModalOpen, setIsLocalCareerModalOpen] = useState(false);
+
     // Form states
     const [formData, setFormData] = useState({
         nombre: '',
@@ -757,7 +760,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                 }}
                                 className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                             >
-                                Revertir al original
+                                Descartar borrador
                             </button>
                         </div>
                     )}
@@ -1302,7 +1305,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                             </label>
                             <button
                                 type="button"
-                                onClick={() => setIsCareerModalOpen(true)}
+                                onClick={() => setIsLocalCareerModalOpen(true)}
                                 className="px-3 py-1.5 rounded-lg border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0"
                             >
                                 <Eye size={12} /> Ver Detalle de Vinculación
@@ -1463,11 +1466,21 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                             onClick={handleSubmitForm}
                             className="btn-vercel-primary flex items-center gap-2"
                         >
-                            {editingGroup ? 'Guardar Cambios' : 'Proponer Grupo'}
+                            {editingGroup ? 'Guardar Cambios' : (isAdmin ? 'Crear Grupo' : 'Proponer Grupo')}
                         </button>
                     )}
                 </div>
             </div>
+
+            <CareerLinkageModal
+                isOpen={isLocalCareerModalOpen}
+                onClose={() => setIsLocalCareerModalOpen(false)}
+                formData={{ id_profesor_coordinador: formData.id_profesor_coordinador }}
+                selectedCoordName={selectedCoordName}
+                selectedCoordCareer={selectedCoordCareer}
+                groupMembers={groupMembers}
+                formatCareerName={formatCareerName}
+            />
         </div>
     );
 };

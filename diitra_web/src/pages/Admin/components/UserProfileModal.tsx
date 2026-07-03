@@ -194,7 +194,7 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                                 }}
                                 className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                             >
-                                Revertir al original
+                                Descartar borrador
                             </button>
                         </div>
                     )}

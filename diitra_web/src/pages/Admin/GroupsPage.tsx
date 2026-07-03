@@ -9,7 +9,6 @@ import {
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { AudioBubblePlayer } from './components/AudioBubblePlayer';
-import { CareerLinkageModal } from './components/CareerLinkageModal';
 import { GroupFormDrawer } from './components/GroupFormDrawer';
 import { GroupDetailDrawer } from './components/GroupDetailDrawer';
 
@@ -109,7 +108,6 @@ const GroupsPage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
     const [pendingDraft, setPendingDraft] = useState<{
@@ -491,7 +489,7 @@ const GroupsPage = () => {
                         className="btn-brand flex items-center justify-center gap-2 text-xs font-bold"
                     >
                         <Plus size={14} strokeWidth={3} />
-                        Proponer Grupo
+                        {isAdmin ? 'Crear Grupo' : 'Proponer Grupo'}
                     </button>
                 </div>
             </header>
@@ -968,7 +966,6 @@ const GroupsPage = () => {
                 setConfirmDialog={setConfirmDialog}
                 formatUserDetails={formatUserDetails}
                 formatCareerName={formatCareerName}
-                setIsCareerModalOpen={setIsCareerModalOpen}
                 onDraftCleared={() => setPendingDraft(null)}
             />
 
@@ -984,16 +981,6 @@ const GroupsPage = () => {
                 lines={lines}
                 formatCareerName={formatCareerName}
                 handleOpenReview={handleOpenReview}
-            />
-
-            <CareerLinkageModal
-                isOpen={isCareerModalOpen}
-                onClose={() => setIsCareerModalOpen(false)}
-                formData={{ id_profesor_coordinador: editingGroup?.id_profesor_coordinador || detailGroup?.id_profesor_coordinador }}
-                selectedCoordName={editingGroup?.nombre_coordinador || detailGroup?.nombre_coordinador || ''}
-                selectedCoordCareer={editingGroup?.carrera_coordinador || detailGroup?.carrera_coordinador || ''}
-                groupMembers={editingGroup?.miembros || detailGroup?.miembros || []}
-                formatCareerName={formatCareerName}
             />
         </main>
     );
