@@ -543,14 +543,16 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     };
                 } else if (activeTab === 'cronograma') {
                     const getProjectWeeksCount = () => {
-                        if (formData?.FechaInicio && formData?.FechaFin) {
+                        const startStr = formData.FechaInicio || formData.FechaInicioEstimada;
+                        const endStr = formData.FechaFin || formData.FechaFinEstimada;
+                        if (startStr && endStr) {
                             try {
-                                const start = new Date(formData.FechaInicio);
-                                const end = new Date(formData.FechaFin);
+                                const start = new Date(startStr);
+                                const end = new Date(endStr);
                                 if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
-                                    const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-                                    const months = Math.max(1, diffMonths + 1);
-                                    return months * 4;
+                                    const diffTime = end.getTime() - start.getTime();
+                                    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                                    return Math.ceil(totalDays / 7);
                                 }
                             } catch (e) {
                                 console.error("Error calculating project weeks:", e);

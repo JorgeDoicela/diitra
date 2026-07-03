@@ -1863,9 +1863,11 @@ namespace diitra_infrastructure.Research
             int totalWeeks = 12; // fallback por defecto
             if (pStart.HasValue && pEnd.HasValue && pEnd.Value > pStart.Value)
             {
-                int diffMonths = (pEnd.Value.Year - pStart.Value.Year) * 12 + (pEnd.Value.Month - pStart.Value.Month);
-                int monthsCount = Math.Max(1, diffMonths + 1);
-                totalWeeks = monthsCount * 4;
+                var startDt = new DateTime(pStart.Value.Year, pStart.Value.Month, pStart.Value.Day);
+                var endDt = new DateTime(pEnd.Value.Year, pEnd.Value.Month, pEnd.Value.Day);
+                var diffTime = endDt - startDt;
+                int totalDays = (int)Math.Ceiling(diffTime.TotalDays) + 1;
+                totalWeeks = (int)Math.Ceiling(totalDays / 7.0);
             }
 
             var list = new System.Collections.Generic.List<bool>();

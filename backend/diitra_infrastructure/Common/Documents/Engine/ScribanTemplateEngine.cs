@@ -226,7 +226,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 var startDateObj = arguments.ElementAtOrDefault(0);
                 var cronograma = arguments.ElementAtOrDefault(1);
                 int weeks = GetWeeksCount(cronograma);
-                int monthsCount = (int)Math.Ceiling(weeks / 4.0);
 
                 DateTime startDate = DateTime.Today;
                 if (startDateObj != null)
@@ -249,14 +248,43 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 var monthsNames = new string[] { "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
                 var sb = new System.Text.StringBuilder();
 
-                for (int i = 0; i < monthsCount; i++)
+                if (weeks <= 0)
                 {
-                    DateTime currentMonthDate = startDate.AddMonths(i);
-                    string monthName = monthsNames[currentMonthDate.Month - 1] + " " + currentMonthDate.Year;
-                    sb.Append("<th colspan=\"4\" style=\"border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; text-align: center; vertical-align: middle;\">")
-                      .Append(monthName)
+                    weeks = 12;
+                }
+
+                // Mapear cada semana a su mes correspondiente
+                var weeksData = new List<(int MonthIndex, string MonthName, int Year)>();
+                for (int w = 0; w < weeks; w++)
+                {
+                    DateTime weekStartDate = startDate.AddDays(w * 7);
+                    weeksData.Add((weekStartDate.Month - 1, monthsNames[weekStartDate.Month - 1], weekStartDate.Year));
+                }
+
+                // Agrupar semanas consecutivas que caen en el mismo mes y año
+                if (weeksData.Count > 0)
+                {
+                    var currentGroup = (MonthName: weeksData[0].MonthName, Year: weeksData[0].Year, WeeksCount: 1);
+                    for (int i = 1; i < weeksData.Count; i++)
+                    {
+                        var w = weeksData[i];
+                        if (w.MonthName == currentGroup.MonthName && w.Year == currentGroup.Year)
+                        {
+                            currentGroup.WeeksCount++;
+                        }
+                        else
+                        {
+                            sb.Append($"<th colspan=\"{currentGroup.WeeksCount}\" style=\"border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; text-align: center; vertical-align: middle;\">")
+                              .Append($"{currentGroup.MonthName} {currentGroup.Year}")
+                              .Append("</th>");
+                            currentGroup = (w.MonthName, w.Year, 1);
+                        }
+                    }
+                    sb.Append($"<th colspan=\"{currentGroup.WeeksCount}\" style=\"border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; text-align: center; vertical-align: middle;\">")
+                      .Append($"{currentGroup.MonthName} {currentGroup.Year}")
                       .Append("</th>");
                 }
+
                 output.WriteSafeString(sb.ToString());
             });
 
@@ -268,9 +296,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 var sb = new System.Text.StringBuilder();
                 for (int i = 0; i < weeks; i++)
                 {
-                    int weekOfIndex = (i % 4) + 1;
                     sb.Append("<th style=\"border: 1px solid #000000; padding: 2px; text-align: center; font-size: 6.5pt; color: #ffffff; background: #222c57;\">S<br/>")
-                      .Append(weekOfIndex)
+                      .Append(i + 1)
                       .Append("</th>");
                 }
                 output.WriteSafeString(sb.ToString());

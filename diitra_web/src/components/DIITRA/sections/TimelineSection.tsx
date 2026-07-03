@@ -157,37 +157,84 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         return `${y}-${m}-${d}`;
     };
 
-    const getMonthsTimeline = () => {
+    const getWeeksAndMonthsTimeline = () => {
         const start = parseProjectDate(formData?.FechaInicio || formData?.FechaInicioEstimada);
         const end = parseProjectDate(formData?.FechaFin || formData?.FechaFinEstimada);
         
-        let monthsCount = 3;
-        let startDate = start || new Date();
-        
-        if (start && end && end > start) {
-            const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-            monthsCount = Math.max(1, diffMonths + 1);
+        if (!start || !end || end <= start) {
+            const defaultMonths = ["Enero", "Febrero", "Marzo"];
+            const timeline = defaultMonths.map((name, i) => ({
+                name,
+                year: new Date().getFullYear(),
+                weeksCount: 4,
+                weekOffset: i * 4
+            }));
+            return { timeline, totalWeeks: 12 };
         }
+        
+        const diffTime = end.getTime() - start.getTime();
+        const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const totalWeeks = Math.ceil(totalDays / 7);
         
         const monthsNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const timeline = [];
-        for (let i = 0; i < monthsCount; i++) {
-            const current = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-            timeline.push({
-                name: monthsNames[current.getMonth()],
-                year: current.getFullYear(),
-                weekOffset: i * 4
+        const weeksData = [];
+        
+        for (let w = 0; w < totalWeeks; w++) {
+            const weekStartDate = new Date(start.getTime());
+            weekStartDate.setDate(start.getDate() + w * 7);
+            weeksData.push({
+                weekIndex: w,
+                monthIndex: weekStartDate.getMonth(),
+                monthName: monthsNames[weekStartDate.getMonth()],
+                year: weekStartDate.getFullYear()
             });
         }
-        return timeline;
+        
+        const timeline: { name: string; year: number; weeksCount: number; weekOffset: number }[] = [];
+        if (weeksData.length > 0) {
+            let currentGroup = {
+                name: weeksData[0].monthName,
+                year: weeksData[0].year,
+                weeksCount: 1,
+                weekOffset: 0
+            };
+            
+            for (let i = 1; i < weeksData.length; i++) {
+                const w = weeksData[i];
+                if (w.monthName === currentGroup.name && w.year === currentGroup.year) {
+                    currentGroup.weeksCount++;
+                } else {
+                    timeline.push(currentGroup);
+                    currentGroup = {
+                        name: w.monthName,
+                        year: w.year,
+                        weeksCount: 1,
+                        weekOffset: i
+                    };
+                }
+            }
+            timeline.push(currentGroup);
+        }
+        
+        return { timeline, totalWeeks };
     };
 
-    const months = getMonthsTimeline();
-    const totalWeeks = months.length * 4;
+    const { timeline: months, totalWeeks } = getWeeksAndMonthsTimeline();
     const teamMembers = getTeamMembers();
     const objectives = getObjectivesList();
     const projectStartDate = parseProjectDate(formData?.FechaInicio || formData?.FechaInicioEstimada);
     const projectEndDate = parseProjectDate(formData?.FechaFin || formData?.FechaFinEstimada);
+
+    const getDurationText = () => {
+        if (!projectStartDate || !projectEndDate) return '';
+        const diffTime = projectEndDate.getTime() - projectStartDate.getTime();
+        const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const realWeeks = Math.ceil(totalDays / 7);
+        
+        const diffMonths = (projectEndDate.getFullYear() - projectStartDate.getFullYear()) * 12 + (projectEndDate.getMonth() - projectStartDate.getMonth()) + (projectEndDate.getDate() - projectStartDate.getDate()) / 30.4;
+        const realMonths = Math.max(0.5, Math.round(diffMonths * 10) / 10);
+        return `✓ Periodo: ${realMonths} ${realMonths === 1 ? 'mes' : 'meses'} (${realWeeks} ${realWeeks === 1 ? 'semana' : 'semanas'}) desde ${projectStartDate.toLocaleDateString('es-EC')} al ${projectEndDate.toLocaleDateString('es-EC')}.`;
+    };
 
     const colorsPalette = [
         '#0070f3', // Azul Vercel
@@ -199,6 +246,39 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         '#ff0080', // Rosa Vercel
         '#888888'  // Gris Atenuado
     ];
+
+    // --- AUTO-CORRECCIÓN DE FECHAS PREVISTAS SI CAMBIA LA FECHA DEL PROYECTO ---
+    const prevProjectStartRef = React.useRef<number | null>(null);
+
+    useEffect(() => {
+        if (readOnly || !projectStartDate || !cronograma || cronograma.length === 0) return;
+        
+        const currentStartMs = projectStartDate.getTime();
+        if (prevProjectStartRef.current !== null && prevProjectStartRef.current !== currentStartMs) {
+            cronograma.forEach((activity, idx) => {
+                const semanas = activity.Semanas || [];
+                const { start, end } = getWeekRange(semanas);
+                
+                if (start !== -1) {
+                    const calculatedStart = new Date(projectStartDate.getTime());
+                    calculatedStart.setDate(projectStartDate.getDate() + start * 7);
+                    const expectedStartStr = formatDateForInput(calculatedStart);
+                    
+                    const calculatedEnd = new Date(projectStartDate.getTime());
+                    calculatedEnd.setDate(projectStartDate.getDate() + (end + 1) * 7 - 1);
+                    const expectedEndStr = formatDateForInput(calculatedEnd);
+                    
+                    if (activity.FechaInicioPrevista !== expectedStartStr) {
+                        onUpdate(idx, 'FechaInicioPrevista', expectedStartStr);
+                    }
+                    if (activity.FechaFinPrevista !== expectedEndStr) {
+                        onUpdate(idx, 'FechaFinPrevista', expectedEndStr);
+                    }
+                }
+            });
+        }
+        prevProjectStartRef.current = currentStartMs;
+    }, [projectStartDate, readOnly, onUpdate]);
 
     // --- LIBERAR EL ARRASTRE DE CELDAS DE MANERA GLOBAL ---
     useEffect(() => {
@@ -335,7 +415,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             
             onUpdate(lastIdx, 'Actividad', act.Actividad);
             onUpdate(lastIdx, 'RecursosNecesarios', act.RecursosNecesarios);
-            onUpdate(lastIdx, 'Responsable', act.Responsable || teamMembers[0] || '');
+            onUpdate(lastIdx, 'Responsable', act.Responsable || '');
             onUpdate(lastIdx, 'Entregable', act.Entregable);
             onUpdate(lastIdx, 'colorHex', act.colorHex);
             onUpdate(lastIdx, 'IdObjetivo', act.IdObjetivo);
@@ -377,7 +457,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             setTimeout(() => {
                 onUpdate(idx, 'Actividad', act.Actividad);
                 onUpdate(idx, 'RecursosNecesarios', act.RecursosNecesarios);
-                onUpdate(idx, 'Responsable', teamMembers[0] || "");
+                onUpdate(idx, 'Responsable', "");
                 onUpdate(idx, 'Entregable', act.Entregable);
                 onUpdate(idx, 'colorHex', act.colorHex);
                 onUpdate(idx, 'IdObjetivo', act.IdObjetivo);
@@ -659,16 +739,24 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
 
     // --- CONTROLADOR DE CAMBIOS EN LAS FECHAS MANUALES DE CARD ---
     const handleActivityDateChange = (index: number, type: 'start' | 'end', dateValue: string) => {
-        onUpdate(index, type === 'start' ? 'FechaInicioPrevista' : 'FechaFinPrevista', dateValue);
-        
         const activity = cronograma[index];
         const updatedActivity = { ...activity };
+        
         if (type === 'start') {
             updatedActivity.FechaInicioPrevista = dateValue;
+            if (updatedActivity.FechaFinPrevista && dateValue > updatedActivity.FechaFinPrevista) {
+                updatedActivity.FechaFinPrevista = dateValue;
+            }
         } else {
             updatedActivity.FechaFinPrevista = dateValue;
+            if (updatedActivity.FechaInicioPrevista && dateValue < updatedActivity.FechaInicioPrevista) {
+                updatedActivity.FechaInicioPrevista = dateValue;
+            }
         }
 
+        onUpdate(index, 'FechaInicioPrevista', updatedActivity.FechaInicioPrevista);
+        onUpdate(index, 'FechaFinPrevista', updatedActivity.FechaFinPrevista);
+        
         const actStart = parseProjectDate(updatedActivity.FechaInicioPrevista);
         const actEnd = parseProjectDate(updatedActivity.FechaFinPrevista);
         
@@ -701,7 +789,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                         Administra las etapas de tu proyecto. 
                         {projectStartDate && projectEndDate ? (
                             <span className="text-emerald-500 font-bold block mt-0.5">
-                                {`✓ Periodo: ${months.length} meses (${totalWeeks} semanas) desde ${projectStartDate.toLocaleDateString('es-EC')} al ${projectEndDate.toLocaleDateString('es-EC')}.`}
+                                {getDurationText()}
                             </span>
                         ) : (
                             <span className="text-amber-500 font-bold block mt-0.5 flex items-center gap-1">
@@ -861,12 +949,16 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                     >
                                         {/* Cabecera del calendario */}
                                         <div className="grid grid-cols-[280px_1fr] border-b border-border-thin pb-2 items-stretch" id="gantt-grid-header">
-                                            <div className="text-xs font-black text-text-dim uppercase tracking-wider pl-2 flex items-center border-r border-border-thin/50 pr-4">Descripción de la Tarea</div>
-                                            <div className="flex flex-col gap-1.5 w-full">
+                                            <div className="text-xs font-black text-text-dim uppercase tracking-wider pl-2 flex items-center border-r border-border-thin/50 pr-4 sticky left-0 bg-bg-deep z-20">Descripción de la Tarea</div>
+                                            <div className="flex flex-col gap-1.5 w-full relative z-0">
                                                 {/* Fila de Meses */}
                                                 <div className="grid w-full" style={{ gridTemplateColumns: `repeat(${totalWeeks}, 1fr)` }}>
                                                     {months.map((m, mIdx) => (
-                                                        <div key={mIdx} className="border-l border-border-thin/60 col-span-4 text-center text-[10.5px] font-black uppercase tracking-wider text-text-main">
+                                                        <div 
+                                                            key={mIdx} 
+                                                            className="border-l border-border-thin/60 text-center text-[10.5px] font-black uppercase tracking-wider text-text-main"
+                                                            style={{ gridColumn: `span ${m.weeksCount} / span ${m.weeksCount}` }}
+                                                        >
                                                             <div className="truncate px-0.5">{m.name}</div>
                                                             <div className="opacity-50 text-[8.5px] font-bold">{m.year}</div>
                                                         </div>
@@ -876,7 +968,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                 <div className="grid w-full" style={{ gridTemplateColumns: `repeat(${totalWeeks}, 1fr)` }}>
                                                     {Array.from({ length: totalWeeks }).map((_, w) => (
                                                         <div key={w} className="border-l border-border-thin/20 text-center text-[9px] font-black text-text-dim/80">
-                                                            S{((w % 4) + 1)}
+                                                            S{w + 1}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -906,7 +998,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                     >
                                                         {/* Nombre de la actividad */}
                                                         <div 
-                                                            className="text-xs font-semibold text-text-main pr-3 pl-2 flex items-center justify-between border-r border-border-thin/50 py-3 mr-2 group/row"
+                                                            className="text-xs font-semibold text-text-main pr-3 pl-2 flex items-center justify-between border-r border-border-thin/50 py-3 mr-2 group/row sticky left-0 bg-bg-deep z-10"
                                                             title="Clic para editar detalles"
                                                         >
                                                             <div 
@@ -943,12 +1035,12 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                         {/* Timeline track de la fila */}
                                                         <div 
                                                             id={idx === 0 ? "gantt-timeline-track" : undefined}
-                                                            className="relative h-full min-h-[48px] flex items-center bg-transparent w-full"
+                                                            className="relative h-full min-h-[48px] flex items-center bg-transparent w-full z-0"
                                                         >
                                                             {/* Grid celdas fondo */}
                                                             <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${totalWeeks}, 1fr)` }}>
                                                                  {Array.from({ length: totalWeeks }).map((_, w) => {
-                                                                    const isMonthBoundary = w % 4 === 0;
+                                                                    const isMonthBoundary = months.some(m => m.weekOffset === w);
                                                                     return (
                                                                         <div 
                                                                             key={w} 
@@ -1066,12 +1158,26 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                                 >
                                                                                     {getInitials(_c.Responsable)}
                                                                                 </span>
-                                                                                <span className="truncate text-text-main/90 font-medium" title={_c.Responsable}>
-                                                                                    {_c.Responsable.split(' ')[0]}
-                                                                                </span>
+                                                                                {(endW - startW + 1) > 2 && (
+                                                                                    <span className="truncate text-text-main/90 font-medium" title={_c.Responsable}>
+                                                                                        {_c.Responsable.split(' ')[0]}
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
                                                                         ) : (
-                                                                            <span className="text-[9px] text-text-dim/60 italic">Sin responsable</span>
+                                                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                                                <span 
+                                                                                    className="px-1.5 py-0.5 rounded-[3px] text-[8.5px] font-black uppercase tracking-wider bg-orange-500/10 border border-orange-500/30 text-orange-500 shrink-0"
+                                                                                    title="Sin responsable asignado"
+                                                                                >
+                                                                                    ?
+                                                                                </span>
+                                                                                {(endW - startW + 1) > 2 && (
+                                                                                    <span className="truncate text-orange-500/70 font-medium italic text-[9.5px]" title="Sin responsable asignado">
+                                                                                        Sin asignar
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
                                                                         )}
                                                                     </div>
  
@@ -1132,7 +1238,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                 </div>
 
                                                 <div className="space-y-3.5 text-xs">
-                                                    {[0, 1, 2, 3].map((wOffset) => {
+                                                    {Array.from({ length: m.weeksCount }).map((_, wOffset) => {
                                                         const currentWeekNum = startWeekIndex + wOffset;
                                                         const activeActs = cronograma.filter(c => c.Semanas?.[currentWeekNum] === true);
 
