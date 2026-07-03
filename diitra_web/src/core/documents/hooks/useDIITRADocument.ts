@@ -215,7 +215,11 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
         const cleanups: (() => void)[] = [];
 
-        Object.keys(initialData).forEach(key => {
+        // Aseguramos observar BlockedSections para sincronizar el bloqueo de secciones en tiempo real.
+        const keysToObserve = new Set(Object.keys(initialData));
+        keysToObserve.add('BlockedSections');
+
+        keysToObserve.forEach(key => {
             if (options.lists?.includes(key)) return;
             if (options.richTexts?.includes(key)) return;
             if (options.nonCollaborative?.includes(key)) return;

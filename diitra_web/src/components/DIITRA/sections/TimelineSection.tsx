@@ -62,139 +62,14 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         currentWeek: number;
     } | null>(null);
 
-    // --- LIBERAR EL ARRASTRE DE CELDAS DE MANERA GLOBAL ---
-    useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            if (cellDragInfo) {
-                const { activityIndex, startWeek, currentWeek } = cellDragInfo;
-                const minW = Math.min(startWeek, currentWeek);
-                const maxW = Math.max(startWeek, currentWeek);
-                
-                const newSemanas = Array(totalWeeks).fill(false);
-                for (let w = minW; w <= maxW; w++) {
-                    newSemanas[w] = true;
-                }
-                
-                onUpdate(activityIndex, 'Semanas', newSemanas);
-                
-                if (projectStartDate) {
-                    const actStart = new Date(projectStartDate.getTime());
-                    actStart.setDate(projectStartDate.getDate() + minW * 7);
-                    onUpdate(activityIndex, 'FechaInicioPrevista', formatDateForInput(actStart));
-                    
-                    const actEnd = new Date(projectStartDate.getTime());
-                    actEnd.setDate(projectStartDate.getDate() + (maxW + 1) * 7 - 1);
-                    onUpdate(activityIndex, 'FechaFinPrevista', formatDateForInput(actEnd));
-                }
-                
-                setCellDragInfo(null);
-            }
-        };
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => {
-            window.removeEventListener('mouseup', handleGlobalMouseUp);
-        };
-    }, [cellDragInfo]);
-
-    // --- CATÁLOGO DE ACTIVIDADES SUGERIDAS (CACES / SENESCYT) ---
-    const suggestedCatalog = [
-        {
-            Actividad: "Revisión de literatura y fundamentación teórica",
-            RecursosNecesarios: "Acceso a bases de datos científicas (Scopus/IEEE), biblioteca digital.",
-            Entregable: "Documento de Marco Teórico y Bibliografía inicial compilada en APA.",
-            colorHex: "#0070f3",
-            IdObjetivo: 0,
-            description: "Fase fundamental de recopilación de antecedentes y fundamentación teórica.",
-            weeksRange: [0, 3]
-        },
-        {
-            Actividad: "Diseño conceptual y validación de instrumentos",
-            RecursosNecesarios: "Computador con herramientas de diagramación, cuestionarios, software de encuestas.",
-            Entregable: "Formularios de encuesta validados o diseño de laboratorio aprobado.",
-            colorHex: "#00dfd8",
-            IdObjetivo: 1,
-            description: "Elaboración y prueba piloto de cuestionarios, experimentos o prototipos.",
-            weeksRange: [2, 5]
-        },
-        {
-            Actividad: "Trabajo de campo, experimentación y recolección de datos",
-            RecursosNecesarios: "Equipos de laboratorio, reactivos, licencias, transporte de campo.",
-            Entregable: "Bitácoras firmadas y bases de datos crudos estructuradas.",
-            colorHex: "#f5a623",
-            IdObjetivo: 1,
-            description: "Fase operativa de campo o laboratorio para colecta experimental de datos.",
-            weeksRange: [4, 7]
-        },
-        {
-            Actividad: "Procesamiento de datos y análisis estadístico",
-            RecursosNecesarios: "Software analítico (Excel, SPSS, R, Python), internet.",
-            Entregable: "Reporte de resultados, tablas cruzadas y gráficos analizados.",
-            colorHex: "#7928ca",
-            IdObjetivo: 1,
-            description: "Tabulación y aplicación de modelos estadísticos sobre datos colectados.",
-            weeksRange: [6, 9]
-        },
-        {
-            Actividad: "Redacción de informe final técnico y artículo indexado",
-            RecursosNecesarios: "Computador, procesador de texto, guías de publicación institucional.",
-            Entregable: "Borrador de artículo científico y reporte técnico final completo.",
-            colorHex: "#00e054",
-            IdObjetivo: 0,
-            description: "Sistematización teórica y preparación de manuscrito para publicación científica.",
-            weeksRange: [8, 11]
-        },
-        {
-            Actividad: "Firma electrónica de informes y subida al Repositorio DSpace",
-            RecursosNecesarios: "Firma digital (.p12), token de acceso al Repositorio Traversari.",
-            Entregable: "Certificado de depósito digital en el repositorio Traversari.",
-            colorHex: "#ff0080",
-            IdObjetivo: 0,
-            description: "Transferencia tecnológica y publicación digital obligatoria CACES.",
-            weeksRange: [10, 11]
-        }
-    ];
-
-    // --- EFECTO MAESTRO PARA DETECTAR drop DE SUGERIDOS ---
-    useEffect(() => {
-        if (pendingSuggestedToAdd && cronograma.length > 0) {
-            const lastIdx = cronograma.length - 1;
-            const act = pendingSuggestedToAdd;
-            
-            const startW = act.weeksRange?.[0] ?? 0;
-            const endW = act.weeksRange?.[1] ?? 3;
-            
-            const newSemanas = Array(totalWeeks).fill(false);
-            for (let w = Math.min(startW, totalWeeks - 1); w <= Math.min(endW, totalWeeks - 1); w++) {
-                newSemanas[w] = true;
-            }
-            
-            let fInitStr = '';
-            let fEndStr = '';
-            if (projectStartDate) {
-                const fInit = new Date(projectStartDate.getTime());
-                fInit.setDate(projectStartDate.getDate() + startW * 7);
-                fInitStr = formatDateForInput(fInit);
-
-                const fEnd = new Date(projectStartDate.getTime());
-                fEnd.setDate(projectStartDate.getDate() + (endW + 1) * 7 - 1);
-                fEndStr = formatDateForInput(fEnd);
-            }
-            
-            onUpdate(lastIdx, 'Actividad', act.Actividad);
-            onUpdate(lastIdx, 'RecursosNecesarios', act.RecursosNecesarios);
-            onUpdate(lastIdx, 'Responsable', act.Responsable || teamMembers[0] || '');
-            onUpdate(lastIdx, 'Entregable', act.Entregable);
-            onUpdate(lastIdx, 'colorHex', act.colorHex);
-            onUpdate(lastIdx, 'IdObjetivo', act.IdObjetivo);
-            onUpdate(lastIdx, 'Numero', lastIdx + 1);
-            if (fInitStr) onUpdate(lastIdx, 'FechaInicioPrevista', fInitStr);
-            if (fEndStr) onUpdate(lastIdx, 'FechaFinPrevista', fEndStr);
-            onUpdate(lastIdx, 'Semanas', newSemanas);
-            
-            setPendingSuggestedToAdd(null);
-            setExpandedCard(lastIdx);
-        }
-    }, [cronograma.length]);
+    // Estado para controlar toques (taps) en responsive sin interferir con el scroll
+    const [touchStartInfo, setTouchStartInfo] = useState<{
+        x: number;
+        y: number;
+        activityIndex: number;
+        weekIndex: number;
+        time: number;
+    } | null>(null);
 
     // --- PARSEO DE OBJETIVOS ESPECÍFICOS ---
     const parseSpecificObjectives = (html: string | undefined): string[] => {
@@ -325,6 +200,142 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         '#888888'  // Gris Atenuado
     ];
 
+    // --- LIBERAR EL ARRASTRE DE CELDAS DE MANERA GLOBAL ---
+    useEffect(() => {
+        const handleGlobalEnd = () => {
+            if (cellDragInfo) {
+                const { activityIndex, startWeek, currentWeek } = cellDragInfo;
+                const minW = Math.min(startWeek, currentWeek);
+                const maxW = Math.max(startWeek, currentWeek);
+                
+                const newSemanas = Array(totalWeeks).fill(false);
+                for (let w = minW; w <= maxW; w++) {
+                    newSemanas[w] = true;
+                }
+                
+                onUpdate(activityIndex, 'Semanas', newSemanas);
+                
+                if (projectStartDate) {
+                    const actStart = new Date(projectStartDate.getTime());
+                    actStart.setDate(projectStartDate.getDate() + minW * 7);
+                    onUpdate(activityIndex, 'FechaInicioPrevista', formatDateForInput(actStart));
+                    
+                    const actEnd = new Date(projectStartDate.getTime());
+                    actEnd.setDate(projectStartDate.getDate() + (maxW + 1) * 7 - 1);
+                    onUpdate(activityIndex, 'FechaFinPrevista', formatDateForInput(actEnd));
+                }
+                
+                setCellDragInfo(null);
+            }
+        };
+        window.addEventListener('mouseup', handleGlobalEnd);
+        return () => {
+            window.removeEventListener('mouseup', handleGlobalEnd);
+        };
+    }, [cellDragInfo, totalWeeks, projectStartDate, onUpdate]);
+
+    // --- CATÁLOGO DE ACTIVIDADES SUGERIDAS (CACES / SENESCYT) ---
+    const suggestedCatalog = [
+        {
+            Actividad: "Revisión de literatura y fundamentación teórica",
+            RecursosNecesarios: "Acceso a bases de datos científicas (Scopus/IEEE), biblioteca digital.",
+            Entregable: "Documento de Marco Teórico y Bibliografía inicial compilada en APA.",
+            colorHex: "#0070f3",
+            IdObjetivo: 0,
+            description: "Fase fundamental de recopilación de antecedentes y fundamentación teórica.",
+            weeksRange: [0, 3]
+        },
+        {
+            Actividad: "Diseño conceptual y validación de instrumentos",
+            RecursosNecesarios: "Computador con herramientas de diagramación, cuestionarios, software de encuestas.",
+            Entregable: "Formularios de encuesta validados o diseño de laboratorio aprobado.",
+            colorHex: "#00dfd8",
+            IdObjetivo: 1,
+            description: "Elaboración y prueba piloto de cuestionarios, experimentos o prototipos.",
+            weeksRange: [2, 5]
+        },
+        {
+            Actividad: "Trabajo de campo, experimentación y recolección de datos",
+            RecursosNecesarios: "Equipos de laboratorio, reactivos, licencias, transporte de campo.",
+            Entregable: "Bitácoras firmadas y bases de datos crudos estructuradas.",
+            colorHex: "#f5a623",
+            IdObjetivo: 1,
+            description: "Fase operativa de campo o laboratorio para colecta experimental de datos.",
+            weeksRange: [4, 7]
+        },
+        {
+            Actividad: "Procesamiento de datos y análisis estadístico",
+            RecursosNecesarios: "Software analítico (Excel, SPSS, R, Python), internet.",
+            Entregable: "Reporte de resultados, tablas cruzadas y gráficos analizados.",
+            colorHex: "#7928ca",
+            IdObjetivo: 1,
+            description: "Tabulación y aplicación de modelos estadísticos sobre datos colectados.",
+            weeksRange: [6, 9]
+        },
+        {
+            Actividad: "Redacción de informe final técnico y artículo indexado",
+            RecursosNecesarios: "Computador, procesador de texto, guías de publicación institucional.",
+            Entregable: "Borrador de artículo científico y reporte técnico final completo.",
+            colorHex: "#00e054",
+            IdObjetivo: 0,
+            description: "Sistematización teórica y preparación de manuscrito para publicación científica.",
+            weeksRange: [8, 11]
+        },
+        {
+            Actividad: "Firma electrónica de informes y subida al Repositorio DSpace",
+            RecursosNecesarios: "Firma digital (.p12), token de acceso al Repositorio Traversari.",
+            Entregable: "Certificado de depósito digital en el repositorio Traversari.",
+            colorHex: "#ff0080",
+            IdObjetivo: 0,
+            description: "Transferencia tecnológica y publicación digital obligatoria CACES.",
+            weeksRange: [10, 11]
+        }
+    ];
+
+    // --- EFECTO MAESTRO PARA DETECTAR drop DE SUGERIDOS ---
+    useEffect(() => {
+        if (pendingSuggestedToAdd && cronograma.length > 0) {
+            const lastIdx = cronograma.length - 1;
+            const act = pendingSuggestedToAdd;
+            
+            const startW = act.weeksRange?.[0] ?? 0;
+            const endW = act.weeksRange?.[1] ?? 3;
+            
+            const newSemanas = Array(totalWeeks).fill(false);
+            for (let w = Math.min(startW, totalWeeks - 1); w <= Math.min(endW, totalWeeks - 1); w++) {
+                newSemanas[w] = true;
+            }
+            
+            let fInitStr = '';
+            let fEndStr = '';
+            if (projectStartDate) {
+                const fInit = new Date(projectStartDate.getTime());
+                fInit.setDate(projectStartDate.getDate() + startW * 7);
+                fInitStr = formatDateForInput(fInit);
+
+                const fEnd = new Date(projectStartDate.getTime());
+                fEnd.setDate(projectStartDate.getDate() + (endW + 1) * 7 - 1);
+                fEndStr = formatDateForInput(fEnd);
+            }
+            
+            onUpdate(lastIdx, 'Actividad', act.Actividad);
+            onUpdate(lastIdx, 'RecursosNecesarios', act.RecursosNecesarios);
+            onUpdate(lastIdx, 'Responsable', act.Responsable || teamMembers[0] || '');
+            onUpdate(lastIdx, 'Entregable', act.Entregable);
+            onUpdate(lastIdx, 'colorHex', act.colorHex);
+            onUpdate(lastIdx, 'IdObjetivo', act.IdObjetivo);
+            onUpdate(lastIdx, 'Numero', lastIdx + 1);
+            if (fInitStr) onUpdate(lastIdx, 'FechaInicioPrevista', fInitStr);
+            if (fEndStr) onUpdate(lastIdx, 'FechaFinPrevista', fEndStr);
+            onUpdate(lastIdx, 'Semanas', newSemanas);
+            
+            setPendingSuggestedToAdd(null);
+            setExpandedCard(lastIdx);
+        }
+    }, [cronograma.length]);
+
+    // (Helper functions and setup constants moved to top of component body to prevent initialization/declaration order issues)
+
     // --- CARGAR CRONOGRAMA SUGERIDO COMPLETO ---
     const handleLoadSuggestedTimeline = () => {
         suggestedCatalog.forEach((act, idx) => {
@@ -382,9 +393,65 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         });
     };
 
-    // --- REDIMENSIONADO Y DESPLAZAMIENTO GLOBAL DE BARRAS GANTT ---
-    const handleGanttBarMouseDown = (
-        e: React.MouseEvent,
+    const handleCellTouchStart = (activityIndex: number, weekIndex: number, e: React.TouchEvent) => {
+        if (readOnly) return;
+        const touch = e.touches[0];
+        setTouchStartInfo({
+            x: touch.clientX,
+            y: touch.clientY,
+            activityIndex,
+            weekIndex,
+            time: Date.now()
+        });
+    };
+
+    const handleCellTouchEnd = (activityIndex: number, weekIndex: number, e: React.TouchEvent) => {
+        if (!touchStartInfo || readOnly) return;
+
+        const touch = e.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartInfo.x);
+        const deltaY = Math.abs(touch.clientY - touchStartInfo.y);
+        const deltaTime = Date.now() - touchStartInfo.time;
+
+        // Si se movió muy poco (menos de 8px) y fue rápido (menos de 250ms), lo consideramos un tap
+        if (deltaX < 8 && deltaY < 8 && deltaTime < 250) {
+            const activity = cronograma[activityIndex];
+            const currentSemanas = activity.Semanas || Array(totalWeeks).fill(false);
+            const newSemanas = [...currentSemanas];
+            
+            newSemanas[weekIndex] = !newSemanas[weekIndex];
+            onUpdate(activityIndex, 'Semanas', newSemanas);
+            
+            // Sincronizar las fechas de la actividad
+            const { start, end } = getWeekRange(newSemanas);
+            if (start !== -1 && projectStartDate) {
+                const actStart = new Date(projectStartDate.getTime());
+                actStart.setDate(projectStartDate.getDate() + start * 7);
+                onUpdate(activityIndex, 'FechaInicioPrevista', formatDateForInput(actStart));
+
+                const actEnd = new Date(projectStartDate.getTime());
+                actEnd.setDate(projectStartDate.getDate() + (end + 1) * 7 - 1);
+                onUpdate(activityIndex, 'FechaFinPrevista', formatDateForInput(actEnd));
+            } else {
+                onUpdate(activityIndex, 'FechaInicioPrevista', '');
+                onUpdate(activityIndex, 'FechaFinPrevista', '');
+            }
+        }
+        setTouchStartInfo(null);
+    };
+
+    // --- AGREGAR SUGERENCIA DIRECTA DESDE CLICK/TOUCH EN EL BANCO ---
+    const handleAddSuggestedActivity = (item: any) => {
+        if (readOnly) return;
+        const actData = { ...item };
+        actData.weeksRange = [0, Math.min(3, totalWeeks - 1)];
+        setPendingSuggestedToAdd(actData);
+        onAdd();
+    };
+
+    // --- REDIMENSIONADO Y DESPLAZAMIENTO GLOBAL DE BARRAS GANTT (MOUSE & TOUCH) ---
+    const handleGanttBarStart = (
+        e: React.MouseEvent | React.TouchEvent,
         idx: number,
         type: 'move' | 'resize-left' | 'resize-right'
     ) => {
@@ -403,10 +470,13 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
 
         const trackRect = trackElement.getBoundingClientRect();
         const cellWidth = trackRect.width / totalWeeks;
-        const initialMouseX = e.clientX;
+        
+        const isTouch = 'touches' in e;
+        const initialX = isTouch ? e.touches[0].clientX : e.clientX;
 
-        const handleMouseMove = (moveEvent: MouseEvent) => {
-            const deltaX = moveEvent.clientX - initialMouseX;
+        const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const deltaX = currentX - initialX;
             const deltaWeeks = Math.round(deltaX / cellWidth);
 
             let newStart = startW;
@@ -452,13 +522,17 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             }
         };
 
-        const handleMouseUp = () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
+        const handleEnd = () => {
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('touchend', handleEnd);
         };
 
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
     };
 
     // --- REORDENACIÓN VERTICAL DE TARJETAS (HTML5 DRAG & DROP) ---
@@ -680,7 +754,22 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                             />
                                             <span className="text-[12.5px] font-bold text-text-main leading-snug whitespace-normal pr-1">{item.Actividad}</span>
                                         </div>
-                                        <Move size={13} className="text-text-dim opacity-50 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
+                                        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                                            {!readOnly && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAddSuggestedActivity(item);
+                                                    }}
+                                                    className="p-1 hover:bg-bg-deep-hover hover:text-text-main rounded-md text-text-dim transition-colors cursor-pointer"
+                                                    title="Agregar actividad al cronograma"
+                                                >
+                                                    <Plus size={13} />
+                                                </button>
+                                            )}
+                                            <Move size={13} className="text-text-dim opacity-50 group-hover:opacity-100 transition-opacity" />
+                                        </div>
                                     </div>
                                     <p className="text-[11px] text-text-dim/80 leading-relaxed mt-2">{item.description}</p>
                                 </div>
@@ -775,14 +864,16 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                     >
                                                         {/* Nombre de la actividad */}
                                                         <div 
-                                                            className="text-xs font-semibold text-text-main pr-3 pl-2 cursor-pointer flex items-center justify-between border-r border-border-thin/50 py-3 mr-2"
-                                                            onClick={() => {
-                                                                setActiveTab('cards');
-                                                                setExpandedCard(idx);
-                                                            }}
+                                                            className="text-xs font-semibold text-text-main pr-3 pl-2 flex items-center justify-between border-r border-border-thin/50 py-3 mr-2 group/row"
                                                             title="Clic para editar detalles"
                                                         >
-                                                            <div className="flex items-start gap-2 pl-1 whitespace-normal">
+                                                            <div 
+                                                                className="flex items-start gap-2 pl-1 whitespace-normal cursor-pointer min-w-0"
+                                                                onClick={() => {
+                                                                    setActiveTab('cards');
+                                                                    setExpandedCard(idx);
+                                                                }}
+                                                            >
                                                                 <div 
                                                                     className="w-1.5 h-3.5 rounded-full shrink-0 mt-0.5" 
                                                                     style={{ backgroundColor: activityColor }} 
@@ -791,7 +882,20 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                     {String(number).padStart(2, '0')}.
                                                                 </span>
                                                                 <span className="whitespace-normal break-words leading-tight line-clamp-2 pr-1.5 text-xs text-text-main font-semibold" title={name}>{name}</span>
-                                                             </div>
+                                                            </div>
+                                                            {!readOnly && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onRemove(idx);
+                                                                    }}
+                                                                    className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-colors shrink-0 ml-1.5 cursor-pointer"
+                                                                    title="Eliminar Actividad"
+                                                                >
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
                                                         </div>
 
                                                         {/* Timeline track de la fila */}
@@ -806,18 +910,23 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                     return (
                                                                         <div 
                                                                             key={w} 
+                                                                            data-week-index={w}
+                                                                            data-activity-index={idx}
                                                                             className={`h-full border-r border-border-thin/10 cursor-pointer hover:bg-text-main/5 transition-colors ${
                                                                                 isMonthBoundary ? 'border-l border-l-border-thin/30' : ''
                                                                             }`}
                                                                             onMouseDown={() => handleCellMouseDown(idx, w)}
                                                                             onMouseEnter={() => handleCellMouseEnter(idx, w)}
+                                                                            onTouchStart={(e) => handleCellTouchStart(idx, w, e)}
+                                                                            onTouchEnd={(e) => handleCellTouchEnd(idx, w, e)}
                                                                         />
                                                                     );
                                                                 })}
                                                                    {/* Barra de Rango de la Actividad (Draggable & Resizable) */}
                                                              {startW !== -1 && (
                                                                  <div 
-                                                                     onMouseDown={(e) => handleGanttBarMouseDown(e, idx, 'move')}
+                                                                     onMouseDown={(e) => handleGanttBarStart(e, idx, 'move')}
+                                                                     onTouchStart={(e) => handleGanttBarStart(e, idx, 'move')}
                                                                      className="absolute h-[26px] rounded-md flex items-center justify-between px-1.5 shadow-sm cursor-move group select-none transition-all bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover overflow-hidden"
                                                                      style={{
                                                                          left: `${(startW / totalWeeks) * 100}%`,
@@ -832,7 +941,8 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                      />
                                                                      {/* Resize Handle Izquierdo */}
                                                                      <div 
-                                                                         onMouseDown={(e) => handleGanttBarMouseDown(e, idx, 'resize-left')}
+                                                                         onMouseDown={(e) => handleGanttBarStart(e, idx, 'resize-left')}
+                                                                         onTouchStart={(e) => handleGanttBarStart(e, idx, 'resize-left')}
                                                                          className="w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20" 
                                                                      />
                                                                      
@@ -856,7 +966,8 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
  
                                                                      {/* Resize Handle Derecho */}
                                                                      <div 
-                                                                         onMouseDown={(e) => handleGanttBarMouseDown(e, idx, 'resize-right')}
+                                                                         onMouseDown={(e) => handleGanttBarStart(e, idx, 'resize-right')}
+                                                                         onTouchStart={(e) => handleGanttBarStart(e, idx, 'resize-right')}
                                                                          className="w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20" 
                                                                      />
                                                                  </div>
