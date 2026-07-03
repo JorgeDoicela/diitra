@@ -440,6 +440,21 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         setTouchStartInfo(null);
     };
 
+    const handleInactiveRowTouchEnd = (activityIndex: number, e: React.TouchEvent) => {
+        if (!touchStartInfo || readOnly) return;
+        
+        const touch = e.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartInfo.x);
+        const deltaY = Math.abs(touch.clientY - touchStartInfo.y);
+        const deltaTime = Date.now() - touchStartInfo.time;
+
+        // Si se movió muy poco (menos de 8px) y fue rápido (menos de 250ms), es un tap: activamos la fila
+        if (deltaX < 8 && deltaY < 8 && deltaTime < 250) {
+            setExpandedCard(activityIndex);
+        }
+        setTouchStartInfo(null);
+    };
+
     // --- AGREGAR SUGERENCIA DIRECTA DESDE CLICK/TOUCH EN EL BANCO ---
     const handleAddSuggestedActivity = (item: any) => {
         if (readOnly) return;
@@ -475,6 +490,10 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         const initialX = isTouch ? e.touches[0].clientX : e.clientX;
 
         const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            if ('touches' in moveEvent && moveEvent.cancelable) {
+                moveEvent.preventDefault();
+            }
+
             const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
             const deltaX = currentX - initialX;
             const deltaWeeks = Math.round(deltaX / cellWidth);
@@ -858,9 +877,13 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                 return (
                                                     <div 
                                                         key={idx} 
-                                                        className={`grid grid-cols-[280px_1fr] items-stretch hover:bg-bg-deep/40 transition-colors border-b border-border-thin/30 ${
-                                                            isExpanded ? 'bg-bg-deep/20 font-semibold' : ''
+                                                        className={`grid grid-cols-[280px_1fr] items-stretch hover:bg-bg-deep/40 transition-all border-b border-border-thin/30 ${
+                                                            isExpanded ? 'bg-text-main/[0.03] font-semibold' : 'opacity-70 hover:opacity-90'
                                                         }`}
+                                                        style={{
+                                                            borderLeft: '3px solid',
+                                                            borderLeftColor: isExpanded ? activityColor : 'transparent'
+                                                        }}
                                                     >
                                                         {/* Nombre de la actividad */}
                                                         <div 
@@ -912,27 +935,63 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                             key={w} 
                                                                             data-week-index={w}
                                                                             data-activity-index={idx}
-                                                                            className={`h-full border-r border-border-thin/10 cursor-pointer hover:bg-text-main/5 transition-colors ${
+                                                                            className={`h-full border-r border-border-thin/10 transition-colors ${
                                                                                 isMonthBoundary ? 'border-l border-l-border-thin/30' : ''
+                                                                            } ${
+                                                                                idx === expandedCard ? 'cursor-pointer hover:bg-text-main/5' : 'cursor-default'
                                                                             }`}
-                                                                            onMouseDown={() => handleCellMouseDown(idx, w)}
-                                                                            onMouseEnter={() => handleCellMouseEnter(idx, w)}
-                                                                            onTouchStart={(e) => handleCellTouchStart(idx, w, e)}
-                                                                            onTouchEnd={(e) => handleCellTouchEnd(idx, w, e)}
+                                                                            onMouseDown={() => {
+                                                                                if (idx === expandedCard) {
+                                                                                    handleCellMouseDown(idx, w);
+                                                                                } else {
+                                                                                    setExpandedCard(idx);
+                                                                                }
+                                                                            }}
+                                                                            onMouseEnter={() => {
+                                                                                if (idx === expandedCard) {
+                                                                                    handleCellMouseEnter(idx, w);
+                                                                                }
+                                                                            }}
+                                                                            onTouchStart={(e) => {
+                                                                                if (idx === expandedCard) {
+                                                                                    handleCellTouchStart(idx, w, e);
+                                                                                } else {
+                                                                                    handleCellTouchStart(idx, w, e);
+                                                                                }
+                                                                            }}
+                                                                            onTouchEnd={(e) => {
+                                                                                if (idx === expandedCard) {
+                                                                                    handleCellTouchEnd(idx, w, e);
+                                                                                } else {
+                                                                                    handleInactiveRowTouchEnd(idx, e);
+                                                                                }
+                                                                            }}
                                                                         />
                                                                     );
                                                                 })}
-                                                                   {/* Barra de Rango de la Actividad (Draggable & Resizable) */}
+                                                             {/* Barra de Rango de la Actividad (Draggable & Resizable) */}
                                                              {startW !== -1 && (
                                                                  <div 
-                                                                     onMouseDown={(e) => handleGanttBarStart(e, idx, 'move')}
-                                                                     onTouchStart={(e) => handleGanttBarStart(e, idx, 'move')}
-                                                                     className="absolute h-[26px] rounded-md flex items-center justify-between px-1.5 shadow-sm cursor-move group select-none transition-all bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover overflow-hidden"
+                                                                     className={`absolute h-[26px] rounded-md flex items-center justify-between px-1 shadow-sm select-none transition-all bg-surface border overflow-hidden ${
+                                                                         idx === expandedCard ? 'border-border-thin shadow' : 'cursor-pointer hover:opacity-90'
+                                                                     }`}
+                                                                     onMouseDown={(e) => {
+                                                                         // En PC (Mouse), permitimos arrastrar desde cualquier parte del cuerpo interno
+                                                                         if (idx === expandedCard && e.button === 0) {
+                                                                             handleGanttBarStart(e, idx, 'move');
+                                                                         }
+                                                                     }}
                                                                      style={{
                                                                          left: `${(startW / totalWeeks) * 100}%`,
                                                                          width: `${((endW - startW + 1) / totalWeeks) * 100}%`,
                                                                          backgroundColor: `${activityColor}15`,
                                                                          borderColor: activityColor
+                                                                     }}
+                                                                     onClick={(e) => {
+                                                                         if (idx !== expandedCard) {
+                                                                             e.stopPropagation();
+                                                                             setExpandedCard(idx);
+                                                                         }
                                                                      }}
                                                                  >
                                                                      <div 
@@ -941,12 +1000,38 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                                                                      />
                                                                      {/* Resize Handle Izquierdo */}
                                                                      <div 
-                                                                         onMouseDown={(e) => handleGanttBarStart(e, idx, 'resize-left')}
-                                                                         onTouchStart={(e) => handleGanttBarStart(e, idx, 'resize-left')}
+                                                                         onMouseDown={(e) => {
+                                                                             if (idx === expandedCard) {
+                                                                                 handleGanttBarStart(e, idx, 'resize-left');
+                                                                             }
+                                                                         }}
+                                                                         onTouchStart={(e) => {
+                                                                             if (idx === expandedCard) {
+                                                                                 handleGanttBarStart(e, idx, 'resize-left');
+                                                                             }
+                                                                         }}
                                                                          className="w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20" 
                                                                      />
+
+                                                                     {/* Grip de arrastre para mover toda la barra */}
+                                                                     {idx === expandedCard && !readOnly && (
+                                                                         <div 
+                                                                             onMouseDown={(e) => {
+                                                                                 e.stopPropagation();
+                                                                                 handleGanttBarStart(e, idx, 'move');
+                                                                             }}
+                                                                             onTouchStart={(e) => {
+                                                                                 e.stopPropagation();
+                                                                                 handleGanttBarStart(e, idx, 'move');
+                                                                             }}
+                                                                             className="p-1 cursor-move text-text-main/40 hover:text-text-main/70 hover:bg-bg-deep/50 rounded shrink-0 z-20 flex items-center justify-center mr-1 ml-0.5"
+                                                                             title="Arrastrar para mover toda la barra"
+                                                                         >
+                                                                             <GripVertical size={11} />
+                                                                         </div>
+                                                                     )}
                                                                      
-                                                                     <div className="text-[10px] font-bold text-text-main pr-1.5 pl-2.5 pointer-events-none select-none flex items-center gap-1.5 z-10 w-full overflow-hidden">
+                                                                     <div className="text-[10px] font-bold text-text-main pr-1 pl-1 pointer-events-none select-none flex items-center gap-1 z-10 w-full overflow-hidden">
                                                                          {_c.Responsable ? (
                                                                              <div className="flex items-center gap-1.5 min-w-0">
                                                                                  <span 
@@ -966,9 +1051,19 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
  
                                                                      {/* Resize Handle Derecho */}
                                                                      <div 
-                                                                         onMouseDown={(e) => handleGanttBarStart(e, idx, 'resize-right')}
-                                                                         onTouchStart={(e) => handleGanttBarStart(e, idx, 'resize-right')}
-                                                                         className="w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20" 
+                                                                         onMouseDown={(e) => {
+                                                                             if (idx === expandedCard) {
+                                                                                 handleGanttBarStart(e, idx, 'resize-right');
+                                                                             }
+                                                                         }}
+                                                                         onTouchStart={(e) => {
+                                                                             if (idx === expandedCard) {
+                                                                                 handleGanttBarStart(e, idx, 'resize-right');
+                                                                             }
+                                                                         }}
+                                                                         className={`w-[5px] h-3.5 bg-text-main/30 group-hover:bg-text-main/50 hover:!bg-text-main cursor-ew-resize rounded-full opacity-40 group-hover:opacity-75 hover:!opacity-100 transition-all z-20 ${
+                                                                             idx === expandedCard ? 'block' : 'hidden'
+                                                                         }`}
                                                                      />
                                                                  </div>
                                                              )}
