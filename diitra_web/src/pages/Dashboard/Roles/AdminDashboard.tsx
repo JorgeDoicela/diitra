@@ -113,21 +113,21 @@ export const AdminDashboard: React.FC = () => {
                 </div>
             ) : (
                 /* Two-column Vercel Layout */
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:200ms] pb-10">
-                    
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:200ms] pb-10">
+
                     {/* Main Content: Left Column */}
-                    <div className="lg:col-span-3 space-y-6">
-                        
+                    <div className="lg:col-span-3 flex flex-col gap-6">
+
                         {/* Status Grid: proyectos por estado y presupuesto */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
+
                             {/* Proyectos por estado */}
                             <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
                                 <div className="p-6">
                                     <div className="flex items-center justify-between mb-5">
                                         <span className="text-sm font-medium text-text-dim">Proyectos por estado</span>
                                     </div>
-                                    
+
                                     <div className="space-y-4">
                                         {stats?.proyectos_por_estado.map((est) => (
                                             <div key={est.estado} className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export const AdminDashboard: React.FC = () => {
                                 <Activity size={14} className="text-text-dim" />
                                 <span className="text-sm font-medium text-text-dim">Actividad reciente</span>
                             </div>
-                            
+
                             <div className="divide-y divide-border-thin bg-bg-deep/10">
                                 {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
                                     <div className="empty-state m-6 py-8">
@@ -242,8 +242,8 @@ export const AdminDashboard: React.FC = () => {
                                         const isInforme = item.tipo?.toLowerCase() === 'informe';
 
                                         return (
-                                            <div 
-                                                key={i} 
+                                            <div
+                                                key={i}
                                                 onClick={() => {
                                                     if (item.uuid) {
                                                         if (item.tipo?.toLowerCase() === 'proyecto') {
@@ -264,7 +264,7 @@ export const AdminDashboard: React.FC = () => {
 
                                                 {/* Columns Group (for neat alignment on desktop) */}
                                                 <div className="flex flex-wrap md:flex-nowrap items-center justify-between md:justify-end gap-x-8 gap-y-2 text-[11px] text-text-dim font-medium w-full md:w-auto">
-                                                    
+
                                                     {/* Col 2: Status with Dot */}
                                                     <div className="flex items-center gap-1.5 min-w-[90px]">
                                                         <span className={`w-1.5 h-1.5 rounded-full ${statusColor} shrink-0`} />
@@ -273,11 +273,10 @@ export const AdminDashboard: React.FC = () => {
 
                                                     {/* Col 3: Type Pill */}
                                                     <div className="shrink-0 min-w-[100px]">
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${
-                                                            isInforme 
-                                                                ? 'bg-info/10 text-info border border-info/20' 
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${isInforme
+                                                                ? 'bg-info/10 text-info border border-info/20'
                                                                 : 'bg-brand/10 text-brand border border-brand/20'
-                                                        }`}>
+                                                            }`}>
                                                             {isInforme ? <FileText size={10} /> : <Layers size={10} />}
                                                             {item.tipo}
                                                         </span>
@@ -308,10 +307,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* Sidebar: Right Column */}
-                    <div className="space-y-6">
+                    <div className="flex flex-col gap-6">
                         <ProximosEventosWidget />
-                        
-                        <VercelUsageCard 
+
+                        <VercelUsageCard
                             title="Resumen Institucional"
                             buttonLabel="Actualizar"
                             onButtonClick={fetchData}
@@ -354,7 +353,7 @@ export const AdminDashboard: React.FC = () => {
                                     <BarChart3 size={14} className="text-text-dim" />
                                     <span className="text-[13px] font-semibold text-text-main">Producción Científica</span>
                                 </div>
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Artículos Indexados</span>
@@ -383,8 +382,8 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
-                <button 
-                    onClick={onButtonClick} 
+                <button
+                    onClick={onButtonClick}
                     className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                     {buttonLabel}
@@ -397,10 +396,10 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                 const radius = 6.5;
                 const circumference = 2 * Math.PI * radius;
                 const strokeDashoffset = circumference - (percentage / 100) * circumference;
-                
+
                 return (
-                    <div 
-                        key={idx} 
+                    <div
+                        key={idx}
                         className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
@@ -432,11 +431,11 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg 
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
+                                <svg
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                     strokeWidth="2.5"
                                 >
                                     <circle cx="12" cy="12" r="10" />

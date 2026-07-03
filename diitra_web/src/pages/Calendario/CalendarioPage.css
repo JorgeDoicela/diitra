@@ -11,10 +11,7 @@
     overflow: hidden;
 }
 
-/* Fondo de contraste para que las Bento Cards destaquen en tema claro */
-:root[data-theme="light"] .calendario-page-container {
-    background: #f5f6f8;
-}
+
 
 /* ─── Sidebar (Bento Style) ────────────────────────────────────── */
 .calendario-sidebar {

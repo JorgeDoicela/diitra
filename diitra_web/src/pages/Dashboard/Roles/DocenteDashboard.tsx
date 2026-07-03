@@ -74,10 +74,10 @@ export const DocenteDashboard: React.FC = () => {
                 </div>
             ) : (
                 /* Two-column Vercel Layout */
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:200ms] pb-10">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:200ms] pb-10">
                     
                     {/* Main Content: Left Column */}
-                    <div className="lg:col-span-3 space-y-6">
+                    <div className="lg:col-span-3 flex flex-col gap-6">
                         
                         {/* Gestión de Proyectos */}
                         <div className="bento-card static p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
@@ -231,7 +231,7 @@ export const DocenteDashboard: React.FC = () => {
 
                     </div>
                     {/* Sidebar: Right Column */}
-                    <div className="space-y-6">
+                    <div className="flex flex-col gap-6">
                         <ProximosEventosWidget />
                         
                         <VercelUsageCard 

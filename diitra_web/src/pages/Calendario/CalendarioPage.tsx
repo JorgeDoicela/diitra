@@ -434,7 +434,7 @@ export const CalendarioPage: React.FC = () => {
             <div className="calendario-sidebar">
                 <button
                     onClick={handleNewEventClick}
-                    className="w-full py-3 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 mb-2 shadow-sm"
+                    className="btn-vercel-primary w-full py-3 text-xs mb-2 flex items-center justify-center gap-2"
                 >
                     <Plus size={14} />
                     Añadir Tarea / Evento
@@ -777,38 +777,38 @@ export const CalendarioPage: React.FC = () => {
 
                         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface">
                             {/* Título */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Título *</label>
+                            <div className="space-y-1">
+                                <label className="section-label mb-1.5 block">Título *</label>
                                 <input
                                     type="text"
                                     required
                                     placeholder="Ej: Reunión de Avance del Proyecto"
                                     value={formTitulo}
                                     onChange={(e) => setFormTitulo(e.target.value)}
-                                    className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                                    className="input-vercel text-sm"
                                 />
                             </div>
 
                             {/* Descripción */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Descripción o Detalles</label>
+                            <div className="space-y-1">
+                                <label className="section-label mb-1.5 block">Descripción o Detalles</label>
                                 <textarea
                                     rows={3}
                                     placeholder="Ingresa notas o detalles sobre el evento..."
                                     value={formDescripcion}
                                     onChange={(e) => setFormDescripcion(e.target.value)}
-                                    className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand resize-none"
+                                    className="input-vercel text-sm resize-none"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Tipo */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Categoría / Tipo</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Categoría / Tipo</label>
                                     <select
                                         value={formTipo}
                                         onChange={(e) => setFormTipo(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     >
                                         <option value="Personal">Personal / Nota</option>
                                         <option value="Tarea">Tarea de Investigación</option>
@@ -818,12 +818,12 @@ export const CalendarioPage: React.FC = () => {
                                 </div>
 
                                 {/* Color */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Etiqueta Visual (Color)</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Etiqueta Visual (Color)</label>
                                     <select
                                         value={formColorHex}
                                         onChange={(e) => setFormColorHex(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     >
                                         {COLORES_OPCIONES.map(({ value, label }) => (
                                             <option key={value} value={value}>{label}</option>
@@ -832,35 +832,35 @@ export const CalendarioPage: React.FC = () => {
                                 </div>
 
                                 {/* Fecha Inicio */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Fecha de Inicio *</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Fecha de Inicio *</label>
                                     <input
                                         type="date"
                                         required
                                         value={formFechaInicio}
                                         onChange={(e) => setFormFechaInicio(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     />
                                 </div>
 
                                 {/* Fecha Fin */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Fecha de Fin</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Fecha de Fin</label>
                                     <input
                                         type="date"
                                         value={formFechaFin}
                                         onChange={(e) => setFormFechaFin(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     />
                                 </div>
 
                                 {/* Prioridad */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Prioridad</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Prioridad</label>
                                     <select
                                         value={formPrioridad}
                                         onChange={(e) => setFormPrioridad(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     >
                                         <option value="Baja">Baja</option>
                                         <option value="Media">Media</option>
@@ -869,12 +869,12 @@ export const CalendarioPage: React.FC = () => {
                                 </div>
 
                                 {/* Estado */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Estado</label>
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block">Estado</label>
                                     <select
                                         value={formEstado}
                                         onChange={(e) => setFormEstado(e.target.value)}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     >
                                         <option value="Pendiente">Pendiente</option>
                                         <option value="EnProgreso">En Progreso</option>
@@ -884,8 +884,8 @@ export const CalendarioPage: React.FC = () => {
                                 </div>
 
                                 {/* Alerta días */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
+                                <div className="space-y-1">
+                                    <label className="section-label mb-1.5 block flex items-center gap-1.5">
                                         <Bell size={10} /> Recordatorio (días antes)
                                     </label>
                                     <input
@@ -895,16 +895,16 @@ export const CalendarioPage: React.FC = () => {
                                         placeholder="Ej: 3 (dejar vacío para no recordar)"
                                         value={formAlertaDias}
                                         onChange={(e) => setFormAlertaDias(e.target.value === '' ? '' : Number(e.target.value))}
-                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                        className="input-vercel text-sm"
                                     />
                                 </div>
 
                                 {/* Recurrencia anual */}
-                                <div className="space-y-2 flex flex-col justify-end">
-                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
+                                <div className="space-y-1 flex flex-col justify-end">
+                                    <label className="section-label mb-1.5 block flex items-center gap-1.5">
                                         <RotateCcw size={10} /> Repetición
                                     </label>
-                                    <div className="flex items-center gap-3 px-4 py-3 bg-bg border border-border rounded-xl">
+                                    <div className="flex items-center gap-3 px-4 py-2.5 bg-surface border border-border-thin rounded-lg">
                                         <input
                                             type="checkbox"
                                             id="recurrencia_anual"
@@ -920,7 +920,7 @@ export const CalendarioPage: React.FC = () => {
                             </div>
 
                             {/* Es Privado */}
-                            <div className="flex items-center gap-3 p-4 bg-bg border border-border rounded-xl">
+                            <div className="flex items-center gap-3 p-4 bg-surface border border-border-thin rounded-lg">
                                 <input
                                     type="checkbox"
                                     id="es_privado"
@@ -943,13 +943,13 @@ export const CalendarioPage: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsFormOpen(false)}
-                                className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all"
+                                className="btn-vercel-secondary flex-1 py-3 text-xs"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
-                                className="flex-1 py-3 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all"
+                                className="btn-vercel-primary flex-1 py-3 text-xs"
                             >
                                 {isEditing ? 'Actualizar Evento' : 'Guardar Evento'}
                             </button>
