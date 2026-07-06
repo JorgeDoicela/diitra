@@ -259,7 +259,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     </header>
                 )}
 
-                <div className={`flex-1 ${isWorkspace ? 'overflow-hidden h-full' : 'overflow-y-auto'}`}>
+                <div className={`flex-1 ${isWorkspace ? 'overflow-hidden h-full' : 'overflow-y-auto custom-scrollbar'}`}>
                     <div className={isWorkspace ? 'h-full w-full' : 'max-w-[1600px] mx-auto w-full'}>
                         {children}
                     </div>

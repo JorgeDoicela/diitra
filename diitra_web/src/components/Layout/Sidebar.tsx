@@ -287,11 +287,13 @@ const Sidebar = ({
     }
 
     const allMenuItems: MenuItem[] = [
-        // Grupo 1: Principal
+        // Grupo 1: Principal y Espacio Personal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
+        { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 1 },
         { name: 'Calendario', icon: Calendar, path: '/calendario', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
         { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
+        { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
         { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
 
         // Grupo 2: Procesos y Analíticas
@@ -302,18 +304,14 @@ const Sidebar = ({
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN'], group: 2, hasChevron: true },
 
         // Grupo 3: Sistema y Admin
-        { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 3 },
-        { name: 'Derechos ARCO', icon: ShieldCheck, path: '/derechos-arco', roles: ['ANY'], group: 3 },
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Panel LOPDP', icon: ShieldCheck, path: '/admin/lopdp', roles: ['DIITRA_ADMIN'], group: 3 },
-        { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Parámetros', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], group: 3, hasChevron: true },
     ];
 
     const menuItems = allMenuItems.filter(item => {
-        if (item.path === '/derechos-arco' && isAdmin) return false;
         if (item.path === '/investigacion/mis-proyectos' && isAdmin) return false;
 
         if (isAdmin) return true;

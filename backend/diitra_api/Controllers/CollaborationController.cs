@@ -303,6 +303,96 @@ namespace diitra_api.Controllers
                 return StatusCode(500, new { message = "Error interno al publicar comentario", detail = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Actualiza el contenido de un comentario (Edición).
+        /// </summary>
+        [HttpPut("comments/{id}")]
+        public async Task<IActionResult> UpdateComment(int id, [FromBody] UpdateCommentRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Contenido))
+                return BadRequest(new { message = "El contenido no puede estar vacío." });
+
+            try
+            {
+                var comment = await _db.InvCollaborationComments.FindAsync(id);
+                if (comment == null)
+                    return NotFound(new { message = "Comentario no encontrado." });
+
+                var userUuid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
+
+                if (comment.UsuarioUuid != userUuid && !isAdmin)
+                {
+                    return StatusCode(403, new { message = "No tienes permisos para editar este comentario." });
+                }
+
+                comment.Contenido = request.Contenido;
+                await _db.SaveChangesAsync();
+
+                // Notificar en tiempo real
+                await _hubContext.Clients.Group(comment.DocumentoUuid.ToLower().Trim()).SendAsync("CommentUpdated", new
+                {
+                    idComentario = comment.IdComentario,
+                    documentoUuid = comment.DocumentoUuid,
+                    contenido = comment.Contenido
+                });
+
+                return Ok(comment);
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al actualizar comentario: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al editar el comentario", detail = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Elimina un comentario y sus respuestas (Eliminación).
+        /// </summary>
+        [HttpDelete("comments/{id}")]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            try
+            {
+                var comment = await _db.InvCollaborationComments.FindAsync(id);
+                if (comment == null)
+                    return NotFound(new { message = "Comentario no encontrado." });
+
+                var userUuid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
+
+                if (comment.UsuarioUuid != userUuid && !isAdmin)
+                {
+                    return StatusCode(403, new { message = "No tienes permisos para eliminar este comentario." });
+                }
+
+                // Obtener e hijos si existen y borrarlos en cascada
+                var children = await _db.InvCollaborationComments.Where(c => c.IdPadre == id).ToListAsync();
+                _db.InvCollaborationComments.RemoveRange(children);
+                _db.InvCollaborationComments.Remove(comment);
+                await _db.SaveChangesAsync();
+
+                // Notificar en tiempo real
+                await _hubContext.Clients.Group(comment.DocumentoUuid.ToLower().Trim()).SendAsync("CommentDeleted", new
+                {
+                    idComentario = comment.IdComentario,
+                    documentoUuid = comment.DocumentoUuid
+                });
+
+                return Ok(new { message = "Comentario eliminado correctamente." });
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al eliminar comentario: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al eliminar el comentario", detail = ex.Message });
+            }
+        }
+    }
+
+    public class UpdateCommentRequest
+    {
+        public string Contenido { get; set; } = null!;
     }
 
     public class CreateCommentRequest

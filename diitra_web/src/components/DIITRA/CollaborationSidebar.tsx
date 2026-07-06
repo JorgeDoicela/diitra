@@ -7,12 +7,17 @@ import {
     User,
     Activity,
     ChevronRight,
-    Loader
+    Loader,
+    Mic,
+    Edit2,
+    XCircle
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
+import { useConfirm } from '../../api/ConfirmContext';
 import { coworkLog } from '../../core/cowork/utils/log';
+import { AudioBubblePlayer } from '../../pages/Admin/components/AudioBubblePlayer';
 
 
 interface CollaborationSidebarProps {
@@ -31,6 +36,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     onClose
 }) => {
     const { user } = useAuth();
+    const confirm = useConfirm();
     const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity'>(() => {
         const saved = localStorage.getItem('document_sidebar_tab');
         return (saved === 'comments' || saved === 'status' || saved === 'activity') ? saved : 'comments';
@@ -45,6 +51,20 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     const [activities, setActivities] = useState<any[]>([]);
     const [sectionStatuses, setSectionStatuses] = useState<Record<string, string>>({});
     const [isLoadingPulse, setIsLoadingPulse] = useState(true);
+
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editingCommentText, setEditingCommentText] = useState('');
+
+    // Audio recording state & refs
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string>('');
+    const [sendingAudio, setSendingAudio] = useState(false);
+
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -123,7 +143,26 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 idPadre: data.idPadre ?? data.id_padre ?? null,
                 creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString()
             };
-            setComments(prev => [...prev, normalized].slice(-50));
+            setComments(prev => {
+                const commentId = normalized.idComentario;
+                if (prev.some(c => c.idComentario === commentId)) return prev;
+                return [...prev, normalized].slice(-50);
+            });
+        });
+
+        cowork.onCommentUpdated?.((data) => {
+            const updatedId = data.idComentario ?? data.id_comentario ?? data.idComentario;
+            setComments(prev => prev.map(c => {
+                if (c.idComentario === updatedId) {
+                    return { ...c, contenido: data.contenido ?? data.Contenido ?? c.contenido };
+                }
+                return c;
+            }));
+        });
+
+        cowork.onCommentDeleted?.((data) => {
+            const deletedId = data.idComentario ?? data.id_comentario ?? data.idComentario;
+            setComments(prev => prev.filter(c => c.idComentario !== deletedId));
         });
 
         cowork.onSectionActivity((data) => {
@@ -161,6 +200,95 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         });
     }, [cowork]);
 
+    // Voice recording helpers
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                setAudioUrl(URL.createObjectURL(blob));
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } catch (err) {
+            console.error("Error starting voice recorder:", err);
+            alert("No se pudo acceder al micrófono. Verifique los permisos.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+    };
+
+    const cancelRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+        if (timerRef.current) clearInterval(timerRef.current);
+        setAudioBlob(null);
+        setAudioUrl('');
+    };
+
+    const handleUpdateComment = async (id: number, nuevoContenido: string) => {
+        try {
+            await api.put(`/collaboration/comments/${id}`, { contenido: nuevoContenido });
+            setEditingCommentId(null);
+            setEditingCommentText('');
+        } catch (err: any) {
+            console.error("Error al actualizar comentario:", err);
+            alert("No se pudo actualizar el comentario: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleDeleteComment = async (id: number) => {
+        const hasConfirmed = await confirm({
+            title: 'Eliminar Comentario',
+            message: '¿Está seguro de que desea eliminar este comentario? Esta acción eliminará también sus respuestas.',
+            variant: 'destructive',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar'
+        });
+        if (!hasConfirmed) return;
+
+        try {
+            await api.delete(`/collaboration/comments/${id}`);
+        } catch (err: any) {
+            console.error("Error al eliminar comentario:", err);
+            alert("No se pudo eliminar el comentario: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const parseCommentContent = (contenido: string) => {
+        try {
+            if (contenido.trim().startsWith('{')) {
+                return JSON.parse(contenido);
+            }
+        } catch (e) {}
+        return null;
+    };
+
     // Cálculo dinámico de progreso global basado en aprobaciones
     const globalProgress = useMemo(() => {
         if (!allSections.length) return 0;
@@ -170,12 +298,36 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
     // Publicar comentario en tiempo real
     const handlePostComment = async () => {
-        if (!comment.trim()) return;
+        if (!comment.trim() && !audioBlob) return;
+        setSendingAudio(true);
         try {
-            await cowork.postComment(instanceUuid, comment);
+            let contentStr = '';
+
+            if (audioBlob) {
+                const formDataObj = new FormData();
+                formDataObj.append('file', audioBlob, `audio_feedback_${Date.now()}.webm`);
+                const uploadRes = await api.post('/collaboration/upload', formDataObj, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                const payload = {
+                    type: 'audio',
+                    audioUrl: uploadRes.data.url,
+                    text: comment.trim() || 'Explicación de audio adjunta'
+                };
+                contentStr = JSON.stringify(payload);
+            } else {
+                contentStr = comment.trim();
+            }
+
+            await cowork.postComment(instanceUuid, contentStr);
             setComment('');
+            setAudioBlob(null);
+            setAudioUrl('');
         } catch (err) {
             console.error("[Team Pulse] Error al enviar comentario:", err);
+        } finally {
+            setSendingAudio(false);
         }
     };
 
@@ -266,6 +418,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     ) : (
                                         <div className="space-y-3 flex flex-col">
                                             {comments.map((c, i) => {
+                                                const parsed = parseCommentContent(c.contenido);
                                                 const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
                                                 const isMe = c.usuarioUuid === user?.id_referencia;
 
@@ -285,16 +438,81 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                             <span className="text-[7px] text-text-dim font-mono">
                                                                 {formatTime(c.creadoEn)}
                                                             </span>
+                                                            {isMe && (
+                                                                <div className="flex items-center gap-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                                                                    {!parsed?.audioUrl && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingCommentId(c.idComentario);
+                                                                                setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                            }}
+                                                                            className="text-[8px] text-text-dim hover:text-text-main"
+                                                                            title="Editar"
+                                                                        >
+                                                                            <Edit2 size={10} />
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleDeleteComment(c.idComentario)}
+                                                                        className="text-[8px] text-text-dim hover:text-red-500"
+                                                                        title="Eliminar"
+                                                                    >
+                                                                        <XCircle size={10} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 ${
+                                                        <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${
                                                             isMe
                                                                 ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
                                                                 : isMsgFromAdmin
                                                                     ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
                                                                     : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
                                                         }`}>
-                                                            <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
+                                                            {editingCommentId === c.idComentario ? (
+                                                                <div className="space-y-2">
+                                                                    <textarea
+                                                                        value={editingCommentText}
+                                                                        onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                                                    />
+                                                                    <div className="flex justify-end gap-1">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingCommentId(null);
+                                                                                setEditingCommentText('');
+                                                                            }}
+                                                                            className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                        >
+                                                                            Cancelar
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                let updatedContent = editingCommentText;
+                                                                                if (parsed) {
+                                                                                    updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
+                                                                                }
+                                                                                handleUpdateComment(c.idComentario, updatedContent);
+                                                                            }}
+                                                                            className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
+                                                                        >
+                                                                            Guardar
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : parsed ? (
+                                                                <div className="space-y-2">
+                                                                    {parsed.text && <p className="text-xs text-text-main leading-relaxed select-text">{parsed.text}</p>}
+                                                                    {parsed.audioUrl && (
+                                                                        <div className="mt-1">
+                                                                            <AudioBubblePlayer src={parsed.audioUrl} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
@@ -303,27 +521,82 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     )}
                                     <div ref={commentsEndRef} />
                                 </div>
-                                <div className="mt-auto relative pt-2 shrink-0">
-                                    <textarea
-                                        value={comment}
-                                        onChange={(e) => setComment(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handlePostComment();
-                                            }
-                                        }}
-                                        placeholder="Escribe un mensaje al equipo..."
-                                        className="w-full bg-surface border border-border-thin rounded-xl p-3 pr-12 text-xs focus:ring-2 focus:ring-text-main/10 focus:border-text-main outline-none resize-none h-20 transition-all custom-scrollbar placeholder:text-text-dim/60"
-                                    />
-                                    <button
-                                        onClick={handlePostComment}
-                                        className="absolute bottom-5 right-3 p-2 bg-text-main hover:opacity-90 text-bg-deep rounded-lg shadow-lg active:scale-95 transition-all"
-                                        title="Enviar mensaje"
-                                    >
-                                        <Send size={12} />
-                                    </button>
-                                </div>
+                                <div className="mt-auto pt-2 shrink-0 space-y-3">
+                                    {isRecording ? (
+                                        <div className="flex items-center justify-between bg-red-500/5 border border-red-500/25 rounded-xl p-2 px-3 animate-pulse">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                                                <span className="text-[8px] font-black uppercase text-red-400 tracking-wider font-mono">
+                                                    Grabando ({Math.floor(recordingTime / 60)}:{(recordingTime % 60) < 10 ? '0' : ''}{recordingTime % 60})
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelRecording}
+                                                    className="px-1.5 py-0.5 hover:bg-surface border border-border-thin rounded text-[8px] font-bold uppercase tracking-widest text-text-dim transition-all"
+                                                >
+                                                    x
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={stopRecording}
+                                                    className="px-2 py-0.5 bg-red-500 text-white rounded text-[8px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-md"
+                                                >
+                                                    ok
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : audioUrl ? (
+                                        <div className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-2 animate-fade-in">
+                                            <div className="space-y-0.5 min-w-0 flex-1 mr-2">
+                                                <span className="text-[7px] font-black uppercase text-emerald-400 tracking-widest block mb-1">Audio grabado</span>
+                                                <AudioBubblePlayer src={audioUrl} />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setAudioBlob(null); setAudioUrl(''); }}
+                                                className="px-1.5 py-0.5 hover:bg-red-500/10 rounded text-[8px] font-bold uppercase tracking-widest text-red-500 transition-all shrink-0"
+                                            >
+                                                Descartar
+                                            </button>
+                                        </div>
+                                    ) : null}
+
+                                    <div className="relative">
+                                        <textarea
+                                            value={comment}
+                                            onChange={(e) => setComment(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handlePostComment();
+                                                }
+                                            }}
+                                            placeholder="Escribe un mensaje al equipo..."
+                                            className="w-full bg-surface border border-border-thin rounded-xl p-3 pr-20 text-xs focus:ring-2 focus:ring-text-main/10 focus:border-text-main outline-none resize-none h-20 transition-all custom-scrollbar placeholder:text-text-dim/60"
+                                        />
+                                        <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                                            {!audioUrl && !isRecording && (
+                                                <button
+                                                    type="button"
+                                                    onClick={startRecording}
+                                                    className="p-1.5 text-text-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg active:scale-95 transition-all"
+                                                    title="Grabar Audio"
+                                                >
+                                                    <Mic size={14} />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handlePostComment}
+                                                disabled={sendingAudio || (!comment.trim() && !audioBlob)}
+                                                className="p-2 bg-text-main hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-bg-deep rounded-lg shadow-lg active:scale-95 transition-all flex items-center justify-center"
+                                                title="Enviar mensaje"
+                                            >
+                                                {sendingAudio ? <Loader size={12} className="animate-spin" /> : <Send size={12} />}
+                                            </button>
+                                        </div>
+                                    </div>            </div>
                             </div>
                         )}
 

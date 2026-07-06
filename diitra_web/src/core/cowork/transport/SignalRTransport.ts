@@ -236,4 +236,14 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.off('NewCommentReceived');
         this.connection.on('NewCommentReceived', handler);
     }
+
+    onCommentUpdated(handler: (data: any) => void): void {
+        this.connection.off('CommentUpdated');
+        this.connection.on('CommentUpdated', handler);
+    }
+
+    onCommentDeleted(handler: (data: any) => void): void {
+        this.connection.off('CommentDeleted');
+        this.connection.on('CommentDeleted', handler);
+    }
 }

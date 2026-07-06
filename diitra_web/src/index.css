@@ -1540,12 +1540,12 @@ select.input-vercel {
 }
 
 /* Evitar saltos de diseño (layout shift) cuando el scrollbar aparece o desaparece */
-html,
+/* html,
 body,
 .overflow-y-auto,
 .overflow-y-scroll {
     scrollbar-gutter: stable;
-}
+} */
 
 [data-theme="light"],
 [data-theme="light"] * {

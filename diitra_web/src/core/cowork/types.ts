@@ -79,4 +79,6 @@ export interface CoWorkHandle {
     onSectionActivity: (handler: (data: any) => void) => void;
     onSectionStatusUpdated: (handler: (data: any) => void) => void;
     onNewCommentReceived: (handler: (data: any) => void) => void;
+    onCommentUpdated: (handler: (data: any) => void) => void;
+    onCommentDeleted: (handler: (data: any) => void) => void;
 }

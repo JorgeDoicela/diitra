@@ -7,6 +7,7 @@ import {
 import api from '../../../api/axios_config';
 import { AudioBubblePlayer } from './AudioBubblePlayer';
 import { coworkLog } from '../../../core/cowork/utils/log';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 
 interface GroupMember {
@@ -111,12 +112,15 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     fetchData,
     isEditingInitial
 }) => {
+    const confirm = useConfirm();
     const [detailMembers, setDetailMembers] = useState<GroupMember[]>([]);
     const [detailTab, setDetailTab] = useState<'info' | 'feedback' | 'proyectos'>('info');
     const [feedbackComments, setFeedbackComments] = useState<any[]>([]);
     const [loadingFeedback, setLoadingFeedback] = useState(false);
     const [newFeedbackText, setNewFeedbackText] = useState('');
     const [sendingFeedback, setSendingFeedback] = useState(false);
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editingCommentText, setEditingCommentText] = useState('');
 
     const userRef = user?.id_referencia?.trim();
     const canEdit = detailGroup && (isAdmin || 
@@ -481,12 +485,18 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         );
     };
 
-    const handleCloseAttempt = (action: 'cancel-edit' | 'close-drawer') => {
+    const handleCloseAttempt = async (action: 'cancel-edit' | 'close-drawer') => {
         if (isEditing && hasChangesFromDb()) {
-            const confirmDiscard = window.confirm("Tiene cambios no guardados en el borrador de edición. ¿Está seguro de que desea salir? Se perderán las modificaciones.");
-            if (!confirmDiscard) return;
+            const hasConfirmed = await confirm({
+                title: 'Salir de la Edición',
+                message: 'Tiene cambios no guardados en el borrador de edición. ¿Está seguro de que desea salir? Se perderán las modificaciones.',
+                variant: 'warning',
+                confirmText: 'Salir',
+                cancelText: 'Permanecer'
+            });
+            if (!hasConfirmed) return;
         }
-
+ 
         if (action === 'cancel-edit') {
             setIsEditing(false);
             if (detailGroup) {
@@ -735,6 +745,23 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         return [...prev, normalizedComment];
                     });
                 });
+
+                newConnection.on('CommentUpdated', (data: any) => {
+                    setFeedbackComments(prev => prev.map(c => {
+                        const commentId = c.idComentario || c.id_comentario;
+                        if (commentId === data.idComentario) {
+                            return { ...c, contenido: data.contenido };
+                        }
+                        return c;
+                    }));
+                });
+
+                newConnection.on('CommentDeleted', (data: any) => {
+                    setFeedbackComments(prev => prev.filter(c => {
+                        const commentId = c.idComentario || c.id_comentario;
+                        return commentId !== data.idComentario;
+                    }));
+                });
             })
             .catch(err => {
                 // Evitar registrar en consola los errores benignos de cancelación/aborto por desmontado rápido
@@ -872,6 +899,41 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
             alert("Error al enviar: " + (err.response?.data?.message || err.message));
         } finally {
             setSendingFeedback(false);
+        }
+    };
+
+    const handleUpdateComment = async (id: number, nuevoContenido: string) => {
+        try {
+            await api.put(`/collaboration/comments/${id}`, { contenido: nuevoContenido });
+            setEditingCommentId(null);
+            setEditingCommentText('');
+            if (detailGroup?.uuid) {
+                await fetchFeedbackComments(detailGroup.uuid);
+            }
+        } catch (err: any) {
+            console.error("Error al actualizar comentario:", err);
+            alert("No se pudo actualizar el comentario: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleDeleteComment = async (id: number) => {
+        const hasConfirmed = await confirm({
+            title: 'Eliminar Comentario',
+            message: '¿Está seguro de que desea eliminar este comentario? Esta acción eliminará también sus respuestas.',
+            variant: 'destructive',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar'
+        });
+        if (!hasConfirmed) return;
+
+        try {
+            await api.delete(`/collaboration/comments/${id}`);
+            if (detailGroup?.uuid) {
+                await fetchFeedbackComments(detailGroup.uuid);
+            }
+        } catch (err: any) {
+            console.error("Error al eliminar comentario:", err);
+            alert("No se pudo eliminar el comentario: " + (err.response?.data?.message || err.message));
         }
     };
 
@@ -1083,16 +1145,70 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                     <span className="text-[7px] text-text-dim font-mono">
                                                         {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
+                                                    {isMe && (
+                                                         <div className="flex items-center gap-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                                                             {!parsed?.audioUrl && (
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setEditingCommentId(c.idComentario);
+                                                                         setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                     }}
+                                                                     className="text-[8px] text-text-dim hover:text-text-main"
+                                                                     title="Editar"
+                                                                 >
+                                                                     <Edit2 size={10} />
+                                                                 </button>
+                                                             )}
+                                                             <button
+                                                                 onClick={() => handleDeleteComment(c.idComentario)}
+                                                                 className="text-[8px] text-text-dim hover:text-red-500"
+                                                                 title="Eliminar"
+                                                             >
+                                                                 <XCircle size={10} />
+                                                             </button>
+                                                         </div>
+                                                    )}
                                                 </div>
 
-                                                <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 ${
+                                                <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${
                                                     isMe
                                                         ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
                                                         : isMsgFromAdmin
                                                             ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
                                                             : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
                                                 }`}>
-                                                    {parsed ? (
+                                                    {editingCommentId === c.idComentario ? (
+                                                         <div className="space-y-2">
+                                                             <textarea
+                                                                 value={editingCommentText}
+                                                                 onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                 className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                                             />
+                                                             <div className="flex justify-end gap-1">
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setEditingCommentId(null);
+                                                                         setEditingCommentText('');
+                                                                     }}
+                                                                     className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                 >
+                                                                     Cancelar
+                                                                 </button>
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         let updatedContent = editingCommentText;
+                                                                         if (parsed) {
+                                                                             updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
+                                                                         }
+                                                                         handleUpdateComment(c.idComentario, updatedContent);
+                                                                     }}
+                                                                     className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
+                                                                 >
+                                                                     Guardar
+                                                                 </button>
+                                                             </div>
+                                                         </div>
+                                                    ) : parsed ? (
                                                         <div className="space-y-2">
                                                             {parsed.text && <p className="text-[11px] font-medium leading-relaxed">{parsed.text}</p>}
                                                             {parsed.audioUrl && (
@@ -2316,120 +2432,239 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                         const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
                                         const isMe = c.usuarioUuid === user?.id_referencia;
 
-                                        if (isFieldFeedback && fieldFeedbackData) {
-                                            return (
-                                                <div 
-                                                    key={c.idComentario || i} 
-                                                    className={`flex flex-col w-full max-w-[90%] ${
-                                                        isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                                                    } animate-fade-up`}
-                                                >
-                                                    <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                        <span className={`text-[9px] font-black uppercase tracking-wider ${
-                                                            isMe
-                                                                ? 'text-emerald-400'
-                                                                : isMsgFromAdmin
-                                                                    ? 'text-amber-400'
-                                                                    : 'text-brand-light'
-                                                        }`}>
-                                                            {isMe ? 'Tú' : c.nombreUsuario} (Retroalimentación de Campo)
-                                                        </span>
-                                                        <span className="text-[8px] text-text-dim font-mono">
-                                                            {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className={`rounded-xl p-4 border shadow-sm w-full select-text transition-all duration-300 ${
-                                                        isMe
-                                                            ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
-                                                            : isMsgFromAdmin
-                                                                ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
-                                                                : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
-                                                    }`}>
-                                                        <div className="flex items-center justify-between border-b border-border-thin/20 pb-2 mb-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <AlertTriangle size={12} className={isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'} />
-                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                                                    isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'
-                                                                }`}>
-                                                                    Observación: {fieldFeedbackData.fieldName || fieldFeedbackData.field}
-                                                                </span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setDetailTab('info');
-                                                                    setHighlightedField(fieldFeedbackData.field);
-                                                                    setTimeout(() => {
-                                                                        const element = document.getElementById(`field-container-${fieldFeedbackData.field}`);
-                                                                        if (element) {
-                                                                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                                        }
-                                                                    }, 300);
-                                                                    setTimeout(() => {
-                                                                        setHighlightedField(null);
-                                                                    }, 3500);
-                                                                }}
-                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-border-thin bg-surface-hover hover:border-border-hover text-text-dim active:scale-95 transition-all"
-                                                            >
-                                                                Ver Campo
-                                                            </button>
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            {fieldFeedbackData.text && <p className="text-[11px] font-medium leading-relaxed">{fieldFeedbackData.text}</p>}
-                                                            {fieldFeedbackData.audioUrl && (
-                                                                <div className="mt-1">
-                                                                    <AudioBubblePlayer src={fieldFeedbackData.audioUrl} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <div 
-                                                key={c.idComentario || i} 
-                                                className={`flex flex-col w-full max-w-[80%] ${
-                                                    isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                                                } animate-fade-up`}
-                                            >
-                                                <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${
-                                                        isMe
-                                                            ? 'text-emerald-400'
-                                                            : isMsgFromAdmin
-                                                                ? 'text-amber-400'
-                                                                : 'text-brand-light'
-                                                    }`}>
-                                                        {isMe ? 'Tú' : c.nombreUsuario}
-                                                    </span>
-                                                    <span className="text-[8px] text-text-dim font-mono">
-                                                        {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-
-                                                <div className={`rounded-xl p-4 border shadow-sm select-text transition-all duration-300 ${
-                                                    isMe
-                                                        ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
-                                                        : isMsgFromAdmin
-                                                            ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
-                                                            : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
-                                                }`}>
-                                                    {isAudio && audioData ? (
-                                                        <div className="space-y-2">
-                                                            {audioData.text && <p className="text-[11px] font-medium leading-relaxed">{audioData.text}</p>}
-                                                            <div className="mt-1">
-                                                                <AudioBubblePlayer src={audioData.audioUrl} />
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-[11px] font-medium leading-relaxed">{c.contenido}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                         if (isFieldFeedback && fieldFeedbackData) {
+                                             return (
+                                                 <div 
+                                                     key={c.idComentario || i} 
+                                                     className={`flex flex-col w-full max-w-[90%] ${
+                                                         isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                     } animate-fade-up`}
+                                                 >
+                                                     <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                         <span className={`text-[9px] font-black uppercase tracking-wider ${
+                                                             isMe
+                                                                 ? 'text-emerald-400'
+                                                                 : isMsgFromAdmin
+                                                                     ? 'text-amber-400'
+                                                                     : 'text-brand-light'
+                                                         }`}>
+                                                             {isMe ? 'Tú' : c.nombreUsuario} (Retroalimentación de Campo)
+                                                         </span>
+                                                         <span className="text-[8px] text-text-dim font-mono">
+                                                             {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+                                                         </span>
+                                                         {isMe && (
+                                                             <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                                                                 {!fieldFeedbackData.audioUrl && (
+                                                                     <button
+                                                                         onClick={() => {
+                                                                             setEditingCommentId(c.idComentario);
+                                                                             setEditingCommentText(fieldFeedbackData.text);
+                                                                         }}
+                                                                         className="text-[8px] text-text-dim hover:text-text-main"
+                                                                         title="Editar"
+                                                                     >
+                                                                         <Edit2 size={10} />
+                                                                     </button>
+                                                                 )}
+                                                                 <button
+                                                                     onClick={() => handleDeleteComment(c.idComentario)}
+                                                                     className="text-[8px] text-text-dim hover:text-red-500"
+                                                                     title="Eliminar"
+                                                                 >
+                                                                     <XCircle size={10} />
+                                                                 </button>
+                                                             </div>
+                                                         )}
+                                                     </div>
+ 
+                                                     <div className={`rounded-xl p-4 border shadow-sm w-full select-text transition-all duration-300 ${
+                                                         isMe
+                                                             ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
+                                                             : isMsgFromAdmin
+                                                                 ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
+                                                                 : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
+                                                     }`}>
+                                                         <div className="flex items-center justify-between border-b border-border-thin/20 pb-2 mb-3">
+                                                             <div className="flex items-center gap-2">
+                                                                 <AlertTriangle size={12} className={isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'} />
+                                                                 <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                                                     isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'
+                                                                 }`}>
+                                                                     Observación: {fieldFeedbackData.fieldName || fieldFeedbackData.field}
+                                                                 </span>
+                                                             </div>
+                                                             <button
+                                                                 onClick={() => {
+                                                                     setDetailTab('info');
+                                                                     setHighlightedField(fieldFeedbackData.field);
+                                                                     setTimeout(() => {
+                                                                         const element = document.getElementById(`field-container-${fieldFeedbackData.field}`);
+                                                                         if (element) {
+                                                                             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                         }
+                                                                     }, 300);
+                                                                     setTimeout(() => {
+                                                                         setHighlightedField(null);
+                                                                     }, 3500);
+                                                                 }}
+                                                                 className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-border-thin bg-surface-hover hover:border-border-hover text-text-dim active:scale-95 transition-all"
+                                                             >
+                                                                 Ver Campo
+                                                             </button>
+                                                         </div>
+                                                         {editingCommentId === c.idComentario ? (
+                                                             <div className="space-y-2">
+                                                                 <textarea
+                                                                     value={editingCommentText}
+                                                                     onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                     className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                                                 />
+                                                                 <div className="flex justify-end gap-1">
+                                                                     <button
+                                                                         onClick={() => {
+                                                                             setEditingCommentId(null);
+                                                                             setEditingCommentText('');
+                                                                         }}
+                                                                         className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                     >
+                                                                         Cancelar
+                                                                     </button>
+                                                                     <button
+                                                                         onClick={() => {
+                                                                             const updatedContent = JSON.stringify({ ...fieldFeedbackData, text: editingCommentText });
+                                                                             handleUpdateComment(c.idComentario, updatedContent);
+                                                                         }}
+                                                                         className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
+                                                                     >
+                                                                         Guardar
+                                                                     </button>
+                                                                 </div>
+                                                             </div>
+                                                         ) : (
+                                                             <div className="space-y-2">
+                                                                 {fieldFeedbackData.text && <p className="text-[11px] font-medium leading-relaxed">{fieldFeedbackData.text}</p>}
+                                                                 {fieldFeedbackData.audioUrl && (
+                                                                     <div className="mt-1">
+                                                                         <AudioBubblePlayer src={fieldFeedbackData.audioUrl} />
+                                                                     </div>
+                                                                 )}
+                                                             </div>
+                                                         )}
+                                                     </div>
+                                                 </div>
+                                             );
+                                         }
+ 
+                                         return (
+                                             <div 
+                                                 key={c.idComentario || i} 
+                                                 className={`flex flex-col w-full max-w-[80%] ${
+                                                     isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                 } animate-fade-up`}
+                                             >
+                                                 <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                     <span className={`text-[9px] font-black uppercase tracking-wider ${
+                                                         isMe
+                                                             ? 'text-emerald-400'
+                                                             : isMsgFromAdmin
+                                                                 ? 'text-amber-400'
+                                                                 : 'text-brand-light'
+                                                     }`}>
+                                                         {isMe ? 'Tú' : c.nombreUsuario}
+                                                     </span>
+                                                     <span className="text-[8px] text-text-dim font-mono">
+                                                         {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+                                                     </span>
+                                                     {isMe && (
+                                                         <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                                                             {!isAudio && (
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setEditingCommentId(c.idComentario);
+                                                                         setEditingCommentText(c.contenido);
+                                                                     }}
+                                                                     className="text-[8px] text-text-dim hover:text-text-main"
+                                                                     title="Editar"
+                                                                 >
+                                                                     <Edit2 size={10} />
+                                                                 </button>
+                                                             )}
+                                                             {isAudio && audioData && (
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setEditingCommentId(c.idComentario);
+                                                                         setEditingCommentText(audioData.text || '');
+                                                                     }}
+                                                                     className="text-[8px] text-text-dim hover:text-text-main"
+                                                                     title="Editar Texto"
+                                                                 >
+                                                                     <Edit2 size={10} />
+                                                                 </button>
+                                                             )}
+                                                             <button
+                                                                 onClick={() => handleDeleteComment(c.idComentario)}
+                                                                 className="text-[8px] text-text-dim hover:text-red-500"
+                                                                 title="Eliminar"
+                                                             >
+                                                                 <XCircle size={10} />
+                                                             </button>
+                                                         </div>
+                                                     )}
+                                                 </div>
+ 
+                                                 <div className={`rounded-xl p-4 border shadow-sm select-text transition-all duration-300 w-full ${
+                                                     isMe
+                                                         ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
+                                                         : isMsgFromAdmin
+                                                             ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
+                                                             : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
+                                                 }`}>
+                                                     {editingCommentId === c.idComentario ? (
+                                                         <div className="space-y-2">
+                                                             <textarea
+                                                                 value={editingCommentText}
+                                                                 onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                 className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                                             />
+                                                             <div className="flex justify-end gap-1">
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setEditingCommentId(null);
+                                                                         setEditingCommentText('');
+                                                                     }}
+                                                                     className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                 >
+                                                                     Cancelar
+                                                                 </button>
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         let updatedContent = editingCommentText;
+                                                                         if (isAudio && audioData) {
+                                                                             updatedContent = JSON.stringify({ ...audioData, text: editingCommentText });
+                                                                         }
+                                                                         handleUpdateComment(c.idComentario, updatedContent);
+                                                                     }}
+                                                                     className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
+                                                                 >
+                                                                     Guardar
+                                                                 </button>
+                                                             </div>
+                                                         </div>
+                                                     ) : isAudio && audioData ? (
+                                                         <div className="space-y-2">
+                                                             {audioData.text && <p className="text-[11px] font-medium leading-relaxed">{audioData.text}</p>}
+                                                             <div className="mt-1">
+                                                                 <AudioBubblePlayer src={audioData.audioUrl} />
+                                                             </div>
+                                                         </div>
+                                                     ) : (
+                                                         <p className="text-[11px] font-medium leading-relaxed">{c.contenido}</p>
+                                                     )}
+                                                 </div>
+                                             </div>
+                                         );
+                                     })}
                                 </div>
                             )}
                         </div>

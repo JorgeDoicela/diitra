@@ -111,6 +111,7 @@ const GroupsPage = () => {
     const [carreras, setCarreras] = useState<Career[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const [viewMode, setViewMode] = useState<'all' | 'my'>('my');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
@@ -157,7 +158,7 @@ const GroupsPage = () => {
         isOpen: false,
         title: '',
         message: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
         type: 'warning'
     });
 
@@ -371,9 +372,9 @@ const GroupsPage = () => {
     const getGroupChanges = (fresh: any, local: any, skipMembers = false): string[] => {
         if (!fresh || !local) return [];
         const changes: string[] = [];
-        
+
         const norm = (val: any) => (val || '').toString().trim();
-        
+
         if (norm(fresh.nombre) !== norm(local.nombre)) changes.push("Nombre");
         if (norm(fresh.siglas) !== norm(local.siglas)) changes.push("Acrónimo/Siglas");
         if (norm(fresh.tipo_grupo) !== norm(local.tipo_grupo)) changes.push("Tipo de Grupo");
@@ -382,11 +383,11 @@ const GroupsPage = () => {
         if (norm(fresh.objetivo_general) !== norm(local.objetivo_general)) changes.push("Objetivo General");
         if (norm(fresh.mision) !== norm(local.mision)) changes.push("Misión");
         if (norm(fresh.vision) !== norm(local.vision)) changes.push("Visión");
-        
+
         const freshLines = (fresh.lineas_ids || []).slice().sort().join(',');
         const localLines = (local.lineas_ids || []).slice().sort().join(',');
         if (freshLines !== localLines) changes.push("Líneas de Investigación");
-        
+
         // Comparar miembros solo cuando ambos objetos vienen del endpoint de detalle completo
         if (!skipMembers && fresh.miembros !== undefined && local.miembros !== undefined) {
             const freshMembers = (fresh.miembros || []).filter((m: any) => m.activo).map((m: any) => m.cedula || '').sort().join(',');
@@ -419,7 +420,7 @@ const GroupsPage = () => {
             // Verificar concurrencia al abrir el panel de evaluación
             const freshRes = await api.get(`/Groups/${group.uuid}`);
             const freshGroup = freshRes.data;
-            
+
             // skipMembers=true: el objeto `group` viene de la tabla (no tiene miembros completos)
             const changesList = getGroupChanges(freshGroup, group, true);
             if (changesList.length > 0) {
@@ -459,7 +460,7 @@ const GroupsPage = () => {
                 type: 'danger',
                 isAlert: true,
                 confirmText: 'Aceptar',
-                onConfirm: () => {}
+                onConfirm: () => { }
             });
         }
     };
@@ -473,7 +474,7 @@ const GroupsPage = () => {
                 type: 'warning',
                 isAlert: true,
                 confirmText: 'Aceptar',
-                onConfirm: () => {}
+                onConfirm: () => { }
             });
             return;
         }
@@ -530,7 +531,7 @@ const GroupsPage = () => {
                         type: 'danger',
                         isAlert: true,
                         confirmText: 'Aceptar',
-                        onConfirm: () => {}
+                        onConfirm: () => { }
                     });
                 } finally {
                     setIsConfirming(false);
@@ -548,7 +549,7 @@ const GroupsPage = () => {
                 type: 'warning',
                 isAlert: true,
                 confirmText: 'Aceptar',
-                onConfirm: () => {}
+                onConfirm: () => { }
             });
             return;
         }
@@ -631,7 +632,7 @@ const GroupsPage = () => {
                         type: 'danger',
                         isAlert: true,
                         confirmText: 'Aceptar',
-                        onConfirm: () => {}
+                        onConfirm: () => { }
                     });
                 } finally {
                     setSendingFeedback(false);
@@ -642,7 +643,7 @@ const GroupsPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10">
             <style>{`
                 .row-last-active {
                     background-color: rgba(0, 112, 243, 0.08) !important;
@@ -722,6 +723,36 @@ const GroupsPage = () => {
                 </div>
             )}
 
+            {!isAdmin && (
+                <div className="flex border-b border-border-thin mb-5 gap-6 animate-fade-up">
+                    <button
+                        onClick={() => setViewMode('my')}
+                        className={`pb-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                            viewMode === 'my'
+                                ? 'border-text-main text-text-main font-bold'
+                                : 'border-transparent text-text-dim hover:text-text-main'
+                        }`}
+                    >
+                        Mis Grupos ({
+                            groups.filter(g => 
+                                g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || 
+                                g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())
+                            ).length
+                        })
+                    </button>
+                    <button
+                        onClick={() => setViewMode('all')}
+                        className={`pb-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                            viewMode === 'all'
+                                ? 'border-text-main text-text-main font-bold'
+                                : 'border-transparent text-text-dim hover:text-text-main'
+                        }`}
+                    >
+                        Todos los Grupos ({groups.length})
+                    </button>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 gap-6">
                 <div className="bento-card static overflow-hidden animate-fade-up">
                     <div className="overflow-x-auto custom-scrollbar">
@@ -736,133 +767,154 @@ const GroupsPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-thin">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={5} className="p-8 text-center">
-                                            <div className="flex flex-col items-center justify-center gap-2 py-4">
-                                                <Loader2 className="animate-spin text-text-main h-6 w-6" />
-                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Cargando grupos...</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : groups.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5}>
-                                            <div className="empty-state py-20 text-center space-y-3">
-                                                <Users size={32} className="mx-auto text-text-dim/30" />
-                                                <p className="text-text-dim font-bold uppercase tracking-widest text-xs">No se encontraron grupos registrados</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : groups.map((g) => (
-                                    <tr
-                                        key={g.id_grupo}
-                                        onClick={() => { setDetailGroup(g); setLastActiveGroupId(null); }}
-                                        className={`transition-all duration-300 group cursor-pointer ${
-                                            detailGroup?.uuid === g.uuid 
-                                                ? 'bg-brand/[0.08] border-brand/35' 
-                                                : (!detailGroup && lastActiveGroupId === g.uuid)
-                                                    ? 'row-last-active'
-                                                    : 'hover:bg-surface/30'
-                                        }`}
-                                    >
-                                        <td className="p-4">
-                                            <div className="space-y-1">
-                                                <h4 className="text-sm font-semibold text-text-main tracking-tight group-hover:text-brand transition-colors">
-                                                    {g.nombre}
-                                                </h4>
-                                                <div className="flex gap-2">
-                                                    <span className="text-[9px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
-                                                        {g.siglas || 'SIN SIGLAS'}
-                                                    </span>
-                                                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim/80">
-                                                        {g.tipo_grupo}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <p className="text-xs font-semibold text-text-main">{g.nombre_coordinador ? formatNombre(g.nombre_coordinador) : 'No asignado'}</p>
-                                            {g.carrera_coordinador && (
-                                                <p className="text-[9px] text-text-dim uppercase font-semibold mt-0.5">{formatCareerName(g.carrera_coordinador)}</p>
-                                            )}
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="space-y-1">
-                                                <p className="text-[10px] text-text-dim font-mono uppercase">
-                                                    {g.lineas_ids?.length || 0} Líneas de Inv.
-                                                </p>
-                                                <p className="text-[10px] text-text-dim font-mono uppercase">
-                                                    {g.carreras_ids?.length || 0} Carreras Vinculadas
-                                                </p>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex flex-col gap-1 items-start">
-                                                {g.estado === 'Aprobado' && (
-                                                    <span className="badge-vercel badge-vercel-success">
-                                                        <CheckCircle size={10} /> Aprobado
-                                                    </span>
-                                                )}
-                                                {g.estado === 'Pendiente' && (
-                                                    <span className="badge-vercel badge-vercel-warning">
-                                                        <Calendar size={10} /> Pendiente
-                                                    </span>
-                                                )}
-                                                {g.estado === 'En Evaluación' && (
-                                                    <span className="badge-vercel badge-vercel-info">
-                                                        <Loader2 size={10} className="animate-spin" /> En Evaluación
-                                                    </span>
-                                                )}
-                                                {g.estado === 'Rechazado' && (
-                                                    <span className="badge-vercel badge-vercel-error">
-                                                        <XCircle size={10} /> Rechazado
-                                                    </span>
-                                                )}
-                                                <p className={`text-[8px] font-mono tracking-wider uppercase ${g.activo ? 'text-success' : 'text-text-dim/60'}`}>
-                                                    ● {g.activo ? 'Vigente' : 'Inactivo'}
-                                                </p>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex gap-2 justify-end">
-                                                <button
-                                                     onClick={() => {
-                                                         setDetailGroup(g);
-                                                         setDetailGroupIsEditing(false);
-                                                         setLastActiveGroupId(null);
-                                                     }}
-                                                     className="p-1.5 rounded hover:bg-brand/10 text-text-dim group-hover:text-brand transition-all"
-                                                     title="Ver Detalle"
-                                                 >
-                                                     <Eye size={14} />
-                                                 </button>
-                                                {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setDetailGroup(g);
-                                                            setDetailGroupIsEditing(true);
-                                                            setLastActiveGroupId(null);
-                                                        }}
-                                                        className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all action-btn-exclude"
-                                                        title="Editar Grupo"
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                )}
-                                                {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
-                                                    <button
-                                                        onClick={() => handleDelete(g.uuid, g.nombre)}
-                                                        className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:bg-red-500/10 transition-all action-btn-exclude"
-                                                        title={isAdmin ? "Desactivar" : "Eliminar"}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {(() => {
+                                    const filteredGroups = groups.filter(g => {
+                                        if (isAdmin || viewMode === 'all') return true;
+                                        const isCoord = g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim();
+                                        const isMem = g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim());
+                                        return isCoord || isMem;
+                                    });
+
+                                    if (loading) {
+                                        return (
+                                            <tr>
+                                                <td colSpan={5} className="p-8 text-center">
+                                                    <div className="flex flex-col items-center justify-center gap-2 py-4">
+                                                        <Loader2 className="animate-spin text-text-main h-6 w-6" />
+                                                        <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Cargando grupos...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+
+                                    if (filteredGroups.length === 0) {
+                                        return (
+                                            <tr>
+                                                <td colSpan={5}>
+                                                    <div className="empty-state py-20 text-center space-y-3">
+                                                        <Users size={32} className="mx-auto text-text-dim/30" />
+                                                        <p className="text-text-dim font-bold uppercase tracking-widest text-xs">
+                                                            {viewMode === 'my' ? 'No participas en ningún grupo de investigación' : 'No se encontraron grupos registrados'}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+
+                                    return filteredGroups.map((g) => {
+                                        return (
+                                            <tr
+                                                key={g.id_grupo}
+                                                onClick={() => { setDetailGroup(g); setLastActiveGroupId(null); }}
+                                                className={`transition-all duration-300 group cursor-pointer ${
+                                                    detailGroup?.uuid === g.uuid
+                                                        ? 'bg-brand/[0.08] border-brand/35'
+                                                        : (!detailGroup && lastActiveGroupId === g.uuid)
+                                                            ? 'row-last-active'
+                                                            : 'hover:bg-surface/30'
+                                                }`}
+                                            >
+                                                <td className="p-4">
+                                                    <div className="space-y-1">
+                                                        <h4 className="text-sm font-semibold text-text-main tracking-tight group-hover:text-brand transition-colors">
+                                                            {g.nombre}
+                                                        </h4>
+                                                        <div className="flex gap-2">
+                                                            <span className="text-[9px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                                {g.siglas || 'SIN SIGLAS'}
+                                                            </span>
+                                                            <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim/80">
+                                                                {g.tipo_grupo}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <p className="text-xs font-semibold text-text-main">{g.nombre_coordinador ? formatNombre(g.nombre_coordinador) : 'No asignado'}</p>
+                                                    {g.carrera_coordinador && (
+                                                        <p className="text-[9px] text-text-dim uppercase font-semibold mt-0.5">{formatCareerName(g.carrera_coordinador)}</p>
+                                                    )}
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[10px] text-text-dim font-mono uppercase">
+                                                            {g.lineas_ids?.length || 0} Líneas de Inv.
+                                                        </p>
+                                                        <p className="text-[10px] text-text-dim font-mono uppercase">
+                                                            {g.carreras_ids?.length || 0} Carreras Vinculadas
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        {g.estado === 'Aprobado' && (
+                                                            <span className="badge-vercel badge-vercel-success">
+                                                                <CheckCircle size={10} /> Aprobado
+                                                            </span>
+                                                        )}
+                                                        {g.estado === 'Pendiente' && (
+                                                            <span className="badge-vercel badge-vercel-warning">
+                                                                <Calendar size={10} /> Pendiente
+                                                            </span>
+                                                        )}
+                                                        {g.estado === 'En Evaluación' && (
+                                                            <span className="badge-vercel badge-vercel-info">
+                                                                <Loader2 size={10} className="animate-spin" /> En Evaluación
+                                                            </span>
+                                                        )}
+                                                        {g.estado === 'Rechazado' && (
+                                                            <span className="badge-vercel badge-vercel-error">
+                                                                <XCircle size={10} /> Rechazado
+                                                            </span>
+                                                        )}
+                                                        <p className={`text-[8px] font-mono tracking-wider uppercase ${g.activo ? 'text-success' : 'text-text-dim/60'}`}>
+                                                            ● {g.activo ? 'Vigente' : 'Inactivo'}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button
+                                                             onClick={() => {
+                                                                 setDetailGroup(g);
+                                                                 setDetailGroupIsEditing(false);
+                                                                 setLastActiveGroupId(null);
+                                                             }}
+                                                             className="p-1.5 rounded hover:bg-brand/10 text-text-dim group-hover:text-brand transition-all"
+                                                             title="Ver Detalle"
+                                                         >
+                                                             <Eye size={14} />
+                                                         </button>
+                                                        {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setDetailGroup(g);
+                                                                    setDetailGroupIsEditing(true);
+                                                                    setLastActiveGroupId(null);
+                                                                }}
+                                                                className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all action-btn-exclude"
+                                                                title="Editar Grupo"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                        )}
+                                                        {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
+                                                            <button
+                                                                onClick={() => handleDelete(g.uuid, g.nombre)}
+                                                                className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:bg-red-500/10 transition-all action-btn-exclude"
+                                                                title={isAdmin ? "Desactivar" : "Eliminar"}
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    });
+                                })()}
                             </tbody>
                         </table>
                     </div>
@@ -897,22 +949,20 @@ const GroupsPage = () => {
                         <div className="flex border-b border-border-thin bg-surface-hover/20 shrink-0">
                             <button
                                 onClick={() => setIsReviewRejecting(false)}
-                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
-                                    !isReviewRejecting
+                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${!isReviewRejecting
                                         ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
                                         : 'border-transparent text-text-dim hover:text-text-main'
-                                }`}
+                                    }`}
                             >
                                 <CheckCircle size={14} />
                                 <span>Aprobar Propuesta</span>
                             </button>
                             <button
                                 onClick={() => setIsReviewRejecting(true)}
-                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
-                                    isReviewRejecting
+                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${isReviewRejecting
                                         ? 'border-red-500 text-red-400 bg-red-500/5'
                                         : 'border-transparent text-text-dim hover:text-text-main'
-                                }`}
+                                    }`}
                             >
                                 <XCircle size={14} />
                                 <span>Rechazar Propuesta</span>
@@ -962,7 +1012,7 @@ const GroupsPage = () => {
                                 <div className="space-y-6 animate-fade-up">
                                     <div className="space-y-2 text-xs text-text-dim leading-relaxed">
                                         <p>
-                                            Rechazar la propuesta devolverá el grupo al estado <span className="text-red-400 font-extrabold">RECHAZADO</span>. 
+                                            Rechazar la propuesta devolverá el grupo al estado <span className="text-red-400 font-extrabold">RECHAZADO</span>.
                                             El equipo proponente recibirá una notificación y podrá editar la propuesta para adaptarla a sus observaciones.
                                         </p>
                                         <p>
@@ -1007,14 +1057,14 @@ const GroupsPage = () => {
                                                 {/* Equalizer animation */}
                                                 <div className="flex items-end gap-1 h-8 justify-center w-full">
                                                     {Array.from({ length: 14 }).map((_, i) => (
-                                                        <span 
-                                                            key={i} 
-                                                            className="w-1 bg-red-500 rounded-full animate-bounce" 
-                                                            style={{ 
-                                                                height: '100%', 
-                                                                animationDelay: `${i * 100}ms`, 
-                                                                animationDuration: '0.6s' 
-                                                            }} 
+                                                        <span
+                                                            key={i}
+                                                            className="w-1 bg-red-500 rounded-full animate-bounce"
+                                                            style={{
+                                                                height: '100%',
+                                                                animationDelay: `${i * 100}ms`,
+                                                                animationDuration: '0.6s'
+                                                            }}
                                                         />
                                                     ))}
                                                 </div>
@@ -1070,7 +1120,7 @@ const GroupsPage = () => {
                             >
                                 Cancelar
                             </button>
-                            
+
                             {!isReviewRejecting ? (
                                 <button
                                     onClick={handleApprove}
@@ -1101,12 +1151,11 @@ const GroupsPage = () => {
                     <div className="modal-card animate-scale-up max-w-md">
                         <div className="modal-header !py-4">
                             <div className="flex items-center gap-3">
-                                <div className={`icon-circle ${
-                                    confirmDialog.type === 'danger' ? 'icon-circle-error' :
-                                    confirmDialog.type === 'warning' ? 'icon-circle-warning' :
-                                    confirmDialog.type === 'success' ? 'icon-circle-success' :
-                                    'icon-circle-info'
-                                }`}>
+                                <div className={`icon-circle ${confirmDialog.type === 'danger' ? 'icon-circle-error' :
+                                        confirmDialog.type === 'warning' ? 'icon-circle-warning' :
+                                            confirmDialog.type === 'success' ? 'icon-circle-success' :
+                                                'icon-circle-info'
+                                    }`}>
                                     {confirmDialog.type === 'danger' && <XCircle size={18} />}
                                     {confirmDialog.type === 'warning' && <AlertTriangle size={18} />}
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
@@ -1142,12 +1191,11 @@ const GroupsPage = () => {
                                         // onConfirm ya maneja el error
                                     }
                                 }}
-                                className={`!py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    confirmDialog.isAlert ? 'btn-vercel-primary' :
-                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                    'btn-vercel-primary'
-                                }`}
+                                className={`!py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${confirmDialog.isAlert ? 'btn-vercel-primary' :
+                                        confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                            confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                                'btn-vercel-primary'
+                                    }`}
                             >
                                 {isConfirming && <Loader2 size={14} className="animate-spin" />}
                                 {isConfirming ? 'Procesando...' : (confirmDialog.confirmText || (confirmDialog.isAlert ? 'Aceptar' : 'Confirmar'))}
