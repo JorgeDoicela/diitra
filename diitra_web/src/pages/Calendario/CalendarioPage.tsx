@@ -210,7 +210,7 @@ export const CalendarioPage: React.FC = () => {
                 // Actualización Optimista
                 setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
                 const newEv: Evento = {
-                    id_evento_calendario: 0,
+                    id_evento_calendario: '0',
                     uuid: note.uuid,
                     titulo: note.titulo,
                     descripcion: note.descripcion || '',
@@ -228,8 +228,7 @@ export const CalendarioPage: React.FC = () => {
                     alerta_dias: note.alerta_dias,
                     recurrencia_anual: note.recurrencia_anual
                 };
-                const newEvCal: EventoCalendario = {
-                    id: 0,
+                const newEvCal: CalendarEventExtended = {
                     title: note.titulo,
                     start: new Date(),
                     end: new Date(),
@@ -839,7 +838,7 @@ export const CalendarioPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="calendario-main">
+            <div className={`calendario-main ${loading ? 'calendario-loading' : ''}`}>
 
                 <div className="calendario-header-actions">
                     <div className="flex items-center gap-6">

@@ -31,6 +31,40 @@ public class CalendarioService : ICalendarioService
     public async Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(
         DateOnly desde, DateOnly hasta, string rolUsuario, int idUsuario)
     {
+        var misProyectosIdsStr = "";
+
+        if (rolUsuario != "DIITRA_ADMIN")
+        {
+            // Obtener IDs de proyectos de interés de forma fuertemente tipada usando LINQ
+            var proyectosDocente = await _context.Set<InvProyectoProfesor>()
+                .Where(p => p.IdUsuario == idUsuario && (p.Activo ?? true))
+                .Select(p => p.IdProyecto)
+                .ToListAsync();
+
+            var proyectosAlumno = await _context.Set<InvProyectoAlumno>()
+                .Where(a => a.IdUsuario == idUsuario && (a.Activo ?? true))
+                .Select(a => a.IdProyecto)
+                .ToListAsync();
+
+            var gruposUsuario = await _context.Set<InvGrupoMiembro>()
+                .Where(m => m.IdUsuario == idUsuario && (m.Activo ?? true))
+                .Select(m => m.IdGrupo)
+                .ToListAsync();
+
+            var proyectosGrupo = await _context.Set<InvProyecto>()
+                .Where(p => p.IdGrupo.HasValue && (p.Activo ?? true) && gruposUsuario.Contains(p.IdGrupo.Value))
+                .Select(p => p.IdProyecto)
+                .ToListAsync();
+
+            var misProyectosIds = proyectosDocente
+                .Union(proyectosAlumno)
+                .Union(proyectosGrupo)
+                .Distinct()
+                .ToList();
+
+            misProyectosIdsStr = string.Join(",", misProyectosIds);
+        }
+
         var sql = @"
             SELECT
                 idEventoCalendario, uuid, titulo, descripcion,
@@ -45,6 +79,11 @@ public class CalendarioService : ICalendarioService
               AND COALESCE(fechaFin, fechaInicio) >= {0}
               AND (rolesVisibles IS NULL OR FIND_IN_SET({2}, rolesVisibles) > 0)
               AND (esPrivado = 0 OR creadoPor = {3})
+              AND (
+                  {2} = 'DIITRA_ADMIN'
+                  OR tipoEntidadOrigen NOT IN ('PROYECTO', 'INFORME_AVANCE', 'PEER_REVIEW')
+                  OR (idEntidadOrigen IS NOT NULL AND FIND_IN_SET(idEntidadOrigen, {4}) > 0)
+              )
             ORDER BY fechaInicio ASC";
 
         var eventos = await _context.Database
@@ -52,7 +91,8 @@ public class CalendarioService : ICalendarioService
                 desde.ToString("yyyy-MM-dd"),
                 hasta.ToString("yyyy-MM-dd"),
                 rolUsuario,
-                idUsuario)
+                idUsuario,
+                misProyectosIdsStr)
             .ToListAsync();
 
         // Expandir eventos con recurrencia anual de la tabla normativa

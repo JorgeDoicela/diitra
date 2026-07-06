@@ -843,6 +843,7 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1368,4 +1369,10 @@
 
 .global-add-task-btn:active {
     transform: scale(0.98) !important;
+}
+
+.calendario-main.calendario-loading {
+    opacity: 0.75;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
 }
