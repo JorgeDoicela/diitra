@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Users, Plus, Search, CheckCircle, GraduationCap, User, UserMinus, Shield, Award, Calendar, FileText, ChevronRight, BookOpen, Eye
+    Users, Plus, Search, CheckCircle, GraduationCap, User, UserMinus, Shield, Award, Calendar, FileText, ChevronRight, BookOpen, Eye, MessageCircle, Phone
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CareerLinkageModal } from './CareerLinkageModal';
@@ -16,6 +16,7 @@ interface GroupMember {
     fecha_inicio?: string;
     fecha_fin?: string;
     carrera?: string;
+    telefono_contacto?: string;
 }
 
 interface Group {
@@ -42,6 +43,8 @@ interface Group {
     miembros?: GroupMember[];
     proyectos?: any[];
     Proyectos?: any[];
+    link_whatsapp?: string;
+    telefono_coordinador?: string;
 }
 
 interface ResearchLine {
@@ -114,7 +117,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         fecha_creacion: '',
         categoria_consolidacion: 'En Formación',
         lineas_ids: [] as number[],
-        carreras_ids: [] as number[]
+        carreras_ids: [] as number[],
+        link_whatsapp: '',
+        telefono_coordinador: ''
     });
 
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
@@ -130,6 +135,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     const [showCoordResults, setShowCoordResults] = useState(false);
 
     const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
+    const [teacherPhone, setTeacherPhone] = useState('');
+    const [studentPhone, setStudentPhone] = useState('');
     const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
     const [isTeacherSearching, setIsTeacherSearching] = useState(false);
     const [showTeacherResults, setShowTeacherResults] = useState(false);
@@ -171,7 +178,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                             fecha_creacion: parsed.formData.fecha_creacion || '',
                             categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
                             lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
-                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : []
+                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : [],
+                            link_whatsapp: parsed.formData.link_whatsapp || '',
+                            telefono_coordinador: parsed.formData.telefono_coordinador || ''
                         };
                         setFormData(validatedFormData);
                         setSelectedCoordName(parsed.selectedCoordName || '');
@@ -204,7 +213,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 fecha_creacion: editingGroup.fecha_creacion ? editingGroup.fecha_creacion.split('T')[0] : '',
                 categoria_consolidacion: editingGroup.categoria_consolidacion || 'En Formación',
                 lineas_ids: editingGroup.lineas_ids || [],
-                carreras_ids: editingGroup.carreras_ids || []
+                carreras_ids: editingGroup.carreras_ids || [],
+                link_whatsapp: editingGroup.link_whatsapp || '',
+                telefono_coordinador: editingGroup.telefono_coordinador || ''
             });
             setSelectedCoordName(editingGroup.nombre_coordinador || '');
             setSelectedCoordCareer(editingGroup.carrera_coordinador || '');
@@ -236,7 +247,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                             fecha_creacion: parsed.formData.fecha_creacion || '',
                             categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
                             lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
-                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : []
+                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : [],
+                            link_whatsapp: parsed.formData.link_whatsapp || '',
+                            telefono_coordinador: parsed.formData.telefono_coordinador || ''
                         };
                         setFormData(validatedFormData);
                         setSelectedCoordName(parsed.selectedCoordName || '');
@@ -269,7 +282,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 fecha_creacion: new Date().toISOString().split('T')[0],
                 categoria_consolidacion: 'En Formación',
                 lineas_ids: [],
-                carreras_ids: []
+                carreras_ids: [],
+                link_whatsapp: '',
+                telefono_coordinador: ''
             });
             setSelectedCoordName('');
             setSelectedCoordCareer('');
@@ -401,7 +416,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             nombre_completo: selectedTeacher.nombre,
             rol: teacherRol,
             activo: true,
-            carrera: selectedTeacher.carrera
+            carrera: selectedTeacher.carrera,
+            telefono_contacto: teacherPhone
         };
 
         if (editingGroup) {
@@ -411,7 +427,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                     cedula: selectedTeacher.cedula,
                     nombre_completo: selectedTeacher.nombre,
                     rol: teacherRol,
-                    activo: true
+                    activo: true,
+                    telefono_contacto: teacherPhone
                 };
                 await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
                 const res = await api.get(`/Groups/${editingGroup.uuid}`);
@@ -449,6 +466,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         setSelectedTeacher(null);
         setTeacherSearchQuery('');
         setTeacherRol('Co-Investigador');
+        setTeacherPhone('');
     };
 
     const handleAddStudent = async () => {
@@ -461,7 +479,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             nombre_completo: selectedStudent.nombre,
             rol: studentRol,
             activo: true,
-            carrera: selectedStudent.carrera
+            carrera: selectedStudent.carrera,
+            telefono_contacto: studentPhone
         };
 
         if (editingGroup) {
@@ -471,7 +490,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                     cedula: selectedStudent.cedula,
                     nombre_completo: selectedStudent.nombre,
                     rol: studentRol,
-                    activo: true
+                    activo: true,
+                    telefono_contacto: studentPhone
                 };
                 await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
                 const res = await api.get(`/Groups/${editingGroup.uuid}`);
@@ -494,6 +514,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
 
         setSelectedStudent(null);
         setStudentSearchQuery('');
+        setStudentPhone('');
         setStudentRol('Semillerista');
     };
 
@@ -581,7 +602,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                     cedula: m.cedula,
                     nombre_completo: m.nombre_completo,
                     rol: m.rol,
-                    activo: true
+                    activo: true,
+                    telefono_contacto: m.telefono_contacto
                 }))
             };
 
@@ -718,7 +740,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                             fecha_creacion: editingGroup.fecha_creacion ? editingGroup.fecha_creacion.split('T')[0] : '',
                                             categoria_consolidacion: editingGroup.categoria_consolidacion || 'En Formación',
                                             lineas_ids: editingGroup.lineas_ids || [],
-                                            carreras_ids: editingGroup.carreras_ids || []
+                                            carreras_ids: editingGroup.carreras_ids || [],
+                                            link_whatsapp: editingGroup.link_whatsapp || '',
+                                            telefono_coordinador: editingGroup.telefono_coordinador || ''
                                         });
                                         setSelectedCoordName(editingGroup.nombre_coordinador || '');
                                         setSelectedCoordCareer(editingGroup.carrera_coordinador || '');
@@ -742,7 +766,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                             fecha_creacion: new Date().toISOString().split('T')[0],
                                             categoria_consolidacion: 'En Formación',
                                             lineas_ids: [],
-                                            carreras_ids: []
+                                            carreras_ids: [],
+                                            link_whatsapp: '',
+                                            telefono_coordinador: ''
                                         });
                                         setSelectedCoordName('');
                                         setSelectedCoordCareer('');
@@ -946,6 +972,34 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                 </div>
                             )}
                         </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                <MessageCircle size={12} className="text-green-500" /> Enlace de Grupo de WhatsApp (Opcional)
+                            </label>
+                            <input
+                                type="url"
+                                disabled={isReadOnly}
+                                value={formData.link_whatsapp || ''}
+                                onChange={(e) => setFormData({ ...formData, link_whatsapp: e.target.value })}
+                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
+                                placeholder="Ej: https://chat.whatsapp.com/..."
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                <Phone size={12} className="text-green-500" /> Teléfono del Coordinador (Opcional)
+                            </label>
+                            <input
+                                type="tel"
+                                disabled={isReadOnly}
+                                value={formData.telefono_coordinador || ''}
+                                onChange={(e) => setFormData({ ...formData, telefono_coordinador: e.target.value })}
+                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
+                                placeholder="Ej: 0991234567"
+                            />
+                        </div>
                     </section>
 
                     {/* Bento Section: Group Members */}
@@ -1062,7 +1116,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                             </div>
 
                                             <div className="grid grid-cols-12 gap-3 items-end">
-                                                <div className="col-span-8 space-y-1">
+                                                <div className="col-span-4 space-y-1">
                                                     <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
                                                     <select
                                                         value={teacherRol}
@@ -1073,7 +1127,17 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         <option value="Director de Proyecto">Director de Proyecto</option>
                                                     </select>
                                                 </div>
-                                                <div className="col-span-4">
+                                                <div className="col-span-5 space-y-1">
+                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                                    <input
+                                                        type="tel"
+                                                        value={teacherPhone}
+                                                        onChange={(e) => setTeacherPhone(e.target.value)}
+                                                        placeholder="Opcional"
+                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3">
                                                     <button
                                                         type="button"
                                                         onClick={handleAddTeacher}
@@ -1111,6 +1175,11 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
                                                             {member.rol}
                                                         </span>
+                                                        {member.telefono_contacto && (
+                                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                <Phone size={8} /> {member.telefono_contacto}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1222,7 +1291,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                             </div>
 
                                             <div className="grid grid-cols-12 gap-3 items-end">
-                                                <div className="col-span-8 space-y-1">
+                                                <div className="col-span-4 space-y-1">
                                                     <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
                                                     <select
                                                         value={studentRol}
@@ -1232,7 +1301,17 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         <option value="Semillerista">Semillerista</option>
                                                     </select>
                                                 </div>
-                                                <div className="col-span-4">
+                                                <div className="col-span-5 space-y-1">
+                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                                    <input
+                                                        type="tel"
+                                                        value={studentPhone}
+                                                        onChange={(e) => setStudentPhone(e.target.value)}
+                                                        placeholder="Opcional"
+                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3">
                                                     <button
                                                         type="button"
                                                         onClick={handleAddStudent}
@@ -1270,6 +1349,11 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-success">
                                                             {member.rol}
                                                         </span>
+                                                        {member.telefono_contacto && (
+                                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                <Phone size={8} /> {member.telefono_contacto}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

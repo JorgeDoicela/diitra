@@ -211,6 +211,8 @@ CREATE TABLE inv_grupos_investigacion (
     estado               VARCHAR(20)  DEFAULT 'Aprobado',
     activo               TINYINT(1)   DEFAULT 1,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    linkWhatsapp         VARCHAR(255) NULL,
+    telefonoCoordinador  VARCHAR(20)  NULL,
     FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
     FOREIGN KEY (idDominio)     REFERENCES inv_dominios(idDominio) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -251,6 +253,7 @@ CREATE TABLE inv_grupos_miembros (
     fechaInicio    DATE,
     fechaFin       DATE,
     motivoSalida   VARCHAR(255) NULL,
+    telefonoContacto VARCHAR(20)  NULL,
     FOREIGN KEY (idGrupo)    REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

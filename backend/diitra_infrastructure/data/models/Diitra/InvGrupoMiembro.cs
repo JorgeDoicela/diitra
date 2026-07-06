@@ -14,6 +14,7 @@ public partial class InvGrupoMiembro
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
     public string? MotivoSalida { get; set; }
+    public string? TelefonoContacto { get; set; }
 
     public virtual InvGrupoInvestigacion IdGrupoNavigation { get; set; } = null!;
     public virtual User IdUsuarioNavigation { get; set; } = null!;

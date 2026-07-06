@@ -787,6 +787,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("Aprobado");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.LinkWhatsapp).HasColumnName("linkWhatsapp").HasMaxLength(255);
+            entity.Property(e => e.TelefonoCoordinador).HasColumnName("telefonoCoordinador").HasMaxLength(20);
 
             entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()
                 .HasForeignKey(d => d.IdCoordinador).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_grupo_coordinador");
@@ -829,6 +831,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
             entity.Property(e => e.MotivoSalida).HasColumnName("motivoSalida").HasMaxLength(255);
+            entity.Property(e => e.TelefonoContacto).HasColumnName("telefonoContacto").HasMaxLength(20);
 
             entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvGruposMiembros)
                 .HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_miembro_grupo");

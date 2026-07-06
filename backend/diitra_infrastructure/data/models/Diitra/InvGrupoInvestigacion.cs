@@ -22,6 +22,8 @@ public partial class InvGrupoInvestigacion
     public bool? Activo { get; set; }
     public string? Estado { get; set; } = "Aprobado";
     public DateTime? FechaRegistro { get; set; }
+    public string? LinkWhatsapp { get; set; }
+    public string? TelefonoCoordinador { get; set; }
 
     public virtual User? IdCoordinadorNavigation { get; set; }
     public virtual InvDominio? IdDominioNavigation { get; set; }

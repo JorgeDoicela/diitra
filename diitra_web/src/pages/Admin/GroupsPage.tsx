@@ -22,6 +22,7 @@ export interface GroupMember {
     fecha_inicio?: string;
     fecha_fin?: string;
     carrera?: string;
+    telefono_contacto?: string;
 }
 
 export interface Group {
@@ -43,6 +44,8 @@ export interface Group {
     categoria_consolidacion?: string;
     activo: boolean;
     estado?: string; // "Pendiente", "Aprobado", "Rechazado"
+    link_whatsapp?: string;
+    telefono_coordinador?: string;
     lineas_ids: number[];
     carreras_ids: number[];
     miembros?: GroupMember[];

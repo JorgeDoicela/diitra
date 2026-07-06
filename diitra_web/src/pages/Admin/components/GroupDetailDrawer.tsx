@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import {
-    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, ChevronRight
+    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, ChevronRight, MessageCircle, Phone
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { AudioBubblePlayer } from './AudioBubblePlayer';
@@ -18,6 +18,7 @@ interface GroupMember {
     fecha_inicio?: string;
     fecha_fin?: string;
     carrera?: string;
+    telefono_contacto?: string;
 }
 
 interface Group {
@@ -44,6 +45,8 @@ interface Group {
     miembros?: GroupMember[];
     proyectos?: any[];
     Proyectos?: any[];
+    link_whatsapp?: string;
+    telefono_coordinador?: string;
 }
 
 interface Domain {
@@ -80,6 +83,12 @@ const formatNombre = (nombre: string | null | undefined) => {
     return nombre
         .toLowerCase()
         .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
+const formatWhatsappLink = (phone: string | null | undefined) => {
+    if (!phone) return '';
+    const cleanPhone = phone.replace(/\D/g, '').replace(/^0/, '');
+    return `https://wa.me/593${cleanPhone}`;
 };
 
 export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
@@ -720,9 +729,23 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                             </div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-text-dim hover:text-text-main transition-colors">
-                        <ChevronRight size={20} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {isMember && detailGroup.link_whatsapp && (
+                            <a
+                                href={detailGroup.link_whatsapp}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                                title="Unirse al grupo de WhatsApp"
+                            >
+                                <MessageCircle size={12} className="animate-pulse" />
+                                <span>Grupo de WhatsApp</span>
+                            </a>
+                        )}
+                        <button onClick={onClose} className="text-text-dim hover:text-text-main transition-colors">
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tab switcher */}
@@ -834,7 +857,20 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                 </label>
                                 {renderFieldFeedbackButton('coordinador', 'Coordinador Responsable')}
                             </div>
-                            <p className="text-sm font-semibold text-text-main">{detailGroup.nombre_coordinador ? formatNombre(detailGroup.nombre_coordinador) : 'No asignado'}</p>
+                            <p className="text-sm font-semibold text-text-main flex items-center gap-2">
+                                <span>{detailGroup.nombre_coordinador ? formatNombre(detailGroup.nombre_coordinador) : 'No asignado'}</span>
+                                {detailGroup.telefono_coordinador && (
+                                    <a
+                                        href={formatWhatsappLink(detailGroup.telefono_coordinador)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors flex items-center justify-center inline-flex"
+                                        title={`Escribir por WhatsApp a ${detailGroup.nombre_coordinador}`}
+                                    >
+                                        <MessageCircle size={12} />
+                                    </a>
+                                )}
+                            </p>
                             {detailGroup.id_profesor_coordinador && (
                                 <p className="text-[10px] font-mono text-text-dim">C.I. {detailGroup.id_profesor_coordinador}</p>
                             )}
@@ -1021,7 +1057,20 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                         </div>
                                                     </div>
                                                     {member.cedula && (
-                                                        <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            {member.telefono_contacto && (
+                                                                <a
+                                                                    href={formatWhatsappLink(member.telefono_contacto)}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="p-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors flex items-center justify-center inline-flex"
+                                                                    title={`Escribir por WhatsApp a ${member.nombre_completo}`}
+                                                                >
+                                                                    <MessageCircle size={10} />
+                                                                </a>
+                                                            )}
+                                                            <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             ))}
@@ -1052,7 +1101,20 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                         </div>
                                                     </div>
                                                     {member.cedula && (
-                                                        <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            {member.telefono_contacto && (
+                                                                <a
+                                                                    href={formatWhatsappLink(member.telefono_contacto)}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="p-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors flex items-center justify-center inline-flex"
+                                                                    title={`Escribir por WhatsApp a ${member.nombre_completo}`}
+                                                                >
+                                                                    <MessageCircle size={10} />
+                                                                </a>
+                                                            )}
+                                                            <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             ))}

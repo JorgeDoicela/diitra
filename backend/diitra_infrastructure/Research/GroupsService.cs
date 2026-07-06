@@ -194,7 +194,10 @@ public class GroupsService : IGroupsService
                 Activo = m.Activo ?? false,
                 FechaInicio = m.FechaInicio,
                 FechaFin = m.FechaFin,
-                Carrera = carreraNom
+                Carrera = carreraNom,
+                TelefonoContacto = !string.IsNullOrEmpty(m.TelefonoContacto)
+                    ? m.TelefonoContacto
+                    : GetUserPhoneFromCatalog(m.IdUsuarioNavigation?.IdSigafi, m.IdUsuarioNavigation?.TablaSigafi)
             };
         }).ToList();
 
@@ -270,7 +273,9 @@ public class GroupsService : IGroupsService
             FechaCreacion = dto.FechaCreacion,
             CategoriaConsolidacion = dto.CategoriaConsolidacion ?? "En Formación",
             Activo = dto.Estado == "Pendiente" ? false : true,
-            Estado = dto.Estado ?? "Aprobado"
+            Estado = dto.Estado ?? "Aprobado",
+            LinkWhatsapp = dto.LinkWhatsapp,
+            TelefonoCoordinador = dto.TelefonoCoordinador
         };
 
         if (dto.LineasIds.Any())
@@ -363,7 +368,8 @@ public class GroupsService : IGroupsService
                         IdUsuario = userId,
                         Rol = memberDto.Rol,
                         Activo = true,
-                        FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now)
+                        FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now),
+                        TelefonoContacto = memberDto.TelefonoContacto
                     };
                     _context.InvGruposMiembros.Add(member);
                 }
@@ -478,6 +484,8 @@ public class GroupsService : IGroupsService
         group.Vision = dto.Vision;
         group.FechaCreacion = dto.FechaCreacion;
         group.CategoriaConsolidacion = dto.CategoriaConsolidacion ?? "En Formación";
+        group.LinkWhatsapp = dto.LinkWhatsapp;
+        group.TelefonoCoordinador = dto.TelefonoCoordinador;
 
         if (!string.IsNullOrEmpty(dto.Estado))
         {
@@ -694,7 +702,8 @@ public class GroupsService : IGroupsService
             IdUsuario = userId,
             Rol = memberDto.Rol,
             Activo = true,
-            FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now)
+            FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now),
+            TelefonoContacto = memberDto.TelefonoContacto
         };
 
         _context.InvGruposMiembros.Add(member);
@@ -947,7 +956,36 @@ public class GroupsService : IGroupsService
             FechaCreacion = g.FechaCreacion,
             CategoriaConsolidacion = g.CategoriaConsolidacion,
             Activo = g.Activo ?? false,
-            Estado = g.Estado
+            Estado = g.Estado,
+            LinkWhatsapp = g.LinkWhatsapp,
+            TelefonoCoordinador = !string.IsNullOrEmpty(g.TelefonoCoordinador)
+                ? g.TelefonoCoordinador
+                : GetUserPhoneFromCatalog(g.IdCoordinadorNavigation?.IdSigafi, g.IdCoordinadorNavigation?.TablaSigafi)
         };
+    }
+
+    private string GetUserPhoneFromCatalog(string? idSigafi, string? tablaSigafi)
+    {
+        if (string.IsNullOrEmpty(idSigafi)) return string.Empty;
+        var sigafiTrim = idSigafi.Trim();
+        string phone = string.Empty;
+        if (tablaSigafi == "profesor")
+        {
+            var prof = _context.Profesores.FirstOrDefault(p => p.IdProfesor == sigafiTrim);
+            phone = prof != null ? (prof.Celular ?? prof.Telefono ?? string.Empty) : string.Empty;
+        }
+        else if (tablaSigafi == "alumno")
+        {
+            var alum = _context.Alumnos.FirstOrDefault(a => a.IdAlumno == sigafiTrim);
+            phone = alum != null ? (alum.Celular ?? alum.Telefono ?? string.Empty) : string.Empty;
+        }
+
+        if (string.IsNullOrEmpty(phone)) return string.Empty;
+        phone = phone.Trim();
+        if (phone.Length == 9 && phone.StartsWith("9"))
+        {
+            phone = "0" + phone;
+        }
+        return phone;
     }
 }

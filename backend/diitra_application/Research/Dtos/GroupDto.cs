@@ -23,6 +23,8 @@ public class GroupDto
     public string? CategoriaConsolidacion { get; set; }
     public bool Activo { get; set; }
     public string? Estado { get; set; }
+    public string? LinkWhatsapp { get; set; }
+    public string? TelefonoCoordinador { get; set; }
 
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
@@ -50,6 +52,7 @@ public class GroupMemberDto
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
     public string? Carrera { get; set; }
+    public string? TelefonoContacto { get; set; }
 }
 
 public class CreateGroupDto
@@ -67,6 +70,8 @@ public class CreateGroupDto
     public string? Estado { get; set; }
     public DateOnly? FechaCreacion { get; set; }
     public string? CategoriaConsolidacion { get; set; }
+    public string? LinkWhatsapp { get; set; }
+    public string? TelefonoCoordinador { get; set; }
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
