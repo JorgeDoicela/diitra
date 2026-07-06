@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import {
-    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, ChevronRight, MessageCircle, Phone
+    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, ChevronRight, MessageCircle, Edit2,
+    Plus, Search, UserMinus, FileText
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { AudioBubblePlayer } from './AudioBubblePlayer';
@@ -47,6 +48,7 @@ interface Group {
     Proyectos?: any[];
     link_whatsapp?: string;
     telefono_coordinador?: string;
+    teacherMemberCedulas?: string[];
 }
 
 interface Domain {
@@ -76,6 +78,9 @@ interface GroupDetailDrawerProps {
     lines: ResearchLine[];
     formatCareerName: (name: string) => string;
     handleOpenReview: (group: Group) => void;
+    fetchData?: () => void;
+    onEdit?: (group: Group) => void;
+    isEditingInitial?: boolean;
 }
 
 const formatNombre = (nombre: string | null | undefined) => {
@@ -102,7 +107,9 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     carreras,
     lines,
     formatCareerName,
-    handleOpenReview
+    handleOpenReview,
+    fetchData,
+    isEditingInitial
 }) => {
     const [detailMembers, setDetailMembers] = useState<GroupMember[]>([]);
     const [detailTab, setDetailTab] = useState<'info' | 'feedback' | 'proyectos'>('info');
@@ -110,6 +117,444 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     const [loadingFeedback, setLoadingFeedback] = useState(false);
     const [newFeedbackText, setNewFeedbackText] = useState('');
     const [sendingFeedback, setSendingFeedback] = useState(false);
+
+    const userRef = user?.id_referencia?.trim();
+    const canEdit = detailGroup && (isAdmin || 
+        (detailGroup.id_profesor_coordinador?.trim() === userRef && detailGroup.estado !== 'Aprobado' && detailGroup.estado !== 'En Evaluación') ||
+        (detailGroup.teacherMemberCedulas && detailGroup.teacherMemberCedulas.some((ced: string) => ced.trim() === userRef) && detailGroup.estado !== 'Aprobado' && detailGroup.estado !== 'En Evaluación'));
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [savingInline, setSavingInline] = useState(false);
+    const [isDraftRestored, setIsDraftRestored] = useState(false);
+    const isInitializedRef = useRef(false);
+
+    const [editFormData, setEditFormData] = useState({
+        nombre: '',
+        siglas: '',
+        tipo_grupo: 'Investigación',
+        id_dominio: '',
+        id_profesor_coordinador: '',
+        objetivo_general: '',
+        mision: '',
+        vision: '',
+        resolucion_aprobacion: '',
+        fecha_creacion: '',
+        categoria_consolidacion: 'En Formación',
+        lineas_ids: [] as number[],
+        carreras_ids: [] as number[],
+        link_whatsapp: '',
+        telefono_coordinador: ''
+    });
+
+    const [selectedCoordName, setSelectedCoordName] = useState('');
+
+    // Search and auto-completes
+    const [coordSearchQuery, setCoordSearchQuery] = useState('');
+    const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
+    const [isCoordSearching, setIsCoordSearching] = useState(false);
+    const [showCoordResults, setShowCoordResults] = useState(false);
+
+    const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
+    const [teacherPhone, setTeacherPhone] = useState('');
+    const [studentPhone, setStudentPhone] = useState('');
+    const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
+    const [isTeacherSearching, setIsTeacherSearching] = useState(false);
+    const [showTeacherResults, setShowTeacherResults] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+    const [teacherRol, setTeacherRol] = useState('Co-Investigador');
+
+    const [studentSearchQuery, setStudentSearchQuery] = useState('');
+    const [studentSearchResults, setStudentSearchResults] = useState<any[]>([]);
+    const [isStudentSearching, setIsStudentSearching] = useState(false);
+    const [showStudentResults, setShowStudentResults] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+    const [studentRol, setStudentRol] = useState('Semillerista');
+
+    const recalculateCarreras = (coordCareer: string, members: GroupMember[]) => {
+        const uniqueIds = new Set<number>();
+        const getMatchedIds = (careerStr: string) => {
+            const careersList = careerStr.split(',').map((c: string) => c.trim().toUpperCase());
+            return carreras
+                .filter(c => careersList.includes(c.carrera1.trim().toUpperCase()))
+                .map(c => c.id_carrera);
+        };
+
+        if (coordCareer) {
+            getMatchedIds(coordCareer).forEach(id => uniqueIds.add(id));
+        }
+
+        members.forEach(m => {
+            if (m.carrera) {
+                getMatchedIds(m.carrera).forEach(id => uniqueIds.add(id));
+            }
+        });
+
+        return Array.from(uniqueIds);
+    };
+
+    useEffect(() => {
+        if (!showCoordResults) return;
+        const delayDebounceFn = setTimeout(async () => {
+            setIsCoordSearching(true);
+            try {
+                const queryParam = (!coordSearchQuery.trim() || coordSearchQuery === (detailGroup?.nombre_coordinador || ''))
+                    ? ''
+                    : coordSearchQuery;
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(queryParam)}&tipo=profesor`);
+                setCoordSearchResults(res.data || []);
+            } catch (err) {
+                console.error("Error al buscar docentes coordinadores:", err);
+            } finally {
+                setIsCoordSearching(false);
+            }
+        }, coordSearchQuery.trim() ? 300 : 0);
+        return () => clearTimeout(delayDebounceFn);
+    }, [coordSearchQuery, showCoordResults, detailGroup]);
+
+    useEffect(() => {
+        if (!showTeacherResults) return;
+        const delayDebounceFn = setTimeout(async () => {
+            setIsTeacherSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(teacherSearchQuery)}&tipo=profesor`);
+                setTeacherSearchResults(res.data || []);
+            } catch (err) {
+                console.error("Error al buscar docentes investigadores:", err);
+            } finally {
+                setIsTeacherSearching(false);
+            }
+        }, teacherSearchQuery.trim() ? 300 : 0);
+        return () => clearTimeout(delayDebounceFn);
+    }, [teacherSearchQuery, showTeacherResults]);
+
+    useEffect(() => {
+        if (!showStudentResults) return;
+        const delayDebounceFn = setTimeout(async () => {
+            setIsStudentSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(studentSearchQuery)}&tipo=alumno`);
+                setStudentSearchResults(res.data || []);
+            } catch (err) {
+                console.error("Error al buscar estudiantes:", err);
+            } finally {
+                setIsStudentSearching(false);
+            }
+        }, studentSearchQuery.trim() ? 300 : 0);
+        return () => clearTimeout(delayDebounceFn);
+    }, [studentSearchQuery, showStudentResults]);
+
+    const handleSelectCoordinator = (teacher: any) => {
+        if (detailMembers.some(m => m.cedula === teacher.cedula)) {
+            alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
+            return;
+        }
+        
+        const updatedCarreras = recalculateCarreras(teacher.carrera || '', detailMembers);
+        setEditFormData(prev => ({
+            ...prev,
+            id_profesor_coordinador: teacher.cedula,
+            carreras_ids: updatedCarreras
+        }));
+
+        setSelectedCoordName(teacher.nombre);
+        setCoordSearchQuery('');
+        setShowCoordResults(false);
+    };
+
+    const handleSelectTeacher = (teacher: any) => {
+        setSelectedTeacher(teacher);
+        setTeacherSearchQuery(teacher.nombre);
+        setShowTeacherResults(false);
+        setTeacherRol('Co-Investigador');
+    };
+
+    const handleSelectStudent = (student: any) => {
+        setSelectedStudent(student);
+        setStudentSearchQuery(student.nombre);
+        setShowStudentResults(false);
+        setStudentRol('Semillerista');
+    };
+
+    const handleAddTeacher = async () => {
+        if (!selectedTeacher || !detailGroup) return;
+
+        if (selectedTeacher.cedula === editFormData.id_profesor_coordinador) {
+            alert("No se puede agregar al Coordinador Responsable como integrante docente.");
+            return;
+        }
+
+        if (detailMembers.some(m => m.cedula?.trim() === selectedTeacher.cedula?.trim())) {
+            alert("Este docente ya es integrante de la propuesta de grupo.");
+            return;
+        }
+
+        try {
+            const memberDto = {
+                id_usuario: 0,
+                cedula: selectedTeacher.cedula,
+                nombre_completo: selectedTeacher.nombre,
+                rol: teacherRol,
+                activo: true,
+                telefono_contacto: teacherPhone
+            };
+            await api.post(`/Groups/${detailGroup.uuid}/members`, memberDto);
+            await refreshGroupDetail();
+            
+            setSelectedTeacher(null);
+            setTeacherSearchQuery('');
+            setTeacherRol('Co-Investigador');
+            setTeacherPhone('');
+        } catch (error: any) {
+            console.error("Error al agregar integrante docente:", error);
+            alert("No se pudo agregar al docente: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleAddStudent = async () => {
+        if (!selectedStudent || !detailGroup) return;
+
+        if (detailMembers.some(m => m.cedula?.trim() === selectedStudent.cedula?.trim())) {
+            alert("Este estudiante ya es integrante de la propuesta de grupo.");
+            return;
+        }
+
+        try {
+            const memberDto = {
+                id_usuario: 0,
+                cedula: selectedStudent.cedula,
+                nombre_completo: selectedStudent.nombre,
+                rol: studentRol,
+                activo: true,
+                telefono_contacto: studentPhone
+            };
+            await api.post(`/Groups/${detailGroup.uuid}/members`, memberDto);
+            await refreshGroupDetail();
+            
+            setSelectedStudent(null);
+            setStudentSearchQuery('');
+            setStudentPhone('');
+            setStudentRol('Semillerista');
+        } catch (error: any) {
+            console.error("Error al agregar estudiante:", error);
+            alert("No se pudo agregar al estudiante: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleRemoveMember = async (idGrupoMiembro: number) => {
+        const reason = window.prompt("Ingrese el motivo por el cual el integrante se retira del grupo (opcional):");
+        if (reason === null) return;
+
+        try {
+            const encodedReason = encodeURIComponent(reason.trim());
+            await api.delete(`/Groups/members/${idGrupoMiembro}?reason=${encodedReason}`);
+            await refreshGroupDetail();
+        } catch (error: any) {
+            console.error("Error al retirar integrante:", error);
+            alert("No se pudo retirar al integrante: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const toggleLine = (lineId: number) => {
+        setEditFormData(prev => {
+            const lines = prev.lineas_ids.includes(lineId)
+                ? prev.lineas_ids.filter(id => id !== lineId)
+                : [...prev.lineas_ids, lineId];
+            return { ...prev, lineas_ids: lines };
+        });
+    };
+
+    const clearDraft = () => {
+        if (detailGroup) {
+            localStorage.removeItem(`edit_group_form_draft_${detailGroup.uuid}`);
+            localStorage.removeItem('groups_draft_metadata');
+            setIsDraftRestored(false);
+            window.dispatchEvent(new CustomEvent('diitra:group-draft-cleared'));
+
+            // Restablecer los campos a los valores originales del servidor
+            setEditFormData({
+                nombre: detailGroup.nombre || '',
+                siglas: detailGroup.siglas || '',
+                tipo_grupo: detailGroup.tipo_grupo || 'Investigación',
+                id_dominio: detailGroup.id_dominio ? detailGroup.id_dominio.toString() : '',
+                id_profesor_coordinador: detailGroup.id_profesor_coordinador || '',
+                objetivo_general: detailGroup.objetivo_general || '',
+                mision: detailGroup.mision || '',
+                vision: detailGroup.vision || '',
+                resolucion_aprobacion: detailGroup.resolucion_aprobacion || '',
+                fecha_creacion: detailGroup.fecha_creacion ? detailGroup.fecha_creacion.split('T')[0] : '',
+                categoria_consolidacion: detailGroup.categoria_consolidacion || 'En Formación',
+                lineas_ids: detailGroup.lineas_ids || [],
+                carreras_ids: detailGroup.carreras_ids || [],
+                link_whatsapp: detailGroup.link_whatsapp || '',
+                telefono_coordinador: detailGroup.telefono_coordinador || ''
+            });
+            setSelectedCoordName(detailGroup.nombre_coordinador || '');
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen || !detailGroup?.uuid) {
+            isInitializedRef.current = false;
+            setIsDraftRestored(false);
+            return;
+        }
+
+        if (isEditing) {
+            const draftKey = `edit_group_form_draft_${detailGroup.uuid}`;
+            const draft = localStorage.getItem(draftKey);
+            if (draft) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    if (parsed && typeof parsed === 'object' && parsed.formData) {
+                        setEditFormData(parsed.formData);
+                        setSelectedCoordName(parsed.selectedCoordName || '');
+                        setIsDraftRestored(true);
+                        isInitializedRef.current = true;
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error reading draft", e);
+                }
+            }
+
+            setEditFormData({
+                nombre: detailGroup.nombre || '',
+                siglas: detailGroup.siglas || '',
+                tipo_grupo: detailGroup.tipo_grupo || 'Investigación',
+                id_dominio: detailGroup.id_dominio ? detailGroup.id_dominio.toString() : '',
+                id_profesor_coordinador: detailGroup.id_profesor_coordinador || '',
+                objetivo_general: detailGroup.objetivo_general || '',
+                mision: detailGroup.mision || '',
+                vision: detailGroup.vision || '',
+                resolucion_aprobacion: detailGroup.resolucion_aprobacion || '',
+                fecha_creacion: detailGroup.fecha_creacion ? detailGroup.fecha_creacion.split('T')[0] : '',
+                categoria_consolidacion: detailGroup.categoria_consolidacion || 'En Formación',
+                lineas_ids: detailGroup.lineas_ids || [],
+                carreras_ids: detailGroup.carreras_ids || [],
+                link_whatsapp: detailGroup.link_whatsapp || '',
+                telefono_coordinador: detailGroup.telefono_coordinador || ''
+            });
+            setSelectedCoordName(detailGroup.nombre_coordinador || '');
+            setIsDraftRestored(false);
+            isInitializedRef.current = true;
+        } else {
+            isInitializedRef.current = false;
+            setIsDraftRestored(false);
+        }
+    }, [isEditing, detailGroup, isOpen]);
+
+    const hasChangesFromDb = () => {
+        if (!detailGroup) return false;
+        
+        const dbNombre = detailGroup.nombre || '';
+        const dbSiglas = detailGroup.siglas || '';
+        const dbTipo = detailGroup.tipo_grupo || 'Investigación';
+        const dbDominio = detailGroup.id_dominio ? detailGroup.id_dominio.toString() : '';
+        const dbCoord = detailGroup.id_profesor_coordinador || '';
+        const dbObjetivo = detailGroup.objetivo_general || '';
+        const dbMision = detailGroup.mision || '';
+        const dbVision = detailGroup.vision || '';
+        const dbResolucion = detailGroup.resolucion_aprobacion || '';
+        const dbFecha = detailGroup.fecha_creacion ? detailGroup.fecha_creacion.split('T')[0] : '';
+        const dbCat = detailGroup.categoria_consolidacion || 'En Formación';
+        const dbLines = detailGroup.lineas_ids || [];
+        const dbWhatsapp = detailGroup.link_whatsapp || '';
+        const dbTel = detailGroup.telefono_coordinador || '';
+
+        const sameLines = JSON.stringify(editFormData.lineas_ids.slice().sort()) === JSON.stringify(dbLines.slice().sort());
+
+        return (
+            editFormData.nombre !== dbNombre ||
+            editFormData.siglas !== dbSiglas ||
+            editFormData.tipo_grupo !== dbTipo ||
+            editFormData.id_dominio !== dbDominio ||
+            editFormData.id_profesor_coordinador !== dbCoord ||
+            editFormData.objetivo_general !== dbObjetivo ||
+            editFormData.mision !== dbMision ||
+            editFormData.vision !== dbVision ||
+            editFormData.resolucion_aprobacion !== dbResolucion ||
+            editFormData.fecha_creacion !== dbFecha ||
+            editFormData.categoria_consolidacion !== dbCat ||
+            !sameLines ||
+            editFormData.link_whatsapp !== dbWhatsapp ||
+            editFormData.telefono_coordinador !== dbTel
+        );
+    };
+
+    const handleCloseAttempt = (action: 'cancel-edit' | 'close-drawer') => {
+        if (isEditing && hasChangesFromDb()) {
+            const confirmDiscard = window.confirm("Tiene cambios no guardados en el borrador de edición. ¿Está seguro de que desea salir? Se perderán las modificaciones.");
+            if (!confirmDiscard) return;
+        }
+
+        if (action === 'cancel-edit') {
+            setIsEditing(false);
+            if (detailGroup) {
+                setEditFormData({
+                    nombre: detailGroup.nombre || '',
+                    siglas: detailGroup.siglas || '',
+                    tipo_grupo: detailGroup.tipo_grupo || 'Investigación',
+                    id_dominio: detailGroup.id_dominio ? detailGroup.id_dominio.toString() : '',
+                    id_profesor_coordinador: detailGroup.id_profesor_coordinador || '',
+                    objetivo_general: detailGroup.objetivo_general || '',
+                    mision: detailGroup.mision || '',
+                    vision: detailGroup.vision || '',
+                    resolucion_aprobacion: detailGroup.resolucion_aprobacion || '',
+                    fecha_creacion: detailGroup.fecha_creacion ? detailGroup.fecha_creacion.split('T')[0] : '',
+                    categoria_consolidacion: detailGroup.categoria_consolidacion || 'En Formación',
+                    lineas_ids: detailGroup.lineas_ids || [],
+                    carreras_ids: detailGroup.carreras_ids || [],
+                    link_whatsapp: detailGroup.link_whatsapp || '',
+                    telefono_coordinador: detailGroup.telefono_coordinador || ''
+                });
+                setSelectedCoordName(detailGroup.nombre_coordinador || '');
+            }
+        } else if (action === 'close-drawer') {
+            onClose();
+            setIsFieldModalOpen(false);
+            setActiveFieldKey(null);
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen || !detailGroup || !isEditing || !isInitializedRef.current) return;
+
+        const draftKey = `edit_group_form_draft_${detailGroup.uuid}`;
+
+        if (!hasChangesFromDb()) {
+            if (localStorage.getItem(draftKey)) {
+                localStorage.removeItem(draftKey);
+                const metaStr = localStorage.getItem('groups_draft_metadata');
+                if (metaStr) {
+                    try {
+                        const meta = JSON.parse(metaStr);
+                        if (meta.type === 'edit' && meta.uuid === detailGroup.uuid) {
+                            localStorage.removeItem('groups_draft_metadata');
+                            window.dispatchEvent(new CustomEvent('diitra:group-draft-cleared'));
+                        }
+                    } catch (e) {}
+                }
+            }
+            return;
+        }
+
+        const draftData = {
+            formData: editFormData,
+            selectedCoordName,
+            timestamp: Date.now()
+        };
+
+        localStorage.setItem(draftKey, JSON.stringify(draftData));
+
+        const meta = {
+            type: 'edit',
+            uuid: detailGroup.uuid,
+            groupName: editFormData.nombre || detailGroup.nombre || 'Borrador sin nombre',
+            timestamp: Date.now()
+        };
+        localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
+        window.dispatchEvent(new CustomEvent('diitra:group-draft-cleared'));
+    }, [editFormData, selectedCoordName, isEditing, detailGroup, isOpen]);
 
     // Contextual field feedback states
     const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
@@ -145,32 +590,77 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         (detailGroup && detailGroup.id_profesor_coordinador?.trim() === user?.id_referencia?.trim()) || 
         detailMembers.some(m => m.activo && (m.cedula?.trim() === user?.id_referencia?.trim() || m.cedula?.trim() === user?.cedula?.trim() || m.id_usuario === user?.id_usuario));
 
+    const refreshGroupDetail = async () => {
+        if (!detailGroup?.uuid) return;
+        try {
+            const res = await api.get(`/Groups/${detailGroup.uuid}`);
+            const fullGroup = res.data;
+            if (fullGroup) {
+                setDetailGroup(fullGroup);
+                if (fullGroup.miembros) {
+                    setDetailMembers(fullGroup.miembros.filter((m: any) => m.activo));
+                } else {
+                    setDetailMembers([]);
+                }
+            }
+        } catch (err) {
+            console.error("Error loading group detail:", err);
+        }
+    };
+
+    const handleSaveInlineChanges = async () => {
+        if (!detailGroup?.uuid) return;
+
+        // Validaciones del lado del cliente
+        if (!editFormData.nombre.trim()) {
+            alert("El nombre de la propuesta de grupo es obligatorio.");
+            return;
+        }
+        if (!editFormData.siglas.trim()) {
+            alert("El acrónimo o siglas del grupo es obligatorio.");
+            return;
+        }
+        if (!editFormData.id_dominio) {
+            alert("Debe seleccionar un dominio académico para el grupo.");
+            return;
+        }
+        if (editFormData.lineas_ids.length === 0) {
+            alert("Debe seleccionar al menos una línea de investigación vinculada.");
+            return;
+        }
+
+        setSavingInline(true);
+        try {
+            const payload = {
+                ...editFormData,
+                id_profesor_coordinador: editFormData.id_profesor_coordinador || null,
+                id_dominio: editFormData.id_dominio ? parseInt(editFormData.id_dominio) : null,
+                miembros: []
+            };
+
+            await api.put(`/Groups/${detailGroup.uuid}`, payload);
+            clearDraft();
+            await refreshGroupDetail();
+            setIsEditing(false);
+            if (fetchData) {
+                fetchData();
+            }
+        } catch (err: any) {
+            console.error("Error al guardar cambios de grupo:", err);
+            alert("No se pudieron guardar los cambios: " + (err.response?.data?.message || err.message));
+        } finally {
+            setSavingInline(false);
+        }
+    };
+
     // Fetch detail members when drawer is open
     useEffect(() => {
-        if (!isOpen || !detailGroup) return;
+        if (!isOpen || !detailGroup?.uuid) return;
         openTimeRef.current = Date.now();
-
-        const loadDetailData = async () => {
-            setDetailTab('info');
-            try {
-                const res = await api.get(`/Groups/${detailGroup.uuid}`);
-                const fullGroup = res.data;
-                if (fullGroup) {
-                    setDetailGroup(fullGroup);
-                    if (fullGroup.miembros) {
-                        setDetailMembers(fullGroup.miembros.filter((m: any) => m.activo));
-                    } else {
-                        setDetailMembers([]);
-                    }
-                }
-            } catch (err) {
-                console.error("Error loading group detail:", err);
-                setDetailMembers([]);
-            }
-        };
-
-        loadDetailData();
-    }, [isOpen, detailGroup?.uuid]);
+        setDetailTab('info');
+        setIsEditing(!!isEditingInitial);
+        refreshGroupDetail();
+    }, [isOpen, detailGroup?.uuid, isEditingInitial]);
 
     // Fetch feedback comments only when user is a confirmed group member / coordinator / admin
     useEffect(() => {
@@ -402,6 +892,9 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         });
     };
 
+
+
+
     const openFieldFeedbackDrawer = (fieldKey: string, fieldName: string) => {
         setActiveFieldKey(fieldKey);
         setActiveFieldName(fieldName);
@@ -475,16 +968,16 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                     e.stopPropagation();
                     openFieldFeedbackDrawer(fieldKey, fieldName);
                 }}
-                className={`flex items-center gap-1 p-1.5 rounded-lg transition-all active:scale-95 shrink-0 ${
+                className={`flex items-center gap-1 p-1.5 rounded-lg border transition-all active:scale-95 shrink-0 ${
                     hasComments
-                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.1)]'
-                        : 'text-text-dim/40 hover:text-text-main hover:bg-surface-hover'
+                        ? 'bg-amber-500/5 border-amber-500/20 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/30'
+                        : 'border-transparent text-text-dim/40 hover:text-text-main hover:bg-surface-hover'
                 }`}
                 title={hasComments ? `Ver ${comments.length} observaciones` : 'Agregar observación contextual'}
             >
-                <MessageSquare size={13} className={hasComments ? 'fill-amber-500/10 text-amber-400' : ''} />
+                <MessageSquare size={13} className={hasComments ? 'fill-amber-500/5 text-amber-500' : ''} />
                 {hasComments && (
-                    <span className="text-[8px] font-mono font-bold leading-none bg-amber-500 text-bg-deep px-1 py-0.5 rounded-full">
+                    <span className="text-[8px] font-mono font-bold leading-none bg-amber-500 text-bg-deep px-1.5 py-0.5 rounded-full">
                         {comments.length}
                     </span>
                 )}
@@ -516,9 +1009,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                     if (Date.now() - openTimeRef.current < 300) {
                         return;
                     }
-                    onClose();
-                    setIsFieldModalOpen(false);
-                    setActiveFieldKey(null);
+                    handleCloseAttempt('close-drawer');
                 }}
             />
 
@@ -708,41 +1199,64 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
             <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
                 <div className="modal-header">
-                    <div className="flex items-center gap-3">
-                        <div className="icon-circle icon-circle-brand">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="icon-circle icon-circle-brand shrink-0">
                             <Award size={20} />
                         </div>
                         <div
                             id="field-container-siglas"
-                            className={`transition-all duration-500 rounded-lg px-2 py-1 ${
+                            className={`min-w-0 transition-all duration-500 rounded-lg px-2 py-1 flex-1 ${
                                 highlightedField === 'siglas'
                                     ? 'ring-2 ring-amber-500/80 bg-amber-500/5 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse'
                                     : ''
                             }`}
                         >
-                            <h3 className="text-lg font-semibold text-text-main tracking-tight">{detailGroup.nombre}</h3>
+                            <h3 className="text-lg font-semibold text-text-main tracking-tight truncate" title={detailGroup.nombre}>{detailGroup.nombre}</h3>
                             <div className="flex items-center gap-2">
-                                <p className="section-label text-text-dim">
+                                <p className="section-label text-text-dim truncate">
                                     {detailGroup.tipo_grupo === 'Semillero' ? 'Semillero' : 'Grupo de Investigación'} — {detailGroup.siglas || 'SIN_SIGLAS'}
                                 </p>
                                 {renderFieldFeedbackButton('siglas', 'Siglas del Grupo')}
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 shrink-0 ml-4">
+                        {canEdit && detailTab === 'info' && (
+                            <div className="flex items-center gap-1.5">
+                                {isEditing ? (
+                                    <button
+                                        onClick={() => handleCloseAttempt('cancel-edit')}
+                                        className="px-2.5 py-1.5 rounded-lg border border-text-main/20 bg-text-main/5 hover:bg-text-main/10 text-text-main text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                                        title="Volver a la vista de detalles"
+                                    >
+                                        <span>Vista Detalle</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-2.5 py-1.5 rounded-lg border border-text-main/20 bg-text-main/5 hover:bg-text-main/10 text-text-main text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                                        title="Editar propuesta directamente aquí"
+                                    >
+                                        <Edit2 size={12} />
+                                        <span>Editar Aquí</span>
+                                    </button>
+                                )}
+
+                            </div>
+                        )}
                         {isMember && detailGroup.link_whatsapp && (
                             <a
                                 href={detailGroup.link_whatsapp}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                                className="px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
                                 title="Unirse al grupo de WhatsApp"
                             >
-                                <MessageCircle size={12} className="animate-pulse" />
+                                <MessageCircle size={12} />
                                 <span>Grupo de WhatsApp</span>
                             </a>
                         )}
-                        <button onClick={onClose} className="text-text-dim hover:text-text-main transition-colors">
+                        <button onClick={() => handleCloseAttempt('close-drawer')} className="text-text-dim hover:text-text-main transition-colors">
                             <ChevronRight size={20} />
                         </button>
                     </div>
@@ -797,6 +1311,546 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
                 {detailTab === 'info' && (
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        {isEditing ? (
+                            <div className="space-y-6">
+                                {isDraftRestored && (
+                                    <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-up">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+                                            <p className="text-xs font-semibold">Edición restaurada desde un borrador local no guardado.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={clearDraft}
+                                            className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-amber-500/20 hover:bg-amber-500/10 text-amber-500 active:scale-95 transition-all"
+                                        >
+                                            Descartar Borrador
+                                        </button>
+                                    </div>
+                                )}
+                                {/* Basic Settings */}
+                                <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombre del Grupo</label>
+                                            {renderFieldFeedbackButton('nombre', 'Nombre del Grupo')}
+                                        </div>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editFormData.nombre}
+                                            onChange={(e) => setEditFormData({ ...editFormData, nombre: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                            placeholder="Ej: Grupo de Investigación en Sistemas Inteligentes"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Siglas / Acrónimo</label>
+                                            {renderFieldFeedbackButton('siglas', 'Siglas del Grupo')}
+                                        </div>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editFormData.siglas}
+                                            onChange={(e) => setEditFormData({ ...editFormData, siglas: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase font-semibold"
+                                            placeholder="Ej: GISI"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Tipo de Grupo</label>
+                                            {renderFieldFeedbackButton('tipoGrupo', 'Tipo de Grupo')}
+                                        </div>
+                                        <select
+                                            value={editFormData.tipo_grupo}
+                                            onChange={(e) => setEditFormData({ ...editFormData, tipo_grupo: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                        >
+                                            <option value="Investigación">Grupo de Investigación</option>
+                                            <option value="Semillero">Semillero de Investigación</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Dominio Académico</label>
+                                            {renderFieldFeedbackButton('idDominio', 'Dominio Académico')}
+                                        </div>
+                                        <select
+                                            required
+                                            value={editFormData.id_dominio}
+                                            onChange={(e) => setEditFormData({ ...editFormData, id_dominio: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                        >
+                                            <option value="">Seleccione Dominio...</option>
+                                            {dominios.map(d => (
+                                                <option key={d.id_dominio} value={d.id_dominio}>{d.nombre}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Etapa del grupo</label>
+                                        <select
+                                            value={editFormData.categoria_consolidacion}
+                                            onChange={(e) => setEditFormData({ ...editFormData, categoria_consolidacion: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                        >
+                                            <option value="En Formación">En Formación (Grupo Inicial / Reciente)</option>
+                                            <option value="Consolidado">Consolidado (Trayectoria Probada)</option>
+                                        </select>
+                                    </div>
+
+                                    {/* WhatsApp and Coordinator Phone */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Enlace de Grupo de WhatsApp (Opcional)</label>
+                                        <input
+                                            type="url"
+                                            value={editFormData.link_whatsapp}
+                                            onChange={(e) => setEditFormData({ ...editFormData, link_whatsapp: e.target.value })}
+                                            placeholder="https://chat.whatsapp.com/..."
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-medium"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Teléfono del Coordinador (Opcional)</label>
+                                        <input
+                                            type="tel"
+                                            value={editFormData.telefono_coordinador}
+                                            onChange={(e) => setEditFormData({ ...editFormData, telefono_coordinador: e.target.value })}
+                                            placeholder="0999999999"
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-medium"
+                                        />
+                                    </div>
+
+                                    {/* Coordinator Selection */}
+                                    <div className="space-y-2 md:col-span-2 relative">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                            <User size={12} /> Coordinador Responsable
+                                        </label>
+                                        <div className="relative">
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                            <input
+                                                type="text"
+                                                value={coordSearchQuery}
+                                                onChange={(e) => {
+                                                    setCoordSearchQuery(e.target.value);
+                                                    setShowCoordResults(true);
+                                                }}
+                                                onFocus={() => setShowCoordResults(true)}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg pl-9 pr-4 py-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase placeholder:normal-case font-medium"
+                                                placeholder={selectedCoordName ? selectedCoordName : "Buscar docente por nombre o cédula..."}
+                                            />
+                                            {showCoordResults && (
+                                                <>
+                                                    <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
+                                                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[180px] overflow-y-auto z-30 custom-scrollbar">
+                                                        {isCoordSearching ? (
+                                                            <div className="p-3 text-center text-xs text-text-dim font-mono flex items-center justify-center gap-2">
+                                                                <Loader2 size={12} className="animate-spin" /> Buscando docente...
+                                                            </div>
+                                                        ) : coordSearchResults.length === 0 ? (
+                                                            <div className="p-3 text-center text-xs text-text-dim font-mono">
+                                                                No se encontraron docentes con ese nombre o cédula.
+                                                            </div>
+                                                        ) : (
+                                                            coordSearchResults.map((teacher: any) => (
+                                                                <button
+                                                                    key={teacher.cedula}
+                                                                    type="button"
+                                                                    onClick={() => handleSelectCoordinator(teacher)}
+                                                                    className="w-full text-left p-2.5 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
+                                                                >
+                                                                    <div className="space-y-0.5">
+                                                                        <p className="font-semibold text-text-main text-xs flex items-center gap-2">
+                                                                            <span>{formatNombre(teacher.nombre)}</span>
+                                                                            {teacher.horas_disponibles !== undefined && (
+                                                                                <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
+                                                                                    (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
+                                                                                        ? 'badge-vercel-success' 
+                                                                                        : 'badge-vercel-error'
+                                                                                }`}>
+                                                                                    Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
+                                                                                </span>
+                                                                            )}
+                                                                        </p>
+                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
+                                                                    </div>
+                                                                    <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
+                                                                        Docente
+                                                                    </span>
+                                                                </button>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Linked Careers */}
+                                <section className="space-y-2 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Carreras Vinculadas Automáticamente</label>
+                                    {(() => {
+                                        const linkedCareers = editFormData.carreras_ids.map(carrId => {
+                                            const career = carreras.find(c => c.id_carrera === carrId);
+                                            return career ? career.carrera1 : null;
+                                        }).filter(c => c !== null) as string[];
+
+                                        const filtered = linkedCareers.filter((cName: string) => {
+                                            const clean = cName.trim().toUpperCase();
+                                            return clean !== 'DOCENTE' && clean !== 'ESTUDIANTE';
+                                        });
+
+                                        if (filtered.length === 0) {
+                                            return (
+                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono bg-bg-deep/30 rounded-xl border border-dashed border-border-thin">
+                                                    Sin carreras vinculadas.
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="flex flex-wrap gap-2 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                                {filtered.map((cName, idx) => (
+                                                    <span key={idx} className="badge-vercel badge-vercel-info text-[9px] py-1 px-2.5 font-bold uppercase">
+                                                        {formatCareerName(cName)}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </section>
+
+                                {/* Identity Statements */}
+                                <section className="space-y-6 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
+                                            {renderFieldFeedbackButton('objetivoGeneral', 'Objetivo General')}
+                                        </div>
+                                        <textarea
+                                            rows={3}
+                                            value={editFormData.objetivo_general}
+                                            onChange={(e) => setEditFormData({ ...editFormData, objetivo_general: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
+                                                {renderFieldFeedbackButton('mision', 'Misión')}
+                                            </div>
+                                            <textarea
+                                                rows={3}
+                                                value={editFormData.mision}
+                                                onChange={(e) => setEditFormData({ ...editFormData, mision: e.target.value })}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                            />
+                                            </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Visión</label>
+                                                {renderFieldFeedbackButton('vision', 'Visión')}
+                                            </div>
+                                            <textarea
+                                                rows={3}
+                                                value={editFormData.vision}
+                                                onChange={(e) => setEditFormData({ ...editFormData, vision: e.target.value })}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                            />
+                                            </div>
+                                    </div>
+                                </section>
+
+                                {/* Research Lines */}
+                                <section className="space-y-4 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                            <BookOpen size={12} /> Líneas de Investigación Institucionales
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {lines.map(line => (
+                                            <div
+                                                key={line.id}
+                                                onClick={() => toggleLine(line.id)}
+                                                className={`p-3 rounded-xl border transition-all flex items-center gap-3 cursor-pointer ${
+                                                    editFormData.lineas_ids.includes(line.id)
+                                                        ? 'bg-text-main/10 border-text-main text-text-main'
+                                                        : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
+                                                }`}
+                                            >
+                                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                                    editFormData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
+                                                }`}>
+                                                    {editFormData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
+                                                </div>
+                                                <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                {/* Members Section (In-place additions and deletions) */}
+                                <section className="space-y-6 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                    <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <Users size={12} /> Integrantes del Grupo
+                                    </h4>
+
+                                    {/* Existing members */}
+                                    <div className="space-y-3">
+                                        {detailMembers.map(member => (
+                                            <div key={member.id_grupo_miembro} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-thin">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-black bg-surface-hover text-text-dim">
+                                                        {member.rol?.includes('Director') ? <Shield size={14} /> : <User size={14} />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-text-main">{formatNombre(member.nombre_completo)}</p>
+                                                        <p className="text-[8px] font-bold uppercase text-text-dim mt-0.5">{member.rol}</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                                    className="p-1.5 rounded-lg border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-all"
+                                                    title="Retirar Integrante"
+                                                >
+                                                    <UserMinus size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Add Teacher Investigator */}
+                                    <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
+                                        <h5 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                                            <Plus size={10} /> Añadir Docente Investigador
+                                        </h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1 relative">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Docente</label>
+                                                <div className="relative">
+                                                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
+                                                    <input
+                                                        type="text"
+                                                        value={teacherSearchQuery}
+                                                        onChange={(e) => {
+                                                            setTeacherSearchQuery(e.target.value);
+                                                            setShowTeacherResults(true);
+                                                        }}
+                                                        onFocus={() => setShowTeacherResults(true)}
+                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                                        placeholder="Buscar por nombre o cédula..."
+                                                    />
+                                                    {showTeacherResults && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-20" onClick={() => setShowTeacherResults(false)}></div>
+                                                            <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
+                                                                {isTeacherSearching ? (
+                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                        Buscando...
+                                                                    </div>
+                                                                ) : teacherSearchResults.length === 0 ? (
+                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                        No se encontraron resultados.
+                                                                    </div>
+                                                                ) : (
+                                                                    teacherSearchResults.map((teacher: any) => (
+                                                                        <button
+                                                                            key={teacher.cedula}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectTeacher(teacher)}
+                                                                            className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
+                                                                        >
+                                                                            <div className="space-y-0.5">
+                                                                                <p className="font-semibold text-text-main text-xs flex items-center gap-2">
+                                                                                    <span>{formatNombre(teacher.nombre)}</span>
+                                                                                    {teacher.horas_disponibles !== undefined && (
+                                                                                        <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
+                                                                                            (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
+                                                                                                ? 'badge-vercel-success' 
+                                                                                                : 'badge-vercel-error'
+                                                                                        }`}>
+                                                                                            Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
+                                                                                        </span>
+                                                                                    )}
+                                                                                </p>
+                                                                                <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
+                                                                            </div>
+                                                                            <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
+                                                                                Docente
+                                                                            </span>
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                                <input
+                                                    type="tel"
+                                                    value={teacherPhone}
+                                                    onChange={(e) => setTeacherPhone(e.target.value)}
+                                                    placeholder="Opcional"
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1 md:col-span-2">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                                <select
+                                                    value={teacherRol}
+                                                    onChange={(e) => setTeacherRol(e.target.value)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                >
+                                                    <option value="Co-Investigador">Co-Investigador</option>
+                                                    <option value="Director de Proyecto">Director de Proyecto</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleAddTeacher}
+                                            disabled={!selectedTeacher}
+                                            className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+                                        >
+                                            Añadir Docente
+                                        </button>
+                                    </div>
+
+                                    {/* Add Student Semillerista */}
+                                    <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
+                                        <h5 className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                                            <Plus size={10} /> Añadir Estudiante Semillerista
+                                        </h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1 relative">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Estudiante</label>
+                                                <div className="relative">
+                                                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
+                                                    <input
+                                                        type="text"
+                                                        value={studentSearchQuery}
+                                                        onChange={(e) => {
+                                                            setStudentSearchQuery(e.target.value);
+                                                            setShowStudentResults(true);
+                                                        }}
+                                                        onFocus={() => setShowStudentResults(true)}
+                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                                        placeholder="Buscar por nombre o cédula..."
+                                                    />
+                                                    {showStudentResults && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-20" onClick={() => setShowStudentResults(false)}></div>
+                                                            <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
+                                                                {isStudentSearching ? (
+                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                        Buscando...
+                                                                    </div>
+                                                                ) : studentSearchResults.length === 0 ? (
+                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                        No se encontraron resultados.
+                                                                    </div>
+                                                                ) : (
+                                                                    studentSearchResults.map((student: any) => (
+                                                                        <button
+                                                                            key={student.cedula}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectStudent(student)}
+                                                                            className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors"
+                                                                        >
+                                                                            <p className="font-semibold text-text-main text-xs">{formatNombre(student.nombre)}</p>
+                                                                            <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {student.cedula} | {student.carrera || 'SIN CARRERA'}</p>
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                                <input
+                                                    type="tel"
+                                                    value={studentPhone}
+                                                    onChange={(e) => setStudentPhone(e.target.value)}
+                                                    placeholder="Opcional"
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1 md:col-span-2">
+                                                <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                                <select
+                                                    value={studentRol}
+                                                    onChange={(e) => setStudentRol(e.target.value)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                >
+                                                    <option value="Semillerista">Semillerista</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleAddStudent}
+                                            disabled={!selectedStudent}
+                                            className="w-full py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-blue-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+                                        >
+                                            Añadir Estudiante
+                                        </button>
+                                    </div>
+                                </section>
+
+                                {/* Admin approval fields */}
+                                {isAdmin && (
+                                    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                                <FileText size={12} /> Resolución de Aprobación
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editFormData.resolucion_aprobacion}
+                                                onChange={(e) => setEditFormData({ ...editFormData, resolucion_aprobacion: e.target.value })}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                                placeholder="ACTA-DI-2026-001"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                                <Calendar size={12} /> Fecha de Creación
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={editFormData.fecha_creacion}
+                                                onChange={(e) => setEditFormData({ ...editFormData, fecha_creacion: e.target.value })}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all"
+                                            />
+                                        </div>
+                                    </section>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
                         {/* Status & Type & Consolidation */}
                         <div className="grid grid-cols-3 gap-4">
                             <div className="bento-card static p-4">
@@ -811,6 +1865,11 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                 {detailGroup.estado === 'Pendiente' && (
                                     <span className="badge-vercel badge-vercel-warning">
                                         <Calendar size={10} /> Pendiente
+                                    </span>
+                                )}
+                                {detailGroup.estado === 'En Evaluación' && (
+                                    <span className="badge-vercel badge-vercel-info">
+                                        <Loader2 size={10} className="animate-spin" /> En Evaluación
                                     </span>
                                 )}
                                 {detailGroup.estado === 'Rechazado' && (
@@ -1131,6 +2190,8 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                 </div>
                             )}
                         </div>
+                        </div>
+                        )}
                     </div>
                 )}
 
@@ -1269,7 +2330,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                                 ? 'text-emerald-400'
                                                                 : isMsgFromAdmin
                                                                     ? 'text-amber-400'
-                                                                    : 'text-brand'
+                                                                    : 'text-brand-light'
                                                         }`}>
                                                             {isMe ? 'Tú' : c.nombreUsuario} (Retroalimentación de Campo)
                                                         </span>
@@ -1278,18 +2339,18 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                         </span>
                                                     </div>
 
-                                                    <div className={`rounded-2xl p-4 border shadow-sm w-full select-text transition-all duration-300 ${
+                                                    <div className={`rounded-xl p-4 border shadow-sm w-full select-text transition-all duration-300 ${
                                                         isMe
-                                                            ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                            ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
                                                             : isMsgFromAdmin
-                                                                ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
-                                                                : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
+                                                                ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
+                                                                : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
                                                     }`}>
                                                         <div className="flex items-center justify-between border-b border-border-thin/20 pb-2 mb-3">
                                                             <div className="flex items-center gap-2">
-                                                                <AlertTriangle size={12} className={isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'} />
+                                                                <AlertTriangle size={12} className={isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'} />
                                                                 <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                                                    isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
+                                                                    isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand-light'
                                                                 }`}>
                                                                     Observación: {fieldFeedbackData.fieldName || fieldFeedbackData.field}
                                                                 </span>
@@ -1308,13 +2369,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                                         setHighlightedField(null);
                                                                     }, 3500);
                                                                 }}
-                                                                className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border active:scale-95 transition-all ${
-                                                                    isMe
-                                                                        ? 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-400'
-                                                                        : isMsgFromAdmin
-                                                                            ? 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 text-amber-400'
-                                                                            : 'bg-bg-deep border-border-thin hover:border-border-hover text-text-dim'
-                                                                }`}
+                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-border-thin bg-surface-hover hover:border-border-hover text-text-dim active:scale-95 transition-all"
                                                             >
                                                                 Ver Campo
                                                             </button>
@@ -1345,7 +2400,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                             ? 'text-emerald-400'
                                                             : isMsgFromAdmin
                                                                 ? 'text-amber-400'
-                                                                : 'text-brand'
+                                                                : 'text-brand-light'
                                                     }`}>
                                                         {isMe ? 'Tú' : c.nombreUsuario}
                                                     </span>
@@ -1354,12 +2409,12 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                     </span>
                                                 </div>
 
-                                                <div className={`rounded-2xl p-4 border shadow-sm select-text transition-all duration-300 ${
+                                                <div className={`rounded-xl p-4 border shadow-sm select-text transition-all duration-300 ${
                                                     isMe
-                                                        ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                        ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/30'
                                                         : isMsgFromAdmin
-                                                            ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
-                                                            : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
+                                                            ? 'bg-amber-500/[0.03] border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/30'
+                                                            : 'bg-brand/[0.03] border-brand/20 text-text-main rounded-tl-none hover:border-brand/30'
                                                 }`}>
                                                     {isAudio && audioData ? (
                                                         <div className="space-y-2">
@@ -1463,14 +2518,36 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                 )}
 
                 <div className="modal-footer shrink-0">
-                    <button onClick={onClose} className="btn-vercel-secondary">Cerrar</button>
-                    {isAdmin && detailGroup.estado === 'Pendiente' && (
-                        <button
-                            onClick={() => handleOpenReview(detailGroup)}
-                            className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-500/10 shrink-0"
-                        >
-                            Evaluar Propuesta
-                        </button>
+                    {isEditing ? (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="btn-vercel-secondary"
+                                disabled={savingInline}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveInlineChanges}
+                                className="btn-vercel-primary flex items-center gap-2"
+                                disabled={savingInline}
+                            >
+                                {savingInline ? <Loader2 size={12} className="animate-spin" /> : null}
+                                <span>Guardar Cambios</span>
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button onClick={onClose} className="btn-vercel-secondary">Cerrar</button>
+                            {isAdmin && detailGroup.estado === 'Pendiente' && (
+                                <button
+                                    onClick={() => handleOpenReview(detailGroup)}
+                                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-500/10 shrink-0"
+                                >
+                                    Evaluar Propuesta
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

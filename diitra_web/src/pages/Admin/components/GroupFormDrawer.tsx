@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Users, Plus, Search, CheckCircle, GraduationCap, User, UserMinus, Shield, Award, Calendar, FileText, ChevronRight, BookOpen, Eye, MessageCircle, Phone
+    Users, Plus, Search, CheckCircle, User, UserMinus, Shield, Award, FileText, ChevronRight, BookOpen
 } from 'lucide-react';
 import api from '../../../api/axios_config';
-import { CareerLinkageModal } from './CareerLinkageModal';
-
 
 interface GroupMember {
     id_grupo_miembro: number;
@@ -88,22 +86,17 @@ const formatNombre = (nombre: string | null | undefined) => {
 export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     isOpen,
     onClose,
-    editingGroup,
-    isReadOnly,
-    isAdmin,
     dominios,
     carreras,
     lines,
     fetchData,
     setConfirmDialog,
-    formatUserDetails,
     formatCareerName,
     onDraftCleared
 }) => {
-    // Local modal state
-    const [isLocalCareerModalOpen, setIsLocalCareerModalOpen] = useState(false);
+    const isInitializedRef = useRef(false);
+    const [isDraftRestored, setIsDraftRestored] = useState(false);
 
-    // Form states
     const [formData, setFormData] = useState({
         nombre: '',
         siglas: '',
@@ -114,7 +107,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         mision: '',
         vision: '',
         resolucion_aprobacion: '',
-        fecha_creacion: '',
+        fecha_creacion: new Date().toISOString().split('T')[0],
         categoria_consolidacion: 'En Formación',
         lineas_ids: [] as number[],
         carreras_ids: [] as number[],
@@ -123,13 +116,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     });
 
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
-    const [isDraftRestored, setIsDraftRestored] = useState(false);
-    const isInitializedRef = useRef(false);
-
-    // Search and auto-completes
-    const [coordSearchQuery, setCoordSearchQuery] = useState('');
     const [selectedCoordName, setSelectedCoordName] = useState('');
     const [selectedCoordCareer, setSelectedCoordCareer] = useState('');
+
+    const [coordSearchQuery, setCoordSearchQuery] = useState('');
     const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
     const [isCoordSearching, setIsCoordSearching] = useState(false);
     const [showCoordResults, setShowCoordResults] = useState(false);
@@ -150,7 +140,28 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
     const [studentRol, setStudentRol] = useState('Semillerista');
 
-    // Populate data when editingGroup changes
+    const recalculateCarreras = (coordCareer: string, members: GroupMember[]) => {
+        const uniqueIds = new Set<number>();
+        const getMatchedIds = (careerStr: string) => {
+            const careersList = careerStr.split(',').map((c: string) => c.trim().toUpperCase());
+            return carreras
+                .filter(c => careersList.includes(c.carrera1.trim().toUpperCase()))
+                .map(c => c.id_carrera);
+        };
+
+        if (coordCareer) {
+            getMatchedIds(coordCareer).forEach(id => uniqueIds.add(id));
+        }
+
+        members.forEach(m => {
+            if (m.carrera) {
+                getMatchedIds(m.carrera).forEach(id => uniqueIds.add(id));
+            }
+        });
+
+        return Array.from(uniqueIds);
+    };
+
     useEffect(() => {
         if (!isOpen) {
             isInitializedRef.current = false;
@@ -158,142 +169,69 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             return;
         }
 
-        if (editingGroup) {
-            const draftKey = `edit_group_form_draft_${editingGroup.uuid}`;
-            const draft = localStorage.getItem(draftKey);
-            if (draft && !isReadOnly) {
-                try {
-                    const parsed = JSON.parse(draft);
-                    if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
-                        const validatedFormData = {
-                            nombre: parsed.formData.nombre || '',
-                            siglas: parsed.formData.siglas || '',
-                            tipo_grupo: parsed.formData.tipo_grupo || 'Investigación',
-                            id_dominio: parsed.formData.id_dominio || '',
-                            id_profesor_coordinador: parsed.formData.id_profesor_coordinador || '',
-                            objetivo_general: parsed.formData.objetivo_general || '',
-                            mision: parsed.formData.mision || '',
-                            vision: parsed.formData.vision || '',
-                            resolucion_aprobacion: parsed.formData.resolucion_aprobacion || '',
-                            fecha_creacion: parsed.formData.fecha_creacion || '',
-                            categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
-                            lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
-                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : [],
-                            link_whatsapp: parsed.formData.link_whatsapp || '',
-                            telefono_coordinador: parsed.formData.telefono_coordinador || ''
-                        };
-                        setFormData(validatedFormData);
-                        setSelectedCoordName(parsed.selectedCoordName || '');
-                        setSelectedCoordCareer(parsed.selectedCoordCareer || '');
-                        setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
-                        setCoordSearchQuery('');
-                        setIsDraftRestored(true);
-                        isInitializedRef.current = true;
-                        return;
-                    } else {
-                        throw new Error("Estructura de borrador de grupo inválida");
-                    }
-                } catch (e) {
-                    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
-                    localStorage.removeItem(draftKey);
-                    localStorage.removeItem('groups_draft_metadata');
+        const draftKey = 'new_group_form_draft';
+        const draft = localStorage.getItem(draftKey);
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                    const validatedFormData = {
+                        nombre: parsed.formData.nombre || '',
+                        siglas: parsed.formData.siglas || '',
+                        tipo_grupo: parsed.formData.tipo_grupo || 'Investigación',
+                        id_dominio: parsed.formData.id_dominio || '',
+                        id_profesor_coordinador: parsed.formData.id_profesor_coordinador || '',
+                        objetivo_general: parsed.formData.objetivo_general || '',
+                        mision: parsed.formData.mision || '',
+                        vision: parsed.formData.vision || '',
+                        resolucion_aprobacion: parsed.formData.resolucion_aprobacion || '',
+                        fecha_creacion: parsed.formData.fecha_creacion || '',
+                        categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
+                        lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                        carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : [],
+                        link_whatsapp: parsed.formData.link_whatsapp || '',
+                        telefono_coordinador: parsed.formData.telefono_coordinador || ''
+                    };
+                    setFormData(validatedFormData);
+                    setSelectedCoordName(parsed.selectedCoordName || '');
+                    setSelectedCoordCareer(parsed.selectedCoordCareer || '');
+                    setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
+                    setCoordSearchQuery('');
+                    setIsDraftRestored(true);
+                    isInitializedRef.current = true;
+                    return;
                 }
+            } catch (e) {
+                console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                localStorage.removeItem(draftKey);
+                localStorage.removeItem('groups_draft_metadata');
             }
-
-            setFormData({
-                nombre: editingGroup.nombre || '',
-                siglas: editingGroup.siglas || '',
-                tipo_grupo: editingGroup.tipo_grupo || 'Investigación',
-                id_dominio: editingGroup.id_dominio ? editingGroup.id_dominio.toString() : '',
-                id_profesor_coordinador: editingGroup.id_profesor_coordinador || '',
-                objetivo_general: editingGroup.objetivo_general || '',
-                mision: editingGroup.mision || '',
-                vision: editingGroup.vision || '',
-                resolucion_aprobacion: editingGroup.resolucion_aprobacion || '',
-                fecha_creacion: editingGroup.fecha_creacion ? editingGroup.fecha_creacion.split('T')[0] : '',
-                categoria_consolidacion: editingGroup.categoria_consolidacion || 'En Formación',
-                lineas_ids: editingGroup.lineas_ids || [],
-                carreras_ids: editingGroup.carreras_ids || [],
-                link_whatsapp: editingGroup.link_whatsapp || '',
-                telefono_coordinador: editingGroup.telefono_coordinador || ''
-            });
-            setSelectedCoordName(editingGroup.nombre_coordinador || '');
-            setSelectedCoordCareer(editingGroup.carrera_coordinador || '');
-            setCoordSearchQuery('');
-
-            if (editingGroup.miembros) {
-                const activeMembers = editingGroup.miembros.filter((m: any) => m.activo);
-                setGroupMembers(activeMembers);
-            } else {
-                setGroupMembers([]);
-            }
-        } else {
-            const draftKey = 'new_group_form_draft';
-            const draft = localStorage.getItem(draftKey);
-            if (draft && !isReadOnly) {
-                try {
-                    const parsed = JSON.parse(draft);
-                    if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
-                        const validatedFormData = {
-                            nombre: parsed.formData.nombre || '',
-                            siglas: parsed.formData.siglas || '',
-                            tipo_grupo: parsed.formData.tipo_grupo || 'Investigación',
-                            id_dominio: parsed.formData.id_dominio || '',
-                            id_profesor_coordinador: parsed.formData.id_profesor_coordinador || '',
-                            objetivo_general: parsed.formData.objetivo_general || '',
-                            mision: parsed.formData.mision || '',
-                            vision: parsed.formData.vision || '',
-                            resolucion_aprobacion: parsed.formData.resolucion_aprobacion || '',
-                            fecha_creacion: parsed.formData.fecha_creacion || '',
-                            categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
-                            lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
-                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : [],
-                            link_whatsapp: parsed.formData.link_whatsapp || '',
-                            telefono_coordinador: parsed.formData.telefono_coordinador || ''
-                        };
-                        setFormData(validatedFormData);
-                        setSelectedCoordName(parsed.selectedCoordName || '');
-                        setSelectedCoordCareer(parsed.selectedCoordCareer || '');
-                        setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
-                        setCoordSearchQuery('');
-                        setIsDraftRestored(true);
-                        isInitializedRef.current = true;
-                        return;
-                    } else {
-                        throw new Error("Estructura de borrador de grupo nuevo inválida");
-                    }
-                } catch (e) {
-                    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
-                    localStorage.removeItem(draftKey);
-                    localStorage.removeItem('groups_draft_metadata');
-                }
-            }
-
-            setFormData({
-                nombre: '',
-                siglas: '',
-                tipo_grupo: 'Investigación',
-                id_dominio: '',
-                id_profesor_coordinador: '',
-                objetivo_general: '',
-                mision: '',
-                vision: '',
-                resolucion_aprobacion: '',
-                fecha_creacion: new Date().toISOString().split('T')[0],
-                categoria_consolidacion: 'En Formación',
-                lineas_ids: [],
-                carreras_ids: [],
-                link_whatsapp: '',
-                telefono_coordinador: ''
-            });
-            setSelectedCoordName('');
-            setSelectedCoordCareer('');
-            setCoordSearchQuery('');
-            setGroupMembers([]);
         }
+
+        setFormData({
+            nombre: '',
+            siglas: '',
+            tipo_grupo: 'Investigación',
+            id_dominio: '',
+            id_profesor_coordinador: '',
+            objetivo_general: '',
+            mision: '',
+            vision: '',
+            resolucion_aprobacion: '',
+            fecha_creacion: new Date().toISOString().split('T')[0],
+            categoria_consolidacion: 'En Formación',
+            lineas_ids: [],
+            carreras_ids: [],
+            link_whatsapp: '',
+            telefono_coordinador: ''
+        });
+        setSelectedCoordName('');
+        setSelectedCoordCareer('');
+        setCoordSearchQuery('');
+        setGroupMembers([]);
         setIsDraftRestored(false);
         isInitializedRef.current = true;
-    }, [editingGroup, isOpen, isReadOnly]);
+    }, [isOpen]);
 
     // debounces
     useEffect(() => {
@@ -301,10 +239,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         const delayDebounceFn = setTimeout(async () => {
             setIsCoordSearching(true);
             try {
-                const queryParam = (!coordSearchQuery.trim() || coordSearchQuery === (editingGroup?.nombre_coordinador || ''))
-                    ? ''
-                    : coordSearchQuery;
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(queryParam)}&tipo=profesor`);
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(coordSearchQuery)}&tipo=profesor`);
                 setCoordSearchResults(res.data || []);
             } catch (err) {
                 console.error("Error al buscar docentes coordinadores:", err);
@@ -313,7 +248,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             }
         }, coordSearchQuery.trim() ? 300 : 0);
         return () => clearTimeout(delayDebounceFn);
-    }, [coordSearchQuery, showCoordResults, editingGroup]);
+    }, [coordSearchQuery, showCoordResults]);
 
     useEffect(() => {
         if (!showTeacherResults) return;
@@ -352,34 +287,13 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
             return;
         }
-        
-        if (teacher.carrera) {
-            const teacherCareers = teacher.carrera.split(',').map((c: string) => c.trim().toUpperCase());
-            const matchedIds = carreras
-                .filter(c => teacherCareers.includes(c.carrera1.trim().toUpperCase()))
-                .map(c => c.id_carrera);
 
-            if (matchedIds.length > 0) {
-                setFormData(prev => {
-                    const newIds = new Set([...prev.carreras_ids, ...matchedIds]);
-                    return {
-                        ...prev,
-                        id_profesor_coordinador: teacher.cedula,
-                        carreras_ids: Array.from(newIds)
-                    };
-                });
-            } else {
-                setFormData(prev => ({
-                    ...prev,
-                    id_profesor_coordinador: teacher.cedula
-                }));
-            }
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                id_profesor_coordinador: teacher.cedula
-            }));
-        }
+        const updatedCarreras = recalculateCarreras(teacher.carrera || '', groupMembers);
+        setFormData(prev => ({
+            ...prev,
+            id_profesor_coordinador: teacher.cedula,
+            carreras_ids: updatedCarreras
+        }));
 
         setSelectedCoordName(teacher.nombre);
         setSelectedCoordCareer(teacher.carrera || '');
@@ -401,7 +315,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         setStudentRol('Semillerista');
     };
 
-    const handleAddTeacher = async () => {
+    const handleAddTeacher = () => {
         if (!selectedTeacher) return;
 
         if (selectedTeacher.cedula === formData.id_profesor_coordinador) {
@@ -409,7 +323,12 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             return;
         }
 
-        const newMember = {
+        if (groupMembers.some(m => m.cedula?.trim() === selectedTeacher.cedula?.trim())) {
+            alert("Este docente ya es integrante de la propuesta de grupo.");
+            return;
+        }
+
+        const newMember: GroupMember = {
             id_grupo_miembro: Date.now(),
             id_usuario: 0,
             cedula: selectedTeacher.cedula,
@@ -420,59 +339,26 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             telefono_contacto: teacherPhone
         };
 
-        if (editingGroup) {
-            try {
-                const memberDto = {
-                    id_usuario: 0,
-                    cedula: selectedTeacher.cedula,
-                    nombre_completo: selectedTeacher.nombre,
-                    rol: teacherRol,
-                    activo: true,
-                    telefono_contacto: teacherPhone
-                };
-                await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
-                const res = await api.get(`/Groups/${editingGroup.uuid}`);
-                const fullGroup = res.data;
-                if (fullGroup && fullGroup.miembros) {
-                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
-                    setGroupMembers(activeMembers);
-                }
-            } catch (error: any) {
-                console.error("Error al agregar integrante docente:", error);
-                alert("No se pudo agregar al docente: " + (error.response?.data?.message || error.message));
-            }
-        } else {
-            if (groupMembers.some(m => m.cedula === selectedTeacher.cedula)) {
-                alert("Este docente ya ha sido agregado al grupo.");
-                return;
-            }
-            setGroupMembers(prev => [...prev, newMember as any]);
-        }
-
-        if (selectedTeacher.carrera) {
-            const teacherCareers = selectedTeacher.carrera.split(',').map((c: string) => c.trim().toUpperCase());
-            const matchedIds = carreras
-                .filter(c => teacherCareers.includes(c.carrera1.trim().toUpperCase()))
-                .map(c => c.id_carrera);
-
-            if (matchedIds.length > 0) {
-                setFormData(prev => {
-                    const newIds = new Set([...prev.carreras_ids, ...matchedIds]);
-                    return { ...prev, carreras_ids: Array.from(newIds) };
-                });
-            }
-        }
+        const updatedMembers = [...groupMembers, newMember];
+        setGroupMembers(updatedMembers);
+        const updatedCarreras = recalculateCarreras(selectedCoordCareer, updatedMembers);
+        setFormData(prev => ({ ...prev, carreras_ids: updatedCarreras }));
 
         setSelectedTeacher(null);
         setTeacherSearchQuery('');
-        setTeacherRol('Co-Investigador');
         setTeacherPhone('');
+        setTeacherRol('Co-Investigador');
     };
 
-    const handleAddStudent = async () => {
+    const handleAddStudent = () => {
         if (!selectedStudent) return;
 
-        const newMember = {
+        if (groupMembers.some(m => m.cedula?.trim() === selectedStudent.cedula?.trim())) {
+            alert("Este estudiante ya es integrante de la propuesta de grupo.");
+            return;
+        }
+
+        const newMember: GroupMember = {
             id_grupo_miembro: Date.now(),
             id_usuario: 0,
             cedula: selectedStudent.cedula,
@@ -483,34 +369,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             telefono_contacto: studentPhone
         };
 
-        if (editingGroup) {
-            try {
-                const memberDto = {
-                    id_usuario: 0,
-                    cedula: selectedStudent.cedula,
-                    nombre_completo: selectedStudent.nombre,
-                    rol: studentRol,
-                    activo: true,
-                    telefono_contacto: studentPhone
-                };
-                await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
-                const res = await api.get(`/Groups/${editingGroup.uuid}`);
-                const fullGroup = res.data;
-                if (fullGroup && fullGroup.miembros) {
-                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
-                    setGroupMembers(activeMembers);
-                }
-            } catch (error: any) {
-                console.error("Error al agregar integrante estudiante:", error);
-                alert("No se pudo agregar al estudiante: " + (error.response?.data?.message || error.message));
-            }
-        } else {
-            if (groupMembers.some(m => m.cedula === selectedStudent.cedula)) {
-                alert("Este estudiante ya ha sido agregado al grupo.");
-                return;
-            }
-            setGroupMembers(prev => [...prev, newMember as any]);
-        }
+        const updatedMembers = [...groupMembers, newMember];
+        setGroupMembers(updatedMembers);
+        const updatedCarreras = recalculateCarreras(selectedCoordCareer, updatedMembers);
+        setFormData(prev => ({ ...prev, carreras_ids: updatedCarreras }));
 
         setSelectedStudent(null);
         setStudentSearchQuery('');
@@ -518,35 +380,16 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         setStudentRol('Semillerista');
     };
 
-    const handleRemoveMember = async (idGrupoMiembro: number) => {
-        if (editingGroup) {
-            const reason = window.prompt("Ingrese el motivo por el cual el integrante se retira del grupo (opcional):");
-            if (reason === null) return;
-
-            try {
-                const encodedReason = encodeURIComponent(reason.trim());
-                await api.delete(`/Groups/members/${idGrupoMiembro}?reason=${encodedReason}`);
-                const res = await api.get(`/Groups/${editingGroup.uuid}`);
-                const fullGroup = res.data;
-                if (fullGroup && fullGroup.miembros) {
-                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
-                    setGroupMembers(activeMembers);
-                }
-            } catch (error: any) {
-                console.error("Error al retirar integrante:", error);
-                alert("No se pudo retirar al integrante: " + (error.response?.data?.message || error.message));
-            }
-        } else {
-            setGroupMembers(prev => prev.filter(m => m.id_grupo_miembro !== idGrupoMiembro));
-        }
+    const handleRemoveMember = (idGrupoMiembro: number) => {
+        const updatedMembers = groupMembers.filter(m => m.id_grupo_miembro !== idGrupoMiembro);
+        setGroupMembers(updatedMembers);
+        const updatedCarreras = recalculateCarreras(selectedCoordCareer, updatedMembers);
+        setFormData(prev => ({ ...prev, carreras_ids: updatedCarreras }));
     };
 
     const clearDraft = () => {
         localStorage.removeItem('new_group_form_draft');
         localStorage.removeItem('groups_draft_metadata');
-        if (editingGroup) {
-            localStorage.removeItem(`edit_group_form_draft_${editingGroup.uuid}`);
-        }
         if (onDraftCleared) {
             onDraftCleared();
         }
@@ -554,7 +397,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
 
     // Auto-save draft on state changes
     useEffect(() => {
-        if (!isOpen || isReadOnly || !isInitializedRef.current) return;
+        if (!isOpen || !isInitializedRef.current) return;
 
         const draftData = {
             formData,
@@ -563,41 +406,42 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             groupMembers
         };
 
-        if (editingGroup) {
-            const draftKey = `edit_group_form_draft_${editingGroup.uuid}`;
-            localStorage.setItem(draftKey, JSON.stringify(draftData));
-            
-            const meta = {
-                type: 'edit',
-                uuid: editingGroup.uuid,
-                groupName: formData.nombre || editingGroup.nombre || 'Borrador sin nombre',
-                timestamp: Date.now()
-            };
-            localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
-        } else {
-            localStorage.setItem('new_group_form_draft', JSON.stringify(draftData));
-            
-            const meta = {
-                type: 'new',
-                groupName: formData.nombre || 'Borrador de Nueva Propuesta',
-                timestamp: Date.now()
-            };
-            localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
-        }
-    }, [formData, selectedCoordName, selectedCoordCareer, groupMembers, isOpen, isReadOnly, editingGroup]);
+        localStorage.setItem('new_group_form_draft', JSON.stringify(draftData));
+        const meta = {
+            type: 'new',
+            groupName: formData.nombre || 'Borrador de Nueva Propuesta',
+            timestamp: Date.now()
+        };
+        localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
+    }, [formData, selectedCoordName, selectedCoordCareer, groupMembers, isOpen]);
 
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (isReadOnly) {
-            onClose();
+
+        // Validaciones del lado del cliente
+        if (!formData.nombre.trim()) {
+            alert("El nombre de la propuesta es obligatorio.");
             return;
         }
+        if (!formData.siglas.trim()) {
+            alert("El acrónimo o siglas del grupo es obligatorio.");
+            return;
+        }
+        if (!formData.id_dominio) {
+            alert("Debe seleccionar un dominio académico para la propuesta.");
+            return;
+        }
+        if (formData.lineas_ids.length === 0) {
+            alert("Debe seleccionar al menos una línea de investigación vinculada.");
+            return;
+        }
+
         try {
             const payload = {
                 ...formData,
                 id_profesor_coordinador: formData.id_profesor_coordinador || null,
                 id_dominio: formData.id_dominio ? parseInt(formData.id_dominio) : null,
-                miembros: editingGroup ? [] : groupMembers.map(m => ({
+                miembros: groupMembers.map(m => ({
                     id_usuario: m.id_usuario || 0,
                     cedula: m.cedula,
                     nombre_completo: m.nombre_completo,
@@ -607,11 +451,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 }))
             };
 
-            if (editingGroup) {
-                await api.put(`/Groups/${editingGroup.uuid}`, payload);
-            } else {
-                await api.post('/Groups', payload);
-            }
+            await api.post('/Groups', payload);
             clearDraft();
             onClose();
             fetchData();
@@ -632,33 +472,13 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     };
 
     const handleCloseModal = () => {
-        if (isReadOnly) {
-            onClose();
-            return;
-        }
-
-        let hasChanges = false;
-        if (editingGroup) {
-            hasChanges = 
-                formData.nombre !== editingGroup.nombre ||
-                formData.siglas !== editingGroup.siglas ||
-                formData.tipo_grupo !== editingGroup.tipo_grupo ||
-                formData.id_dominio !== (editingGroup.id_dominio?.toString() ?? '') ||
-                formData.id_profesor_coordinador !== (editingGroup.id_profesor_coordinador ?? '') ||
-                formData.objetivo_general !== editingGroup.objetivo_general ||
-                formData.mision !== editingGroup.mision ||
-                formData.vision !== editingGroup.vision ||
-                formData.categoria_consolidacion !== (editingGroup.categoria_consolidacion ?? 'En Formación') ||
-                JSON.stringify(formData.lineas_ids.slice().sort()) !== JSON.stringify((editingGroup.lineas_ids || []).slice().sort());
-        } else {
-            hasChanges = 
-                formData.nombre.trim() !== '' ||
-                formData.siglas.trim() !== '' ||
-                formData.objetivo_general.trim() !== '' ||
-                formData.mision.trim() !== '' ||
-                formData.vision.trim() !== '' ||
-                groupMembers.length > 0;
-        }
+        const hasChanges = 
+            formData.nombre.trim() !== '' ||
+            formData.siglas.trim() !== '' ||
+            formData.objetivo_general.trim() !== '' ||
+            formData.mision.trim() !== '' ||
+            formData.vision.trim() !== '' ||
+            groupMembers.length > 0;
 
         if (hasChanges) {
             setConfirmDialog({
@@ -680,79 +500,44 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
 
     if (!isOpen) return null;
 
-    const teachers = groupMembers.filter(member => {
-        const rolLower = (member.rol || '').toLowerCase();
-        return !rolLower.includes('semillerista') && !rolLower.includes('estudiante');
-    });
-
-    const students = groupMembers.filter(member => {
-        const rolLower = (member.rol || '').toLowerCase();
-        return rolLower.includes('semillerista') || rolLower.includes('estudiante');
-    });
-
     return (
         <div className="fixed inset-0 z-[10000] flex justify-end">
             <div
                 className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                 onClick={handleCloseModal}
             />
-            <div className="relative w-full max-w-3xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
-                <div className="modal-header">
-                    <div className="flex items-center gap-3">
-                        <div className="icon-circle icon-circle-brand">
-                            <Award size={20} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-text-main tracking-tight">
-                                {isReadOnly ? 'Ver Grupo de Investigación' : (editingGroup ? 'Editar Grupo de Investigación' : 'Nuevo Grupo de Investigación')}
-                            </h3>
-                            <p className="section-label text-text-dim">Configuración administrativa y normativa</p>
-                        </div>
-                    </div>
-                    <button onClick={handleCloseModal} className="text-text-dim hover:text-text-main transition-colors">
-                        <ChevronRight size={20} />
-                    </button>
-                </div>
 
-                <form onSubmit={handleSubmitForm} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
-                    {isDraftRestored && (
-                        <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
-                            <div className="flex items-center gap-3">
-                                <FileText size={16} className="text-text-main shrink-0" />
-                                <p className="text-xs text-text-dim">
-                                    <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado tus datos no guardados localmente.
-                                </p>
+            <div className="relative h-full flex items-center">
+                <div className="relative w-full max-w-3xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
+                    <div className="modal-header">
+                        <div className="flex items-center gap-3">
+                            <div className="icon-circle icon-circle-brand">
+                                <Award size={20} />
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (editingGroup) {
-                                        setFormData({
-                                            nombre: editingGroup.nombre || '',
-                                            siglas: editingGroup.siglas || '',
-                                            tipo_grupo: editingGroup.tipo_grupo || 'Investigación',
-                                            id_dominio: editingGroup.id_dominio ? editingGroup.id_dominio.toString() : '',
-                                            id_profesor_coordinador: editingGroup.id_profesor_coordinador || '',
-                                            objetivo_general: editingGroup.objetivo_general || '',
-                                            mision: editingGroup.mision || '',
-                                            vision: editingGroup.vision || '',
-                                            resolucion_aprobacion: editingGroup.resolucion_aprobacion || '',
-                                            fecha_creacion: editingGroup.fecha_creacion ? editingGroup.fecha_creacion.split('T')[0] : '',
-                                            categoria_consolidacion: editingGroup.categoria_consolidacion || 'En Formación',
-                                            lineas_ids: editingGroup.lineas_ids || [],
-                                            carreras_ids: editingGroup.carreras_ids || [],
-                                            link_whatsapp: editingGroup.link_whatsapp || '',
-                                            telefono_coordinador: editingGroup.telefono_coordinador || ''
-                                        });
-                                        setSelectedCoordName(editingGroup.nombre_coordinador || '');
-                                        setSelectedCoordCareer(editingGroup.carrera_coordinador || '');
-                                        if (editingGroup.miembros) {
-                                            const activeMembers = editingGroup.miembros.filter((m: any) => m.activo);
-                                            setGroupMembers(activeMembers);
-                                        } else {
-                                            setGroupMembers([]);
-                                        }
-                                    } else {
+                            <div>
+                                <h3 className="text-lg font-semibold text-text-main tracking-tight">
+                                    Nuevo Grupo de Investigación
+                                </h3>
+                                <p className="section-label text-text-dim">Configuración de propuesta y equipo inicial</p>
+                            </div>
+                        </div>
+                        <button onClick={handleCloseModal} className="text-text-dim hover:text-text-main transition-colors">
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmitForm} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
+                        {isDraftRestored && (
+                            <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
+                                <div className="flex items-center gap-3">
+                                    <FileText size={16} className="text-text-main shrink-0" />
+                                    <p className="text-xs text-text-dim">
+                                        <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
                                         setFormData({
                                             nombre: '',
                                             siglas: '',
@@ -773,24 +558,20 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                         setSelectedCoordName('');
                                         setSelectedCoordCareer('');
                                         setGroupMembers([]);
-                                    }
-                                    localStorage.removeItem('new_group_form_draft');
-                                    localStorage.removeItem('groups_draft_metadata');
-                                    if (editingGroup) {
-                                        localStorage.removeItem(`edit_group_form_draft_${editingGroup.uuid}`);
-                                    }
-                                    setIsDraftRestored(false);
-                                    if (onDraftCleared) {
-                                        onDraftCleared();
-                                    }
-                                }}
-                                className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
-                            >
-                                Descartar borrador
-                            </button>
-                        </div>
-                    )}
-                    {!isAdmin && !isReadOnly && (
+                                        localStorage.removeItem('new_group_form_draft');
+                                        localStorage.removeItem('groups_draft_metadata');
+                                        setIsDraftRestored(false);
+                                        if (onDraftCleared) {
+                                            onDraftCleared();
+                                        }
+                                    }}
+                                    className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
+                                >
+                                    Descartar borrador
+                                </button>
+                            </div>
+                        )}
+
                         <div className="space-y-3 animate-fade-up">
                             <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex items-center gap-3">
                                 <Shield size={16} className="text-text-main shrink-0" />
@@ -798,288 +579,321 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                     Las propuestas se envían en estado <span className="text-text-main font-semibold">Pendiente</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
                                 </p>
                             </div>
-                            {editingGroup && editingGroup.estado === 'Aprobado' && (
-                                <div className="border border-warning/20 bg-warning-subtle rounded-lg p-3 flex items-center gap-3">
-                                    <Calendar size={16} className="text-warning shrink-0" />
-                                    <p className="text-xs text-text-dim">
-                                        Este grupo ya está <span className="text-warning font-semibold">Aprobado</span>. Cualquier modificación sustancial revertirá el estado a Pendiente y requerirá una nueva evaluación.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Basic Settings */}
-                    <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombre del Grupo</label>
-                            <input
-                                type="text"
-                                required
-                                disabled={isReadOnly}
-                                value={formData.nombre}
-                                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
-                                placeholder="Ej: Grupo de Investigación en Sistemas Inteligentes"
-                            />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Siglas / Acrónimo</label>
-                            <input
-                                type="text"
-                                required
-                                disabled={isReadOnly}
-                                value={formData.siglas}
-                                onChange={(e) => setFormData({ ...formData, siglas: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase font-semibold"
-                                placeholder="Ej: GISI"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Tipo de Grupo</label>
-                            <select
-                                disabled={isReadOnly}
-                                value={formData.tipo_grupo}
-                                onChange={(e) => setFormData({ ...formData, tipo_grupo: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
-                            >
-                                <option value="Investigación">Grupo de Investigación</option>
-                                <option value="Semillero">Semillero de Investigación</option>
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Dominio Académico</label>
-                            <select
-                                required
-                                disabled={isReadOnly}
-                                value={formData.id_dominio}
-                                onChange={(e) => setFormData({ ...formData, id_dominio: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
-                            >
-                                <option value="">Seleccione Dominio...</option>
-                                {dominios.map(d => (
-                                    <option key={d.id_dominio} value={d.id_dominio}>{d.nombre}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Etapa del grupo</label>
-                            <select
-                                disabled={isReadOnly}
-                                value={formData.categoria_consolidacion}
-                                onChange={(e) => setFormData({ ...formData, categoria_consolidacion: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
-                            >
-                                <option value="En Formación">En Formación (Grupo Inicial / Reciente)</option>
-                                <option value="Consolidado">Consolidado (Trayectoria Probada)</option>
-                            </select>
-                        </div>
-
-                        {/* Responsible Coordinator (Docente principal) */}
-                        <div className="space-y-2 md:col-span-2 relative">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                <User size={12} /> Coordinador Responsable
-                            </label>
-
-                            {!isReadOnly ? (
-                                <div className="relative">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                        {/* Basic Settings */}
+                        <section className="space-y-6">
+                            <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <Award size={12} /> Configuración Básica
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Nombre del Grupo</label>
                                     <input
                                         type="text"
-                                        value={coordSearchQuery || selectedCoordName}
-                                        onChange={(e) => {
-                                            setCoordSearchQuery(e.target.value);
-                                            if (selectedCoordName) {
-                                                setSelectedCoordName('');
-                                                setSelectedCoordCareer('');
-                                                setFormData({ ...formData, id_profesor_coordinador: '' });
-                                            }
-                                        }}
-                                        onFocus={() => setShowCoordResults(true)}
-                                        placeholder="Escriba para buscar y seleccionar Coordinador Responsable (Cédula o Nombre)..."
-                                        className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 pl-10 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 uppercase font-medium"
+                                        required
+                                        value={formData.nombre}
+                                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                        placeholder="Ej: Grupo de Investigación en Sistemas Inteligentes"
                                     />
-                                    {isCoordSearching && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-text-main rounded-full"></div>
-                                        </div>
-                                    )}
-
-                                    {showCoordResults && (
-                                        <>
-                                            <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
-                                            <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
-                                                {isCoordSearching && coordSearchResults.length === 0 ? (
-                                                    <div className="p-5 text-center text-xs text-text-dim font-mono">
-                                                        <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-text-main rounded-full mx-auto mb-2"></div>
-                                                        <span>Buscando docentes...</span>
-                                                    </div>
-                                                ) : coordSearchResults.length === 0 && !isCoordSearching ? (
-                                                    <div className="p-5 text-center text-xs text-text-dim font-mono uppercase">
-                                                        No se encontraron docentes.
-                                                    </div>
-                                                ) : (
-                                                    coordSearchResults.map((selectedUser: any) => (
-                                                        <button
-                                                            key={selectedUser.cedula}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                handleSelectCoordinator(selectedUser);
-                                                                setShowCoordResults(false);
-                                                            }}
-                                                            className="popover-item-vercel transition-colors"
-                                                        >
-                                                            <div className="space-y-1 truncate pr-2">
-                                                                <p className="font-medium text-text-main text-xs truncate flex items-center gap-2">
-                                                                    <span>{formatNombre(selectedUser.nombre)}</span>
-                                                                    {selectedUser.horas_disponibles !== undefined && (
-                                                                        <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
-                                                                            (selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)) > 0 
-                                                                                ? 'badge-vercel-success' 
-                                                                                : 'badge-vercel-error'
-                                                                        }`}>
-                                                                            Disp: {selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)}h / {selectedUser.horas_disponibles}h
-                                                                        </span>
-                                                                    )}
-                                                                </p>
-                                                                <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(selectedUser)}</p>
-                                                            </div>
-                                                            <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
-                                                                Docente
-                                                            </span>
-                                                        </button>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
                                 </div>
-                            ) : (
-                                <div className="p-4 bg-bg-deep border border-border-thin rounded-xl flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-lg bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main shrink-0">
-                                        <User size={16} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-semibold text-text-main tracking-wider">{selectedCoordName ? formatNombre(selectedCoordName) : 'S/D'}</h4>
-                                        <p className="text-[10px] text-text-dim font-mono uppercase tracking-tight">
-                                            C.I. {formData.id_profesor_coordinador || 'S/D'} {selectedCoordCareer ? ` | ${formatCareerName(selectedCoordCareer)}` : ''}
-                                        </p>
-                                    </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Siglas / Acrónimo</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.siglas}
+                                        onChange={(e) => setFormData({ ...formData, siglas: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all uppercase font-semibold"
+                                        placeholder="Ej: GISI"
+                                    />
                                 </div>
-                            )}
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                <MessageCircle size={12} className="text-green-500" /> Enlace de Grupo de WhatsApp (Opcional)
-                            </label>
-                            <input
-                                type="url"
-                                disabled={isReadOnly}
-                                value={formData.link_whatsapp || ''}
-                                onChange={(e) => setFormData({ ...formData, link_whatsapp: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
-                                placeholder="Ej: https://chat.whatsapp.com/..."
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                <Phone size={12} className="text-green-500" /> Teléfono del Coordinador (Opcional)
-                            </label>
-                            <input
-                                type="tel"
-                                disabled={isReadOnly}
-                                value={formData.telefono_coordinador || ''}
-                                onChange={(e) => setFormData({ ...formData, telefono_coordinador: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
-                                placeholder="Ej: 0991234567"
-                            />
-                        </div>
-                    </section>
-
-                    {/* Bento Section: Group Members */}
-                    <section className="p-6 bg-surface rounded-2xl border border-border-thin space-y-6 animate-fade-up">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border-thin">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-[10px] font-black text-text-main uppercase tracking-widest">
-                                    <Users size={12} />
-                                    <span>Integrantes del Grupo de Investigación</span>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Tipo de Grupo</label>
+                                    <select
+                                        value={formData.tipo_grupo}
+                                        onChange={(e) => setFormData({ ...formData, tipo_grupo: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                    >
+                                        <option value="Investigación">Grupo de Investigación</option>
+                                        <option value="Semillero">Semillero de Investigación</option>
+                                    </select>
                                 </div>
-                                <p className="text-[10px] text-text-dim uppercase font-bold">Docentes con horas vigentes y Estudiantes matriculados</p>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Dominio Académico</label>
+                                    <select
+                                        required
+                                        value={formData.id_dominio}
+                                        onChange={(e) => setFormData({ ...formData, id_dominio: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                    >
+                                        <option value="">Seleccione Dominio...</option>
+                                        {dominios.map(d => (
+                                            <option key={d.id_dominio} value={d.id_dominio}>{d.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Etapa del grupo</label>
+                                    <select
+                                        value={formData.categoria_consolidacion}
+                                        onChange={(e) => setFormData({ ...formData, categoria_consolidacion: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none transition-all font-medium"
+                                    >
+                                        <option value="En Formación">En Formación (Grupo Inicial / Reciente)</option>
+                                        <option value="Consolidado">Consolidado (Trayectoria Probada)</option>
+                                    </select>
+                                </div>
                             </div>
-                            <span className="text-[9px] font-bold text-text-main bg-text-main/10 border border-text-main/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                                {groupMembers.length} Miembros Activos
-                            </span>
-                        </div>
+                        </section>
 
-                        {/* Grid separating Docentes and Estudiantes */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Sector 1: Docentes Investigadores */}
-                            <div className="space-y-4 p-5 rounded-2xl bg-bg-deep/20 border border-emerald-500/10 backdrop-blur-sm relative overflow-hidden transition-all hover:border-emerald-500/25">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-                                
-                                <div className="flex justify-between items-center pb-2 border-b border-border-thin">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                            <User size={16} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Docentes Investigadores</h4>
-                                            <p className="text-[10px] text-text-dim/80 font-bold uppercase tracking-tight">Académicos con horas de investigación</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
-                                        {teachers.length} Activos
-                                    </span>
-                                </div>
-
-                                {/* Form to add teacher */}
-                                {!isReadOnly && (
-                                    <div className="space-y-3 p-3.5 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                        <div className="grid grid-cols-1 gap-3">
-                                            <div className="relative space-y-1">
-                                                <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Buscador Docente</label>
-                                                <div className="relative">
-                                                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                                                    <input
-                                                        type="text"
-                                                        value={teacherSearchQuery}
-                                                        onChange={(e) => {
-                                                            setTeacherSearchQuery(e.target.value);
-                                                            if (selectedTeacher) {
-                                                                setSelectedTeacher(null);
-                                                            }
-                                                        }}
-                                                        onFocus={() => setShowTeacherResults(true)}
-                                                        placeholder="Buscar docente investigador por nombre o cédula..."
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/50 font-medium"
-                                                    />
-                                                    {isTeacherSearching && (
-                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-emerald-400 rounded-full"></div>
+                        {/* Coordinator selection */}
+                        <section className="space-y-6">
+                            <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <User size={12} /> Coordinador Responsable
+                            </h4>
+                            <div className="p-6 bg-bg-deep/20 rounded-2xl border border-border-thin space-y-4">
+                                <div className="space-y-2 relative">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Buscar Coordinador</label>
+                                    <div className="relative">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim/60" />
+                                        <input
+                                            type="text"
+                                            value={coordSearchQuery}
+                                            onChange={(e) => {
+                                                setCoordSearchQuery(e.target.value);
+                                                setShowCoordResults(true);
+                                            }}
+                                            onFocus={() => setShowCoordResults(true)}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg pl-10 pr-4 py-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase placeholder:normal-case font-medium"
+                                            placeholder={selectedCoordName ? selectedCoordName : "Buscar docente por nombre o cédula..."}
+                                        />
+                                        {showCoordResults && (
+                                            <>
+                                                <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
+                                                <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[180px] overflow-y-auto z-30 custom-scrollbar">
+                                                    {isCoordSearching ? (
+                                                        <div className="p-3 text-center text-xs text-text-dim font-mono">
+                                                            Buscando docente...
                                                         </div>
+                                                    ) : coordSearchResults.length === 0 ? (
+                                                        <div className="p-3 text-center text-xs text-text-dim font-mono">
+                                                            No se encontraron docentes con ese nombre o cédula.
+                                                        </div>
+                                                    ) : (
+                                                        coordSearchResults.map((teacher: any) => (
+                                                            <button
+                                                                key={teacher.cedula}
+                                                                type="button"
+                                                                onClick={() => handleSelectCoordinator(teacher)}
+                                                                className="w-full text-left p-2.5 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
+                                                            >
+                                                                <div className="space-y-0.5">
+                                                                    <p className="font-semibold text-text-main text-xs flex items-center gap-2">
+                                                                        <span>{formatNombre(teacher.nombre)}</span>
+                                                                        {teacher.horas_disponibles !== undefined && (
+                                                                            <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
+                                                                                (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
+                                                                                    ? 'badge-vercel-success' 
+                                                                                    : 'badge-vercel-error'
+                                                                            }`}>
+                                                                                Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
+                                                                            </span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
+                                                                </div>
+                                                                <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
+                                                                    Docente
+                                                                </span>
+                                                            </button>
+                                                        ))
                                                     )}
                                                 </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-                                                {selectedTeacher && (
-                                                    <div className="mt-1.5 px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-emerald-400">
-                                                        <span>Docente: {selectedTeacher.nombre}</span>
-                                                        <span className="text-[7px] bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20 uppercase font-bold tracking-widest">Seleccionado</span>
+                        {/* Linked Careers (Visual indicator) */}
+                        <section className="space-y-2 p-6 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Carreras Vinculadas Automáticamente</label>
+                            {(() => {
+                                const linkedCareers = formData.carreras_ids.map(carrId => {
+                                    const career = carreras.find(c => c.id_carrera === carrId);
+                                    return career ? career.carrera1 : null;
+                                }).filter(c => c !== null) as string[];
+
+                                const filtered = linkedCareers.filter((cName: string) => {
+                                    const clean = cName.trim().toUpperCase();
+                                    return clean !== 'DOCENTE' && clean !== 'ESTUDIANTE';
+                                });
+
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div className="p-3 text-center text-[10px] text-text-dim font-mono bg-bg-deep/30 rounded-xl border border-dashed border-border-thin">
+                                            Sin carreras vinculadas.
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="flex flex-wrap gap-2 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                        {filtered.map((cName, idx) => (
+                                            <span key={idx} className="badge-vercel badge-vercel-info text-[9px] py-1 px-2.5 font-bold uppercase">
+                                                {formatCareerName(cName)}
+                                            </span>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+                        </section>
+
+                        {/* Identity Statements */}
+                        <section className="space-y-6">
+                            <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <Award size={12} /> Declaración de Identidad
+                            </h4>
+                            <div className="space-y-6 p-6 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Objetivo General</label>
+                                    <textarea
+                                        rows={3}
+                                        value={formData.objetivo_general}
+                                        onChange={(e) => setFormData({ ...formData, objetivo_general: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                        placeholder="Ej: Fomentar el desarrollo e integración de soluciones tecnológicas..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Misión</label>
+                                        <textarea
+                                            rows={3}
+                                            value={formData.mision}
+                                            onChange={(e) => setFormData({ ...formData, mision: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                            placeholder="La misión del grupo de investigación..."
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Visión</label>
+                                        <textarea
+                                            rows={3}
+                                            value={formData.vision}
+                                            onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                                            placeholder="Consolidarse como un referente académico..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Research Lines */}
+                        <section className="space-y-6">
+                            <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <BookOpen size={12} /> Líneas de Investigación Institucionales
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-6 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                {lines.map(line => (
+                                    <div
+                                        key={line.id}
+                                        onClick={() => toggleLine(line.id)}
+                                        className={`p-3 rounded-xl border transition-all flex items-center gap-3 cursor-pointer ${
+                                            formData.lineas_ids.includes(line.id)
+                                                ? 'bg-text-main/10 border-text-main text-text-main'
+                                                : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
+                                        }`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                            formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
+                                        }`}>
+                                            {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
+                                        </div>
+                                        <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Members addition */}
+                        <section className="space-y-6">
+                            <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <Users size={12} /> Equipo de Trabajo Inicial
+                            </h4>
+                            <div className="space-y-6 p-6 bg-bg-deep/20 rounded-2xl border border-border-thin">
+                                {/* Current members list */}
+                                {groupMembers.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-text-dim bg-bg-deep/30 rounded-xl border border-dashed border-border-thin font-mono uppercase">
+                                        Sin integrantes agregados.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {groupMembers.map(member => (
+                                            <div key={member.id_grupo_miembro} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-thin animate-fade-up">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-black bg-surface-hover text-text-dim">
+                                                        {member.rol === 'Director' ? <Shield size={14} /> : <User size={14} />}
                                                     </div>
-                                                )}
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-text-main">{formatNombre(member.nombre_completo)}</p>
+                                                        <p className="text-[8px] font-bold uppercase text-text-dim mt-0.5">{member.rol} {member.carrera ? `| ${formatCareerName(member.carrera)}` : ''}</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                                    className="p-1.5 rounded-lg border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-all"
+                                                >
+                                                    <UserMinus size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
+                                {/* Add teacher form */}
+                                <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
+                                    <h5 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                                        <Plus size={10} /> Añadir Docente Investigador
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1 relative">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Docente</label>
+                                            <div className="relative">
+                                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
+                                                <input
+                                                    type="text"
+                                                    value={teacherSearchQuery}
+                                                    onChange={(e) => {
+                                                        setTeacherSearchQuery(e.target.value);
+                                                        setShowTeacherResults(true);
+                                                    }}
+                                                    onFocus={() => setShowTeacherResults(true)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                                    placeholder="Buscar por nombre o cédula..."
+                                                />
                                                 {showTeacherResults && (
                                                     <>
                                                         <div className="fixed inset-0 z-20" onClick={() => setShowTeacherResults(false)}></div>
-                                                        <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
-                                                            {teacherSearchResults.length === 0 ? (
+                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
+                                                            {isTeacherSearching ? (
                                                                 <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                                    No se encontraron docentes con horas vigentes.
+                                                                    Buscando...
+                                                                </div>
+                                                            ) : teacherSearchResults.length === 0 ? (
+                                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                    No se encontraron resultados.
                                                                 </div>
                                                             ) : (
                                                                 teacherSearchResults.map((teacher: any) => (
@@ -1087,10 +901,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         key={teacher.cedula}
                                                                         type="button"
                                                                         onClick={() => handleSelectTeacher(teacher)}
-                                                                        className="popover-item-vercel transition-colors"
+                                                                        className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-medium text-text-main text-xs flex items-center gap-2">
+                                                                            <p className="font-semibold text-text-main text-xs flex items-center gap-2">
                                                                                 <span>{formatNombre(teacher.nombre)}</span>
                                                                                 {teacher.horas_disponibles !== undefined && (
                                                                                     <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
@@ -1102,9 +916,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                                     </span>
                                                                                 )}
                                                                             </p>
-                                                                            <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(teacher)}</p>
+                                                                            <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
                                                                         </div>
-                                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
+                                                                        <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
                                                                             Docente
                                                                         </span>
                                                                     </button>
@@ -1114,158 +928,74 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                     </>
                                                 )}
                                             </div>
+                                        </div>
 
-                                            <div className="grid grid-cols-12 gap-3 items-end">
-                                                <div className="col-span-4 space-y-1">
-                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
-                                                    <select
-                                                        value={teacherRol}
-                                                        onChange={(e) => setTeacherRol(e.target.value)}
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
-                                                    >
-                                                        <option value="Co-Investigador">Co-Investigador</option>
-                                                        <option value="Director de Proyecto">Director de Proyecto</option>
-                                                    </select>
-                                                </div>
-                                                <div className="col-span-5 space-y-1">
-                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
-                                                    <input
-                                                        type="tel"
-                                                        value={teacherPhone}
-                                                        onChange={(e) => setTeacherPhone(e.target.value)}
-                                                        placeholder="Opcional"
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
-                                                    />
-                                                </div>
-                                                <div className="col-span-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleAddTeacher}
-                                                        disabled={!selectedTeacher}
-                                                        className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-bg-deep font-bold px-3 py-2.5 rounded-lg text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1"
-                                                    >
-                                                        <Plus size={12} strokeWidth={3} />
-                                                        Vincular
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                            <input
+                                                type="tel"
+                                                value={teacherPhone}
+                                                onChange={(e) => setTeacherPhone(e.target.value)}
+                                                placeholder="Opcional"
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1 md:col-span-2">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                            <select
+                                                value={teacherRol}
+                                                onChange={(e) => setTeacherRol(e.target.value)}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                            >
+                                                <option value="Co-Investigador">Co-Investigador</option>
+                                                <option value="Director de Proyecto">Director de Proyecto</option>
+                                            </select>
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Teacher List */}
-                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                                    {teachers.map((member) => (
-                                        <div
-                                            key={member.id_grupo_miembro}
-                                            className="p-3 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-emerald-500/20 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                                                    <User size={14} />
-                                                </div>
-                                                <div className="min-w-0 space-y-0.5">
-                                                    <p className="text-xs font-semibold text-text-main truncate max-w-[200px]" title={formatNombre(member.nombre_completo)}>
-                                                        {formatNombre(member.nombre_completo)}
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[10px] font-mono text-text-dim bg-surface border border-border-thin px-1.5 py-0.5 rounded">
-                                                            C.I. {member.cedula || 'S/D'}
-                                                        </span>
-                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
-                                                            {member.rol}
-                                                        </span>
-                                                        {member.telefono_contacto && (
-                                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                                                <Phone size={8} /> {member.telefono_contacto}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {!isReadOnly && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
-                                                    className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
-                                                    title="Desvincular docente"
-                                                >
-                                                    <UserMinus size={13} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {teachers.length === 0 && (
-                                        <div className="py-6 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin/60 space-y-1.5">
-                                            <Users size={16} className="mx-auto text-text-dim/30" />
-                                            <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest">Sin docentes investigadores</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Sector 2: Estudiantes Semilleristas */}
-                            <div className="space-y-4 p-5 rounded-2xl bg-bg-deep/20 border border-blue-500/10 backdrop-blur-sm relative overflow-hidden transition-all hover:border-blue-500/25">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-
-                                <div className="flex justify-between items-center pb-2 border-b border-border-thin">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                                            <GraduationCap size={16} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Estudiantes Semilleristas</h4>
-                                            <p className="text-[10px] text-text-dim/80 font-bold uppercase tracking-tight">Alumnos matriculados en semillero</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full font-mono">
-                                        {students.length} Activos
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddTeacher}
+                                        disabled={!selectedTeacher}
+                                        className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+                                    >
+                                        Añadir Docente
+                                    </button>
                                 </div>
 
-                                {/* Form to add student */}
-                                {!isReadOnly && (
-                                    <div className="space-y-3 p-3.5 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                        <div className="grid grid-cols-1 gap-3">
-                                            <div className="relative space-y-1">
-                                                <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Buscador Estudiante</label>
-                                                <div className="relative">
-                                                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                                                    <input
-                                                        type="text"
-                                                        value={studentSearchQuery}
-                                                        onChange={(e) => {
-                                                            setStudentSearchQuery(e.target.value);
-                                                            if (selectedStudent) {
-                                                                setSelectedStudent(null);
-                                                            }
-                                                        }}
-                                                        onFocus={() => setShowStudentResults(true)}
-                                                        placeholder="Buscar estudiante por nombre o cédula..."
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/50 font-medium"
-                                                    />
-                                                    {isStudentSearching && (
-                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-blue-400 rounded-full"></div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {selectedStudent && (
-                                                    <div className="mt-1.5 px-2.5 py-1 bg-blue-500/5 border border-blue-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-blue-400">
-                                                        <span>Estudiante: {selectedStudent.nombre}</span>
-                                                        <span className="text-[7px] bg-blue-500/10 px-1 py-0.2 rounded border border-blue-500/20 uppercase font-bold tracking-widest">Seleccionado</span>
-                                                    </div>
-                                                )}
-
+                                {/* Add student form */}
+                                <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
+                                    <h5 className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                                        <Plus size={10} /> Añadir Estudiante Semillerista
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1 relative">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Estudiante</label>
+                                            <div className="relative">
+                                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
+                                                <input
+                                                    type="text"
+                                                    value={studentSearchQuery}
+                                                    onChange={(e) => {
+                                                        setStudentSearchQuery(e.target.value);
+                                                        setShowStudentResults(true);
+                                                    }}
+                                                    onFocus={() => setShowStudentResults(true)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
+                                                    placeholder="Buscar por nombre o cédula..."
+                                                />
                                                 {showStudentResults && (
                                                     <>
                                                         <div className="fixed inset-0 z-20" onClick={() => setShowStudentResults(false)}></div>
-                                                        <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
-                                                            {studentSearchResults.length === 0 ? (
+                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
+                                                            {isStudentSearching ? (
                                                                 <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                                    No se encontraron estudiantes matriculados.
+                                                                    Buscando...
+                                                                </div>
+                                                            ) : studentSearchResults.length === 0 ? (
+                                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                    No se encontraron resultados.
                                                                 </div>
                                                             ) : (
                                                                 studentSearchResults.map((student: any) => (
@@ -1273,15 +1003,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         key={student.cedula}
                                                                         type="button"
                                                                         onClick={() => handleSelectStudent(student)}
-                                                                        className="popover-item-vercel transition-colors"
+                                                                        className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors"
                                                                     >
-                                                                        <div className="space-y-0.5">
-                                                                            <p className="font-medium text-text-main text-xs">{formatNombre(student.nombre)}</p>
-                                                                            <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(student)}</p>
-                                                                        </div>
-                                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-success">
-                                                                            Estudiante
-                                                                        </span>
+                                                                        <p className="font-semibold text-text-main text-xs">{formatNombre(student.nombre)}</p>
+                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {student.cedula} | {student.carrera || 'SIN CARRERA'}</p>
                                                                     </button>
                                                                 ))
                                                             )}
@@ -1289,282 +1014,64 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                     </>
                                                 )}
                                             </div>
+                                        </div>
 
-                                            <div className="grid grid-cols-12 gap-3 items-end">
-                                                <div className="col-span-4 space-y-1">
-                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
-                                                    <select
-                                                        value={studentRol}
-                                                        onChange={(e) => setStudentRol(e.target.value)}
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
-                                                    >
-                                                        <option value="Semillerista">Semillerista</option>
-                                                    </select>
-                                                </div>
-                                                <div className="col-span-5 space-y-1">
-                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
-                                                    <input
-                                                        type="tel"
-                                                        value={studentPhone}
-                                                        onChange={(e) => setStudentPhone(e.target.value)}
-                                                        placeholder="Opcional"
-                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
-                                                    />
-                                                </div>
-                                                <div className="col-span-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleAddStudent}
-                                                        disabled={!selectedStudent}
-                                                        className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-bg-deep font-bold px-3 py-2.5 rounded-lg text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1"
-                                                    >
-                                                        <Plus size={12} strokeWidth={3} />
-                                                        Vincular
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
+                                            <input
+                                                type="tel"
+                                                value={studentPhone}
+                                                onChange={(e) => setStudentPhone(e.target.value)}
+                                                placeholder="Opcional"
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1 md:col-span-2">
+                                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                            <select
+                                                value={studentRol}
+                                                onChange={(e) => setStudentRol(e.target.value)}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                            >
+                                                <option value="Semillerista">Semillerista</option>
+                                            </select>
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Student List */}
-                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                                    {students.map((member) => (
-                                        <div
-                                            key={member.id_grupo_miembro}
-                                            className="p-3 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-blue-500/20 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
-                                                    <GraduationCap size={14} />
-                                                </div>
-                                                <div className="min-w-0 space-y-0.5">
-                                                    <p className="text-xs font-semibold text-text-main truncate max-w-[200px]" title={formatNombre(member.nombre_completo)}>
-                                                        {formatNombre(member.nombre_completo)}
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[10px] font-mono text-text-dim bg-surface border border-border-thin px-1.5 py-0.5 rounded">
-                                                            C.I. {member.cedula || 'S/D'}
-                                                        </span>
-                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-success">
-                                                            {member.rol}
-                                                        </span>
-                                                        {member.telefono_contacto && (
-                                                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                                                <Phone size={8} /> {member.telefono_contacto}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {!isReadOnly && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
-                                                    className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
-                                                    title="Desvincular estudiante"
-                                                >
-                                                    <UserMinus size={13} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {students.length === 0 && (
-                                        <div className="py-6 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin/60 space-y-1.5">
-                                            <GraduationCap size={16} className="mx-auto text-text-dim/30" />
-                                            <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest">Sin estudiantes vinculados</p>
-                                        </div>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={handleAddStudent}
+                                        disabled={!selectedStudent}
+                                        className="w-full py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-blue-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+                                    >
+                                        Añadir Estudiante
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Careers (Dynamic Auto-resolved) */}
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                <GraduationCap size={12} /> Carreras / Programas Académicos (Automático)
-                            </label>
-                            <button
-                                type="button"
-                                onClick={() => setIsLocalCareerModalOpen(true)}
-                                className="px-3 py-1.5 rounded-lg border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0"
-                            >
-                                <Eye size={12} /> Ver Detalle de Vinculación
-                            </button>
-                        </div>
-                        
-                        {(() => {
-                            const linkedCareers: string[] = [];
-                            if (selectedCoordCareer) {
-                                selectedCoordCareer.split(',').forEach(c => {
-                                    const trimmed = c.trim();
-                                    if (trimmed && !linkedCareers.includes(trimmed)) {
-                                        linkedCareers.push(trimmed);
-                                    }
-                                });
-                            }
-                            groupMembers.forEach(m => {
-                                if (m.carrera) {
-                                    m.carrera.split(',').forEach(c => {
-                                        const trimmed = c.trim();
-                                        if (trimmed && !linkedCareers.includes(trimmed)) {
-                                            linkedCareers.push(trimmed);
-                                        }
-                                    });
-                                }
-                            });
-
-                            if (linkedCareers.length === 0) {
-                                        return (
-                                            <div className="p-4 bg-bg-deep/40 rounded-xl border border-dashed border-border-thin text-center space-y-1">
-                                                <GraduationCap size={16} className="mx-auto text-text-dim/40" />
-                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-wider">
-                                                    Las carreras se vincularán automáticamente según el Coordinador y los Integrantes seleccionados.
-                                                </p>
-                                            </div>
-                                        );
-                            }
-
-                            return (
-                                <div className="flex flex-wrap gap-2 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                    {linkedCareers.map((cName, idx) => (
-                                        <span key={idx} className="badge-vercel badge-vercel-info text-[9px] py-1 px-2.5 font-bold uppercase">
-                                            {formatCareerName(cName)}
-                                        </span>
-                                    ))}
-                                </div>
-                            );
-                        })()}
-                    </section>
-
-                    {/* Identity Statements */}
-                    <section className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
-                            <textarea
-                                rows={3}
-                                disabled={isReadOnly}
-                                value={formData.objetivo_general}
-                                onChange={(e) => setFormData({ ...formData, objetivo_general: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
-                                <textarea
-                                    rows={3}
-                                    disabled={isReadOnly}
-                                    value={formData.mision}
-                                    onChange={(e) => setFormData({ ...formData, mision: e.target.value })}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Visión</label>
-                                <textarea
-                                    rows={3}
-                                    disabled={isReadOnly}
-                                    value={formData.vision}
-                                    onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Research Lines */}
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                <BookOpen size={12} /> Líneas de Investigación Institucionales
-                            </label>
-                            <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                {formData.lineas_ids.length} seleccionadas
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {lines.map(line => (
-                                <div
-                                    key={line.id}
-                                    onClick={() => !isReadOnly && toggleLine(line.id)}
-                                    className={`p-3 rounded-xl border transition-all flex items-center gap-3 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
-                                        } ${formData.lineas_ids.includes(line.id)
-                                            ? 'bg-text-main/10 border-text-main text-text-main'
-                                            : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
-                                        }`}
-                                >
-                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
-                                        }`}>
-                                        {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
-                                    </div>
-                                    <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
-                    {isAdmin && (
-                        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={12} /> Resolución de Aprobación
-                                </label>
-                                <input
-                                    type="text"
-                                    disabled={isReadOnly}
-                                    value={formData.resolucion_aprobacion}
-                                    onChange={(e) => setFormData({ ...formData, resolucion_aprobacion: e.target.value })}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
-                                    placeholder="ACTA-DI-2026-001"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                    <Calendar size={12} /> Fecha de Creación / Propuesta
-                                </label>
-                                <input
-                                    type="date"
-                                    disabled={isReadOnly}
-                                    value={formData.fecha_creacion}
-                                    onChange={(e) => setFormData({ ...formData, fecha_creacion: e.target.value })}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                                />
                             </div>
                         </section>
-                    )}
-                </form>
+                    </form>
 
-                <div className="modal-footer">
-                    <button
-                        onClick={handleCloseModal}
-                        className="btn-vercel-secondary"
-                    >
-                        {isReadOnly ? 'Cerrar' : 'Cancelar'}
-                    </button>
-                    {!isReadOnly && (
-                        <button
-                            onClick={handleSubmitForm}
-                            className="btn-vercel-primary flex items-center gap-2"
-                        >
-                            {editingGroup ? 'Guardar Cambios' : (isAdmin ? 'Crear Grupo' : 'Proponer Grupo')}
-                        </button>
-                    )}
+                    <div className="modal-footer shrink-0 border-t border-border-thin bg-surface">
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCloseModal}
+                                className="btn-vercel-secondary !py-2 !px-4"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmitForm}
+                                className="btn-vercel-primary !py-2 !px-5"
+                            >
+                                Enviar Propuesta
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <CareerLinkageModal
-                isOpen={isLocalCareerModalOpen}
-                onClose={() => setIsLocalCareerModalOpen(false)}
-                formData={{ id_profesor_coordinador: formData.id_profesor_coordinador }}
-                selectedCoordName={selectedCoordName}
-                selectedCoordCareer={selectedCoordCareer}
-                groupMembers={groupMembers}
-                formatCareerName={formatCareerName}
-            />
         </div>
     );
 };

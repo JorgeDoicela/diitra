@@ -83,10 +83,6 @@ public partial class GroupsController : ControllerBase
             var isAdmin = User.IsInRole("DIITRA_ADMIN");
             if (!isAdmin)
             {
-                if (existingGroup.Estado == "Pendiente")
-                {
-                    return BadRequest(new { message = "No se puede editar un grupo de investigación mientras se encuentra en estado PENDIENTE de revisión." });
-                }
                 dto.Estado = "Pendiente";
                 if (string.IsNullOrEmpty(dto.IdProfesorCoordinador))
                 {
@@ -167,6 +163,38 @@ public partial class GroupsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPatch("{uuid}/start-review")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
+    public async Task<IActionResult> StartReview(string uuid)
+    {
+        try
+        {
+            var result = await _groupsService.StartReviewAsync(uuid);
+            if (!result) return NotFound(new { message = "Grupo no encontrado" });
+            return Ok(new { message = "Revisión iniciada y grupo bloqueado" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("{uuid}/cancel-review")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
+    public async Task<IActionResult> CancelReview(string uuid)
+    {
+        try
+        {
+            var result = await _groupsService.CancelReviewAsync(uuid);
+            if (!result) return NotFound(new { message = "Grupo no encontrado" });
+            return Ok(new { message = "Revisión cancelada y grupo desbloqueado" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 
 public class ReviewGroupRequest
@@ -196,10 +224,27 @@ public partial class GroupsController
         var userRef = GetCurrentUserReference();
         if (string.IsNullOrEmpty(userRef)) return false;
 
+        var userRefTrim = userRef.Trim();
         var group = await _groupsService.GetByUuidAsync(groupUuid);
         if (group == null) return false;
 
-        return string.Equals(group.IdProfesorCoordinador?.Trim(), userRef.Trim(), StringComparison.OrdinalIgnoreCase);
+        if (group.Estado == "Aprobado" || group.Estado == "En Evaluación")
+        {
+            return false;
+        }
+
+        if (string.Equals(group.IdProfesorCoordinador?.Trim(), userRefTrim, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (group.TeacherMemberCedulas != null &&
+            group.TeacherMemberCedulas.Any(ced => string.Equals(ced.Trim(), userRefTrim, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
     }
 }
 

@@ -51,6 +51,7 @@ export interface Group {
     miembros?: GroupMember[];
     proyectos?: any[];
     Proyectos?: any[];
+    teacherMemberCedulas?: string[];
 }
 
 export interface ResearchLine {
@@ -122,6 +123,7 @@ const GroupsPage = () => {
 
     // Detail drawer trigger
     const [detailGroup, setDetailGroup] = useState<Group | null>(null);
+    const [detailGroupIsEditing, setDetailGroupIsEditing] = useState(false);
     const [lastActiveGroupId, setLastActiveGroupId] = useState<string | null>(null);
 
     // Review states (Admin)
@@ -149,6 +151,8 @@ const GroupsPage = () => {
         message: string;
         onConfirm: () => void | Promise<void>;
         type: 'danger' | 'warning' | 'info' | 'success';
+        isAlert?: boolean;
+        confirmText?: string;
     }>({
         isOpen: false,
         title: '',
@@ -231,17 +235,31 @@ const GroupsPage = () => {
             setLastActiveGroupId(detailGroup.uuid);
         }
         setDetailGroup(null);
+        setDetailGroupIsEditing(false);
     };
 
-    useEffect(() => {
+    const refreshDraftMetadata = () => {
         const metaStr = localStorage.getItem('groups_draft_metadata');
         if (metaStr) {
             try {
                 setPendingDraft(JSON.parse(metaStr));
             } catch (e) {
                 console.error("Error reading draft metadata", e);
+                setPendingDraft(null);
             }
+        } else {
+            setPendingDraft(null);
         }
+    };
+
+    useEffect(() => {
+        refreshDraftMetadata();
+
+        const handleRefresh = () => refreshDraftMetadata();
+        window.addEventListener('diitra:group-draft-cleared', handleRefresh);
+        return () => {
+            window.removeEventListener('diitra:group-draft-cleared', handleRefresh);
+        };
     }, []);
 
     const handleRestoreDraft = () => {
@@ -254,9 +272,9 @@ const GroupsPage = () => {
         } else if (pendingDraft.type === 'edit' && pendingDraft.uuid) {
             const group = groups.find(g => g.uuid === pendingDraft.uuid);
             if (group) {
-                setEditingGroup(group);
-                setIsReadOnly(false);
-                setIsModalOpen(true);
+                setDetailGroup(group);
+                setDetailGroupIsEditing(true);
+                setLastActiveGroupId(null);
             } else {
                 alert("No se pudo encontrar el grupo original en la lista. Es posible que haya sido eliminado o no tenga permisos.");
             }
@@ -350,20 +368,113 @@ const GroupsPage = () => {
         }
     };
 
-    const handleOpenReview = (group: Group) => {
-        setDetailGroup(null);
-        setReviewingGroup(group);
+    const getGroupChanges = (fresh: any, local: any, skipMembers = false): string[] => {
+        if (!fresh || !local) return [];
+        const changes: string[] = [];
+        
+        const norm = (val: any) => (val || '').toString().trim();
+        
+        if (norm(fresh.nombre) !== norm(local.nombre)) changes.push("Nombre");
+        if (norm(fresh.siglas) !== norm(local.siglas)) changes.push("Acrónimo/Siglas");
+        if (norm(fresh.tipo_grupo) !== norm(local.tipo_grupo)) changes.push("Tipo de Grupo");
+        if (norm(fresh.id_dominio) !== norm(local.id_dominio)) changes.push("Dominio Académico");
+        if (norm(fresh.id_profesor_coordinador) !== norm(local.id_profesor_coordinador)) changes.push("Coordinador");
+        if (norm(fresh.objetivo_general) !== norm(local.objetivo_general)) changes.push("Objetivo General");
+        if (norm(fresh.mision) !== norm(local.mision)) changes.push("Misión");
+        if (norm(fresh.vision) !== norm(local.vision)) changes.push("Visión");
+        
+        const freshLines = (fresh.lineas_ids || []).slice().sort().join(',');
+        const localLines = (local.lineas_ids || []).slice().sort().join(',');
+        if (freshLines !== localLines) changes.push("Líneas de Investigación");
+        
+        // Comparar miembros solo cuando ambos objetos vienen del endpoint de detalle completo
+        if (!skipMembers && fresh.miembros !== undefined && local.miembros !== undefined) {
+            const freshMembers = (fresh.miembros || []).filter((m: any) => m.activo).map((m: any) => m.cedula || '').sort().join(',');
+            const localMembers = (local.miembros || []).filter((m: any) => m.activo).map((m: any) => m.cedula || '').sort().join(',');
+            if (freshMembers !== localMembers) changes.push("Integrantes / Miembros");
+        }
+
+        return changes;
+    };
+
+    const handleCloseReviewModal = async () => {
+        if (reviewingGroup) {
+            try {
+                await api.patch(`/Groups/${reviewingGroup.uuid}/cancel-review`);
+            } catch (err) {
+                console.error("Error al desbloquear el grupo:", err);
+            }
+        }
         setReviewResolution('');
         setRejectObservations('');
         setAudioBlob(null);
         setAudioUrl('');
-        setIsReviewRejecting(false);
-        setIsReviewModalOpen(true);
+        setIsReviewModalOpen(false);
+        setReviewingGroup(null);
+        fetchData();
+    };
+
+    const handleOpenReview = async (group: Group) => {
+        try {
+            // Verificar concurrencia al abrir el panel de evaluación
+            const freshRes = await api.get(`/Groups/${group.uuid}`);
+            const freshGroup = freshRes.data;
+            
+            // skipMembers=true: el objeto `group` viene de la tabla (no tiene miembros completos)
+            const changesList = getGroupChanges(freshGroup, group, true);
+            if (changesList.length > 0) {
+                const fieldsStr = changesList.join(', ');
+                setConfirmDialog({
+                    isOpen: true,
+                    title: 'Propuesta Modificada',
+                    message: `¡Atención! La propuesta de grupo ha sido modificada por otro usuario mientras la revisabas. Se detectaron cambios específicos en: [${fieldsStr}]. La propuesta se recargará con los nuevos cambios para que puedas revisarlos antes de evaluar.`,
+                    type: 'warning',
+                    isAlert: true,
+                    confirmText: 'Aceptar',
+                    onConfirm: () => {
+                        setDetailGroup(freshGroup);
+                        fetchData();
+                    }
+                });
+                return;
+            }
+
+            // Bloquear la propuesta cambiando su estado a "En Evaluación"
+            await api.patch(`/Groups/${freshGroup.uuid}/start-review`);
+
+            setDetailGroup(null);
+            setReviewingGroup({ ...freshGroup, estado: 'En Evaluación' }); // Usar la versión fresca y actualizar localmente
+            setReviewResolution('');
+            setRejectObservations('');
+            setAudioBlob(null);
+            setAudioUrl('');
+            setIsReviewRejecting(false);
+            setIsReviewModalOpen(true);
+        } catch (err: any) {
+            console.error("Error al abrir evaluación:", err);
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Error de Carga',
+                message: 'No se pudieron cargar los datos actualizados del grupo para evaluar o el grupo ya se encuentra bajo revisión.',
+                type: 'danger',
+                isAlert: true,
+                confirmText: 'Aceptar',
+                onConfirm: () => {}
+            });
+        }
     };
 
     const handleApprove = async () => {
         if (!reviewResolution.trim()) {
-            alert("Debe especificar el número de resolución de aprobación.");
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Campo Obligatorio',
+                message: 'Debe especificar el número de resolución de aprobación.',
+                type: 'warning',
+                isAlert: true,
+                confirmText: 'Aceptar',
+                onConfirm: () => {}
+            });
             return;
         }
         if (!reviewingGroup) return;
@@ -376,6 +487,32 @@ const GroupsPage = () => {
             onConfirm: async () => {
                 setIsConfirming(true);
                 try {
+                    // Verificar concurrencia
+                    const freshRes = await api.get(`/Groups/${reviewingGroup.uuid}`);
+                    const freshGroup = freshRes.data;
+                    const changesList = getGroupChanges(freshGroup, reviewingGroup);
+                    // Ignoramos el cambio del estado a "En Evaluación" propio del bloqueo
+                    const filteredChanges = changesList.filter(c => c !== "Estado");
+
+                    if (filteredChanges.length > 0) {
+                        const fieldsStr = filteredChanges.join(', ');
+                        setConfirmDialog({
+                            isOpen: true,
+                            title: 'Propuesta Modificada',
+                            message: `¡Atención! La propuesta de grupo ha sido modificada por otro usuario mientras la evaluabas. Se detectaron cambios específicos en: [${fieldsStr}]. La propuesta se recargará con los nuevos cambios para que puedas revisarlos antes de evaluar.`,
+                            type: 'warning',
+                            isAlert: true,
+                            confirmText: 'Aceptar',
+                            onConfirm: () => {
+                                setIsReviewModalOpen(false);
+                                setReviewingGroup(null);
+                                setDetailGroup(freshGroup);
+                                fetchData();
+                            }
+                        });
+                        return;
+                    }
+
                     await api.patch(`/Groups/${reviewingGroup.uuid}/review`, {
                         aprobado: true,
                         resolucion: reviewResolution.trim(),
@@ -386,7 +523,15 @@ const GroupsPage = () => {
                     fetchData();
                 } catch (err: any) {
                     console.error("Error al aprobar grupo:", err);
-                    alert("Error: " + (err.response?.data?.message || err.message));
+                    setConfirmDialog({
+                        isOpen: true,
+                        title: 'Error de Servidor',
+                        message: "Error al procesar la aprobación: " + (err.response?.data?.message || err.message),
+                        type: 'danger',
+                        isAlert: true,
+                        confirmText: 'Aceptar',
+                        onConfirm: () => {}
+                    });
                 } finally {
                     setIsConfirming(false);
                 }
@@ -396,7 +541,15 @@ const GroupsPage = () => {
 
     const handleRejectReview = async () => {
         if (!rejectObservations.trim() && !audioBlob) {
-            alert("Debe ingresar observaciones escritas o grabar retroalimentación de voz explicando los motivos del rechazo.");
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Campos Obligatorios',
+                message: 'Debe ingresar observaciones escritas o grabar retroalimentación de voz explicando los motivos del rechazo.',
+                type: 'warning',
+                isAlert: true,
+                confirmText: 'Aceptar',
+                onConfirm: () => {}
+            });
             return;
         }
         if (!reviewingGroup) return;
@@ -410,6 +563,31 @@ const GroupsPage = () => {
                 setSendingFeedback(true);
                 setIsConfirming(true);
                 try {
+                    // Verificar concurrencia
+                    const freshRes = await api.get(`/Groups/${reviewingGroup.uuid}`);
+                    const freshGroup = freshRes.data;
+                    const changesList = getGroupChanges(freshGroup, reviewingGroup);
+                    const filteredChanges = changesList.filter(c => c !== "Estado");
+
+                    if (filteredChanges.length > 0) {
+                        const fieldsStr = filteredChanges.join(', ');
+                        setConfirmDialog({
+                            isOpen: true,
+                            title: 'Propuesta Modificada',
+                            message: `¡Atención! La propuesta de grupo ha sido modificada por otro usuario mientras la evaluabas. Se detectaron cambios específicos en: [${fieldsStr}]. La propuesta se recargará con los nuevos cambios para que puedas revisarlos antes de evaluar.`,
+                            type: 'warning',
+                            isAlert: true,
+                            confirmText: 'Aceptar',
+                            onConfirm: () => {
+                                setIsReviewModalOpen(false);
+                                setReviewingGroup(null);
+                                setDetailGroup(freshGroup);
+                                fetchData();
+                            }
+                        });
+                        return;
+                    }
+
                     let contentStr = rejectObservations.trim();
 
                     if (audioBlob) {
@@ -446,7 +624,15 @@ const GroupsPage = () => {
                     fetchData();
                 } catch (err: any) {
                     console.error("Error al rechazar grupo:", err);
-                    alert("Error: " + (err.response?.data?.message || err.message));
+                    setConfirmDialog({
+                        isOpen: true,
+                        title: 'Error de Servidor',
+                        message: "Error al procesar el rechazo: " + (err.response?.data?.message || err.message),
+                        type: 'danger',
+                        isAlert: true,
+                        confirmText: 'Aceptar',
+                        onConfirm: () => {}
+                    });
                 } finally {
                     setSendingFeedback(false);
                     setIsConfirming(false);
@@ -623,6 +809,11 @@ const GroupsPage = () => {
                                                         <Calendar size={10} /> Pendiente
                                                     </span>
                                                 )}
+                                                {g.estado === 'En Evaluación' && (
+                                                    <span className="badge-vercel badge-vercel-info">
+                                                        <Loader2 size={10} className="animate-spin" /> En Evaluación
+                                                    </span>
+                                                )}
                                                 {g.estado === 'Rechazado' && (
                                                     <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} /> Rechazado
@@ -636,25 +827,33 @@ const GroupsPage = () => {
                                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex gap-2 justify-end">
                                                 <button
-                                                     onClick={() => { setDetailGroup(g); setLastActiveGroupId(null); }}
+                                                     onClick={() => {
+                                                         setDetailGroup(g);
+                                                         setDetailGroupIsEditing(false);
+                                                         setLastActiveGroupId(null);
+                                                     }}
                                                      className="p-1.5 rounded hover:bg-brand/10 text-text-dim group-hover:text-brand transition-all"
                                                      title="Ver Detalle"
                                                  >
                                                      <Eye size={14} />
                                                  </button>
-                                                {(isAdmin || (g.id_profesor_coordinador === user?.id_referencia && g.estado !== 'Pendiente' && g.estado !== 'Aprobado')) && (
+                                                {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
                                                     <button
-                                                        onClick={() => handleOpenModal(g, false)}
+                                                        onClick={() => {
+                                                            setDetailGroup(g);
+                                                            setDetailGroupIsEditing(true);
+                                                            setLastActiveGroupId(null);
+                                                        }}
                                                         className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all action-btn-exclude"
                                                         title="Editar Grupo"
                                                     >
                                                         <Edit2 size={14} />
                                                     </button>
                                                 )}
-                                                {(isAdmin || (g.id_profesor_coordinador === user?.id_referencia && g.estado !== 'Pendiente' && g.estado !== 'Aprobado')) && (
+                                                {(isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado')) && (
                                                     <button
                                                         onClick={() => handleDelete(g.uuid, g.nombre)}
-                                                        className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:text-red-500 transition-all action-btn-exclude"
+                                                        className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:bg-red-500/10 transition-all action-btn-exclude"
                                                         title={isAdmin ? "Desactivar" : "Eliminar"}
                                                     >
                                                         <Trash2 size={14} />
@@ -674,7 +873,7 @@ const GroupsPage = () => {
                 <div className="fixed inset-0 z-[10000] flex justify-end">
                     <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
+                        onClick={handleCloseReviewModal}
                     />
                     <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
                         <div className="modal-header shrink-0">
@@ -689,7 +888,7 @@ const GroupsPage = () => {
                                     <p className="section-label text-text-dim">Revisión y Aprobación Normativa Institucional</p>
                                 </div>
                             </div>
-                            <button onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }} className="text-text-dim hover:text-text-main transition-colors">
+                            <button onClick={handleCloseReviewModal} className="text-text-dim hover:text-text-main transition-colors">
                                 <ChevronRight size={20} />
                             </button>
                         </div>
@@ -866,7 +1065,7 @@ const GroupsPage = () => {
 
                         <div className="modal-footer shrink-0">
                             <button
-                                onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
+                                onClick={handleCloseReviewModal}
                                 className="btn-vercel-secondary"
                             >
                                 Cancelar
@@ -924,13 +1123,15 @@ const GroupsPage = () => {
                             </p>
                         </div>
                         <div className="modal-footer bg-surface/50 !py-3">
-                            <button
-                                onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                                disabled={isConfirming}
-                                className="btn-vercel-secondary !py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Cancelar
-                            </button>
+                            {!confirmDialog.isAlert && (
+                                <button
+                                    onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                                    disabled={isConfirming}
+                                    className="btn-vercel-secondary !py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Cancelar
+                                </button>
+                            )}
                             <button
                                 disabled={isConfirming}
                                 onClick={async () => {
@@ -942,13 +1143,14 @@ const GroupsPage = () => {
                                     }
                                 }}
                                 className={`!py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    confirmDialog.isAlert ? 'btn-vercel-primary' :
                                     confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                     confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                     'btn-vercel-primary'
                                 }`}
                             >
                                 {isConfirming && <Loader2 size={14} className="animate-spin" />}
-                                {isConfirming ? 'Procesando...' : 'Confirmar'}
+                                {isConfirming ? 'Procesando...' : (confirmDialog.confirmText || (confirmDialog.isAlert ? 'Aceptar' : 'Confirmar'))}
                             </button>
                         </div>
                     </div>
@@ -984,6 +1186,8 @@ const GroupsPage = () => {
                 lines={lines}
                 formatCareerName={formatCareerName}
                 handleOpenReview={handleOpenReview}
+                fetchData={fetchData}
+                isEditingInitial={detailGroupIsEditing}
             />
         </main>
     );

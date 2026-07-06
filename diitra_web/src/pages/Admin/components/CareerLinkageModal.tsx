@@ -42,7 +42,7 @@ export const CareerLinkageModal: React.FC<CareerLinkageModalProps> = ({
                 className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm cursor-pointer animate-fade-in"
                 onClick={onClose}
             />
-            <div className="relative w-full max-w-2xl bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-fade-up overflow-hidden max-h-[85vh]">
+            <div className="relative w-full max-w-2xl bg-surface border border-border-thin rounded-lg shadow-2xl flex flex-col z-10 animate-fade-up overflow-hidden max-h-[85vh]">
                 <div className="p-5 border-b border-border-thin flex justify-between items-center bg-bg-deep/25">
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -82,15 +82,22 @@ export const CareerLinkageModal: React.FC<CareerLinkageModalProps> = ({
                                     <p className="text-[9px] font-mono text-text-dim">C.I. {formData.id_profesor_coordinador}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5 shrink-0 max-w-[280px]">
-                                    {selectedCoordCareer ? (
-                                        selectedCoordCareer.split(',').map((c, i) => (
-                                            <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
-                                                {formatCareerName(c.trim())}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>
-                                    )}
+                                    {(() => {
+                                        const cleanCareers = selectedCoordCareer
+                                            ? selectedCoordCareer.split(',').map(c => c.trim()).filter(c => {
+                                                const upper = c.toUpperCase();
+                                                return upper !== 'DOCENTE' && upper !== 'ESTUDIANTE';
+                                            })
+                                            : [];
+                                        if (cleanCareers.length > 0) {
+                                            return cleanCareers.map((c, i) => (
+                                                <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
+                                                    {formatCareerName(c)}
+                                                </span>
+                                            ));
+                                        }
+                                        return <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>;
+                                    })()}
                                 </div>
                             </div>
                         ) : null}
@@ -113,15 +120,22 @@ export const CareerLinkageModal: React.FC<CareerLinkageModalProps> = ({
                                     <p className="text-[9px] font-mono text-text-dim">C.I. {member.cedula || 'S/D'}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5 shrink-0 max-w-[280px]">
-                                    {member.carrera ? (
-                                        member.carrera.split(',').map((c, i) => (
-                                            <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
-                                                {formatCareerName(c.trim())}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>
-                                    )}
+                                    {(() => {
+                                        const cleanCareers = member.carrera
+                                            ? member.carrera.split(',').map(c => c.trim()).filter(c => {
+                                                const upper = c.toUpperCase();
+                                                return upper !== 'DOCENTE' && upper !== 'ESTUDIANTE';
+                                            })
+                                            : [];
+                                        if (cleanCareers.length > 0) {
+                                            return cleanCareers.map((c, i) => (
+                                                <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
+                                                    {formatCareerName(c)}
+                                                </span>
+                                            ));
+                                        }
+                                        return <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>;
+                                    })()}
                                 </div>
                             </div>
                         ))}

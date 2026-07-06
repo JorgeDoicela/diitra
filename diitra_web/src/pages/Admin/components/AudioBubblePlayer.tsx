@@ -50,7 +50,7 @@ export const AudioBubblePlayer: React.FC<AudioBubblePlayerProps> = ({ src }) => 
     };
 
     return (
-        <div className="flex items-center gap-3 bg-bg-deep/80 border border-border-thin rounded-xl p-3 w-64 shrink-0 shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-3 bg-bg-deep border border-border-thin rounded-lg p-3 w-64 shrink-0 shadow-lg">
             <button
                 type="button"
                 onClick={togglePlay}

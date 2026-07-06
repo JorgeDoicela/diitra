@@ -51,6 +51,7 @@ public class GroupsService : IGroupsService
         var query = _context.InvGruposInvestigacion
             .Include(g => g.IdCoordinadorNavigation)
             .Include(g => g.IdLineas)
+            .Include(g => g.IdCarreras)
             .Include(g => g.InvGruposMiembros)
                 .ThenInclude(m => m.IdUsuarioNavigation)
             .AsQueryable();
@@ -82,6 +83,7 @@ public class GroupsService : IGroupsService
         {
             var dto = MapToDto(g);
             dto.LineasIds = g.IdLineas.Select(l => l.IdLinea).ToList();
+            dto.CarrerasIds = g.IdCarreras.Select(c => c.IdCarrera).ToList();
             return dto;
         }).ToList();
     }
@@ -128,11 +130,40 @@ public class GroupsService : IGroupsService
         }
 
         var studentCareers = new List<AlumnosCarrera>();
-        if (memberCedulas.Any())
+        if (memberCedulas.Any() && !string.IsNullOrEmpty(periodId))
         {
-            studentCareers = await _context.AlumnosCarreras
-                .Where(ac => memberCedulas.Contains(ac.IdAlumno.Trim()))
+            var matriculas = await _context.Matriculas
+                .Where(m => memberCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == periodId && m.Valida == 1)
                 .ToListAsync();
+            
+            var studentNiveles = matriculas.Select(m => (int?)m.IdNivel).ToList();
+            var studentsDirectNiveles = await _context.Alumnos
+                .Where(s => memberCedulas.Contains(s.IdAlumno.Trim()) && s.IdNivel != null)
+                .Select(s => new { s.IdAlumno, s.IdNivel })
+                .ToListAsync();
+
+            var courses = await _context.Cursos.ToListAsync();
+
+            foreach (var cedula in memberCedulas)
+            {
+                var sCedula = cedula.Trim();
+                var mat = matriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sCedula);
+                var direct = studentsDirectNiveles.FirstOrDefault(s => s.IdAlumno.Trim() == sCedula);
+                var idNivel = mat?.IdNivel ?? direct?.IdNivel;
+
+                if (idNivel.HasValue)
+                {
+                    var matchingCursos = courses.Where(c => c.IdNivel == idNivel.Value).ToList();
+                    foreach (var curso in matchingCursos)
+                    {
+                        studentCareers.Add(new AlumnosCarrera
+                        {
+                            IdAlumno = sCedula,
+                            IdCarrera = curso.IdCarrera
+                        });
+                    }
+                }
+            }
         }
         var allCarreras = await _context.Carreras.ToListAsync();
 
@@ -327,13 +358,31 @@ public class GroupsService : IGroupsService
                     uniqueCarreraIds.Add(idCarrera);
                 }
 
-                var studentCareers = await _context.AlumnosCarreras
-                    .Where(ac => teacherCedulas.Contains(ac.IdAlumno.Trim()))
-                    .Select(ac => ac.IdCarrera)
+                var matriculas = await _context.Matriculas
+                    .Where(m => teacherCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == currentPeriod.IdPeriodo && m.Valida == 1)
                     .ToListAsync();
-                foreach (var idCarrera in studentCareers)
+                var studentNiveles = matriculas.Select(m => (int?)m.IdNivel).ToList();
+                var studentsDirectNiveles = await _context.Alumnos
+                    .Where(s => teacherCedulas.Contains(s.IdAlumno.Trim()) && s.IdNivel != null)
+                    .Select(s => s.IdNivel!.Value)
+                    .ToListAsync();
+                var allStudentNiveles = studentNiveles
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .Concat(studentsDirectNiveles)
+                    .Distinct()
+                    .ToList();
+                if (allStudentNiveles.Any())
                 {
-                    uniqueCarreraIds.Add(idCarrera);
+                    var studentCareersFromCursos = await _context.Cursos
+                        .Where(c => allStudentNiveles.Contains(c.IdNivel))
+                        .Select(c => c.IdCarrera)
+                        .Distinct()
+                        .ToListAsync();
+                    foreach (var idCarrera in studentCareersFromCursos)
+                    {
+                        uniqueCarreraIds.Add(idCarrera);
+                    }
                 }
             }
         }
@@ -547,6 +596,14 @@ public class GroupsService : IGroupsService
                 }
             }
 
+            var activeMemberCedulas = await _context.InvGruposMiembros
+                .Where(m => m.IdGrupo == group.IdGrupo && m.Activo == true && m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi != null)
+                .Select(m => m.IdUsuarioNavigation!.IdSigafi!.Trim())
+                .ToListAsync();
+
+            teacherCedulas.AddRange(activeMemberCedulas);
+            teacherCedulas = teacherCedulas.Distinct().ToList();
+
             if (teacherCedulas.Any())
             {
                 var profCareers = await _context.ProfesoresCarrerasPeriodos
@@ -558,13 +615,31 @@ public class GroupsService : IGroupsService
                     uniqueCarreraIds.Add(idCarrera);
                 }
 
-                var studentCareers = await _context.AlumnosCarreras
-                    .Where(ac => teacherCedulas.Contains(ac.IdAlumno.Trim()))
-                    .Select(ac => ac.IdCarrera)
+                var matriculas = await _context.Matriculas
+                    .Where(m => teacherCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == currentPeriod.IdPeriodo && m.Valida == 1)
                     .ToListAsync();
-                foreach (var idCarrera in studentCareers)
+                var studentNiveles = matriculas.Select(m => (int?)m.IdNivel).ToList();
+                var studentsDirectNiveles = await _context.Alumnos
+                    .Where(s => teacherCedulas.Contains(s.IdAlumno.Trim()) && s.IdNivel != null)
+                    .Select(s => s.IdNivel!.Value)
+                    .ToListAsync();
+                var allStudentNiveles = studentNiveles
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .Concat(studentsDirectNiveles)
+                    .Distinct()
+                    .ToList();
+                if (allStudentNiveles.Any())
                 {
-                    uniqueCarreraIds.Add(idCarrera);
+                    var studentCareersFromCursos = await _context.Cursos
+                        .Where(c => allStudentNiveles.Contains(c.IdNivel))
+                        .Select(c => c.IdCarrera)
+                        .Distinct()
+                        .ToListAsync();
+                    foreach (var idCarrera in studentCareersFromCursos)
+                    {
+                        uniqueCarreraIds.Add(idCarrera);
+                    }
                 }
             }
         }
@@ -727,10 +802,29 @@ public class GroupsService : IGroupsService
                     .Select(pc => pc.IdCarrera!.Value)
                     .ToListAsync();
 
-                var studentCareers = await _context.AlumnosCarreras
-                    .Where(ac => ac.IdAlumno.Trim() == memberDto.Cedula.Trim())
-                    .Select(ac => ac.IdCarrera)
+                var studentCareers = new List<int>();
+                var matriculas = await _context.Matriculas
+                    .Where(m => m.IdAlumno.Trim() == memberDto.Cedula.Trim() && m.IdPeriodo == currentPeriod.IdPeriodo && m.Valida == 1)
                     .ToListAsync();
+                var studentNiveles = matriculas.Select(m => (int?)m.IdNivel).ToList();
+                var studentsDirectNiveles = await _context.Alumnos
+                    .Where(s => s.IdAlumno.Trim() == memberDto.Cedula.Trim() && s.IdNivel != null)
+                    .Select(s => s.IdNivel!.Value)
+                    .ToListAsync();
+                var allStudentNiveles = studentNiveles
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .Concat(studentsDirectNiveles)
+                    .Distinct()
+                    .ToList();
+                if (allStudentNiveles.Any())
+                {
+                    studentCareers = await _context.Cursos
+                        .Where(c => allStudentNiveles.Contains(c.IdNivel))
+                        .Select(c => c.IdCarrera)
+                        .Distinct()
+                        .ToListAsync();
+                }
 
                 var mergedCareers = profCareers.Concat(studentCareers).Distinct().ToList();
 
@@ -785,6 +879,95 @@ public class GroupsService : IGroupsService
         member.FechaFin = DateOnly.FromDateTime(DateTime.Now);
         member.MotivoSalida = reason;
         await _context.SaveChangesAsync();
+
+        var group = await _context.InvGruposInvestigacion
+            .Include(g => g.IdCarreras)
+            .FirstOrDefaultAsync(g => g.IdGrupo == member.IdGrupo);
+
+        if (group != null)
+        {
+            group.IdCarreras.Clear();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .ThenByDescending(p => p.Activo == true)
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                .ThenByDescending(p => p.FechaInicial)
+                .FirstOrDefaultAsync();
+
+            var teacherCedulas = new List<string>();
+            if (group.IdCoordinadorNavigation != null && !string.IsNullOrEmpty(group.IdCoordinadorNavigation.IdSigafi))
+            {
+                teacherCedulas.Add(group.IdCoordinadorNavigation.IdSigafi.Trim());
+            }
+            else
+            {
+                var coordUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == group.IdCoordinador);
+                if (coordUser != null && !string.IsNullOrEmpty(coordUser.IdSigafi))
+                {
+                    teacherCedulas.Add(coordUser.IdSigafi.Trim());
+                }
+            }
+
+            var activeMemberCedulas = await _context.InvGruposMiembros
+                .Where(m => m.IdGrupo == group.IdGrupo && m.Activo == true && m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi != null)
+                .Select(m => m.IdUsuarioNavigation!.IdSigafi!.Trim())
+                .ToListAsync();
+
+            teacherCedulas.AddRange(activeMemberCedulas);
+            teacherCedulas = teacherCedulas.Distinct().ToList();
+
+            var uniqueCarreraIds = new HashSet<int>();
+            if (currentPeriod != null && teacherCedulas.Any())
+            {
+                var profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Where(pc => teacherCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == currentPeriod.IdPeriodo && pc.EsActivo == 1 && pc.IdCarrera != null)
+                    .Select(pc => pc.IdCarrera!.Value)
+                    .ToListAsync();
+                foreach (var idCarrera in profCareers)
+                {
+                    uniqueCarreraIds.Add(idCarrera);
+                }
+
+                var matriculas = await _context.Matriculas
+                    .Where(m => teacherCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == currentPeriod.IdPeriodo && m.Valida == 1)
+                    .ToListAsync();
+                var studentNiveles = matriculas.Select(m => (int?)m.IdNivel).ToList();
+                var studentsDirectNiveles = await _context.Alumnos
+                    .Where(s => teacherCedulas.Contains(s.IdAlumno.Trim()) && s.IdNivel != null)
+                    .Select(s => s.IdNivel!.Value)
+                    .ToListAsync();
+                var allStudentNiveles = studentNiveles
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .Concat(studentsDirectNiveles)
+                    .Distinct()
+                    .ToList();
+                if (allStudentNiveles.Any())
+                {
+                    var studentCareersFromCursos = await _context.Cursos
+                        .Where(c => allStudentNiveles.Contains(c.IdNivel))
+                        .Select(c => c.IdCarrera)
+                        .Distinct()
+                        .ToListAsync();
+                    foreach (var idCarrera in studentCareersFromCursos)
+                    {
+                        uniqueCarreraIds.Add(idCarrera);
+                    }
+                }
+            }
+
+            if (uniqueCarreraIds.Any())
+            {
+                var carreras = await _context.Carreras.Where(c => uniqueCarreraIds.Contains(c.IdCarrera)).ToListAsync();
+                foreach (var carrera in carreras)
+                {
+                    group.IdCarreras.Add(carrera);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
 
         var afterState = new
         {
@@ -936,6 +1119,50 @@ public class GroupsService : IGroupsService
         return true;
     }
 
+    public async Task<bool> StartReviewAsync(string uuid)
+    {
+        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        if (group.Estado != "En Evaluación")
+        {
+            var beforeState = new { Estado = group.Estado };
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+            group.Estado = "En Evaluación";
+            await _context.SaveChangesAsync();
+
+            var afterState = new { Estado = group.Estado };
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+            await _auditService.LogActionAsync(null, "INICIAR_EVALUACION_GRUPO", $"Inicio de evaluación para el grupo {group.Nombre}", "INVESTIGACION", beforeJson, afterJson);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> CancelReviewAsync(string uuid)
+    {
+        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        if (group.Estado == "En Evaluación")
+        {
+            var beforeState = new { Estado = group.Estado };
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+            group.Estado = "Pendiente";
+            await _context.SaveChangesAsync();
+
+            var afterState = new { Estado = group.Estado };
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+            await _auditService.LogActionAsync(null, "CANCELAR_EVALUACION_GRUPO", $"Cancelación de evaluación para el grupo {group.Nombre}", "INVESTIGACION", beforeJson, afterJson);
+        }
+
+        return true;
+    }
+
     private GroupDto MapToDto(InvGrupoInvestigacion g)
     {
         return new GroupDto
@@ -960,7 +1187,11 @@ public class GroupsService : IGroupsService
             LinkWhatsapp = g.LinkWhatsapp,
             TelefonoCoordinador = !string.IsNullOrEmpty(g.TelefonoCoordinador)
                 ? g.TelefonoCoordinador
-                : GetUserPhoneFromCatalog(g.IdCoordinadorNavigation?.IdSigafi, g.IdCoordinadorNavigation?.TablaSigafi)
+                : GetUserPhoneFromCatalog(g.IdCoordinadorNavigation?.IdSigafi, g.IdCoordinadorNavigation?.TablaSigafi),
+            TeacherMemberCedulas = g.InvGruposMiembros
+                .Where(m => m.Activo == true && m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.TablaSigafi == "profesor" && !string.IsNullOrEmpty(m.IdUsuarioNavigation.IdSigafi))
+                .Select(m => m.IdUsuarioNavigation.IdSigafi.Trim())
+                .ToList()
         };
     }
 

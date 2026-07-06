@@ -30,6 +30,7 @@ public class GroupDto
     public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
     public List<GroupAssociatedProjectDto> Proyectos { get; set; } = new();
+    public List<string> TeacherMemberCedulas { get; set; } = new();
 }
 
 public class GroupAssociatedProjectDto

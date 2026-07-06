@@ -9,8 +9,6 @@ export const StickyNotesFloatingButton: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [text, setText] = useState('');
     const [color, setColor] = useState('#F59E0B');
-    const [loading, setLoading] = useState(false);
-    const [successMsg, setSuccessMsg] = useState(false);
 
     // Evitar renderizar en rutas públicas como login
     const publicRoutes = ['/login', '/registro', '/recuperar-password', '/restablecer-password'];
