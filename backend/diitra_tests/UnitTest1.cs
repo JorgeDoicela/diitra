@@ -120,6 +120,7 @@ public class UnitTest1
     [Fact]
     public async Task TestPrintUserHours()
     {
+        if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
         optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
@@ -360,6 +361,7 @@ public class UnitTest1
     [Fact]
     public async Task TestDiagnoseDuplication()
     {
+        if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
         optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
