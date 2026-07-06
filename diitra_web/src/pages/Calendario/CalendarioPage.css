@@ -1,3 +1,8 @@
+/* Ocultar barra de herramientas nativa de react-big-calendar */
+.rbc-toolbar {
+    display: none !important;
+}
+
 /* ─── Layout principal ─────────────────────────────────────────── */
 .calendario-page-container {
     display: flex;
@@ -618,4 +623,749 @@
 
 .rbc-addons-dnd .rbc-event:not([draggable="true"]) {
     cursor: default;
+}
+
+/* ─── Selector de Vista (Calendario / Kanban) ───────────────────── */
+.calendario-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.view-selector-pill {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3px;
+    border-radius: 8px;
+}
+
+.view-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-sans);
+}
+
+.view-selector-btn:hover {
+    color: var(--fg);
+    background: var(--surface-hover);
+}
+
+.view-selector-btn.active {
+    background: var(--fg);
+    color: var(--bg);
+}
+
+/* ─── Tablero Kanban ────────────────────────────────────────────── */
+.kanban-board-container {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.kanban-board-container::-webkit-scrollbar {
+    height: 5px;
+}
+.kanban-board-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 245px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.kanban-column.drag-over {
+    border-color: var(--fg);
+    background: var(--surface-hover);
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    user-select: none;
+}
+
+.kanban-column-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kanban-column-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg);
+}
+
+.kanban-column-count {
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.kanban-column-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    padding: 8px 12px;
+    font-size: 11.5px;
+    font-weight: 550;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 10px;
+    margin-top: 2px;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    font-family: var(--font-sans);
+}
+
+.kanban-column-add-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
+    color: var(--fg);
+}
+
+.kanban-cards-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 150px;
+    background: var(--bg);
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+.kanban-cards-container::-webkit-scrollbar {
+    width: 4px;
+}
+.kanban-cards-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* 🏷️ Tarjetas Kanban (Vercel Style) ────────────────────────────── */
+.kanban-card {
+    background: color-mix(in srgb, var(--card-color, var(--border)) 8%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--card-color, var(--border)) 30%, var(--border));
+    border-radius: 8px;
+    padding: 12px;
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kanban-card[draggable="true"] {
+    cursor: grab;
+}
+
+.kanban-card[draggable="false"] {
+    cursor: pointer;
+}
+
+.kanban-card:hover {
+    border-color: color-mix(in srgb, var(--card-color, var(--border)) 55%, var(--border-hover));
+    background: color-mix(in srgb, var(--card-color, var(--border)) 12%, var(--surface));
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card.dragging {
+    opacity: 0.35;
+}
+
+.kanban-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.35;
+}
+
+.kanban-card-title.completado {
+    text-decoration: line-through;
+    opacity: 0.55;
+}
+
+.kanban-card-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.kanban-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.kanban-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+}
+
+.kanban-badge.categoria {
+    background: var(--badge-bg);
+    color: #ffffff;
+}
+
+.kanban-badge.prioridad {
+    background: var(--prio-bg);
+    color: var(--prio-text);
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.kanban-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.kanban-card-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+}
+
+.kanban-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-card:hover .kanban-card-actions {
+    opacity: 1;
+}
+
+.kanban-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 3px;
+    transition: background-color 0.1s, color 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kanban-action-btn:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+.kanban-action-btn.complete:hover {
+    background: var(--success-subtle);
+    color: var(--success);
+}
+
+.kanban-action-btn.delete:hover {
+    background: var(--error-subtle);
+    color: var(--error);
+}
+
+.kanban-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 0 12px;
+    user-select: none;
+}
+
+/* Responsive Kanban Layout */
+@media (max-width: 1024px) {
+    .kanban-board-container {
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .kanban-column {
+        min-height: 200px;
+    }
+}
+
+/* ─── Notas Rápidas (Sticky Notes) ──────────────────────────────── */
+.sticky-notes-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.sticky-notes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.sticky-notes-grid::-webkit-scrollbar {
+    width: 3px;
+}
+.sticky-notes-grid::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.sticky-note-card {
+    background: color-mix(in srgb, var(--note-color, var(--border)) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 38%, var(--border));
+    border-radius: 6px;
+    padding: 8px 10px;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sticky-note-card:hover {
+    border-color: color-mix(in srgb, var(--note-color, var(--border)) 60%, var(--border-hover));
+    background: color-mix(in srgb, var(--note-color, var(--border)) 18%, var(--surface));
+}
+
+.sticky-note-card:active {
+    cursor: grabbing;
+}
+
+.sticky-note-text {
+    font-size: 11px;
+    line-height: 1.35;
+    margin: 0;
+    color: var(--fg);
+    word-break: break-word;
+    flex: 1;
+}
+
+.sticky-note-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.sticky-note-card:hover .sticky-note-actions {
+    opacity: 1;
+}
+
+.sticky-note-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.sticky-note-action-btn:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+.sticky-note-action-btn.delete:hover {
+    background: var(--error-subtle);
+    color: var(--error);
+}
+
+
+/* ─── Vista Agenda (Vercel Style) ───────────────────────────────── */
+.rbc-agenda-view {
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+    border: none !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+    table-layout: fixed !important;
+    padding: 10px !important;
+    background: var(--bg) !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--text-dim) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 6px 16px !important;
+    text-align: left !important;
+    border-right: none !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th:first-child {
+    width: 120px !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th:nth-child(2) {
+    width: 110px !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th:last-child {
+    width: auto !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody {
+    background: transparent !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr {
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 10px 16px !important;
+    font-size: 12.5px !important;
+    color: var(--fg) !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: left !important;
+}
+
+/* Celda de fecha (flota libremente a la izquierda) */
+.rbc-agenda-date-cell {
+    color: var(--text-dim) !important;
+    font-weight: 600 !important;
+    font-family: var(--font-sans) !important;
+    vertical-align: middle !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.rbc-agenda-time-cell {
+    color: var(--fg) !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    vertical-align: middle !important;
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+    font-family: var(--font-sans) !important;
+}
+
+.rbc-agenda-event-cell {
+    vertical-align: middle !important;
+}
+
+.rbc-agenda-event-cell .rbc-event,
+.rbc-agenda-event-cell .rbc-event:hover,
+.rbc-agenda-event-cell .rbc-event:focus {
+    background: none !important;
+    color: var(--fg) !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+}
+
+/* Estilos de la tarjeta-badge interna */
+.agenda-event-badge {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.agenda-event-badge.completado {
+    text-decoration: line-through !important;
+    opacity: 0.65 !important;
+}
+
+.agenda-event-badge-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+.agenda-event-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    background-color: var(--event-color) !important;
+    flex-shrink: 0 !important;
+}
+
+.agenda-event-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--fg) !important;
+}
+
+.agenda-event-desc {
+    font-size: 11px !important;
+    color: var(--text-dim) !important;
+    font-weight: 400 !important;
+}
+
+/* ─── Vista de Agenda Personalizada (Vercel Card List) ───────────── */
+.custom-agenda-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.custom-agenda-header {
+    display: flex;
+    gap: 24px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--font-sans);
+    margin-bottom: 10px;
+}
+
+.custom-agenda-th.th-fecha {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.custom-agenda-th.th-hora {
+    width: 110px;
+    flex-shrink: 0;
+}
+
+.custom-agenda-th.th-evento {
+    flex: 1;
+}
+
+.custom-agenda-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 4px 6px 0 !important;
+}
+
+.custom-agenda-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+}
+
+.custom-agenda-row {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow 0.15s ease, filter 0.15s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.custom-agenda-row:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    filter: brightness(0.97);
+}
+
+.custom-agenda-row.completado {
+    opacity: 0.65;
+}
+
+.custom-agenda-row.completado .agenda-event-title {
+    text-decoration: line-through;
+}
+
+.custom-agenda-td.td-fecha {
+    width: 120px;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+}
+
+.custom-agenda-td.td-hora {
+    width: 110px;
+    flex-shrink: 0;
+    color: var(--fg);
+    font-weight: 600;
+    font-size: 11.5px;
+    font-family: var(--font-sans);
+}
+
+.custom-agenda-td.td-evento {
+    flex: 1;
+}
+
+/* Colores de Fila Completa de Agenda Personalizada */
+/* Naranja */
+.custom-agenda-row.color-orange {
+    background-color: rgba(245, 158, 11, 0.06) !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+/* Azul */
+.custom-agenda-row.color-blue {
+    background-color: rgba(59, 130, 246, 0.06) !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+/* Verde */
+.custom-agenda-row.color-green {
+    background-color: rgba(16, 185, 129, 0.06) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+/* Rosa */
+.custom-agenda-row.color-pink {
+    background-color: rgba(236, 72, 153, 0.06) !important;
+    border: 1px solid rgba(236, 72, 153, 0.3) !important;
+}
+/* Morado */
+.custom-agenda-row.color-purple {
+    background-color: rgba(139, 92, 246, 0.06) !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+}
+/* Rojo */
+.custom-agenda-row.color-red {
+    background-color: rgba(239, 68, 68, 0.06) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+/* Azul Oscuro */
+.custom-agenda-row.color-darkblue {
+    background-color: rgba(30, 58, 138, 0.06) !important;
+    border: 1px solid rgba(30, 58, 138, 0.3) !important;
+}
+/* Gris */
+.custom-agenda-row.color-gray {
+    background-color: rgba(107, 114, 128, 0.06) !important;
+    border: 1px solid rgba(107, 114, 128, 0.3) !important;
+}
+
+/* Botón Global de Añadir Tarea arriba a la derecha */
+.global-add-task-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: #111827 !important; /* Negro antracita premium */
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease, transform 0.1s ease !important;
+    font-family: var(--font-sans) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.global-add-task-btn:hover {
+    background: #1f2937 !important;
+}
+
+.global-add-task-btn:active {
+    transform: scale(0.98) !important;
 }

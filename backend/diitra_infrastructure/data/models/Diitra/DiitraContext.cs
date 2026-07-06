@@ -2010,7 +2010,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
             entity.Property(e => e.TipoEvento).HasColumnName("tipoEvento").HasMaxLength(50).HasDefaultValue("Normativo");
-            entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio").IsRequired();
+            entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
             entity.Property(e => e.EsTodoElDia).HasColumnName("esTodoElDia").HasDefaultValue(true);
             entity.Property(e => e.RecurrenciaAnual).HasColumnName("recurrenciaAnual").HasDefaultValue(false);

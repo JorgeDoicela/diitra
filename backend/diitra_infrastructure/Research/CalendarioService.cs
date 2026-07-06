@@ -64,6 +64,8 @@ public class CalendarioService : ICalendarioService
 
         foreach (var norm in normativos)
         {
+            if (!norm.FechaInicio.HasValue) continue;
+
             if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
                 !norm.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rolUsuario)) continue;
 
@@ -76,7 +78,7 @@ public class CalendarioService : ICalendarioService
             for (int año = añoDesde; año <= añoHasta; año++)
             {
                 if (norm.RecurrenciaHasta.HasValue && año > norm.RecurrenciaHasta.Value.Year) break;
-                var fechaOcurrencia = new DateOnly(año, norm.FechaInicio.Month, norm.FechaInicio.Day);
+                var fechaOcurrencia = new DateOnly(año, norm.FechaInicio.Value.Month, norm.FechaInicio.Value.Day);
                 if (fechaOcurrencia < desde || fechaOcurrencia > hasta) continue;
 
                 // No duplicar si ya existe por el SELECT de la vista (mismo año de creación)
@@ -304,6 +306,8 @@ public class CalendarioService : ICalendarioService
             {
                 foreach (var evento in eventos)
                 {
+                    if (!evento.FechaInicio.HasValue) continue;
+
                     // ── Filtro de privacidad ──────────────────────────────────
                     // Eventos privados/personales solo van al creador, no a todos
                     if (evento.EsPrivado && evento.CreadoPor != usuario.IdUsuario) continue;
@@ -314,13 +318,13 @@ public class CalendarioService : ICalendarioService
                         !evento.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rol)) continue;
 
                     // ── Proyección de Recurrencia Anual para la Alerta ───────
-                    DateOnly fechaInicioOcurrencia = evento.FechaInicio;
+                    DateOnly fechaInicioOcurrencia = evento.FechaInicio.Value;
                     if (evento.RecurrenciaAnual)
                     {
                         // Si ya expiró la recurrencia, la ignoramos
                         if (evento.RecurrenciaHasta.HasValue && hoy.Year > evento.RecurrenciaHasta.Value.Year) continue;
                         
-                        fechaInicioOcurrencia = new DateOnly(hoy.Year, evento.FechaInicio.Month, evento.FechaInicio.Day);
+                        fechaInicioOcurrencia = new DateOnly(hoy.Year, evento.FechaInicio.Value.Month, evento.FechaInicio.Value.Day);
                     }
 
                     // No alertar si el evento de este año ya pasó antes del día de hoy
@@ -338,14 +342,14 @@ public class CalendarioService : ICalendarioService
                         .AnyAsync(a =>
                             a.IdEventoCalendario == idCompuesto &&
                             a.IdUsuario == usuario.IdUsuario &&
-                            a.FechaEvento == evento.FechaInicio);
+                            a.FechaEvento == evento.FechaInicio.Value);
 
                     if (yaEnviada) continue;
 
                     // Enviar email usando el motor existente
                     try
                     {
-                        var diasRestantes = evento.FechaInicio.DayNumber - hoy.DayNumber;
+                        var diasRestantes = evento.FechaInicio.Value.DayNumber - hoy.DayNumber;
                         var sendRequest = new EmailSendRequest
                         {
                             TemplateCodigo = "CALENDARIO_ALERTA_EVENTO",
@@ -354,7 +358,7 @@ public class CalendarioService : ICalendarioService
                             {
                                 ["[[titulo_evento]]"]      = evento.Titulo,
                                 ["[[dias_restantes]]"]     = diasRestantes.ToString(),
-                                ["[[fecha_evento]]"]       = evento.FechaInicio.ToString("dd 'de' MMMM 'de' yyyy"),
+                                ["[[fecha_evento]]"]       = evento.FechaInicio.Value.ToString("dd 'de' MMMM 'de' yyyy"),
                                 ["[[descripcion_evento]]"] = evento.Descripcion ?? "",
                                 ["[[url_accion]]"]         = evento.UrlAccion ?? "/calendario",
                                 ["[[nombre_usuario]]"]     = usuario.Nombre ?? usuario.EmailInstitucional ?? ""
@@ -368,7 +372,7 @@ public class CalendarioService : ICalendarioService
                         {
                             IdEventoCalendario = idCompuesto,
                             IdUsuario          = usuario.IdUsuario,
-                            FechaEvento        = evento.FechaInicio,
+                            FechaEvento        = evento.FechaInicio.Value,
                             FechaEnvio         = DateTime.UtcNow
                         });
                     }
@@ -387,6 +391,15 @@ public class CalendarioService : ICalendarioService
         }
 
         _logger.LogInformation("[Calendario] Alertas diarias procesadas.");
+    }
+
+    public async Task<IEnumerable<EventoNormativoDto>> GetStickyNotesAsync(int idUsuario)
+    {
+        return await _context.Set<InvCalendarioEventoNormativo>()
+            .Where(e => e.CreadoPor == idUsuario && e.FechaInicio == null && e.Activo)
+            .OrderByDescending(e => e.FechaRegistro)
+            .Select(e => ToDto(e))
+            .ToListAsync();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

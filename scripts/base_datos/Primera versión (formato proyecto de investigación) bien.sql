@@ -2076,7 +2076,7 @@ CREATE TABLE inv_calendario_eventos_normativos (
     -- Tipo de evento flexible: Normativo, Academico, Institucional, Feriado, Personal, Reunion, etc.
     tipoEvento        VARCHAR(50)   NOT NULL DEFAULT 'Normativo',
     -- Fechas del evento
-    fechaInicio       DATE          NOT NULL,
+    fechaInicio       DATE          NULL,
     fechaFin          DATE          NULL      COMMENT 'NULL si es evento de un solo día',
     esTodoElDia       TINYINT(1)    NOT NULL DEFAULT 1,
     -- RECURRENCIA ANUAL

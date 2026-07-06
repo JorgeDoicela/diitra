@@ -83,6 +83,20 @@ public class CalendarioController : ControllerBase
         return Created("", new { uuid });
     }
 
+    // Obtener las notas adhesivas sin programar del usuario
+    [HttpGet("usuario/notas")]
+    public async Task<IActionResult> GetStickyNotes()
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var notas = await _calendarioService.GetStickyNotesAsync(dbUser.IdUsuario);
+        return Ok(notas);
+    }
+
     // Actualizar un evento de usuario
     [HttpPut("usuario/eventos/{uuid}")]
     public async Task<IActionResult> UpdateUsuarioEvento(string uuid, [FromBody] EventoNormativoDto dto)

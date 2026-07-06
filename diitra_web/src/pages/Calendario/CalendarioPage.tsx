@@ -6,13 +6,14 @@ import type { Event as BigCalendarEvent, View, SlotInfo } from 'react-big-calend
 import { format, parse, startOfWeek, getDay, addDays, isAfter, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../api/ConfirmContext';
 import {
     X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2,
-    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight
+    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers
 } from 'lucide-react';
 import {
     type EventoCalendario,
-    getEventos, createEvento, updateEvento, deleteEvento, getIcalToken,
+    getEventos, getStickyNotes, createEvento, updateEvento, deleteEvento, getIcalToken,
     buildPayload, CATEGORIAS_CONFIG, PRIORIDAD_COLORS, ESTADO_LABELS, COLORES_OPCIONES,
     getContextDescription,
 } from '../../services/calendarioService';
@@ -70,6 +71,48 @@ const EventoEnCelda: React.FC<{ event: CalendarEventExtended }> = ({ event }) =>
     );
 };
 
+const EventoEnAgenda: React.FC<{ event: CalendarEventExtended }> = ({ event }) => {
+    const ev = event.resource;
+    const isCompleted = ev.estado === 'Completado';
+    const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
+    
+    // Mapeo para nombres de clases de color
+    const colorHex = color.toUpperCase();
+    const colorClassMap: Record<string, string> = {
+        '#F59E0B': 'orange',
+        '#3B82F6': 'blue',
+        '#10B981': 'green',
+        '#EC4899': 'pink',
+        '#8B5CF6': 'purple',
+        '#EF4444': 'red',
+        '#1E3A8A': 'darkblue',
+    };
+    const colorName = colorClassMap[colorHex] || 'gray';
+    
+    // Crear un color de fondo translúcido (8% de opacidad)
+    const badgeBg = `${color}14`; // 14 en hexadecimal es aprox 8% de opacidad
+    const badgeBorder = `${color}30`; // 30 en hexadecimal es aprox 18% de opacidad
+    
+    return (
+        <div 
+            className={`agenda-event-badge color-${colorName} ${isCompleted ? 'completado' : ''}`}
+            style={{ 
+                '--event-color': color,
+                '--event-bg': badgeBg,
+                '--event-border': badgeBorder
+            } as React.CSSProperties}
+        >
+            <div className="agenda-event-badge-content">
+                <span className="agenda-event-dot" />
+                <span className="agenda-event-title">{ev.titulo}</span>
+                {ev.descripcion && (
+                    <span className="agenda-event-desc">— {ev.descripcion}</span>
+                )}
+            </div>
+        </div>
+    );
+};
+
 export const CalendarioPage: React.FC = () => {
     const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
     const [loading, setLoading] = useState(true);
@@ -84,8 +127,191 @@ export const CalendarioPage: React.FC = () => {
         'Personal': true,
     });
 
+    const [viewMode, setViewMode] = useState<'calendar' | 'kanban'>('calendar');
+    const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+    const kanbanColumnas = [
+        { id: 'Pendiente', label: 'Pendiente' },
+        { id: 'EnProgreso', label: 'En Progreso' },
+        { id: 'Completado', label: 'Completado' },
+        { id: 'Cancelado', label: 'Cancelado' },
+    ];
+
+    const [stickyNotes, setStickyNotes] = useState<EventoCalendario[]>([]);
+    const fetchStickyNotes = useCallback(async () => {
+        try {
+            const data = await getStickyNotes();
+            setStickyNotes(data);
+        } catch (err) {
+            console.error('Error al cargar notas adhesivas:', err);
+        }
+    }, []);
+
+    const handleDeleteStickyNote = async (uuid: string) => {
+        try {
+            setLoading(true);
+            await deleteEvento(uuid);
+            fetchStickyNotes();
+        } catch (err) {
+            console.error('Error al eliminar nota adhesiva:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleNoteDragStart = (e: React.DragEvent, note: EventoCalendario) => {
+        e.dataTransfer.setData('diitra/note', JSON.stringify(note));
+        e.dataTransfer.effectAllowed = 'copyMove';
+    };
+
+    const handleDragStart = (e: React.DragEvent, uuid: string) => {
+        setDraggingUuid(uuid);
+        e.dataTransfer.setData('text/plain', uuid);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragEnd = () => {
+        setDraggingUuid(null);
+        setDragOverColumn(null);
+    };
+
+    const handleDragOver = (e: React.DragEvent, columnId: string) => {
+        e.preventDefault();
+        if (dragOverColumn !== columnId) {
+            setDragOverColumn(columnId);
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetEstado: string) => {
+        e.preventDefault();
+        setDragOverColumn(null);
+
+        const noteData = e.dataTransfer.getData('diitra/note');
+        if (noteData) {
+            try {
+                const note: EventoCalendario = JSON.parse(noteData);
+                const payload = buildPayload({
+                    titulo: note.titulo,
+                    descripcion: note.descripcion || '',
+                    tipo: note.subcategoria || 'Personal',
+                    fechaInicio: format(new Date(), 'yyyy-MM-dd'),
+                    fechaFin: format(new Date(), 'yyyy-MM-dd'),
+                    esTodoElDia: note.es_todo_el_dia,
+                    colorHex: note.color_hex || '#F59E0B',
+                    esPrivado: note.es_privado,
+                    prioridad: note.prioridad,
+                    estado: targetEstado,
+                    alertaDias: note.alerta_dias ?? '',
+                    recurrenciaAnual: note.recurrencia_anual ?? false,
+                    urlAccion: note.url_accion,
+                });
+
+                // Actualización Optimista
+                setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
+                const newEv: Evento = {
+                    id_evento_calendario: 0,
+                    uuid: note.uuid,
+                    titulo: note.titulo,
+                    descripcion: note.descripcion || '',
+                    categoria_global: 'Personal',
+                    subcategoria: note.subcategoria || 'Personal',
+                    fecha_inicio: format(new Date(), 'yyyy-MM-dd'),
+                    fecha_fin: format(new Date(), 'yyyy-MM-dd'),
+                    es_todo_el_dia: note.es_todo_el_dia,
+                    color_hex: note.color_hex || '#F59E0B',
+                    es_privado: note.es_privado,
+                    prioridad: note.prioridad,
+                    estado: targetEstado,
+                    url_accion: note.url_accion,
+                    creado_por: 0,
+                    alerta_dias: note.alerta_dias,
+                    recurrencia_anual: note.recurrencia_anual
+                };
+                const newEvCal: EventoCalendario = {
+                    id: 0,
+                    title: note.titulo,
+                    start: new Date(),
+                    end: new Date(),
+                    allDay: note.es_todo_el_dia,
+                    resource: newEv
+                };
+                setEventos(prev => [...prev, newEvCal]);
+
+                // Ejecución asíncrona en segundo plano
+                updateEvento(note.uuid, payload).then(() => {
+                    fetchStickyNotes();
+                    fetchEventos(currentDate);
+                }).catch(err => {
+                    console.error('Error al actualizar nota en el servidor:', err);
+                    fetchStickyNotes();
+                    fetchEventos(currentDate);
+                });
+            } catch (err) {
+                console.error('Error al convertir nota adhesiva a tarea:', err);
+            }
+            return;
+        }
+
+        const uuid = e.dataTransfer.getData('text/plain') || draggingUuid;
+        setDraggingUuid(null);
+        if (!uuid) return;
+
+        const eventFound = eventos.find(ev => ev.resource.uuid === uuid);
+        if (!eventFound) return;
+
+        const ev = eventFound.resource;
+        const isPersonal = ev.categoria_global === 'Personal';
+
+        if (!isPersonal) {
+            alert('Solo se pueden reorganizar las tareas y eventos personales.');
+            return;
+        }
+
+        if (ev.estado === targetEstado) return;
+
+        const payload = buildPayload({
+            titulo: ev.titulo,
+            descripcion: ev.descripcion || '',
+            tipo: ev.subcategoria || 'Personal',
+            fechaInicio: ev.fecha_inicio,
+            fechaFin: ev.fecha_fin || ev.fecha_inicio,
+            esTodoElDia: ev.es_todo_el_dia,
+            colorHex: ev.color_hex || '#F59E0B',
+            esPrivado: ev.es_privado,
+            prioridad: ev.prioridad,
+            estado: targetEstado,
+            alertaDias: ev.alerta_dias ?? '',
+            recurrenciaAnual: ev.recurrencia_anual ?? false,
+            urlAccion: ev.url_accion,
+        });
+
+        // Actualización Optimista
+        setEventos(prev => prev.map(item => {
+            if (item.resource.uuid === uuid) {
+                return {
+                    ...item,
+                    resource: {
+                        ...item.resource,
+                        estado: targetEstado
+                    }
+                };
+            }
+            return item;
+        }));
+
+        // Ejecución asíncrona en segundo plano
+        updateEvento(uuid, payload).then(() => {
+            fetchEventos(currentDate);
+        }).catch(err => {
+            console.error('Error al actualizar estado del evento en Kanban:', err);
+            fetchEventos(currentDate);
+        });
+    };
+
     const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null);
     const navigate = useNavigate();
+    const confirm = useConfirm();
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -145,8 +371,8 @@ export const CalendarioPage: React.FC = () => {
         setFormTitulo(ev.titulo);
         setFormDescripcion(ev.descripcion || '');
         setFormTipo(ev.subcategoria || 'Personal');
-        setFormFechaInicio(ev.fecha_inicio);
-        setFormFechaFin(ev.fecha_fin || ev.fecha_inicio);
+        setFormFechaInicio(ev.fecha_inicio || '');
+        setFormFechaFin(ev.fecha_fin || ev.fecha_inicio || '');
         setFormEsTodoElDia(ev.es_todo_el_dia);
         setFormColorHex(ev.color_hex || '#F59E0B');
         setFormEsPrivado(ev.es_privado);
@@ -195,12 +421,21 @@ export const CalendarioPage: React.FC = () => {
     };
 
     const handleDeleteEvent = async (uuid: string) => {
-        if (!window.confirm('¿Está seguro de que desea eliminar este evento/tarea?')) return;
+        const ok = await confirm({
+            title: 'Eliminar Evento',
+            message: '¿Está seguro de que desea eliminar este evento/tarea?',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            variant: 'destructive'
+        });
+        if (!ok) return;
+
         try {
             setLoading(true);
             await deleteEvento(uuid);
             setSelectedEvent(null);
             fetchEventos(currentDate);
+            fetchStickyNotes();
         } catch (error) {
             console.error('Error al eliminar evento de usuario:', error);
         } finally {
@@ -352,16 +587,18 @@ export const CalendarioPage: React.FC = () => {
         try {
             setLoading(true);
             const raw = await getEventos(date);
-            const parsed: CalendarEventExtended[] = raw.map((ev) => {
-                const [yI, mI, dI] = ev.fecha_inicio.split('-').map(Number);
-                const start = new Date(yI, mI - 1, dI);
-                let end = start;
-                if (ev.fecha_fin) {
-                    const [yF, mF, dF] = ev.fecha_fin.split('-').map(Number);
-                    end = new Date(yF, mF - 1, dF);
-                }
-                return { title: ev.titulo, start, end, allDay: ev.es_todo_el_dia, resource: ev };
-            });
+            const parsed: CalendarEventExtended[] = raw
+                .filter(ev => ev.fecha_inicio !== null)
+                .map((ev) => {
+                    const [yI, mI, dI] = ev.fecha_inicio!.split('-').map(Number);
+                    const start = new Date(yI, mI - 1, dI);
+                    let end = start;
+                    if (ev.fecha_fin) {
+                        const [yF, mF, dF] = ev.fecha_fin.split('-').map(Number);
+                        end = new Date(yF, mF - 1, dF);
+                    }
+                    return { title: ev.titulo, start, end, allDay: ev.es_todo_el_dia, resource: ev };
+                });
             setEventos(parsed);
         } catch (error) {
             console.error('Error al cargar eventos del calendario:', error);
@@ -370,7 +607,20 @@ export const CalendarioPage: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchEventos(currentDate); }, [currentDate]);
+    useEffect(() => {
+        fetchEventos(currentDate);
+        fetchStickyNotes();
+    }, [currentDate, fetchStickyNotes]);
+
+    useEffect(() => {
+        const handleNoteCreated = () => {
+            fetchStickyNotes();
+        };
+        window.addEventListener('diitra:note-created', handleNoteCreated);
+        return () => {
+            window.removeEventListener('diitra:note-created', handleNoteCreated);
+        };
+    }, [fetchStickyNotes]);
 
     const handleNavigate = (newDate: Date) => setCurrentDate(newDate);
 
@@ -392,13 +642,14 @@ export const CalendarioPage: React.FC = () => {
     const eventStyleGetter = (event: CalendarEventExtended) => {
         const ev = event.resource;
         const isCompleted = ev.estado === 'Completado';
+        const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
         return {
             style: {
-                backgroundColor: isCompleted ? 'transparent' : (ev.color_hex || '#6B7280'),
+                backgroundColor: isCompleted ? 'transparent' : color,
                 borderRadius: '6px',
                 opacity: categoriasVisibles[ev.categoria_global] !== false ? 1 : 0.15,
-                color: isCompleted ? (ev.color_hex || '#6B7280') : '#ffffff',
-                border: isCompleted ? `1.5px solid ${ev.color_hex || '#6B7280'}` : '0px',
+                color: isCompleted ? color : '#ffffff',
+                border: isCompleted ? `1.5px solid ${color}` : '0px',
                 display: 'block',
                 fontSize: '11.5px',
                 padding: '2px 6px',
@@ -429,17 +680,43 @@ export const CalendarioPage: React.FC = () => {
         return (event as CalendarEventExtended).resource?.categoria_global === 'Personal';
     };
 
+    const handleNavigateClick = (action: 'PREV' | 'NEXT' | 'TODAY') => {
+        let newDate = new Date(currentDate);
+        if (action === 'TODAY') {
+            newDate = new Date();
+        } else {
+            const multiplier = action === 'PREV' ? -1 : 1;
+            if (view === 'month') {
+                newDate.setMonth(newDate.getMonth() + multiplier);
+            } else if (view === 'week') {
+                newDate.setDate(newDate.getDate() + (7 * multiplier));
+            } else if (view === 'day') {
+                newDate.setDate(newDate.getDate() + multiplier);
+            } else if (view === 'agenda') {
+                newDate.setMonth(newDate.getMonth() + multiplier);
+            }
+        }
+        setCurrentDate(newDate);
+    };
+
+    const getLabelFecha = () => {
+        if (view === 'month') {
+            return format(currentDate, 'MMMM yyyy', { locale: es }).replace(/^\w/, c => c.toUpperCase());
+        }
+        if (view === 'day') {
+            return format(currentDate, "d 'de' MMMM", { locale: es });
+        }
+        if (view === 'week') {
+            const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+            const end = addDays(start, 6);
+            return `${format(start, 'd MMM')} - ${format(end, 'd MMM')}`;
+        }
+        return format(currentDate, 'MMMM yyyy', { locale: es }).replace(/^\w/, c => c.toUpperCase());
+    };
+
     return (
         <div className="calendario-page-container">
             <div className="calendario-sidebar">
-                <button
-                    onClick={handleNewEventClick}
-                    className="btn-vercel-primary w-full py-3 text-xs mb-2 flex items-center justify-center gap-2"
-                >
-                    <Plus size={14} />
-                    Añadir Tarea / Evento
-                </button>
-
                 {/* Filtros */}
                 <div className="sidebar-section">
                     <h3>Filtros de Agenda</h3>
@@ -455,6 +732,48 @@ export const CalendarioPage: React.FC = () => {
                                 <span>{label}</span>
                             </label>
                         ))}
+                    </div>
+                </div>
+
+                {/* Notas Rápidas (Inbox) */}
+                <div className="sidebar-section sticky-notes-section">
+                    <h3>Notas Rápidas</h3>
+                    <p className="ical-help-text mb-3">Arrastra las notas adhesivas pendientes al tablero Kanban para planificarlas.</p>
+
+                    <div className="sticky-notes-grid">
+                        {stickyNotes.length === 0 ? (
+                            <p className="proximos-empty">Bandeja vacía</p>
+                        ) : (
+                            stickyNotes.map(note => (
+                                <div
+                                    key={note.uuid}
+                                    draggable
+                                    onDragStart={(e) => handleNoteDragStart(e, note)}
+                                    className="sticky-note-card"
+                                    style={{ '--note-color': note.color_hex || '#F59E0B' } as React.CSSProperties}
+                                >
+                                    <p className="sticky-note-text">{note.titulo}</p>
+                                    <div className="sticky-note-actions" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            type="button"
+                                            className="sticky-note-action-btn"
+                                            onClick={() => handleEditEventClick(note)}
+                                            title="Editar nota"
+                                        >
+                                            <Edit2 size={11} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="sticky-note-action-btn delete"
+                                            onClick={() => handleDeleteStickyNote(note.uuid)}
+                                            title="Eliminar nota"
+                                        >
+                                            <Trash2 size={11} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -521,48 +840,352 @@ export const CalendarioPage: React.FC = () => {
             </div>
 
             <div className="calendario-main">
-                {loading && <div className="calendario-loading-bar">Actualizando eventos...</div>}
-                <DnDCalendar
-                    localizer={localizer}
-                    events={filteredEventos}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: '100%' }}
-                    culture="es"
-                    view={view}
-                    onView={(newView: View) => setView(newView)}
-                    onNavigate={handleNavigate}
-                    date={currentDate}
-                    onSelectEvent={handleSelectEvent}
-                    onSelectSlot={handleSelectSlot}
-                    selectable
-                    eventPropGetter={eventStyleGetter}
-                    onEventDrop={handleEventDrop}
-                    onEventResize={handleEventResize}
-                    resizable
-                    draggableAccessor={isDraggable}
-                    components={{
-                        event: EventoEnCelda as any,
-                    }}
-                    tooltipAccessor={(event: CalendarEventExtended) =>
-                        `${event.title}${event.resource.descripcion ? '\n' + event.resource.descripcion : ''}`
-                    }
-                    messages={{
-                        next: "Sig. >",
-                        previous: "< Ant.",
-                        today: "Hoy",
-                        month: "Mes",
-                        week: "Semana",
-                        day: "Día",
-                        agenda: "Agenda",
-                        date: "Fecha",
-                        time: "Hora",
-                        event: "Evento",
-                        allDay: "Todo el día",
-                        noEventsInRange: "No hay eventos en este rango de fechas.",
-                        showMore: (total: number) => `+ Ver más (${total})`
-                    }}
-                />
+
+                <div className="calendario-header-actions">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="text-brand" size={18} />
+                            <h2 className="text-sm font-bold text-text-main font-sans uppercase tracking-wider">
+                                Agenda
+                            </h2>
+                        </div>
+
+                        <div className="view-selector-pill">
+                            <button
+                                type="button"
+                                className={`view-selector-btn ${viewMode === 'calendar' ? 'active' : ''}`}
+                                onClick={() => setViewMode('calendar')}
+                            >
+                                <CalendarIcon size={12} />
+                                Calendario
+                            </button>
+                            <button
+                                type="button"
+                                className={`view-selector-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                                onClick={() => setViewMode('kanban')}
+                            >
+                                <Layers size={12} />
+                                Tablero Kanban
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {viewMode === 'calendar' && (
+                            <>
+                                {/* Navegador Temporal */}
+                                <div className="view-selector-pill">
+                                    <button
+                                        onClick={() => handleNavigateClick('PREV')}
+                                        className="view-selector-btn font-semibold"
+                                        title="Anterior"
+                                    >
+                                        &lt;
+                                    </button>
+                                    <span className="text-xs font-semibold px-2 min-w-[120px] text-center text-fg font-sans select-none flex items-center justify-center">
+                                        {getLabelFecha()}
+                                    </span>
+                                    <button
+                                        onClick={() => handleNavigateClick('NEXT')}
+                                        className="view-selector-btn font-semibold"
+                                        title="Siguiente"
+                                    >
+                                        &gt;
+                                    </button>
+                                    <button
+                                        onClick={() => handleNavigateClick('TODAY')}
+                                        className="view-selector-btn text-[10px] font-bold uppercase"
+                                    >
+                                        Hoy
+                                    </button>
+                                </div>
+
+                                {/* Selector Sub-vistas (Agenda al inicio, luego Mes, Semana, Día) */}
+                                <div className="view-selector-pill">
+                                    {(['agenda', 'month', 'week', 'day'] as const).map(v => (
+                                        <button
+                                            key={v}
+                                            type="button"
+                                            className={`view-selector-btn ${view === v ? 'active' : ''}`}
+                                            onClick={() => setView(v)}
+                                        >
+                                            {v === 'agenda' ? 'Agenda' : v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'Día'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Botón Global de Añadir Tarea */}
+                        <button
+                            type="button"
+                            className="global-add-task-btn"
+                            onClick={handleNewEventClick}
+                        >
+                            <Plus size={14} />
+                            <span>Añadir Tarea</span>
+                        </button>
+                    </div>
+                </div>
+
+                {viewMode === 'calendar' ? (
+                    view === 'agenda' ? (
+                        <div className="custom-agenda-view">
+                            <div className="custom-agenda-header">
+                                <div className="custom-agenda-th th-fecha">Fecha</div>
+                                <div className="custom-agenda-th th-hora">Hora</div>
+                                <div className="custom-agenda-th th-evento">Evento</div>
+                            </div>
+                            <div className="custom-agenda-body">
+                                {filteredEventos.length === 0 ? (
+                                    <div className="custom-agenda-empty">No hay eventos en este rango de fechas.</div>
+                                ) : (
+                                    (() => {
+                                        // Ordenar eventos por fecha de inicio
+                                        const sortedEvents = [...filteredEventos].sort(
+                                            (a, b) => (a.start as Date).getTime() - (b.start as Date).getTime()
+                                        );
+                                        
+                                        let lastDateStr = '';
+                                        
+                                        return sortedEvents.map(event => {
+                                            const ev = event.resource;
+                                            const isCompleted = ev.estado === 'Completado';
+                                            const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
+                                            
+                                            // Formatear fecha
+                                            const dateStr = format(event.start as Date, "eee d 'de' MMM", { locale: es });
+                                            // Si es la misma fecha que el anterior, la dejamos en blanco pero conservamos el espacio
+                                            const showDate = dateStr !== lastDateStr ? dateStr : '';
+                                            lastDateStr = dateStr;
+                                            
+                                            // Formatear hora
+                                            let horaStr = 'todo el día';
+                                            if (!ev.es_todo_el_dia && event.start && event.end) {
+                                                horaStr = `${format(event.start as Date, 'HH:mm')} - ${format(event.end as Date, 'HH:mm')}`;
+                                            }
+                                            
+                                            const colorHex = color.toUpperCase();
+                                            const colorClassMap: Record<string, string> = {
+                                                '#F59E0B': 'orange',
+                                                '#3B82F6': 'blue',
+                                                '#10B981': 'green',
+                                                '#EC4899': 'pink',
+                                                '#8B5CF6': 'purple',
+                                                '#EF4444': 'red',
+                                                '#1E3A8A': 'darkblue',
+                                            };
+                                            const colorName = colorClassMap[colorHex] || 'gray';
+                                            
+                                            return (
+                                                <div
+                                                    key={ev.uuid}
+                                                    onClick={() => handleSelectEvent(event)}
+                                                    className={`custom-agenda-row color-${colorName} ${isCompleted ? 'completado' : ''}`}
+                                                >
+                                                    <div className="custom-agenda-td td-fecha">{showDate}</div>
+                                                    <div className="custom-agenda-td td-hora">{horaStr}</div>
+                                                    <div className="custom-agenda-td td-evento">
+                                                        <div className="agenda-event-badge-content">
+                                                            <span className="agenda-event-dot" style={{ backgroundColor: color }} />
+                                                            <span className="agenda-event-title">{ev.titulo}</span>
+                                                            {ev.descripcion && (
+                                                                <span className="agenda-event-desc">— {ev.descripcion}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        });
+                                    })()
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <DnDCalendar
+                            localizer={localizer}
+                            events={filteredEventos}
+                            startAccessor="start"
+                            endAccessor="end"
+                            style={{ height: '100%' }}
+                            culture="es"
+                            view={view}
+                            onView={(newView: View) => setView(newView)}
+                            onNavigate={handleNavigate}
+                            date={currentDate}
+                            onSelectEvent={handleSelectEvent}
+                            onSelectSlot={handleSelectSlot}
+                            selectable
+                            eventPropGetter={eventStyleGetter}
+                            onEventDrop={handleEventDrop}
+                            onEventResize={handleEventResize}
+                            resizable
+                            draggableAccessor={isDraggable}
+                            components={{
+                                event: EventoEnCelda as any,
+                                agenda: {
+                                    event: EventoEnAgenda as any
+                                }
+                            }}
+                            tooltipAccessor={(event: CalendarEventExtended) =>
+                                `${event.title}${event.resource.descripcion ? '\n' + event.resource.descripcion : ''}`
+                            }
+                            messages={{
+                                next: "Sig. >",
+                                previous: "< Ant.",
+                                today: "Hoy",
+                                month: "Mes",
+                                week: "Semana",
+                                day: "Día",
+                                agenda: "Agenda",
+                                date: "Fecha",
+                                time: "Hora",
+                                event: "Evento",
+                                allDay: "Todo el día",
+                                noEventsInRange: "No hay eventos en este rango de fechas.",
+                                showMore: (total: number) => `+ Ver más (${total})`
+                            }}
+                        />
+                    )
+                ) : (
+                    <div className="kanban-board-container">
+                        {kanbanColumnas.map(col => {
+                            const colEvents = filteredEventos.filter(ev => {
+                                if (ev.resource.categoria_global !== 'Personal') return false;
+
+                                const estado = ev.resource.estado;
+                                if (col.id === 'EnProgreso') {
+                                    return estado === 'EnProgreso' || estado === 'En Ejecución';
+                                }
+                                if (col.id === 'Pendiente') {
+                                    return estado === 'Pendiente' || !estado;
+                                }
+                                return estado === col.id;
+                            });
+
+                            return (
+                                <div
+                                    key={col.id}
+                                    className={`kanban-column ${dragOverColumn === col.id ? 'drag-over' : ''}`}
+                                    onDragOver={(e) => handleDragOver(e, col.id)}
+                                    onDragLeave={() => setDragOverColumn(null)}
+                                    onDrop={(e) => handleDrop(e, col.id)}
+                                >
+                                    <div className="kanban-column-header">
+                                        <div className="kanban-column-title-wrapper">
+                                            <span className="kanban-column-title">{col.label}</span>
+                                            <span className="kanban-column-count">{colEvents.length}</span>
+                                        </div>
+                                    </div>
+                                    <div className="kanban-cards-container">
+                                        {colEvents.length === 0 ? (
+                                            <div className="kanban-empty-state">
+                                                Arrastra tareas aquí o usa Añadir Tarea
+                                            </div>
+                                        ) : (
+                                            colEvents.map(ev => {
+                                                const r = ev.resource;
+                                                const isCompleted = r.estado === 'Completado';
+                                                const isPersonal = r.categoria_global === 'Personal';
+                                                const formattedDate = r.fecha_fin && r.fecha_fin !== r.fecha_inicio
+                                                    ? `${format(ev.start as Date, 'd MMM', { locale: es })} - ${format(ev.end as Date, 'd MMM', { locale: es })}`
+                                                    : format(ev.start as Date, 'd MMM', { locale: es });
+
+                                                return (
+                                                    <div
+                                                        key={r.uuid}
+                                                        draggable={isPersonal}
+                                                        onDragStart={(e) => handleDragStart(e, r.uuid)}
+                                                        onDragEnd={handleDragEnd}
+                                                        className={`kanban-card ${draggingUuid === r.uuid ? 'dragging' : ''}`}
+                                                        style={{ '--card-color': r.color_hex || '#6B7280' } as React.CSSProperties}
+                                                        onClick={() => setSelectedEvent(r)}
+                                                    >
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="kanban-card-tags">
+                                                                <span
+                                                                    className="kanban-badge categoria"
+                                                                    style={{ '--badge-bg': r.color_hex || '#6B7280' } as React.CSSProperties}
+                                                                >
+                                                                    {r.categoria_global === 'Personal' ? 'Mi Tarea' : r.categoria_global}
+                                                                </span>
+                                                                {r.prioridad && (
+                                                                    <span
+                                                                        className="kanban-badge prioridad"
+                                                                        style={{
+                                                                            '--prio-bg': PRIORIDAD_COLORS[r.prioridad]?.bg || 'var(--border)',
+                                                                            '--prio-text': PRIORIDAD_COLORS[r.prioridad]?.text || 'var(--text-dim)',
+                                                                        } as React.CSSProperties}
+                                                                    >
+                                                                        {r.prioridad}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h4 className={`kanban-card-title ${isCompleted ? 'completado' : ''}`}>
+                                                                {r.titulo}
+                                                            </h4>
+                                                            {r.descripcion && (
+                                                                <p className="kanban-card-desc">{r.descripcion}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="kanban-card-footer">
+                                                            <span className="kanban-card-date">
+                                                                <CalendarIcon size={10} />
+                                                                {formattedDate}
+                                                            </span>
+                                                            <div className="kanban-card-actions" onClick={(e) => e.stopPropagation()}>
+                                                                {isPersonal && !isCompleted && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="kanban-action-btn complete"
+                                                                        onClick={() => handleQuickComplete(r)}
+                                                                        title="Marcar como Completado"
+                                                                    >
+                                                                        <CheckCircle size={12} />
+                                                                    </button>
+                                                                )}
+                                                                {isPersonal && (
+                                                                    <>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="kanban-action-btn"
+                                                                            onClick={() => handleEditEventClick(r)}
+                                                                            title="Editar"
+                                                                        >
+                                                                            <Edit2 size={12} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="kanban-action-btn delete"
+                                                                            onClick={() => handleDeleteEvent(r.uuid)}
+                                                                            title="Eliminar"
+                                                                        >
+                                                                            <Trash2 size={12} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                {(r.url_accion || (!isPersonal && r.categoria_global === 'Proyecto' && r.uuid)) && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="kanban-action-btn"
+                                                                        onClick={() => handleGoToEventAction(r)}
+                                                                        title="Ir al Contexto de Trabajo"
+                                                                    >
+                                                                        <ArrowRight size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Detail Drawer */}
@@ -657,12 +1280,11 @@ export const CalendarioPage: React.FC = () => {
 
                                 <div className="bento-card static p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Estado</div>
-                                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded inline-block font-sans ${
-                                        selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
-                                        selectedEvent.estado === 'EnProgreso' || selectedEvent.estado === 'En Ejecución' ? 'bg-info-subtle text-info' :
-                                        selectedEvent.estado === 'Cancelado'  ? 'bg-bg-deep text-text-dim' :
-                                        'bg-warning-subtle text-warning'
-                                    }`}>
+                                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded inline-block font-sans ${selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
+                                            selectedEvent.estado === 'EnProgreso' || selectedEvent.estado === 'En Ejecución' ? 'bg-info-subtle text-info' :
+                                                selectedEvent.estado === 'Cancelado' ? 'bg-bg-deep text-text-dim' :
+                                                    'bg-warning-subtle text-warning'
+                                        }`}>
                                         {ESTADO_LABELS[selectedEvent.estado] ?? selectedEvent.estado}
                                     </span>
                                 </div>
@@ -837,7 +1459,7 @@ export const CalendarioPage: React.FC = () => {
                                     <input
                                         type="date"
                                         required
-                                        value={formFechaInicio}
+                                        value={formFechaInicio || ''}
                                         onChange={(e) => setFormFechaInicio(e.target.value)}
                                         className="input-vercel text-sm"
                                     />
@@ -848,7 +1470,7 @@ export const CalendarioPage: React.FC = () => {
                                     <label className="section-label mb-1.5 block">Fecha de Fin</label>
                                     <input
                                         type="date"
-                                        value={formFechaFin}
+                                        value={formFechaFin || ''}
                                         onChange={(e) => setFormFechaFin(e.target.value)}
                                         className="input-vercel text-sm"
                                     />

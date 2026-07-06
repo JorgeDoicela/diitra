@@ -31,7 +31,7 @@ export interface EventoPayload {
     titulo: string;
     descripcion: string;
     tipo_evento: string;
-    fecha_inicio: string;
+    fecha_inicio: string | null;
     fecha_fin: string | null;
     es_todo_el_dia: boolean;
     recurrencia_anual: boolean;
@@ -65,6 +65,9 @@ export const getEventos = (date: Date): Promise<EventoCalendario[]> => {
         params: { desde: formatLocalDate(desde), hasta: formatLocalDate(hasta) }
     }).then(r => r.data || []);
 };
+
+export const getStickyNotes = (): Promise<EventoCalendario[]> =>
+    api.get('/calendario/usuario/notas').then(r => r.data || []);
 
 export const createEvento = (payload: EventoPayload): Promise<EventoCalendario> =>
     api.post('/calendario/usuario/eventos', payload).then(r => r.data);
@@ -118,8 +121,8 @@ export const buildPayload = (fields: {
     titulo: string;
     descripcion: string;
     tipo: string;
-    fechaInicio: string;
-    fechaFin: string;
+    fechaInicio: string | null;
+    fechaFin: string | null;
     esTodoElDia: boolean;
     colorHex: string;
     esPrivado: boolean;

@@ -7,6 +7,7 @@ import { Menu, MoreHorizontal } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
 import { HelpModal } from './Help/HelpModal';
 import api from '../../api/axios_config';
+import { StickyNotesFloatingButton } from '../Common/StickyNotesFloatingButton';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -270,6 +271,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 onClose={() => setIsHelpOpen(false)}
                 pathname={location.pathname}
             />
+
+            <StickyNotesFloatingButton />
         </div>
     );
 };

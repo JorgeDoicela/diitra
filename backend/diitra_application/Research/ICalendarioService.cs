@@ -29,7 +29,7 @@ public record EventoNormativoDto(
     string Titulo,
     string? Descripcion,
     string TipoEvento,
-    DateOnly FechaInicio,
+    DateOnly? FechaInicio,
     DateOnly? FechaFin,
     bool EsTodoElDia,
     bool RecurrenciaAnual,
@@ -61,6 +61,9 @@ public interface ICalendarioService
     Task<string> CreateNormativoAsync(EventoNormativoDto dto, int idUsuarioAdmin);
     Task<bool> UpdateNormativoAsync(string uuid, EventoNormativoDto dto);
     Task<bool> DeleteNormativoAsync(string uuid);
+
+    /// <summary>Obtiene las notas adhesivas/rápidas sin programar del usuario.</summary>
+    Task<IEnumerable<EventoNormativoDto>> GetStickyNotesAsync(int idUsuario);
 
     /// <summary>Llamado por el job diario: envía alertas por email de eventos próximos.</summary>
     Task ProcesarAlertasDiariasAsync();

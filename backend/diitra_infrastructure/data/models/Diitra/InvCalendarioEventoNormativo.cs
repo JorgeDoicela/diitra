@@ -7,7 +7,7 @@ public partial class InvCalendarioEventoNormativo
     public string Titulo { get; set; } = null!;
     public string? Descripcion { get; set; }
     public string TipoEvento { get; set; } = "Normativo";
-    public DateOnly FechaInicio { get; set; }
+    public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
     public bool EsTodoElDia { get; set; } = true;
     public bool RecurrenciaAnual { get; set; } = false;
