@@ -265,7 +265,7 @@ export const ESTADO_REVISION_CONFIG: Record<string, { label: string; badge: stri
 };
 
 export const ESTADO_ARBITRAJE_CONFIG: Record<string, { label: string; badge: string; dot: string; color: string }> = {
-    'SinArbitros': { label: 'Sin Árbitros', badge: 'badge-vercel-neutral', dot: 'dot-neutral', color: '#888' },
+    'SinArbitros': { label: 'Sin Evaluadores', badge: 'badge-vercel-neutral', dot: 'dot-neutral', color: '#888' },
     'Pendiente':   { label: 'Pendiente',    badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse', color: '#f0a500' },
     'EnProceso':   { label: 'En Proceso',   badge: 'badge-vercel-info',    dot: 'dot-info dot-pulse', color: '#3b82f6' },
     'Completado':  { label: 'Completado',   badge: 'badge-vercel-success', dot: 'dot-success', color: '#22c55e' },
@@ -278,7 +278,7 @@ export const DICTAMEN_CONFIG: Record<string, { label: string; color: string; bg:
     'Desempate': { label: '⚖ DESEMPATE', color: '#f0a500', bg: 'rgba(240,165,0,0.1)' },
 };
 
-/** Config de dictamen individual del árbitro */
+/** Config de dictamen individual del evaluador */
 export const DICTAMEN_REVISOR_CONFIG: Record<string, { label: string; badge: string }> = {
     'Aprueba':   { label: '✓ Aprueba',   badge: 'badge-vercel-success' },
     'Rechaza':   { label: '✗ Rechaza',   badge: 'badge-vercel-error' },

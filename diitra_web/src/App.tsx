@@ -295,8 +295,8 @@ function App() {
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
-                            <Route path="/arbitraje" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
-                            <Route path="/arbitraje/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
+                            <Route path="/evaluacion-pares" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
+                            <Route path="/evaluacion-pares/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
                             <Route path="/verificacion" element={<VerifyDocument />} />
                             <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>

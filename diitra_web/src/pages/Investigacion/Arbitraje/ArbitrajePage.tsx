@@ -32,13 +32,13 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
     proyectos.forEach(p => {
         const tieneExterno = p.revisiones.some(r => r.es_externo);
         if (p.total_arbitros > 0 && !tieneExterno) {
-            alerts.push({ id: `ext-${p.proyecto_uuid}`, tipo: 'advertencia', titulo: 'Sin árbitro externo', descripcion: `"${p.proyecto_titulo}" requiere al menos un revisor externo (CACES I5).`, proyectoUuid: p.proyecto_uuid });
+            alerts.push({ id: `ext-${p.proyecto_uuid}`, tipo: 'advertencia', titulo: 'Sin evaluador externo', descripcion: `"${p.proyecto_titulo}" requiere al menos un revisor externo (CACES I5).`, proyectoUuid: p.proyecto_uuid });
         }
         if (p.estado_arbitraje === 'Desempate') {
-            alerts.push({ id: `des-${p.proyecto_uuid}`, tipo: 'critico', titulo: 'Desempate pendiente', descripcion: `"${p.proyecto_titulo}" tiene dictámenes divididos. Se requiere un tercer árbitro.`, proyectoUuid: p.proyecto_uuid });
+            alerts.push({ id: `des-${p.proyecto_uuid}`, tipo: 'critico', titulo: 'Desempate pendiente', descripcion: `"${p.proyecto_titulo}" tiene dictámenes divididos. Se requiere un tercer evaluador.`, proyectoUuid: p.proyecto_uuid });
         }
         if (p.total_arbitros < 2 && p.estado_arbitraje !== 'Completado') {
-            alerts.push({ id: `min-${p.proyecto_uuid}`, tipo: 'advertencia', titulo: 'Panel incompleto', descripcion: `"${p.proyecto_titulo}" tiene menos de 2 árbitros asignados (mínimo CACES).`, proyectoUuid: p.proyecto_uuid });
+            alerts.push({ id: `min-${p.proyecto_uuid}`, tipo: 'advertencia', titulo: 'Panel incompleto', descripcion: `"${p.proyecto_titulo}" tiene menos de 2 evaluadores asignados (mínimo CACES).`, proyectoUuid: p.proyecto_uuid });
         }
     });
     return alerts;
@@ -101,7 +101,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
             <div className="modal-card animate-scale-up w-full max-w-lg">
                 <div className="modal-header">
                     <div>
-                        <p className="section-label mb-1"><UserPlus size={10} /><span>Árbitro Externo · CACES I5</span></p>
+                        <p className="section-label mb-1"><UserPlus size={10} /><span>Par Evaluador Externo · CACES I5</span></p>
                         <h3 className="text-base font-semibold text-text-main">Registrar Revisor Externo</h3>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors"><X size={15} /></button>
@@ -190,7 +190,7 @@ const MiniProgress: React.FC<{ completados: number; total: number }> = ({ comple
 // ─────────────────────────────────────────────────────────────
 const FILTROS = [
     { key: 'todos',       label: 'Todos' },
-    { key: 'SinArbitros', label: 'Sin árbitros' },
+    { key: 'SinArbitros', label: 'Sin evaluadores' },
     { key: 'Pendiente',   label: 'Pendiente' },
     { key: 'EnProceso',   label: 'En proceso' },
     { key: 'Completado',  label: 'Completado' },
@@ -271,22 +271,22 @@ const ArbitrajePage: React.FC = () => {
             <header className="mb-10 animate-fade-up relative z-10">
                 <div className="section-label mb-2">
                     <Gavel size={12} className="text-brand" />
-                    <span>Módulo de Arbitraje · DIITRA</span>
+                    <span>Módulo de Evaluación por Pares · DIITRA</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-3">
-                            Gestión de Arbitraje
+                            Evaluación por Pares
                         </h2>
                         <p className="text-sm text-text-dim max-w-2xl font-medium leading-relaxed">
                             Panel de control del proceso de evaluación por pares bajo la normativa CACES.
-                            Asigne árbitros, supervise el avance y emita dictámenes formales.
+                            Asigne evaluadores, supervise el avance y emita dictámenes formales.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <button onClick={() => setShowExterno(true)} className="btn-vercel-secondary flex items-center gap-2 shrink-0">
                             <UserPlus size={14} />
-                            Árbitro Externo
+                            Par Evaluador Externo
                         </button>
                         <button onClick={loadData} className="btn-vercel-secondary flex items-center gap-2 shrink-0" disabled={loading}>
                             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -341,7 +341,7 @@ const ArbitrajePage: React.FC = () => {
                                     <Gavel size={28} strokeWidth={1.5} />
                                 </div>
                                 <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin proyectos en esta categoría</p>
-                                <p className="text-text-dim text-xs mt-2 max-w-sm">Cambia el filtro o asigna árbitros a los proyectos.</p>
+                                <p className="text-text-dim text-xs mt-2 max-w-sm">Cambia el filtro o asigna evaluadores a los proyectos.</p>
                             </div>
                         ) : (
                             <div className="w-full overflow-hidden">
@@ -364,7 +364,7 @@ const ArbitrajePage: React.FC = () => {
                                                 <tr
                                                     key={p.proyecto_uuid}
                                                     className="group border-b border-border-thin/50 last:border-0 hover:bg-surface/40 transition-colors cursor-pointer"
-                                                    onClick={() => navigate(`/arbitraje/proyecto/${p.proyecto_uuid}`)}
+                                                    onClick={() => navigate(`/evaluacion-pares/proyecto/${p.proyecto_uuid}`)}
                                                 >
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-start gap-3 min-w-0">
@@ -453,10 +453,10 @@ const ArbitrajePage: React.FC = () => {
                                                             <button
                                                                 onClick={e => { e.stopPropagation(); setAsignarA(p); }}
                                                                 className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
-                                                                title="Asignar árbitro"
+                                                                title="Asignar evaluador"
                                                             >
                                                                 <PlusCircle size={11} />
-                                                                <span className="hidden xl:inline text-[10px]">Árbitro</span>
+                                                                <span className="hidden xl:inline text-[10px]">Evaluador</span>
                                                             </button>
                                                             <ChevronRight size={14} className="text-text-dim/40 group-hover:text-text-dim transition-colors" />
                                                         </div>
@@ -475,12 +475,12 @@ const ArbitrajePage: React.FC = () => {
                 <div className="space-y-6 lg:pt-[69px]">
                     {stats && (
                         <VercelUsageCard
-                            title="Métricas de Arbitraje"
+                            title="Métricas de Evaluación"
                             buttonLabel="Actualizar"
                             onButtonClick={loadData}
                             items={[
                                 { label: 'En Revisión',     value: stats.proyectos_en_revision,    displayValue: `${stats.proyectos_en_revision}`,                                     max: Math.max(10, stats.proyectos_en_revision),    color: 'var(--fg)',  tooltip: 'Proyectos actualmente en proceso de evaluación por pares.' },
-                                { label: 'Total Árbitros',  value: stats.total_arbitros_asignados, displayValue: `${stats.total_arbitros_asignados}`,                                   max: Math.max(15, stats.total_arbitros_asignados), color: '#3b82f6',    tooltip: 'Total de revisores asignados (internos y externos).' },
+                                { label: 'Pares Evaluadores',  value: stats.total_arbitros_asignados, displayValue: `${stats.total_arbitros_asignados}`,                                   max: Math.max(15, stats.total_arbitros_asignados), color: '#3b82f6',    tooltip: 'Total de revisores asignados (internos y externos).' },
                                 { label: 'Completadas',     value: stats.evaluaciones_completadas, displayValue: `${stats.evaluaciones_completadas} / ${stats.total_arbitros_asignados}`, max: Math.max(1, stats.total_arbitros_asignados),  color: '#22c55e',    tooltip: 'Evaluaciones firmadas y entregadas por los árbitros.' },
                                 { label: 'Pendientes',      value: stats.evaluaciones_pendientes,  displayValue: `${stats.evaluaciones_pendientes}`,                                    max: Math.max(1, stats.total_arbitros_asignados),  color: '#f0a500',    tooltip: 'Evaluaciones asignadas aún sin entregar.' },
                                 { label: 'Desempates',      value: stats.casos_desempate,          displayValue: `${stats.casos_desempate}`,                                            max: Math.max(1, stats.proyectos_en_revision),     color: '#ef4444',    tooltip: 'Casos donde hay empate en dictámenes.' },
@@ -516,7 +516,7 @@ const ArbitrajePage: React.FC = () => {
                                             </p>
                                             {a.proyectoUuid && (
                                                 <button
-                                                    onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
+                                                    onClick={() => navigate(`/evaluacion-pares/proyecto/${a.proyectoUuid}`)}
                                                     className="text-[10px] font-medium text-brand hover:text-brand-light hover:underline transition-colors mt-2 flex items-center gap-0.5 cursor-pointer"
                                                 >
                                                     <span>Gestionar</span>

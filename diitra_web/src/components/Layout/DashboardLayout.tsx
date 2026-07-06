@@ -32,8 +32,8 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/convocatorias') return 'Convocatorias';
     if (pathname === '/revisiones') return 'Revisiones por Pares';
     if (pathname.startsWith('/revisiones/')) return 'Evaluación de Proyecto';
-    if (pathname === '/arbitraje') return 'Arbitraje';
-    if (pathname.startsWith('/arbitraje/proyecto/')) return 'Arbitraje de Proyecto';
+    if (pathname === '/evaluacion-pares') return 'Evaluación por Pares';
+    if (pathname.startsWith('/evaluacion-pares/proyecto/')) return 'Evaluación por Pares de Proyecto';
     if (pathname === '/verificacion' || pathname.startsWith('/verificacion/')) return 'Verificación Documental';
     return '';
 };

@@ -102,7 +102,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             Acceso Seguro para Revisores
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium uppercase tracking-wider">
-                            Módulo de Arbitraje Científico · DIITRA
+                            Evaluación por Pares · DIITRA
                         </p>
                     </div>
                 </div>

@@ -190,13 +190,13 @@ export const EVALUACION_CONFIG: HelpConfig = {
 
 export const ARBITRAJE_CONFIG: HelpConfig = {
     icon: <Scale size={24} className="text-brand" />,
-    title: "Módulo de Arbitraje y Resolución",
+    title: "Módulo de Evaluación por Pares",
     summary: "Espacio administrativo para dirimir evaluaciones de proyectos discordantes o en apelación.",
-    description: "Sección de arbitraje utilizada por el comité científico de investigación de la institución para dirimir evaluaciones con resultados divergentes (por ejemplo, un revisor aprueba y otro rechaza una propuesta). El comité utiliza esta herramienta para revisar los dictámenes, oír la retroalimentación y emitir una resolución definitiva.",
+    description: "Sección de evaluación por pares utilizada por el comité científico de investigación de la institución para dirimir evaluaciones con resultados divergentes (por ejemplo, un revisor aprueba y otro rechaza una propuesta). El comité utiliza esta herramienta para revisar los dictámenes, oír la retroalimentación y emitir una resolución definitiva.",
     steps: [
         {
             title: "Comparación de dictámenes discrepantes",
-            description: "Examina los dictámenes conflictivos mostrados en columnas paralelas en la pantalla de arbitraje. Podrás ver los comentarios específicos del evaluador 1 y del evaluador 2, sus calificaciones numéricas por criterios y reproducir los comentarios de audio para evaluar las divergencias técnicas.",
+            description: "Examina los dictámenes conflictivos mostrados en columnas paralelas en la pantalla de evaluación por pares. Podrás ver los comentarios específicos del evaluador 1 y del evaluador 2, sus calificaciones numéricas por criterios y reproducir los comentarios de audio para evaluar las divergencias técnicas.",
             highlight: 'content-bottom'
         },
         {
@@ -206,26 +206,26 @@ export const ARBITRAJE_CONFIG: HelpConfig = {
         },
         {
             title: "Firma electrónica de resolución y auto-notificación",
-            description: "Estampa tu firma digital en el acta de arbitraje. Al completar el firmado, DIITRA actualizará el expediente general del proyecto en tiempo real, generará los certificados de aprobación si aplica y enviará una notificación con el dictamen de arbitraje al docente investigador.",
+            description: "Estampa tu firma digital en el acta de evaluación. Al completar el firmado, DIITRA actualizará el expediente general del proyecto en tiempo real, generará los certificados de aprobación si aplica y enviará una notificación con el dictamen de evaluación al docente investigador.",
             highlight: 'content-bottom'
         }
     ],
     compliance: "Asegura el debido proceso y la transparencia institucional en las fases de dictaminación científica, mitigando conflictos de interés en procesos de asignación de financiamiento público evaluados bajo estándares del CACES.",
     tips: [
         "Puedes convocar a un tercer revisor para desempatar desde la misma consola si el comité científico requiere un dictamen técnico adicional.",
-        "Todas las resoluciones de arbitraje quedan registradas con fecha y hora en el historial de auditoría del sistema."
+        "Todas las resoluciones de evaluación por pares quedan registradas con fecha y hora en el historial de auditoría del sistema."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
             {/* Header / Top Content */}
             <div className={`rounded-lg border p-1.5 flex justify-between items-center transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Módulo de Arbitraje</span>
-                    <span className="text-[7px] text-text-main font-bold">Gestión de Arbitraje</span>
+                    <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Evaluación por Pares</span>
+                    <span className="text-[7px] text-text-main font-bold">Evaluación por Pares</span>
                 </div>
                 <div className="flex gap-1">
                     <div className="px-1.5 py-0.5 bg-surface-hover border border-border-thin rounded text-[4.5px] font-bold">
-                        + Árbitro Externo
+                        + Evaluador Externo
                     </div>
                 </div>
             </div>
@@ -238,7 +238,7 @@ export const ARBITRAJE_CONFIG: HelpConfig = {
                         <thead>
                             <tr className="border-b border-border-thin/60 text-[3.5px] font-mono text-text-dim uppercase tracking-wider">
                                 <th className="pb-1 font-bold">Proyecto</th>
-                                <th className="pb-1 font-bold">Árbitros</th>
+                                <th className="pb-1 font-bold">Evaluadores</th>
                                 <th className="pb-1 font-bold">Estado</th>
                                 <th className="pb-1 font-bold text-right">Acciones</th>
                             </tr>
@@ -280,7 +280,7 @@ export const ARBITRAJE_CONFIG: HelpConfig = {
 
 export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
     icon: <Scale size={24} className="text-brand" />,
-    title: "Arbitraje de Proyecto",
+    title: "Evaluación de Proyecto",
     summary: "Panel del Comité Científico para la resolución de evaluaciones divergentes y emisión de dictamen final.",
     description: "Entorno operativo del Consejo de Investigación diseñado para analizar discrepancias en los dictámenes de revisores pares y emitir una resolución definitiva que dirima la postulación.",
     steps: [
@@ -296,14 +296,14 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
         },
         {
             title: "Emisión de resolución definitiva firmada",
-            description: "Genera y suscribe digitalmente la resolución oficial de arbitraje, la cual causará estado y actualizará de inmediato el flujo del proyecto en DIITRA.",
+            description: "Genera y suscribe digitalmente la resolución oficial de evaluación por pares, la cual causará estado y actualizará de inmediato el flujo del proyecto en DIITRA.",
             highlight: 'content-top'
         }
     ],
     compliance: "Garantiza el debido proceso y la seguridad jurídica en la asignación de recursos competitivos de investigación, de acuerdo a la normativa nacional y el modelo de evaluación del CACES.",
     tips: [
         "Puedes solicitar una tercera evaluación de desempate antes de emitir el fallo si el comité considera que el tema requiere especialidad técnica adicional.",
-        "Todas las actas de arbitraje quedan respaldadas en el sistema para resguardo de la institución."
+        "Todas las actas de evaluación quedan respaldadas en el sistema para resguardo de la institución."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
@@ -312,11 +312,11 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
                 <div className="flex items-center gap-1.5">
                     <span className="text-text-dim text-[5px]">⬅ Volver</span>
                     <div className="w-[1px] h-2.5 bg-border-thin" />
-                    <span className="text-[6px] font-semibold text-text-main font-bold">Arbitraje del Proyecto</span>
+                    <span className="text-[6px] font-semibold text-text-main font-bold">Evaluación por Pares del Proyecto</span>
                 </div>
                 <div className="flex gap-1">
                     <div className="px-1.5 py-0.5 bg-brand text-white rounded text-[4.5px] font-bold">
-                        Cerrar Arbitraje
+                        Cerrar Evaluación
                     </div>
                 </div>
             </div>
@@ -326,7 +326,7 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
                 {/* Column 1: Internos */}
                 <div className="rounded border border-border-thin bg-surface p-1 flex flex-col justify-between">
                     <div className="space-y-1">
-                        <span className="text-[4.5px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Árbitros Internos</span>
+                        <span className="text-[4.5px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Evaluadores Internos</span>
                         <div className="flex justify-between items-center text-[4px] bg-bg-deep p-0.5 rounded">
                             <span className="font-semibold text-text-main">Dr. Juan Pérez</span>
                             <span className="text-success font-mono font-bold">75.0/100</span>
@@ -338,7 +338,7 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
                 {/* Column 2: Externos */}
                 <div className="rounded border border-border-thin bg-surface p-1 flex flex-col justify-between">
                     <div className="space-y-1">
-                        <span className="text-[4.5px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Árbitros Externos</span>
+                        <span className="text-[4.5px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Evaluadores Externos</span>
                         <div className="flex justify-between items-center text-[4px] bg-bg-deep p-0.5 rounded">
                             <span className="font-semibold text-text-main">Mgs. Ana Gómez</span>
                             <span className="text-error font-mono font-bold">50.0/100</span>

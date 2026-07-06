@@ -150,11 +150,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             ) : isAdmin ? (
                                                 <button 
                                                     type="button"
-                                                    onClick={() => navigate(`/arbitraje/proyecto/${resolvedProjectUuid}`)}
+                                                    onClick={() => navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`)}
                                                     className="btn-vercel-primary !py-2"
                                                 >
                                                     <Settings size={14} />
-                                                    <span>Gestionar Arbitraje Científico</span>
+                                                    <span>Gestionar Evaluación por Pares</span>
                                                 </button>
                                             ) : (
                                                 <div className="flex items-start gap-2 bg-surface border border-border-thin rounded-lg p-3 max-w-xl text-text-dim text-xs leading-relaxed">

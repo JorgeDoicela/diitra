@@ -128,7 +128,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                                         </div>
                                         <div>
                                             <p className="text-xs font-semibold text-text-main">
-                                                Árbitro #{idx + 1}
+                                                Evaluador #{idx + 1}
                                             </p>
                                             <p className="text-[10px] text-text-dim">
                                                 {ev.es_externo ? 'Par Externo' : 'Par Interno'} · {ev.es_doble_ciego ? 'Anónimo' : 'Abierto'}

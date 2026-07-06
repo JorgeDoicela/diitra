@@ -75,8 +75,8 @@ const ArbitrajeProyecto: React.FC = () => {
     const handleCerrar = async () => {
         if (!projectUuid || !arbitraje) return;
         if (!await confirm({
-            title: "Cerrar Arbitraje",
-            message: "¿Cerrar el arbitraje y emitir el dictamen final? Esta acción cambiará el estado del proyecto.",
+            title: "Cerrar Evaluación",
+            message: "¿Cerrar la evaluación por pares y emitir el dictamen final? Esta acción cambiará el estado del proyecto.",
             confirmText: "Cerrar",
             cancelText: "Cancelar",
             variant: "warning"
@@ -87,7 +87,7 @@ const ArbitrajeProyecto: React.FC = () => {
             const result = await cerrarArbitraje(projectUuid);
             setDictamen(result);
             loadData();
-            addToast('Arbitraje Cerrado', 'El arbitraje ha sido cerrado y el dictamen final emitido con éxito.', 'success');
+            addToast('Evaluación Cerrada', 'La evaluación por pares ha sido cerrada y el dictamen final emitido con éxito.', 'success');
         } catch (err: any) {
             addToast('Error', err?.response?.data?.message ?? 'Error al cerrar el arbitraje.', 'error');
         } finally {
@@ -128,7 +128,7 @@ const ArbitrajeProyecto: React.FC = () => {
         try {
             await revocarAsignacion(rev.uuid);
             loadData();
-            addToast('Asignación Revocada', 'La asignación del árbitro ha sido revocada con éxito.', 'success');
+            addToast('Asignación Revocada', 'La asignación del evaluador ha sido revocada con éxito.', 'success');
         } catch {
             addToast('Error', 'No se pudo revocar la asignación.', 'error');
         }
@@ -173,7 +173,7 @@ const ArbitrajeProyecto: React.FC = () => {
     if (!arbitraje) {
         return (
             <main className="flex-1 bg-bg-deep p-10">
-                <button onClick={() => navigate('/arbitraje')} className="btn-vercel-secondary flex items-center gap-2 mb-6">
+                <button onClick={() => navigate('/evaluacion-pares')} className="btn-vercel-secondary flex items-center gap-2 mb-6">
                     <ArrowLeft size={14} /> Volver
                 </button>
                 <div className="empty-state py-20">
@@ -333,7 +333,7 @@ const ArbitrajeProyecto: React.FC = () => {
                         <table className="w-full sm:table-fixed">
                             <thead>
                                 <tr className="border-b border-border-thin">
-                                    <th className="text-left px-5 py-3.5 sm:w-[40%]"><span className="section-label !tracking-[0.12em]">Árbitro / Evaluador</span></th>
+                                    <th className="text-left px-5 py-3.5 sm:w-[40%]"><span className="section-label !tracking-[0.12em]">Evaluador</span></th>
                                     <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[18%]"><span className="section-label !tracking-[0.12em]">Tipo</span></th>
                                     <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[15%]"><span className="section-label justify-center !tracking-[0.12em]">Plazo</span></th>
                                     <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[10%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
@@ -356,17 +356,17 @@ const ArbitrajeProyecto: React.FC = () => {
             {/* Header */}
             <header className="mb-10 animate-fade-up relative z-10">
                 <button
-                    onClick={() => navigate('/arbitraje')}
+                    onClick={() => navigate('/evaluacion-pares')}
                     className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
                 >
-                    <ArrowLeft size={12} /> Volver al Panel de Arbitraje
+                    <ArrowLeft size={12} /> Volver al Panel de Evaluación
                 </button>
 
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                         <div className="section-label mb-2">
                             <Gavel size={12} className="text-brand" />
-                            <span>Arbitraje · {arbitraje.convocatoria ?? 'Sin convocatoria'}</span>
+                            <span>Evaluación por Pares · {arbitraje.convocatoria ?? 'Sin convocatoria'}</span>
                         </div>
                         <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-snug mb-3 max-w-4xl">
                             {arbitraje.proyecto_titulo}
@@ -394,7 +394,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 className="btn-vercel-secondary flex items-center gap-2 shrink-0"
                             >
                                 <PlusCircle size={14} />
-                                Agregar Árbitro
+                                Agregar Evaluador
                             </button>
                         )}
                         {arbitraje.arbitraje_cerrado ? (
@@ -413,7 +413,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 className="btn-vercel-primary flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
-                                Cerrar Arbitraje
+                                Cerrar Evaluación
                             </button>
                         )}
                         {arbitraje.estado_proyecto === 'Aprobado' && (
@@ -437,7 +437,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     <div>
                         <p className="text-xs font-semibold text-text-main">Caso de Desempate Detectado</p>
                         <p className="text-[11px] text-text-dim mt-1">
-                            Los árbitros presentan dictámenes contradictorios. Puede asignar un tercer árbitro para desempatar
+                            Los evaluadores presentan dictámenes contradictorios. Puede asignar un tercer evaluador para desempatar
                             o emitir una resolución fundada del Director de Investigación.
                         </p>
                     </div>
@@ -466,7 +466,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 <div className="icon-circle icon-circle-neutral !p-4 mb-4">
                                     <Gavel size={28} strokeWidth={1.5} />
                                 </div>
-                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin árbitros asignados</p>
+                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin evaluadores asignados</p>
                                 <p className="text-text-dim text-xs mt-2 max-w-sm">Use el botón superior para agregar evaluadores.</p>
                             </div>
                         </div>
@@ -485,8 +485,8 @@ const ArbitrajeProyecto: React.FC = () => {
                                 <span className="font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5):</span>
                                 {' '}
                                 <span className="text-text-dim">
-                                    {arbitraje.total_arbitros < 2 && "Se requiere un mínimo de 2 árbitros evaluadores por propuesta para cumplir con los estándares mínimos. "}
-                                    {externos.length === 0 && "Es obligatorio contar con al menos 1 árbitro externo a la institución para la evaluación de proyectos."}
+                                    {arbitraje.total_arbitros < 2 && "Se requiere un mínimo de 2 evaluadores por propuesta para cumplir con los estándares mínimos. "}
+                                    {externos.length === 0 && "Es obligatorio contar con al menos 1 evaluador externo a la institución para la evaluación de proyectos."}
                                 </span>
                             </div>
                         </div>
@@ -501,7 +501,7 @@ const ArbitrajeProyecto: React.FC = () => {
                         onButtonClick={loadData}
                         items={[
                             {
-                                label: 'Total Árbitros',
+                                label: 'Total Evaluadores',
                                 value: arbitraje.total_arbitros,
                                 displayValue: `${arbitraje.total_arbitros}`,
                                 max: 5,

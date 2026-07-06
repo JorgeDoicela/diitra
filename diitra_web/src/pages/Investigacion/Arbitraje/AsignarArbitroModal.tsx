@@ -129,7 +129,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
             }
             onSuccess();
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? 'Error al asignar los árbitros.');
+            setError(err?.response?.data?.message ?? 'Error al asignar los evaluadores.');
         } finally {
             setEnviando(false);
         }
@@ -142,7 +142,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                 <div className="modal-header border-b border-border-thin pb-3">
                     <div>
                         <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">
-                            Asignar Árbitro
+                            Asignar Evaluador
                         </h3>
                         <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest mt-0.5 line-clamp-1">
                             {proyecto.proyecto_titulo}
@@ -202,7 +202,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                             </div>
 
                             <label className="section-label block mb-2">
-                                Árbitros Disponibles ({revisores.length})
+                                Evaluadores Disponibles ({revisores.length})
                             </label>
 
                             <div className="flex-1 overflow-y-auto space-y-1 border border-border-thin rounded-lg p-2 bg-bg-deep/10 custom-scrollbar pr-1 max-h-[260px] min-h-[220px]">
@@ -281,7 +281,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                 <div className="space-y-2.5 p-3.5 bg-surface rounded-lg border border-border-thin shadow-sm">
                                     <div className="flex items-center gap-2 text-text-main border-b border-border-thin/50 pb-2 mb-1">
                                         <UserCheck size={13} />
-                                        <span className="text-xs font-semibold uppercase tracking-wider">Árbitros Seleccionados ({revisoresSeleccionados.length})</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wider">Evaluadores Seleccionados ({revisoresSeleccionados.length})</span>
                                     </div>
                                     <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
                                         {revisoresSeleccionados.map((rev) => (
@@ -312,7 +312,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     type="button"
                                                     onClick={() => toggleRevisor(rev)}
                                                     className="text-text-dim hover:text-error transition-colors p-1 shrink-0 cursor-pointer"
-                                                    title="Quitar árbitro"
+                                                    title="Quitar evaluador"
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -413,7 +413,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                         className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-semibold font-sans"
                     >
                         {enviando ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
-                        {revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Árbitros` : 'Asignar Árbitro'}
+                        {revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Evaluadores` : 'Asignar Evaluador'}
                     </button>
                 </div>
             </div>

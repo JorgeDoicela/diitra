@@ -30,8 +30,8 @@ export const HELP_MAP: Record<string, HelpConfig> = {
     
     '/revisiones': REVISIONES_CONFIG,
     '/revisiones/evaluacion': EVALUACION_CONFIG,
-    '/arbitraje': ARBITRAJE_CONFIG,
-    '/arbitraje/proyecto': ARBITRAJE_PROYECTO_CONFIG,
+    '/evaluacion-pares': ARBITRAJE_CONFIG,
+    '/evaluacion-pares/proyecto': ARBITRAJE_PROYECTO_CONFIG,
     
     '/usuarios': USUARIOS_CONFIG,
     '/auditoria': AUDITORIA_CONFIG,
@@ -54,8 +54,8 @@ export const normalizePathname = (path: string): string => {
     if (segments[0] === 'revisiones' && segments.length > 1) {
         return '/revisiones/evaluacion';
     }
-    if (segments[0] === 'arbitraje' && segments[1] === 'proyecto' && segments.length > 2) {
-        return '/arbitraje/proyecto';
+    if (segments[0] === 'evaluacion-pares' && segments[1] === 'proyecto' && segments.length > 2) {
+        return '/evaluacion-pares/proyecto';
     }
     if (segments[0] === 'verificacion' && segments.length > 1) {
         return '/verificacion';
