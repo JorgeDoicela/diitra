@@ -34,15 +34,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             var legalSections = new System.Text.StringBuilder();
 
-            // 1. Aviso de modo doble ciego (si aplica)
-            if (isBlindMode && template.SupportsBlindMode)
-            {
-                legalSections.AppendLine(@"
-                <div class=""blind-mode-notice"">
-                    ⚠️ DOCUMENTO ANONIMIZADO — Proceso de Evaluación Doble Ciego (Art. 10, Reglamento de Régimen Académico CES).<br/>
-                    Los datos de identidad han sido suprimidos para garantizar la imparcialidad de la revisión.
-                </div>");
-            }
+            // El aviso de doble ciego se maneja de forma nativa en la cabecera del PDF mediante DocumentEventHandler para evitar desbordamiento y superposiciones.
 
             // 2. Pie de página legal
             var lopdpText = customLopdpClause ?? DefaultLopdpClause;

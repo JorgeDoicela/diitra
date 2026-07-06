@@ -361,7 +361,8 @@ namespace Diitra.Infrastructure.Common.Documents
                     TraceabilityCode = traceabilityCode,
                     IsDraft = request.IsDraftMode,
                     StationaryImageData = stationaryImage,
-                    VerificationBaseUrl = verificationBaseUrl
+                    VerificationBaseUrl = verificationBaseUrl,
+                    IsBlindMode = request.IsBlindMode
                 }, template.CustomCss);
 
                 // 6. Sello de Integridad (SHA-256)

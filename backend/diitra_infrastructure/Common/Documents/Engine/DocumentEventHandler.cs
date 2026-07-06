@@ -33,7 +33,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly string _verificationBaseUrl;
         private readonly int _cronogramaPage;
         private readonly int _pageOffset;
-
+        private readonly bool _isBlindMode;
+ 
         public DocumentEventHandler(
             string traceabilityCode, 
             string institutionName = "DIITRA - Departamento de Investigación e Innovación",
@@ -43,13 +44,15 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             ImageData? stationaryImageData = null,
             string? verificationBaseUrl = null,
             int cronogramaPage = 5,
-            int pageOffset = 0)
+            int pageOffset = 0,
+            bool isBlindMode = false)
         {
             _pageOffset = pageOffset;
             _traceabilityCode = traceabilityCode;
             _institutionName = institutionName;
             _lopdpClause = lopdpClause;
             _isDraft = isDraft;
+            _isBlindMode = isBlindMode;
             _verificationBaseUrl = string.IsNullOrWhiteSpace(verificationBaseUrl)
                 ? "https://diitra.ist.edu.ec"
                 : verificationBaseUrl.TrimEnd('/');
@@ -160,6 +163,36 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 {
                     canvas.Close();
                     return;
+                }
+
+                // 0.2 Encabezado de Modo Doble Ciego Nativo (No invasivo)
+                if (_isBlindMode)
+                {
+                    try
+                    {
+                        // Dibujar el fondo amarillo
+                        PdfCanvas underCanvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
+                        underCanvas.SaveState()
+                            .SetFillColor(new iText.Kernel.Colors.DeviceRgb(254, 249, 195)) // #fef9c3
+                            .SetStrokeColor(new iText.Kernel.Colors.DeviceRgb(254, 240, 138)) // #fef08a
+                            .SetLineWidth(0.5f)
+                            .Rectangle(36, pageSize.GetTop() - 36, pageSize.GetWidth() - 72, 20)
+                            .FillStroke()
+                            .RestoreState();
+
+                        // Escribir el texto encima centrado
+                        var fontBold = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+                        Paragraph pBlind = new Paragraph("DOCUMENTO ANONIMIZADO — Proceso de Evaluación Doble Ciego (Art. 10, RRA CES)")
+                            .SetFont(fontBold)
+                            .SetFontSize(7.5f)
+                            .SetFontColor(new iText.Kernel.Colors.DeviceRgb(133, 77, 14)); // #854d0e
+                        
+                        canvas.ShowTextAligned(pBlind, pageSize.GetWidth() / 2, pageSize.GetTop() - 30, TextAlignment.CENTER);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DIITRA EVENT] Error drawing blind notice: {ex.Message}");
+                    }
                 }
 
                 // 1. Marca de agua (Watermark) si es borrador

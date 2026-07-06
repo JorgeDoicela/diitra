@@ -297,7 +297,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 stationaryImageBase64: metadata.StationaryImageBase64,
                 stationaryImageData: metadata.StationaryImageData,
                 verificationBaseUrl: metadata.VerificationBaseUrl,
-                cronogramaPage: cronogramaPage
+                cronogramaPage: cronogramaPage,
+                isBlindMode: metadata.IsBlindMode
             );
 
             try 
@@ -350,7 +351,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 stationaryImageData: metadata.StationaryImageData,
                 verificationBaseUrl: metadata.VerificationBaseUrl,
                 cronogramaPage: -999,
-                pageOffset: pageOffset
+                pageOffset: pageOffset,
+                isBlindMode: metadata.IsBlindMode
             );
 
             pdfDocument.AddEventHandler(PdfDocumentEvent.START_PAGE, handler);
@@ -422,5 +424,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         public string? StationaryImageBase64 { get; set; }
         public iText.IO.Image.ImageData? StationaryImageData { get; set; }
         public string? VerificationBaseUrl { get; set; }
+        public bool IsBlindMode { get; set; } = false;
     }
 }

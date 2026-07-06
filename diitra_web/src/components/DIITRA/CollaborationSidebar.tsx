@@ -10,7 +10,9 @@ import {
     Loader,
     Mic,
     Edit2,
-    XCircle
+    XCircle,
+    Edit3,
+    Eye
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
@@ -596,48 +598,71 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                 {sendingAudio ? <Loader size={12} className="animate-spin" /> : <Send size={12} />}
                                             </button>
                                         </div>
-                                    </div>            </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
                         {activeTab === 'status' && (
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 {sectionName !== 'output' && (
-                                    <div className="bg-text-main/5 border border-text-main/20 rounded-2xl p-5 shadow-sm">
-                                        <h4 className="text-[9px] font-black uppercase text-text-main mb-2.5 tracking-widest">Mi Sección Actual</h4>
-                                        <p className="text-xs font-bold text-text-main mb-4 capitalize">{(sectionName || '').replace(/_/g, ' ')}</p>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {['Borrador', 'Revisión', 'Aprobado'].map(s => (
-                                                <button
-                                                    key={s}
-                                                    onClick={() => handleUpdateStatus(s)}
-                                                    className={`w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${(sectionStatuses[sectionName] || 'Borrador') === s
-                                                            ? 'bg-text-main text-bg-deep border-text-main shadow-lg font-black'
-                                                            : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                    <div className="bg-surface border border-border-thin rounded-2xl p-5 shadow-sm">
+                                        <h4 className="text-[9px] font-black uppercase text-text-dim mb-3 tracking-widest">Mi Sección Actual</h4>
+                                        <p className="text-xs font-black text-text-main mb-4 capitalize">{(sectionName || '').replace(/_/g, ' ')}</p>
+                                        <div className="grid grid-cols-1 gap-2.5">
+                                            {[
+                                                { label: 'Borrador', value: 'Borrador', desc: 'Edición activa por los redactores', icon: <Edit3 size={14} className="shrink-0" />, activeStyle: 'bg-surface border-border-hover text-text-main shadow-md font-bold' },
+                                                { label: 'Revisión', value: 'Revisión', desc: 'Lista para control de calidad', icon: <Eye size={14} className="shrink-0" />, activeStyle: 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-md font-bold' },
+                                                { label: 'Aprobado', value: 'Aprobado', desc: 'Sección consolidada y cerrada', icon: <CheckCircle size={14} className="shrink-0" />, activeStyle: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-md font-bold' }
+                                            ].map(s => {
+                                                const isActive = (sectionStatuses[sectionName] || 'Borrador') === s.value;
+                                                return (
+                                                    <button
+                                                        key={s.value}
+                                                        onClick={() => handleUpdateStatus(s.value)}
+                                                        className={`w-full px-4 py-3 rounded-xl text-left border transition-all duration-300 flex items-center justify-between group ${
+                                                            isActive
+                                                                ? s.activeStyle
+                                                                : 'bg-bg-deep/50 border-border-thin/60 text-text-dim hover:text-text-main hover:bg-surface-hover hover:border-border-hover'
                                                         }`}
-                                                >
-                                                    {s}
-                                                </button>
-                                            ))}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`p-1.5 rounded-lg transition-colors ${
+                                                                isActive 
+                                                                    ? (s.value === 'Aprobado' ? 'bg-emerald-500/20' : s.value === 'Revisión' ? 'bg-amber-500/20' : 'bg-surface-hover')
+                                                                    : 'bg-bg-deep group-hover:bg-surface'
+                                                            }`}>
+                                                                {s.icon}
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <p className="text-[10px] font-black uppercase tracking-wider">{s.label}</p>
+                                                                <p className="text-[8px] text-text-dim font-semibold leading-none mt-0.5">{s.desc}</p>
+                                                            </div>
+                                                        </div>
+                                                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="p-4 bg-surface border border-border-thin rounded-2xl space-y-3">
-                                    <h4 className="text-[9px] font-black uppercase text-text-dim tracking-widest">Estado del Informe</h4>
-                                    <div className="flex items-center justify-between text-[10px] font-bold">
-                                        <span className="text-text-dim uppercase tracking-wider">Aprobación Global</span>
-                                        <span className="text-text-main font-mono font-black">{globalProgress}%</span>
+                                <div className="p-5 bg-surface border border-border-thin rounded-2xl space-y-4 shadow-sm hover:border-border-hover transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="text-[9px] font-black uppercase text-text-dim tracking-widest mb-0.5">Progreso de Redacción</h4>
+                                            <p className="text-[8px] text-text-dim uppercase leading-relaxed font-bold tracking-tight">
+                                                {allSections.filter(s => sectionStatuses[s] === 'Aprobado').length} de {allSections.length} secciones aprobadas
+                                            </p>
+                                        </div>
+                                        <span className="text-[14px] font-mono font-black text-text-main">{globalProgress}%</span>
                                     </div>
-                                    <div className="w-full bg-bg-deep h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-bg-deep h-2 rounded-full overflow-hidden p-[1px] border border-border-thin/40">
                                         <div
-                                            className="h-full bg-text-main transition-all duration-500 rounded-full"
+                                            className="h-full bg-gradient-to-r from-brand to-emerald-500 transition-all duration-700 ease-out rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                                             style={{ width: `${globalProgress}%` }}
                                         ></div>
                                     </div>
-                                    <p className="text-[8px] text-text-dim uppercase leading-relaxed font-bold tracking-tight">
-                                        Secciones aprobadas: {allSections.filter(s => sectionStatuses[s] === 'Aprobado').length} de {allSections.length}
-                                    </p>
                                 </div>
                             </div>
                         )}

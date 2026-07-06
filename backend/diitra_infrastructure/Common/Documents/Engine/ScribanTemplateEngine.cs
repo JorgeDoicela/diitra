@@ -561,10 +561,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 dict["ods"] = odsVal;
             }
 
-            // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
-            if (isBlindMode)
-                ApplyBlindMask(dict);
-
             // Variables globales del sistema (siempre disponibles en cualquier plantilla)
             var ecuadorCulture = new CultureInfo("es-EC");
             dict["fecha_emision"] = DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", ecuadorCulture);
@@ -594,6 +590,10 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     }
                 }
             }
+
+            // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
+            if (isBlindMode)
+                ApplyBlindMask(dict);
 
             return dict;
         }
@@ -692,12 +692,68 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 "cedula", "correo", "email", "telefono", "celular",
                 "autor", "investigador", "docente",
                 "nombre_investigador", "nombre_director", "nombre_revisor",
-                "nombre_autor", "cedula_autor", "nombre_tutor", "nombre_rector"
+                "nombre_autor", "cedula_autor", "nombre_tutor", "nombre_rector",
+                "director_proyecto", "directorproyecto", "nombre_director_firma",
+                "nombre_coordinador_firma", "director_nombre", "coordinador_nombre",
+                "responsable",
+                "carrera", "carreras_coejecutoras", "programa", "grupo_investigacion", "grupo_investigacion_nombre"
             };
 
-            foreach (var field in fieldsToMask)
-                if (data.ContainsKey(field))
-                    data[field] = "[ RESERVADO — PROCESO DOBLE CIEGO ]";
+            string idProyectoStr = "";
+            if (data.TryGetValue("id_proyecto", out var idVal) && idVal != null)
+            {
+                idProyectoStr = idVal.ToString() ?? "";
+            }
+            else if (data.TryGetValue("id", out var idVal2) && idVal2 != null)
+            {
+                idProyectoStr = idVal2.ToString() ?? "";
+            }
+
+            string tituloAnonimo = "Propuesta de Investigación Anonimizada";
+            if (!string.IsNullOrEmpty(idProyectoStr) && int.TryParse(idProyectoStr, out int idProj))
+            {
+                tituloAnonimo = $"Propuesta #{idProj:D4}";
+            }
+
+            if (data.ContainsKey("titulo"))
+            {
+                data["titulo"] = tituloAnonimo;
+            }
+            if (data.ContainsKey("Titulo"))
+            {
+                data["Titulo"] = tituloAnonimo;
+            }
+
+            ApplyBlindMaskRecursive(data, fieldsToMask);
+        }
+
+        private static void ApplyBlindMaskRecursive(object? obj, HashSet<string> fieldsToMask)
+        {
+            if (obj == null) return;
+
+            if (obj is Dictionary<string, object?> dict)
+            {
+                var keys = new List<string>(dict.Keys);
+                foreach (var key in keys)
+                {
+                    var val = dict[key];
+                    if (fieldsToMask.Contains(key))
+                    {
+                        dict[key] = "[ RESERVADO — PROCESO DOBLE CIEGO ]";
+                    }
+                    else
+                    {
+                        ApplyBlindMaskRecursive(val, fieldsToMask);
+                    }
+                }
+            }
+            else if (obj is System.Collections.IList list)
+            {
+                foreach (var item in list)
+                {
+                    ApplyBlindMaskRecursive(item, fieldsToMask);
+                }
+            }
         }
 
         private static string GetProperty(object? item, string key)
