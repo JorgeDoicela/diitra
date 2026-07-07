@@ -166,9 +166,13 @@ namespace Diitra.Infrastructure.Common.Documents
                 else
                 {
                     var seed = DocumentTemplateRegistry.GetByCode(request.TemplateCode);
-                    if (seed != null && seed.Version > template.Version)
+                    if (seed != null && (seed.Version > template.Version || 
+                                         (seed.Version == template.Version && 
+                                          (seed.SupportsBlindMode != template.SupportsBlindMode || 
+                                           seed.RequiresLopdpClause != template.RequiresLopdpClause || 
+                                           seed.RequiresElectronicSignature != template.RequiresElectronicSignature))))
                     {
-                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando v{SeedVersion} de '{Code}'...", seed.Version, request.TemplateCode);
+                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando v{SeedVersion} de '{Code}' por cambio de metadatos...", seed.Version, request.TemplateCode);
                         template.SyncWithSeed(seed);
                         await _templateRepository.SaveAsync(template, cancellationToken);
                     }
