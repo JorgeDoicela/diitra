@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
     Loader2, Users, Building, GraduationCap, FileDown,
-    CalendarDays, X, PlusCircle, Trash2, Scale, Award
+    CalendarDays, X, PlusCircle, Trash2, Scale, Award,
+    ExternalLink
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -388,6 +389,13 @@ const ArbitrajeProyecto: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 shrink-0 md:mt-1">
+                        <button
+                            onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                            className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                        >
+                            <ExternalLink size={14} />
+                            Ver Proyecto
+                        </button>
                         {!arbitraje.arbitraje_cerrado && (
                             <button
                                 onClick={() => setShowAsignar(true)}

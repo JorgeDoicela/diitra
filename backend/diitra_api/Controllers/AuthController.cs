@@ -441,4 +441,70 @@ public class AuthController : ControllerBase
             password = resultado.Password
         });
     }
+
+    /// <summary>
+    /// Cambia la contraseña del usuario autenticado actualmente si no es institucional (ej. evaluadores externos).
+    /// </summary>
+    [HttpPost("cambiar-contrasenia")]
+    [Authorize]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> CambiarContrasenia([FromBody] ChangePasswordRequestDto request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Todos los campos son obligatorios." });
+        }
+
+        var userIdClaim = User.FindFirst("id_usuario")?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+        {
+            return Unauthorized(new { message = "Usuario no autenticado correctamente." });
+        }
+
+        try
+        {
+            var success = await _authService.ChangePasswordAsync(idUsuario, request.CurrentPassword, request.NewPassword);
+            if (success)
+            {
+                return Ok(new { message = "Contraseña actualizada exitosamente." });
+            }
+            return BadRequest(new { message = "No se pudo actualizar la contraseña." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Restablece la contraseña de emergencia a partir del token de alerta de seguridad.
+    /// </summary>
+    [HttpPost("revertir-contrasenia-alerta")]
+    [AllowAnonymous]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> RevertirContraseniaAlerta([FromBody] RevertPasswordRequestDto request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Todos los campos son obligatorios." });
+        }
+
+        try
+        {
+            var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+            var success = await _authService.RevertSuspiciousPasswordChangeAsync(request.Token, request.NewPassword, ip);
+            if (success)
+            {
+                return Ok(new { message = "Contraseña restablecida de emergencia con éxito. El acceso no autorizado ha sido cancelado." });
+            }
+            return BadRequest(new { message = "No se pudo restablecer la contraseña." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

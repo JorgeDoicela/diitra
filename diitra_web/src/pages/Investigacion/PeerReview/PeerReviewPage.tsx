@@ -133,7 +133,7 @@ const PeerReviewPage: React.FC = () => {
                                         } else if (diasRestantes <= 7) {
                                             daysBadgeClass = 'badge-vercel-warning';
                                         } else {
-                                            daysBadgeClass = 'badge-vercel-success';
+                                            daysBadgeClass = 'badge-vercel-neutral';
                                         }
 
                                         const hasDraft = drafts[review.uuid];
@@ -145,7 +145,7 @@ const PeerReviewPage: React.FC = () => {
                                                 onClick={() => navigate(`/revisiones/${review.uuid}`)}
                                             >
                                                 <div className="flex items-start md:items-center gap-4 flex-1 min-w-0">
-                                                    <div className="icon-circle shrink-0 group-hover:scale-110 transition-transform bg-warning-subtle text-warning">
+                                                    <div className="icon-circle shrink-0 group-hover:scale-110 transition-transform bg-surface border border-border-thin text-text-dim">
                                                         <FileText size={22} strokeWidth={1.5} />
                                                     </div>
                                                     <div className="min-w-0">
@@ -161,10 +161,10 @@ const PeerReviewPage: React.FC = () => {
                                                                 <span className="badge-vercel badge-vercel-info text-[9px]">BORRADOR GUARDADO</span>
                                                             )}
                                                             {review.es_externo && (
-                                                                <span className="badge-vercel badge-vercel-violet text-[9px]">PAR EXTERNO</span>
+                                                                <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">PAR EXTERNO</span>
                                                             )}
                                                             {review.es_doble_ciego && (
-                                                                <span className="status-tag text-text-dim bg-surface">Anónimo</span>
+                                                                <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">Anónimo</span>
                                                             )}
                                                         </div>
                                                         <h4 className="text-lg font-bold tracking-tight text-text-main group-hover:text-brand transition-colors line-clamp-2 md:line-clamp-1">
@@ -228,7 +228,7 @@ const PeerReviewPage: React.FC = () => {
                                                 onClick={() => navigate(`/revisiones/${review.uuid}`)}
                                             >
                                                 <div className="flex items-start md:items-center gap-4 flex-1 min-w-0">
-                                                    <div className="icon-circle shrink-0 group-hover:scale-105 transition-transform bg-success-subtle text-success">
+                                                    <div className="icon-circle shrink-0 group-hover:scale-105 transition-transform bg-surface border border-border-thin text-text-dim">
                                                         <FileText size={22} strokeWidth={1.5} />
                                                     </div>
                                                     <div className="min-w-0">
@@ -241,10 +241,10 @@ const PeerReviewPage: React.FC = () => {
                                                                 {statusCfg.label}
                                                             </div>
                                                             {review.es_externo && (
-                                                                <span className="badge-vercel badge-vercel-violet text-[9px]">PAR EXTERNO</span>
+                                                                <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">PAR EXTERNO</span>
                                                             )}
                                                             {review.es_doble_ciego && (
-                                                                <span className="status-tag text-text-dim bg-surface">Anónimo</span>
+                                                                <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">Anónimo</span>
                                                             )}
                                                         </div>
                                                         <h4 className="text-lg font-bold tracking-tight text-text-main line-clamp-2 md:line-clamp-1">

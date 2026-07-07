@@ -26,4 +26,14 @@ public interface IAuthService
     /// Consume el token (un solo uso).
     /// </summary>
     Task<PasswordRecoveryValidationResult> ValidatePasswordRecoveryTokenAsync(string plainToken, string? ipAddress);
+
+    /// <summary>
+    /// Cambia la contraseña de un usuario si no es institucional (ej. evaluadores externos).
+    /// </summary>
+    Task<bool> ChangePasswordAsync(int idUsuario, string currentPassword, string newPassword);
+
+    /// <summary>
+    /// Reestablece de emergencia la contraseña de un usuario si se detecta un cambio de credenciales sospechoso, invalidando sesiones anteriores.
+    /// </summary>
+    Task<bool> RevertSuspiciousPasswordChangeAsync(string plainToken, string newPassword, string? ipAddress);
 }

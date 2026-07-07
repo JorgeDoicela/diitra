@@ -82,3 +82,15 @@ public class PasswordRecoveryValidationResult
     /// <summary>Cuando la contraseña en SIGAFI está hasheada (BCrypt) y no puede recuperarse.</summary>
     public bool EsHashInaccesible { get; set; }
 }
+
+public class ChangePasswordRequestDto
+{
+    public string CurrentPassword { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+}
+
+public class RevertPasswordRequestDto
+{
+    public string Token { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+}

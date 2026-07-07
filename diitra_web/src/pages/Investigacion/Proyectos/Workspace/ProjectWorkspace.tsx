@@ -851,7 +851,7 @@ export const ProjectWorkspace: React.FC = () => {
                 return addedCount > 0 ? updatedMembers : prev;
             });
 
-            if (addedCount > 0) {
+            if (addedCount > 0 && !silent) {
                 addToast("Equipo actualizado", `Se importaron ${addedCount} miembro${addedCount !== 1 ? 's' : ''} del grupo automáticamente.`, "success");
             } else if (!silent) {
                 addToast("Sincronización", "Todos los miembros activos de este grupo ya forman parte del equipo.", "info");

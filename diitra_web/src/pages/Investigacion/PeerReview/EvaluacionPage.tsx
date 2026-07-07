@@ -309,8 +309,7 @@ const EvaluacionPage: React.FC = () => {
         return (
             <main className="flex-1 bg-bg-deep flex items-center justify-center p-8 lg:p-10">
                 <div className="bento-card static p-8 text-center max-w-lg w-full shadow-2xl relative z-10 border-border-hover bg-surface animate-scale-up">
-                    <div className="p-6 rounded-full mx-auto mb-6 w-20 h-20 flex items-center justify-center"
-                        style={{ background: cfg.bg }}>
+                    <div className="mx-auto mb-6 w-20 h-20 flex items-center justify-center">
                         {dictamenPreview === 'Aprobado'
                             ? <CheckCircle2 size={36} style={{ color: cfg.color }} />
                             : <XCircle size={36} style={{ color: cfg.color }} />
@@ -880,12 +879,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 </div>
             </div>
 
-            <div className="w-full bg-surface rounded-full h-1">
-                <div
-                    className="h-1 rounded-full transition-all duration-300"
-                    style={{ width: `${porcentaje}%`, background: color }}
-                />
-            </div>
+
 
             <div className="py-1">
                 <input

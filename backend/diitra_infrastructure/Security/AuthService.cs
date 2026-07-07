@@ -1222,4 +1222,153 @@ public class AuthService : IAuthService
             EsHashInaccesible = esHashInaccesible
         };
     }
+
+    public async Task<bool> ChangePasswordAsync(int idUsuario, string currentPassword, string newPassword)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario && u.Activo);
+        if (user == null)
+        {
+            throw new InvalidOperationException("El usuario no existe o está inactivo.");
+        }
+
+        if (user.TablaSigafi != "otros")
+        {
+            throw new InvalidOperationException("Las cuentas institucionales deben cambiar su contraseña a través del portal de autogestión de la institución (SIGAFI).");
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+        {
+            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
+        }
+
+        if (!VerifyPassword(user, currentPassword))
+        {
+            throw new InvalidOperationException("La contraseña actual ingresada es incorrecta.");
+        }
+
+        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
+        await _context.SaveChangesAsync();
+
+        // Enviar notificación de seguridad por correo electrónico
+        string? emailDestino = user.EmailInstitucional;
+        if (!string.IsNullOrEmpty(emailDestino))
+        {
+            try
+            {
+                // Invalidar tokens anteriores de recuperación activos para este usuario
+                var tokensAnteriores = await _context.Set<InvMagicLink>()
+                    .Where(l => l.IdUsuario == user.IdUsuario && l.Proposito == "PASSWORD_RECOVERY" && !l.Utilizado)
+                    .ToListAsync();
+
+                foreach (var t in tokensAnteriores)
+                {
+                    t.Utilizado = true;
+                    t.FechaUtilizado = DateTime.Now;
+                }
+
+                // Generar token criptográfico seguro (32 bytes -> hex -> SHA-256 en BD)
+                var tokenBytes = new byte[32];
+                using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+                {
+                    rng.GetBytes(tokenBytes);
+                }
+                var plainToken = Convert.ToHexString(tokenBytes);
+                var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+                var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+                // Guardar el enlace de recuperación en inv_magic_links
+                var recoveryLink = new InvMagicLink
+                {
+                    IdUsuario = user.IdUsuario,
+                    TokenHash = tokenHash,
+                    FechaCreacion = DateTime.Now,
+                    FechaExpiracion = DateTime.Now.AddDays(7), // Válido por 7 días
+                    Utilizado = false,
+                    Proposito = "PASSWORD_SECURITY_ALERT"
+                };
+
+                _context.Set<InvMagicLink>().Add(recoveryLink);
+                await _context.SaveChangesAsync();
+
+                // Construir enlace de recuperación de emergencia
+                var baseUrl = GetFrontendUrl();
+                var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/reestablecer-alerta?token={plainToken}";
+
+                // Cuerpo del correo
+                var emailBody =
+                    $"<p>Hola, <strong>{user.Nombre}</strong>.</p>" +
+                    $"<p>Te informamos que la contraseña de tu cuenta de acceso a <strong>DIITRA</strong> ha sido cambiada recientemente.</p>" +
+                    $"<p>Si realizaste este cambio, no necesitas hacer nada.</p>" +
+                    $"<p><strong>¿No fuiste tú?</strong> Si no realizaste esta acción o consideras que se trata de un acceso no autorizado, por favor restablece tu contraseña inmediatamente haciendo clic en el siguiente botón para expulsar cualquier sesión sospechosa:</p>" +
+                    $"<p style=\"color:#888888; font-size:12px; margin-top: 15px;\">Por motivos de seguridad, este enlace es de un solo uso y es válido durante 7 días.</p>";
+
+                await _notificationService.NotifyUserAsync(
+                    user.IdUsuario,
+                    "Notificación de seguridad: cambio de contraseña — DIITRA",
+                    emailBody,
+                    "SISTEMA",
+                    recoveryUrl
+                );
+
+                await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_SENT",
+                    $"Notificación de cambio de contraseña enviada a {emailDestino} con token de seguridad.", "SEGURIDAD");
+            }
+            catch (Exception ex)
+            {
+                // Capturar el error pero no fallar el cambio de contraseña si falla el servidor de email
+                await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_FAILED",
+                    $"Error al enviar notificación de cambio de contraseña: {ex.Message}", "SEGURIDAD");
+            }
+        }
+
+        return true;
+    }
+
+    public async Task<bool> RevertSuspiciousPasswordChangeAsync(string plainToken, string newPassword, string? ipAddress)
+    {
+        if (string.IsNullOrWhiteSpace(plainToken))
+        {
+            throw new InvalidOperationException("El token es obligatorio.");
+        }
+
+        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        var magicLink = await _context.Set<InvMagicLink>()
+            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash 
+                                   && l.Proposito == "PASSWORD_SECURITY_ALERT" 
+                                   && !l.Utilizado 
+                                   && l.FechaExpiracion > DateTime.Now);
+
+        if (magicLink == null)
+        {
+            throw new InvalidOperationException("El enlace de alerta de seguridad ha expirado, ya fue utilizado o es inválido.");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == magicLink.IdUsuario && u.Activo);
+        if (user == null)
+        {
+            throw new InvalidOperationException("El usuario asociado no existe o está inactivo.");
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+        {
+            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
+        }
+
+        // Revertir y cambiar la contraseña de inmediato
+        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
+        
+        // Consumir el token de seguridad
+        magicLink.Utilizado = true;
+        magicLink.FechaUtilizado = DateTime.Now;
+        magicLink.IpUtilizacion = ipAddress;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_REVERTED_ALERT",
+            $"Contraseña restablecida de emergencia tras reporte de actividad sospechosa desde IP {ipAddress}.", "SEGURIDAD");
+
+        return true;
+    }
 }

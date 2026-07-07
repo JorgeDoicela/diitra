@@ -41,6 +41,7 @@ const LopdpConsentPage       = lazy(() => import('./pages/Lopdp/LopdpConsentPage
 const LopdpAdminPage         = lazy(() => import('./pages/Lopdp/LopdpAdminPage'));
 const CalendarioPage         = lazy(() => import('./pages/Calendario/CalendarioPage').then(m => ({ default: m.CalendarioPage })));
 const RecycleBinPage         = lazy(() => import('./pages/RecycleBin/RecycleBinPage'));
+const ResetAlertPage         = lazy(() => import('./pages/Auth/ResetAlertPage'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -247,6 +248,9 @@ function App() {
                         } />
                         <Route path="/auth/ver-contrasenia" element={
                             <VerContrasenia currentTheme={theme} toggleTheme={toggleTheme} />
+                        } />
+                        <Route path="/auth/reestablecer-alerta" element={
+                            <ResetAlertPage />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}

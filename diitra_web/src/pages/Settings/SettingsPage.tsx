@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Loader2, Shield, CheckCircle2 } from 'lucide-react';
+import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useAuth } from '../../api/AuthContext';
@@ -18,7 +18,7 @@ interface PerfilData {
 
 const SettingsPage: React.FC = () => {
     const { addToast } = useNotifications();
-    const { logout } = useAuth();
+    const { logout, isRevisor } = useAuth();
     const confirm = useConfirm();
 
     const [profile, setProfile] = useState<PerfilData>({
@@ -34,6 +34,63 @@ const SettingsPage: React.FC = () => {
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingConsent, setIsSavingConsent] = useState(false);
+
+    // Formulario de cambio de contraseña para revisores externos
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            addToast('Validación', 'Por favor complete todos los campos.', 'warning');
+            return;
+        }
+
+        if (passwordForm.newPassword.length < 8) {
+            addToast('Contraseña Débil', 'La nueva contraseña debe tener al menos 8 caracteres.', 'warning');
+            return;
+        }
+
+        const hasLetter = /[a-zA-Z]/.test(passwordForm.newPassword);
+        const hasNumber = /[0-9]/.test(passwordForm.newPassword);
+        if (!hasLetter || !hasNumber) {
+            addToast('Contraseña Débil', 'La nueva contraseña debe incluir al menos una letra y un número.', 'warning');
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            addToast('Validación', 'La nueva contraseña y la confirmación no coinciden.', 'warning');
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            await api.post('/auth/cambiar-contrasenia', {
+                current_password: passwordForm.currentPassword,
+                new_password: passwordForm.newPassword
+            });
+            addToast('Contraseña Actualizada', 'Su contraseña ha sido cambiada exitosamente.', 'success');
+            setPasswordForm({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (err: any) {
+            console.error('Error changing password:', err);
+            const errMsg = err.response?.data?.message || 'No se pudo cambiar la contraseña en este momento.';
+            addToast('Error', errMsg, 'error');
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
 
     // Firma electrónica state — solo consentimiento, no se guarda certificado
 
@@ -263,6 +320,100 @@ const SettingsPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {!isLoadingProfile && (
+                    <div className="bento-card static p-6 space-y-6">
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
+                            <KeyRound size={16} className="text-brand" />
+                            Seguridad y Contraseña
+                        </h2>
+
+                        {isRevisor ? (
+                            <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    Por motivos de seguridad, es recomendable cambiar su contraseña temporal por una contraseña robusta y personal.
+                                </p>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Contraseña Actual</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showCurrentPassword ? "text" : "password"}
+                                            className="w-full bg-surface border border-border-thin rounded-lg pl-3 pr-10 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="Ingrese su contraseña actual"
+                                            value={passwordForm.currentPassword}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-main transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
+                                        >
+                                            {showCurrentPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Nueva Contraseña</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showNewPassword ? "text" : "password"}
+                                            className="w-full bg-surface border border-border-thin rounded-lg pl-3 pr-10 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="Mínimo 8 caracteres (letras y números)"
+                                            value={passwordForm.newPassword}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-main transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
+                                        >
+                                            {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Confirmar Nueva Contraseña</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            className="w-full bg-surface border border-border-thin rounded-lg pl-3 pr-10 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="Repita la nueva contraseña"
+                                            value={passwordForm.confirmPassword}
+                                            onChange={e => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-main transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={isChangingPassword}
+                                        className="btn-vercel-primary text-xs"
+                                    >
+                                        {isChangingPassword && <Loader2 className="animate-spin mr-1.5" size={14} />}
+                                        Actualizar Contraseña
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="flex items-start gap-3 p-4 bg-surface border border-border-thin rounded-xl max-w-2xl">
+                                <Info size={16} className="text-brand mt-0.5 shrink-0" />
+                                <div className="space-y-1">
+                                    <h4 className="text-xs font-semibold text-text-main">Cuenta Gestionada Institucionalmente</h4>
+                                    <p className="text-[11px] text-text-dim leading-relaxed">
+                                        Tu cuenta está vinculada al sistema de identidad institucional (SIGAFI / Microsoft SSO). Por motivos de seguridad y consistencia, el cambio de credenciales debe realizarse directamente a través del portal de autogestión de la institución, no de forma local en esta aplicación.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
