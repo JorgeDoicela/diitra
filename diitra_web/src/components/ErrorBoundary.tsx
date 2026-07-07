@@ -52,36 +52,27 @@ class ErrorBoundary extends Component<Props, State> {
                                this.state.error?.message?.includes('Failed to execute');
 
             return (
-                <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#09090b] text-[#fafafa] p-6 selection:bg-white selection:text-black">
-                    <div className="w-full max-w-md p-8 rounded-xl border border-[#27272a] bg-[#121214] shadow-2xl flex flex-col items-center text-center space-y-6">
-                        {/* Icon */}
-                        <div className="w-12 h-12 rounded-full bg-[#27272a] border border-[#3f3f46] flex items-center justify-center text-red-400">
-                            <AlertOctagon size={24} className="text-[#f43f5e]" />
+                <div className="min-h-screen w-full flex items-center justify-center bg-[#09090b] text-[#fafafa] p-4">
+                    <div className="w-full max-w-sm p-6 rounded-lg border border-[#27272a] bg-[#121214] flex flex-col items-center text-center space-y-4 shadow-xl">
+                        <div className="flex items-center gap-2.5">
+                            <AlertOctagon size={18} className="text-[#f43f5e] shrink-0" />
+                            <h3 className="text-sm font-medium text-white">Error de Reconciliación</h3>
                         </div>
-
-                        {/* Text Content */}
-                        <div className="space-y-2">
-                            <h2 className="text-xl font-semibold tracking-tight text-white">
-                                Interrupción del Sistema
-                            </h2>
-                            <p className="text-sm text-[#a1a1aa] leading-relaxed">
-                                {isDomError 
-                                    ? 'Detectamos que una extensión del navegador (como un traductor o bloqueador) alteró la estructura visual de la aplicación, provocando un fallo de renderizado.'
-                                    : 'Ocurrió un error inesperado al procesar la interfaz visual.'}
-                            </p>
-                            {isDomError && (
-                                <p className="text-xs text-[#71717a] mt-2 italic bg-[#18181b] p-3 rounded-lg border border-[#27272a]">
-                                    Tip: Intenta desactivar la traducción automática o el bloqueador de publicidad para este sitio.
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Actions */}
+                        <p className="text-xs text-[#a1a1aa] leading-relaxed">
+                            {isDomError 
+                                ? 'Una extensión o traductor externo del navegador alteró la estructura visual de la aplicación.'
+                                : 'Ocurrió un error inesperado al procesar la interfaz.'}
+                        </p>
+                        {isDomError && (
+                            <div className="text-[10px] text-[#71717a] bg-[#18181b] p-2.5 rounded border border-[#27272a] text-left w-full">
+                                💡 <strong>Tip:</strong> Prueba desactivando la traducción automática o extensiones bloqueadoras para este sitio.
+                            </div>
+                        )}
                         <button
                             onClick={this.handleReload}
-                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-black bg-white hover:bg-[#e4e4e7] transition-all duration-200 shadow-sm active:scale-[0.98]"
+                            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-xs font-medium text-black bg-white hover:bg-[#e4e4e7] transition-all duration-150 active:scale-[0.98]"
                         >
-                            <RefreshCw size={14} className="animate-spin-hover" />
+                            <RefreshCw size={12} />
                             Recargar Aplicación
                         </button>
                     </div>
