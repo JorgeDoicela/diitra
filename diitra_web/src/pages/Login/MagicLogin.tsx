@@ -37,9 +37,11 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const pinPageUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://192.168.7.103/auth/pin'
-        : `${window.location.origin}/auth/pin`;
+    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://192.168.7.103/diitra'
+        : window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '');
+
+    const pinPageUrl = `${baseUrl}/auth/pin`;
 
     const handleAccess = async () => {
         if (!token) return;
@@ -216,15 +218,23 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                         Si prefieres trabajar desde tu computadora, abre la siguiente dirección en ese navegador e introduce el código PIN:
                                     </p>
 
-                                    {/* URL del PIN */}
+                                    {/* URL del PIN interactivo */}
                                     <div className="flex items-center gap-2">
-                                        <div className="flex-1 font-mono text-[10px] text-text-main bg-surface border border-border-thin rounded-md px-3 py-2 truncate">
+                                        <a
+                                            href={pinPageUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 font-mono text-[10px] hover:underline bg-surface border border-border-thin rounded-md px-3 py-2 truncate transition-colors duration-200"
+                                            style={{ color: currentTheme === 'dark' ? '#58a6ff' : '#0969da' }}
+                                            title="Abrir página de PIN en nueva pestaña"
+                                        >
                                             {pinPageUrl}
-                                        </div>
+                                        </a>
                                         <button
+                                            type="button"
                                             onClick={handleCopyUrl}
                                             title="Copiar URL"
-                                            className="shrink-0 p-2 border border-border-thin rounded-md text-text-dim hover:text-text-main hover:border-border-hover transition-all"
+                                            className="shrink-0 p-2 border border-border-thin rounded-md text-text-dim hover:text-text-main hover:border-border-hover transition-all cursor-pointer"
                                         >
                                             {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                         </button>

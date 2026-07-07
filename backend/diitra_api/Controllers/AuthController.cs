@@ -397,7 +397,16 @@ public class AuthController : ControllerBase
             return Ok(new { message = "Si el correo está registrado, recibirás un enlace en los próximos minutos." });
 
         var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
-        await _authService.RequestPasswordRecoveryAsync(request.Identificador.Trim(), ip);
+        var resultado = await _authService.RequestPasswordRecoveryAsync(request.Identificador.Trim(), request.Cedula, ip);
+
+        if (resultado.RequiereDesambiguacion)
+        {
+            return Ok(new
+            {
+                requiresDisambiguation = true,
+                message = resultado.Message
+            });
+        }
 
         // Siempre la misma respuesta, sin revelar si el usuario existe
         return Ok(new { message = "Si el correo está registrado, recibirás un enlace en los próximos minutos." });
@@ -430,6 +439,7 @@ public class AuthController : ControllerBase
                 valido = true,
                 esHashInaccesible = true,
                 nombre = resultado.NombreUsuario,
+                esRevisorExterno = resultado.EsRevisorExterno,
                 message = "Tu contraseña está almacenada de forma encriptada en el sistema institucional y no puede ser recuperada. Contacta al administrador para restablecerla."
             });
 
@@ -499,6 +509,36 @@ public class AuthController : ControllerBase
             if (success)
             {
                 return Ok(new { message = "Contraseña restablecida de emergencia con éxito. El acceso no autorizado ha sido cancelado." });
+            }
+            return BadRequest(new { message = "No se pudo restablecer la contraseña." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Restablece la contraseña ordinaria de revisores externos usando el token de recuperación.
+    /// </summary>
+    [HttpPost("restablecer-contrasenia-recuperacion")]
+    [AllowAnonymous]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> RestablecerContraseniaRecuperacion([FromBody] RevertPasswordRequestDto request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Todos los campos son obligatorios." });
+        }
+
+        try
+        {
+            var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+            var success = await _authService.ResetPasswordWithRecoveryTokenAsync(request.Token, request.NewPassword, ip);
+            if (success)
+            {
+                return Ok(new { message = "Contraseña restablecida con éxito. Ya puedes iniciar sesión con tu nueva credencial." });
             }
             return BadRequest(new { message = "No se pudo restablecer la contraseña." });
         }

@@ -11,6 +11,8 @@ using diitra_infrastructure.data.models;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using Microsoft.AspNetCore.Http;
+using diitra_application.Common.Notifications;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace diitra_infrastructure.Security;
 
@@ -20,6 +22,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
     private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _masterAdminId;
     private static bool _rbacSeeded = false;
@@ -31,12 +34,14 @@ public class AuthService : IAuthService
         IConfiguration configuration, 
         IAuditService auditService, 
         diitra_application.Common.Notifications.INotificationService notificationService,
+        IServiceProvider serviceProvider,
         IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _configuration = configuration;
         _auditService = auditService;
         _notificationService = notificationService;
+        _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
         _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
     }
@@ -853,12 +858,16 @@ public class AuthService : IAuthService
         var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "MagicLinkResend.html");
         if (File.Exists(templatePath))
         {
+            // Comprobar si la contraseña actual en la BD coincide con la temporal por defecto
+            bool mostrarCredenciales = BCrypt.Net.BCrypt.Verify("Diitra2026*", user.Contrasenia);
+
             var templateHtml = await File.ReadAllTextAsync(templatePath);
             var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
             emailBody = template(new
             {
                 fecha_limite = expirationDate.ToString("dd/MM/yyyy"),
-                username = user.IdSigafi
+                username = user.IdSigafi,
+                mostrar_credenciales = mostrarCredenciales
             });
         }
         else
@@ -1046,22 +1055,65 @@ public class AuthService : IAuthService
     /// institucional del usuario. SIEMPRE retorna true para evitar enumeración de cuentas.
     /// Rate limit: máximo 3 tokens activos por usuario en los últimos 15 minutos.
     /// </summary>
-    public async Task<bool> RequestPasswordRecoveryAsync(string identificador, string? ipAddress)
+    public async Task<PasswordRecoveryRequestResult> RequestPasswordRecoveryAsync(string identificador, string? cedula, string? ipAddress)
     {
-        if (string.IsNullOrWhiteSpace(identificador)) return true;
+        var result = new PasswordRecoveryRequestResult { Exito = false };
+
+        if (string.IsNullOrWhiteSpace(identificador))
+        {
+            result.Exito = true;
+            return result;
+        }
 
         identificador = identificador.Trim().ToLower();
 
-        // 1. Buscar usuario en DIITRA (por cédula o email)
-        var user = await _context.Users.FirstOrDefaultAsync(u =>
-            u.Activo &&
-            (u.IdSigafi.ToLower() == identificador || (u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == identificador)));
+        // 1. Buscar coincidencias por correo o identificación
+        var userList = await _context.Users
+            .Where(u => u.Activo &&
+                (u.IdSigafi.ToLower() == identificador || (u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == identificador)))
+            .ToListAsync();
 
-        if (user == null) return true; // Sin revelar que no existe
+        if (!userList.Any())
+        {
+            // Retornamos exito por seguridad contra enumeración de cuentas
+            result.Exito = true;
+            return result;
+        }
 
-        // Verificar que tiene email institucional
+        diitra_domain.Identity.Entities.User? user = null;
+
+        // Si hay múltiples cuentas activas vinculadas a la misma identificación/correo
+        if (userList.Count > 1)
+        {
+            if (string.IsNullOrWhiteSpace(cedula))
+            {
+                result.RequiereDesambiguacion = true;
+                result.Message = "Hemos detectado múltiples cuentas vinculadas a esta dirección de correo. Por favor, introduce tu número de cédula o identificación para confirmar a cuál de ellas deseas acceder.";
+                return result;
+            }
+
+            var cleanCedula = cedula.Trim().ToLower();
+            user = userList.FirstOrDefault(u => u.IdSigafi.ToLower() == cleanCedula);
+
+            if (user == null)
+            {
+                result.RequiereDesambiguacion = true;
+                result.Message = "El número de cédula o identificación provisto no coincide con ninguna de las cuentas vinculadas a este correo.";
+                return result;
+            }
+        }
+        else
+        {
+            user = userList.First();
+        }
+
+        // Verificar que tiene email
         var emailDestino = user.EmailInstitucional;
-        if (string.IsNullOrEmpty(emailDestino)) return true;
+        if (string.IsNullOrEmpty(emailDestino))
+        {
+            result.Exito = true;
+            return result;
+        }
 
         // 2. Rate limiting: máximo 3 tokens de recuperación activos en 15 min
         var ventana = DateTime.Now.AddMinutes(-15);
@@ -1075,7 +1127,8 @@ public class AuthService : IAuthService
         {
             await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_RATE_LIMIT",
                 $"Rate limit alcanzado para recuperación de contraseña desde IP {ipAddress}", "SEGURIDAD");
-            return true; // Sin revelar el rate limit externamente
+            result.Exito = true;
+            return result; // Sin revelar el rate limit externamente
         }
 
         // 3. Invalidar tokens anteriores de recuperación activos para este usuario
@@ -1137,7 +1190,8 @@ public class AuthService : IAuthService
         await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_REQUESTED",
             $"Enlace de recuperación de contraseña generado y enviado a {emailDestino} desde IP {ipAddress}", "SEGURIDAD");
 
-        return true;
+        result.Exito = true;
+        return result;
     }
 
     /// <summary>
@@ -1172,13 +1226,16 @@ public class AuthService : IAuthService
 
         if (link == null) return invalido;
 
-        // 3. Consumir token (un solo uso)
-        link.Utilizado = true;
-        link.FechaUtilizado = DateTime.Now;
-        link.IpUtilizacion = ipAddress;
-        await _context.SaveChangesAsync();
-
         var user = link.Usuario;
+
+        // 3. Consumir token (un solo uso) si NO es revisor externo (los institucionales se consumen en la lectura)
+        if (user.TablaSigafi != "otros")
+        {
+            link.Utilizado = true;
+            link.FechaUtilizado = DateTime.Now;
+            link.IpUtilizacion = ipAddress;
+            await _context.SaveChangesAsync();
+        }
 
         // 4. Obtener contraseña original de SIGAFI según la tabla fuente
         string? passwordOriginal = null;
@@ -1219,7 +1276,8 @@ public class AuthService : IAuthService
             Valido = true,
             Password = passwordOriginal,
             NombreUsuario = user.Nombre,
-            EsHashInaccesible = esHashInaccesible
+            EsHashInaccesible = esHashInaccesible,
+            EsRevisorExterno = (user.TablaSigafi == "otros")
         };
     }
 
@@ -1299,25 +1357,53 @@ public class AuthService : IAuthService
                     $"<p>Hola, <strong>{user.Nombre}</strong>.</p>" +
                     $"<p>Te informamos que la contraseña de tu cuenta de acceso a <strong>DIITRA</strong> ha sido cambiada recientemente.</p>" +
                     $"<p>Si realizaste este cambio, no necesitas hacer nada.</p>" +
-                    $"<p><strong>¿No fuiste tú?</strong> Si no realizaste esta acción o consideras que se trata de un acceso no autorizado, por favor restablece tu contraseña inmediatamente haciendo clic en el siguiente botón para expulsar cualquier sesión sospechosa:</p>" +
+                    $"<p><strong>¿No fuiste tú?</strong> Si no realizaste esta acción o consideras que se trata de un acceso no autorizado, por favor restablece tu contraseña inmediatamente haciendo clic en el siguiente enlace para expulsar cualquier sesión sospechosa:</p>" +
+                    $"<p><a href=\"{recoveryUrl}\" style=\"color:#0070f3; text-decoration:none; font-weight:600;\">Restablecer mi contraseña de seguridad</a></p>" +
                     $"<p style=\"color:#888888; font-size:12px; margin-top: 15px;\">Por motivos de seguridad, este enlace es de un solo uso y es válido durante 7 días.</p>";
 
-                await _notificationService.NotifyUserAsync(
-                    user.IdUsuario,
-                    "Notificación de seguridad: cambio de contraseña — DIITRA",
-                    emailBody,
-                    "SISTEMA",
-                    recoveryUrl
-                );
+                var emailRequest = new EmailSendRequest
+                {
+                    DestinatariosUserIds = new List<int> { user.IdUsuario },
+                    CustomSubject = "Notificación de seguridad: cambio de contraseña — DIITRA",
+                    CustomBody = emailBody
+                };
 
-                await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_SENT",
-                    $"Notificación de cambio de contraseña enviada a {emailDestino} con token de seguridad.", "SEGURIDAD");
+                // Enviar el email en segundo plano (Fire-and-Forget) para no retrasar la respuesta de la API al cliente
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using (var scope = _serviceProvider.CreateScope())
+                        {
+                            var emailEngine = scope.ServiceProvider.GetRequiredService<diitra_application.Common.Notifications.IEmailEngineService>();
+                            await emailEngine.SendTemplatedEmailAsync(emailRequest);
+
+                            var audit = scope.ServiceProvider.GetRequiredService<IAuditService>();
+                            await audit.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_SENT",
+                                $"Correo exclusivo de cambio de contraseña enviado a {emailDestino} con token de seguridad.", "SEGURIDAD");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Registramos el error de forma segura en caso de que ocurra en el hilo de segundo plano
+                        try
+                        {
+                            using (var scope = _serviceProvider.CreateScope())
+                            {
+                                var audit = scope.ServiceProvider.GetRequiredService<IAuditService>();
+                                await audit.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_FAILED",
+                                    $"Error al enviar notificación de cambio de contraseña en segundo plano: {ex.Message}", "SEGURIDAD");
+                            }
+                        }
+                        catch { /* Evitar caídas del hilo */ }
+                    }
+                });
             }
             catch (Exception ex)
             {
-                // Capturar el error pero no fallar el cambio de contraseña si falla el servidor de email
+                // Capturar el error pero no fallar el cambio de contraseña si falla la inicialización del segundo plano
                 await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_FAILED",
-                    $"Error al enviar notificación de cambio de contraseña: {ex.Message}", "SEGURIDAD");
+                    $"Error al programar notificación de cambio de contraseña: {ex.Message}", "SEGURIDAD");
             }
         }
 
@@ -1368,6 +1454,60 @@ public class AuthService : IAuthService
 
         await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_REVERTED_ALERT",
             $"Contraseña restablecida de emergencia tras reporte de actividad sospechosa desde IP {ipAddress}.", "SEGURIDAD");
+
+        return true;
+    }
+
+    public async Task<bool> ResetPasswordWithRecoveryTokenAsync(string plainToken, string newPassword, string? ipAddress)
+    {
+        if (string.IsNullOrWhiteSpace(plainToken))
+        {
+            throw new InvalidOperationException("El token es obligatorio.");
+        }
+
+        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        var magicLink = await _context.Set<InvMagicLink>()
+            .Include(l => l.Usuario)
+            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash 
+                                   && l.Proposito == "PASSWORD_RECOVERY" 
+                                   && !l.Utilizado 
+                                   && l.FechaExpiracion > DateTime.Now);
+
+        if (magicLink == null)
+        {
+            throw new InvalidOperationException("El enlace de recuperación ha expirado, ya fue utilizado o es inválido.");
+        }
+
+        var user = magicLink.Usuario;
+        if (user == null || !user.Activo)
+        {
+            throw new InvalidOperationException("El usuario asociado no existe o está inactivo.");
+        }
+
+        if (user.TablaSigafi != "otros")
+        {
+            throw new InvalidOperationException("Solo los evaluadores externos pueden restablecer su contraseña local.");
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+        {
+            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
+        }
+
+        // Modificar contraseña
+        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
+        
+        // Consumir el token de recuperación
+        magicLink.Utilizado = true;
+        magicLink.FechaUtilizado = DateTime.Now;
+        magicLink.IpUtilizacion = ipAddress;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RESET_RECOVERY",
+            $"Contraseña restablecida de forma exitosa mediante flujo de recuperación desde IP {ipAddress}.", "SEGURIDAD");
 
         return true;
     }

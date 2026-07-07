@@ -13,6 +13,8 @@ interface RecuperarContraseniaProps {
 const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarContraseniaProps) => {
     const theme = currentTheme;
     const [identificador, setIdentificador] = useState('');
+    const [cedula, setCedula] = useState('');
+    const [requiereDesambiguacion, setRequiereDesambiguacion] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [enviado, setEnviado] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,11 +39,23 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
         setIsSubmitting(true);
         setError(null);
         try {
-            await fetch(`${API_BASE}/api/auth/recuperar-contrasenia`, {
+            const res = await fetch(`${API_BASE}/api/auth/recuperar-contrasenia`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identificador: identificador.trim() }),
+                body: JSON.stringify({ 
+                    identificador: identificador.trim(),
+                    cedula: requiereDesambiguacion ? cedula.trim() : null
+                }),
             });
+            const data = await res.json();
+
+            if (data.requiresDisambiguation) {
+                setRequiereDesambiguacion(true);
+                setError(data.message);
+                setIsSubmitting(false);
+                return;
+            }
+
             setEnviado(true);
         } catch {
             setError('Error de conexión. Por favor intenta nuevamente.');
@@ -105,8 +119,30 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
                                     placeholder="1777**** o nombre@istpet.edu.ec"
                                     autoComplete="username"
                                     autoFocus
+                                    disabled={requiereDesambiguacion}
                                 />
                             </div>
+
+                            {requiereDesambiguacion && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                    <label
+                                        htmlFor="cedula"
+                                        className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1"
+                                    >
+                                        Cédula / Identificación de la cuenta
+                                    </label>
+                                    <input
+                                        id="cedula"
+                                        type="text"
+                                        value={cedula}
+                                        onChange={(e) => setCedula(e.target.value)}
+                                        className="input-vercel h-11"
+                                        placeholder="Ingrese su identificación exacta"
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             {error && (
                                 <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
@@ -118,12 +154,12 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
                                 <button
                                     type="submit"
                                     id="btn-recuperar"
-                                    disabled={isSubmitting || !identificador.trim()}
+                                    disabled={isSubmitting || !identificador.trim() || (requiereDesambiguacion && !cedula.trim())}
                                     className="btn-vercel-primary w-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting
                                         ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : 'Enviar enlace de recuperación'
+                                        : requiereDesambiguacion ? 'Confirmar y enviar enlace' : 'Enviar enlace de recuperación'
                                     }
                                 </button>
 

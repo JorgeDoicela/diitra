@@ -1,5 +1,6 @@
 <p style="font-family: Arial, Helvetica, sans-serif; margin: 0 0 16px 0;">Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.</p>
 <p style="font-family: Arial, Helvetica, sans-serif; margin: 16px 0 24px 0;">Para ingresar a la plataforma de forma directa y segura y continuar con sus revisiones pendientes sin requerir contraseña, utilice el botón <strong>VER DETALLES EN DIITRA</strong> a continuación (vigente hasta la fecha límite <strong>{{fecha_limite}}</strong>).</p>
+{{#if mostrar_credenciales}}
 <div style="margin-top: 24px; padding: 20px; background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 8px; font-family: Arial, Helvetica, sans-serif;">
   <h4 style="margin: 0 0 12px 0; color: #666666; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif;">Credenciales de Acceso Convencional</h4>
   <p style="margin: 0 0 12px 0; font-size: 13.5px; color: #333333; line-height: 1.5; font-family: Arial, Helvetica, sans-serif;">Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:</p>
@@ -15,3 +16,10 @@
   </table>
   <p style="margin: 0; font-size: 12px; color: #666666; font-style: italic; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">* Por motivos de seguridad, es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.</p>
 </div>
+{{else}}
+<div style="margin-top: 24px; padding: 20px; background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 8px; font-family: Arial, Helvetica, sans-serif;">
+  <h4 style="margin: 0 0 12px 0; color: #666666; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif;">Credenciales de Acceso</h4>
+  <p style="margin: 0 0 12px 0; font-size: 13.5px; color: #333333; line-height: 1.5; font-family: Arial, Helvetica, sans-serif;">Para iniciar sesión de forma convencional a través de la página de login principal, utilice la **contraseña personalizada** que haya configurado anteriormente para su usuario (<strong>{{username}}</strong>).</p>
+  <p style="margin: 0; font-size: 12px; color: #666666; font-style: italic; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">* Si no recuerda su contraseña personalizada, puede restablecerla utilizando la opción <strong>¿Olvidó su contraseña?</strong> en el portal de acceso.</p>
+</div>
+{{/if}}

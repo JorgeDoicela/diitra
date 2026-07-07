@@ -3,6 +3,7 @@
   "{{project_title}}"
 </div>
 <p style="font-family: Segoe UI, Arial, sans-serif; margin: 16px 0 28px 0;">Para ingresar a la plataforma y emitir su dictamen de forma segura sin requerir contraseña, utilice el botón <strong>VER DETALLES EN DIITRA</strong> a continuación (vigente hasta la fecha límite <strong>{{fecha_limite}}</strong>).</p>
+{{#if mostrar_credenciales}}
 <div style="margin-top: 28px; padding: 22px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; font-family: Segoe UI, Arial, sans-serif;">
   <h4 style="margin: 0 0 12px 0; color: #475569; font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: Segoe UI, Arial, sans-serif;">Credenciales de Acceso Convencional</h4>
   <p style="margin: 0 0 12px 0; font-size: 13.5px; color: #334155; line-height: 1.5; font-family: Segoe UI, Arial, sans-serif;">Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:</p>
@@ -18,3 +19,10 @@
   </table>
   <p style="margin: 0; font-size: 12px; color: #64748b; font-style: italic; line-height: 1.4; font-family: Segoe UI, Arial, sans-serif;">* Por motivos de seguridad, es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.</p>
 </div>
+{{else}}
+<div style="margin-top: 28px; padding: 22px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; font-family: Segoe UI, Arial, sans-serif;">
+  <h4 style="margin: 0 0 12px 0; color: #475569; font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: Segoe UI, Arial, sans-serif;">Credenciales de Acceso</h4>
+  <p style="margin: 0 0 12px 0; font-size: 13.5px; color: #334155; line-height: 1.5; font-family: Segoe UI, Arial, sans-serif;">Para iniciar sesión de forma convencional a través de la página de login principal, utilice la **contraseña personalizada** que haya configurado anteriormente para su usuario (<strong>{{username}}</strong>).</p>
+  <p style="margin: 0; font-size: 12px; color: #64748b; font-style: italic; line-height: 1.4; font-family: Segoe UI, Arial, sans-serif;">* Si no recuerda su contraseña personalizada, puede restablecerla utilizando la opción <strong>¿Olvidó su contraseña?</strong> en el portal de acceso.</p>
+</div>
+{{/if}}

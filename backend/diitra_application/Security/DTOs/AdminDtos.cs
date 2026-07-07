@@ -42,6 +42,8 @@ public class UserMetadataDto
     public string? ResearchGateUrl { get; set; }
     public string? Especialidad { get; set; }
     public string? GradoAcademicoMaximo { get; set; }
+    public string? Nombre { get; set; }
+    public string? Email { get; set; }
 }
 
 public class RoleDto

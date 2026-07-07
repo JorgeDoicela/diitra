@@ -56,9 +56,16 @@ public class AdminController : ControllerBase
     [HttpPut("metadata/{uuid}")]
     public async Task<IActionResult> UpdateMetadata(string uuid, [FromBody] UserMetadataDto dto)
     {
-        var result = await _adminService.UpdateUserMetadataAsync(uuid, dto);
-        if (!result) return NotFound();
-        return Ok(new { message = "Metadata actualizada" });
+        try
+        {
+            var result = await _adminService.UpdateUserMetadataAsync(uuid, dto);
+            if (!result) return NotFound();
+            return Ok(new { message = "Perfil actualizado con éxito." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("roles/assign")]

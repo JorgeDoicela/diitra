@@ -71,6 +71,15 @@ public class MicrosoftLoginRequest
 public class PasswordRecoveryRequestDto
 {
     public string Identificador { get; set; } = null!;
+    public string? Cedula { get; set; }
+}
+
+/// <summary>Resultado de la solicitud de recuperación.</summary>
+public class PasswordRecoveryRequestResult
+{
+    public bool Exito { get; set; }
+    public bool RequiereDesambiguacion { get; set; }
+    public string? Message { get; set; }
 }
 
 /// <summary>Respuesta interna del servicio al validar el token de recuperación.</summary>
@@ -81,6 +90,7 @@ public class PasswordRecoveryValidationResult
     public string? NombreUsuario { get; set; }
     /// <summary>Cuando la contraseña en SIGAFI está hasheada (BCrypt) y no puede recuperarse.</summary>
     public bool EsHashInaccesible { get; set; }
+    public bool EsRevisorExterno { get; set; }
 }
 
 public class ChangePasswordRequestDto

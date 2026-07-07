@@ -20,7 +20,7 @@ public interface IAuthService
     /// Genera un token de recuperación (30 min) y envía el enlace al correo institucional del usuario.
     /// Siempre retorna true para evitar enumeración de usuarios.
     /// </summary>
-    Task<bool> RequestPasswordRecoveryAsync(string identificador, string? ipAddress);
+    Task<PasswordRecoveryRequestResult> RequestPasswordRecoveryAsync(string identificador, string? cedula, string? ipAddress);
     /// <summary>
     /// Valida el token de recuperación y retorna la contraseña original de SIGAFI si es legible.
     /// Consume el token (un solo uso).
@@ -36,4 +36,9 @@ public interface IAuthService
     /// Reestablece de emergencia la contraseña de un usuario si se detecta un cambio de credenciales sospechoso, invalidando sesiones anteriores.
     /// </summary>
     Task<bool> RevertSuspiciousPasswordChangeAsync(string plainToken, string newPassword, string? ipAddress);
+
+    /// <summary>
+    /// Restablece la contraseña de un usuario mediante token de recuperación de contraseña ordinario (solo para evaluadores externos).
+    /// </summary>
+    Task<bool> ResetPasswordWithRecoveryTokenAsync(string plainToken, string newPassword, string? ipAddress);
 }

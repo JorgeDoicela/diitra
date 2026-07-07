@@ -406,7 +406,7 @@ public class AdminService : IAdminService
 
     public async Task<UserMetadataDto?> GetUserMetadataAsync(string userUuid)
     {
-        var meta = await _context.InvUsuariosMetadata
+        var meta = await _context.InvUsuariosMetadata.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
 
         if (meta == null) return null;
@@ -417,7 +417,9 @@ public class AdminService : IAdminService
             GoogleScholarUrl = meta.GoogleScholarUrl,
             ResearchGateUrl = meta.ResearchGateUrl,
             Especialidad = meta.Especialidad,
-            GradoAcademicoMaximo = meta.GradoAcademicoMaximo
+            GradoAcademicoMaximo = meta.GradoAcademicoMaximo,
+            Nombre = meta.User?.Nombre,
+            Email = meta.User?.EmailInstitucional
         };
     }
 
@@ -438,6 +440,35 @@ public class AdminService : IAdminService
             GradoAcademicoMaximo = meta.GradoAcademicoMaximo
         };
         string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+        if (meta.User != null && meta.User.TablaSigafi == "otros")
+        {
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var cleanEmail = dto.Email.Trim().ToLower();
+                var emailExists = await _context.Users.AnyAsync(u => 
+                    u.IdUsuario != meta.IdUsuario 
+                    && u.Activo 
+                    && u.EmailInstitucional != null 
+                    && u.EmailInstitucional.ToLower() == cleanEmail);
+
+                if (emailExists)
+                {
+                    throw new InvalidOperationException("El correo electrónico ya se encuentra registrado para otro usuario activo.");
+                }
+
+                meta.User.EmailInstitucional = dto.Email.Trim();
+                if (meta.User.IdSigafi.Contains("@"))
+                {
+                    meta.User.IdSigafi = dto.Email.Trim();
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Nombre))
+            {
+                meta.User.Nombre = dto.Nombre.Trim();
+            }
+        }
 
         meta.OrcidId = dto.OrcidId;
         meta.ScopusId = dto.ScopusId;

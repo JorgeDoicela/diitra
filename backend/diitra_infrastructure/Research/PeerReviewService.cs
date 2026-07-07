@@ -1150,13 +1150,17 @@ public class PeerReviewService : IPeerReviewService
                 var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "AsignarArbitroExterno.html");
                 if (File.Exists(templatePath))
                 {
+                    // Comprobar si la contraseña actual en la BD coincide con la temporal por defecto
+                    bool mostrarCredenciales = BCrypt.Net.BCrypt.Verify("Diitra2026*", revisorUser.Contrasenia);
+
                     var templateHtml = await File.ReadAllTextAsync(templatePath);
                     var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
                     emailBody = template(new
                     {
                         project_title = project.Titulo,
                         fecha_limite = dto.FechaLimite.ToString("dd/MM/yyyy"),
-                        username = revisorUser.IdSigafi
+                        username = revisorUser.IdSigafi,
+                        mostrar_credenciales = mostrarCredenciales
                     });
                 }
                 else

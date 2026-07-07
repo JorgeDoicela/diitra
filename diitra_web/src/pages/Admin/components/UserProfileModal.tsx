@@ -8,6 +8,7 @@ interface UserProfileModalProps {
         id_profesor: string;
         nombre_completo: string;
         user_uuid: string;
+        type?: string;
     };
     onClose: () => void;
     onDraftCleared?: () => void;
@@ -30,7 +31,9 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
         google_scholar_url: '',
         research_gate_url: '',
         especialidad: '',
-        grado_academico_maximo: ''
+        grado_academico_maximo: '',
+        nombre: '',
+        email: ''
     });
 
     const [officialMetadata, setOfficialMetadata] = useState<any>(null);
@@ -63,7 +66,9 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                             google_scholar_url: typeof parsed.metadata.google_scholar_url === 'string' ? parsed.metadata.google_scholar_url : '',
                             research_gate_url: typeof parsed.metadata.research_gate_url === 'string' ? parsed.metadata.research_gate_url : '',
                             especialidad: typeof parsed.metadata.especialidad === 'string' ? parsed.metadata.especialidad : '',
-                            grado_academico_maximo: typeof parsed.metadata.grado_academico_maximo === 'string' ? parsed.metadata.grado_academico_maximo : ''
+                            grado_academico_maximo: typeof parsed.metadata.grado_academico_maximo === 'string' ? parsed.metadata.grado_academico_maximo : '',
+                            nombre: typeof parsed.metadata.nombre === 'string' ? parsed.metadata.nombre : '',
+                            email: typeof parsed.metadata.email === 'string' ? parsed.metadata.email : ''
                         };
                         setMetadata(validated);
                         setIsDraftRestored(true);
@@ -141,8 +146,10 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
             await api.put(`/Admin/metadata/${user.user_uuid}`, metadata);
             clearDraft();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving metadata:', error);
+            const msg = error.response?.data?.message || 'Ocurrió un error inesperado al actualizar el perfil.';
+            alert(msg);
         } finally {
             setSaving(false);
         }
@@ -206,6 +213,33 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                         </div>
                     ) : (
                         <>
+                            {user.type === 'EXTERNO' && (
+                                <section className="grid grid-cols-2 gap-4 border border-border-thin bg-surface-hover/20 p-4 rounded-xl mb-6 animate-fade-in">
+                                    <div className="space-y-1.5 col-span-2">
+                                        <label className="section-label text-text-dim">Nombre Completo</label>
+                                        <input 
+                                            type="text" 
+                                            value={metadata.nombre || ''}
+                                            onChange={(e) => setMetadata({...metadata, nombre: e.target.value})}
+                                            className="input-vercel"
+                                            placeholder="Nombres y Apellidos"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5 col-span-2">
+                                        <label className="section-label text-text-dim">Correo Electrónico</label>
+                                        <input 
+                                            type="email" 
+                                            value={metadata.email || ''}
+                                            onChange={(e) => setMetadata({...metadata, email: e.target.value})}
+                                            className="input-vercel"
+                                            placeholder="correo@ejemplo.com"
+                                            required
+                                        />
+                                    </div>
+                                </section>
+                            )}
+
                             <section className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="section-label text-text-dim">
