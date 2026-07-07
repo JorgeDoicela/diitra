@@ -36,6 +36,28 @@ interface NotificationsContextType {
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
+class ToastErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.warn('Toast rendering failed due to external DOM interference (handled locally):', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return null;
+        }
+        return this.props.children;
+    }
+}
+
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -217,62 +239,65 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             {children}
 
             {/* Real-time Vercel-style Toasts */}
-            <div className="toast-container-vercel">
-                {toasts.map(t => {
-                    const toastType = t.type || 'default';
-                    let IconComponent = Bell;
-                    let typeClass = 'toast-vercel-default';
+            <ToastErrorBoundary key={toasts.length}>
+                <div className="toast-container-vercel">
+                    {toasts.map(t => {
+                        const toastType = t.type || 'default';
+                        let IconComponent = Bell;
+                        let typeClass = 'toast-vercel-default';
 
-                    if (toastType === 'success') {
-                        IconComponent = CheckCircle2;
-                        typeClass = 'toast-vercel-success';
-                    } else if (toastType === 'error') {
-                        IconComponent = XCircle;
-                        typeClass = 'toast-vercel-error';
-                    } else if (toastType === 'warning') {
-                        IconComponent = AlertCircle;
-                        typeClass = 'toast-vercel-warning';
-                    } else if (toastType === 'info') {
-                        IconComponent = Info;
-                        typeClass = 'toast-vercel-info';
-                    }
+                        if (toastType === 'success') {
+                            IconComponent = CheckCircle2;
+                            typeClass = 'toast-vercel-success';
+                        } else if (toastType === 'error') {
+                            IconComponent = XCircle;
+                            typeClass = 'toast-vercel-error';
+                        } else if (toastType === 'warning') {
+                            IconComponent = AlertCircle;
+                            typeClass = 'toast-vercel-warning';
+                        } else if (toastType === 'info') {
+                            IconComponent = Info;
+                            typeClass = 'toast-vercel-info';
+                        }
 
-                    return (
-                        <div 
-                            key={t.id} 
-                            className={`toast-vercel ${typeClass} group cursor-pointer`}
-                            onClick={() => {
-                                if (t.url) {
-                                    navigate(t.url);
-                                }
-                                setToasts(prev => prev.filter(x => x.id !== t.id));
-                            }}
-                        >
-                            <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
-                                <IconComponent size={14} />
-                            </div>
-                            <div className="flex-1 min-w-0 space-y-0.5">
-                                <h4 className="text-xs font-semibold text-text-main leading-tight">{t.title}</h4>
-                                <p className="text-[10px] text-text-dim leading-relaxed">{t.body}</p>
-                                {t.url && (
-                                    <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase mt-1">
-                                        Ver detalle
-                                    </span>
-                                )}
-                            </div>
-                            <button 
-                                className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
-                                onClick={(e) => {
-                                    e.stopPropagation();
+                        return (
+                            <div 
+                                key={t.id} 
+                                className={`toast-vercel ${typeClass} group cursor-pointer`}
+                                translate="no"
+                                onClick={() => {
+                                    if (t.url) {
+                                        navigate(t.url);
+                                    }
                                     setToasts(prev => prev.filter(x => x.id !== t.id));
                                 }}
                             >
-                                <X size={12} />
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
+                                <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
+                                    <IconComponent size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                    <h4 className="text-xs font-semibold text-text-main leading-tight">{t.title}</h4>
+                                    <p className="text-[10px] text-text-dim leading-relaxed">{t.body}</p>
+                                    {t.url && (
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase mt-1">
+                                            Ver detalle
+                                        </span>
+                                    )}
+                                </div>
+                                <button 
+                                    className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setToasts(prev => prev.filter(x => x.id !== t.id));
+                                    }}
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            </ToastErrorBoundary>
         </NotificationsContext.Provider>
     );
 };
