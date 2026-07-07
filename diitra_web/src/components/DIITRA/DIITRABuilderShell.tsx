@@ -1320,7 +1320,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         </div>
 
                                         {/* Visor de PDF */}
-                                        <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl p-2 flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
+                                        <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
                                             {isGenerating ? (
                                                 <div className="flex-1 flex flex-col items-center justify-center gap-6">
                                                     <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />

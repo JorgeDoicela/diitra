@@ -210,11 +210,15 @@ CREATE TABLE inv_grupos_investigacion (
     categoriaConsolidacion VARCHAR(50) DEFAULT 'En Formación' COMMENT 'En Formación, Consolidado',
     estado               VARCHAR(20)  DEFAULT 'Aprobado',
     activo               TINYINT(1)   DEFAULT 1,
+    eliminado            TINYINT(1)   DEFAULT 0,
+    fechaEliminacion     TIMESTAMP    NULL,
+    eliminadoPorUsuarioId INT(11)     NULL,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     linkWhatsapp         VARCHAR(255) NULL,
     telefonoCoordinador  VARCHAR(20)  NULL,
     FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
-    FOREIGN KEY (idDominio)     REFERENCES inv_dominios(idDominio) ON DELETE SET NULL
+    FOREIGN KEY (idDominio)     REFERENCES inv_dominios(idDominio) ON DELETE SET NULL,
+    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_pnd_objetivos (
@@ -321,10 +325,14 @@ CREATE TABLE inv_convocatorias (
     financiamientoExt  TINYINT(1)    DEFAULT 0,
     metaProduccion     VARCHAR(255),
     estado             ENUM('Borrador','Abierta','Cerrada','Anulada') DEFAULT 'Borrador',
+    eliminado             TINYINT(1)    DEFAULT 0,
+    fechaEliminacion      TIMESTAMP     NULL,
+    eliminadoPorUsuarioId INT(11)       NULL,
     FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo),
     FOREIGN KEY (idTipoConvocatoria) REFERENCES inv_tipos_convocatoria(idTipoConvocatoria),
     FOREIGN KEY (idAgendaZonal) REFERENCES inv_agendas_zonales(idAgendaZonal),
-    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica)
+    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica),
+    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_convocatorias_hitos (
@@ -391,6 +399,9 @@ CREATE TABLE inv_proyectos (
     valorEjecucion        DECIMAL(12,2) DEFAULT 0.00,
     idObjetivoPnd         INT           NULL COMMENT 'Vínculo con el Plan Nacional de Desarrollo',
     activo                TINYINT(1)    DEFAULT 1,
+    eliminado             TINYINT(1)    DEFAULT 0,
+    fechaEliminacion      TIMESTAMP     NULL,
+    eliminadoPorUsuarioId INT(11)       NULL,
     fechaRegistro         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -417,7 +428,8 @@ CREATE TABLE inv_proyectos (
     firmadoPor           INT(11) NULL,
     idDspaceHandle       VARCHAR(255)  NULL COMMENT 'Handle del Repositorio Digital DSpace',
     metadataCacesJson    JSON          NULL COMMENT 'Snapshot de indicadores para acreditación',
-    FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+    FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Matriz de Marco Lógico (MML) - Requisito SENESCYT

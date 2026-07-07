@@ -244,10 +244,8 @@ public class PeerReviewService : IPeerReviewService
             puntajeMinimo = 70m;
         }
 
-        // En doble ciego: omitir datos identificadores del proyecto
-        string tituloParaRevisor = revision.EsDobleCiego
-            ? $"Propuesta #{proyecto.IdProyecto:D4}" // Título anonimizado
-            : proyecto.Titulo;
+        // El título del proyecto no debe ser anonimizado según el CACES, ya que es fundamental para evaluar coherencia e impacto.
+        string tituloParaRevisor = proyecto.Titulo;
 
         // ── FALLBACK DE CONTENIDO COMPLETO (DOSSIER TÉCNICO) ────────────────────────
         var docInstance = await _context.DocumentInstances
@@ -319,7 +317,7 @@ public class PeerReviewService : IPeerReviewService
             IdRubrica = idRubrica,
             NombreRubrica = nombreRubrica,
             ProyectoTitulo = tituloParaRevisor,
-            LineaInvestigacion = revision.EsDobleCiego ? null : proyecto.IdSublineaNavigation?.Nombre,
+            LineaInvestigacion = proyecto.IdSublineaNavigation?.Nombre,
             Justificacion = justificacionFinal,
             Metodologia = metodologiaFinal,
             Antecedentes = antecedentesFinal,

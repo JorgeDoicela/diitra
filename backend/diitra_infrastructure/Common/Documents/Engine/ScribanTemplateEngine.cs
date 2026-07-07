@@ -699,30 +699,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 "carrera", "carreras_coejecutoras", "programa", "grupo_investigacion", "grupo_investigacion_nombre"
             };
 
-            string idProyectoStr = "";
-            if (data.TryGetValue("id_proyecto", out var idVal) && idVal != null)
-            {
-                idProyectoStr = idVal.ToString() ?? "";
-            }
-            else if (data.TryGetValue("id", out var idVal2) && idVal2 != null)
-            {
-                idProyectoStr = idVal2.ToString() ?? "";
-            }
-
-            string tituloAnonimo = "Propuesta de Investigación Anonimizada";
-            if (!string.IsNullOrEmpty(idProyectoStr) && int.TryParse(idProyectoStr, out int idProj))
-            {
-                tituloAnonimo = $"Propuesta #{idProj:D4}";
-            }
-
-            if (data.ContainsKey("titulo"))
-            {
-                data["titulo"] = tituloAnonimo;
-            }
-            if (data.ContainsKey("Titulo"))
-            {
-                data["Titulo"] = tituloAnonimo;
-            }
+            // El título del proyecto no debe ser anonimizado según el CACES, ya que es fundamental para evaluar coherencia e impacto.
 
             ApplyBlindMaskRecursive(data, fieldsToMask);
         }
