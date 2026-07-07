@@ -1935,7 +1935,72 @@ namespace diitra_infrastructure.Research
 
         public async Task<SyncResult> DeleteProjectAsync(string uuid, string? userIdRef)
         {
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado o no existe." };
+            }
+
+            if (project.Estado != "Borrador" && project.Estado != "En Corrección" &&
+                project.Estado != "Prepropuesta" && project.Estado != "Prepropuesta Rechazada")
+            {
+                return new SyncResult { Success = false, Message = "Solo se pueden eliminar prepropuestas y borradores de proyectos." };
+            }
+
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Titulo = project.Titulo,
+                CodigoInstitucional = project.CodigoInstitucional,
+                Estado = project.Estado,
+                DescripcionProyecto = project.DescripcionProyecto,
+                Activo = project.Activo,
+                FechaRegistro = project.FechaRegistro
+            });
+
+            var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+            int? internalUserId = internalUser?.IdUsuario;
+
+            project.Eliminado = true;
+            project.FechaEliminacion = DateTime.UtcNow;
+            project.EliminadoPorUsuarioId = internalUserId;
+
+            await _context.SaveChangesAsync();
+
+            await _auditService.LogActionAsync(internalUserId, "ELIMINAR_PROYECTO_TEMPORAL", $"Proyecto enviado a la papelera: {project.Titulo}", "PROYECTOS", beforeJson, null);
+
+            return new SyncResult { Success = true };
+        }
+
+        public async Task<SyncResult> RestoreProjectAsync(string uuid, string? userIdRef)
+        {
             var project = await _context.InvProyectos
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado o no existe." };
+            }
+
+            var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+            int? internalUserId = internalUser?.IdUsuario;
+
+            project.Eliminado = false;
+            project.FechaEliminacion = null;
+            project.EliminadoPorUsuarioId = null;
+
+            await _context.SaveChangesAsync();
+
+            await _auditService.LogActionAsync(internalUserId, "RESTAURAR_PROYECTO", $"Proyecto restaurado de la papelera: {project.Titulo}", "PROYECTOS", null, null);
+
+            return new SyncResult { Success = true };
+        }
+
+        public async Task<SyncResult> PurgeProjectAsync(string uuid, string? userIdRef)
+        {
+            var project = await _context.InvProyectos
+                .IgnoreQueryFilters()
                 .Include(p => p.InvProyectosCarreras)
                 .Include(p => p.InvProyectosProfesores)
                 .Include(p => p.InvProyectosAlumnos)
@@ -1952,12 +2017,6 @@ namespace diitra_infrastructure.Research
             if (project == null)
             {
                 return new SyncResult { Success = false, Message = "Proyecto no encontrado o no existe." };
-            }
-
-            if (project.Estado != "Borrador" && project.Estado != "En Corrección" &&
-                project.Estado != "Prepropuesta" && project.Estado != "Prepropuesta Rechazada")
-            {
-                return new SyncResult { Success = false, Message = "Solo se pueden eliminar prepropuestas y borradores de proyectos." };
             }
 
             string beforeJson = System.Text.Json.JsonSerializer.Serialize(new

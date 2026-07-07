@@ -176,6 +176,8 @@ builder.Services.AddSingleton<diitra_api.Services.BackupBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.BackupBackgroundService>());
 builder.Services.AddSingleton<diitra_api.Services.CalendarioAlertasJob>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.CalendarioAlertasJob>());
+builder.Services.AddSingleton<diitra_api.Services.RecycleBinCleanupBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.RecycleBinCleanupBackgroundService>());
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");

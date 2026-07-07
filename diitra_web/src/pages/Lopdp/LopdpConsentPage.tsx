@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ShieldCheck, LogOut, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -7,6 +8,7 @@ import { useNotifications } from '../../api/NotificationsContext';
 const LopdpConsentPage: React.FC = () => {
     const { logout, refreshUser, user } = useAuth();
     const { addToast } = useNotifications();
+    const navigate = useNavigate();
 
     const [hasRead, setHasRead] = useState(false);
     const [accepted, setAccepted] = useState(false);
@@ -43,6 +45,11 @@ const LopdpConsentPage: React.FC = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
     };
 
     return (
@@ -139,7 +146,7 @@ const LopdpConsentPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                     <button
                         type="button"
-                        onClick={logout}
+                        onClick={handleLogout}
                         className="btn-vercel-secondary sm:w-1/3 order-2 sm:order-1"
                     >
                         <LogOut size={12} />

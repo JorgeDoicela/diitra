@@ -31,6 +31,9 @@ public partial class InvProyecto
     public string? IdDspaceHandle { get; set; }
     public string? MetadataCacesJson { get; set; }
     public bool? Activo { get; set; }
+    public bool? Eliminado { get; set; }
+    public DateTime? FechaEliminacion { get; set; }
+    public int? EliminadoPorUsuarioId { get; set; }
     public bool? DisponibleAdopcion { get; set; }
     public DateTime? FechaRegistro { get; set; }
     public DateTime? FechaModificacion { get; set; }

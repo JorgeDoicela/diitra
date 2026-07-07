@@ -1219,4 +1219,80 @@ public class GroupsService : IGroupsService
         }
         return phone;
     }
+
+    public async Task<bool> DeleteAsync(string uuid, string? userIdRef = null)
+    {
+        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        var beforeState = new
+        {
+            group.Uuid,
+            group.Nombre,
+            group.Estado,
+            group.Activo
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
+        group.Eliminado = true;
+        group.FechaEliminacion = DateTime.UtcNow;
+        group.EliminadoPorUsuarioId = internalUserId;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(internalUserId, "ELIMINAR_GRUPO_TEMPORAL", $"Grupo enviado a la papelera: {group.Nombre}", "INVESTIGACION", beforeJson, null);
+
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(string uuid, string? userIdRef = null)
+    {
+        var group = await _context.InvGruposInvestigacion
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
+        group.Eliminado = false;
+        group.FechaEliminacion = null;
+        group.EliminadoPorUsuarioId = null;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(internalUserId, "RESTAURAR_GRUPO", $"Grupo restaurado de la papelera: {group.Nombre}", "INVESTIGACION", null, null);
+
+        return true;
+    }
+
+    public async Task<bool> PurgeAsync(string uuid, string? userIdRef = null)
+    {
+        var group = await _context.InvGruposInvestigacion
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        var beforeState = new
+        {
+            group.Uuid,
+            group.Nombre,
+            group.Estado,
+            group.Activo
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
+        _context.InvGruposInvestigacion.Remove(group);
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(internalUserId, "ELIMINAR_GRUPO", $"Eliminación física del grupo: {group.Nombre}", "INVESTIGACION", beforeJson, null);
+
+        return true;
+    }
 }

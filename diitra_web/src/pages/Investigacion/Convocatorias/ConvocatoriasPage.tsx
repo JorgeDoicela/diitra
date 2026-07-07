@@ -663,7 +663,7 @@ const ConvocatoriasPage = () => {
     const handleDelete = async (uuid: string) => {
         if (!await confirm({
             title: "Eliminar Convocatoria",
-            message: "¿Estás seguro de eliminar esta convocatoria?",
+            message: "¿Estás seguro de eliminar esta convocatoria? Se enviará a la papelera de reciclaje y se conservará por 30 días antes de eliminarse de forma automática y definitiva.",
             confirmText: "Eliminar",
             cancelText: "Cancelar",
             variant: "destructive"

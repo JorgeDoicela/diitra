@@ -44,6 +44,8 @@ namespace Diitra.Application.Research
         /// Elimina físicamente un proyecto y todas sus relaciones en cascada (solo permitido para borradores/correcciones).
         /// </summary>
         Task<SyncResult> DeleteProjectAsync(string uuid, string? userIdRef);
+        Task<SyncResult> PurgeProjectAsync(string uuid, string? userIdRef);
+        Task<SyncResult> RestoreProjectAsync(string uuid, string? userIdRef);
 
         /// <summary>
         /// Sincroniza y actualiza dinámicamente el equipo de investigadores de un proyecto en cualquier fase.

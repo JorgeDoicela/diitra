@@ -443,7 +443,7 @@ const MyProjectsPage: React.FC = () => {
                                 <div className="space-y-2">
                                     <h4 className="font-bold text-text-main text-base">¿Eliminar propuesta de investigación?</h4>
                                     <p className="text-text-dim text-xs leading-relaxed">
-                                        Esta acción eliminará de forma permanente la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
+                                        Esta acción enviará la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong> a la papelera de reciclaje, donde se conservará por 30 días antes de eliminarse permanentemente de forma automática.
                                     </p>
                                     {deletionError && (
                                         <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">

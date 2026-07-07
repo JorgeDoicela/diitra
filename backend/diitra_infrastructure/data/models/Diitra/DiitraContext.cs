@@ -166,10 +166,16 @@ public partial class DiitraContext : DbContext
     {
         // La conexión se inyecta desde Program.cs vía AddDbContext<DiitraContext>
         // No se configura aquí para evitar credenciales en el código fuente
+        optionsBuilder.ConfigureWarnings(warnings => 
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<InvProyecto>().HasQueryFilter(p => p.Eliminado != true);
+        modelBuilder.Entity<InvConvocatoria>().HasQueryFilter(c => c.Eliminado != true);
+        modelBuilder.Entity<InvGrupoInvestigacion>().HasQueryFilter(g => g.Eliminado != true);
+
         // ============================================================
         // TABLAS SIGAFI (configuración mínima necesaria)
         // Solo las propiedades y llaves que Diitra utiliza
@@ -785,6 +791,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaCreacion).HasColumnName("fechaCreacion");
             entity.Property(e => e.CategoriaConsolidacion).HasColumnName("categoriaConsolidacion").HasMaxLength(50).HasDefaultValue("En Formación");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
+            entity.Property(e => e.Eliminado).HasColumnName("eliminado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.FechaEliminacion).HasColumnName("fechaEliminacion");
+            entity.Property(e => e.EliminadoPorUsuarioId).HasColumnName("eliminadoPorUsuarioId");
             entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("Aprobado");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.LinkWhatsapp).HasColumnName("linkWhatsapp").HasMaxLength(255);
@@ -865,6 +874,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FinanciamientoExt).HasColumnName("financiamientoExt").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.MetaProduccion).HasColumnName("metaProduccion").HasMaxLength(255);
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
+            entity.Property(e => e.Eliminado).HasColumnName("eliminado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.FechaEliminacion).HasColumnName("fechaEliminacion");
+            entity.Property(e => e.EliminadoPorUsuarioId).HasColumnName("eliminadoPorUsuarioId");
 
             entity.HasOne(d => d.IdPeriodoNavigation).WithMany().HasForeignKey(d => d.IdPeriodo).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_conv_periodo");
             entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.Convocatorias).HasForeignKey(d => d.IdRubrica).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_conv_rubrica");
@@ -946,6 +958,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdDspaceHandle).HasColumnName("idDspaceHandle").HasMaxLength(255);
             entity.Property(e => e.MetadataCacesJson).HasColumnName("metadataCacesJson").HasColumnType("json");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
+            entity.Property(e => e.Eliminado).HasColumnName("eliminado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.FechaEliminacion).HasColumnName("fechaEliminacion");
+            entity.Property(e => e.EliminadoPorUsuarioId).HasColumnName("eliminadoPorUsuarioId");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
 

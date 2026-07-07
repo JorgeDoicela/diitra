@@ -25,6 +25,9 @@ public partial class InvConvocatoria
     public bool FinanciamientoExt { get; set; }
     public string? MetaProduccion { get; set; }
     public string Estado { get; set; } = "Borrador";
+    public bool? Eliminado { get; set; }
+    public DateTime? FechaEliminacion { get; set; }
+    public int? EliminadoPorUsuarioId { get; set; }
 
     public virtual Periodo IdPeriodoNavigation { get; set; } = null!;
     public virtual InvRubrica? IdRubricaNavigation { get; set; }

@@ -455,7 +455,7 @@ public class ConvocatoriaService : IConvocatoriaService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(string uuid)
+    public async Task<bool> DeleteAsync(string uuid, string? userIdRef = null)
     {
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
@@ -477,10 +477,71 @@ public class ConvocatoriaService : IConvocatoriaService
         };
         string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
+        conv.Eliminado = true;
+        conv.FechaEliminacion = DateTime.UtcNow;
+        conv.EliminadoPorUsuarioId = internalUserId;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(internalUserId, "ELIMINAR_CONVOCATORIA_TEMPORAL", $"Convocatoria enviada a la papelera: {conv.Titulo}", "CONVOCATORIAS", beforeJson, null);
+
+        return true;
+    }
+
+    public async Task<bool> RestoreAsync(string uuid, string? userIdRef = null)
+    {
+        var conv = await _context.InvConvocatorias
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Uuid == uuid);
+        if (conv == null) return false;
+
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
+        conv.Eliminado = false;
+        conv.FechaEliminacion = null;
+        conv.EliminadoPorUsuarioId = null;
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(internalUserId, "RESTAURAR_CONVOCATORIA", $"Convocatoria restaurada de la papelera: {conv.Titulo}", "CONVOCATORIAS", null, null);
+
+        return true;
+    }
+
+    public async Task<bool> PurgeAsync(string uuid, string? userIdRef = null)
+    {
+        var conv = await _context.InvConvocatorias
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Uuid == uuid);
+        if (conv == null) return false;
+
+        var tieneProyectos = await _context.InvProyectos.AnyAsync(p => p.IdConvocatoria == conv.IdConvocatoria);
+        if (tieneProyectos)
+        {
+            throw new InvalidOperationException("No se puede eliminar permanentemente la convocatoria porque tiene proyectos asociados.");
+        }
+
+        var beforeState = new
+        {
+            conv.Uuid,
+            conv.CodigoConvocatoria,
+            conv.Titulo,
+            conv.Anio,
+            conv.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
+        var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+        int? internalUserId = internalUser?.IdUsuario;
+
         _context.InvConvocatorias.Remove(conv);
         await _context.SaveChangesAsync();
 
-        await _auditService.LogActionAsync(null, "ELIMINAR_CONVOCATORIA", $"Eliminación de convocatoria {conv.Titulo}", "CONVOCATORIAS", beforeJson, null);
+        await _auditService.LogActionAsync(internalUserId, "ELIMINAR_CONVOCATORIA", $"Eliminación física de convocatoria: {conv.Titulo}", "CONVOCATORIAS", beforeJson, null);
 
         return true;
     }

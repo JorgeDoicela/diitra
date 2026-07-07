@@ -7,6 +7,7 @@ using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
 using Microsoft.Extensions.Logging;
 using diitra_domain.Identity.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace diitra_infrastructure.Common.Notifications
 {
@@ -15,15 +16,18 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly DiitraContext _context;
         private readonly IEnumerable<INotificationDriver> _drivers;
         private readonly ILogger<NotificationService> _logger;
+        private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
 
         public NotificationService(
             DiitraContext context, 
             IEnumerable<INotificationDriver> drivers,
-            ILogger<NotificationService> logger)
+            ILogger<NotificationService> logger,
+            Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory)
         {
             _context = context;
             _drivers = drivers;
             _logger = logger;
+            _scopeFactory = scopeFactory;
         }
 
         public async Task NotifyUserAsync(int userId, string title, string body, string category = "SISTEMA", string? url = null, Dictionary<string, string>? extraData = null)
@@ -47,7 +51,7 @@ namespace diitra_infrastructure.Common.Notifications
             if (user != null)
             {
                 var resolved = await ResolveUserEmailAndNameAsync(user);
-                await DispatchToDriversAsync(userId, resolved.Email ?? "", resolved.Name, title, body, url, extraData);
+                DispatchToDriversBackground(userId, resolved.Email ?? "", resolved.Name, title, body, url, extraData);
             }
         }
 
@@ -101,7 +105,7 @@ namespace diitra_infrastructure.Common.Notifications
                 try
                 {
                     var resolved = await ResolveUserEmailAndNameAsync(user);
-                    await DispatchToDriversAsync(
+                    DispatchToDriversBackground(
                         user.IdUsuario,
                         resolved.Email ?? "",
                         resolved.Name,
@@ -169,7 +173,7 @@ namespace diitra_infrastructure.Common.Notifications
                 try
                 {
                     var resolved = await ResolveUserEmailAndNameAsync(user);
-                    await DispatchToDriversAsync(
+                    DispatchToDriversBackground(
                         user.IdUsuario,
                         resolved.Email ?? "",
                         resolved.Name,
@@ -228,7 +232,7 @@ namespace diitra_infrastructure.Common.Notifications
             return (null, name);
         }
 
-        private async Task DispatchToDriversAsync(
+        private void DispatchToDriversBackground(
             int userId,
             string recipientContact,
             string recipientName,
@@ -237,25 +241,38 @@ namespace diitra_infrastructure.Common.Notifications
             string? url,
             Dictionary<string, string>? extraData)
         {
-            foreach (var driver in _drivers)
+            _ = Task.Run(async () =>
             {
                 try
                 {
-                    string contact = driver.Name == "Email" ? recipientContact : userId.ToString();
-
-                    if (string.IsNullOrEmpty(contact) && driver.Name == "Email")
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        _logger.LogWarning("Usuario {UserId} sin email institucional, omitiendo envio Email", userId);
-                        continue;
-                    }
+                        var scopedDrivers = scope.ServiceProvider.GetServices<INotificationDriver>();
+                        foreach (var driver in scopedDrivers)
+                        {
+                            try
+                            {
+                                string contact = driver.Name == "Email" ? recipientContact : userId.ToString();
 
-                    await driver.SendAsync(contact, title, body, url, recipientName, extraData);
+                                if (string.IsNullOrEmpty(contact) && driver.Name == "Email")
+                                {
+                                    continue;
+                                }
+
+                                await driver.SendAsync(contact, title, body, url, recipientName, extraData);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error enviando notificacion via driver {Driver} a usuario {UserId} en segundo plano", driver.Name, userId);
+                            }
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error enviando notificacion via driver {Driver} a usuario {UserId}", driver.Name, userId);
+                    _logger.LogError(ex, "Error critico al despachar notificaciones en segundo plano para usuario {UserId}", userId);
                 }
-            }
+            });
         }
 
         private static string? MapRoleToTablaSigafi(string role)

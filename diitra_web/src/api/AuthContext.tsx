@@ -141,34 +141,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
-        try {
-            // Unsubscribe from Web Push notifications on the server
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                const registration = await navigator.serviceWorker.ready;
-                const subscription = await registration.pushManager.getSubscription();
-                if (subscription) {
-                    const subJson = subscription.toJSON();
-                    const tokenString = `${subJson.endpoint}|${subJson.keys?.p256dh || ''}|${subJson.keys?.auth || ''}`;
-                    try {
-                        await api.post('/Admin/notifications/unsubscribe', {
-                            device_token: tokenString
-                        });
-                    } catch (e) {
-                        console.error('Error unsubscribing push on server:', e);
-                    }
-                    await subscription.unsubscribe();
-                }
-            }
-        } catch (err) {
-            console.error('Error in push unsubscription:', err);
-        }
-
-        try {
-            await api.post('/auth/logout');
-        } catch (err) {}
+        // 1. Limpieza local inmediata para que la UI responda al instante (milisegundos)
         setUser(null);
         localStorage.removeItem('diitra_logged_in');
         localStorage.removeItem('web_push_active');
+
+        // 2. Ejecutar desuscripción y logout en segundo plano de forma no bloqueante
+        (async () => {
+            try {
+                const logoutTasks: Promise<any>[] = [];
+
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    // getRegistration() no bloquea la ejecución si el service worker no está listo
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        const subscription = await registration.pushManager.getSubscription();
+                        if (subscription) {
+                            const subJson = subscription.toJSON();
+                            const tokenString = `${subJson.endpoint}|${subJson.keys?.p256dh || ''}|${subJson.keys?.auth || ''}`;
+                            logoutTasks.push(
+                                api.post('/Admin/notifications/unsubscribe', { device_token: tokenString })
+                                    .catch(e => console.error('Error unsubscribing push on server:', e))
+                            );
+                            logoutTasks.push(
+                                subscription.unsubscribe()
+                                    .catch(e => console.error('Error unsubscribing browser push:', e))
+                            );
+                        }
+                    }
+                }
+
+                // Cierre de sesión en el backend
+                logoutTasks.push(api.post('/auth/logout').catch(() => {}));
+
+                await Promise.all(logoutTasks);
+            } catch (err) {
+                console.error('Error procesando deslogueo en segundo plano:', err);
+            }
+        })();
     };
 
     const hasPermission = useCallback((module: string, operation: string): boolean => {

@@ -9,7 +9,9 @@ public interface IConvocatoriaService
     Task<string> CreateAsync(CreateConvocatoriaDto dto);
     Task<bool> UpdateAsync(string uuid, CreateConvocatoriaDto dto);
     Task<bool> ChangeStatusAsync(string uuid, string newState);
-    Task<bool> DeleteAsync(string uuid);
+    Task<bool> DeleteAsync(string uuid, string? userIdRef = null);
+    Task<bool> RestoreAsync(string uuid, string? userIdRef = null);
+    Task<bool> PurgeAsync(string uuid, string? userIdRef = null);
     Task<IEnumerable<PeriodoDto>> GetActivePeriodsAsync();
     Task<IEnumerable<object>> GetCatalogosTiposAsync();
     Task<IEnumerable<object>> GetCatalogosAgendasAsync();

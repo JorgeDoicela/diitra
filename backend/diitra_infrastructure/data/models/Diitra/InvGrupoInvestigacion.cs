@@ -20,6 +20,9 @@ public partial class InvGrupoInvestigacion
     public DateOnly? FechaCreacion { get; set; }
     public string? CategoriaConsolidacion { get; set; } = "En Formación";
     public bool? Activo { get; set; }
+    public bool? Eliminado { get; set; }
+    public DateTime? FechaEliminacion { get; set; }
+    public int? EliminadoPorUsuarioId { get; set; }
     public string? Estado { get; set; } = "Aprobado";
     public DateTime? FechaRegistro { get; set; }
     public string? LinkWhatsapp { get; set; }

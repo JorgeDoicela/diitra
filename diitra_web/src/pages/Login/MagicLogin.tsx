@@ -37,7 +37,9 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const pinPageUrl = `${window.location.origin}/auth/pin`;
+    const pinPageUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://192.168.7.103/auth/pin'
+        : `${window.location.origin}/auth/pin`;
 
     const handleAccess = async () => {
         if (!token) return;
@@ -134,14 +136,14 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <div className="space-y-2">
                                 <h3 className="text-sm font-semibold text-text-main uppercase">Verificación de Enlace</h3>
                                 <p className="text-xs text-text-dim leading-relaxed">
-                                    Para evitar que los filtros automáticos de seguridad de tu correo consuman tu enlace de acceso único, presiona el botón a continuación para ingresar al sistema.
+                                    Para confirmar tu identidad y elegir cómo deseas acceder al sistema, por favor presiona el botón a continuación.
                                 </p>
                             </div>
                             <button
                                 onClick={handleAccess}
                                 className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 group"
                             >
-                                <span>Ingresar a DIITRA</span>
+                                <span>Confirmar Acceso</span>
                                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                             </button>
                         </div>
@@ -241,7 +243,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                         </p>
                                         <div className="mt-2">
                                             <p className="text-[9px] text-brand text-center leading-relaxed">
-                                                <strong>Aviso de seguridad:</strong> Cada vez que abres este enlace desde tu correo, se genera un nuevo PIN y el anterior se invalida automáticamente.
+                                                <strong>Aviso de seguridad:</strong> Por tu seguridad, cada clic en el enlace de tu correo genera un nuevo código PIN y el código anterior dejará de funcionar.
                                             </p>
                                         </div>
                                     </div>

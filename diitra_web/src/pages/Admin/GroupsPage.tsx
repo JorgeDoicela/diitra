@@ -309,7 +309,7 @@ const GroupsPage = () => {
         const title = isAdmin ? 'Desactivar Grupo' : 'Eliminar Propuesta';
         const confirmMsg = isAdmin
             ? `¿Está seguro de desactivar el grupo "${name}"?`
-            : `¿Está seguro de eliminar su propuesta de grupo "${name}"?`;
+            : `¿Está seguro de eliminar su propuesta de grupo "${name}"? Se enviará a la papelera de reciclaje y se conservará por 30 días antes de eliminarse de forma automática y definitiva.`;
 
         setConfirmDialog({
             isOpen: true,

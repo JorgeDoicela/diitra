@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 
@@ -120,9 +121,10 @@ public class ConvocatoriasController : ControllerBase
     {
         try
         {
-            var result = await _convocatoriaService.DeleteAsync(uuid);
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _convocatoriaService.DeleteAsync(uuid, userIdRef);
             if (!result) return NotFound();
-            return Ok(new { message = "Convocatoria eliminada" });
+            return Ok(new { message = "Convocatoria enviada a la papelera" });
         }
         catch (InvalidOperationException ex)
         {

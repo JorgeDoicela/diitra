@@ -104,12 +104,24 @@ public partial class GroupsController : ControllerBase
     {
         if (!await CanManageGroupAsync(uuid))
         {
-            return StatusCode(403, new { message = "No tienes permisos para desactivar este grupo de investigación." });
+            return StatusCode(403, new { message = "No tienes permisos para realizar esta acción sobre el grupo." });
         }
 
-        var result = await _groupsService.DeactivateAsync(uuid);
-        if (!result) return NotFound();
-        return NoContent();
+        var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        bool isAdmin = User.IsInRole("DIITRA_ADMIN");
+
+        if (isAdmin)
+        {
+            var result = await _groupsService.DeactivateAsync(uuid);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+        else
+        {
+            var result = await _groupsService.DeleteAsync(uuid, userIdRef);
+            if (!result) return NotFound();
+            return Ok(new { message = "Propuesta de grupo enviada a la papelera" });
+        }
     }
 
     [HttpPost("{uuid}/members")]
