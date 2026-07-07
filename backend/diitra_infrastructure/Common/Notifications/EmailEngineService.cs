@@ -385,18 +385,31 @@ namespace diitra_infrastructure.Common.Notifications
                 };
 
                 // Procesar adjuntos
-                var mailAttachments = new List<Attachment>();
                 var attachmentsMeta = new List<object>();
+                var storagePath = _configuration["Storage:BasePath"] ?? Path.Combine(AppContext.BaseDirectory, "diitra_data");
+                var emailAttachmentsDir = Path.Combine(storagePath, "email_attachments");
 
                 foreach (var adj in request.Attachments ?? Enumerable.Empty<EmailAttachmentDto>())
                 {
-                    Attachment? mailAttachment = null;
-
                     if (!string.IsNullOrEmpty(adj.Base64Content))
                     {
-                        var bytes = Convert.FromBase64String(adj.Base64Content);
-                        var ms = new MemoryStream(bytes);
-                        mailAttachment = new Attachment(ms, adj.NombreArchivo, adj.ContentType ?? "application/octet-stream");
+                        try
+                        {
+                            if (!Directory.Exists(emailAttachmentsDir)) Directory.CreateDirectory(emailAttachmentsDir);
+                            var fileUuid = Guid.NewGuid().ToString();
+                            var extension = Path.GetExtension(adj.NombreArchivo) ?? ".dat";
+                            var physicalFileName = $"{fileUuid}{extension}";
+                            var fullPath = Path.Combine(emailAttachmentsDir, physicalFileName);
+                            var bytes = Convert.FromBase64String(adj.Base64Content);
+                            await File.WriteAllBytesAsync(fullPath, bytes);
+
+                            var relativePath = Path.Combine("email_attachments", physicalFileName).Replace("\\", "/");
+                            attachmentsMeta.Add(new { nombre = adj.NombreArchivo, ruta = relativePath });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error al guardar adjunto Base64 en disco para el correo.");
+                        }
                     }
                     else if (!string.IsNullOrEmpty(adj.RutaArchivo))
                     {
@@ -485,10 +498,10 @@ namespace diitra_infrastructure.Common.Notifications
 
                                                         var auditEntry = await _context.DocumentAuditEntries
                                                             .FirstOrDefaultAsync(a => a.TraceabilityCode == docResult.TraceabilityCode);
-                                                         if (auditEntry != null)
-                                                         {
-                                                             auditEntry.UpdateFileHash(signedHash);
-                                                             await _context.SaveChangesAsync();
+                                                        if (auditEntry != null)
+                                                        {
+                                                            auditEntry.UpdateFileHash(signedHash);
+                                                            await _context.SaveChangesAsync();
                                                             _logger.LogInformation("Se actualizó el hash del documento firmado en inv_document_audit a: {Hash}", signedHash);
                                                         }
                                                     }
@@ -508,9 +521,15 @@ namespace diitra_infrastructure.Common.Notifications
                                             }
                                         }
 
-                                        var ms = new MemoryStream(finalBytes);
-                                        mailAttachment = new Attachment(ms, docResult.FileName ?? $"{templateCode.ToLower()}_{DateTime.Now:yyyyMMdd}.pdf", "application/pdf");
-                                        _logger.LogInformation("Documento '{FileName}' generado y adjuntado con éxito.", docResult.FileName);
+                                        if (!Directory.Exists(emailAttachmentsDir)) Directory.CreateDirectory(emailAttachmentsDir);
+                                        var fileUuid = Guid.NewGuid().ToString();
+                                        var physicalFileName = $"{fileUuid}.pdf";
+                                        var fullPath = Path.Combine(emailAttachmentsDir, physicalFileName);
+                                        await File.WriteAllBytesAsync(fullPath, finalBytes);
+
+                                        var relativePath = Path.Combine("email_attachments", physicalFileName).Replace("\\", "/");
+                                        attachmentsMeta.Add(new { nombre = docResult.FileName ?? $"{templateCode.ToLower()}_{DateTime.Now:yyyyMMdd}.pdf", ruta = relativePath });
+                                        _logger.LogInformation("Documento '{FileName}' generado y guardado en disco con éxito.", docResult.FileName);
                                     }
                                 }
                                 else
@@ -525,86 +544,17 @@ namespace diitra_infrastructure.Common.Notifications
                         }
                         else
                         {
-                            var storagePath = _configuration["Storage:BasePath"] ?? Path.Combine(AppContext.BaseDirectory, "diitra_data");
-                            var fullPath = Path.Combine(storagePath, adj.RutaArchivo);
-                            if (File.Exists(fullPath))
-                            {
-                                mailAttachment = new Attachment(fullPath);
-                                mailAttachment.Name = adj.NombreArchivo;
-                            }
+                            attachmentsMeta.Add(new { nombre = adj.NombreArchivo, ruta = adj.RutaArchivo });
                         }
-                    }
-
-                    if (mailAttachment != null)
-                    {
-                        mailAttachments.Add(mailAttachment);
-                        attachmentsMeta.Add(new { nombre = adj.NombreArchivo, ruta = adj.RutaArchivo });
                     }
                 }
 
                 historyEntry.AdjuntosJson = JsonSerializer.Serialize(attachmentsMeta);
-
-                if (isMock)
-                {
-                    _logger.LogWarning("[MOCK EMAIL ENGINE] De: {From} a {To} | Asunto: {Subject}", fromEmail, recipient.Email, finalSubject);
-                    historyEntry.Estado = "Enviado";
-                    _context.InvEmailHistorials.Add(historyEntry);
-                    await _context.SaveChangesAsync();
-                    
-                    // Liberar los recursos de los adjuntos antes del continue para evitar Memory Leak
-                    foreach (var att in mailAttachments)
-                    {
-                        att.ContentStream?.Dispose();
-                    }
-                    continue;
-                }
-
-                try
-                {
-                    using var client = new SmtpClient(host, port)
-                    {
-                        Credentials = new NetworkCredential(smtpUser, smtpPass),
-                        EnableSsl = true
-                    };
-
-                    using var mailMessage = new MailMessage
-                    {
-                        From = new MailAddress(fromEmail, fromName),
-                        Subject = finalSubject
-                    };
-                    mailMessage.To.Add(recipient.Email);
-                    _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, finalBody);
-
-                    foreach (var att in mailAttachments)
-                    {
-                        mailMessage.Attachments.Add(att);
-                    }
-
-                    await client.SendMailAsync(mailMessage);
-                    _logger.LogInformation("Email enviado con éxito a {Recipient}", recipient.Email);
-
-                    historyEntry.Estado = "Enviado";
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al enviar email a {Recipient}", recipient.Email);
-                    historyEntry.Estado = "Fallido";
-                    historyEntry.ErrorMensaje = ex.ToString();
-                    isAllSuccess = false;
-                }
-                finally
-                {
-                    foreach (var att in mailAttachments)
-                    {
-                        att.ContentStream?.Dispose();
-                    }
-                }
-
                 _context.InvEmailHistorials.Add(historyEntry);
-                await _context.SaveChangesAsync();
             }
 
-            return isAllSuccess;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<IEnumerable<object>> GetUnfinishedProjectsAsync()

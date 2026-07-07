@@ -915,6 +915,33 @@ const EmailEnginePage: React.FC = () => {
             return;
         }
 
+        const totalSpecific = selectedPeople.length;
+        if (totalSpecific > 100) {
+            setSendResult({ success: false, message: 'No puedes enviar a más de 100 destinatarios específicos por lote. Por favor, remueve algunos destinatarios.' });
+            setSending(false);
+            return;
+        }
+
+        const isMassive = Boolean(selectedRole || selectedCarreraId);
+        if (isMassive || totalSpecific > 5) {
+            const destText = isMassive 
+                ? "un envío de difusión masiva según los filtros seleccionados"
+                : `un envío a ${totalSpecific} destinatarios específicos`;
+
+            const accepted = await confirm({
+                title: "Confirmar Envío de Correos",
+                message: `Estás a punto de procesar ${destText}. El motor de correos los encolará en segundo plano aplicando un retardo controlado de 1.5 segundos por correo para evitar ser catalogados como spam. ¿Estás seguro de continuar?`,
+                confirmText: "Confirmar Envío",
+                cancelText: "Cancelar",
+                variant: "primary"
+            });
+
+            if (!accepted) {
+                setSending(false);
+                return;
+            }
+        }
+
         let certificateBase64: string | null = null;
         if (signatureFile) {
             certificateBase64 = await new Promise<string | null>((resolve) => {
@@ -963,7 +990,7 @@ const EmailEnginePage: React.FC = () => {
 
         try {
             const res = await api.post('/Admin/email-engine/send', payload);
-            setSendResult({ success: true, message: res.data.message || 'Correos enviados con éxito.' });
+            setSendResult({ success: true, message: res.data.message || 'Lote de correos encolado exitosamente. Se procesará en segundo plano.' });
 
             // Clean fields upon success
             setSelectedPeople([]);
