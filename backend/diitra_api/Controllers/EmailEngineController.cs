@@ -138,7 +138,14 @@ namespace diitra_api.Controllers
                 return BadRequest("El motivo es obligatorio para declarar el proyecto inconcluso.");
             }
 
-            var success = await _emailEngineService.MarkProjectAsUnfinishedAsync(id, request.Reason);
+            int? adminUserId = null;
+            var userIdStr = User.FindFirst("id_usuario")?.Value;
+            if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var parsedId))
+            {
+                adminUserId = parsedId;
+            }
+
+            var success = await _emailEngineService.MarkProjectAsUnfinishedAsync(id, request.Reason, adminUserId);
             if (success)
             {
                 return Ok(new { success = true, message = "Proyecto marcado como inconcluso y disponible para adopción." });

@@ -28,7 +28,7 @@ interface GeneralProject {
     codigoInstitucional?: string;
     estado: string;
     lineaInvestigacion?: string;
-    directorProyecto?: string;
+    directorNombre?: string;
     fechaRegistro?: string;
     costoTotal?: number;
 }
@@ -177,7 +177,7 @@ const ProjectAdoptionPage: React.FC = () => {
         // Skip projects already inconcluso or finished
         const matchesQuery = p.titulo.toLowerCase().includes(query) ||
                (p.codigoInstitucional || '').toLowerCase().includes(query) ||
-               (p.directorProyecto || '').toLowerCase().includes(query);
+               (p.directorNombre || '').toLowerCase().includes(query);
         const eligibleState = p.estado !== 'Inconcluso' && p.estado !== 'Finalizado' && p.estado !== 'Rechazado';
         return matchesQuery && eligibleState;
     });
@@ -301,7 +301,7 @@ const ProjectAdoptionPage: React.FC = () => {
                                             {/* Former director info */}
                                             <div className="p-3 bg-bg-deep/50 rounded-lg border border-border-thin flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-purple-600/20 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xs shrink-0 uppercase">
-                                                    {p.director_anterior ? p.director_anterior.substring(0,2).toUpperCase() : 'DA'}
+                                                    {p.director_anterior && p.director_anterior !== 'Sin asignar' ? p.director_anterior.substring(0,2).toUpperCase() : 'N/A'}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Director Anterior</p>
@@ -374,7 +374,7 @@ const ProjectAdoptionPage: React.FC = () => {
                                                 <td className="p-4 whitespace-nowrap">
                                                     <span className="text-xs font-medium text-text-main flex items-center gap-1.5">
                                                         <User size={12} className="text-text-dim" />
-                                                        {p.directorProyecto || 'Sin asignar'}
+                                                        {p.directorNombre || 'Sin asignar'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap">
@@ -437,7 +437,7 @@ const ProjectAdoptionPage: React.FC = () => {
                             <div className="space-y-2 border-y border-border-thin py-3 text-xs leading-relaxed text-text-dim">
                                 <p><strong>Proyecto:</strong> <span className="text-text-main font-semibold">"{adoptingProject.titulo}"</span></p>
                                 <p><strong>Código:</strong> <span className="text-text-main font-mono">{adoptingProject.codigo_institucional || 'N/A'}</span></p>
-                                <p><strong>Director Anterior:</strong> <span className="text-text-main">{adoptingProject.director_anterior} ({adoptingProject.director_anterior_email})</span></p>
+                                <p><strong>Director Anterior:</strong> <span className="text-text-main">{adoptingProject.director_anterior}{adoptingProject.director_anterior_email ? ` (${adoptingProject.director_anterior_email})` : ''}</span></p>
                             </div>
 
                             <p className="text-[11px] text-text-dim leading-relaxed">
@@ -623,7 +623,7 @@ const ProjectAdoptionPage: React.FC = () => {
                                 <label className="section-label text-text-dim">Director Anterior Coordinador</label>
                                 <div className="flex items-center gap-3">
                                     <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-sm font-bold text-white uppercase shrink-0">
-                                        {detailProject.director_anterior ? detailProject.director_anterior.substring(0, 2).toUpperCase() : 'DA'}
+                                        {detailProject.director_anterior && detailProject.director_anterior !== 'Sin asignar' ? detailProject.director_anterior.substring(0, 2).toUpperCase() : 'N/A'}
                                     </div>
                                     <div className="min-w-0">
                                         <div className="text-xs font-bold text-text-main">

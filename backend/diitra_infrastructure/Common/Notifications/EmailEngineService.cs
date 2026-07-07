@@ -588,7 +588,7 @@ namespace diitra_infrastructure.Common.Notifications
             });
         }
 
-        public async Task<bool> MarkProjectAsUnfinishedAsync(int projectId, string reason)
+        public async Task<bool> MarkProjectAsUnfinishedAsync(int projectId, string reason, int? adminUserId = null)
         {
             var project = await _context.InvProyectos.FindAsync(projectId);
             if (project == null) return false;
@@ -603,7 +603,7 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 Uuid = Guid.NewGuid().ToString(),
                 IdProyecto = project.IdProyecto,
-                IdUsuario = null,
+                IdUsuario = adminUserId,
                 EstadoAnterior = beforeJson,
                 EstadoNuevo = "Inconcluso",
                 Observacion = $"Proyecto marcado como Inconcluso y Disponible para Adopción. Motivo: {reason}",

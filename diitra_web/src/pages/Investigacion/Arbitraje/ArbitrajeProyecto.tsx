@@ -4,7 +4,7 @@ import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
     Loader2, Users, Building, GraduationCap, FileDown,
     CalendarDays, X, PlusCircle, Trash2, Scale, Award,
-    ExternalLink
+    ExternalLink, RotateCw
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -37,6 +37,11 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const internos = arbitraje ? arbitraje.revisiones.filter(r => !r.es_externo) : [];
     const externos = arbitraje ? arbitraje.revisiones.filter(r => r.es_externo) : [];
+
+    const revisionesConPuntaje = arbitraje ? arbitraje.revisiones.filter(r => r.estado === 'Completada' && r.puntaje_total != null) : [];
+    const promedioCalculado = revisionesConPuntaje.length > 0
+        ? revisionesConPuntaje.reduce((sum, r) => sum + (r.puntaje_total ?? 0), 0) / revisionesConPuntaje.length
+        : null;
 
     const loadData = useCallback(async () => {
         if (!projectUuid) return;
@@ -207,19 +212,19 @@ const ArbitrajeProyecto: React.FC = () => {
                             </p>
                             <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-text-dim font-medium">
                                 {!rev.es_externo && rev.revisor_carrera && (
-                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-semibold max-w-[100px] xs:max-w-[140px] sm:max-w-none" title={formatNombre(rev.revisor_carrera)}>
-                                        <GraduationCap size={9} className="shrink-0" />
+                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1.5 py-0.5 rounded text-text-dim max-w-[100px] xs:max-w-[140px] sm:max-w-none" title={formatNombre(rev.revisor_carrera)}>
+                                        <GraduationCap size={9} className="shrink-0 text-text-dim/80" />
                                         <span className="truncate">{formatNombre(rev.revisor_carrera)}</span>
                                     </span>
                                 )}
                                 {rev.revisor_especialidad && (
-                                    <span className="flex items-center gap-0.5 max-w-[110px] xs:max-w-[150px] sm:max-w-none" title={rev.revisor_especialidad}>
-                                        <Award size={9} className="shrink-0" />
+                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1.5 py-0.5 rounded text-text-dim max-w-[110px] xs:max-w-[150px] sm:max-w-none" title={rev.revisor_especialidad}>
+                                        <Award size={9} className="shrink-0 text-text-dim/80" />
                                         <span className="truncate">{rev.revisor_especialidad}</span>
                                     </span>
                                 )}
                                 {rev.es_doble_ciego && (
-                                    <span className="status-tag text-text-dim px-1.5 py-0.5 text-[9px] bg-surface/50 border border-border-thin shrink-0">Anónimo</span>
+                                    <span className="bg-surface/50 border border-border-thin rounded px-1.5 py-0.5 text-[9px] text-text-dim shrink-0 font-medium">Anónimo</span>
                                 )}
                             </div>
 
@@ -235,12 +240,14 @@ const ArbitrajeProyecto: React.FC = () => {
                                     </span>
                                 )}
 
-                                <span className="bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim font-mono">
-                                    {diasRestantes > 0 ? `${diasRestantes}d` : 'Expirado'}
-                                </span>
+                                {rev.estado !== 'Completada' && (
+                                    <span className={`border rounded px-1.5 py-0.5 font-mono ${diasRestantes > 0 ? 'bg-surface border-border-thin text-text-dim' : 'bg-error/5 border-error/20 text-error'}`}>
+                                        {diasRestantes > 0 ? `${diasRestantes}d` : 'Expirado'}
+                                    </span>
+                                )}
 
                                 {rev.puntaje_total != null && (
-                                    <span className={`rounded px-1.5 py-0.5 font-mono ${rev.puntaje_total >= 70 ? 'bg-success/5 border border-success/20 text-success' : 'bg-error/5 border border-error/20 text-error'}`}>
+                                    <span className={`rounded px-1.5 py-0.5 font-mono ${rev.puntaje_total >= 70 ? 'bg-success/5 border border-success/20 text-success/90' : 'bg-error/5 border border-error/20 text-error/90'}`}>
                                         {rev.puntaje_total.toFixed(1)} pts
                                     </span>
                                 )}
@@ -265,13 +272,17 @@ const ArbitrajeProyecto: React.FC = () => {
                     )}
                 </td>
                 <td className="px-4 py-4 text-center hidden sm:table-cell">
-                    <span className="text-xs font-mono text-text-dim">
-                        {diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Expirado'}
-                    </span>
+                    {rev.estado === 'Completada' ? (
+                        <span className="text-xs font-mono text-text-dim/40">—</span>
+                    ) : (
+                        <span className={`text-xs font-mono ${diasRestantes <= 0 ? 'text-error font-semibold' : 'text-text-dim'}`}>
+                            {diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Expirado'}
+                        </span>
+                    )}
                 </td>
                 <td className="px-4 py-4 text-center hidden lg:table-cell">
                     {rev.puntaje_total != null ? (
-                        <span className={`text-sm font-semibold font-mono ${rev.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                        <span className={`text-sm font-semibold font-mono ${rev.puntaje_total >= 70 ? 'text-success/90' : 'text-error/90'}`}>
                             {rev.puntaje_total.toFixed(1)}
                         </span>
                     ) : (
@@ -531,10 +542,10 @@ const ArbitrajeProyecto: React.FC = () => {
                             },
                             {
                                 label: 'Promedio',
-                                value: arbitraje.puntaje_promedio || 0,
-                                displayValue: arbitraje.puntaje_promedio != null ? `${arbitraje.puntaje_promedio.toFixed(1)}/100` : '—',
+                                value: promedioCalculado || 0,
+                                displayValue: promedioCalculado != null ? `${promedioCalculado.toFixed(1)}/100` : '—',
                                 max: 100,
-                                color: arbitraje.puntaje_promedio && arbitraje.puntaje_promedio >= 70 ? '#22c55e' : '#ef4444'
+                                color: promedioCalculado && promedioCalculado >= 70 ? '#22c55e' : '#ef4444'
                             }
                         ]}
                     />
@@ -758,19 +769,15 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
             {buttonLabel && (
                 <button
                     onClick={onButtonClick}
-                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="p-1.5 text-text-dim hover:text-text-main hover:bg-surface border border-transparent hover:border-border-thin rounded-md transition-all cursor-pointer"
+                    title={buttonLabel}
                 >
-                    {buttonLabel}
+                    <RotateCw size={13} className="hover:rotate-180 transition-transform duration-500" />
                 </button>
             )}
         </div>
         <div className="space-y-1">
             {items.map((item: any, idx: number) => {
-                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
-                const radius = 6.5;
-                const circumference = 2 * Math.PI * radius;
-                const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
                 return (
                     <div
                         key={idx}
@@ -778,45 +785,28 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
-                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
-                                    <circle
-                                        cx="9"
-                                        cy="9"
-                                        r={radius}
-                                        className="fill-none"
-                                        strokeWidth="1.8"
-                                        style={{ stroke: 'var(--accents-2)' }}
-                                    />
-                                    <circle
-                                        cx="9"
-                                        cy="9"
-                                        r={radius}
-                                        className="fill-none transition-all duration-500"
-                                        stroke={item.color || 'var(--brand)'}
-                                        strokeWidth="1.8"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
-                            </div>
+                            <div 
+                                className="w-1.5 h-1.5 rounded-full shrink-0" 
+                                style={{ backgroundColor: item.color || 'var(--brand)' }}
+                            />
                             <div className="flex items-center gap-1.5 min-w-0">
                                 <span className="text-xs font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                >
-                                    <title>{item.tooltip}</title>
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                </svg>
+                                {item.tooltip && (
+                                    <svg
+                                        className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                    >
+                                        <title>{item.tooltip}</title>
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="16" x2="12" y2="12" />
+                                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                                    </svg>
+                                )}
                             </div>
                         </div>
                         <span className="text-xs font-mono font-medium text-text-main shrink-0 ml-2">

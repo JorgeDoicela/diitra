@@ -15,7 +15,7 @@ namespace diitra_application.Common.Notifications
         Task<IEnumerable<EmailHistorialDto>> GetEmailHistoryAsync(int limit = 100);
         Task<bool> SendTemplatedEmailAsync(EmailSendRequest request);
         Task<IEnumerable<object>> GetUnfinishedProjectsAsync();
-        Task<bool> MarkProjectAsUnfinishedAsync(int projectId, string reason);
+        Task<bool> MarkProjectAsUnfinishedAsync(int projectId, string reason, int? adminUserId = null);
         Task<bool> AdoptProjectAsync(int projectId, int newDirectorUserId);
     }
 
