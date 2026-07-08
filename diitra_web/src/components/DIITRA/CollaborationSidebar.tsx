@@ -703,16 +703,6 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 )}
             </div>
 
-            {/* Footer */}
-            <div className="p-3 bg-bg-deep/50 border-t border-border-thin flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-green-500">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                    Sincronización activa
-                </div>
-                <div className="text-[8px] text-text-dim font-mono font-bold">
-                    Colaboración en vivo
-                </div>
-            </div>
         </aside>
     );
 };

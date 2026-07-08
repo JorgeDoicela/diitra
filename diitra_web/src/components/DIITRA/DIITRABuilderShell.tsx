@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, X, Lock, Unlock, Sun, Moon } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, X, Lock, Unlock, Sun, Moon } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import type { CoWorkHandle } from '../../core/cowork/types';
@@ -61,6 +61,13 @@ function getMetadataSaveBlockReason(data: any, templateCode: string): string | n
     return null;
 }
 
+const snapshotForm = (data: any): string => {
+    try {
+        const { Uuid, Titulo, Nombre, ...rest } = data;
+        return JSON.stringify({ Uuid, Titulo, Nombre, ...rest });
+    } catch { return ''; }
+};
+
 interface DIITRABuilderShellProps {
     title: string;
     subtitle: string;
@@ -116,6 +123,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     const sectionParam = queryParams.get('section');
     const activeTab = sectionParam || sections[0]?.id || 'general';
+    const activeSection = sections.find(s => s.id === activeTab);
+    const activeSectionLabel = activeSection?.label || 'General';
     const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
     const isDirectorOrAdmin = !!canSign;
     const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
@@ -492,7 +501,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             const isBlocked = !!currentBlocked[sectionId];
             const newBlocked = { ...currentBlocked, [sectionId]: !isBlocked };
             onUpdateField('BlockedSections', newBlocked);
-            
+
             addAudit(
                 isBlocked
                     ? `Sección '${sectionId.toUpperCase()}' desbloqueada`
@@ -502,12 +511,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         }
     }, [formData?.BlockedSections, onUpdateField, addAudit]);
 
-    const snapshotForm = (data: any): string => {
-        try {
-            const { Uuid, Titulo, Nombre, ...rest } = data;
-            return JSON.stringify({ Uuid, Titulo, Nombre, ...rest });
-        } catch { return ''; }
-    };
 
     // ── Auto-save inteligente del núcleo (dirty-check + debounce 3s) ──
     const lastSavedSnapshotRef = useRef<string>(snapshotForm(formData));
@@ -515,6 +518,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const formDataRef = useRef(formData);
     const onSaveRef = useRef(onSave);
     const isSavingRef = useRef(false);
+
+    const currentSnapshot = snapshotForm(formData);
+    const isDirty = currentSnapshot !== lastSavedSnapshotRef.current;
 
     useEffect(() => { formDataRef.current = formData; }, [formData]);
     useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
@@ -752,7 +758,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         if (!isOnline && prevIsOnlineRef.current) {
             // Conexión perdida: iniciamos un temporizador de 1.5s antes de alertar
             if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-            
+
             offlineTimeoutRef.current = setTimeout(() => {
                 addToast(
                     'Conexión inestable',
@@ -779,7 +785,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 hasShownOfflineRef.current = false;
             }
         }
-        
+
         prevIsOnlineRef.current = isOnline;
 
         return () => {
@@ -843,557 +849,545 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     return (
         <DocumentDataContext.Provider value={formData}>
             <DocumentMetadataContext.Provider value={{ readOnlyReason }}>
-            <SectionLockContext.Provider value={{
-                formData,
-                readOnly,
-                isDirectorOrAdmin,
-                onUpdateField
-            }}>
-            <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
-                <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
-
-                    {/* ── Header Universal ── */}
-                    <div className="px-4 md:px-8 py-3 md:py-5 border-b border-border-thin bg-bg-deep/50 flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-0">
-                        <div className="flex items-center justify-between w-full lg:w-auto gap-4 md:gap-6">
-                            <div className="flex items-center gap-4 md:gap-6">
-                                <div className="p-2 md:p-3 bg-text-main rounded-xl shadow-lg shrink-0">
-                                    <Shield size={18} className="text-bg-deep md:w-[20px]" />
-                                </div>
-                                <div>
-                                    <h2 className="text-sm md:text-xl font-black text-text-main tracking-tighter uppercase leading-none">
-                                        DIITRA <span className="text-text-dim font-light hidden sm:inline">Editor de documentos</span>
-                                    </h2>
-                                    <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v1.0.0</p>
-                                </div>
-                            </div>
-
-                            {/* Botones móviles */}
-                            <div className="lg:hidden flex items-center gap-2">
-                                <button
-                                    onClick={handleClose}
-                                    className="p-2 bg-surface border border-border-thin rounded-lg text-text-dim hover:text-text-main hover:border-text-main transition-colors"
-                                    title="Salir del documento"
-                                    aria-label="Salir del documento"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between w-full lg:w-auto gap-4 md:gap-8">
-                            {/* ── Indicadores CoWork ── */}
-                            <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-1.5 md:py-2 bg-bg-deep rounded-xl border border-border-thin">
-                                {/* Estado de conexión */}
-                                <div className="flex items-center gap-1.5 md:gap-2 pr-2 md:pr-4 border-r border-border-thin">
-                                    {!isOnline ? (
-                                        <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
-                                        </>
-                                    ) : isSlowConnection ? (
-                                        <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-amber-500 uppercase tracking-widest">Señal débil</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">En línea</span>
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Avatares de colaboradores conectados */}
-                                {users.length > 0 && (
-                                    <div className="flex -space-x-1.5 md:-space-x-2">
-                                        {users.map((u, i) => (
-                                            <div
-                                                key={`${u.id}-${i}`}
-                                                className="w-5 h-5 md:w-7 md:h-7 rounded-full border border-surface flex items-center justify-center text-[7px] md:text-[10px] font-black text-white shadow-lg cursor-help transition-transform hover:-translate-y-1"
-                                                style={{ backgroundColor: u.color }}
-                                                title={`${u.name} (${u.role})`}
-                                            >
-                                                {u.initials}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Estado de sincronización */}
-                            <div className="hidden sm:flex flex-col items-end">
-                                <span className="text-[7px] md:text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Sincronización</span>
-                                <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-text-main font-black uppercase">
-                                    {readOnly ? (
-                                        <span className="text-warning font-medium">Desactivada</span>
-                                    ) : isSyncing ? (
-                                        <><Clock size={10} className="animate-spin" /> ...</>
-                                    ) : (
-                                        <><CheckCircle size={10} className="text-success" /> {lastSaved ? lastSaved : 'Listo'}</>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Acciones de cabecera */}
-                            <div className="flex gap-2 md:gap-3">
-                                {readOnly ? (
-                                    <span className="badge-vercel badge-vercel-warning flex-1 lg:flex-none px-4 md:px-5 py-2 md:py-2.5 text-[10px] md:text-xs cursor-default select-none justify-center">
-                                        <Shield size={12} /> Solo lectura
-                                    </span>
-                                ) : (
-                                    <button
-                                        onClick={handleSave}
-                                        className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-text-main hover:opacity-90 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-bg-deep transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <Save size={12} /> <span className="hidden xs:inline">Guardar</span>
-                                    </button>
-                                )}
-                                <button
-                                    onClick={toggleTheme}
-                                    className="p-2 md:p-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-text-dim hover:text-text-main transition-colors flex items-center justify-center"
-                                    title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
-                                    aria-label="Cambiar tema claro/oscuro"
-                                >
-                                    {isDarkMode ? <Sun size={14} className="text-warning" /> : <Moon size={14} className="text-indigo-400" />}
-                                </button>
-                                <button
-                                    onClick={handleClose}
-                                    className="hidden lg:flex px-6 py-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors"
-                                >
-                                    Cerrar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-1 overflow-hidden relative" ref={bodyContainerRef}>
-                                     {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
-                        {(!isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !showMobileSections)) && (
-                            <button
-                                onMouseDown={startDraggingNav}
-                                onTouchStart={startDraggingNav}
-                                style={{
-                                    top: `${navTopPercent}%`,
-                                    transform: `translateY(-50%) translateX(${navXOffset}px)`,
-                                    transition: isDraggingNav ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                }}
-                                className={`absolute left-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${
-                                    isDraggingNav || navXOffset > 5
-                                        ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
-                                        : 'rounded-r-xl border-l-0'
-                                }`}
-                                title="Mostrar navegación del documento"
-                            >
-                                <FileText size={15} />
-                                <span className="[writing-mode:vertical-lr] rotate-180 text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Nav</span>
-                            </button>
-                        )}
-
-                        {/* Pestaña de reabrir Actividad — pegada al borde derecho */}
-                        {!isSidebarOpen && (
-                            <button
-                                onMouseDown={startDraggingChat}
-                                onTouchStart={startDraggingChat}
-                                style={{
-                                    top: `${chatTopPercent}%`,
-                                    transform: `translateY(-50%) translateX(-${chatXOffset}px)`,
-                                    transition: isDraggingChat ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                }}
-                                className={`absolute right-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${
-                                    isDraggingChat || chatXOffset > 5
-                                        ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
-                                        : 'rounded-l-xl border-r-0'
-                                }`}
-                                title="Mostrar actividad del equipo"
-                            >
-                                <MessageSquare size={15} className={isOnline ? 'animate-pulse' : ''} />
-                                <span className="[writing-mode:vertical-lr] text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Chat</span>
-                            </button>
-                        )}
-                        {/* ── Sidebar de Navegación ── */}
-                        <div
-                            ref={leftSidebarRef}
-                            style={{
-                                width: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? undefined
-                                    : (isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px'),
-                                transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? (showMobileSections ? 'translateX(0)' : 'translateX(-100%)')
-                                    : undefined,
-                                transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
-                                    : 'width 300ms ease-in-out',
-                                visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? (showMobileSections ? 'visible' : 'hidden')
-                                    : 'visible'
-                            }}
-                            className={`
-                                overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
-                                ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                    ? 'fixed inset-y-0 left-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-r border-border-thin !w-[85vw] sm:!w-[320px]'
-                                    : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
-                                }
-                            `}
-                        >
-                            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
-                                <div className="flex lg:hidden justify-between items-center mb-4">
-                                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
-                                    <button
-                                        onClick={() => setShowMobileSections(false)}
-                                        className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                                        aria-label="Cerrar menú"
-                                    >
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-4 lg:ml-2">
-                                        <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
+                <SectionLockContext.Provider value={{
+                    formData,
+                    readOnly,
+                    isDirectorOrAdmin,
+                    onUpdateField
+                }}>
+                    <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
+                        <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+                            {/* ── Header Universal ── */}
+                            <div className="px-4 md:px-8 py-3 border-b border-border-thin bg-bg-deep/75 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-[50]">
+                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
+                                    <div className="flex items-center gap-3">
+                                        {/* Botón Volver/Cerrar */}
                                         <button
-                                            onClick={() => setIsLeftSidebarOpen(false)}
-                                            className="hidden lg:flex p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                                            title="Contraer navegación"
+                                            onClick={handleClose}
+                                            className="flex items-center gap-2 py-1.5 text-text-dim hover:text-text-main transition-all duration-200 group cursor-pointer text-[10px] md:text-xs font-bold uppercase tracking-wider bg-transparent border-0 active:scale-95"
+                                            title="Salir del documento y guardar cambios"
+                                            aria-label="Salir del documento"
                                         >
-                                            <ChevronLeft size={16} />
+                                            <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+                                            <span>Volver</span>
                                         </button>
+
+                                        {/* Divisor Vertical */}
+                                        <div className="h-5 w-[1px] bg-border-thin mx-1" />
+
+                                        {/* Identidad */}
+                                        <div className="min-w-0">
+                                            <h2 className="text-xs md:text-sm font-black text-text-main tracking-tighter uppercase leading-none truncate max-w-[150px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[500px]" title={title}>
+                                                {title}
+                                            </h2>
+                                            {subtitle && (
+                                                <p className="text-[8px] text-text-dim font-bold uppercase tracking-widest mt-0.5 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[500px]" title={subtitle}>
+                                                    {subtitle}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        {sections.map(section => (
+                                </div>
+
+                                <div className="flex items-center gap-3 md:gap-4 flex-wrap md:flex-nowrap">
+                                    {/* 1. Único Indicador de Persistencia Inteligente */}
+                                    <div className="flex items-center">
+                                        {readOnly ? (
+                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-warning cursor-default select-none flex items-center gap-1.5 animate-fade-in pr-1">
+                                                <Shield size={10} /> Solo lectura
+                                            </span>
+                                        ) : isSyncing ? (
+                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-1.5 select-none animate-fade-in pr-1">
+                                                <Clock size={10} className="animate-spin text-text-dim" /> Guardando...
+                                            </span>
+                                        ) : isDirty ? (
                                             <button
-                                                key={section.id}
-                                                onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                                className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                                onClick={handleSave}
+                                                className="px-3 py-1.5 bg-transparent hover:bg-surface border border-border-thin hover:border-text-dim/30 rounded-md text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-text-main transition-all flex items-center justify-center gap-1.5 active:scale-95 animate-fade-in cursor-pointer"
+                                                title="Persistir cambios inmediatamente en base de datos"
                                             >
-                                                <span className="flex items-center gap-4">
-                                                    {section.icon} {section.label}
-                                                </span>
-                                                {formData?.BlockedSections?.[section.id] && (
-                                                    <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
-                                                )}
+                                                <Save size={10} /> <span>Guardar cambios</span>
                                             </button>
-                                        ))}
-                                        <button
-                                            onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
-                                        >
-                                            <FileText size={18} /> Finalizar y Firmar
-                                        </button>
+                                        ) : (
+                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-success flex items-center gap-1.5 select-none animate-fade-in pr-1" title="Todos los cambios están persistidos y sincronizados">
+                                                <CheckCircle size={10} /> {lastSaved ? `Guardado ${lastSaved}` : 'Guardado'}
+                                            </span>
+                                        )}
                                     </div>
-                                </div>
 
-                                {/* ── Auditoría de Sesión ── */}
-                                <div className="mt-auto hidden md:block">
-                                    <div className="p-5 bg-surface rounded-2xl border border-border-thin">
-                                        <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
-                                        </p>
-                                        <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                            {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
-                                            {auditLogs.map((log, i) => (
-                                                <div key={i} className="flex gap-3">
-                                                    <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />
-                                                    <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' : log.type === 'error' ? 'text-red-500/80' : log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'}`}>
-                                                        {log.msg}
-                                                    </p>
+                                    {/* 2. Estado de conexión */}
+                                    <div className="flex items-center gap-1.5">
+                                        {!isOnline ? (
+                                            <>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                                <span className="text-[7px] md:text-[8px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
+                                            </>
+                                        ) : isSlowConnection ? (
+                                            <>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                                <span className="text-[7px] md:text-[8px] font-black text-amber-500 uppercase tracking-widest">Señal débil</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                <span className="text-[7px] md:text-[8px] font-black text-green-500 uppercase tracking-widest">En línea</span>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* 3. Avatares de colaboradores conectados */}
+                                    {users.length > 0 ? (
+                                        <div className="flex -space-x-1.5 items-center">
+                                            {users.map((u, i) => (
+                                                <div
+                                                    key={`${u.id}-${i}`}
+                                                    className="w-5 h-5 rounded-full border border-surface flex items-center justify-center text-[8px] font-black text-white shadow-md cursor-help transition-transform hover:-translate-y-0.5"
+                                                    style={{ backgroundColor: u.color }}
+                                                    title={`${u.name} (${u.role})`}
+                                                >
+                                                    {u.initials}
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <span className="text-[7px] md:text-[8px] font-bold text-text-dim uppercase tracking-widest select-none">Solo tú</span>
+                                    )}
+
+                                    {/* 4. Botón de cambio de tema */}
+                                    <button
+                                        onClick={toggleTheme}
+                                        className="p-1.5 text-text-dim hover:text-text-main transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-90 bg-transparent border-0"
+                                        title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                                        aria-label="Cambiar tema claro/oscuro"
+                                    >
+                                        {isDarkMode ? <Sun size={14} className="text-warning animate-pulse" /> : <Moon size={14} className="text-indigo-400" />}
+                                    </button>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Drag Handle Left */}
-                        {isLeftSidebarOpen && !showMobileSections && (
-                            <div
-                                onMouseDown={startDraggingLeft}
-                                className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
-                            />
-                        )}
+                            <div className="flex flex-1 overflow-hidden relative" ref={bodyContainerRef}>
+                                {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
+                                {(!isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !showMobileSections)) && (
+                                    <button
+                                        onMouseDown={startDraggingNav}
+                                        onTouchStart={startDraggingNav}
+                                        style={{
+                                            top: `${navTopPercent}%`,
+                                            transform: `translateY(-50%) translateX(${navXOffset}px)`,
+                                            transition: isDraggingNav ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                        }}
+                                        className={`absolute left-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${isDraggingNav || navXOffset > 5
+                                                ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
+                                                : 'rounded-r-xl border-l-0'
+                                            }`}
+                                        title="Mostrar navegación del documento"
+                                    >
+                                        <FileText size={15} />
+                                        <span className="[writing-mode:vertical-lr] rotate-180 text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Nav</span>
+                                    </button>
+                                )}
 
-                        {/* ── Área Principal: Editor & Visor PDF ── */}
-                        <div className="flex-1 bg-bg-deep overflow-hidden flex">
-                            {activeTab !== 'output' ? (
-                                <div className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto custom-scrollbar">
-                                    <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
-                                        <div className="mb-6 md:mb-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                            <div>
-                                                <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
-                                                <p className="text-[8px] sm:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
-                                                <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-3 md:mt-6 rounded-full" />
+                                {/* Pestaña de reabrir Actividad — pegada al borde derecho */}
+                                {!isSidebarOpen && (
+                                    <button
+                                        onMouseDown={startDraggingChat}
+                                        onTouchStart={startDraggingChat}
+                                        style={{
+                                            top: `${chatTopPercent}%`,
+                                            transform: `translateY(-50%) translateX(-${chatXOffset}px)`,
+                                            transition: isDraggingChat ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                        }}
+                                        className={`absolute right-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${isDraggingChat || chatXOffset > 5
+                                                ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
+                                                : 'rounded-l-xl border-r-0'
+                                            }`}
+                                        title="Mostrar actividad del equipo"
+                                    >
+                                        <MessageSquare size={15} className={isOnline ? 'animate-pulse' : ''} />
+                                        <span className="[writing-mode:vertical-lr] text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Chat</span>
+                                    </button>
+                                )}
+                                {/* ── Sidebar de Navegación ── */}
+                                <div
+                                    ref={leftSidebarRef}
+                                    style={{
+                                        width: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? undefined
+                                            : (isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px'),
+                                        transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? (showMobileSections ? 'translateX(0)' : 'translateX(-100%)')
+                                            : undefined,
+                                        transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
+                                            : 'width 300ms ease-in-out',
+                                        visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? (showMobileSections ? 'visible' : 'hidden')
+                                            : 'visible'
+                                    }}
+                                    className={`
+                                overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
+                                ${typeof window !== 'undefined' && window.innerWidth < 1024
+                                            ? 'fixed inset-y-0 left-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-r border-border-thin !w-[85vw] sm:!w-[320px]'
+                                            : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
+                                        }
+                            `}
+                                >
+                                    <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
+                                        <div className="flex lg:hidden justify-between items-center mb-4">
+                                            <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
+                                            <button
+                                                onClick={() => setShowMobileSections(false)}
+                                                className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
+                                                aria-label="Cerrar menú"
+                                            >
+                                                <ChevronLeft size={20} />
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4 lg:ml-2">
+                                                <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
+                                                <button
+                                                    onClick={() => setIsLeftSidebarOpen(false)}
+                                                    className="hidden lg:flex p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
+                                                    title="Contraer navegación"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
                                             </div>
-
-                                            {/* Compact Section Lock Control */}
-                                            {!readOnly && activeTab !== 'output' && (
-                                                <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
-                                                    {isSectionBlocked ? (
-                                                        <>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Lock size={12} className="text-amber-500 animate-pulse" />
-                                                                <span className="text-amber-500">Sección Bloqueada</span>
-                                                            </div>
-                                                            {isDirectorOrAdmin && (
-                                                                <button
-                                                                    onClick={() => handleToggleSectionLock(activeTab)}
-                                                                    className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
-                                                                >
-                                                                    Desbloquear
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Unlock size={12} className="text-text-dim" />
-                                                                <span className="text-text-dim">Edición Abierta</span>
-                                                            </div>
-                                                            {isDirectorOrAdmin && (
-                                                                <button
-                                                                    onClick={() => handleToggleSectionLock(activeTab)}
-                                                                    className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
-                                                                >
-                                                                    Bloquear
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
+                                            <div className="space-y-1">
+                                                {sections.map(section => (
+                                                    <button
+                                                        key={section.id}
+                                                        onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
+                                                        className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                                    >
+                                                        <span className="flex items-center gap-4">
+                                                            {section.icon} {section.label}
+                                                        </span>
+                                                        {formData?.BlockedSections?.[section.id] && (
+                                                            <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
+                                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
+                                                >
+                                                    <FileText size={18} /> Finalizar y Firmar
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        {readOnly && (
-                                            <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">
-                                                <Shield size={16} className="text-warning mt-0.5 shrink-0" />
-                                                <div>
-                                                    <p className="callout-vercel-title">Vista de solo lectura activa</p>
-                                                    <p className="callout-vercel-body">
-                                                        {readOnlyReason === 'state' ? (
-                                                            `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
-                                                        ) : readOnlyReason === 'review' ? (
-                                                            "Estás visualizando este documento en modo de solo lectura para fines de revisión y auditoría académica."
-                                                        ) : (
-                                                            "Has accedido a este documento en modalidad de solo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
-                                                        )}
-                                                    </p>
+                                        {/* ── Auditoría de Sesión ── */}
+                                        <div className="mt-auto hidden md:block">
+                                            <div className="p-5 bg-surface rounded-2xl border border-border-thin">
+                                                <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                    <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
+                                                </p>
+                                                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                                    {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
+                                                    {auditLogs.map((log, i) => (
+                                                        <div key={i} className="flex gap-3">
+                                                            <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />
+                                                            <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' : log.type === 'error' ? 'text-red-500/80' : log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'}`}>
+                                                                {log.msg}
+                                                            </p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        )}
-
-
-                                        {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
-                                        {children(activeTab, cowork)}
+                                        </div>
                                     </div>
                                 </div>
-                            ) : (
-                                /* ── Panel de Finalización y Firma ── */
-                                <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-y-auto lg:overflow-hidden p-1">
-                                        {/* Panel de Controles Unificado */}
-                                        <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
-                                            {/* Sección 1: Emisión */}
-                                            <div className="p-5 flex flex-col gap-4 shrink-0">
-                                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
-                                                    <Settings size={16} className="text-text-dim" /> Emisión
-                                                </h4>
-                                                <div className="space-y-4">
-                                                    {/* Switch sin tarjeta contenedora - Vercel Style */}
-                                                    <div className="flex items-center justify-between py-1">
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-text-main">Modo borrador</p>
-                                                            <p className="text-xs text-text-dim">Marca de agua de seguridad</p>
-                                                        </div>
-                                                        <label className="relative inline-flex items-center cursor-pointer">
-                                                            <input type="checkbox" checked={isDraftMode} onChange={(e) => setIsDraftMode(e.target.checked)} className="sr-only peer" />
-                                                            <div className="w-11 h-6 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-text-main after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                                        </label>
-                                                    </div>
-                                                    <div className="grid grid-cols-1 gap-2.5">
-                                                        <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
-                                                            <FileText size={15} /> Generar vista previa
-                                                        </button>
-                                                        <button onClick={() => handleGeneratePdf(true)} className="w-full border border-border-thin bg-transparent hover:bg-surface text-text-main/80 hover:text-text-main px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-                                                            <Users size={15} /> Vista sin identidades
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            <div className="border-t border-border-thin shrink-0" />
-                                            {/* Sección 2: Firma Electrónica */}
-                                            <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
-                                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
-                                                    <Shield size={16} className="text-text-dim" /> Firma Electrónica
-                                                </h4>
-                                                <p className="text-xs text-text-dim leading-relaxed">Firma digital PAdES con validez legal.</p>
+                                {/* Drag Handle Left */}
+                                {isLeftSidebarOpen && !showMobileSections && (
+                                    <div
+                                        onMouseDown={startDraggingLeft}
+                                        className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
+                                    />
+                                )}
 
-                                                <div className="flex flex-col gap-4 mt-2">
-                                                    {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
-                                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
-                                                            <div className="flex justify-center">
-                                                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                                                    <CheckCircle size={20} />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-sm font-semibold text-text-main">Documento Firmado</p>
-                                                                <p className="text-xs text-text-dim leading-relaxed">
-                                                                    Este documento ya ha sido firmado y emitido oficialmente en estado <span className="text-green-500 font-bold">"{projectStatus}"</span>.
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ) : !canSign ? (
-                                                        <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
-                                                            <div className="flex justify-center">
-                                                                <div className="icon-circle icon-circle-warning !p-2">
-                                                                    <Shield size={16} />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-sm font-semibold text-text-main">Firma restringida</p>
-                                                                <p className="text-xs text-text-dim leading-relaxed">
-                                                                    Solo el Director de Proyecto o un Administrador del sistema están autorizados para firmar.
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
-                                                        <div className="flex flex-col gap-3">
-                                                            {/* Dropzone certificado .p12 */}
-                                                            <div className="space-y-1">
-                                                                <label className="text-xs font-bold text-text-main block">Certificado .p12</label>
-                                                                <label
-                                                                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer transition-all gap-1.5 ${
-                                                                        signatureCertFile
-                                                                            ? 'border-green-500/40 bg-green-500/5'
-                                                                            : 'border-border-thin hover:border-text-main/30 bg-surface'
-                                                                    }`}
-                                                                >
-                                                                    <input
-                                                                        type="file"
-                                                                        accept=".p12,.pfx"
-                                                                        className="sr-only"
-                                                                        onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
-                                                                    />
-                                                                    {signatureCertFile ? (
-                                                                        <>
-                                                                            <CheckCircle size={18} className="text-green-500" />
-                                                                            <span className="text-xs font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
-                                                                            <span className="text-[10px] text-text-dim">Clic para cambiar</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <Shield size={18} className="text-text-dim" />
-                                                                            <span className="text-xs font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
-                                                                            <span className="text-[10px] text-text-dim">No se guarda en el servidor</span>
-                                                                        </>
+                                {/* ── Área Principal: Editor & Visor PDF ── */}
+                                <div className="flex-1 bg-bg-deep overflow-hidden flex">
+                                    {activeTab !== 'output' ? (
+                                        <div className="flex-1 pt-4 pb-8 px-3 sm:pt-6 sm:pb-12 sm:px-6 md:pt-8 md:pb-16 md:px-12 overflow-y-auto custom-scrollbar">
+                                            <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
+                                                <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                    <div>
+                                                        <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{activeSectionLabel}</h3>
+                                                        <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-2 md:mt-3 rounded-full" />
+                                                    </div>
+
+                                                    {/* Compact Section Lock Control */}
+                                                    {!readOnly && activeTab !== 'output' && (
+                                                        <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
+                                                            {isSectionBlocked ? (
+                                                                <>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Lock size={12} className="text-amber-500 animate-pulse" />
+                                                                        <span className="text-amber-500">Sección Bloqueada</span>
+                                                                    </div>
+                                                                    {isDirectorOrAdmin && (
+                                                                        <button
+                                                                            onClick={() => handleToggleSectionLock(activeTab)}
+                                                                            className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
+                                                                        >
+                                                                            Desbloquear
+                                                                        </button>
                                                                     )}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Unlock size={12} className="text-text-dim" />
+                                                                        <span className="text-text-dim">Edición Abierta</span>
+                                                                    </div>
+                                                                    {isDirectorOrAdmin && (
+                                                                        <button
+                                                                            onClick={() => handleToggleSectionLock(activeTab)}
+                                                                            className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
+                                                                        >
+                                                                            Bloquear
+                                                                        </button>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {readOnly && (
+                                                    <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">
+                                                        <Shield size={16} className="text-warning mt-0.5 shrink-0" />
+                                                        <div>
+                                                            <p className="callout-vercel-title">Vista de solo lectura activa</p>
+                                                            <p className="callout-vercel-body">
+                                                                {readOnlyReason === 'state' ? (
+                                                                    `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
+                                                                ) : readOnlyReason === 'review' ? (
+                                                                    "Estás visualizando este documento en modo de solo lectura para fines de revisión y auditoría académica."
+                                                                ) : (
+                                                                    "Has accedido a este documento en modalidad de solo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+
+                                                {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
+                                                {children(activeTab, cowork)}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* ── Panel de Finalización y Firma ── */
+                                        <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
+                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-y-auto lg:overflow-hidden p-1">
+                                                {/* Panel de Controles Unificado */}
+                                                <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
+                                                    {/* Sección 1: Emisión */}
+                                                    <div className="p-5 flex flex-col gap-4 shrink-0">
+                                                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                                            <Settings size={16} className="text-text-dim" /> Emisión
+                                                        </h4>
+                                                        <div className="space-y-4">
+                                                            {/* Switch sin tarjeta contenedora - Vercel Style */}
+                                                            <div className="flex items-center justify-between py-1">
+                                                                <div>
+                                                                    <p className="text-sm font-semibold text-text-main">Modo borrador</p>
+                                                                    <p className="text-xs text-text-dim">Marca de agua de seguridad</p>
+                                                                </div>
+                                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                                    <input type="checkbox" checked={isDraftMode} onChange={(e) => setIsDraftMode(e.target.checked)} className="sr-only peer" />
+                                                                    <div className="w-11 h-6 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-text-main after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                                                                 </label>
                                                             </div>
-
-                                                            {/* Contraseña */}
-                                                            <div className="space-y-1">
-                                                                <label className="text-xs font-bold text-text-main block">Contraseña del certificado</label>
-                                                                <input
-                                                                    type="password"
-                                                                    placeholder="Contraseña del .p12"
-                                                                    value={signaturePassword}
-                                                                    onChange={(e) => setSignaturePassword(e.target.value)}
-                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3.5 py-2.5 text-sm focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
-                                                                />
+                                                            <div className="grid grid-cols-1 gap-2.5">
+                                                                <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+                                                                    <FileText size={15} /> Generar vista previa
+                                                                </button>
+                                                                <button onClick={() => handleGeneratePdf(true)} className="w-full border border-border-thin bg-transparent hover:bg-surface text-text-main/80 hover:text-text-main px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                                                                    <Users size={15} /> Vista sin identidades
+                                                                </button>
                                                             </div>
+                                                        </div>
+                                                    </div>
 
-                                                            <button
-                                                                onClick={handleSign}
-                                                                disabled={!pdfBlob || isSigning || !signatureCertFile}
-                                                                className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                                                    (!pdfBlob || !signatureCertFile)
-                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
-                                                                }`}
-                                                            >
-                                                                {isSigning ? <><Clock size={15} className="animate-spin" /> Firmando...</> : <><Shield size={15} /> Aplicar firma electrónica</>}
+                                                    <div className="border-t border-border-thin shrink-0" />
+                                                    {/* Sección 2: Firma Electrónica */}
+                                                    <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
+                                                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                                            <Shield size={16} className="text-text-dim" /> Firma Electrónica
+                                                        </h4>
+                                                        <p className="text-xs text-text-dim leading-relaxed">Firma digital PAdES con validez legal.</p>
+
+                                                        <div className="flex flex-col gap-4 mt-2">
+                                                            {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
+                                                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
+                                                                    <div className="flex justify-center">
+                                                                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                                                            <CheckCircle size={20} />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-sm font-semibold text-text-main">Documento Firmado</p>
+                                                                        <p className="text-xs text-text-dim leading-relaxed">
+                                                                            Este documento ya ha sido firmado y emitido oficialmente en estado <span className="text-green-500 font-bold">"{projectStatus}"</span>.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            ) : !canSign ? (
+                                                                <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
+                                                                    <div className="flex justify-center">
+                                                                        <div className="icon-circle icon-circle-warning !p-2">
+                                                                            <Shield size={16} />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-sm font-semibold text-text-main">Firma restringida</p>
+                                                                        <p className="text-xs text-text-dim leading-relaxed">
+                                                                            Solo el Director de Proyecto o un Administrador del sistema están autorizados para firmar.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
+                                                                <div className="flex flex-col gap-3">
+                                                                    {/* Dropzone certificado .p12 */}
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-xs font-bold text-text-main block">Certificado .p12</label>
+                                                                        <label
+                                                                            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer transition-all gap-1.5 ${signatureCertFile
+                                                                                    ? 'border-green-500/40 bg-green-500/5'
+                                                                                    : 'border-border-thin hover:border-text-main/30 bg-surface'
+                                                                                }`}
+                                                                        >
+                                                                            <input
+                                                                                type="file"
+                                                                                accept=".p12,.pfx"
+                                                                                className="sr-only"
+                                                                                onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
+                                                                            />
+                                                                            {signatureCertFile ? (
+                                                                                <>
+                                                                                    <CheckCircle size={18} className="text-green-500" />
+                                                                                    <span className="text-xs font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
+                                                                                    <span className="text-[10px] text-text-dim">Clic para cambiar</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Shield size={18} className="text-text-dim" />
+                                                                                    <span className="text-xs font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
+                                                                                    <span className="text-[10px] text-text-dim">No se guarda en el servidor</span>
+                                                                                </>
+                                                                            )}
+                                                                        </label>
+                                                                    </div>
+
+                                                                    {/* Contraseña */}
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-xs font-bold text-text-main block">Contraseña del certificado</label>
+                                                                        <input
+                                                                            type="password"
+                                                                            placeholder="Contraseña del .p12"
+                                                                            value={signaturePassword}
+                                                                            onChange={(e) => setSignaturePassword(e.target.value)}
+                                                                            className="w-full bg-surface border border-border-thin rounded-xl px-3.5 py-2.5 text-sm focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
+                                                                        />
+                                                                    </div>
+
+                                                                    <button
+                                                                        onClick={handleSign}
+                                                                        disabled={!pdfBlob || isSigning || !signatureCertFile}
+                                                                        className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${(!pdfBlob || !signatureCertFile)
+                                                                                ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                                                : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                                            }`}
+                                                                    >
+                                                                        {isSigning ? <><Clock size={15} className="animate-spin" /> Firmando...</> : <><Shield size={15} /> Aplicar firma electrónica</>}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Visor de PDF */}
+                                                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
+                                                    {isGenerating ? (
+                                                        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                                                            <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />
+                                                            <div className="text-center px-4">
+                                                                <p className="text-[10px] md:text-xs font-black text-text-main uppercase tracking-[0.3em]">Generando documento</p>
+                                                                <p className="text-[8px] md:text-[9px] text-text-dim uppercase tracking-widest mt-2">Preparando vista previa...</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : pdfUrl ? (
+                                                        <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
+                                                    ) : (
+                                                        <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
+                                                            <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
+                                                            <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
+                                                            <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden">
+                                                                Generar PDF
                                                             </button>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Visor de PDF */}
-                                        <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
-                                            {isGenerating ? (
-                                                <div className="flex-1 flex flex-col items-center justify-center gap-6">
-                                                    <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />
-                                                    <div className="text-center px-4">
-                                                        <p className="text-[10px] md:text-xs font-black text-text-main uppercase tracking-[0.3em]">Generando documento</p>
-                                                        <p className="text-[8px] md:text-[9px] text-text-dim uppercase tracking-widest mt-2">Preparando vista previa...</p>
-                                                    </div>
-                                                </div>
-                                            ) : pdfUrl ? (
-                                                <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
-                                            ) : (
-                                                <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
-                                                    <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
-                                                    <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
-                                                    <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden">
-                                                        Generar PDF
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Drag Handle Right */}
-                        {isSidebarOpen && (
-                            <div
-                                onMouseDown={startDraggingRight}
-                                className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
-                            />
-                        )}
+                                {/* Drag Handle Right */}
+                                {isSidebarOpen && (
+                                    <div
+                                        onMouseDown={startDraggingRight}
+                                        className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
+                                    />
+                                )}
 
-                        {/* ── Collaboration Sidebar (Derecha) ── */}
-                        <div
-                            ref={rightSidebarRef}
-                            style={{
-                                '--right-sidebar-width': `${rightSidebarWidth}px`,
-                                width: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? undefined
-                                    : (isSidebarOpen ? `${rightSidebarWidth}px` : '0px'),
-                                transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? (isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
-                                    : undefined,
-                                transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
-                                    : 'width 300ms ease-in-out',
-                                visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                    ? (isSidebarOpen ? 'visible' : 'hidden')
-                                    : 'visible'
-                            } as React.CSSProperties}
-                            className={`
+                                {/* ── Collaboration Sidebar (Derecha) ── */}
+                                <div
+                                    ref={rightSidebarRef}
+                                    style={{
+                                        '--right-sidebar-width': `${rightSidebarWidth}px`,
+                                        width: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? undefined
+                                            : (isSidebarOpen ? `${rightSidebarWidth}px` : '0px'),
+                                        transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? (isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
+                                            : undefined,
+                                        transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
+                                            : 'width 300ms ease-in-out',
+                                        visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                            ? (isSidebarOpen ? 'visible' : 'hidden')
+                                            : 'visible'
+                                    } as React.CSSProperties}
+                                    className={`
                                 overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
                                 ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                    ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
-                                    : (isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
-                                }
+                                            ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
+                                            : (isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
+                                        }
                             `}
-                        >
-                            <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
-                                <CollaborationSidebar
-                                    instanceUuid={cowork.session.documentId}
-                                    sectionName={activeTab}
-                                    cowork={cowork}
-                                    allSections={sections.map(s => s.id)}
-                                    onClose={() => setIsSidebarOpen(false)}
-                                />
+                                >
+                                    <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
+                                        <CollaborationSidebar
+                                            instanceUuid={cowork.session.documentId}
+                                            sectionName={activeTab}
+                                            cowork={cowork}
+                                            allSections={sections.map(s => s.id)}
+                                            onClose={() => setIsSidebarOpen(false)}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            </SectionLockContext.Provider>
+                </SectionLockContext.Provider>
             </DocumentMetadataContext.Provider>
         </DocumentDataContext.Provider>
     );
