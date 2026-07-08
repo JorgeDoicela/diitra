@@ -1179,13 +1179,20 @@ public class AuthService : IAuthService
             $"<p style=\"color:#888888; font-size:12px;\">Si no realizaste esta solicitud, ignora este correo. " +
             $"Tu contraseña no será revelada sin que hagas clic en el enlace.</p>";
 
-        await _notificationService.NotifyUserAsync(
-            user.IdUsuario,
-            "Recuperación de Contraseña — DIITRA",
-            emailBody,
-            "SISTEMA",
-            recoveryUrl
-        );
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var emailEngine = scope.ServiceProvider.GetRequiredService<diitra_application.Common.Notifications.IEmailEngineService>();
+            await emailEngine.SendTemplatedEmailAsync(new EmailSendRequest
+            {
+                DestinatariosUserIds = new List<int> { user.IdUsuario },
+                CustomSubject = "Recuperación de Contraseña — DIITRA",
+                CustomBody = emailBody,
+                TemplateData = new Dictionary<string, string>
+                {
+                    { "[[action_url]]", recoveryUrl }
+                }
+            });
+        }
 
         await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_REQUESTED",
             $"Enlace de recuperación de contraseña generado y enviado a {emailDestino} desde IP {ipAddress}", "SEGURIDAD");

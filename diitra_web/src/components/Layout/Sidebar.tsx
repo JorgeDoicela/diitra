@@ -176,14 +176,14 @@ const Sidebar = ({
             setSidebarProjectsLoading(true);
             const endpoint = isAdmin ? '/projects' : '/projects/my';
             const res = await api.get(endpoint);
-            
+
             // Consistent sorting (recientes) matching main pages
             const sorted = (res.data || []).sort((a: any, b: any) => {
                 const dateA = a.fecha_modificacion || a.fecha_registro || '';
                 const dateB = b.fecha_modificacion || b.fecha_registro || '';
                 return new Date(dateB).getTime() - new Date(dateA).getTime();
             });
-            
+
             setSidebarProjects(sorted);
         } catch (err) {
             console.error('[DIITRA Sidebar] Error al cargar proyectos para el menú:', err);
@@ -233,7 +233,7 @@ const Sidebar = ({
         if (location.pathname.startsWith('/investigacion/mis-proyectos')) {
             setIsMisProyectosOpen(true);
         } else if (
-            (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion')) || 
+            (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion')) ||
             (location.pathname.includes('/workspace/') && !location.pathname.includes('/mis-proyectos/'))
         ) {
             setIsInvestigacionOpen(true);
@@ -270,7 +270,20 @@ const Sidebar = ({
         }
 
         if (n.url_accion) {
-            navigate(n.url_accion);
+            if (n.url_accion.startsWith('http://') || n.url_accion.startsWith('https://')) {
+                try {
+                    const urlObj = new URL(n.url_accion);
+                    if (urlObj.host === window.location.host) {
+                        navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+                    } else {
+                        window.open(n.url_accion, '_blank');
+                    }
+                } catch {
+                    window.location.href = n.url_accion;
+                }
+            } else {
+                navigate(n.url_accion);
+            }
             setIsNotificationsOpen(false);
         }
     };
@@ -294,8 +307,7 @@ const Sidebar = ({
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
         { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
-        { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
-        { name: 'Papelera', icon: Trash2, path: '/papelera', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
+
 
         // Grupo 2: Procesos y Analíticas
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 2 },
@@ -583,7 +595,7 @@ const Sidebar = ({
                                 }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            <span className={`text-[14px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
                                 }`}>
                                 {item.name}
                             </span>
@@ -602,14 +614,14 @@ const Sidebar = ({
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {sidebarProjectsLoading && sidebarProjects.length === 0 ? (
-                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[12px] text-text-dim/40 font-medium italic select-none">
+                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[13px] text-text-dim/40 font-medium italic select-none">
                                     <div className="w-7 h-7 flex items-center justify-center shrink-0">
                                         <Loader2 size={13} className="shrink-0 animate-spin opacity-40" />
                                     </div>
                                     <span>Cargando...</span>
                                 </div>
                             ) : sidebarProjects.length === 0 ? (
-                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[12px] text-text-dim/40 font-medium italic select-none">
+                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[13px] text-text-dim/40 font-medium italic select-none">
                                     <div className="w-7 h-7 flex items-center justify-center shrink-0">
                                         <BookOpen size={13} strokeWidth={1} className="shrink-0 opacity-40" />
                                     </div>
@@ -622,7 +634,7 @@ const Sidebar = ({
                                             const projectPath = item.name === 'Investigación'
                                                 ? `/investigacion/workspace/protocolo-investigacion/${p.uuid}`
                                                 : `/investigacion/mis-proyectos/workspace/protocolo-investigacion/${p.uuid}`;
-                                            
+
                                             const isSubActive = location.pathname.includes(`/workspace/`) && location.pathname.includes(p.uuid);
 
                                             return (
@@ -644,7 +656,7 @@ const Sidebar = ({
                                                             }`}>
                                                             <BookOpen size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                                         </div>
-                                                        <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                        <span className={`text-[13px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
                                                             }`} title={p.titulo?.trim() || '(Sin título)'}>
                                                             {p.titulo?.trim() || '(Sin título)'}
                                                         </span>
@@ -725,7 +737,7 @@ const Sidebar = ({
                                 }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            <span className={`text-[14px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
                                 }`}>
                                 {item.name}
                             </span>
@@ -776,7 +788,7 @@ const Sidebar = ({
                                                 }`}>
                                                 <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                             </div>
-                                            <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                            <span className={`text-[13px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
                                                 }`}>
                                                 {subItem.name}
                                             </span>
@@ -816,7 +828,7 @@ const Sidebar = ({
                                 }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            <span className={`text-[14px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
                                 }`}>
                                 {item.name}
                             </span>
@@ -994,7 +1006,7 @@ const Sidebar = ({
                         }`}>
                         <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                     </div>
-                    <span className={`text-[13px] tracking-tight truncate ${item.indent ? 'text-[12px]' : ''
+                    <span className={`text-[14px] tracking-tight truncate ${item.indent ? 'text-[13px]' : ''
                         } ${isActive ? 'font-semibold text-text-main' : 'font-medium'
                         }`}>
                         {item.name}
@@ -1073,19 +1085,19 @@ const Sidebar = ({
                             alt="DIITRA Logo"
                             className="h-6 w-auto object-contain"
                         />
-                        <span className="text-[14px] font-semibold text-text-main tracking-[0.2em] font-sans uppercase">
+                        <span className="text-[12px] font-medium text-text-main tracking-[0.3em] font-sans uppercase">
                             DIITRA
                         </span>
                     </Link>
 
                     {/* Navigator Search */}
-                    <div className="px-3 mb-4">
+                    <div className="px-3 mb-2">
                         <div
                             onClick={triggerCommandPalette}
                             className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
                         >
                             <Search size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
-                            <span className="text-xs text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
+                            <span className="text-[14px] text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
                             <kbd className="text-[10px] font-sans font-semibold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
                         </div>
                     </div>
@@ -1143,6 +1155,18 @@ const Sidebar = ({
                                         <Settings size={14} />
                                         <span>Configuración</span>
                                     </div>
+                                    {(isAdmin || user?.roles?.includes('DIITRA_DOCENTE')) && (
+                                        <div
+                                            onClick={() => {
+                                                navigate('/papelera');
+                                                setIsUserMenuOpen(false);
+                                            }}
+                                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                                        >
+                                            <Trash2 size={14} />
+                                            <span>Papelera</span>
+                                        </div>
+                                    )}
                                     <hr className="border-border-thin my-1" />
                                     <div
                                         onClick={async () => {

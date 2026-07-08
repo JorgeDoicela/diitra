@@ -15,7 +15,20 @@ const NotificationBell = () => {
         }
         
         if (n.url_accion) {
-            navigate(n.url_accion);
+            if (n.url_accion.startsWith('http://') || n.url_accion.startsWith('https://')) {
+                try {
+                    const urlObj = new URL(n.url_accion);
+                    if (urlObj.host === window.location.host) {
+                        navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+                    } else {
+                        window.open(n.url_accion, '_blank');
+                    }
+                } catch {
+                    window.location.href = n.url_accion;
+                }
+            } else {
+                navigate(n.url_accion);
+            }
             setIsOpen(false);
         }
     };

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -166,15 +165,25 @@ const MyProjectsPage: React.FC = () => {
                         {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
                     </p>
                 </div>
-                {!isDocente && (
+                <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
                     <button
-                        onClick={() => setShowNewProject(true)}
-                        className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
+                        onClick={() => navigate('/investigacion/adopcion')}
+                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
+                        title="Adoptar proyectos de investigación inconclusos"
                     >
-                        <Plus size={14} strokeWidth={3} />
-                        Nueva Postulación
+                        <Award size={14} />
+                        <span>Adopción de Proyectos</span>
                     </button>
-                )}
+                    {!isDocente && (
+                        <button
+                            onClick={() => setShowNewProject(true)}
+                            className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
+                        >
+                            <Plus size={14} strokeWidth={3} />
+                            Nueva Postulación
+                        </button>
+                    )}
+                </div>
             </header>
 
             <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:100ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">

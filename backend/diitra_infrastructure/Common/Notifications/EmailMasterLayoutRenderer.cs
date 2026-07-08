@@ -77,6 +77,8 @@ namespace diitra_infrastructure.Common.Notifications
         {
             var priorityKeys = new[]
             {
+                "[[action_url]]",
+                "[[url_accion]]",
                 "[[proyecto_workspace_url]]",
                 "[[url_adopcion]]",
                 "[[convocatoria_bases_url]]"

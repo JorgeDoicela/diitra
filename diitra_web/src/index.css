@@ -41,17 +41,17 @@ en el elemento principal:
  * (ej: bg-surface, text-text-dim, border-border-thin) en lugar de colores rígidos.
  */
 :root {
-    /* Fondo y color de texto base (Dark Mode por defecto) */
+    /* Fondo y color de texto base (Vercel Dark Mode) */
     --bg: #000000;
     --fg: #ffffff;
 
     /* Superficie base para tarjetas, Bento cards, contenedores y sus hovers */
     --surface: #0a0a0a;
-    --surface-hover: #171717;
+    --surface-hover: #151515;
 
-    /* Bordes ultra finos semitransparentes característicos del look de Vercel */
-    --border: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.16);
+    /* Bordes ultra finos semitransparentes del look de Vercel */
+    --border: rgba(255, 255, 255, 0.15);
+    --border-hover: rgba(255, 255, 255, 0.25);
 
     /* Textos secundarios / atenuados */
     --text-dim: #888888;
@@ -59,9 +59,9 @@ en el elemento principal:
     --radius: 8px;
 
     /* Rejilla y mallas decorativas */
-    --grid-color: rgba(255, 255, 255, 0.04);
-    --selection-bg: #ffffff;
-    --selection-fg: #000000;
+    --grid-color: rgba(255, 255, 255, 0.05);
+    --selection-bg: #0070f3;
+    --selection-fg: #ffffff;
 
     /* Colores de marca / llamadas a la acción (Azul Cobalto de Vercel) */
     --brand: #0070f3;
@@ -69,23 +69,19 @@ en el elemento principal:
     --brand-light: #3291ff;
 
     /* Colores para escenarios y estados específicos (Alertas / Estados de Proyectos) */
-    --error: #ff3333;
-    /* Escenario: Cancelaciones, Rechazos, Errores */
+    --error: #f33;
     --success: #00e054;
-    /* Escenario: Aprobaciones, Procesos Exitosos, Miembros Activos */
     --warning: #f5a623;
-    /* Escenario: En Revisión, En Corrección, Pendientes */
-    --info: #3291ff;
-    /* Escenario: Convocatorias, Novedades, Ayuda */
+    --info: #0070f3;
 
     /* Colores de fondo traslúcidos para burbujas e iconos de estado */
-    --success-subtle: rgba(0, 224, 84, 0.06);
-    --error-subtle: rgba(255, 51, 51, 0.06);
-    --warning-subtle: rgba(245, 166, 35, 0.06);
-    --info-subtle: rgba(50, 145, 255, 0.06);
-    --brand-subtle: rgba(0, 112, 243, 0.06);
+    --success-subtle: rgba(0, 224, 84, 0.08);
+    --error-subtle: rgba(255, 51, 51, 0.08);
+    --warning-subtle: rgba(245, 166, 35, 0.08);
+    --info-subtle: rgba(0, 112, 243, 0.08);
+    --brand-subtle: rgba(0, 112, 243, 0.08);
 
-    /* Escala de Grises Exclusiva (Geist Grays) para fondos, sombras y líneas finas */
+    /* Escala de Grises Exclusiva (Geist Grays) */
     --accents-1: #111111;
     --accents-2: #333333;
     --accents-3: #444444;
@@ -98,43 +94,43 @@ en el elemento principal:
 
 [data-theme="light"] {
     /* TEMA CLARO: Inversión de tonos de grises y adaptabilidad semántica */
-    --bg: #ffffff;
-    --fg: #000000;
-    --surface: #fafafa;
-    --surface-hover: #eaeaea;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-hover: rgba(0, 0, 0, 0.16);
-    --text-dim: #666666;
-    --accent: #000000;
-    --grid-color: rgba(0, 0, 0, 0.04);
-    --selection-bg: #000000;
+    --bg: #fafafa;
+    --fg: #09090b;
+    --surface: #ffffff;
+    --surface-hover: #f4f4f5;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-hover: rgba(0, 0, 0, 0.1);
+    --text-dim: #71717a;
+    --accent: #09090b;
+    --grid-color: rgba(0, 0, 0, 0.02);
+    --selection-bg: #6366f1;
     --selection-fg: #ffffff;
 
     /* Marca corporativa */
-    --brand: #0070f3;
-    --brand-dark: #0051c3;
-    --brand-light: #3291ff;
+    --brand: #4f46e5;
+    --brand-dark: #3730a3;
+    --brand-light: #6366f1;
 
     /* Feedback adaptativo a fondos claros */
-    --error: #cc0000;
-    --success: #008f37;
-    --warning: #b87200;
-    --info: #0070f3;
+    --error: #e11d48;
+    --success: #059669;
+    --warning: #d97706;
+    --info: #0284c7;
 
-    --success-subtle: rgba(0, 143, 55, 0.04);
-    --error-subtle: rgba(204, 0, 0, 0.04);
-    --warning-subtle: rgba(184, 114, 0, 0.04);
-    --info-subtle: rgba(0, 112, 243, 0.04);
-    --brand-subtle: rgba(0, 112, 243, 0.04);
+    --success-subtle: rgba(5, 150, 105, 0.06);
+    --error-subtle: rgba(225, 29, 72, 0.06);
+    --warning-subtle: rgba(217, 119, 6, 0.06);
+    --info-subtle: rgba(2, 132, 199, 0.06);
+    --brand-subtle: rgba(79, 70, 229, 0.06);
 
-    --accents-1: #fafafa;
-    --accents-2: #eaeaea;
-    --accents-3: #999999;
-    --accents-4: #888888;
-    --accents-5: #666666;
-    --accents-6: #444444;
-    --accents-7: #333333;
-    --accents-8: #111111;
+    --accents-1: #ffffff;
+    --accents-2: #f4f4f5;
+    --accents-3: #e4e4e7;
+    --accents-4: #a1a1aa;
+    --accents-5: #71717a;
+    --accents-6: #52525b;
+    --accents-7: #27272a;
+    --accents-8: #09090b;
 }
 
 /**
@@ -585,7 +581,7 @@ select:focus-visible {
 
 /* Anular color celeste/amarillo predeterminado por navegadores en autocompletado y mantener estilos */
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
+input:-webkit-autofill:hover,
 input:-webkit-autofill:active,
 input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--fg) !important;
@@ -616,7 +612,7 @@ input:-webkit-autofill::first-line {
 
 /* Estándar moderno de autofill para compatibilidad futura */
 input:autofill,
-input:autofill:hover, 
+input:autofill:hover,
 input:autofill:active,
 input:autofill:focus {
     transition: background-color 5000s ease-in-out 0s;
@@ -765,10 +761,12 @@ input:autofill::first-line {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-    max-height: 12rem; /* 192px max-height */
+    max-height: 12rem;
+    /* 192px max-height */
     overflow-y: auto;
     z-index: 50;
-    padding: 0.375rem; /* 6px internal padding */
+    padding: 0.375rem;
+    /* 6px internal padding */
     backdrop-filter: blur(8px);
 }
 
@@ -1573,30 +1571,27 @@ tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
              Efectos de Brillo Conic Especiales (Estilo Vercel)
 ================================================================================= */
 .conic-glow-rainbow {
-    background-image: conic-gradient(
-        from 0deg,
-        #ff0055 0%,
-        #0066ff 25%,
-        #00ffcc 50%,
-        #99ff00 75%,
-        #ffcc00 90%,
-        #ff0055 100%
-    );
+    background-image: conic-gradient(from 0deg,
+            #ff0055 0%,
+            #0066ff 25%,
+            #00ffcc 50%,
+            #99ff00 75%,
+            #ffcc00 90%,
+            #ff0055 100%);
 }
 
 .radial-glow-accent {
-    background-image: radial-gradient(
-        circle,
-        var(--brand) 0%,
-        rgba(0, 112, 243, 0.4) 40%,
-        transparent 70%
-    );
+    background-image: radial-gradient(circle,
+            var(--brand) 0%,
+            rgba(0, 112, 243, 0.4) 40%,
+            transparent 70%);
 }
 
 @keyframes conic-spin {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -1609,4 +1604,3 @@ tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
 .animate-conic-spin-fast {
     animation: conic-spin 6s linear infinite;
 }
-

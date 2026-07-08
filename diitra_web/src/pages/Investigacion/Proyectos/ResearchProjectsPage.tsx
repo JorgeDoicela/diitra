@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ClipboardList, Plus, FileCheck, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, RefreshCw
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, RefreshCw, Award
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -222,6 +222,14 @@ const ResearchProjectsPage = () => {
                     >
                         <FileCheck size={14} />
                         <span>Informe Final</span>
+                    </button>
+                    <button
+                        onClick={() => navigate('/investigacion/adopcion')}
+                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
+                        title="Adoptar proyectos de investigación inconclusos"
+                    >
+                        <Award size={14} />
+                        <span>Adopción</span>
                     </button>
                     <button
                         onClick={() => setShowWizard(true)}
