@@ -1,0 +1,114 @@
+.signature-pad-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.signature-pad-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.signature-pad-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--fg);
+    font-weight: 600;
+}
+
+.signature-pad-header p {
+    margin: 4px 0 0 0;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.canvas-wrapper {
+    width: 100%;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-hover);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: crosshair;
+}
+
+.signature-canvas {
+    display: block;
+    background: transparent;
+    max-width: 100%;
+}
+
+/* En modo oscuro, invertir colores del trazo en caliente para que se vea blanco/azul brillante */
+[data-theme="dark"] .signature-canvas,
+:root:not([data-theme="light"]) .signature-canvas {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.signature-pad-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.signature-pad-right-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-pad {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-pad-primary {
+    background: var(--fg);
+    color: var(--bg);
+}
+
+.btn-pad-primary:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.btn-pad-primary:disabled {
+    background: var(--accents-2);
+    color: var(--accents-5);
+    border-color: var(--border);
+    cursor: not-allowed;
+}
+
+.btn-pad-secondary {
+    background: var(--surface);
+    color: var(--text-dim);
+    border-color: var(--border);
+}
+
+.btn-pad-secondary:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.btn-pad-link {
+    background: transparent;
+    color: var(--text-dim);
+}
+
+.btn-pad-link:hover {
+    color: var(--fg);
+    text-decoration: underline;
+}

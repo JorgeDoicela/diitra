@@ -37,6 +37,7 @@ DROP TABLE IF EXISTS
     inv_documentos_firmas,
     inv_documentos_instancias,
     inv_document_templates,
+    inv_user_signature_profiles,
 
     -- DIITRA CoWork (Coordinación Team Pulse & Colaboración)
     inv_collaboration_comments,
@@ -1274,15 +1275,38 @@ CREATE TABLE inv_documentos_instancias (
     CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE inv_user_signature_profiles (
+    idPerfil                INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                    VARCHAR(36)   NOT NULL UNIQUE,
+    idUsuario               INT(11)       NOT NULL UNIQUE,
+    firma_imagen_b64        LONGTEXT      NULL     COMMENT 'PNG en Base64 de la firma dibujada o cargada',
+    iniciales               VARCHAR(10)   NULL,
+    cargo                   VARCHAR(200)  NULL     COMMENT 'Cargo institucional para estampar',
+    departamento            VARCHAR(200)  NULL     COMMENT 'Departamento o área del firmante',
+    es_configurado          TINYINT(1)    NOT NULL DEFAULT 0,
+    creado_en               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[FIRMA] Perfiles de firma institucional por usuario';
+
 CREATE TABLE inv_documentos_firmas (
     idFirma                 INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                    VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público del registro de firma',
     documento_uuid          VARCHAR(36)   NOT NULL,
     firmante_id             VARCHAR(100)  NOT NULL COMMENT 'ID o Email del firmante (ej. c.c. o correo)',
     firmante_rol            VARCHAR(50)   NOT NULL COMMENT 'Rol del firmante en el documento (ej. Director, Autor)',
     fecha_firma             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    firma_metadata          TEXT          NULL     COMMENT 'Datos extraídos del certificado PAdES .p12 (Issuer, Serial, etc)',
+    tipo_firma              ENUM('FirmaEC', 'DIITRA') NOT NULL DEFAULT 'FirmaEC' COMMENT 'Tipo de firma aplicada',
+    firma_code              VARCHAR(50)   NULL UNIQUE COMMENT 'Código legible para verificación (ej: DFRM-2026-A1B2C3)',
+    hmac_hash               VARCHAR(128)  NULL COMMENT 'Prueba criptográfica de autenticidad HMAC-SHA256',
+    doc_hash                VARCHAR(64)   NULL COMMENT 'SHA-256 del PDF en el momento exacto de la firma',
+    ip_address              VARCHAR(45)   NULL COMMENT 'IP de auditoría forense',
+    user_agent              TEXT          NULL COMMENT 'Navegador de auditoría forense',
+    firma_metadata          TEXT          NULL COMMENT 'Datos extraídos del certificado PAdES .p12 o JSON de la firma DIITRA',
     archivo_pdf_firmado     VARCHAR(512)  NOT NULL COMMENT 'Ruta relativa al documento final firmado por este usuario',
     es_valida               TINYINT(1)    NOT NULL DEFAULT 1,
+    revocada_en             TIMESTAMP     NULL,
+    motivo_revocacion       TEXT          NULL,
     INDEX idx_doc_firma (documento_uuid),
     CONSTRAINT fk_firma_documento FOREIGN KEY (documento_uuid) REFERENCES inv_documentos_instancias(uuid) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

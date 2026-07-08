@@ -1,0 +1,183 @@
+.sig-block-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    width: 100%;
+    font-family: var(--font-sans, inherit);
+    color: var(--fg);
+}
+
+.sig-block-title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sig-block-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sig-card-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.sig-card-item:hover {
+    border-color: var(--border-hover);
+}
+
+.sig-card-item.sig-revoked {
+    border-color: rgba(255, 51, 51, 0.25);
+    background: var(--error-subtle);
+}
+
+.sig-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sig-signer-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+}
+
+.sig-card-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-mono, monospace);
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-valid {
+    background: var(--success-subtle);
+    color: var(--success);
+    border: 1px solid rgba(0, 224, 84, 0.2);
+}
+
+.badge-revoked {
+    background: var(--error-subtle);
+    color: var(--error);
+    border: 1px solid rgba(255, 51, 51, 0.2);
+}
+
+.sig-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sig-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+}
+
+.sig-meta-row.flex-column {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.meta-label {
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.meta-val {
+    color: var(--fg);
+    font-weight: 500;
+}
+
+.code-text {
+    font-family: var(--font-mono, monospace);
+    background: var(--surface-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-size: 0.75rem;
+}
+
+.hash-text {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.7rem;
+    background: var(--surface-hover);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    word-break: break-all;
+    font-weight: 400;
+    color: var(--text-dim);
+    width: 100%;
+}
+
+.revocation-reason {
+    background: var(--error-subtle);
+    border: 1px solid rgba(255, 51, 51, 0.2);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    margin-top: 6px;
+    width: 100%;
+}
+
+.text-error {
+    color: var(--error);
+}
+
+.text-error-dark {
+    color: var(--fg);
+    font-size: 0.78rem;
+}
+
+.sig-block-empty {
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+.sig-block-empty p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.sig-block-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    padding: 12px;
+}
+
+.sig-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top: 2px solid var(--fg);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}

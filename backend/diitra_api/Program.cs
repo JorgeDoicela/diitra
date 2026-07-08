@@ -17,6 +17,10 @@ using Diitra.Application.Common.Documents;
 using Diitra.Application.Common.Repositories;
 using Diitra.Infrastructure.Common.Repositories;
 using Diitra.Infrastructure.Common.Documents;
+// DIITRA Firma
+using diitra_application.Signatures;
+using diitra_infrastructure.Signatures;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
@@ -113,8 +117,14 @@ builder.Services.AddSignalR(options =>
 });
 
 // Infrastructure Services
-builder.Services.AddScoped<IFirmaElectronicaService, FirmaElectronicaService>();
+builder.Services.AddScoped<diitra_infrastructure.Security.IFirmaElectronicaService, diitra_infrastructure.Security.FirmaElectronicaService>();
 builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
+
+// DIITRA Firma
+builder.Services.AddSingleton<SignatureHashService>();
+builder.Services.AddSingleton<SignatureStamper>();
+builder.Services.AddScoped<IDiitraSignatureService, DiitraSignatureService>();
+builder.Services.AddSingleton<IPasswordHasher<object>, PasswordHasher<object>>();
 
 // Authorization Logic (PBAC)
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionHandler>();

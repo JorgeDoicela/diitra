@@ -1,0 +1,388 @@
+/* Importar tipografías cursivas de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Sacramento&family=Alex+Brush&family=Great+Vibes&family=Pinyon+Script&family=Mrs+Saint+Delafield&display=swap');
+
+.signature-profile-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: var(--font-sans, inherit);
+    color: var(--fg);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.signature-profile-card:hover {
+    border-color: var(--border-hover);
+}
+
+.signature-profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+
+.signature-profile-title-area h3 {
+    margin: 6px 0 2px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+}
+
+.signature-profile-title-area p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.badge-signature-status {
+    background: var(--brand-subtle);
+    color: var(--brand);
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-mono, monospace);
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--border);
+}
+
+.sig-alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--font-sans, inherit);
+}
+
+.sig-alert-success {
+    background: var(--success-subtle);
+    color: var(--success);
+    border: 1px solid rgba(0, 224, 84, 0.25);
+}
+
+.sig-alert-error {
+    background: var(--error-subtle);
+    color: var(--error);
+    border: 1px solid rgba(255, 51, 51, 0.25);
+}
+
+.sig-profile-empty {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.sig-profile-empty h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg);
+}
+
+.sig-profile-empty p {
+    margin: 0 max(5%, 40px);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+
+.sig-profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sig-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.sig-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sig-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sig-value {
+    font-size: 0.85rem;
+    color: var(--fg);
+    font-weight: 500;
+}
+
+.sig-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sig-preview-box {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sig-preview-box img {
+    max-height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+[data-theme="dark"] .sig-preview-box img,
+:root:not([data-theme="light"]) .sig-preview-box img {
+    /* En modo oscuro, invertir colores de la firma si tiene fondo blanco */
+    filter: invert(1) hue-rotate(180deg) drop-shadow(0 2px 4px rgba(255,255,255,0.1));
+}
+
+.sig-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sig-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 600px) {
+    .sig-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sig-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sig-form-group.font-family-select select {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    outline: none;
+    background-color: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+    font-family: var(--font-sans, inherit);
+    transition: border-color 0.2s ease;
+}
+
+.sig-form-group.font-family-select select:focus {
+    border-color: var(--border-hover);
+}
+
+.sig-form-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sig-form-group input {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    background: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    outline: none;
+    font-family: var(--font-sans, inherit);
+    transition: border-color 0.2s ease;
+}
+
+.sig-form-group input:focus {
+    border-color: var(--border-hover);
+}
+
+.sig-mode-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.sig-section-title-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sig-mode-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sig-mode-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--font-sans, inherit);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sig-mode-btn:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.sig-mode-btn.active {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+}
+
+.sig-mode-workspace {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.sig-mode-auto-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.auto-signature-preview {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    height: 120px;
+}
+
+.auto-signature-preview img {
+    max-height: 100px;
+}
+
+.input-tip {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.sig-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.btn-sig {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--font-sans, inherit);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-sig-primary {
+    background: var(--fg);
+    color: var(--bg);
+}
+
+.btn-sig-primary:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.btn-sig-primary:disabled {
+    background: var(--accents-2);
+    color: var(--accents-5);
+    border-color: var(--border);
+    cursor: not-allowed;
+}
+
+.btn-sig-secondary {
+    background: var(--surface);
+    color: var(--text-dim);
+    border-color: var(--border);
+}
+
+.btn-sig-secondary:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.btn-sig-link {
+    background: transparent;
+    color: var(--text-dim);
+}
+
+.btn-sig-link:hover {
+    color: var(--fg);
+    text-decoration: underline;
+}
+
+.signature-profile-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 12px;
+    color: var(--text-dim);
+    font-family: var(--font-sans, inherit);
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top: 2px solid var(--fg);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

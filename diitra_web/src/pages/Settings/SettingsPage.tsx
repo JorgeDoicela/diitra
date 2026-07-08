@@ -4,6 +4,7 @@ import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useAuth } from '../../api/AuthContext';
 import { useConfirm } from '../../api/ConfirmContext';
+import { SignatureProfileCard } from './components/SignatureProfileCard';
 
 interface PerfilData {
     orcid_id?: string;
@@ -197,6 +198,8 @@ const SettingsPage: React.FC = () => {
             </header>
 
             <div className="max-w-4xl space-y-6">
+                <SignatureProfileCard />
+
                 <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
                     <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                         <User size={16} />
@@ -309,7 +312,7 @@ const SettingsPage: React.FC = () => {
                                     onChange={handleConsentToggle}
                                 />
                                 <label htmlFor="termsConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer select-none">
-                                    Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo el procesamiento temporal de mi firma electrónica para la suscripción de documentos institucionales. Entiendo que mi certificado <code className="bg-surface-dim px-1 py-0.5 rounded font-mono text-[10px] text-brand font-semibold">.p12</code> y contraseña se procesarán únicamente en memoria para firmar y <strong>nunca serán almacenados en el servidor</strong>.
+                                    Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo el uso de mi firma digital en el sistema. Entiendo que: 1) si uso firma electrónica avanzada con certificado <code className="bg-surface-dim px-1 py-0.5 rounded font-mono text-[10px] text-brand font-semibold">.p12</code>, el archivo y su clave se procesarán temporalmente en memoria RAM y <strong>nunca serán almacenados en el servidor</strong>; 2) si utilizo la firma institucional DIITRA, autorizo la <strong>persistencia segura del trazo de mi firma y cargo</strong> en el servidor para estampar los documentos oficiales de los cuales soy responsable.
                                 </label>
                             </div>
 

@@ -98,6 +98,10 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentInstance> DocumentInstances { get; set; }
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentAuditEntry> DocumentAuditEntries { get; set; }
 
+    // --- DIITRA Firma (Módulo de Firma Digital Institucional) ---
+    public virtual DbSet<InvDocumentoFirma>       InvDocumentoFirmas       { get; set; }
+    public virtual DbSet<InvUserSignaturePerfil>  InvUserSignaturePerfiles { get; set; }
+
     // --- DIITRA CoWork (Persistencia Colaborativa) ---
     public virtual DbSet<InvCoworkDocumento> InvCoworkDocumentos { get; set; }
     public virtual DbSet<InvCoworkUpdate>    InvCoworkUpdates    { get; set; }
