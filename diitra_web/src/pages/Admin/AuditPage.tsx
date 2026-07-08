@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { 
     Shield, 
+    ShieldCheck,
     Search, 
     Calendar, 
     Filter, 
@@ -558,6 +560,13 @@ const AuditPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <Link 
+                            to="/lopdp"
+                            className="btn-vercel-secondary flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            <ShieldCheck size={14} className="text-brand" />
+                            Panel LOPDP
+                        </Link>
                         <button 
                             onClick={handleExport}
                             disabled={logs.length === 0}

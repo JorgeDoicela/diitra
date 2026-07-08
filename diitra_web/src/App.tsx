@@ -267,23 +267,25 @@ function App() {
                             <Route path="/configuracion" element={<SettingsPage />} />
                             <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
                             <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/admin/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
+                            <Route path="/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
                             <Route path="/parametros-normativos" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
-                            <Route path="/admin/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
-                            <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
-                            <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
-                            <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
-                            <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
+                             <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
+                             <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
+                             <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
+                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
+                             <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
+                             <Route path="/admin/lopdp" element={<Navigate to="/lopdp" replace />} />
+                             <Route path="/admin/emails" element={<Navigate to="/emails" replace />} />
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
                             <Route path="/investigacion/proyectos" element={<NavigateToResearchProjects />} />
                             <Route path="/investigacion/proyectos/workspace/:documentUuid" element={<NavigateToWorkspaceDetail />} />
                             <Route path="/lopdp/arco" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/lopdp/admin" element={<Navigate to="/admin/lopdp" replace />} />
+                            <Route path="/lopdp/admin" element={<Navigate to="/lopdp" replace />} />
                             
                             {/* Supervision Context (Admin Only) */}
                             <Route path="/investigacion" element={<AdminRoute><ResearchProjectsPage /></AdminRoute>} />
