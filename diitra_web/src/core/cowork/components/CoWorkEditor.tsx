@@ -6,20 +6,15 @@ import React, { useContext } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import api from '../../../api/axios_config';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
-import type { CoWorkHandle, CoWorkUser } from '../types';
+import type { CoWorkHandle } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
 import { DocumentDataContext, DocumentMetadataContext, SectionGuardContext, SectionLockContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
 import {
-    CheckCircle2,
     Loader2,
-    Users,
-    Wifi,
-    WifiOff,
     EyeOff,
-    Lock,
-    Unlock
+    Lock
 } from 'lucide-react';
 
 interface CoWorkEditorProps {
@@ -65,6 +60,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
             useCollaboration={useCollaboration}
             dbValue={dbValue}
             {...props}
+            readonly={isReadOnlyMode}
         />
     );
 };
@@ -82,9 +78,8 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
     const { readOnlyReason } = useContext(DocumentMetadataContext);
-    const guardContext = useContext(SectionGuardContext);
     const lockContext = useContext(SectionLockContext);
-    const isDirectorOrAdmin = lockContext?.isDirectorOrAdmin === true;
+    const isGlobalReadOnly = lockContext?.readOnly === true;
 
     const onChangeRef = React.useRef(onChange);
     const coworkRef = React.useRef(cowork);
@@ -254,117 +249,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
     return (
         <div className={`flex flex-col w-full h-full bg-surface rounded-lg border border-border-thin overflow-hidden ${className}`}>
-            {/* Status bar */}
-            <div className="px-5 py-3 border-b border-border-thin bg-bg-deep flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    {session.isConnected ? (
-                        <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                            <Wifi size={11} className="text-green-500" />
-                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-green-500">
-                                Colaboración en línea
-                            </span>
-                        </>
-                    ) : session.error ? (
-                        <>
-                            <WifiOff size={11} className="text-red-400" />
-                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-red-400">
-                                Sin conexión — Modo local
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <Loader2 size={11} className="animate-spin text-text-dim" />
-                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-text-dim">
-                                Conectando...
-                            </span>
-                        </>
-                    )}
-                </div>
 
-                {/* Lock Status Pill */}
-                {guardContext?.id && (
-                    <div className="flex items-center gap-2 bg-surface/50 border border-border-thin px-3 py-1 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider select-none">
-                        {guardContext.isBlocked ? (
-                            <>
-                                <div className="flex items-center gap-1.5">
-                                    <Lock size={11} className="text-amber-500 animate-pulse" />
-                                    <span className="text-amber-500">
-                                        Bloqueado
-                                    </span>
-                                </div>
-                                {isDirectorOrAdmin && guardContext.handleToggleLock && (
-                                    <button
-                                        onClick={guardContext.handleToggleLock}
-                                        className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
-                                    >
-                                        Desbloquear
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex items-center gap-1.5">
-                                    <Unlock size={11} className="text-text-dim" />
-                                    <span className="text-text-dim">
-                                        Abierto
-                                    </span>
-                                </div>
-                                {isDirectorOrAdmin && guardContext.handleToggleLock && (
-                                    <button
-                                        onClick={guardContext.handleToggleLock}
-                                        className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
-                                    >
-                                        Bloquear
-                                    </button>
-                                )}
-                            </>
-                        )}
-                    </div>
-                )}
-
-                <div className="flex items-center gap-4">
-                    {session.isSyncing && (
-                        <div className="flex items-center gap-1.5">
-                            <Loader2 size={10} className="animate-spin text-text-dim" />
-                            <span className="text-[9px] text-text-dim uppercase tracking-widest">Guardando...</span>
-                        </div>
-                    )}
-                    {session.lastSyncedAt && !session.isSyncing && (
-                        <div className="flex items-center gap-1">
-                            <CheckCircle2 size={10} className="text-green-500" />
-                            <span className="text-[9px] text-text-dim uppercase tracking-widest">
-                                {session.lastSyncedAt.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                        </div>
-                    )}
-
-                    {session.connectedUsers.length > 0 && (
-                        <div className="flex items-center gap-2">
-                            <div className="flex -space-x-2">
-                                {session.connectedUsers.slice(0, 5).map((user: CoWorkUser, idx: number) => (
-                                    <div
-                                        key={`${user.id}-${idx}`}
-                                        className="w-6 h-6 rounded-full border border-bg-deep flex items-center justify-center text-[9px] font-bold text-white transition-transform hover:-translate-y-0.5 cursor-help"
-                                        style={{ backgroundColor: user.color }}
-                                        title={`${user.name} (${user.role})`}
-                                    >
-                                        {user.initials}
-                                    </div>
-                                ))}
-                                {session.connectedUsers.length > 5 && (
-                                    <div className="w-6 h-6 rounded-full border border-bg-deep bg-surface flex items-center justify-center text-[9px] font-bold text-text-dim">
-                                        +{session.connectedUsers.length - 5}
-                                    </div>
-                                )}
-                            </div>
-                            <span className="text-[9px] text-text-dim uppercase tracking-widest flex items-center gap-1">
-                                <Users size={9} />{session.connectedUsers.length}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
 
             <CoWorkToolbar
                 editor={editor}
@@ -378,14 +263,14 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             )}
 
-            {session.isOversightObserver && (
+            {session.isOversightObserver && !readonly && !isGlobalReadOnly && (
                 <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <Lock size={13} className="shrink-0 text-indigo-400" />
                     <span>Modo supervisión: estás observando este documento como administrador.</span>
                 </div>
             )}
 
-            {(readonly || session.readOnly) && !session.isOversightObserver && (
+            {(readonly || session.readOnly) && (!session.isOversightObserver || readonly) && !isGlobalReadOnly && (
                 <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <Lock size={13} className="shrink-0 text-indigo-400" />
                     <span>

@@ -162,26 +162,30 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
             {/* Historial y Ayuda */}
             <div className="flex items-center gap-1.5">
                 <button
-                    onClick={() => editor.chain().focus().undo().run()}
-                    disabled={!editor.can().undo()}
+                    onClick={() => {
+                        if (typeof editor.commands.undo === 'function') {
+                            editor.chain().focus().undo().run();
+                        }
+                    }}
+                    disabled={typeof editor.can().undo !== 'function' || !editor.can().undo()}
                     className="p-1.5 rounded text-text-dim hover:text-text-main disabled:opacity-30 disabled:pointer-events-none hover:bg-bg-deep transition-all duration-200"
                     title="Deshacer"
                 >
                     <Undo size={14} />
                 </button>
                 <button
-                    onClick={() => editor.chain().focus().redo().run()}
-                    disabled={!editor.can().redo()}
+                    onClick={() => {
+                        if (typeof editor.commands.redo === 'function') {
+                            editor.chain().focus().redo().run();
+                        }
+                    }}
+                    disabled={typeof editor.can().redo !== 'function' || !editor.can().redo()}
                     className="p-1.5 rounded text-text-dim hover:text-text-main disabled:opacity-30 disabled:pointer-events-none hover:bg-bg-deep transition-all duration-200"
                     title="Rehacer"
                 >
                     <Redo size={14} />
                 </button>
-                <div className="w-px h-5 bg-border-thin mx-0.5" />
-                <div className="flex items-center gap-1 text-[10px] text-text-dim select-none" title="Los cambios se sincronizan y guardan automáticamente">
-                    <HelpCircle size={12} />
-                    <span className="hidden sm:inline font-medium uppercase tracking-wider">Guardado Auto</span>
-                </div>
+
             </div>
         </div>
     );

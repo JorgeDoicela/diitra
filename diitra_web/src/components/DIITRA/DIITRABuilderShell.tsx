@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, X, Lock, Unlock, Sun, Moon } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import type { CoWorkHandle } from '../../core/cowork/types';
@@ -471,7 +471,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [signaturePassword, setSignaturePassword] = useState('');
     const [signatureCertFile, setSignatureCertFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
-    const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
+    // Estado de logs de auditoria removido de UI por desuso
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
@@ -492,7 +492,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     }, [pdfBlob]);
 
     const addAudit = useCallback((msg: string, type: string = 'info') => {
-        setAuditLogs(prev => [{ msg, type }, ...prev].slice(0, 8));
+        console.log(`[Audit:${type.toUpperCase()}] ${msg}`);
     }, []);
 
     const handleToggleSectionLock = useCallback((sectionId: string) => {
@@ -571,7 +571,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             coworkLog("[DIITRA] saveDirtyData: Guardado exitoso.");
             if (!isUnmounting) {
                 setLastSaved(new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-                addAudit('Sincronización de estado exitosa', 'success');
             }
         } catch (error) {
             console.error("[DIITRA] saveDirtyData: Error al guardar en base de datos:", error);
@@ -1078,25 +1077,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             </div>
                                         </div>
 
-                                        {/* ── Auditoría de Sesión ── */}
-                                        <div className="mt-auto hidden md:block">
-                                            <div className="p-5 bg-surface rounded-2xl border border-border-thin">
-                                                <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                    <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
-                                                </p>
-                                                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                                    {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
-                                                    {auditLogs.map((log, i) => (
-                                                        <div key={i} className="flex gap-3">
-                                                            <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />
-                                                            <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' : log.type === 'error' ? 'text-red-500/80' : log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'}`}>
-                                                                {log.msg}
-                                                            </p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
+                                        {/* Auditoría de sesión removida para simplificar navegación */}
                                     </div>
                                 </div>
 
