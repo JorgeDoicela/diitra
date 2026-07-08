@@ -132,7 +132,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                     onClick={handleManualRefresh}
                     disabled={isLoading || isRefreshing}
                     title="Actualizar actividad"
-                    className="p-1 rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all disabled:opacity-40"
+                    className="p-1.5 h-7 w-7 rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all disabled:opacity-40 flex items-center justify-center"
                 >
                     <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
                 </button>
@@ -204,16 +204,6 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                     </div>
                 )}
             </div>
-
-            {/* Footer con última actualización */}
-            {lastFetch && (
-                <div className="px-4 py-2 border-t border-border-thin/50 flex items-center gap-1">
-                    <Clock size={9} className="text-text-dim/40" />
-                    <span className="text-[9px] text-text-dim/50">
-                        Actualizado {timeAgo(lastFetch.toISOString())}
-                    </span>
-                </div>
-            )}
         </div>
     );
 };

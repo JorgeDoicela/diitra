@@ -106,14 +106,6 @@ const RecycleBinPage: React.FC = () => {
                         Restaura elementos eliminados temporalmente o elimínalos de forma permanente de la base de datos.
                     </p>
                 </div>
-                <button
-                    onClick={fetchItems}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-3.5 py-2 bg-surface hover:bg-surface-hover border border-black/10 dark:border-white/10 text-text-main rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50"
-                >
-                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                    Actualizar
-                </button>
             </div>
 
             {/* Tabs */}

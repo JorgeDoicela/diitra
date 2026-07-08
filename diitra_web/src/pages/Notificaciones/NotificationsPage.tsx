@@ -29,7 +29,7 @@ const getCategoryConfig = (cat: string) => categoryConfig[cat] || { icon: Mail, 
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
-    const { notifications, markAsRead, markAllAsRead, fetchNotifications, isLoading } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, fetchNotifications, isLoading, isConnected } = useNotifications();
     const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread' | 'investigacion' | 'sistema' | 'urgente'>('all');
     const [search, setSearch] = useState('');
@@ -38,6 +38,16 @@ const NotificationsPage = () => {
     useEffect(() => {
         document.title = "Centro de Notificaciones | DIITRA";
     }, []);
+
+    useEffect(() => {
+        const handleFocus = () => {
+            handleRefresh();
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [notifications]);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -190,14 +200,6 @@ const NotificationsPage = () => {
                             <span>Marcar leídas</span>
                         </button>
                     )}
-                    <button
-                        onClick={handleRefresh}
-                        disabled={loadingAll}
-                        className="btn-vercel-secondary !p-2.5 h-10 w-10 flex items-center justify-center"
-                        title="Sincronizar notificaciones"
-                    >
-                        <RefreshCw size={14} className={loadingAll || isLoading ? 'animate-spin' : ''} />
-                    </button>
                 </div>
             </header>
 
@@ -329,8 +331,6 @@ const NotificationsPage = () => {
                 <div className="space-y-6">
                     <VercelUsageCard
                         title="Resumen de notificaciones"
-                        buttonLabel="Actualizar"
-                        onButtonClick={handleRefresh}
                         items={[
                             {
                                 label: 'Notificaciones',

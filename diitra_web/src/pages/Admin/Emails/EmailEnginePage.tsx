@@ -1768,10 +1768,10 @@ const EmailEnginePage: React.FC = () => {
                                         <button
                                             onClick={() => fetchHistory()}
                                             disabled={refreshing}
-                                            className="btn-vercel-secondary text-xs !py-2 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                            className="btn-vercel-secondary !p-2 h-9 w-9 flex items-center justify-center rounded-lg cursor-pointer disabled:opacity-50"
+                                            title="Refrescar cola de correos"
                                         >
-                                            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-                                            Refrescar
+                                            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
                                         </button>
                                     </div>
                                 </div>

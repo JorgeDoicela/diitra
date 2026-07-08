@@ -636,7 +636,7 @@ const AnalyticsPage = () => {
                     <button
                         onClick={reload}
                         disabled={refreshing}
-                        className="btn-vercel-secondary !p-2.5 h-10 w-10"
+                        className="btn-vercel-secondary !p-2 h-9 w-9 flex items-center justify-center rounded-lg"
                         title="Sincronizar base de datos en tiempo real"
                         id="refresh-analytics-btn"
                     >

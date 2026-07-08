@@ -76,14 +76,6 @@ const PeerReviewPage: React.FC = () => {
                             Evalúe con rigor científico y ética académica conforme a la normativa CACES.
                         </p>
                     </div>
-                    <button
-                        onClick={fetchReviews}
-                        className="btn-vercel-secondary flex items-center gap-2 shrink-0 shadow-sm"
-                        disabled={loading}
-                    >
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                        Actualizar
-                    </button>
                 </div>
             </header>
 
@@ -284,8 +276,6 @@ const PeerReviewPage: React.FC = () => {
             <div className="space-y-6">
                 <VercelUsageCard 
                     title="Resumen de Evaluaciones"
-                    buttonLabel="Actualizar"
-                    onButtonClick={fetchReviews}
                     items={[
                         {
                             label: 'Pendientes',

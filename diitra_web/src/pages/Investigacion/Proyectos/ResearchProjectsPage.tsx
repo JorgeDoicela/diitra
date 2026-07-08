@@ -83,6 +83,16 @@ const ResearchProjectsPage = () => {
         loadProjects();
     }, []);
 
+    useEffect(() => {
+        const handleFocus = () => {
+            loadProjects(true);
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, []);
+
     const lineasDisponibles = useMemo(() => {
         return Array.from(
             new Set(proyectos.map(p => p.linea_investigacion).filter(Boolean))
@@ -211,7 +221,7 @@ const ResearchProjectsPage = () => {
                     <button
                         onClick={() => loadProjects(true)}
                         disabled={refreshing || loading}
-                        className="btn-vercel-secondary !p-2.5 h-10 w-10 flex items-center justify-center rounded-xl"
+                        className="btn-vercel-secondary !p-2 h-9 w-9 flex items-center justify-center rounded-lg"
                         title="Actualizar proyectos"
                     >
                         <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />

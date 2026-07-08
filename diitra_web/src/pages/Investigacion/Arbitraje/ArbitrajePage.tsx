@@ -288,10 +288,6 @@ const ArbitrajePage: React.FC = () => {
                             <UserPlus size={14} />
                             Par Evaluador Externo
                         </button>
-                        <button onClick={loadData} className="btn-vercel-secondary flex items-center gap-2 shrink-0" disabled={loading}>
-                            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                            Actualizar
-                        </button>
                     </div>
                 </div>
             </header>
@@ -476,8 +472,6 @@ const ArbitrajePage: React.FC = () => {
                     {stats && (
                         <VercelUsageCard
                             title="Métricas de Evaluación"
-                            buttonLabel="Actualizar"
-                            onButtonClick={loadData}
                             items={[
                                 { label: 'En Revisión',     value: stats.proyectos_en_revision,    displayValue: `${stats.proyectos_en_revision}`,                                     max: Math.max(10, stats.proyectos_en_revision),    color: 'var(--fg)',  tooltip: 'Proyectos actualmente en proceso de evaluación por pares.' },
                                 { label: 'Pares Evaluadores',  value: stats.total_arbitros_asignados, displayValue: `${stats.total_arbitros_asignados}`,                                   max: Math.max(15, stats.total_arbitros_asignados), color: '#3b82f6',    tooltip: 'Total de revisores asignados (internos y externos).' },
