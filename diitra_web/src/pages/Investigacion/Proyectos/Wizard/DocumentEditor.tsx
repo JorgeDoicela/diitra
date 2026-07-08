@@ -372,6 +372,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         formData,
         setFormData,
         localChangeCount,
+        remoteChangeCount,
         addItem,
         removeItem,
         updateItem,
@@ -517,6 +518,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             formData={formData}
             setFormData={setFormData}
             localChangeCount={localChangeCount}
+            remoteChangeCount={remoteChangeCount}
             cowork={cowork}      // ← Inyectado al Shell (no lo crea él)
             onSave={handleSave}
             onClose={onClose}

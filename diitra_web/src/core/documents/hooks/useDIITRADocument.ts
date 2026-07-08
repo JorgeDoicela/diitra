@@ -72,6 +72,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
     } = {}
 ) {
     const [localChangeCount, setLocalChangeCount] = useState(0);
+    const [remoteChangeCount, setRemoteChangeCount] = useState(0);
 
     const [formData, setFormData] = useState<T>(() => {
         const enriched: any = { ...initialData };
@@ -244,6 +245,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
                         if (isEqualValue(prev[key], parsedValue)) return prev;
                         return { ...prev, [key]: parsedValue };
                     });
+                    setRemoteChangeCount(c => c + 1);
                 }
             };
             ytext.observe(observer);
@@ -440,6 +442,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         formData,
         setFormData,
         localChangeCount,
+        remoteChangeCount,
         addItem,
         removeItem,
         updateItem,

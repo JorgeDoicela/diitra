@@ -75,7 +75,8 @@ interface DIITRABuilderShellProps {
     sections: BuilderSection[];
     formData: any;
     setFormData: React.Dispatch<React.SetStateAction<any>>;
-    localChangeCount?: number;                            // ← Agregado para controlar el auto-guardado
+    localChangeCount?: number;                            // ← Cambios locales (dispara autoguardado)
+    remoteChangeCount?: number;                           // ← Cambios remotos de Yjs (no dispara guardado)
     cowork: CoWorkHandle;                                // ← Inyectado desde el padre (v2.0)
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
@@ -95,6 +96,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     sections,
     formData,
     localChangeCount = 0,                                // ← Valor por defecto
+    remoteChangeCount = 0,                               // ← Valor por defecto
     onSave,
     onClose,
     cowork,      // ← Recibido como prop
@@ -524,6 +526,25 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     useEffect(() => { formDataRef.current = formData; }, [formData]);
     useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
+
+    // ── Sincronización de snapshot para colaboradores remotos ──────────────────
+    // Cuando llega un update de Yjs de otro usuario, los datos ya están (o
+    // estarán) persistidos por el autor original. Avanzamos lastSavedSnapshotRef
+    // para que este cliente no quede en estado isDirty de forma indefinida.
+    // Usamos remoteChangeCount como señal explícita en lugar de comparar refs
+    // de counters dentro de un effect con dependencias omitidas (anti-patrón).
+    useEffect(() => {
+        if (remoteChangeCount === 0) return; // Ignorar la inicialización
+
+        // Guardia crítica: si este cliente tiene un autosave pendiente, significa
+        // que hay cambios locales aún no persistidos. Avanzar el snapshot remoto
+        // haría isDirty = false y el autosave cancelaría el guardado → pérdida de datos.
+        // Solo sincronizamos cuando NO hay cambios locales en vuelo.
+        if (saveTimeoutRef.current !== null || isSavingRef.current) return;
+
+        lastSavedSnapshotRef.current = snapshotForm(formDataRef.current);
+        setLastSaved(new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }, [remoteChangeCount]);
 
     const saveDirtyData = useCallback(async (isUnmounting = false) => {
         if (readOnly) {
