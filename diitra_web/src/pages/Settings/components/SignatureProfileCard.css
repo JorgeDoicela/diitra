@@ -288,6 +288,7 @@
         flex-direction: column;
         gap: 8px;
     }
+
     .sig-mode-btn {
         width: 100%;
         text-align: center;
@@ -763,6 +764,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -772,6 +774,7 @@
     from {
         transform: translateX(100%);
     }
+
     to {
         transform: translateX(0);
     }
@@ -828,11 +831,13 @@
     pointer-events: none;
 }
 
-.sig-upload-dropzone:hover::before, .sig-upload-dropzone.dragging::before {
+.sig-upload-dropzone:hover::before,
+.sig-upload-dropzone.dragging::before {
     opacity: 1;
 }
 
-.sig-upload-dropzone:hover, .sig-upload-dropzone.dragging {
+.sig-upload-dropzone:hover,
+.sig-upload-dropzone.dragging {
     border-color: var(--brand, #0070f3);
     box-shadow: 0 4px 20px rgba(0, 112, 243, 0.05);
     transform: translateY(-2px);
@@ -851,7 +856,8 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.sig-upload-dropzone:hover .sig-upload-icon, .sig-upload-dropzone.dragging .sig-upload-icon {
+.sig-upload-dropzone:hover .sig-upload-icon,
+.sig-upload-dropzone.dragging .sig-upload-icon {
     color: var(--brand, #0070f3);
     border-color: var(--brand);
     transform: translateY(-4px) scale(1.08);
@@ -939,11 +945,13 @@
     font-weight: 400;
     line-height: 1.35;
     margin-top: 1px;
-    text-transform: none; /* Evita heredar mayúsculas del label */
+    text-transform: none;
+    /* Evita heredar mayúsculas del label */
     letter-spacing: normal;
 }
 
-.sig-zoom-range, .sig-rotation-range {
+.sig-zoom-range,
+.sig-rotation-range {
     width: 100%;
     height: 5px;
     background: var(--border);
@@ -956,12 +964,14 @@
     appearance: none;
 }
 
-.sig-zoom-range:hover, .sig-rotation-range:hover {
+.sig-zoom-range:hover,
+.sig-rotation-range:hover {
     background: var(--border-hover);
 }
 
 /* Estilos webkit para sliders premium */
-.sig-zoom-range::-webkit-slider-thumb, .sig-rotation-range::-webkit-slider-thumb {
+.sig-zoom-range::-webkit-slider-thumb,
+.sig-rotation-range::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 14px;
@@ -970,27 +980,30 @@
     background: var(--brand, #0070f3);
     border: 2px solid var(--surface);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     transition: transform 0.1s ease;
 }
 
-.sig-zoom-range::-webkit-slider-thumb:hover, .sig-rotation-range::-webkit-slider-thumb:hover {
+.sig-zoom-range::-webkit-slider-thumb:hover,
+.sig-rotation-range::-webkit-slider-thumb:hover {
     transform: scale(1.2);
 }
 
 /* Estilos firefox para sliders premium */
-.sig-zoom-range::-moz-range-thumb, .sig-rotation-range::-moz-range-thumb {
+.sig-zoom-range::-moz-range-thumb,
+.sig-rotation-range::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50%;
     background: var(--brand, #0070f3);
     border: 2px solid var(--surface);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     transition: transform 0.1s ease;
 }
 
-.sig-zoom-range::-moz-range-thumb:hover, .sig-rotation-range::-moz-range-thumb:hover {
+.sig-zoom-range::-moz-range-thumb:hover,
+.sig-rotation-range::-moz-range-thumb:hover {
     transform: scale(1.2);
 }
 
@@ -1023,13 +1036,16 @@
         align-items: stretch;
         gap: 12px;
     }
+
     .sig-cropper-right-actions {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
         width: 100%;
     }
-    .sig-cropper-right-actions button, .btn-sig-back {
+
+    .sig-cropper-right-actions button,
+    .btn-sig-back {
         width: 100%;
         text-align: center;
     }
@@ -1128,6 +1144,7 @@
 .sig-segment-btn.active .dot-blue {
     border-color: rgba(255, 255, 255, 0.4);
 }
+
 .sig-segment-btn.active .dot-black {
     border-color: rgba(255, 255, 255, 0.4);
 }
@@ -1343,6 +1360,7 @@
         grid-template-columns: 1fr;
         gap: 16px;
     }
+
     .sig-cropper-wrapper {
         min-height: 260px;
         height: 260px;
@@ -1360,9 +1378,12 @@
 .ReactCrop__crop-selection {
     border: 1.5px solid #ffffff !important;
     outline: none !important;
-    background-image: none !important; /* Elimina las líneas discontinuas creadas con gradientes */
-    animation: none !important; /* Desactiva la animación marching-ants */
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75) !important; /* Opacidad elegante del fondo */
+    background-image: none !important;
+    /* Elimina las líneas discontinuas creadas con gradientes */
+    animation: none !important;
+    /* Desactiva la animación marching-ants */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75) !important;
+    /* Opacidad elegante del fondo */
 }
 
 /* Tiradores circulares de color de marca */
@@ -1376,5 +1397,6 @@
 }
 
 .ReactCrop__drag-handle::after {
-    display: none !important; /* Quitar las líneas por defecto */
+    display: none !important;
+    /* Quitar las líneas por defecto */
 }

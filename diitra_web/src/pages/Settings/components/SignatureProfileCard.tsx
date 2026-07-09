@@ -9,7 +9,7 @@ import { DrawSignatureTab } from './DrawSignatureTab';
 import './SignatureProfileCard.css';
 
 export const SignatureProfileCard: React.FC = () => {
-    const sig     = useSignatureProfile();
+    const sig = useSignatureProfile();
     const cropper = useImageCropper();
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -175,7 +175,7 @@ export const SignatureProfileCard: React.FC = () => {
 
             {/* Precarga de tipografías cursivas */}
             <div style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, overflow: 'hidden' }}>
-                {['Caveat','Dancing Script','Sacramento','Alex Brush','Great Vibes','Pinyon Script','Mrs Saint Delafield'].map(f => (
+                {['Caveat', 'Dancing Script', 'Sacramento', 'Alex Brush', 'Great Vibes', 'Pinyon Script', 'Mrs Saint Delafield'].map(f => (
                     <span key={f} style={{ fontFamily: f }}>preload</span>
                 ))}
             </div>
@@ -184,49 +184,91 @@ export const SignatureProfileCard: React.FC = () => {
             {showConfirmModal && createPortal(
                 <div className="sig-modal-overlay">
                     <div className="sig-modal-backdrop" onClick={() => setShowConfirmModal(false)} />
-                    <div className="sig-modal-content">
-                        <div className="sig-modal-header">
-                            <div className="sig-modal-badge-container">
-                                <span className="sig-modal-badge-id">FIRMA-DIGITAL</span>
-                                <div className="sig-modal-badge-status">
-                                    <span className="status-dot" />
+
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
+                        {/* Cabecera idéntica a Convocatoria */}
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                            <div className="flex items-center gap-3">
+                                <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
+                                    FIRMA-DIGITAL
+                                </span>
+                                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-brand">
+                                    <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
                                     <span>Configuración Activa</span>
                                 </div>
                             </div>
-                            <button type="button" className="sig-modal-close-btn" onClick={() => setShowConfirmModal(false)}>
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmModal(false)}
+                                className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
+                            >
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="sig-modal-title-area">
-                            <h2>Confirmar Firma Digital</h2>
-                            <p>Esta información se incrustará de manera oficial al estampar su firma en los documentos.</p>
-                        </div>
-                        <div className="sig-modal-body">
-                            <p>¿Está seguro de que desea guardar y activar su perfil de firma digital con los siguientes datos?</p>
-                            <div className="sig-modal-summary-card">
-                                <div className="sig-modal-summary-item">
-                                    <span className="sig-modal-summary-label">Nombre de la Firma</span>
-                                    <span className="sig-modal-summary-value">{sig.autoText || sig.toTitleCase(sig.cargo)}</span>
+
+                        {/* Contenido (Scrollable) con Bento Cards de dos columnas */}
+                        <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface text-left">
+                            <div className="space-y-4">
+                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                    Confirmar Firma Digital
+                                </h2>
+                                <p className="text-sm text-text-dim leading-relaxed font-medium">
+                                    Esta información se incrustará de manera oficial al estampar su firma en los documentos. ¿Está seguro de que desea guardar y activar su perfil con los siguientes datos?
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bento-card static p-5 space-y-1.5 col-span-2">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                        Nombre de la Firma
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-sans">
+                                        {sig.autoText || sig.toTitleCase(sig.cargo)}
+                                    </div>
                                 </div>
-                                <div className="sig-modal-summary-item">
-                                    <span className="sig-modal-summary-label">Cargo</span>
-                                    <span className="sig-modal-summary-value">{sig.cargo.trim()}</span>
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                        Cargo
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-sans">
+                                        {sig.cargo.trim()}
+                                    </div>
                                 </div>
-                                <div className="sig-modal-summary-item">
-                                    <span className="sig-modal-summary-label">Departamento / Área</span>
-                                    <span className="sig-modal-summary-value">{sig.departamento.trim()}</span>
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                        Departamento / Área
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-sans">
+                                        {sig.departamento.trim()}
+                                    </div>
                                 </div>
-                                <div className="sig-modal-summary-item sig-modal-summary-preview">
-                                    <span className="sig-modal-summary-label">Firma Oficial</span>
+                                <div className="bento-card static p-5 space-y-3 col-span-2">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                        Firma Oficial
+                                    </div>
                                     <div className="sig-modal-preview-box">
                                         <img src={sig.firmaImagenB64} alt="Firma a guardar" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="sig-modal-footer">
-                            <button type="button" className="btn-sig btn-sig-secondary" onClick={() => setShowConfirmModal(false)}>Cancelar</button>
-                            <button type="button" className="btn-sig btn-sig-primary" onClick={handleConfirmSave}>Confirmar y Activar</button>
+
+                        {/* Pie de página con botones fluidos y borde superior */}
+                        <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmModal(false)}
+                                className="btn-vercel-secondary flex-1"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmSave}
+                                className="btn-vercel-primary flex-1"
+                            >
+                                Confirmar y Activar
+                            </button>
                         </div>
                     </div>
                 </div>,

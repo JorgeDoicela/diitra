@@ -41,20 +41,20 @@ export interface SignatureProfileState {
 export function useSignatureProfile(): SignatureProfileState {
     const { user } = useAuth();
 
-    const [profile, setProfile]               = useState<UserSignatureProfileDto | null>(null);
-    const [loading, setLoading]               = useState(true);
-    const [saving, setSaving]                 = useState(false);
-    const [isEditing, setIsEditing]           = useState(false);
-    const [message, setMessage]               = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-    const [cargo, setCargo]                   = useState('');
-    const [departamento, setDepartamento]     = useState('');
+    const [profile, setProfile] = useState<UserSignatureProfileDto | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [cargo, setCargo] = useState('');
+    const [departamento, setDepartamento] = useState('');
     const [firmaImagenB64, setFirmaImagenB64] = useState<string | undefined>(undefined);
-    const [firmaAutoB64, setFirmaAutoB64]     = useState<string | undefined>(undefined);
+    const [firmaAutoB64, setFirmaAutoB64] = useState<string | undefined>(undefined);
     const [firmaUploadB64, setFirmaUploadB64] = useState<string | undefined>(undefined);
-    const [firmaDrawB64, setFirmaDrawB64]     = useState<string | undefined>(undefined);
-    const [activeMode, setActiveMode]         = useState<SignatureMode>('auto');
-    const [autoText, setAutoText]             = useState('');
-    const [selectedFont, setSelectedFont]     = useState('Caveat');
+    const [firmaDrawB64, setFirmaDrawB64] = useState<string | undefined>(undefined);
+    const [activeMode, setActiveMode] = useState<SignatureMode>('auto');
+    const [autoText, setAutoText] = useState('');
+    const [selectedFont, setSelectedFont] = useState('Caveat');
 
     useEffect(() => {
         let active = true;
