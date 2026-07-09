@@ -548,7 +548,20 @@
     animation: fadeIn 0.2s ease-out;
 }
 
+.sig-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 1;
+}
+
 .sig-modal-content {
+    position: relative;
+    z-index: 10;
     background: var(--surface);
     border-left: 1px solid var(--border);
     border-top: none;

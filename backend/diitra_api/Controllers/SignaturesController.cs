@@ -1,29 +1,23 @@
 using diitra_application.Signatures;
-using diitra_infrastructure.data.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace diitra_api.Controllers;
 
 /// <summary>
 /// API REST del módulo DIITRA Firma.
 /// Gestiona perfiles de firma de usuarios y la firma de documentos institucionales.
+/// El controlador no accede a la base de datos directamente — delega todo al servicio.
 /// </summary>
 [ApiController]
 [Route("api/signatures")]
 public class SignaturesController : ControllerBase
 {
     private readonly IDiitraSignatureService _signatureService;
-    private readonly DiitraContext           _context;
 
-    public SignaturesController(
-        IDiitraSignatureService signatureService,
-        DiitraContext           context)
+    public SignaturesController(IDiitraSignatureService signatureService)
     {
         _signatureService = signatureService;
-        _context          = context;
     }
 
     // ── PERFIL ────────────────────────────────────────────────────────
@@ -68,6 +62,10 @@ public class SignaturesController : ControllerBase
             var result = await _signatureService.UpsertProfileAsync(idUsuario, dto);
             return Ok(result);
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
@@ -79,7 +77,7 @@ public class SignaturesController : ControllerBase
     /// <summary>
     /// Firma un documento con DIITRA Firma.
     /// Requiere re-autenticación (contraseña) para garantizar no repudio.
-    /// Retorna el PDF firmado como descarga.
+    /// El nombre y cédula del firmante se resuelven internamente desde el servicio.
     /// </summary>
     [HttpPost("sign")]
     [Authorize]
@@ -88,21 +86,16 @@ public class SignaturesController : ControllerBase
         var idUsuario = GetCurrentUserId();
         if (idUsuario == 0) return Unauthorized();
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
-        if (user is null) return Unauthorized();
-
         var ip        = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers["User-Agent"].ToString();
 
         try
         {
             var result = await _signatureService.SignDocumentAsync(
-                idUsuario:     idUsuario,
-                nombreUsuario: user.Nombre ?? user.IdSigafi ?? "Usuario DIITRA",
-                cedulaUsuario: user.IdSigafi,
-                ipAddress:     ip,
-                userAgent:     userAgent,
-                dto:           dto);
+                idUsuario: idUsuario,
+                ipAddress: ip,
+                userAgent: userAgent,
+                dto:       dto);
 
             return Ok(new
             {
@@ -167,7 +160,6 @@ public class SignaturesController : ControllerBase
         var idUsuario = GetCurrentUserId();
         if (idUsuario == 0) return Unauthorized();
 
-        // Verificar si es admin (puedes ajustar esto a tu lógica de roles)
         var esAdmin = User.IsInRole("Administrador") || User.HasClaim("permission", "admin.firma");
 
         try

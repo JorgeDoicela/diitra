@@ -91,14 +91,30 @@ namespace diitra_api.Controllers
             string code, 
             [FromServices] IDocumentAuditRepository auditRepository, 
             [FromServices] IDocumentTemplateRepository templateRepository,
+            [FromServices] diitra_infrastructure.data.models.DiitraContext context,
             System.Threading.CancellationToken ct)
         {
             _logger.LogInformation("[DIITRA CORE] Solicitud de verificación pública de trazabilidad para código: {Code}", code);
 
+            // 1. Intentar buscar por código de trazabilidad del documento original
             var auditEntry = await auditRepository.FindByTraceabilityCodeAsync(code, ct);
+            
+            // 2. Si no se encuentra, intentar buscar por un código de firma (DFRM-*)
             if (auditEntry == null)
             {
-                return NotFound(new { error = "El código de trazabilidad no es válido o el documento no ha sido emitido oficialmente." });
+                var firma = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+                    context.InvDocumentoFirmas, f => f.FirmaCode == code, ct);
+
+                if (firma != null)
+                {
+                    auditEntry = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+                        context.DocumentAuditEntries, e => e.EntityUuid == firma.DocumentoUuid, ct);
+                }
+            }
+
+            if (auditEntry == null)
+            {
+                return NotFound(new { error = "El código de trazabilidad o firma no es válido, o el documento no ha sido emitido oficialmente." });
             }
 
             string templateName = "Documento Oficial DIITRA";
@@ -115,6 +131,46 @@ namespace diitra_api.Controllers
                 _logger.LogWarning(ex, "[DIITRA CORE] No se pudo obtener el nombre de la plantilla {Code}", auditEntry.TemplateCode);
             }
 
+            // 3. Obtener todas las firmas asociadas a este documento ordenadas por fecha (cascada de firmas)
+            var firmasDb = new System.Collections.Generic.List<diitra_infrastructure.data.models.InvDocumentoFirma>();
+            if (!string.IsNullOrWhiteSpace(auditEntry.EntityUuid))
+            {
+                firmasDb = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync(
+                    Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking(
+                        System.Linq.Queryable.OrderBy(
+                            System.Linq.Queryable.Where(context.InvDocumentoFirmas, f => f.DocumentoUuid == auditEntry.EntityUuid),
+                            f => f.FechaFirma
+                        )
+                    ),
+                    ct
+                );
+            }
+
+            var firmasList = System.Linq.Enumerable.ToList(
+                System.Linq.Enumerable.Select(firmasDb, f => {
+                    string firmanteNombre = f.FirmanteId;
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(f.FirmaMetadata ?? "{}");
+                        firmanteNombre = doc.RootElement.TryGetProperty("nombre", out var n)
+                            ? n.GetString() ?? f.FirmanteId
+                            : f.FirmanteId;
+                    }
+                    catch { }
+
+                    return new {
+                        FirmaCode = f.FirmaCode,
+                        FirmanteNombre = firmanteNombre,
+                        FirmanteRol = f.FirmanteRol,
+                        FechaFirma = f.FechaFirma,
+                        DocHash = f.DocHash,
+                        EsValida = f.EsValida,
+                        RevocadaEn = f.RevocadaEn,
+                        MotivoRevocacion = f.MotivoRevocacion
+                    };
+                })
+            );
+
             return Ok(new
             {
                 TemplateCode = auditEntry.TemplateCode,
@@ -124,7 +180,8 @@ namespace diitra_api.Controllers
                 GeneratedBy = auditEntry.GeneratedBy ?? "Sistema DIITRA",
                 GeneratedAt = auditEntry.GeneratedAt,
                 FileHash = auditEntry.FileHash ?? "N/A",
-                FileName = auditEntry.FileName
+                FileName = auditEntry.FileName,
+                Signatures = firmasList
             });
         }
     }

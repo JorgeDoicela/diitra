@@ -27,11 +27,10 @@ public interface IDiitraSignatureService
     /// Requiere re-autenticación (contraseña) para garantizar no repudio.
     /// Genera código DFRM-{AÑO}-{UUID8}, HMAC-SHA256, SHA-256 del PDF.
     /// Estampa el bloque visual profesional en el PDF y registra el evento.
+    /// El servicio resuelve internamente el nombre y cédula del usuario.
     /// </summary>
     Task<SignatureResultDto> SignDocumentAsync(
         int    idUsuario,
-        string nombreUsuario,
-        string? cedulaUsuario,
         string ipAddress,
         string userAgent,
         SignDocumentDto dto);

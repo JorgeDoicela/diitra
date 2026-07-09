@@ -1279,7 +1279,7 @@ CREATE TABLE inv_user_signature_profiles (
     idPerfil                INT           AUTO_INCREMENT PRIMARY KEY,
     uuid                    VARCHAR(36)   NOT NULL UNIQUE,
     idUsuario               INT(11)       NOT NULL UNIQUE,
-    firma_imagen_b64        LONGTEXT      NULL     COMMENT 'PNG en Base64 de la firma dibujada o cargada',
+    firma_imagen_b64        VARCHAR(512)  NULL     COMMENT 'Ruta al archivo PNG de la firma en almacenamiento o Base64',
     iniciales               VARCHAR(10)   NULL,
     cargo                   VARCHAR(200)  NULL     COMMENT 'Cargo institucional para estampar',
     departamento            VARCHAR(200)  NULL     COMMENT 'Departamento o área del firmante',
@@ -1296,7 +1296,7 @@ CREATE TABLE inv_documentos_firmas (
     firmante_id             VARCHAR(100)  NOT NULL COMMENT 'ID o Email del firmante (ej. c.c. o correo)',
     firmante_rol            VARCHAR(50)   NOT NULL COMMENT 'Rol del firmante en el documento (ej. Director, Autor)',
     fecha_firma             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tipo_firma              ENUM('FirmaEC', 'DIITRA') NOT NULL DEFAULT 'FirmaEC' COMMENT 'Tipo de firma aplicada',
+    tipo_firma              ENUM('FirmaEC', 'DIITRA') NOT NULL DEFAULT 'DIITRA' COMMENT 'Tipo de firma aplicada',
     firma_code              VARCHAR(50)   NULL UNIQUE COMMENT 'Código legible para verificación (ej: DFRM-2026-A1B2C3)',
     hmac_hash               VARCHAR(128)  NULL COMMENT 'Prueba criptográfica de autenticidad HMAC-SHA256',
     doc_hash                VARCHAR(64)   NULL COMMENT 'SHA-256 del PDF en el momento exacto de la firma',
@@ -1308,7 +1308,7 @@ CREATE TABLE inv_documentos_firmas (
     revocada_en             TIMESTAMP     NULL,
     motivo_revocacion       TEXT          NULL,
     INDEX idx_doc_firma (documento_uuid),
-    CONSTRAINT fk_firma_documento FOREIGN KEY (documento_uuid) REFERENCES inv_documentos_instancias(uuid) ON DELETE CASCADE
+    CONSTRAINT fk_firma_documento FOREIGN KEY (documento_uuid) REFERENCES inv_documentos_instancias(uuid) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_document_audit (

@@ -7,6 +7,7 @@ using iText.Kernel.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
 using iText.Barcodes;
+using System.Linq;
 
 namespace diitra_infrastructure.Signatures;
 
@@ -242,10 +243,42 @@ public class SignatureStamper
 
     private static FontSet LoadFonts()
     {
-        return new FontSet(
-            PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD),
-            PdfFontFactory.CreateFont(StandardFonts.HELVETICA)
-        );
+        // 1. Intentar cargar las fuentes empaquetadas con el proyecto (portabilidad total en Docker/Linux/Windows)
+        var localFontsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Fonts");
+        var localBoldPath = Path.Combine(localFontsDir, "OpenSans-Bold.ttf");
+        var localRegularPath = Path.Combine(localFontsDir, "OpenSans-Regular.ttf");
+
+        // 2. Fallback a rutas tradicionales del sistema operativo
+        var candidates = new[]
+        {
+            localBoldPath,
+            @"C:\Windows\Fonts\NotoSans-Bold.ttf",
+            @"C:\Windows\Fonts\segoeui.ttf",
+            @"/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",   // Linux
+            @"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        };
+        var candidatesRegular = new[]
+        {
+            localRegularPath,
+            @"C:\Windows\Fonts\NotoSans-Regular.ttf",
+            @"C:\Windows\Fonts\segoeui.ttf",
+            @"/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+            @"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        };
+
+        PdfFont boldFont;
+        PdfFont regularFont;
+
+        var boldPath    = candidates.FirstOrDefault(File.Exists);
+        var regularPath = candidatesRegular.FirstOrDefault(File.Exists);
+
+        try { boldFont    = boldPath    != null ? PdfFontFactory.CreateFont(boldPath, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED)    : PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD); }
+        catch { boldFont    = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD); }
+
+        try { regularFont = regularPath != null ? PdfFontFactory.CreateFont(regularPath, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED) : PdfFontFactory.CreateFont(StandardFonts.HELVETICA); }
+        catch { regularFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA); }
+
+        return new FontSet(boldFont, regularFont);
     }
 
     private record FontSet(PdfFont bold, PdfFont regular);

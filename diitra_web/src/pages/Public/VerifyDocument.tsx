@@ -91,62 +91,111 @@ const VerifyDocument = () => {
                 )}
 
                 {result && (
-                    <div className="lg:col-span-5 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in">
-                        <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-thin">
-                            <ShieldCheck size={32} className="text-success shrink-0" />
+                    <>
+                        <div className="lg:col-span-5 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in flex flex-col justify-between">
                             <div>
-                                <h3 className="text-xl font-semibold tracking-tighter text-text-main">Documento Auténtico</h3>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    <div className="badge-vercel badge-vercel-success">
-                                        <span className="dot dot-success" />
-                                        Integridad verificada
+                                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-thin">
+                                    <ShieldCheck size={32} className="text-success shrink-0" />
+                                    <div>
+                                        <h3 className="text-xl font-semibold tracking-tighter text-text-main">Documento Auténtico</h3>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            <div className="badge-vercel badge-vercel-success">
+                                                <span className="dot dot-success" />
+                                                Integridad verificada
+                                            </div>
+                                            {result.signatures && result.signatures.length > 0 && (
+                                                <div className="badge-vercel badge-vercel-success bg-brand/10 border-brand/20 text-brand-light">
+                                                    <span className="dot bg-brand animate-pulse" />
+                                                    {result.signatures.length} {result.signatures.length === 1 ? 'Firma activa' : 'Firmas activas'}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="badge-vercel badge-vercel-success bg-brand/10 border-brand/20 text-brand-light">
-                                        <span className="dot bg-brand animate-pulse" />
-                                        Firma digital activa
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 mb-6">
+                                    <div>
+                                        <label className="section-label text-text-dim mb-1">
+                                            <FileText size={12} /> Tipo de Documento
+                                        </label>
+                                        <p className="text-sm font-semibold text-text-main">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="section-label text-text-dim mb-1">
+                                            <User size={12} /> Emitido por
+                                        </label>
+                                        <p className="text-sm font-semibold text-text-main">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="section-label text-text-dim mb-1">
+                                            <Calendar size={12} /> Fecha de Emisión
+                                        </label>
+                                        <p className="text-sm font-semibold text-text-main">
+                                            {new Date(result.generated_at || result.generatedAt).toLocaleDateString()} - {new Date(result.generated_at || result.generatedAt).toLocaleTimeString()}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="section-label text-text-dim mb-1">
+                                            <ShieldCheck size={12} /> Código de trazabilidad (Original)
+                                        </label>
+                                        <p className="text-[10px] font-mono break-all text-text-dim">{result.file_hash || result.fileHash || 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => { setResult(null); setInputCode(''); }}
+                                    className="btn-vercel-secondary w-full"
+                                >
+                                    Verificar otro documento
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 mb-6">
-                            <div>
-                                <label className="section-label text-text-dim mb-1">
-                                    <FileText size={12} /> Tipo de Documento
-                                </label>
-                                <p className="text-sm font-semibold text-text-main">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
-                            </div>
-                            <div>
-                                <label className="section-label text-text-dim mb-1">
-                                    <User size={12} /> Emitido por
-                                </label>
-                                <p className="text-sm font-semibold text-text-main">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
-                            </div>
-                            <div>
-                                <label className="section-label text-text-dim mb-1">
-                                    <Calendar size={12} /> Fecha de Emisión
-                                </label>
-                                <p className="text-sm font-semibold text-text-main">
-                                    {new Date(result.generated_at || result.generatedAt).toLocaleDateString()} - {new Date(result.generated_at || result.generatedAt).toLocaleTimeString()}
+                        {result.signatures && result.signatures.length > 0 && (
+                            <div className="lg:col-span-7 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in">
+                                <h3 className="text-xl font-semibold tracking-tighter text-text-main mb-2">Cadena de Custodia Criptográfica</h3>
+                                <p className="text-xs text-text-dim mb-6 leading-relaxed">
+                                    DIITRA implementa un modelo de firmas digitales consecutivas (en cascada). Cada firmante sella el documento en su estado actual, estampando su bloque visual e incorporando el hash del PDF previo. La integridad forense se valida rastreando la cadena ascendente.
                                 </p>
+                                
+                                <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-[2px] before:bg-border-thin">
+                                    {result.signatures.map((sig: any, index: number) => (
+                                        <div key={sig.firmaCode} className="relative pl-8">
+                                            <span className={`absolute left-1 top-1 w-4 h-4 rounded-full border-2 border-bg-deep flex items-center justify-center ${sig.esValida ? 'bg-success' : 'bg-error'}`} />
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="text-[10px] uppercase tracking-wider font-semibold text-brand-light">
+                                                        {index + 1}ª Firma aplicada ({sig.firmaCode})
+                                                    </span>
+                                                    <h4 className="text-sm font-semibold text-text-main mt-0.5">{sig.firmanteNombre}</h4>
+                                                    <p className="text-xs text-text-dim font-medium">{sig.firmanteRol}</p>
+                                                </div>
+                                                <div className="text-left md:text-right shrink-0">
+                                                    <span className="text-[10px] text-text-dim block">
+                                                        {new Date(sig.fechaFirma).toLocaleDateString()} - {new Date(sig.fechaFirma).toLocaleTimeString()}
+                                                    </span>
+                                                    <span className={`inline-block text-[9px] font-semibold px-2 py-0.5 rounded mt-1 ${sig.esValida ? 'bg-success/10 text-success border border-success/20' : 'bg-error/10 text-error border border-error/20'}`}>
+                                                        {sig.esValida ? 'Válida / Activa' : 'Revocada'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {sig.motivoRevocacion && (
+                                                <p className="text-xs text-error mt-1 italic">
+                                                    Motivo de revocación: {sig.motivoRevocacion}
+                                                </p>
+                                            )}
+                                            <div className="mt-2 p-2 bg-bg-deep rounded border border-border-thin">
+                                                <span className="text-[9px] uppercase tracking-wider text-text-dim block font-semibold mb-0.5">Hash del PDF Firmado (SHA-256)</span>
+                                                <span className="text-[9px] font-mono break-all text-text-main">{sig.docHash}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div>
-                                <label className="section-label text-text-dim mb-1">
-                                    <ShieldCheck size={12} /> Código de verificación
-                                </label>
-                                <p className="text-[10px] font-mono break-all text-text-dim">{result.file_hash || result.fileHash || 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center">
-                            <button
-                                onClick={() => { setResult(null); setInputCode(''); }}
-                                className="btn-vercel-secondary w-full"
-                            >
-                                Verificar otro documento
-                            </button>
-                        </div>
-                    </div>
+                        )}
+                    </>
                 )}
             </section>
         </main>
