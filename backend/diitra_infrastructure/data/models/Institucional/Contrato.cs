@@ -20,6 +20,18 @@ public class Contrato
     [Column("esActivo")]
     public sbyte? EsActivo { get; set; }
 
+    [Column("iddepartamentos")]
+    public int? Iddepartamentos { get; set; }
+
+    [Column("idCargoInstituto")]
+    public int? IdCargoInstituto { get; set; }
+
     [ForeignKey("IdTiposContratos")]
     public virtual TiposContrato? TipoContratoNavigation { get; set; }
+
+    [ForeignKey("Iddepartamentos")]
+    public virtual Departamento? DepartamentoNavigation { get; set; }
+
+    [ForeignKey("IdCargoInstituto")]
+    public virtual CargoInstituto? CargoInstitutoNavigation { get; set; }
 }

@@ -47,7 +47,8 @@
     position: absolute;
     bottom: 60px;
     right: 0;
-    width: 350px;
+    width: calc(100vw - 48px);
+    max-width: 350px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -174,5 +175,16 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@media (max-width: 480px) {
+    .sticky-floating-container {
+        bottom: 16px;
+        right: 16px;
+    }
+    .sticky-floating-card {
+        bottom: 56px;
+        width: calc(100vw - 32px);
     }
 }

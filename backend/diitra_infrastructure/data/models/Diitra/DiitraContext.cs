@@ -101,6 +101,7 @@ public partial class DiitraContext : DbContext
     // --- DIITRA Firma (Módulo de Firma Digital Institucional) ---
     public virtual DbSet<InvDocumentoFirma>       InvDocumentoFirmas       { get; set; }
     public virtual DbSet<InvUserSignaturePerfil>  InvUserSignaturePerfiles { get; set; }
+    public virtual DbSet<CargoInstituto>          CargosInstituto          { get; set; }
 
     // --- DIITRA CoWork (Persistencia Colaborativa) ---
     public virtual DbSet<InvCoworkDocumento> InvCoworkDocumentos { get; set; }

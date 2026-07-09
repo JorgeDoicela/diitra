@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
-    CheckCheck, Filter, Search, Inbox,
-    RefreshCw
+    CheckCheck, Filter, Search, Inbox
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
@@ -29,7 +28,7 @@ const getCategoryConfig = (cat: string) => categoryConfig[cat] || { icon: Mail, 
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
-    const { notifications, markAsRead, markAllAsRead, fetchNotifications, isLoading, isConnected } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
     const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread' | 'investigacion' | 'sistema' | 'urgente'>('all');
     const [search, setSearch] = useState('');

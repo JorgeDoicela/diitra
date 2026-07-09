@@ -197,9 +197,7 @@ const SettingsPage: React.FC = () => {
                 </p>
             </header>
 
-            <div className="max-w-4xl space-y-6">
-                <SignatureProfileCard />
-
+            <div className="max-w-6xl space-y-6">
                 <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
                     <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                         <User size={16} />
@@ -325,6 +323,8 @@ const SettingsPage: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                <SignatureProfileCard />
 
                 {!isLoadingProfile && (
                     <div className="bento-card static p-6 space-y-6">

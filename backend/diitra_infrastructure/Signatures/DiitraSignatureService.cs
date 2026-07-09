@@ -53,7 +53,81 @@ public class DiitraSignatureService : IDiitraSignatureService
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.IdUsuario == idUsuario);
 
-        return perfil is null ? null : MapToProfileDto(perfil);
+        // Si tiene perfil registrado, lo obtenemos
+        UserSignatureProfileDto? dto = null;
+        if (perfil != null)
+        {
+            dto = MapToProfileDto(perfil);
+            // Si el perfil ya existe pero tiene cargo o departamento vacíos, procedemos a autocompletar lo que falte
+            if (!string.IsNullOrWhiteSpace(dto.Cargo) && !string.IsNullOrWhiteSpace(dto.Departamento))
+            {
+                return dto;
+            }
+        }
+
+        // Buscamos la información institucional del usuario (SIGAFI)
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+        if (user == null) return dto;
+
+        string? cargoAuto = dto?.Cargo;
+        string? deptoAuto = dto?.Departamento;
+
+        if (user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(user.IdSigafi))
+        {
+            var contrato = await _context.Contratos
+                .Include(c => c.DepartamentoNavigation)
+                .Include(c => c.CargoInstitutoNavigation)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.IdProfesor == user.IdSigafi && c.EsActivo == 1);
+
+            if (contrato != null)
+            {
+                if (string.IsNullOrWhiteSpace(cargoAuto))
+                    cargoAuto = contrato.CargoInstitutoNavigation?.Nombre;
+
+                if (string.IsNullOrWhiteSpace(deptoAuto))
+                    deptoAuto = contrato.DepartamentoNavigation?.NombreDepartamento;
+            }
+        }
+        else if (user.TablaSigafi == "alumno" && !string.IsNullOrEmpty(user.IdSigafi))
+        {
+            if (string.IsNullOrWhiteSpace(cargoAuto))
+                cargoAuto = "Estudiante";
+
+            if (string.IsNullOrWhiteSpace(deptoAuto))
+            {
+                var alumCarrera = await _context.AlumnosCarreras
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(ac => ac.IdAlumno == user.IdSigafi);
+
+                if (alumCarrera != null)
+                {
+                    var carrera = await _context.Carreras
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.IdCarrera == alumCarrera.IdCarrera);
+                    
+                    deptoAuto = carrera?.Carrera1;
+                }
+            }
+        }
+
+        string? iniciales = dto?.Iniciales;
+        if (string.IsNullOrWhiteSpace(iniciales) && !string.IsNullOrWhiteSpace(user.Nombre))
+        {
+            var parts = user.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            iniciales = string.Concat(parts.Take(2).Select(p => char.ToUpper(p[0])));
+        }
+
+        return new UserSignatureProfileDto
+        {
+            IdUsuario = idUsuario,
+            EsConfigurado = dto?.EsConfigurado ?? false,
+            FirmaImagenB64 = dto?.FirmaImagenB64,
+            Iniciales = iniciales,
+            Cargo = cargoAuto,
+            Departamento = deptoAuto,
+            ActualizadoEn = dto?.ActualizadoEn ?? DateTime.UtcNow
+        };
     }
 
     public async Task<UserSignatureProfileDto> UpsertProfileAsync(int idUsuario, UpdateSignatureProfileDto dto)
@@ -76,7 +150,7 @@ public class DiitraSignatureService : IDiitraSignatureService
         perfil.Iniciales      = dto.Iniciales?.Trim().ToUpper();
         perfil.Cargo          = dto.Cargo?.Trim();
         perfil.Departamento   = dto.Departamento?.Trim();
-        perfil.EsConfigurado  = !string.IsNullOrWhiteSpace(dto.Cargo);
+        perfil.EsConfigurado  = !string.IsNullOrWhiteSpace(dto.Cargo) && !string.IsNullOrWhiteSpace(dto.Departamento);
         perfil.ActualizadoEn  = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

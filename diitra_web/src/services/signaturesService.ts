@@ -70,8 +70,15 @@ export interface RevokeSignatureDto {
 export const getSignatureProfile = (): Promise<UserSignatureProfileDto> =>
     api.get('/signatures/profile').then(r => r.data);
 
-export const updateSignatureProfile = (dto: UpdateSignatureProfileDto): Promise<UserSignatureProfileDto> =>
-    api.put('/signatures/profile', dto).then(r => r.data);
+export const updateSignatureProfile = (dto: UpdateSignatureProfileDto): Promise<UserSignatureProfileDto> => {
+    const payload = {
+        cargo: dto.cargo,
+        departamento: dto.departamento,
+        iniciales: dto.iniciales,
+        firma_imagen_b64: dto.firmaImagenB64
+    };
+    return api.put('/signatures/profile', payload).then(r => r.data);
+};
 
 export const signDocumentWithDiitra = (dto: SignDocumentDto): Promise<SignatureResultDto> =>
     api.post('/signatures/sign', dto).then(r => r.data);

@@ -44,6 +44,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const isWorkspace = location.pathname.includes('/workspace/');
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showHeader, setShowHeader] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
@@ -172,6 +174,20 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         window.dispatchEvent(event);
     }, [isCollapsed]);
 
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        if (isWorkspace) return;
+        const currentScrollY = e.currentTarget.scrollTop;
+        
+        if (currentScrollY < 10) {
+            if (!showHeader) setShowHeader(true);
+        } else if (currentScrollY > lastScrollY + 10) {
+            if (showHeader) setShowHeader(false);
+        } else if (currentScrollY < lastScrollY - 10) {
+            if (!showHeader) setShowHeader(true);
+        }
+        setLastScrollY(currentScrollY);
+    };
+
 
     return (
         <div className="flex h-screen w-full bg-bg-deep overflow-hidden font-sans selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
@@ -241,7 +257,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
                 {/* Mobile Header */}
                 {!isWorkspace && (
-                    <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-bg-deep border-b border-border-thin z-50">
+                    <header className={`lg:hidden flex items-center justify-between px-6 bg-bg-deep border-b border-border-thin z-50 transition-all duration-300 ease-in-out ${
+                        showHeader 
+                            ? 'max-h-20 py-4 opacity-100' 
+                            : 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none'
+                    }`}>
                         <button
                             onClick={() => setIsSidebarOpen(true)}
                             className="p-2 -ml-2 text-text-dim hover:text-text-main transition-colors"
@@ -259,7 +279,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     </header>
                 )}
 
-                <div className={`flex-1 ${isWorkspace ? 'overflow-hidden h-full' : 'overflow-y-auto custom-scrollbar'}`}>
+                <div 
+                    onScroll={handleScroll}
+                    className={`flex-1 ${isWorkspace ? 'overflow-hidden h-full' : 'overflow-y-auto custom-scrollbar'}`}
+                >
                     <div className={isWorkspace ? 'h-full w-full' : 'max-w-[1600px] mx-auto w-full'}>
                         {children}
                     </div>

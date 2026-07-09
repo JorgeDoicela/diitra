@@ -13,8 +13,7 @@ import {
     Code, 
     Image as ImageIcon, 
     Undo, 
-    Redo,
-    HelpCircle
+    Redo
 } from 'lucide-react';
 
 interface CoWorkToolbarProps {

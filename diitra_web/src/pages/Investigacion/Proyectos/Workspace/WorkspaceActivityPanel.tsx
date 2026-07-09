@@ -71,7 +71,6 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
     const [actividad, setActividad] = useState<ActividadItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [lastFetch, setLastFetch] = useState<Date | null>(null);
     const [error, setError] = useState<string | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -93,7 +92,6 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                 icono: item.icono ?? ''
             }));
             setActividad(mapped);
-            setLastFetch(new Date());
             setError(null);
         } catch (err: any) {
             // No mostrar error en polling silencioso para no molestar al usuario

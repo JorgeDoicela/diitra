@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import SignaturePadLib from 'signature_pad';
 import './SignaturePad.css';
 
 interface SignaturePadProps {
@@ -7,110 +8,170 @@ interface SignaturePadProps {
     defaultValue?: string;
 }
 
-export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onCancel, defaultValue }) => {
+export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, defaultValue }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [hasDrawn, setHasDrawn] = useState(false);
+    const signaturePadRef = useRef<SignaturePadLib | null>(null);
 
+    // Opciones profesionales de trazo
+    const [penColor, setPenColor] = useState('#0a3264');
+    const [penWidth, setPenWidth] = useState<'fine' | 'medium' | 'thick'>('medium');
+
+    // Mantener callbacks actualizados para evitar stale closures
+    const onSaveRef = useRef(onSave);
+    onSaveRef.current = onSave;
+
+    // Referencias persistentes para conservar el trazo y tamaño original sin pérdidas de escala acumulativas
+    const strokeDataRef = useRef<any[]>([]);
+    const lastStrokeSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+
+    // Inicializar el lienzo una única vez al montar
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        // Inicializar SignaturePad
+        const signaturePad = new SignaturePadLib(canvas, {
+            minWidth: 1.2,
+            maxWidth: 3.2,
+            penColor: penColor,
+            velocityFilterWeight: 0.7
+        });
 
-        // Configuración inicial del canvas para dibujo suave y de alta definición
-        ctx.strokeStyle = '#0a3264'; // Azul institucional de la firma
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        signaturePadRef.current = signaturePad;
 
-        // Si hay una firma previa, dibujarla en el fondo como preview
+        const wrapper = canvas.parentElement;
+
+        // Escuchar el final del trazo para sincronizar en tiempo real y fijar el tamaño base del trazo
+        signaturePad.addEventListener('endStroke', () => {
+            const isEmpty = signaturePad.isEmpty();
+            if (!isEmpty) {
+                const currentWidth = wrapper ? wrapper.clientWidth : canvas.clientWidth;
+                const currentHeight = wrapper ? wrapper.clientHeight : canvas.clientHeight;
+                lastStrokeSizeRef.current = { width: currentWidth, height: currentHeight };
+                strokeDataRef.current = signaturePad.toData();
+                onSaveRef.current(signaturePad.toDataURL('image/png'));
+            } else {
+                strokeDataRef.current = [];
+                onSaveRef.current('');
+            }
+        });
+
+        const initialWidth = wrapper ? wrapper.clientWidth : canvas.clientWidth;
+        const initialHeight = wrapper ? wrapper.clientHeight : canvas.clientHeight;
+        lastStrokeSizeRef.current = { width: initialWidth, height: initialHeight };
+        strokeDataRef.current = [];
+
+        // Ajustar el tamaño del canvas al tamaño real del contenedor antes de cargar defaultValue
+        if (initialWidth > 0 && initialHeight > 0) {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = Math.floor(initialWidth * ratio);
+            canvas.height = Math.floor(initialHeight * ratio);
+            canvas.getContext('2d')?.scale(ratio, ratio);
+        }
+
+        // Cargar firma inicial si existe
         if (defaultValue) {
-            const img = new Image();
-            img.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                setHasDrawn(true);
-            };
-            img.src = defaultValue;
+            signaturePad.fromDataURL(defaultValue);
+            setTimeout(() => {
+                strokeDataRef.current = signaturePad.toData();
+            }, 50);
+        }
+
+        // Redimensionamiento dinámico y autocurativo con ResizeObserver
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (width === 0 || height === 0) return;
+
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const targetWidth = Math.floor(width * ratio);
+                const targetHeight = Math.floor(height * ratio);
+
+                if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                    const data = strokeDataRef.current;
+                    const refSize = lastStrokeSizeRef.current;
+                    
+                    // Calcular factores de escala con respecto a la pantalla original donde se dibujó
+                    const scaleX = refSize.width > 0 ? (width / refSize.width) : 1;
+                    const scaleY = refSize.height > 0 ? (height / refSize.height) : 1;
+                    const scale = Math.min(scaleX, scaleY);
+
+                    // Desplazamiento de centrado automático
+                    const offsetX = (width - refSize.width * scale) / 2;
+                    const offsetY = (height - refSize.height * scale) / 2;
+
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    canvas.getContext('2d')?.scale(ratio, ratio);
+                    
+                    signaturePad.clear();
+                    if (data.length > 0) {
+                        // Escalar y centrar uniformemente cada coordenada del trazo original
+                        const scaledData = data.map(group => ({
+                            ...group,
+                            points: group.points.map(point => ({
+                                ...point,
+                                x: point.x * scale + offsetX,
+                                y: point.y * scale + offsetY
+                            }))
+                        }));
+                        signaturePad.fromData(scaledData);
+                        
+                        // Sincronizar el trazo escalado con el estado del componente padre
+                        onSaveRef.current(signaturePad.toDataURL('image/png'));
+                    } else if (defaultValue) {
+                        signaturePad.fromDataURL(defaultValue);
+                    }
+                }
+            }
+        });
+
+        if (wrapper) {
+            resizeObserver.observe(wrapper);
+        }
+
+        return () => {
+            resizeObserver.disconnect();
+            signaturePad.off();
+        };
+    }, []);
+
+    // Actualizar propiedades del trazo dinámicamente
+    useEffect(() => {
+        const signaturePad = signaturePadRef.current;
+        if (!signaturePad) return;
+
+        signaturePad.penColor = penColor;
+
+        if (penWidth === 'fine') {
+            signaturePad.minWidth = 0.6;
+            signaturePad.maxWidth = 1.6;
+        } else if (penWidth === 'medium') {
+            signaturePad.minWidth = 1.2;
+            signaturePad.maxWidth = 3.2;
+        } else if (penWidth === 'thick') {
+            signaturePad.minWidth = 2.0;
+            signaturePad.maxWidth = 5.5;
+        }
+    }, [penColor, penWidth]);
+
+    // Permitir cargar defaultValue si cambia externamente (ej: reseteo del padre)
+    useEffect(() => {
+        const signaturePad = signaturePadRef.current;
+        if (!signaturePad) return;
+        
+        if (!defaultValue) {
+            signaturePad.clear();
+        } else if (signaturePad.isEmpty() && defaultValue !== signaturePad.toDataURL('image/png')) {
+            signaturePad.fromDataURL(defaultValue);
         }
     }, [defaultValue]);
 
-    // Obtener las coordenadas del cursor/toque relativas al canvas
-    const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return { x: 0, y: 0 };
-
-        const rect = canvas.getBoundingClientRect();
-        
-        // Manejar eventos touch o mouse
-        if ('touches' in e) {
-            if (e.touches.length === 0) return { x: 0, y: 0 };
-            return {
-                x: e.touches[0].clientX - rect.left,
-                y: e.touches[0].clientY - rect.top
-            };
-        } else {
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        }
-    };
-
-    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-        e.preventDefault();
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const { x, y } = getCoordinates(e);
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        setIsDrawing(true);
-    };
-
-    const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-        if (!isDrawing) return;
-        e.preventDefault();
-
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const { x, y } = getCoordinates(e);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        setHasDrawn(true);
-    };
-
-    const stopDrawing = () => {
-        setIsDrawing(false);
-    };
-
     const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setHasDrawn(false);
-    };
-
-    const saveSignature = () => {
-        const canvas = canvasRef.current;
-        if (!canvas || !hasDrawn) return;
-
-        // Exportar a PNG Base64
-        const dataUrl = canvas.toDataURL('image/png');
-        onSave(dataUrl);
+        if (!signaturePadRef.current) return;
+        signaturePadRef.current.clear();
+        strokeDataRef.current = [];
+        onSaveRef.current('');
     };
 
     return (
@@ -124,45 +185,66 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onCancel, de
                 <div className="canvas-wrapper">
                     <canvas
                         ref={canvasRef}
-                        width={500}
-                        height={200}
-                        onMouseDown={startDrawing}
-                        onMouseMove={draw}
-                        onMouseUp={stopDrawing}
-                        onMouseLeave={stopDrawing}
-                        onTouchStart={startDrawing}
-                        onTouchMove={draw}
-                        onTouchEnd={stopDrawing}
                         className="signature-canvas"
                     />
                 </div>
 
-                <div className="signature-pad-actions">
-                    <button 
-                        type="button" 
-                        onClick={clearCanvas} 
-                        className="btn-pad btn-pad-secondary"
-                    >
-                        Limpiar Lienzo
-                    </button>
-                    
-                    <div className="signature-pad-right-actions">
-                        {onCancel && (
-                            <button 
-                                type="button" 
-                                onClick={onCancel} 
-                                className="btn-pad btn-pad-link"
+                {/* Panel de configuraciones avanzadas del trazo */}
+                <div className="signature-pad-options">
+                    <div className="sig-option-group">
+                        <span className="sig-option-title">Color de Tinta</span>
+                        <div className="sig-color-options">
+                            <button
+                                type="button"
+                                className={`sig-color-btn color-blue ${penColor === '#0a3264' ? 'active' : ''}`}
+                                onClick={() => setPenColor('#0a3264')}
+                                title="Azul Institucional"
+                            />
+                            <button
+                                type="button"
+                                className={`sig-color-btn color-black ${penColor === '#000000' ? 'active' : ''}`}
+                                onClick={() => setPenColor('#000000')}
+                                title="Negro Legal"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="sig-option-group">
+                        <span className="sig-option-title">Grosor de Trazo</span>
+                        <div className="sig-width-options">
+                            <button
+                                type="button"
+                                className={`sig-width-btn ${penWidth === 'fine' ? 'active' : ''}`}
+                                onClick={() => setPenWidth('fine')}
                             >
-                                Cancelar
+                                Fino
                             </button>
-                        )}
+                            <button
+                                type="button"
+                                className={`sig-width-btn ${penWidth === 'medium' ? 'active' : ''}`}
+                                onClick={() => setPenWidth('medium')}
+                            >
+                                Medio
+                            </button>
+                            <button
+                                type="button"
+                                className={`sig-width-btn ${penWidth === 'thick' ? 'active' : ''}`}
+                                onClick={() => setPenWidth('thick')}
+                            >
+                                Grueso
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="sig-option-group" style={{ marginLeft: 'auto' }}>
+                        <span className="sig-option-title">Lienzo</span>
                         <button 
                             type="button" 
-                            onClick={saveSignature} 
-                            disabled={!hasDrawn}
-                            className="btn-pad btn-pad-primary"
+                            onClick={clearCanvas} 
+                            className="sig-width-btn"
+                            style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                            Confirmar Trazo
+                            Limpiar Lienzo
                         </button>
                     </div>
                 </div>
