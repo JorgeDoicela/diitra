@@ -10,7 +10,7 @@ interface UploadSignatureTabProps extends ImageCropperState {
 }
 
 export const UploadSignatureTab: React.FC<UploadSignatureTabProps> = ({
-    imageSrc, crop, completedCrop, rotation, showCropper,
+    imageSrc, crop, rotation, showCropper,
     threshold, inkMode, aspectRatio, previewBase64, isDragging, imgRef,
     setCrop, setCompletedCrop, setRotation, setThreshold, setInkMode,
     handleAspectChange, handleFileChange, handleDragOver, handleDragLeave,

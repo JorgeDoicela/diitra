@@ -109,7 +109,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, defaultValue
                         // Escalar y centrar uniformemente cada coordenada del trazo original
                         const scaledData = data.map(group => ({
                             ...group,
-                            points: group.points.map(point => ({
+                            points: group.points.map((point: any) => ({
                                 ...point,
                                 x: point.x * scale + offsetX,
                                 y: point.y * scale + offsetY
