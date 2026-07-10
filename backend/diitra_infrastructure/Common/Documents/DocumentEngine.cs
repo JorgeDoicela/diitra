@@ -451,6 +451,22 @@ namespace Diitra.Infrastructure.Common.Documents
                 templateCode, template.Version, updatedBy);
         }
 
+        public async Task UpdateSignatureConfigAsync(
+            string templateCode, bool requiresSignature,
+            string signatureType, string updatedBy,
+            CancellationToken cancellationToken = default)
+        {
+            var template = await _templateRepository.FindByCodeAsync(templateCode, cancellationToken)
+                ?? throw new KeyNotFoundException($"Plantilla '{templateCode}' no encontrada.");
+
+            template.UpdateSignatureConfig(requiresSignature, signatureType, updatedBy);
+            await _templateRepository.SaveAsync(template, cancellationToken);
+
+            _logger.LogInformation(
+                "DIITRA DocumentEngine: Configuración de firma de plantilla [{Code}] actualizada por [{User}]: RequiresSignature={RequiresSignature}, Type={Type}.",
+                templateCode, updatedBy, requiresSignature, signatureType);
+        }
+
         /// <summary>
         /// Sanitiza y optimiza el HTML antes del renderizado.
         /// - Fuerza a las imágenes a ser responsivas (max-width: 100%).

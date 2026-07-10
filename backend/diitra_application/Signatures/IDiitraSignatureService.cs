@@ -35,6 +35,15 @@ public interface IDiitraSignatureService
         string userAgent,
         SignDocumentDto dto);
 
+    Task<SignatureResultDto> SignDocumentWithP12Async(
+        int    idUsuario,
+        string ipAddress,
+        string userAgent,
+        byte[] certificateBytes,
+        string certificatePassword,
+        string documentoUuid,
+        string? rolFirmante);
+
     // ── Consultas ────────────────────────────────────────────────────
 
     /// <summary>Lista todas las firmas DIITRA de un documento.</summary>

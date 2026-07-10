@@ -49,7 +49,7 @@ namespace Diitra.Infrastructure.Common.Storage
             await File.WriteAllBytesAsync(fullPath, content);
 
             // Retornamos la ruta relativa (para guardar en la base de datos)
-            return Path.Combine(subFolder, uniqueFileName);
+            return Path.Combine(subFolder, uniqueFileName).Replace('\\', '/');
         }
 
         public async Task<byte[]> GetFileAsync(string filePath)

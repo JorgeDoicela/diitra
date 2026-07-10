@@ -39,6 +39,8 @@ namespace diitra_api.Controllers
                 t.IsActive,
                 t.RequiresLopdpClause,
                 t.SupportsBlindMode,
+                RequiresElectronicSignature = t.RequiresElectronicSignature,
+                SignatureType = t.SignatureType,
                 t.UpdatedAt,
                 t.UpdatedBy
             }));
@@ -67,6 +69,8 @@ namespace diitra_api.Controllers
                 template.IsActive,
                 template.RequiresLopdpClause,
                 template.SupportsBlindMode,
+                RequiresElectronicSignature = template.RequiresElectronicSignature,
+                SignatureType = template.SignatureType,
                 template.CollaborativeFieldsJson,
                 template.UpdatedAt
             });
@@ -123,7 +127,26 @@ namespace diitra_api.Controllers
                 info = "Edita el archivo .html y genera el documento. El cambio aplica sin recompilar."
             });
         }
+
+        /// <summary>
+        /// Actualiza la configuración de firmas de una plantilla.
+        /// </summary>
+        [HttpPut("{code}/signature-config")]
+        public async Task<IActionResult> UpdateSignatureConfig(string code, [FromBody] UpdateSignatureConfigRequest request, CancellationToken ct)
+        {
+            try
+            {
+                var updatedBy = User.Identity?.Name ?? "admin";
+                await _documentEngine.UpdateSignatureConfigAsync(code, request.RequiresSignature, request.SignatureType, updatedBy, ct);
+                return Ok(new { message = $"Configuración de firmas para plantilla '{code}' actualizada correctamente." });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = $"Plantilla '{code}' no encontrada." });
+            }
+        }
     }
 
     public record UpdateTemplateRequest(string HtmlContent, string? CustomCss = null);
+    public record UpdateSignatureConfigRequest(bool RequiresSignature, string SignatureType);
 }

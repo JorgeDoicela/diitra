@@ -124,6 +124,70 @@ public class SignaturesController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Firma un documento con Firma Digital Ecuador (.p12).
+    /// </summary>
+    [HttpPost("sign-p12")]
+    [Consumes("multipart/form-data")]
+    [Authorize]
+    public async Task<IActionResult> SignDocumentWithP12(
+        Microsoft.AspNetCore.Http.IFormFile? certificate,
+        [FromForm] string? password,
+        [FromForm] string documentoUuid,
+        [FromForm] string? rolFirmante)
+    {
+        var idUsuario = GetCurrentUserId();
+        if (idUsuario == 0) return Unauthorized();
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = Request.Headers["User-Agent"].ToString();
+
+        try
+        {
+            byte[]? certificateBytes = null;
+            if (certificate != null && certificate.Length > 0)
+            {
+                using var ms = new System.IO.MemoryStream();
+                await certificate.CopyToAsync(ms);
+                certificateBytes = ms.ToArray();
+            }
+
+            var result = await _signatureService.SignDocumentWithP12Async(
+                idUsuario: idUsuario,
+                ipAddress: ip,
+                userAgent: userAgent,
+                certificateBytes: certificateBytes,
+                certificatePassword: password ?? "",
+                documentoUuid: documentoUuid,
+                rolFirmante: rolFirmante);
+
+            return Ok(new
+            {
+                message = "Documento firmado digitalmente con éxito.",
+                firmaCode = result.FirmaCode,
+                docHash = result.DocHash,
+                firmadoEn = result.FirmadoEn,
+                verificationUrl = result.VerificationUrl,
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error interno al firmar el documento con certificado digital: " + ex.Message });
+        }
+    }
+
     // ── CONSULTAS ─────────────────────────────────────────────────────
 
     /// <summary>Lista todas las firmas DIITRA de un documento específico.</summary>

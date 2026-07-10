@@ -235,6 +235,11 @@ namespace diitra_api.Controllers
                     }
                 }
 
+                // Cargar firma gráfica del perfil de usuario si está disponible
+                var signatureProfile = await context.InvUserSignaturePerfiles
+                    .FirstOrDefaultAsync(p => p.IdUsuario == dbUser.IdUsuario);
+                string? firmaImagenB64 = signatureProfile?.FirmaImagenB64;
+
                 // 3. Generar el PDF oficial del protocolo de investigación en modo NO Borrador
                 var request = new DocumentRequest
                 {
@@ -251,7 +256,8 @@ namespace diitra_api.Controllers
                             {
                                 { "nombre", signerName },
                                 { "entidad", signerEntity },
-                                { "fecha", signatureDate }
+                                { "fecha", signatureDate },
+                                { "imagen", firmaImagenB64 ?? "" }
                             }
                         }
                     }

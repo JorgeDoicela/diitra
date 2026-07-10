@@ -69,6 +69,7 @@ namespace diitra_api.Controllers
                 {
                     title = "Proyecto de Investigación",
                     subtitle = "Formulación del Proyecto de Investigación - ISTPET",
+                    signatureType = template.SignatureType,
                     schema = new Dictionary<string, object>
                     {
                         { "Titulo", "" },
@@ -132,6 +133,7 @@ namespace diitra_api.Controllers
                 {
                     title = "Rúbrica de Evaluación por Pares",
                     subtitle = "Evaluación anónima (Fase 2) — Normativa CACES",
+                    signatureType = template.SignatureType,
                     schema = new Dictionary<string, object>
                     {
                         { "Pertinencia", 0 },
@@ -173,6 +175,7 @@ namespace diitra_api.Controllers
                 {
                     title = "Informe de Avance de Proyecto",
                     subtitle = "Ejecución y Monitoreo (Fase 3)",
+                    signatureType = template.SignatureType,
                     schema = new Dictionary<string, object>
                     {
                         { "ConclusionesParciales", "" },
@@ -206,6 +209,7 @@ namespace diitra_api.Controllers
                 {
                     title = "Acta del Comité de Ética de Investigación",
                     subtitle = "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
+                    signatureType = template.SignatureType,
                     schema = new Dictionary<string, object>
                     {
                         { "JustificacionEtica", "" },
@@ -246,6 +250,7 @@ namespace diitra_api.Controllers
                 {
                     title = "Informe Final de Investigación",
                     subtitle = "Cierre y Consolidación de Resultados - ISTPET",
+                    signatureType = template.SignatureType,
                     schema = new Dictionary<string, object>
                     {
                         { "resumen_ejecutivo", "" },
@@ -345,6 +350,7 @@ namespace diitra_api.Controllers
             {
                 title = template.Name,
                 subtitle = template.Description ?? "Formulario Dinámico de Colaboración",
+                signatureType = template.SignatureType,
                 schema = dynamicSchema,
                 lists = new string[] { },
                 sections = new[]

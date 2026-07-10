@@ -44,6 +44,9 @@ namespace Diitra.Domain.Common.Documents
         /// <summary>Si true, el documento incluye bloques de firma electrónica FirmaEC.</summary>
         public bool RequiresElectronicSignature { get; private set; } = false;
 
+        /// <summary>Tipo de firma requerida para la plantilla (DIITRA, ECUADOR_P12, HIBRIDO).</summary>
+        public string SignatureType { get; private set; } = "DIITRA";
+
         /// <summary>
         /// CSS personalizado adicional para la plantilla. El motor inyecta el CSS base institucional
         /// y luego aplica este override.
@@ -69,6 +72,7 @@ namespace Diitra.Domain.Common.Documents
             DocumentCategory category, string? description = null,
             bool requiresLopdp = true, bool supportsBlind = false,
             bool requiresTraceability = true, bool requiresSignature = false,
+            string signatureType = "DIITRA",
             string? collaborativeFields = null, int version = 1)
         {
             return new DocumentTemplate
@@ -82,6 +86,7 @@ namespace Diitra.Domain.Common.Documents
                 SupportsBlindMode = supportsBlind,
                 RequiresTraceabilityCode = requiresTraceability,
                 RequiresElectronicSignature = requiresSignature,
+                SignatureType = signatureType,
                 CollaborativeFieldsJson = collaborativeFields,
                 Version = version
             };
@@ -91,6 +96,15 @@ namespace Diitra.Domain.Common.Documents
         {
             HtmlContent = newHtmlContent;
             CustomCss = customCss;
+            Version++;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = updatedBy;
+        }
+
+        public void UpdateSignatureConfig(bool requiresSignature, string signatureType, string updatedBy)
+        {
+            RequiresElectronicSignature = requiresSignature;
+            SignatureType = signatureType;
             Version++;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = updatedBy;
@@ -114,6 +128,7 @@ namespace Diitra.Domain.Common.Documents
             RequiresLopdpClause = seed.RequiresLopdpClause;
             SupportsBlindMode = seed.SupportsBlindMode;
             RequiresElectronicSignature = seed.RequiresElectronicSignature;
+            SignatureType = seed.SignatureType;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = "SYSTEM_SYNC";
         }

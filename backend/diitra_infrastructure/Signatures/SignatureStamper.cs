@@ -52,13 +52,17 @@ public class SignatureStamper
         DateTime firmadoEn)
     {
         using var outputStream = new MemoryStream();
-        using var reader       = new PdfReader(new MemoryStream(pdfBytes));
-        using var writer       = new PdfWriter(outputStream);
-        using var pdf          = new PdfDocument(reader, writer);
-        using var document     = new Document(pdf);
 
-        // Configurar márgenes del nuevo contenido
-        document.SetMargins(36, 36, 36, 36);
+        // IMPORTANTE: document, pdf, writer y reader deben ser dispuestos (Dispose/Close) ANTES de
+        // llamar outputStream.ToArray(). iText7 hace flush y finaliza el PDF al cerrar PdfDocument.
+        // Si ToArray() se llama dentro del bloque using del PdfDocument, el PDF queda truncado (solo header).
+        using (var reader   = new PdfReader(new MemoryStream(pdfBytes)))
+        using (var writer   = new PdfWriter(outputStream))
+        using (var pdf      = new PdfDocument(reader, writer))
+        using (var document = new Document(pdf))
+        {
+            // Configurar márgenes del nuevo contenido
+            document.SetMargins(36, 36, 36, 36);
 
         // ── Añadir nueva página de firma ─────────────────────────────
         document.Add(new AreaBreak(iText.Layout.Properties.AreaBreakType.NEXT_PAGE));
@@ -190,6 +194,9 @@ public class SignatureStamper
             .SetPadding(6));
 
         document.Add(footerTable);
+
+        } // ← Aquí se disponen document → pdf → writer → reader en orden inverso.
+          //   iText7 hace flush completo al cerrar PdfDocument, finalizando el PDF en outputStream.
 
         return outputStream.ToArray();
     }

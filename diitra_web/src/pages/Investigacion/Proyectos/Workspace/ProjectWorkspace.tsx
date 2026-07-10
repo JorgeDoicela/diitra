@@ -593,6 +593,16 @@ export const ProjectWorkspace: React.FC = () => {
 
     useEffect(() => {
         fetchProject();
+
+        const handleProjectsChanged = () => {
+            console.log("[DIITRA] Evento diitra-projects-changed capturado. Recargando datos del proyecto...");
+            fetchProject();
+        };
+
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+        return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
+        };
     }, [fetchProject, activeDocument]);
 
     useEffect(() => {

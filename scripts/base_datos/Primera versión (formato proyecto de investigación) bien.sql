@@ -1249,6 +1249,7 @@ CREATE TABLE inv_document_templates (
     supports_blind_mode     TINYINT(1)    NOT NULL DEFAULT 0,
     requires_traceability   TINYINT(1)    NOT NULL DEFAULT 1,
     requires_signature      TINYINT(1)    NOT NULL DEFAULT 0,
+    signature_type          VARCHAR(50)   NOT NULL DEFAULT 'DIITRA' COMMENT 'DIITRA, ECUADOR_P12, HIBRIDO',
     is_active               TINYINT(1)    NOT NULL DEFAULT 1,
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

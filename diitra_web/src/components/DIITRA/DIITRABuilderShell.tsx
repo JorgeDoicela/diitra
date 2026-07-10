@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon, AlertCircle } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import type { CoWorkHandle } from '../../core/cowork/types';
@@ -7,6 +7,7 @@ import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { coworkLog } from '../../core/cowork/utils/log';
+import { SignatureBlock } from './SignatureBlock';
 
 
 /**
@@ -87,6 +88,7 @@ interface DIITRABuilderShellProps {
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
     canSign?: boolean;
     onUpdateField?: (name: string, value: any) => void;
+    signatureType?: string;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
@@ -106,7 +108,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     entityUuid,
     children,
     canSign = true,
-    onUpdateField
+    onUpdateField,
+    signatureType = 'DIITRA',
+    documentUuid
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -471,11 +475,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [isDraftMode, setIsDraftMode] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
+    const [institutionalPassword, setInstitutionalPassword] = useState('');
     const [signatureCertFile, setSignatureCertFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
     // Estado de logs de auditoria removido de UI por desuso
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
+    const [signatureRefreshTrigger, setSignatureRefreshTrigger] = useState(0);
 
 
 
@@ -492,6 +498,38 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             setTimeout(() => URL.revokeObjectURL(url), 100);
         };
     }, [pdfBlob]);
+
+    // Autocargar PDF firmado desde el storage si el documento ya está emitido/enviado
+    useEffect(() => {
+        const loadSignedPdf = async () => {
+            const uuid = documentUuid || formData.Uuid || formData.uuid;
+            if (!uuid || uuid.startsWith('temp_')) return;
+
+            const isSigned = projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución';
+            if (!isSigned) return;
+
+            setIsGenerating(true);
+            try {
+                const instanceRes = await api.get(`/documents/instances/${uuid}`);
+                const finalPath = instanceRes.data?.finalPdfPath || instanceRes.data?.final_pdf_path || instanceRes.data?.FinalPdfPath;
+                
+                if (finalPath) {
+                    const cleanPath = finalPath.replace(/\\/g, '/');
+                    const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
+                    setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
+                } else {
+                    await handleGeneratePdf(false);
+                }
+            } catch (err) {
+                console.error('[DIITRA] Error al cargar el PDF firmado:', err);
+                await handleGeneratePdf(false);
+            } finally {
+                setIsGenerating(false);
+            }
+        };
+
+        loadSignedPdf();
+    }, [documentUuid, formData.Uuid, formData.uuid, projectStatus]);
 
     const addAudit = useCallback((msg: string, type: string = 'info') => {
         console.log(`[Audit:${type.toUpperCase()}] ${msg}`);
@@ -709,10 +747,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             const formDataObj = new FormData();
             formDataObj.append('certificate', signatureCertFile);
             formDataObj.append('password', signaturePassword || '');
-            formDataObj.append('projectUuid', entityUuid || formData.EntityUuid || formData.entityUuid || formData.Uuid || '');
+            formDataObj.append('documentoUuid', documentUuid || formData.Uuid || formData.uuid || '');
+            formDataObj.append('rolFirmante', 'Director de Proyecto');
 
-            const response = await api.post(
-                '/projects/sign',
+            await api.post(
+                '/signatures/sign-p12',
                 formDataObj,
                 {
                     headers: { 'Content-Type': undefined },
@@ -721,26 +760,32 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             delete headers['Content-Type'];
                         }
                         return data;
-                    }],
-                    responseType: 'blob'
+                    }]
                 }
             );
-            setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
+
+            // Regenerar vista previa del PDF para reflejar la firma estampada
+            await handleGeneratePdf(false);
+
             // Limpiar certificado de memoria tras firma exitosa
             setSignatureCertFile(null);
             setSignaturePassword('');
-            addAudit('Firma electrónica PAdES aplicada exitosamente.', 'success');
+            addAudit('Firma digital avanzada (.p12) aplicada exitosamente.', 'success');
+
+            // Forzar recarga de firmas locales y notificar cambios al espacio de trabajo sin recargar la página entera
+            setSignatureRefreshTrigger(prev => prev + 1);
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             console.error('[DIITRA] Error signing document:', err);
 
             let serverMessage = '';
             try {
-                if (err?.response?.data instanceof Blob) {
-                    const text = await err.response.data.text();
-                    const parsed = JSON.parse(text);
-                    serverMessage = parsed?.error || parsed?.message || '';
-                } else if (err?.response?.data?.error) {
+                if (err?.response?.data?.error) {
                     serverMessage = err.response.data.error;
+                } else if (typeof err?.response?.data === 'string') {
+                    serverMessage = err.response.data;
+                } else if (err?.response?.data?.message) {
+                    serverMessage = err.response.data.message;
                 }
             } catch {
                 // silenciar errores de parseo
@@ -750,13 +795,73 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 serverMessage.toLowerCase().includes('lopdp') ||
                 serverMessage.toLowerCase().includes('consentimiento');
 
+            let finalMsg = '';
             if (isLopdpGate) {
-                addAudit('Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma', 'warning');
+                finalMsg = 'Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma';
+                addAudit(finalMsg, 'warning');
+                addToast('Firma Bloqueada', finalMsg, 'warning');
             } else if (serverMessage) {
+                finalMsg = serverMessage;
                 addAudit(`Error de firma: ${serverMessage}`, 'error');
+                addToast('Error de Firma', finalMsg, 'error');
             } else {
+                finalMsg = 'Clave o certificado inválido';
                 addAudit('Error de firma: Clave o certificado inválido', 'error');
+                addToast('Error de Firma', finalMsg, 'error');
             }
+        } finally {
+            setIsSigning(false);
+        }
+    };
+
+    const handleSignDiitra = async () => {
+        if (!institutionalPassword.trim()) {
+            addAudit('Debe ingresar su contraseña institucional para firmar.', 'warning');
+            return;
+        }
+
+        setIsSigning(true);
+        addAudit('Iniciando proceso de firma institucional DIITRA...');
+        try {
+            const dto = {
+                documento_uuid: documentUuid || formData.Uuid || formData.uuid || '',
+                rol_firmante: 'Director de Proyecto',
+                password: institutionalPassword
+            };
+
+            await api.post('/signatures/sign', dto);
+            
+            // Regenerar vista previa del PDF para reflejar la firma estampada
+            await handleGeneratePdf(false);
+            
+            setInstitutionalPassword('');
+            addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
+
+            // Forzar recarga de firmas locales y notificar cambios al espacio de trabajo sin recargar la página entera
+            setSignatureRefreshTrigger(prev => prev + 1);
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+        } catch (err: any) {
+            console.error('[DIITRA] Error al aplicar firma institucional:', err);
+            console.log('Cuerpo de respuesta del servidor (data):', JSON.stringify(err?.response?.data));
+            let serverMessage = '';
+            try {
+                if (err?.response?.data instanceof Blob) {
+                    const text = await err.response.data.text();
+                    const parsed = JSON.parse(text);
+                    serverMessage = parsed?.error || parsed?.message || '';
+                } else if (err?.response?.data?.error) {
+                    serverMessage = err.response.data.error;
+                } else if (err?.response?.data?.message) {
+                    serverMessage = err.response.data.message;
+                } else if (typeof err?.response?.data === 'string') {
+                    serverMessage = err.response.data;
+                }
+            } catch {}
+            console.log('Mensaje de error extraído:', serverMessage);
+            
+            const finalMsg = serverMessage || 'Contraseña incorrecta o error de red';
+            addAudit(`Error de firma: ${finalMsg}`, 'error');
+            addToast('Error de Firma', finalMsg, 'error');
         } finally {
             setIsSigning(false);
         }
@@ -1254,63 +1359,109 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
-                                                                <div className="flex flex-col gap-3">
-                                                                    {/* Dropzone certificado .p12 */}
-                                                                    <div className="space-y-1">
-                                                                        <label className="text-xs font-bold text-text-main block">Certificado .p12</label>
-                                                                        <label
-                                                                            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer transition-all gap-1.5 ${signatureCertFile
-                                                                                    ? 'border-green-500/40 bg-green-500/5'
-                                                                                    : 'border-border-thin hover:border-text-main/30 bg-surface'
-                                                                                }`}
-                                                                        >
-                                                                            <input
-                                                                                type="file"
-                                                                                accept=".p12,.pfx"
-                                                                                className="sr-only"
-                                                                                onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
-                                                                            />
-                                                                            {signatureCertFile ? (
-                                                                                <>
-                                                                                    <CheckCircle size={18} className="text-green-500" />
-                                                                                    <span className="text-xs font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
-                                                                                    <span className="text-[10px] text-text-dim">Clic para cambiar</span>
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <Shield size={18} className="text-text-dim" />
-                                                                                    <span className="text-xs font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
-                                                                                    <span className="text-[10px] text-text-dim">No se guarda en el servidor</span>
-                                                                                </>
-                                                                            )}
-                                                                        </label>
-                                                                    </div>
+                                                                <div className="flex flex-col gap-5">
+                                                                    {(signatureType === 'DIITRA' || signatureType === 'HIBRIDO') && (
+                                                                        /* Firma Institucional DIITRA (Sello + Trazo) */
+                                                                        <div className="flex flex-col gap-3 p-4 border border-border-thin rounded-2xl bg-surface/30">
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <Shield size={16} className="text-text-main" />
+                                                                                <h4 className="text-xs font-black uppercase tracking-wider text-text-main">Firma Institucional DIITRA</h4>
+                                                                            </div>
+                                                                            <div className="space-y-1">
+                                                                                <label className="text-[10px] font-bold text-text-dim block">Contraseña Institucional</label>
+                                                                                <p className="text-[9px] text-text-dim">Por seguridad, confirme su contraseña de cuenta para firmar.</p>
+                                                                                <input
+                                                                                    type="password"
+                                                                                    placeholder="Contraseña de tu cuenta"
+                                                                                    value={institutionalPassword}
+                                                                                    onChange={(e) => setInstitutionalPassword(e.target.value)}
+                                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 text-xs focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
+                                                                                />
+                                                                            </div>
 
-                                                                    {/* Contraseña */}
-                                                                    <div className="space-y-1">
-                                                                        <label className="text-xs font-bold text-text-main block">Contraseña del certificado</label>
-                                                                        <input
-                                                                            type="password"
-                                                                            placeholder="Contraseña del .p12"
-                                                                            value={signaturePassword}
-                                                                            onChange={(e) => setSignaturePassword(e.target.value)}
-                                                                            className="w-full bg-surface border border-border-thin rounded-xl px-3.5 py-2.5 text-sm focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
-                                                                        />
-                                                                    </div>
+                                                                            <button
+                                                                                onClick={handleSignDiitra}
+                                                                                disabled={isSigning || !institutionalPassword}
+                                                                                className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${(!institutionalPassword)
+                                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                                                    }`}
+                                                                            >
+                                                                                {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma DIITRA</>}
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
 
-                                                                    <button
-                                                                        onClick={handleSign}
-                                                                        disabled={!pdfBlob || isSigning || !signatureCertFile}
-                                                                        className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${(!pdfBlob || !signatureCertFile)
-                                                                                ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                                                : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
-                                                                            }`}
-                                                                    >
-                                                                        {isSigning ? <><Clock size={15} className="animate-spin" /> Firmando...</> : <><Shield size={15} /> Aplicar firma electrónica</>}
-                                                                    </button>
+                                                                    {(signatureType === 'ECUADOR_P12' || signatureType === 'HIBRIDO') && (
+                                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
+                                                                        <div className="flex flex-col gap-3 p-4 border border-border-thin rounded-2xl bg-surface/30">
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <FileText size={16} className="text-text-main" />
+                                                                                <h4 className="text-xs font-black uppercase tracking-wider text-text-main">Firma Digital (.p12 / .pfx)</h4>
+                                                                            </div>
+                                                                            {/* Dropzone certificado .p12 */}
+                                                                            <div className="space-y-1">
+                                                                                <label className="text-[10px] font-bold text-text-dim block">Certificado .p12</label>
+                                                                                <label
+                                                                                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-all gap-1.5 ${signatureCertFile
+                                                                                            ? 'border-green-500/40 bg-green-500/5'
+                                                                                            : 'border-border-thin hover:border-text-main/30 bg-surface'
+                                                                                        }`}
+                                                                                >
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        accept=".p12,.pfx"
+                                                                                        className="sr-only"
+                                                                                        onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
+                                                                                    />
+                                                                                    {signatureCertFile ? (
+                                                                                        <>
+                                                                                            <CheckCircle size={16} className="text-green-500" />
+                                                                                            <span className="text-[10px] font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
+                                                                                            <span className="text-[9px] text-text-dim">Clic para cambiar</span>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <>
+                                                                                            <Shield size={16} className="text-text-dim" />
+                                                                                            <span className="text-[10px] font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
+                                                                                            <span className="text-[9px] text-text-dim">No se guarda en el servidor</span>
+                                                                                        </>
+                                                                                    )}
+                                                                                </label>
+                                                                            </div>
+
+                                                                            {/* Contraseña */}
+                                                                            <div className="space-y-1">
+                                                                                <label className="text-[10px] font-bold text-text-dim block">Contraseña del certificado</label>
+                                                                                <input
+                                                                                    type="password"
+                                                                                    placeholder="Contraseña del .p12"
+                                                                                    value={signaturePassword}
+                                                                                    onChange={(e) => setSignaturePassword(e.target.value)}
+                                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 text-xs focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
+                                                                                />
+                                                                            </div>
+
+                                                                            <button
+                                                                                onClick={handleSign}
+                                                                                disabled={isSigning || !signatureCertFile}
+                                                                                className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${(!signatureCertFile || isSigning)
+                                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                                                    }`}
+                                                                            >
+                                                                                {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma electrónica</>}
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
+                                                            <div className="mt-4 border-t border-border-thin pt-4">
+                                                                <SignatureBlock 
+                                                                    documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''} 
+                                                                    refreshTrigger={signatureRefreshTrigger} 
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

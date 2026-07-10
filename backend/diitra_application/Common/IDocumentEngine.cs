@@ -115,5 +115,10 @@ namespace Diitra.Application.Common.Documents
         /// Actualiza el contenido HTML de una plantilla (panel de administración).
         /// </summary>
         Task UpdateTemplateAsync(string templateCode, string newHtmlContent, string? customCss, string updatedBy, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Actualiza la configuración de firmas de una plantilla (panel de administración).
+        /// </summary>
+        Task UpdateSignatureConfigAsync(string templateCode, bool requiresSignature, string signatureType, string updatedBy, CancellationToken cancellationToken = default);
     }
 }

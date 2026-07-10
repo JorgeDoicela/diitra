@@ -528,6 +528,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             entityUuid={entityUuid}
             canSign={canSign}
             onUpdateField={updateField}
+            signatureType={templateConfig?.signatureType || 'DIITRA'}
+            documentUuid={formData.Uuid || formData.uuid || initialData?.Uuid || initialData?.uuid}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);
