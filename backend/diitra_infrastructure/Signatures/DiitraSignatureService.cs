@@ -389,64 +389,89 @@ public class DiitraSignatureService : IDiitraSignatureService
             verificationUrl: verificationUrl,
             firmadoEn:       firmadoEn);
 
-        // 10. Guardar el PDF firmado físicamente
-        var pdfPath = await SaveSignedPdfAsync(pdfFirmado, dto.DocumentoUuid, firmaCode);
+        // 10. Iniciar transacción explícita de EF Core
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        string? pdfPath = null;
 
-        // 11. Actualizar DocumentInstance para que el workspace sirva siempre el PDF firmado más reciente
-        // Usamos el método de dominio Finalize() que actualiza FinalPdfPath (private set), FileHash y State
-        instancia.Finalize(
-            pdfPath:          pdfPath,
-            hash:             docHash,
-            traceabilityCode: firmaCode);
-
-        // 12. Persistir el registro de firma (inmutable) + actualizar instancia en un solo transaction
-        var snapshotJson = JsonSerializer.Serialize(new
+        try
         {
-            nombre       = nombreUsuario,
-            cedula       = cedulaUsuario,
-            cargo        = perfil?.Cargo,
-            departamento = perfil?.Departamento,
-            rol          = dto.RolFirmante,
-            metodo       = "DIITRA_BASIC_V1",
-        });
+            // 11. Guardar el PDF firmado físicamente a través de la abstracción de storage
+            pdfPath = await SaveSignedPdfAsync(pdfFirmado, dto.DocumentoUuid, firmaCode);
 
-        var registroFirma = new InvDocumentoFirma
+            // 12. Actualizar DocumentInstance para que el workspace sirva siempre el PDF firmado más reciente
+            // Usamos el método de dominio Finalize() que actualiza FinalPdfPath (private set), FileHash y State
+            instancia.Finalize(
+                pdfPath:          pdfPath,
+                hash:             docHash,
+                traceabilityCode: firmaCode);
+
+            // 13. Persistir el registro de firma (inmutable) + actualizar instancia en un solo transaction
+            var snapshotJson = JsonSerializer.Serialize(new
+            {
+                nombre       = nombreUsuario,
+                cedula       = cedulaUsuario,
+                cargo        = perfil?.Cargo,
+                departamento = perfil?.Departamento,
+                rol          = dto.RolFirmante,
+                metodo       = "DIITRA_BASIC_V1",
+            });
+
+            var registroFirma = new InvDocumentoFirma
+            {
+                Uuid              = Guid.NewGuid().ToString(),
+                DocumentoUuid     = dto.DocumentoUuid,
+                FirmanteId        = firmanteIdStr,
+                FirmanteRol       = dto.RolFirmante ?? "Firmante",
+                FechaFirma        = firmadoEn,
+                TipoFirma         = "DIITRA",
+                FirmaCode         = firmaCode,
+                HmacHash          = hmacHash,
+                DocHash           = docHash,
+                IpAddress         = ipAddress,
+                UserAgent         = userAgent,
+                FirmaMetadata     = snapshotJson,
+                ArchivoPdfFirmado = pdfPath,
+                EsValida          = true,
+            };
+
+            _context.InvDocumentoFirmas.Add(registroFirma);
+
+            // Auditoría de firma exitosa (LOPDP Escritura)
+            var successAudit = new InvLopdpAuditoriaDatos
+            {
+                Uuid = Guid.NewGuid(),
+                IdUsuarioActor = idUsuario,
+                IdUsuarioAfectado = idUsuario,
+                TablaAfectada = "inv_documentos_firmas",
+                ColumnaAfectada = "firma_code",
+                Operacion = "ESCRITURA",
+                Motivo = $"Firma de documento exitosa. Código: {firmaCode}.",
+                IpDireccion = ipAddress,
+                UserAgent = userAgent,
+                FechaAcceso = DateTime.UtcNow
+            };
+            _context.InvLopdpAuditoriaDatos.Add(successAudit);
+
+            await _context.SaveChangesAsync(); // Firma + actualización de instancia + auditoría en un solo commit
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
         {
-            Uuid              = Guid.NewGuid().ToString(),
-            DocumentoUuid     = dto.DocumentoUuid,
-            FirmanteId        = firmanteIdStr,
-            FirmanteRol       = dto.RolFirmante ?? "Firmante",
-            FechaFirma        = firmadoEn,
-            TipoFirma         = "DIITRA",
-            FirmaCode         = firmaCode,
-            HmacHash          = hmacHash,
-            DocHash           = docHash,
-            IpAddress         = ipAddress,
-            UserAgent         = userAgent,
-            FirmaMetadata     = snapshotJson,
-            ArchivoPdfFirmado = pdfPath,
-            EsValida          = true,
-        };
-
-        _context.InvDocumentoFirmas.Add(registroFirma);
-
-        // Auditoría de firma exitosa (LOPDP Escritura)
-        var successAudit = new InvLopdpAuditoriaDatos
-        {
-            Uuid = Guid.NewGuid(),
-            IdUsuarioActor = idUsuario,
-            IdUsuarioAfectado = idUsuario,
-            TablaAfectada = "inv_documentos_firmas",
-            ColumnaAfectada = "firma_code",
-            Operacion = "ESCRITURA",
-            Motivo = $"Firma de documento exitosa. Código: {firmaCode}.",
-            IpDireccion = ipAddress,
-            UserAgent = userAgent,
-            FechaAcceso = DateTime.UtcNow
-        };
-        _context.InvLopdpAuditoriaDatos.Add(successAudit);
-
-        await _context.SaveChangesAsync(); // Firma + actualización de instancia + auditoría en un solo commit
+            await transaction.RollbackAsync();
+            if (!string.IsNullOrEmpty(pdfPath))
+            {
+                try
+                {
+                    await _storageService.DeleteFileAsync(pdfPath);
+                }
+                catch (Exception deleteEx)
+                {
+                    _logger.LogError(deleteEx, "[DIITRA Firma] No se pudo limpiar el PDF huérfano en {Path} tras error en transacción", pdfPath);
+                }
+            }
+            _logger.LogError(ex, "[DIITRA Firma] Error durante el proceso de firma del documento {DocUuid}", dto.DocumentoUuid);
+            throw;
+        }
 
         _logger.LogInformation(
             "[DIITRA Firma] Documento {DocUuid} firmado. Código: {Code} | Usuario: {UserId} | Hash: {Hash}",
@@ -675,25 +700,28 @@ public class DiitraSignatureService : IDiitraSignatureService
 
     private async Task<byte[]> GetPdfBytesFromInstance(Diitra.Domain.Common.Documents.DocumentInstance instancia)
     {
-        if (!string.IsNullOrWhiteSpace(instancia.FinalPdfPath) && File.Exists(instancia.FinalPdfPath))
-            return await File.ReadAllBytesAsync(instancia.FinalPdfPath);
+        if (string.IsNullOrWhiteSpace(instancia.FinalPdfPath))
+        {
+            throw new InvalidOperationException(
+                $"El documento '{instancia.Uuid}' no tiene PDF generado. " +
+                "Genere el PDF antes de firmarlo.");
+        }
 
-        throw new InvalidOperationException(
-            $"El documento '{instancia.Uuid}' no tiene PDF generado. " +
-            "Genere el PDF antes de firmarlo.");
+        // Compatibilidad histórica: si el path es absoluto y existe en el disco local
+        if (Path.IsPathRooted(instancia.FinalPdfPath) && File.Exists(instancia.FinalPdfPath))
+        {
+            return await File.ReadAllBytesAsync(instancia.FinalPdfPath);
+        }
+
+        // Uso estándar desacoplado a través del storage service
+        return await _storageService.GetFileAsync(instancia.FinalPdfPath);
     }
 
     private async Task<string> SaveSignedPdfAsync(byte[] pdfBytes, string documentoUuid, string firmaCode)
     {
-        var storageRoot = _config["Storage:DocumentsPath"] ?? Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Documents");
-        var firmasDir   = Path.Combine(storageRoot, "Firmas");
-        Directory.CreateDirectory(firmasDir);
-
         var fileName = $"{documentoUuid}_{firmaCode}.pdf";
-        var fullPath = Path.Combine(firmasDir, fileName);
-        await File.WriteAllBytesAsync(fullPath, pdfBytes);
-
-        return Path.Combine("Firmas", fileName); // ruta relativa
+        // Guardamos en la subcarpeta "firmas" usando la abstracción de storage
+        return await _storageService.SaveFileAsync(fileName, pdfBytes, "firmas");
     }
 
     // ── Mappers ────────────────────────────────────────────────────

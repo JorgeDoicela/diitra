@@ -115,6 +115,15 @@ export function useSignatureProfile(): SignatureProfileState {
     };
 
     const executeSaveProfile = async () => {
+        // Validar tamaño de firma (límite del backend: 300 KB en base64)
+        if (firmaImagenB64 && firmaImagenB64.length > 307200) {
+            setMessage({
+                text: 'La imagen de firma optimizada excede el tamaño máximo permitido de 300 KB. Intente de nuevo recortando un área menor o usando trazos más compactos.',
+                type: 'error'
+            });
+            return;
+        }
+
         try {
             setSaving(true);
             setMessage(null);
