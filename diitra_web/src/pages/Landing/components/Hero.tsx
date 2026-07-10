@@ -167,7 +167,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     </div>
                     <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-normal text-text-main tracking-tighter leading-[0.85] lg:whitespace-nowrap">
                         Investigación <br />
-                        & Innovación.
+                        & Innovación
                     </h1>
                     <div className="pt-2 flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
                         <button

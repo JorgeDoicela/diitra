@@ -288,7 +288,7 @@ const Roles: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-border-thin">
                 <div className="space-y-2">
                     <h2 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tighter leading-[0.95] text-text-main">
-                        Estructura & Niveles de Acceso.
+                        Estructura & Niveles de Acceso
                     </h2>
                 </div>
                 <p className="text-xs text-text-dim max-w-md leading-relaxed font-medium">

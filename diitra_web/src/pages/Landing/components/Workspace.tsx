@@ -180,7 +180,7 @@ const Workspace: React.FC = () => {
         <section id="workspace" className="py-20 lg:-ml-24 lg:-mr-24 relative">
             {/* Título superior al estilo Vercel */}
             <h2 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tighter leading-[0.95] text-text-main max-w-3xl mb-16">
-                Un espacio de trabajo <br className="hidden md:inline" /> para el investigador.
+                Un espacio de trabajo <br className="hidden md:inline" /> para el investigador
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-start relative">
@@ -482,25 +482,25 @@ const Workspace: React.FC = () => {
                                         case 1:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Redacción</span> colaborativa en tiempo real de tu propuesta.
+                                                    <span className="text-text-dim/60">Redacción</span> colaborativa en tiempo real de tu propuesta
                                                 </>
                                             );
                                         case 2:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Doble ciego</span> automático y transparente para evaluación.
+                                                    <span className="text-text-dim/60">Doble ciego</span> automático y transparente para evaluación
                                                 </>
                                             );
                                         case 3:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Presupuestos</span> modulares con cálculo automático de rubros.
+                                                    <span className="text-text-dim/60">Presupuestos</span> modulares con cálculo automático de rubros
                                                 </>
                                             );
                                         case 4:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Control</span> automático de horas de investigación.
+                                                    <span className="text-text-dim/60">Control</span> automático de horas de investigación
                                                 </>
                                             );
                                         default:

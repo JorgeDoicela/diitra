@@ -150,7 +150,7 @@ const Caces: React.FC = () => {
         <section id="caces" className="py-20 lg:-ml-24 lg:-mr-24 relative">
             {/* Título superior alineado a la derecha estilo Vercel */}
             <h2 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tighter leading-[0.95] text-text-main max-w-3xl mb-16 lg:ml-auto text-left lg:text-right">
-                Diseñado para superar <br className="hidden md:inline" /> la auditoría CACES.
+                Diseñado para superar <br className="hidden md:inline" /> la auditoría CACES
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-start relative">
@@ -164,25 +164,25 @@ const Caces: React.FC = () => {
                                         case 1:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Evidencias</span> de avance para justificar tu investigación.
+                                                    <span className="text-text-dim/60">Evidencias</span> de avance para justificar tu investigación
                                                 </>
                                             );
                                         case 2:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Reporte</span> unificado y consolidado de producción científica.
+                                                    <span className="text-text-dim/60">Reporte</span> unificado y consolidado de producción científica
                                                 </>
                                             );
                                         case 3:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Horas</span> de distributivo con control automático de carga.
+                                                    <span className="text-text-dim/60">Horas</span> de distributivo con control automático de carga
                                                 </>
                                             );
                                         case 4:
                                             return (
                                                 <>
-                                                    <span className="text-text-dim/60">Compatibilidad</span> SIIES para exportación directa sin reprocesos.
+                                                    <span className="text-text-dim/60">Compatibilidad</span> SIIES para exportación directa sin reprocesos
                                                 </>
                                             );
                                         default:

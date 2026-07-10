@@ -9,7 +9,7 @@ const Interoperability: React.FC = () => {
                 Sincronización de Datos
             </div>
             <h3 className="text-3xl md:text-5xl lg:text-[56px] font-bold tracking-tighter text-text-main leading-[0.95]">
-                Conectado con su <br className="hidden md:inline" /> Gestión Académica.
+                Conectado con su <br className="hidden md:inline" /> Gestión Académica
             </h3>
             <p className="text-xs text-text-dim max-w-lg mx-auto leading-relaxed">
                 DIITRA se acopla a las bases de datos académicas para validar en tiempo real los distributivos y horas asignadas a investigación de cada docente del Tecnológico Traversari.
