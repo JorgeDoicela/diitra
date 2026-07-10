@@ -235,7 +235,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                         <div className="h-4 w-[1px] bg-border-thin mx-1" />
                                     </>
                                 )}
-                                <span className="section-label !text-text-main">Tecnológico Traversari</span>
+                                <span className="section-label !text-text-main !font-semibold !tracking-widest">Tecnológico Traversari</span>
                             </div>
 
                             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-widest text-text-main pointer-events-none select-none">

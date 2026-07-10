@@ -1084,7 +1084,7 @@ const Sidebar = ({
                             alt="DIITRA Logo"
                             className="h-6 w-auto object-contain"
                         />
-                        <span className="text-[12px] font-medium text-text-main tracking-[0.3em] font-sans uppercase">
+                        <span className="text-[12px] font-semibold text-text-main tracking-[0.4em] font-sans uppercase">
                             DIITRA
                         </span>
                     </Link>
