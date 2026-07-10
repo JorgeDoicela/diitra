@@ -378,6 +378,7 @@ public class DiitraSignatureService : IDiitraSignatureService
             throw new InvalidOperationException("Ya existe una firma DIITRA válida de este usuario en el documento.");
         }
 
+
         // 5. Obtener el PDF actual del documento
         var pdfBytes = await GetPdfBytesFromInstance(instancia);
 
@@ -1006,6 +1007,36 @@ public class DiitraSignatureService : IDiitraSignatureService
             MotivoRevocacion = f.MotivoRevocacion,
             RevocadaEn       = f.RevocadaEn,
         };
+    }
+
+    private static string? GenerateQrSvg(string url)
+    {
+        try
+        {
+            using var qrGenerator = new QRCoder.QRCodeGenerator();
+            using var qrCodeData = qrGenerator.CreateQrCode(url, QRCoder.QRCodeGenerator.ECCLevel.Q);
+            using var qrCode = new QRCoder.SvgQRCode(qrCodeData);
+            
+            // Genera el SVG. getGraphic(pixelPerModule)
+            // pixelPerModule=2 es suficiente para un tamaño ligero
+            string svg = qrCode.GetGraphic(2);
+            
+            // Limpiar cualquier XML header que añada QRCoder para que sea inline HTML perfecto
+            int svgStart = svg.IndexOf("<svg", StringComparison.OrdinalIgnoreCase);
+            if (svgStart >= 0)
+            {
+                svg = svg.Substring(svgStart);
+            }
+            
+            // Asegurar que el SVG se dimensione correctamente dentro de su contenedor td
+            svg = svg.Replace("<svg ", "<svg width=\"42\" height=\"42\" style=\"display:block; margin:0 auto;\" ");
+            
+            return svg;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string NormalizeName(string name)
