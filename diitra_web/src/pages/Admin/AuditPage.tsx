@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios_config';
-import { 
-    Shield, 
+import {
+    Shield,
     ShieldCheck,
-    Search, 
-    Calendar, 
-    Filter, 
-    ChevronLeft, 
-    ChevronRight, 
-    Activity, 
-    MapPin, 
-    Monitor, 
+    Search,
+    Calendar,
+    Filter,
+    ChevronLeft,
+    ChevronRight,
+    Activity,
+    MapPin,
+    Monitor,
     Code,
     Info,
     Download,
@@ -123,7 +123,7 @@ const renderValue = (value: unknown) => {
     if (value === null || value === undefined) {
         return <span className="text-text-dim/40 italic">ninguno</span>;
     }
-    
+
     if (typeof value === 'boolean') {
         return value ? (
             <span className="badge-vercel badge-vercel-success py-0 px-2 text-[9px] font-semibold">
@@ -189,7 +189,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ text }) => {
     };
 
     return (
-        <button 
+        <button
             onClick={handleCopy}
             className="absolute top-2 right-2 p-1.5 rounded border border-border-thin bg-surface text-text-dim hover:text-text-main hover:border-border-hover transition-all text-[9px] font-semibold flex items-center gap-1 cursor-pointer z-20"
         >
@@ -213,7 +213,7 @@ const AuditPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
-    
+
     const [search, setSearch] = useState('');
     const [modulo, setModulo] = useState('');
     const [action, setAction] = useState('');
@@ -231,7 +231,7 @@ const AuditPage: React.FC = () => {
     const handleExport = () => {
         try {
             if (logs.length === 0) return;
-            
+
             // 1. Mapear los datos para la hoja de Excel
             const excelData = logs.map(log => ({
                 "Fecha y Hora": formatDateSafe(log.date, "yyyy-MM-dd HH:mm:ss"),
@@ -560,14 +560,14 @@ const AuditPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Link 
+                        <Link
                             to="/lopdp"
                             className="btn-vercel-secondary flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <ShieldCheck size={14} className="text-brand" />
                             Panel LOPDP
                         </Link>
-                        <button 
+                        <button
                             onClick={handleExport}
                             disabled={logs.length === 0}
                             className="btn-vercel-secondary flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
@@ -582,8 +582,8 @@ const AuditPage: React.FC = () => {
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                         <div className="relative group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 placeholder="Buscar por usuario o acción..."
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={search}
@@ -593,7 +593,7 @@ const AuditPage: React.FC = () => {
 
                         <div className="relative group">
                             <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <select 
+                            <select
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={modulo}
                                 onChange={(e) => setModulo(e.target.value)}
@@ -609,7 +609,7 @@ const AuditPage: React.FC = () => {
 
                         <div className="relative group">
                             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <select 
+                            <select
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={action}
                                 onChange={(e) => setAction(e.target.value)}
@@ -644,8 +644,8 @@ const AuditPage: React.FC = () => {
 
                         <div className="relative group">
                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input 
-                                type="date" 
+                            <input
+                                type="date"
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={fromDate}
                                 onChange={(e) => setFromDate(e.target.value)}
@@ -654,8 +654,8 @@ const AuditPage: React.FC = () => {
 
                         <div className="relative group">
                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input 
-                                type="date" 
+                            <input
+                                type="date"
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={toDate}
                                 onChange={(e) => setToDate(e.target.value)}
@@ -702,8 +702,8 @@ const AuditPage: React.FC = () => {
                                     </tr>
                                 ) : (
                                     logs.map((log) => (
-                                        <tr 
-                                            key={log.id_audit} 
+                                        <tr
+                                            key={log.id_audit}
                                             className="group hover:bg-surface/30 transition-all cursor-pointer"
                                             onClick={() => {
                                                 setSelectedLog(log);
@@ -756,7 +756,7 @@ const AuditPage: React.FC = () => {
                             Mostrando {logs.length} de {totalCount} registros históricos
                         </div>
                         <div className="flex items-center gap-2">
-                            <button 
+                            <button
                                 disabled={page === 1}
                                 onClick={(e) => { e.stopPropagation(); setPage(p => p - 1); }}
                                 className="btn-vercel-secondary !p-2 disabled:opacity-30 cursor-pointer"
@@ -766,7 +766,7 @@ const AuditPage: React.FC = () => {
                             <span className="text-xs font-semibold text-text-main px-4">
                                 Página {page} de {totalPages}
                             </span>
-                            <button 
+                            <button
                                 disabled={page === totalPages}
                                 onClick={(e) => { e.stopPropagation(); setPage(p => p + 1); }}
                                 className="btn-vercel-secondary !p-2 disabled:opacity-30 cursor-pointer"
@@ -779,7 +779,7 @@ const AuditPage: React.FC = () => {
 
                 {isDrawerOpen && selectedLog && (
                     <div className="fixed inset-0 z-[9999] flex justify-end">
-                        <div 
+                        <div
                             className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                             onClick={() => setIsDrawerOpen(false)}
                         />
@@ -847,14 +847,14 @@ const AuditPage: React.FC = () => {
 
                                     {selectedLog && (parseJson(selectedLog.values_before) !== null || parseJson(selectedLog.values_after) !== null) && selectedLog.action?.toUpperCase() !== 'LOGIN' && (
                                         <div className="flex gap-1 p-1 bg-bg-deep rounded border border-border-thin select-none animate-fade-in">
-                                            <button 
+                                            <button
                                                 onClick={() => setSnapshotView('diff')}
                                                 className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'diff' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                             >
                                                 Diferencias
                                             </button>
                                             {parseJson(selectedLog.values_before) !== null && (
-                                                <button 
+                                                <button
                                                     onClick={() => setSnapshotView('before')}
                                                     className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'before' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >
@@ -862,7 +862,7 @@ const AuditPage: React.FC = () => {
                                                 </button>
                                             )}
                                             {parseJson(selectedLog.values_after) !== null && (
-                                                <button 
+                                                <button
                                                     onClick={() => setSnapshotView('after')}
                                                     className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'after' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >

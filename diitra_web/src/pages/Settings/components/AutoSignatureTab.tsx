@@ -38,11 +38,35 @@ export const AutoSignatureTab: React.FC<AutoSignatureTabProps> = ({
 
         document.fonts.load(fontSpec).then(() => {
             if (!active) return;
+            
+            // Dividir el texto en dos líneas si tiene más de 2 palabras
+            const parts = autoText.split(' ').filter(p => p.trim() !== '');
+            let firstLine = '';
+            let secondLine = '';
+
+            if (parts.length <= 2) {
+                firstLine = autoText;
+            } else {
+                const half = parts.length === 3 ? 1 : Math.ceil(parts.length / 2);
+                firstLine = parts.slice(0, half).join(' ');
+                secondLine = parts.slice(half).join(' ');
+            }
+
             ctx.font = `italic ${baseFontSize}px "${selectedFont}", cursive`;
-            const textWidth = ctx.measureText(autoText).width;
+            
+            // Medir el ancho de cada línea para ajustar el canvas
+            const width1 = ctx.measureText(firstLine).width;
+            const width2 = secondLine ? ctx.measureText(secondLine).width : 0;
+            const maxWidth = Math.max(width1, width2);
+            
             const paddingX  = 60;
-            canvas.width  = Math.max(300, Math.ceil(textWidth + paddingX));
-            canvas.height = Math.ceil(baseFontSize * 1.6);
+            canvas.width  = Math.max(300, Math.ceil(maxWidth + paddingX));
+            
+            const lineHeight = baseFontSize * 1.1;
+            canvas.height = secondLine 
+                ? Math.ceil(lineHeight * 2 + 40) 
+                : Math.ceil(baseFontSize * 1.6);
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'rgba(0,0,0,0)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -50,7 +74,15 @@ export const AutoSignatureTab: React.FC<AutoSignatureTabProps> = ({
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.font = `italic ${baseFontSize}px "${selectedFont}", cursive`;
-            ctx.fillText(autoText, canvas.width / 2, canvas.height / 2);
+
+            if (secondLine) {
+                // Dibujar línea 1 (arriba) y línea 2 (abajo)
+                ctx.fillText(firstLine, canvas.width / 2, canvas.height / 2 - lineHeight / 2);
+                ctx.fillText(secondLine, canvas.width / 2, canvas.height / 2 + lineHeight / 2);
+            } else {
+                ctx.fillText(firstLine, canvas.width / 2, canvas.height / 2);
+            }
+
             onSignatureGenerated(canvas.toDataURL('image/png'));
         }).catch(() => {});
 

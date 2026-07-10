@@ -172,7 +172,7 @@ en el elemento principal:
 
     /* Fuentes oficiales de Vercel mapeadas a clases Tailwind: font-sans y font-mono */
     --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
-    --font-mono: "Geist Mono", "JetBrains Mono", monospace;
+    --font-mono: "Geist Sans", "Inter", system-ui, sans-serif;
 
     /* Transiciones y micro-animaciones premium */
     --animate-fade-up: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;

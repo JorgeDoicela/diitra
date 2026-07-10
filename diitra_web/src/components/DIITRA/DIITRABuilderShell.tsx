@@ -1324,12 +1324,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                     <div className="border-t border-border-thin shrink-0" />
                                                     {/* Sección 2: Firma Electrónica */}
                                                     <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
-                                                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
-                                                            <Shield size={16} className="text-text-dim" /> Firma Electrónica
-                                                        </h4>
-                                                        <p className="text-xs text-text-dim leading-relaxed">Firma digital PAdES con validez legal.</p>
 
-                                                        <div className="flex flex-col gap-4 mt-2">
+                                                        <div className="flex flex-col gap-4">
                                                             {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
                                                                 <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
                                                                     <div className="flex justify-center">

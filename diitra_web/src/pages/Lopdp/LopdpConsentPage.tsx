@@ -79,7 +79,7 @@ const LopdpConsentPage: React.FC = () => {
                         TÉRMINOS DE CONSENTIMIENTO Y POLÍTICA DE PROTECCIÓN DE DATOS PERSONALES
                     </h3>
                     <p className="text-center font-semibold text-text-main text-[9px]">
-                        DIITRA — SISTEMA DE GESTIÓN DE INVESTIGACIÓN E INNOVACIÓN (ECUADOR)
+                        DIITRA — DEPARTAMENTO DE INVESTIGACIÓN E INNOVACIÓN TRAVERSARI (ECUADOR)
                     </p>
 
                     <p>

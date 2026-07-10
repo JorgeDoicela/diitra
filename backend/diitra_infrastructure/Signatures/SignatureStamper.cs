@@ -77,20 +77,19 @@ public class SignatureStamper
                 .SetBorder(iText.Layout.Borders.Border.NO_BORDER)
                 .SetPadding(1.0f));
 
-            // ── Cuerpo: 2 columnas (Izquierda: Firma + QR + Código, Derecha: Datos)
-            var bodyTable = new Table(new float[] { 3.2f, 6.8f })
+            // ── Cuerpo: 3 columnas (Izquierda: Firma, Centro: Datos, Derecha: QR)
+            var bodyTable = new Table(new float[] { 3.0f, 4.8f, 2.2f })
                 .UseAllAvailableWidth()
                 .SetMarginTop(0.4f)
                 .SetBackgroundColor(LightGray);
 
-            // Columna izquierda: Firma cursiva, QR + Verificar y Código DFRM
-            var leftCell = new Cell()
+            // Columna 1: Firma manuscrita o iniciales
+            var firmaCell = new Cell()
                 .SetBorder(iText.Layout.Borders.Border.NO_BORDER)
                 .SetPadding(1.2f)
                 .SetVerticalAlignment(VerticalAlignment.MIDDLE)
                 .SetHorizontalAlignment(HorizontalAlignment.CENTER);
 
-            // 1. Firma Cursiva o Iniciales
             if (!string.IsNullOrWhiteSpace(firmaImagenB64))
             {
                 try
@@ -102,83 +101,87 @@ public class SignatureStamper
 
                     var imgData = ImageDataFactory.Create(imgBytes);
                     var img = new iText.Layout.Element.Image(imgData)
-                        .ScaleToFit(40, 12)
+                        .ScaleToFit(50, 16)
                         .SetHorizontalAlignment(HorizontalAlignment.CENTER)
-                        .SetMarginTop(0.5f)
-                        .SetMarginBottom(0.5f);
-                    leftCell.Add(img);
+                        .SetMarginTop(1.5f)
+                        .SetMarginBottom(1.5f);
+                    firmaCell.Add(img);
                 }
                 catch
                 {
-                    leftCell.Add(BuildInitialsPlaceholder(nombreFirmante, fonts));
+                    firmaCell.Add(BuildInitialsPlaceholder(nombreFirmante, fonts));
                 }
             }
             else
             {
-                leftCell.Add(BuildInitialsPlaceholder(nombreFirmante, fonts));
+                firmaCell.Add(BuildInitialsPlaceholder(nombreFirmante, fonts));
             }
+            bodyTable.AddCell(firmaCell);
 
-            // 2. Código QR de Verificación
-            var qrBytes = GenerateQrImage(verificationUrl, pdf);
-            if (qrBytes != null)
-            {
-                qrBytes.ScaleToFit(24, 24)
-                    .SetHorizontalAlignment(HorizontalAlignment.CENTER)
-                    .SetMarginTop(0.5f)
-                    .SetMarginBottom(0);
-                leftCell.Add(qrBytes);
-                
-                leftCell.Add(new Paragraph("Verificar")
-                    .SetFont(fonts.regular)
-                    .SetFontSize(3.8f)
-                    .SetFontColor(TextGray)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginTop(0)
-                    .SetMarginBottom(0.5f));
-            }
-
-            // 3. Código DFRM
-            leftCell.Add(new Paragraph(firmaCode)
-                .SetFont(fonts.bold)
-                .SetFontSize(4.5f)
-                .SetFontColor(AccentColor)
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetMarginTop(0)
-                .SetMarginBottom(0));
-
-            bodyTable.AddCell(leftCell);
-
-            // Columna derecha: Datos del firmante
-            var centerCell = new Cell()
+            // Columna 2: Datos del firmante
+            var datosCell = new Cell()
                 .SetBorder(iText.Layout.Borders.Border.NO_BORDER)
                 .SetBorderLeft(new iText.Layout.Borders.SolidBorder(BorderColor, 0.75f))
                 .SetPadding(1.2f)
                 .SetVerticalAlignment(VerticalAlignment.MIDDLE);
 
-            centerCell.Add(new Paragraph(nombreFirmante)
+            datosCell.Add(new Paragraph(FormatNombreMultiLine(nombreFirmante))
                 .SetFont(fonts.bold)
                 .SetFontSize(5.8f)
                 .SetFontColor(PrimaryColor)
-                .SetMarginBottom(0f)
+                .SetMarginBottom(0.5f)
                 .SetMultipliedLeading(0.85f));
 
             if (!string.IsNullOrWhiteSpace(rolEnDocumento))
-                centerCell.Add(DataRow("Rol:", rolEnDocumento, fonts));
+                datosCell.Add(DataRow("Rol:", rolEnDocumento, fonts));
 
             if (!string.IsNullOrWhiteSpace(cargo))
-                centerCell.Add(DataRow("Cargo:", cargo, fonts));
+                datosCell.Add(DataRow("Cargo:", cargo, fonts));
 
             if (!string.IsNullOrWhiteSpace(departamento))
-                centerCell.Add(DataRow("Departamento:", departamento, fonts));
+                datosCell.Add(DataRow("Departamento:", departamento, fonts));
 
             if (!string.IsNullOrWhiteSpace(cedula))
-                centerCell.Add(DataRow("C.I.:", cedula, fonts));
+                datosCell.Add(DataRow("C.I.:", cedula, fonts));
 
-            // Formato de fecha abreviado para evitar saltos de línea y clipping
             string fechaFormat = firmadoEn.ToString("dd/MM/yyyy HH:mm") + " UTC";
-            centerCell.Add(DataRow("Firmado:", fechaFormat, fonts));
+            datosCell.Add(DataRow("Firmado:", fechaFormat, fonts));
 
-            bodyTable.AddCell(centerCell);
+            // Fila de Código
+            datosCell.Add(new Paragraph()
+                .SetMarginBottom(0)
+                .SetMultipliedLeading(0.85f)
+                .Add(new Text("Código: ").SetFont(fonts.bold).SetFontSize(4.8f).SetFontColor(TextGray))
+                .Add(new Text(firmaCode).SetFont(fonts.bold).SetFontSize(4.8f).SetFontColor(AccentColor)));
+
+            bodyTable.AddCell(datosCell);
+
+            // Columna 3: QR de Verificación
+            var qrCell = new Cell()
+                .SetBorder(iText.Layout.Borders.Border.NO_BORDER)
+                .SetBorderLeft(new iText.Layout.Borders.SolidBorder(BorderColor, 0.75f))
+                .SetPadding(1.2f)
+                .SetVerticalAlignment(VerticalAlignment.MIDDLE)
+                .SetHorizontalAlignment(HorizontalAlignment.CENTER);
+
+            var qrBytes = GenerateQrImage(verificationUrl, pdf);
+            if (qrBytes != null)
+            {
+                qrBytes.ScaleToFit(24, 24)
+                    .SetHorizontalAlignment(HorizontalAlignment.CENTER)
+                    .SetMarginTop(1.5f)
+                    .SetMarginBottom(0);
+                qrCell.Add(qrBytes);
+
+                qrCell.Add(new Paragraph("Verificar")
+                    .SetFont(fonts.regular)
+                    .SetFontSize(3.8f)
+                    .SetFontColor(TextGray)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetMarginTop(0)
+                    .SetMarginBottom(1.5f));
+            }
+            bodyTable.AddCell(qrCell);
 
             // ── Footer legal (más estrecho) ──────────────────────────────────
             var footerTable = new Table(1)
@@ -187,11 +190,12 @@ public class SignatureStamper
 
             footerTable.AddCell(new Cell()
                 .Add(new Paragraph(
-                    $"Firma institucional DIITRA · Sello de Integridad")
+                    $"Firma institucional DIITRA · Departamento de Investigación e Innovación Traversari · Verificar en: {verificationUrl}")
                     .SetFont(fonts.regular)
-                    .SetFontSize(4.0f)
+                    .SetFontSize(3.2f)
                     .SetFontColor(TextGray)
-                    .SetTextAlignment(TextAlignment.CENTER))
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetMultipliedLeading(0.85f))
                 .SetBackgroundColor(BorderColor)
                 .SetBorder(iText.Layout.Borders.Border.NO_BORDER)
                 .SetPadding(1.0f));
@@ -203,29 +207,73 @@ public class SignatureStamper
 
             // Intentar encontrar las coordenadas del nombre del firmante en la página para estampar encima
             float canvasX;
-            float canvasY = 60f; // Fallback por defecto si no lo encuentra
-
-            var finder = new TextLocationFinder(nombreFirmante);
-            try
-            {
-                var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
-                processor.ProcessPageContent(page);
-            }
-            catch { /* fallback silencioso si falla el parser */ }
+            float canvasY = 135f; // Fallback estimado a nivel del recuadro de firmas si no se encuentra nada
 
             bool esDirector = string.IsNullOrWhiteSpace(rolEnDocumento) || 
                               rolEnDocumento.Contains("Director", StringComparison.OrdinalIgnoreCase) || 
                               rolEnDocumento.Contains("Elaborado", StringComparison.OrdinalIgnoreCase);
 
-            // Ajustar coordenadas X para centrar el bloque horizontalmente dentro de la celda de la tabla.
-            // Con canvasWidth = 210f y la celda midiendo 261.5f, dejamos un margen de seguridad limpio de ~25f a cada lado.
             canvasX = esDirector ? 60f : 320f;
 
-            if (finder.Y.HasValue)
+            // 1. Intentar buscar por el nombre completo
+            var finder = new TextLocationFinder(nombreFirmante);
+            bool found = false;
+            try
             {
-                // El nombre del firmante en la última página está impreso debajo del recuadro de la firma.
-                // Ajustamos el origen Y a baseline + 15f y la altura a 72f para que el bloque de firmas
-                // encaje y se centre con márgenes perfectos en la celda vacía superior (de 96px de alto y padding 0).
+                var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
+                processor.ProcessPageContent(page);
+                if (finder.Y.HasValue) found = true;
+            }
+            catch {}
+
+            // 2. Fallback: buscar por apellidos del firmante (los últimos dos elementos)
+            if (!found)
+            {
+                var nameParts = nombreFirmante.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (nameParts.Length > 2)
+                {
+                    var apellidos = string.Join(" ", nameParts.Skip(nameParts.Length / 2));
+                    finder = new TextLocationFinder(apellidos);
+                    try
+                    {
+                        var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
+                        processor.ProcessPageContent(page);
+                        if (finder.Y.HasValue) found = true;
+                    }
+                    catch {}
+                }
+            }
+
+            // 3. Fallback: buscar la etiqueta de rol fija de la tabla
+            if (!found)
+            {
+                string fallbackRole = esDirector ? "Director del Proyecto" : "Coordinador de Carrera";
+                finder = new TextLocationFinder(fallbackRole);
+                try
+                {
+                    var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
+                    processor.ProcessPageContent(page);
+                    if (finder.Y.HasValue) found = true;
+                }
+                catch {}
+            }
+
+            // 4. Fallback secundario de rol
+            if (!found)
+            {
+                string fallbackRole2 = esDirector ? "Director de Proyecto" : "Coordinador";
+                finder = new TextLocationFinder(fallbackRole2);
+                try
+                {
+                    var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
+                    processor.ProcessPageContent(page);
+                    if (finder.Y.HasValue) found = true;
+                }
+                catch {}
+            }
+
+            if (found && finder.Y.HasValue)
+            {
                 canvasY = finder.Y.Value + 15f;
             }
 
@@ -333,6 +381,26 @@ public class SignatureStamper
         catch { regularFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA); }
 
         return new FontSet(boldFont, regularFont);
+    }
+
+    private static string FormatNombreMultiLine(string nombreCompleto)
+    {
+        if (string.IsNullOrWhiteSpace(nombreCompleto)) return string.Empty;
+        var parts = nombreCompleto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length <= 2)
+        {
+            return nombreCompleto;
+        }
+        
+        int half = parts.Length / 2;
+        if (parts.Length == 3)
+        {
+            half = 1;
+        }
+        
+        var firstLine = string.Join(" ", parts.Take(half));
+        var secondLine = string.Join(" ", parts.Skip(half));
+        return $"{firstLine}\n{secondLine}";
     }
 
     private record FontSet(PdfFont bold, PdfFont regular);

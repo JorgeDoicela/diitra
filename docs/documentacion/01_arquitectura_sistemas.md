@@ -1,6 +1,6 @@
-# Ecosistema DIITRA: Arquitectura de Software y Sistemas
+# DIITRA: Arquitectura de Software y Sistemas
 
-Este documento detalla los principios de diseño de software, el desglose de capas del backend, la estructura y optimizaciones de los clientes web y móvil, y la infraestructura de comunicación colaborativa del ecosistema **DIITRA** (Sistema de Gestión Integral de Investigación, Innovación y Vinculación).
+Este documento detalla los principios de diseño de software, el desglose de capas del backend, la estructura y optimizaciones de los clientes web y móvil, y la infraestructura de comunicación colaborativa de **DIITRA** (Departamento de Investigación e Innovación Traversari).
 
 ---
 
@@ -14,7 +14,7 @@ graph TD
     INFRA[Infraestructura - diitra_infrastructure] --> APP
     APP --> DOM[Dominio / Reglas Core - diitra_domain]
     INFRA --> DOM
-    
+
     style DOM fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
     style APP fill:#1e293b,stroke:#0ea5e9,stroke-width:2px,color:#fff
     style INFRA fill:#334155,stroke:#0284c7,stroke-width:1px,color:#fff
@@ -45,17 +45,17 @@ C4Context
   Person(director, "Director de Investigación", "Administra convocatorias, aprueba distributivos y gestiona auditorías.")
   Person(revisor, "Pares Revisores", "Evalúan proyectos académicos mediante doble ciego.")
   Person(investigador, "Investigadores (Docentes/Estudiantes)", "Postulan ideas, cargan evidencias y editan protocolos.")
-  
+
   System(diitra, "Sistema Core DIITRA", "Servicios Backend .NET 8, Clientes Web React y Mobile Expo App.")
-  
+
   System_Ext(sigafig, "SIGAFI (Académico-Financiero)", "Sistema Institucional de carga de distributivos y presupuestos.")
   System_Ext(firmaec, "FirmaEC Middleware", "Servicio externo para validación de certificados P12 y firma digital.")
   System_Ext(smtp, "Servidor SMTP Institucional", "Distribución de notificaciones y alertas por correo.")
-  
+
   Rel(director, diitra, "Administración de convocatorias y reportes", "HTTPS")
   Rel(revisor, diitra, "Evaluaciones anónimas", "HTTPS (Token temporal)")
   Rel(investigador, diitra, "Registro de propuestas y CoWork", "HTTPS/WSS")
-  
+
   Rel(diitra, sigafig, "Sincronización de distributivos y docentes", "REST/SQL Sync")
   Rel(diitra, firmaec, "Firma y verificación de documentos", "REST API")
   Rel(diitra, smtp, "Envío de notificaciones y alertas", "SMTP/TLS")
