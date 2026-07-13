@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../api/AuthContext';
 
 interface HeaderProps {
     currentTheme: 'dark' | 'light';
@@ -10,6 +11,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isAuthenticated } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -24,6 +26,20 @@ const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handleLogoClick = () => {
+        if (isAuthenticated) {
+            navigate('/dashboard');
+        } else {
+            if (location.pathname === '/') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                navigate('/');
+                // Esperamos un instante o forzamos el scroll arriba
+                window.scrollTo({ top: 0 });
+            }
+        }
+    };
+
     return (
         <nav className={`fixed top-0 w-full z-[60] border-b theme-transition ${isScrolled ? 'border-border-thin bg-bg-deep' : 'border-transparent bg-bg-deep'
             }`}>
@@ -33,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
                         src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                         alt="DIITRA Logo"
                         className="h-9 w-auto object-contain cursor-pointer"
-                        onClick={() => navigate('/')}
+                        onClick={handleLogoClick}
                     />
                     {isHome ? (
                         <div className="hidden md:flex items-center gap-8 text-[13px] font-medium text-text-dim">

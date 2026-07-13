@@ -57,6 +57,12 @@ public class GroupMemberDto
     public DateOnly? FechaFin { get; set; }
     public string? Carrera { get; set; }
     public string? TelefonoContacto { get; set; }
+    public string? OrcidId { get; set; }
+    public string? ScopusId { get; set; }
+    public string? GoogleScholarUrl { get; set; }
+    public string? ResearchGateUrl { get; set; }
+    public string? Especialidad { get; set; }
+    public string? GradoAcademicoMaximo { get; set; }
 }
 
 public class CreateGroupDto

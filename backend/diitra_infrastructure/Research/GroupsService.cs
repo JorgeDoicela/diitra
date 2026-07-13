@@ -182,6 +182,11 @@ public class GroupsService : IGroupsService
             }
         }
 
+        var memberUserIds = group.InvGruposMiembros.Select(m => m.IdUsuario).ToList();
+        var membersMetadata = await _context.InvUsuariosMetadata
+            .Where(m => memberUserIds.Contains(m.IdUsuario))
+            .ToListAsync();
+
         dto.Miembros = group.InvGruposMiembros.Select(m =>
         {
             var cedula = m.IdUsuarioNavigation?.IdSigafi?.Trim();
@@ -215,6 +220,8 @@ public class GroupsService : IGroupsService
                 }
             }
 
+            var meta = membersMetadata.FirstOrDefault(x => x.IdUsuario == m.IdUsuario);
+
             return new GroupMemberDto
             {
                 IdGrupoMiembro = m.IdGrupoMiembro,
@@ -228,7 +235,13 @@ public class GroupsService : IGroupsService
                 Carrera = carreraNom,
                 TelefonoContacto = !string.IsNullOrEmpty(m.TelefonoContacto)
                     ? m.TelefonoContacto
-                    : GetUserPhoneFromCatalog(m.IdUsuarioNavigation?.IdSigafi, m.IdUsuarioNavigation?.TablaSigafi)
+                    : GetUserPhoneFromCatalog(m.IdUsuarioNavigation?.IdSigafi, m.IdUsuarioNavigation?.TablaSigafi),
+                OrcidId = meta?.OrcidId,
+                ScopusId = meta?.ScopusId,
+                GoogleScholarUrl = meta?.GoogleScholarUrl,
+                ResearchGateUrl = meta?.ResearchGateUrl,
+                Especialidad = meta?.Especialidad,
+                GradoAcademicoMaximo = meta?.GradoAcademicoMaximo
             };
         }).ToList();
 

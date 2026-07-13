@@ -1,10 +1,30 @@
 import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../api/AuthContext';
 
 interface FooterProps {
     currentTheme: 'dark' | 'light';
 }
 
 const Footer: React.FC<FooterProps> = ({ currentTheme }) => {
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const handleLogoClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isAuthenticated) {
+            navigate('/dashboard');
+        } else {
+            if (location.pathname === '/') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                navigate('/');
+                window.scrollTo({ top: 0 });
+            }
+        }
+    };
+
     const footerColumns = [
         {
             title: 'Ecosistema',
@@ -77,11 +97,13 @@ const Footer: React.FC<FooterProps> = ({ currentTheme }) => {
                     {/* Copyright y Logotipos abajo */}
                     <div className="mt-20 pt-10 border-t border-border-thin flex flex-col sm:flex-row justify-between items-center gap-6 text-[9px] font-mono select-none">
                         <div className="flex items-center gap-4">
-                            <img
-                                src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
-                                alt="DIITRA Logo"
-                                className="h-8 w-auto object-contain"
-                            />
+                            <Link to={isAuthenticated ? "/dashboard" : "/"} onClick={handleLogoClick}>
+                                <img
+                                    src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
+                                    alt="DIITRA Logo"
+                                    className="h-8 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                                />
+                            </Link>
                             <span className="opacity-80">© {new Date().getFullYear()} DIITRA. TODOS LOS DERECHOS RESERVADOS.</span>
                         </div>
                         <span className="text-text-dim opacity-80">TECNOLÓGICO TRAVERSARI - ISTPET</span>
