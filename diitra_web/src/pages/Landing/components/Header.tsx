@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 interface HeaderProps {
     currentTheme: 'dark' | 'light';
@@ -9,8 +9,11 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+
+    const isHome = location.pathname === '/';
 
     useEffect(() => {
         const handleScroll = () => {
@@ -29,14 +32,23 @@ const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
                     <img
                         src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                         alt="DIITRA Logo"
-                        className="h-9 w-auto object-contain"
+                        className="h-9 w-auto object-contain cursor-pointer"
+                        onClick={() => navigate('/')}
                     />
-                    <div className="hidden md:flex items-center gap-8 text-[13px] font-medium text-text-dim">
-                        <a href="#workspace" className="nav-link hover:text-text-main transition-colors">Workspace</a>
-                        <a href="#caces" className="nav-link hover:text-text-main transition-colors">Acreditación</a>
-                        <a href="#modulos" className="nav-link hover:text-text-main transition-colors">Módulos</a>
-                        <a href="#roles" className="nav-link hover:text-text-main transition-colors">Estructura</a>
-                    </div>
+                    {isHome ? (
+                        <div className="hidden md:flex items-center gap-8 text-[13px] font-medium text-text-dim">
+                            <a href="#workspace" className="nav-link hover:text-text-main transition-colors">Workspace</a>
+                            <a href="#caces" className="nav-link hover:text-text-main transition-colors">Acreditación</a>
+                            <a href="#modulos" className="nav-link hover:text-text-main transition-colors">Módulos</a>
+                            <a href="#roles" className="nav-link hover:text-text-main transition-colors">Estructura</a>
+                            <Link to="/grupos-investigacion" className="nav-link hover:text-text-main transition-colors">Grupos</Link>
+                        </div>
+                    ) : (
+                        <div className="hidden md:flex items-center gap-8 text-[13px] font-medium text-text-dim">
+                            <Link to="/" className="nav-link hover:text-text-main transition-colors">Inicio</Link>
+                            <Link to="/grupos-investigacion" className="nav-link hover:text-text-main transition-colors">Grupos</Link>
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-5 lg:-mr-24">
                     <button onClick={toggleTheme} className="p-2 text-text-dim hover:text-text-main transition-colors rounded-md hover:bg-surface-hover/30">
@@ -60,10 +72,20 @@ const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
             {/* Mobile menu drawer */}
             {isOpen && (
                 <div className="md:hidden border-t border-border-thin bg-bg-deep px-6 py-4 flex flex-col gap-4 animate-fade-in">
-                    <a href="#workspace" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Workspace</a>
-                    <a href="#caces" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Acreditación</a>
-                    <a href="#modulos" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Módulos</a>
-                    <a href="#roles" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Estructura</a>
+                    {isHome ? (
+                        <>
+                            <a href="#workspace" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Workspace</a>
+                            <a href="#caces" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Acreditación</a>
+                            <a href="#modulos" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Módulos</a>
+                            <a href="#roles" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Estructura</a>
+                            <Link to="/grupos-investigacion" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Grupos</Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Inicio</Link>
+                            <Link to="/grupos-investigacion" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Grupos</Link>
+                        </>
+                    )}
                 </div>
             )}
         </nav>

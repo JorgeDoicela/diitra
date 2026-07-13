@@ -31,6 +31,7 @@ const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
 const ConfiguracionPage      = lazy(() => import('./pages/Admin/ConfiguracionPage'));
 const PublicConvocatoriasPage = lazy(() => import('./pages/Investigacion/Convocatorias/PublicConvocatoriasPage'));
 const VerifyDocument         = lazy(() => import('./pages/Public/VerifyDocument'));
+const PublicGroupsPage       = lazy(() => import('./pages/Public/PublicGroupsPage'));
 const AnalyticsPage          = lazy(() => import('./pages/Analytics/AnalyticsPage'));
 const NotificationsPage      = lazy(() => import('./pages/Notificaciones/NotificationsPage'));
 const EmailEnginePage        = lazy(() => import('./pages/Admin/Emails/EmailEnginePage'));
@@ -312,6 +313,10 @@ function App() {
                         {/* Public Verification Page (Accessible without authentication) */}
                         <Route path="/verificacion/:code" element={<VerifyDocument />} />
                         <Route path="/verify/:code" element={<RedirectVerifyCode />} />
+
+                        {/* Public Groups Page */}
+                        <Route path="/grupos-investigacion" element={<PublicGroupsPage currentTheme={theme} toggleTheme={toggleTheme} />} />
+                        <Route path="/grupos-investigacion/:uuid" element={<PublicGroupsPage currentTheme={theme} toggleTheme={toggleTheme} />} />
 
                         <Route path="/consentimiento-lopdp" element={
                             <ProtectedRoute>

@@ -39,6 +39,23 @@ public partial class GroupsController : ControllerBase
         return Ok(group);
     }
 
+    [HttpGet("public")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublicGroups([FromQuery] string? search)
+    {
+        var groups = await _groupsService.GetPublicGroupsAsync(search);
+        return Ok(groups);
+    }
+
+    [HttpGet("public/{uuid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublicGroupByUuid(string uuid)
+    {
+        var group = await _groupsService.GetPublicGroupByUuidAsync(uuid);
+        if (group == null) return NotFound();
+        return Ok(group);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateGroupDto dto)
     {

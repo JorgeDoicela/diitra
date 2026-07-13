@@ -217,6 +217,7 @@ CREATE TABLE inv_grupos_investigacion (
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     linkWhatsapp         VARCHAR(255) NULL,
     telefonoCoordinador  VARCHAR(20)  NULL,
+    fotoUrl              VARCHAR(500) NULL,
     FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
     FOREIGN KEY (idDominio)     REFERENCES inv_dominios(idDominio) ON DELETE SET NULL,
     FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL

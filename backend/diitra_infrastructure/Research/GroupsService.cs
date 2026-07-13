@@ -306,7 +306,8 @@ public class GroupsService : IGroupsService
             Activo = dto.Estado == "Pendiente" ? false : true,
             Estado = dto.Estado ?? "Aprobado",
             LinkWhatsapp = dto.LinkWhatsapp,
-            TelefonoCoordinador = dto.TelefonoCoordinador
+            TelefonoCoordinador = dto.TelefonoCoordinador,
+            FotoUrl = dto.FotoUrl
         };
 
         if (dto.LineasIds.Any())
@@ -535,6 +536,7 @@ public class GroupsService : IGroupsService
         group.CategoriaConsolidacion = dto.CategoriaConsolidacion ?? "En Formación";
         group.LinkWhatsapp = dto.LinkWhatsapp;
         group.TelefonoCoordinador = dto.TelefonoCoordinador;
+        group.FotoUrl = dto.FotoUrl;
 
         if (!string.IsNullOrEmpty(dto.Estado))
         {
@@ -1185,9 +1187,14 @@ public class GroupsService : IGroupsService
             Activo = g.Activo ?? false,
             Estado = g.Estado,
             LinkWhatsapp = g.LinkWhatsapp,
+            FotoUrl = g.FotoUrl,
             TelefonoCoordinador = !string.IsNullOrEmpty(g.TelefonoCoordinador)
                 ? g.TelefonoCoordinador
                 : GetUserPhoneFromCatalog(g.IdCoordinadorNavigation?.IdSigafi, g.IdCoordinadorNavigation?.TablaSigafi),
+            LineasIds = g.IdLineas.Select(l => l.IdLinea).ToList(),
+            CarrerasIds = g.IdCarreras.Select(c => c.IdCarrera).ToList(),
+            LineasNombres = g.IdLineas.Select(l => l.NombreLinea).ToList(),
+            CarrerasNombres = g.IdCarreras.Select(c => c.Carrera1 ?? string.Empty).Where(n => !string.IsNullOrEmpty(n)).ToList(),
             TeacherMemberCedulas = g.InvGruposMiembros
                 .Where(m => m.Activo == true && m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.TablaSigafi == "profesor" && !string.IsNullOrEmpty(m.IdUsuarioNavigation.IdSigafi))
                 .Select(m => m.IdUsuarioNavigation.IdSigafi.Trim())
@@ -1295,4 +1302,88 @@ public class GroupsService : IGroupsService
 
         return true;
     }
+
+    public async Task<IEnumerable<GroupDto>> GetPublicGroupsAsync(string? search = null)
+    {
+        var query = _context.InvGruposInvestigacion
+            .Include(g => g.IdCoordinadorNavigation)
+            .Include(g => g.IdLineas)
+            .Include(g => g.IdCarreras)
+            .Include(g => g.InvProyectos)
+            .Include(g => g.InvGruposMiembros)
+                .ThenInclude(m => m.IdUsuarioNavigation)
+            .Where(g => g.Estado == "Aprobado" && g.Activo == true && g.Eliminado != true)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(g => g.Nombre.Contains(search) || g.Siglas!.Contains(search));
+        }
+
+        var groups = await query.ToListAsync();
+
+        return groups.Select(g => 
+        {
+            var dto = MapToDto(g);
+            dto.LineasIds = g.IdLineas.Select(l => l.IdLinea).ToList();
+            dto.CarrerasIds = g.IdCarreras.Select(c => c.IdCarrera).ToList();
+            
+            // Poblar miembros activos sanitizados
+            dto.Miembros = g.InvGruposMiembros
+                .Where(m => m.Activo == true)
+                .Select(m => new GroupMemberDto
+                {
+                    IdGrupoMiembro = m.IdGrupoMiembro,
+                    IdUsuario = m.IdUsuario,
+                    NombreCompleto = m.IdUsuarioNavigation?.Nombre ?? "Desconocido",
+                    Rol = m.Rol,
+                    Activo = m.Activo ?? false,
+                    FechaInicio = m.FechaInicio,
+                    FechaFin = m.FechaFin
+                }).ToList();
+
+            // Poblar proyectos activos
+            dto.Proyectos = g.InvProyectos
+                .Where(p => p.Activo == true)
+                .Select(p => new GroupAssociatedProjectDto
+                {
+                    Uuid = p.Uuid,
+                    Titulo = p.Titulo,
+                    Estado = p.Estado,
+                    CodigoInstitucional = p.CodigoInstitucional
+                }).ToList();
+
+            // Anonimizar datos LOPDP sensibles para acceso público
+            dto.TelefonoCoordinador = null;
+            dto.LinkWhatsapp = null;
+            dto.TeacherMemberCedulas = new List<string>();
+            
+            return dto;
+        }).ToList();
+    }
+
+    public async Task<GroupDto?> GetPublicGroupByUuidAsync(string uuid)
+    {
+        var groupDto = await GetByUuidAsync(uuid);
+        if (groupDto == null || groupDto.Estado != "Aprobado" || !groupDto.Activo)
+        {
+            return null;
+        }
+
+        // Anonimizar datos LOPDP sensibles para acceso público
+        groupDto.TelefonoCoordinador = null;
+        groupDto.LinkWhatsapp = null;
+        groupDto.TeacherMemberCedulas = new List<string>();
+        if (groupDto.Miembros != null)
+        {
+            foreach (var m in groupDto.Miembros)
+            {
+                m.Cedula = null;
+                m.TelefonoContacto = null;
+            }
+        }
+
+        return groupDto;
+    }
 }
+

@@ -17,4 +17,6 @@ public interface IGroupsService
     Task<bool> ReviewGroupAsync(string uuid, bool aprobado, string? resolucion);
     Task<bool> StartReviewAsync(string uuid);
     Task<bool> CancelReviewAsync(string uuid);
+    Task<IEnumerable<GroupDto>> GetPublicGroupsAsync(string? search = null);
+    Task<GroupDto?> GetPublicGroupByUuidAsync(string uuid);
 }

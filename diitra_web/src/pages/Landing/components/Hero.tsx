@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface HeroProps {
     currentTheme: 'dark' | 'light';
@@ -177,12 +177,12 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             Iniciar Gestión
                             <ArrowRight size={12} />
                         </button>
-                        <a
-                            href="#"
+                        <Link
+                            to="/grupos-investigacion"
                             className="flex items-center justify-center gap-2 bg-transparent text-text-main px-6 py-3 rounded-md border border-border-thin text-[11px] font-semibold uppercase tracking-widest hover:bg-surface-hover/40 hover:border-border-hover transition-all cursor-pointer"
                         >
-                            Normativa IST
-                        </a>
+                            Nuestros Grupos
+                        </Link>
                     </div>
                 </div>
 

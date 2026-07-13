@@ -25,9 +25,12 @@ public class GroupDto
     public string? Estado { get; set; }
     public string? LinkWhatsapp { get; set; }
     public string? TelefonoCoordinador { get; set; }
+    public string? FotoUrl { get; set; }
 
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
+    public List<string> LineasNombres { get; set; } = new();
+    public List<string> CarrerasNombres { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
     public List<GroupAssociatedProjectDto> Proyectos { get; set; } = new();
     public List<string> TeacherMemberCedulas { get; set; } = new();
@@ -73,6 +76,7 @@ public class CreateGroupDto
     public string? CategoriaConsolidacion { get; set; }
     public string? LinkWhatsapp { get; set; }
     public string? TelefonoCoordinador { get; set; }
+    public string? FotoUrl { get; set; }
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
