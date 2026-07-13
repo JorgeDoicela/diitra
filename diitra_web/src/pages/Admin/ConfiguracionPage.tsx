@@ -78,9 +78,9 @@ interface EventoNormativo {
 const ConfiguracionPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab');
-    const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores' || tabParam === 'calendario' || tabParam === 'plantillas') ? tabParam : 'lineas';
+    const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores' || tabParam === 'calendario') ? tabParam : 'lineas';
     
-    const setActiveTab = (tab: 'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores' | 'calendario' | 'plantillas') => {
+    const setActiveTab = (tab: 'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores' | 'calendario') => {
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('tab', tab);
@@ -92,7 +92,7 @@ const ConfiguracionPage = () => {
     const confirm = useConfirm();
     
     const [detailItem, setDetailItem] = useState<{
-        type: 'linea' | 'periodo' | 'producto' | 'dominio' | 'indicador' | 'calendario' | 'plantilla';
+        type: 'linea' | 'periodo' | 'producto' | 'dominio' | 'indicador' | 'calendario';
         data: any;
     } | null>(null);
 
@@ -102,7 +102,6 @@ const ConfiguracionPage = () => {
     const [dominios, setDominios] = useState<DominioAcademico[]>([]);
     const [indicadores, setIndicadores] = useState<ConfigIndicador[]>([]);
     const [calendario, setCalendario] = useState<EventoNormativo[]>([]);
-    const [templates, setTemplates] = useState<any[]>([]);
 
     const [isCalendarioModalOpen, setIsCalendarioModalOpen] = useState(false);
     const [editingCalendario, setEditingCalendario] = useState<EventoNormativo | null>(null);
@@ -253,26 +252,11 @@ const ConfiguracionPage = () => {
                     activo: e.activo
                 }));
                 setCalendario(mappedData);
-            } else if (activeTab === 'plantillas') {
-                const res = await api.get('/admin/templates');
-                setTemplates(res.data || []);
             }
         } catch (error) {
             console.error('[DIITRA] Error al cargar configuración:', error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleUpdateSignatureConfig = async (code: string, requiresSignature: boolean, signatureType: string) => {
-        try {
-            await api.put(`/admin/templates/${code}/signature-config`, {
-                requires_signature: requiresSignature,
-                signature_type: signatureType
-            });
-            setTemplates(prev => prev.map(t => t.code === code ? { ...t, requiresElectronicSignature: requiresSignature, signatureType } : t));
-        } catch (err) {
-            console.error('[DIITRA] Error al actualizar configuración de firmas:', err);
         }
     };
 
@@ -841,15 +825,6 @@ const ConfiguracionPage = () => {
                     <Calendar size={14} />
                     <span>Hitos CACES</span>
                 </button>
-                <button
-                    onClick={() => { setActiveTab('plantillas'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
-                        activeTab === 'plantillas' ? 'active' : ''
-                    }`}
-                >
-                    <Settings2 size={14} />
-                    <span>Plantillas & Firmas</span>
-                </button>
             </div>
 
             {loading ? (
@@ -1264,72 +1239,6 @@ const ConfiguracionPage = () => {
                                         <tr>
                                             <td colSpan={7} className="py-20 text-center text-text-dim text-xs font-mono uppercase">
                                                 No se encontraron hitos registrados en el calendario
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        )}
-                        {activeTab === 'plantillas' && (
-                            <table className="w-full text-left border-collapse min-w-[700px]">
-                                <thead>
-                                    <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-semibold tracking-widest">Documento</th>
-                                        <th className="p-4 font-semibold tracking-widest">Código</th>
-                                        <th className="p-4 font-semibold tracking-widest">Requiere Firma</th>
-                                        <th className="p-4 font-semibold tracking-widest">Tipo de Firma Requerido</th>
-                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border-thin">
-                                    {templates.map((t) => (
-                                        <tr key={t.code} className="hover:bg-surface/30 transition-colors group">
-                                            <td className="p-4 text-sm font-medium text-text-main">
-                                                {t.name}
-                                            </td>
-                                            <td className="p-4 text-xs font-mono font-medium text-text-dim">
-                                                {t.code}
-                                            </td>
-                                            <td className="p-4">
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={t.requiresElectronicSignature || false}
-                                                        onChange={(e) => handleUpdateSignatureConfig(t.code, e.target.checked, t.signatureType || 'DIITRA')}
-                                                        className="sr-only peer"
-                                                    />
-                                                    <div className="w-9 h-5 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-text-main after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-                                                </label>
-                                            </td>
-                                            <td className="p-4">
-                                                <select
-                                                    value={t.signatureType || 'DIITRA'}
-                                                    onChange={(e) => handleUpdateSignatureConfig(t.code, t.requiresElectronicSignature || false, e.target.value)}
-                                                    className="bg-surface border border-border-thin rounded-lg px-2.5 py-1.5 text-xs focus:border-text-main outline-none transition-all text-text-main"
-                                                    disabled={!t.requiresElectronicSignature}
-                                                >
-                                                    <option value="DIITRA">Firma Institucional DIITRA (Sello)</option>
-                                                    <option value="ECUADOR_P12">Firma Digital Ecuador (.p12)</option>
-                                                    <option value="HIBRIDO">Firma Híbrida (Ambas)</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-4">
-                                                {t.isActive ? (
-                                                    <span className="badge-vercel badge-vercel-success">
-                                                        <CheckCircle size={10} strokeWidth={3} /> Activo
-                                                    </span>
-                                                ) : (
-                                                    <span className="badge-vercel badge-vercel-error">
-                                                        <XCircle size={10} strokeWidth={3} /> Inactivo
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {templates.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="py-20 text-center text-text-dim text-xs font-mono uppercase">
-                                                No se encontraron plantillas de documentos registradas
                                             </td>
                                         </tr>
                                     )}

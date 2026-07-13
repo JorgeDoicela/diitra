@@ -264,7 +264,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/papelera" element={<RecycleBinPage />} />
-                            <Route path="/configuracion" element={<SettingsPage />} />
+                            <Route path="/configuracion" element={<AdminRoute><SettingsPage /></AdminRoute>} />
                             <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
                             <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />

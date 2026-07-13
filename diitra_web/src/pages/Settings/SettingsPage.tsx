@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff } from 'lucide-react';
+import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff, CheckCircle, XCircle, Settings2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useAuth } from '../../api/AuthContext';
@@ -19,7 +19,7 @@ interface PerfilData {
 
 const SettingsPage: React.FC = () => {
     const { addToast } = useNotifications();
-    const { logout, isRevisor } = useAuth();
+    const { logout, isRevisor, isAdmin } = useAuth();
     const confirm = useConfirm();
 
     const [profile, setProfile] = useState<PerfilData>({
@@ -35,6 +35,10 @@ const SettingsPage: React.FC = () => {
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingConsent, setIsSavingConsent] = useState(false);
+
+    // Estados para la configuración de firmas por plantilla (solo admins)
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
 
     // Formulario de cambio de contraseña para revisores externos
     const [passwordForm, setPasswordForm] = useState({
@@ -111,6 +115,39 @@ const SettingsPage: React.FC = () => {
             setIsLoadingProfile(false);
         }
     };
+
+    const fetchTemplates = async () => {
+        setIsLoadingTemplates(true);
+        try {
+            const res = await api.get('/admin/templates');
+            setTemplates(res.data || []);
+        } catch (err) {
+            console.error('[DIITRA] Error al cargar plantillas de firma:', err);
+            addToast('Error', 'No se pudieron cargar las plantillas de firma institucional.', 'error');
+        } finally {
+            setIsLoadingTemplates(false);
+        }
+    };
+
+    const handleUpdateSignatureConfig = async (code: string, requiresSignature: boolean, signatureType: string) => {
+        try {
+            await api.put(`/admin/templates/${code}/signature-config`, {
+                requires_signature: requiresSignature,
+                signature_type: signatureType
+            });
+            setTemplates(prev => prev.map(t => t.code === code ? { ...t, requiresElectronicSignature: requiresSignature, signatureType } : t));
+            addToast('Configuración Actualizada', 'La configuración de firma se actualizó correctamente.', 'success');
+        } catch (err) {
+            console.error('[DIITRA] Error al actualizar configuración de firmas:', err);
+            addToast('Error', 'No se pudo actualizar la configuración de firmas.', 'error');
+        }
+    };
+
+    useEffect(() => {
+        if (isAdmin) {
+            fetchTemplates();
+        }
+    }, [isAdmin]);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -325,6 +362,95 @@ const SettingsPage: React.FC = () => {
                 )}
 
                 <SignatureProfileCard />
+
+                {isAdmin && (
+                    <div className="bento-card static p-6 space-y-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
+                                    <Settings2 size={16} className="text-brand" />
+                                    Firmas por Plantilla de Documento
+                                </h2>
+                                <p className="text-xs text-text-dim mt-1">
+                                    Defina qué plantillas de documentos institucionales requieren firma electrónica y qué tipo de firma se aplicará.
+                                </p>
+                            </div>
+                        </div>
+
+                        {isLoadingTemplates ? (
+                            <div className="py-12 flex justify-center">
+                                <Loader2 className="animate-spin text-brand" size={24} />
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto custom-scrollbar border border-border-thin rounded-xl">
+                                <table className="w-full text-left border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
+                                            <th className="p-4 font-semibold tracking-widest">Documento</th>
+                                            <th className="p-4 font-semibold tracking-widest">Código</th>
+                                            <th className="p-4 font-semibold tracking-widest">Requiere Firma</th>
+                                            <th className="p-4 font-semibold tracking-widest">Tipo de Firma Requerido</th>
+                                            <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border-thin">
+                                        {templates.map((t) => (
+                                            <tr key={t.code} className="hover:bg-surface/30 transition-colors group">
+                                                <td className="p-4 text-xs font-semibold text-text-main">
+                                                    {t.name}
+                                                </td>
+                                                <td className="p-4 text-xs font-mono font-medium text-text-dim">
+                                                    {t.code}
+                                                </td>
+                                                <td className="p-4">
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={t.requiresElectronicSignature || false}
+                                                            onChange={(e) => handleUpdateSignatureConfig(t.code, e.target.checked, t.signatureType || 'DIITRA')}
+                                                            className="sr-only peer"
+                                                        />
+                                                        <div className="w-9 h-5 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                                    </label>
+                                                </td>
+                                                <td className="p-4">
+                                                    <select
+                                                        value={t.signatureType || 'DIITRA'}
+                                                        onChange={(e) => handleUpdateSignatureConfig(t.code, t.requiresElectronicSignature || false, e.target.value)}
+                                                        className="bg-surface border border-border-thin rounded-lg px-2.5 py-1.5 text-xs focus:border-brand outline-none transition-all text-text-main"
+                                                        disabled={!t.requiresElectronicSignature}
+                                                    >
+                                                        <option value="DIITRA">Firma Institucional DIITRA (Sello)</option>
+                                                        <option value="ECUADOR_P12">Firma Digital Ecuador (.p12)</option>
+                                                        <option value="HIBRIDO">Firma Híbrida (Ambas)</option>
+                                                    </select>
+                                                </td>
+                                                <td className="p-4">
+                                                    {t.isActive ? (
+                                                        <span className="badge-vercel badge-vercel-success">
+                                                            <CheckCircle size={10} strokeWidth={3} /> Activo
+                                                        </span>
+                                                    ) : (
+                                                        <span className="badge-vercel badge-vercel-error">
+                                                            <XCircle size={10} strokeWidth={3} /> Inactivo
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {templates.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="py-12 text-center text-text-dim text-xs font-mono uppercase">
+                                                    No se encontraron plantillas de documentos registradas
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {!isLoadingProfile && (
                     <div className="bento-card static p-6 space-y-6">
