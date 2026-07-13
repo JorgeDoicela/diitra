@@ -66,15 +66,16 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                     >
                         <ArrowLeft size={16} />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
-                            <Activity size={10} strokeWidth={2} className="text-brand" />
-                            <span>Proyecto · ISTPET</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px] text-text-dim">
-                            <span>diitra</span>
-                            <ChevronRight size={10} />
-                            <span className="text-text-main font-mono">{currentProject.id}</span>
+                    <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-1.5 text-[11px] text-text-dim">
+                            <span 
+                                className="hover:text-text-main cursor-pointer transition-colors duration-150"
+                                onClick={() => navigate(urlPrefix)}
+                            >
+                                {urlPrefix.endsWith('mis-proyectos') ? 'Mis Proyectos' : 'Investigación'}
+                            </span>
+                            <ChevronRight size={10} className="opacity-60" />
+                            <span className="text-text-main font-semibold font-mono">Proyecto #{currentProject.id}</span>
                         </div>
                     </div>
                 </div>

@@ -167,12 +167,11 @@ namespace diitra_api.Controllers
                     return BadRequest(new { error = "El proyecto ya ha sido firmado y enviado oficialmente." });
                 }
 
-                // ── CONTROL DE ACCESO: Solo Director de Proyecto o Administrador del Sistema pueden firmar ──
-                var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(idReferencia);
+                // ── CONTROL DE ACCESO: Solo el Director de Proyecto está autorizado a firmar ──
                 var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(projectUuid, idReferencia);
-                if (!isSystemAdmin && !isProjectDirector)
+                if (!isProjectDirector)
                 {
-                    return StatusCode(403, new { error = "Solo el director del proyecto o el administrador del sistema están autorizados para firmar digitalmente este protocolo." });
+                    return StatusCode(403, new { error = "Solo el director del proyecto está autorizado para firmar digitalmente este protocolo." });
                 }
 
                 // 2. Cargar Firma (.p12 — upload-on-demand, nunca se guarda en servidor)
@@ -511,10 +510,8 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             detail.PuedeSolicitarCambioEquipo = !string.IsNullOrEmpty(userIdRef) &&
                 await _projectOrchestrator.UserCanRequestTeamChangeAsync(uuid, userIdRef);
-            detail.PuedeFirmar = !string.IsNullOrEmpty(userIdRef) && (
-                await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef) ||
-                await _projectOrchestrator.IsSystemAdminAsync(userIdRef)
-            );
+            detail.PuedeFirmar = !string.IsNullOrEmpty(userIdRef) && 
+                await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
             return Ok(detail);
         }
 

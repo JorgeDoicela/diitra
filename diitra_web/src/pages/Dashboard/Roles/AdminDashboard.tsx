@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Activity, BarChart3,
-    Loader2, Megaphone,
-    Fingerprint, FileText, Layers, ExternalLink
+    Megaphone,
+    Fingerprint, FileText, Layers, ExternalLink,
+    RotateCw, HelpCircle, Inbox
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -45,9 +46,10 @@ export const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [animate, setAnimate] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const fetchData = async () => {
-        setLoading(true);
+        setIsRefreshing(true);
         setError(null);
         try {
             const res = await api.get('/projects/stats');
@@ -57,6 +59,7 @@ export const AdminDashboard: React.FC = () => {
             setError('No se pudieron obtener las estadísticas de investigación de la base de datos. Por favor, comprueba que el servidor esté activo o intenta de nuevo.');
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
     };
 
@@ -326,6 +329,7 @@ export const AdminDashboard: React.FC = () => {
                             title="Resumen Institucional"
                             buttonLabel="Actualizar"
                             onButtonClick={fetchData}
+                            isRefreshing={isRefreshing}
                             animate={animate}
                             items={[
                                 {
@@ -396,16 +400,18 @@ export const AdminDashboard: React.FC = () => {
     );
 };
 
-const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: any) => (
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate, isRefreshing }: any) => (
     <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
                 <button
                     onClick={onButtonClick}
-                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                    disabled={isRefreshing}
+                    className="flex items-center gap-1.5 px-2.5 py-1 border border-border-thin hover:border-text-dim/30 hover:bg-surface-hover text-text-dim hover:text-text-main rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
                 >
-                    {buttonLabel}
+                    <RotateCw size={10} className={isRefreshing ? "animate-spin" : ""} />
+                    <span>{isRefreshing ? "Cargando..." : buttonLabel}</span>
                 </button>
             )}
         </div>
@@ -419,8 +425,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: 
                 return (
                     <div
                         key={idx}
-                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
-                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                        className="flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-200 hover:bg-surface-hover/50 group border border-transparent hover:border-border-thin/50"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
@@ -450,23 +455,16 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: 
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                </svg>
+                                <HelpCircle
+                                    size={12}
+                                    className="text-text-dim/40 group-hover:text-text-main transition-colors shrink-0 cursor-help"
+                                />
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
-                            <AnimatedNumber 
-                                value={item.value} 
-                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()} 
+                            <AnimatedNumber
+                                value={item.value}
+                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()}
                             />
                         </span>
                     </div>

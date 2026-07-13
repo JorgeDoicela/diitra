@@ -534,6 +534,13 @@ export const ProjectWorkspace: React.FC = () => {
         }
 
         if (success && res) {
+            const directorObj = (res.data.investigadores || []).find((inv: any) => 
+                inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal')
+            );
+            const directorNombre = directorObj 
+                ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
+                : '';
+
             setCurrentProject({
                 id: res.data.uuid.substring(0, 8).toUpperCase(),
                 uuid: res.data.uuid,
@@ -541,6 +548,7 @@ export const ProjectWorkspace: React.FC = () => {
                 status: res.data.estado || 'Borrador',
                 presupuesto: res.data.costo_total || 0,
                 linea: res.data.linea_investigacion || 'No definida',
+                directorProyecto: directorNombre,
                 puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                     (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección' || res.data.estado === 'Prepropuesta' || res.data.estado === 'Prepropuesta Rechazada'),
                 puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
@@ -556,7 +564,7 @@ export const ProjectWorkspace: React.FC = () => {
             });
             setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
 
-            const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_investigacion ?? res.data.grupoInvestigacion ?? '';
+            const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_invest_uuid ?? res.data.grupoInvestigacion ?? '';
             const hasGroup = !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
             setTieneGrupo(hasGroup);
             setGrupoInvestigacion(groupUuid);
@@ -572,6 +580,7 @@ export const ProjectWorkspace: React.FC = () => {
                 status: 'Borrador',
                 presupuesto: 0,
                 linea: 'No definida',
+                directorProyecto: user?.nombres_completos || user?.nombre || '',
                 puedeEditar: true,
                 puedeSolicitarCambioEquipo: false,
                 puedeFirmar: true,

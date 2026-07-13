@@ -1350,7 +1350,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                                     <div className="space-y-1">
                                                                         <p className="text-sm font-semibold text-text-main">Firma restringida</p>
                                                                         <p className="text-xs text-text-dim leading-relaxed">
-                                                                            Solo el Director de Proyecto o un Administrador del sistema están autorizados para firmar.
+                                                                            Solo el Director de Proyecto está autorizado para firmar digitalmente este protocolo.
                                                                         </p>
                                                                     </div>
                                                                 </div>

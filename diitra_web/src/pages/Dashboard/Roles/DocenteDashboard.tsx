@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     TrendingUp, Briefcase, Loader2, ClipboardList,
-    Fingerprint, FileText, Layers, ExternalLink
+    Fingerprint, FileText, Layers, ExternalLink,
+    Activity, FileEdit, RotateCw, Inbox, HelpCircle, ArrowRight
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -37,19 +38,23 @@ export const DocenteDashboard: React.FC = () => {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [animate, setAnimate] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const fetchStats = async () => {
+        setIsRefreshing(true);
+        try {
+            const res = await api.get('/projects/stats');
+            setStats(res.data);
+        } catch (e) {
+            console.error('[DIITRA] Error al cargar stats:', e);
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
+        }
+    };
 
     useEffect(() => {
-        const fetch = async () => {
-            try {
-                const res = await api.get('/projects/stats');
-                setStats(res.data);
-            } catch (e) {
-                console.error('[DIITRA] Error al cargar stats:', e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetch();
+        fetchStats();
     }, []);
 
     useEffect(() => {
@@ -85,10 +90,10 @@ export const DocenteDashboard: React.FC = () => {
             ) : (
                 /* Two-column Vercel Layout */
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:200ms] pb-10">
-                    
+
                     {/* Main Content: Left Column */}
                     <div className="lg:col-span-3 flex flex-col gap-6">
-                        
+
                         {/* Gestión de Proyectos */}
                         <div className="bento-card static p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
                             <div>
@@ -103,34 +108,64 @@ export const DocenteDashboard: React.FC = () => {
                                     Administra tus propuestas, realiza el seguimiento del ciclo de vida (Borrador, En Revisión, En Ejecución, Finalizado) y justifica egresos financieros bajo normativas vigentes.
                                 </p>
 
-                                <div className="grid grid-cols-3 gap-4 mb-6">
-                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-semibold text-text-main font-mono">
-                                            <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
-                                        </p>
-                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Activos</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    {/* Card Activos */}
+                                    <div
+                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-success/5 transition-all duration-300 group"
+                                        style={{ borderLeftColor: 'var(--success)' }}
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Activos</span>
+                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
+                                                <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
+                                            </p>
+                                        </div>
+                                        <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success transition-transform duration-300 group-hover:scale-105">
+                                            <Activity size={18} />
+                                        </div>
                                     </div>
-                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-semibold text-text-dim font-mono">
-                                            <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
-                                        </p>
-                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Borradores</p>
+
+                                    {/* Card Borradores */}
+                                    <div
+                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-neutral/5 transition-all duration-300 group"
+                                        style={{ borderLeftColor: 'var(--text-dim)' }}
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Borradores</span>
+                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
+                                                <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
+                                            </p>
+                                        </div>
+                                        <div className="w-9 h-9 rounded-lg bg-text-dim/10 flex items-center justify-center text-text-dim transition-transform duration-300 group-hover:scale-105">
+                                            <FileEdit size={18} />
+                                        </div>
                                     </div>
-                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-semibold text-text-main font-mono">
-                                            <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
-                                        </p>
-                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Total</p>
+
+                                    {/* Card Total */}
+                                    <div
+                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-brand/5 transition-all duration-300 group"
+                                        style={{ borderLeftColor: 'var(--brand)' }}
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Total</span>
+                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
+                                                <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
+                                            </p>
+                                        </div>
+                                        <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center text-brand transition-transform duration-300 group-hover:scale-105">
+                                            <Briefcase size={18} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex justify-end border-t border-border-thin/50 pt-4 mt-2">
                                 <button
                                     onClick={() => navigate('/investigacion/mis-proyectos')}
-                                    className="btn-vercel-secondary text-xs px-4 py-2"
+                                    className="text-xs font-semibold text-brand hover:text-brand-hover inline-flex items-center gap-1.5 transition-all group"
                                 >
-                                    Ver mis proyectos
+                                    <span>Ver todos los proyectos</span>
+                                    <ArrowRight size={14} className="transform translate-x-0 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
                         </div>
@@ -141,12 +176,16 @@ export const DocenteDashboard: React.FC = () => {
                                 <TrendingUp size={14} className="text-text-dim" />
                                 <span className="text-sm font-medium text-text-dim">Actividad reciente</span>
                             </div>
-                            
+
                             <div className="divide-y divide-border-thin bg-bg-deep/10">
                                 {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
-                                    <div className="empty-state m-6 py-8">
-                                        <p className="text-xs text-text-dim italic">
-                                            Aún no hay actividad registrada en este periodo.
+                                    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                                        <div className="w-12 h-12 rounded-full bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim/50 mb-3 shadow-inner">
+                                            <Inbox size={20} />
+                                        </div>
+                                        <h4 className="text-xs font-semibold text-text-main mb-1">Sin actividad reciente</h4>
+                                        <p className="text-[11px] text-text-dim max-w-[280px] leading-relaxed">
+                                            Aquí aparecerán las actualizaciones y notificaciones sobre el avance de tus proyectos de investigación.
                                         </p>
                                     </div>
                                 ) : (
@@ -178,8 +217,8 @@ export const DocenteDashboard: React.FC = () => {
                                         const isInforme = item.tipo?.toLowerCase().includes('informe');
 
                                         return (
-                                            <div 
-                                                key={i} 
+                                            <div
+                                                key={i}
                                                 onClick={() => {
                                                     if (item.uuid) {
                                                         if (item.tipo?.toLowerCase().includes('proyecto')) {
@@ -202,7 +241,7 @@ export const DocenteDashboard: React.FC = () => {
 
                                                 {/* Columns Group */}
                                                 <div className="flex flex-wrap md:flex-nowrap items-center justify-between md:justify-end gap-x-8 gap-y-2 text-[11px] text-text-dim font-medium w-full md:w-auto">
-                                                    
+
                                                     {/* Col 2: Status with Dot */}
                                                     <div className="flex items-center gap-1.5 min-w-[90px]">
                                                         <span className={`w-1.5 h-1.5 rounded-full ${statusColor} shrink-0`} />
@@ -211,11 +250,10 @@ export const DocenteDashboard: React.FC = () => {
 
                                                     {/* Col 3: Type Pill */}
                                                     <div className="shrink-0 min-w-[100px]">
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${
-                                                            isInforme 
-                                                                ? 'bg-info/10 text-info border border-info/20' 
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${isInforme
+                                                                ? 'bg-info/10 text-info border border-info/20'
                                                                 : 'bg-brand/10 text-brand border border-brand/20'
-                                                        }`}>
+                                                            }`}>
                                                             {isInforme ? <FileText size={10} /> : <Layers size={10} />}
                                                             {item.tipo}
                                                         </span>
@@ -247,12 +285,13 @@ export const DocenteDashboard: React.FC = () => {
                     {/* Sidebar: Right Column */}
                     <div className="flex flex-col gap-6">
                         <ProximosEventosWidget />
-                        
-                        <VercelUsageCard 
+
+                        <VercelUsageCard
                             title="Resumen del Periodo"
                             animate={animate}
                             buttonLabel="Actualizar"
-                            onButtonClick={fetch}
+                            onButtonClick={fetchStats}
+                            isRefreshing={isRefreshing}
                             items={[
                                 {
                                     label: 'Mis Proyectos Activos',
@@ -293,8 +332,8 @@ export const DocenteDashboard: React.FC = () => {
                             return (
                                 <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="section-label">
-                                            <ClipboardList size={12} className="text-info" />
+                                        <div className="flex items-center gap-1.5">
+                                            <ClipboardList size={14} className="text-info" />
                                             <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
                                         </div>
                                         <span className="font-mono text-[13px] font-semibold text-info">
@@ -303,13 +342,16 @@ export const DocenteDashboard: React.FC = () => {
                                     </div>
                                     {hasDistributivo ? (
                                         <>
-                                            <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                                            <div className="w-full bg-bg-deep border border-border-thin/30 h-2 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full rounded-full bg-info progress-bar-fill"
-                                                    style={{ width: animate ? `${percentage}%` : '0%' }}
+                                                    className="h-full rounded-full progress-bar-fill transition-all duration-1000 ease-out"
+                                                    style={{
+                                                        width: animate ? `${percentage}%` : '0%',
+                                                        background: 'linear-gradient(90deg, var(--info) 0%, var(--brand) 100%)'
+                                                    }}
                                                 />
                                             </div>
-                                            <span className="text-[10px] text-text-dim mt-2 block font-medium">
+                                            <span className="text-[10px] text-text-dim mt-2 block font-medium leading-relaxed">
                                                 Dedicación de investigación ({stats.mis_horas_investigacion}h) asignada de un máximo de {maxHours}h semanales según tu distributivo.
                                             </span>
                                         </>
@@ -328,16 +370,18 @@ export const DocenteDashboard: React.FC = () => {
     );
 };
 
-const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: any) => (
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate, isRefreshing }: any) => (
     <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
                 <button 
                     onClick={onButtonClick} 
-                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                    disabled={isRefreshing}
+                    className="flex items-center gap-1.5 px-2.5 py-1 border border-border-thin hover:border-text-dim/30 hover:bg-surface-hover text-text-dim hover:text-text-main rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
                 >
-                    {buttonLabel}
+                    <RotateCw size={10} className={isRefreshing ? "animate-spin" : ""} />
+                    <span>{isRefreshing ? "Cargando..." : buttonLabel}</span>
                 </button>
             )}
         </div>
@@ -351,8 +395,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: 
                 return (
                     <div 
                         key={idx} 
-                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
-                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                        className="flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-200 hover:bg-surface-hover/50 group border border-transparent hover:border-border-thin/50"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
@@ -382,23 +425,16 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: 
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg 
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
-                                    strokeWidth="2.5"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                </svg>
+                                <HelpCircle
+                                    size={12}
+                                    className="text-text-dim/40 group-hover:text-text-main transition-colors shrink-0 cursor-help"
+                                />
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
-                            <AnimatedNumber 
-                                value={item.value} 
-                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()} 
+                            <AnimatedNumber
+                                value={item.value}
+                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()}
                             />
                         </span>
                     </div>
