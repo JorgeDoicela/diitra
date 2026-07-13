@@ -8,6 +8,8 @@ import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
+import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { AnimatedNumber } from '../Components/AnimatedNumber';
 interface DashboardStats {
     mis_proyectos_activos: number;
     mis_proyectos_borrador: number;
@@ -34,6 +36,7 @@ export const DocenteDashboard: React.FC = () => {
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Investigador';
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [animate, setAnimate] = useState(false);
 
     useEffect(() => {
         const fetch = async () => {
@@ -48,6 +51,15 @@ export const DocenteDashboard: React.FC = () => {
         };
         fetch();
     }, []);
+
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setAnimate(true), 100);
+            return () => clearTimeout(timer);
+        } else {
+            setAnimate(false);
+        }
+    }, [loading]);
 
 
 
@@ -69,9 +81,7 @@ export const DocenteDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-text-dim" size={24} />
-                </div>
+                <DashboardSkeleton />
             ) : (
                 /* Two-column Vercel Layout */
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:200ms] pb-10">
@@ -95,16 +105,20 @@ export const DocenteDashboard: React.FC = () => {
 
                                 <div className="grid grid-cols-3 gap-4 mb-6">
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-semibold text-text-main font-mono">{stats?.mis_proyectos_activos ?? 0}</p>
+                                        <p className="text-2xl font-semibold text-text-main font-mono">
+                                            <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
+                                        </p>
                                         <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Activos</p>
                                     </div>
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-semibold text-text-dim font-mono">{stats?.mis_proyectos_borrador ?? 0}</p>
+                                        <p className="text-2xl font-semibold text-text-dim font-mono">
+                                            <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
+                                        </p>
                                         <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Borradores</p>
                                     </div>
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
                                         <p className="text-2xl font-semibold text-text-main font-mono">
-                                            {(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)}
+                                            <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
                                         </p>
                                         <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Total</p>
                                     </div>
@@ -235,42 +249,36 @@ export const DocenteDashboard: React.FC = () => {
                         <ProximosEventosWidget />
                         
                         <VercelUsageCard 
-                            title="Resumen Académico"
+                            title="Resumen del Periodo"
+                            animate={animate}
                             buttonLabel="Actualizar"
                             onButtonClick={fetch}
                             items={[
                                 {
-                                    label: 'Proyectos Activos',
+                                    label: 'Mis Proyectos Activos',
                                     value: stats?.mis_proyectos_activos ?? 0,
-                                    displayValue: `${stats?.mis_proyectos_activos ?? 0} vigentes`,
+                                    suffix: 'proyectos',
+                                    max: 5,
+                                    color: 'var(--success)'
+                                },
+                                {
+                                    label: 'Productos Registrados',
+                                    value: stats?.mis_productos_registrados ?? 0,
+                                    suffix: 'validados',
                                     max: 10,
                                     color: 'var(--brand)'
                                 },
                                 {
-                                    label: 'En Borrador',
-                                    value: stats?.mis_proyectos_borrador ?? 0,
-                                    displayValue: `${stats?.mis_proyectos_borrador ?? 0} borrador`,
-                                    max: 5,
-                                    color: 'var(--text-dim)'
-                                },
-                                {
-                                    label: 'En Revisión / Enviados',
-                                    value: stats?.mis_proyectos_en_revision ?? 0,
-                                    displayValue: `${stats?.mis_proyectos_en_revision ?? 0} en revisión`,
-                                    max: 5,
-                                    color: 'var(--warning)'
-                                },
-                                {
-                                    label: 'Mis Productos',
-                                    value: stats?.mis_productos_registrados ?? 0,
-                                    displayValue: `${stats?.mis_productos_registrados ?? 0} validados`,
-                                    max: 15,
-                                    color: 'var(--success)'
+                                    label: 'Horas de Investigación',
+                                    value: stats?.mis_horas_investigacion ?? 0,
+                                    suffix: 'hrs / sem',
+                                    max: stats?.horas_disponibles_distributivo || 20,
+                                    color: 'var(--info)'
                                 },
                                 {
                                     label: 'Informes Pendientes',
                                     value: stats?.mis_informes_pendientes ?? 0,
-                                    displayValue: `${stats?.mis_informes_pendientes ?? 0} por entregar`,
+                                    suffix: 'por entregar',
                                     max: 5,
                                     color: (stats?.mis_informes_pendientes ?? 0) > 0 ? 'var(--warning)' : 'var(--success)'
                                 }
@@ -290,15 +298,15 @@ export const DocenteDashboard: React.FC = () => {
                                             <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
                                         </div>
                                         <span className="font-mono text-[13px] font-semibold text-info">
-                                            {stats.mis_horas_investigacion} / {maxHours} hrs
+                                            <AnimatedNumber value={stats.mis_horas_investigacion} /> / {maxHours} hrs
                                         </span>
                                     </div>
                                     {hasDistributivo ? (
                                         <>
                                             <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full rounded-full bg-info transition-all duration-700"
-                                                    style={{ width: `${percentage}%` }}
+                                                    className="h-full rounded-full bg-info progress-bar-fill"
+                                                    style={{ width: animate ? `${percentage}%` : '0%' }}
                                                 />
                                             </div>
                                             <span className="text-[10px] text-text-dim mt-2 block font-medium">
@@ -320,7 +328,7 @@ export const DocenteDashboard: React.FC = () => {
     );
 };
 
-const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: any) => (
     <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
@@ -361,11 +369,11 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                         cx="9"
                                         cy="9"
                                         r={radius}
-                                        className="fill-none transition-all duration-500"
+                                        className="fill-none progress-circle-fill"
                                         stroke={item.color || 'var(--brand)'}
                                         strokeWidth="1.8"
                                         strokeDasharray={circumference}
-                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeDashoffset={animate ? (item.max ? strokeDashoffset : 0) : circumference}
                                         strokeLinecap="round"
                                     />
                                 </svg>
@@ -388,7 +396,10 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
-                            {item.displayValue || item.value}
+                            <AnimatedNumber 
+                                value={item.value} 
+                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()} 
+                            />
                         </span>
                     </div>
                 );

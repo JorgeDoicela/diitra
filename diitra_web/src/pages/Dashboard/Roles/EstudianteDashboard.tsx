@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
+import { DashboardSkeleton } from '../Components/DashboardSkeleton';
 interface ProyectoResumen {
     uuid: string;
     titulo: string;
@@ -106,9 +107,7 @@ export const EstudianteDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-text-dim" size={24} />
-                </div>
+                <DashboardSkeleton />
             ) : (
                 <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
                     <BentoCard 

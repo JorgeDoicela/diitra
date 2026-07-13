@@ -9,6 +9,8 @@ import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
+import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { AnimatedNumber } from '../Components/AnimatedNumber';
 interface GlobalStats {
     total_proyectos: number;
     proyectos_borrador: number;
@@ -42,6 +44,7 @@ export const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<GlobalStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [animate, setAnimate] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -60,6 +63,15 @@ export const AdminDashboard: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => setAnimate(true), 100);
+            return () => clearTimeout(timer);
+        } else {
+            setAnimate(false);
+        }
+    }, [loading]);
 
     const ejecucionPorc = stats?.presupuesto_total_asignado
         ? Math.min(100, ((stats.presupuesto_total_ejecutado ?? 0) / stats.presupuesto_total_asignado) * 100)
@@ -92,9 +104,7 @@ export const AdminDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-text-dim" size={24} />
-                </div>
+                <DashboardSkeleton />
             ) : error ? (
                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center max-w-lg mx-auto bg-surface border border-border-thin shadow-md rounded-xl animate-fade-up mt-6">
                     <div className="w-12 h-12 rounded-full bg-error/10 border border-error/20 flex items-center justify-center mb-4 text-error animate-pulse">
@@ -136,9 +146,9 @@ export const AdminDashboard: React.FC = () => {
                                                 </span>
                                                 <div className="flex-1 h-1 bg-border-thin rounded-full overflow-hidden">
                                                     <div
-                                                        className="h-full rounded-full transition-all duration-700"
+                                                        className="h-full rounded-full progress-bar-fill"
                                                         style={{
-                                                            width: stats.total_proyectos
+                                                            width: (animate && stats?.total_proyectos)
                                                                 ? `${(est.cantidad / stats.total_proyectos) * 100}%`
                                                                 : '0%',
                                                             backgroundColor: est.color
@@ -146,7 +156,7 @@ export const AdminDashboard: React.FC = () => {
                                                     />
                                                 </div>
                                                 <span className="text-xs font-mono font-medium text-text-main w-6 text-right">
-                                                    {est.cantidad}
+                                                    <AnimatedNumber value={est.cantidad} />
                                                 </span>
                                             </div>
                                         ))}
@@ -154,7 +164,9 @@ export const AdminDashboard: React.FC = () => {
                                 </div>
                                 <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3 flex justify-between items-center text-xs font-medium">
                                     <span className="text-text-dim">Total proyectos</span>
-                                    <span className="font-mono font-medium text-text-main">{stats?.total_proyectos ?? 0}</span>
+                                    <span className="font-mono font-medium text-text-main">
+                                        <AnimatedNumber value={stats?.total_proyectos ?? 0} />
+                                    </span>
                                 </div>
                             </div>
 
@@ -168,15 +180,15 @@ export const AdminDashboard: React.FC = () => {
                                     <div className="space-y-4">
                                         <div className="flex items-baseline gap-1.5">
                                             <span className="text-4xl font-semibold tracking-tight text-text-main font-sans">
-                                                {ejecucionPorc.toFixed(1)}%
+                                                <AnimatedNumber value={ejecucionPorc} formatter={(v) => `${v.toFixed(1)}%`} />
                                             </span>
                                             <span className="text-[10px] text-text-dim uppercase tracking-wider font-semibold">ejecutado</span>
                                         </div>
 
                                         <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
                                             <div
-                                                className="h-full rounded-full bg-success transition-all duration-700"
-                                                style={{ width: `${ejecucionPorc}%` }}
+                                                className="h-full rounded-full bg-success progress-bar-fill"
+                                                style={{ width: animate ? `${ejecucionPorc}%` : '0%' }}
                                             />
                                         </div>
                                     </div>
@@ -186,13 +198,13 @@ export const AdminDashboard: React.FC = () => {
                                     <div className="pr-4">
                                         <span className="text-[9px] text-text-dim uppercase tracking-wider font-medium">Ejecutado</span>
                                         <p className="font-mono text-xs font-medium text-text-main mt-0.5">
-                                            ${(stats?.presupuesto_total_ejecutado ?? 0).toLocaleString('es-EC')}
+                                            <AnimatedNumber value={stats?.presupuesto_total_ejecutado ?? 0} formatter={(v) => `$${Math.round(v).toLocaleString('es-EC')}`} />
                                         </p>
                                     </div>
                                     <div className="pl-4">
                                         <span className="text-[9px] text-text-dim uppercase tracking-wider font-medium">Asignado</span>
                                         <p className="font-mono text-xs font-medium text-text-main mt-0.5">
-                                            ${(stats?.presupuesto_total_asignado ?? 0).toLocaleString('es-EC')}
+                                            <AnimatedNumber value={stats?.presupuesto_total_asignado ?? 0} formatter={(v) => `$${Math.round(v).toLocaleString('es-EC')}`} />
                                         </p>
                                     </div>
                                 </div>
@@ -314,32 +326,33 @@ export const AdminDashboard: React.FC = () => {
                             title="Resumen Institucional"
                             buttonLabel="Actualizar"
                             onButtonClick={fetchData}
+                            animate={animate}
                             items={[
                                 {
                                     label: 'Convocatorias Activas',
                                     value: stats?.total_convocatorias_abiertas ?? 0,
-                                    displayValue: `${stats?.total_convocatorias_abiertas ?? 0} vigentes`,
+                                    suffix: 'vigentes',
                                     max: 5,
                                     color: 'var(--success)'
                                 },
                                 {
                                     label: 'Investigadores Activos',
                                     value: stats?.total_investigadores_activos ?? 0,
-                                    displayValue: `${stats?.total_investigadores_activos ?? 0} miembros`,
+                                    suffix: 'miembros',
                                     max: 50,
                                     color: 'var(--brand)'
                                 },
                                 {
                                     label: 'Productos Científicos',
                                     value: stats?.total_productos_periodo ?? 0,
-                                    displayValue: `${stats?.total_productos_periodo ?? 0} validados`,
+                                    suffix: 'validados',
                                     max: 30,
                                     color: 'var(--info)'
                                 },
                                 {
                                     label: 'Ejecución Presupuestaria',
                                     value: Math.round(ejecucionPorc),
-                                    displayValue: `${Math.round(ejecucionPorc)}%`,
+                                    suffix: '%',
                                     max: 100,
                                     color: 'var(--success)'
                                 }
@@ -357,15 +370,21 @@ export const AdminDashboard: React.FC = () => {
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Artículos Indexados</span>
-                                        <span className="font-semibold text-text-main font-mono">{stats.articulos_indexados ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">
+                                            <AnimatedNumber value={stats.articulos_indexados ?? 0} />
+                                        </span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Prototipos e Innovación</span>
-                                        <span className="font-semibold text-text-main font-mono">{stats.prototipos ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">
+                                            <AnimatedNumber value={stats.prototipos ?? 0} />
+                                        </span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Ponencias y Difusión</span>
-                                        <span className="font-semibold text-text-main font-mono">{stats.ponencias ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">
+                                            <AnimatedNumber value={stats.ponencias ?? 0} />
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -377,7 +396,7 @@ export const AdminDashboard: React.FC = () => {
     );
 };
 
-const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate }: any) => (
     <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
@@ -418,11 +437,11 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                         cx="9"
                                         cy="9"
                                         r={radius}
-                                        className="fill-none transition-all duration-500"
+                                        className="fill-none progress-circle-fill"
                                         stroke={item.color || 'var(--brand)'}
                                         strokeWidth="1.8"
                                         strokeDasharray={circumference}
-                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeDashoffset={animate ? (item.max ? strokeDashoffset : 0) : circumference}
                                         strokeLinecap="round"
                                     />
                                 </svg>
@@ -445,7 +464,10 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
-                            {item.displayValue || item.value}
+                            <AnimatedNumber 
+                                value={item.value} 
+                                formatter={(v) => item.suffix ? `${Math.round(v)}${item.suffix === '%' ? '%' : ' ' + item.suffix}` : Math.round(v).toString()} 
+                            />
                         </span>
                     </div>
                 );

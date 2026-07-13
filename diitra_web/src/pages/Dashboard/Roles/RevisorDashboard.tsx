@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { getMyReviews } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
+import { DashboardSkeleton } from '../Components/DashboardSkeleton';
 
 export const RevisorDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -57,9 +58,7 @@ export const RevisorDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-text-dim" size={24} />
-                </div>
+                <DashboardSkeleton />
             ) : error ? (
                 <div className="badge-vercel-error !rounded-xl !p-4 mt-6 text-sm">
                     <AlertCircle size={16} />
