@@ -498,7 +498,7 @@ public class AuthService : IAuthService
         var system = await _context.Systems.FirstOrDefaultAsync(s => s.Codigo == "DIITRA");
         if (system == null)
         {
-            system = new SystemEntity { Codigo = "DIITRA", Detalle = "Departamento de Investigación e Innovación Traversari" };
+            system = new SystemEntity { Codigo = "DIITRA", Detalle = "Dpto. Investigación e Innovación Traversari" };
             _context.Systems.Add(system);
             await _context.SaveChangesAsync();
         }

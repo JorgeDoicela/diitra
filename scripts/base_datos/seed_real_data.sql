@@ -547,12 +547,12 @@ INSERT INTO inv_documentos_instancias (id, uuid, template_code, template_version
 (5, 'd4444444-1111-4444-4444-444444444444', 'PROTOCOLO_INVESTIGACION', 1, '44444444-4444-4444-4444-444444444444', 'Proyecto', 'Protocolo Oficial - Asistente Virtual IA', 1, 'sistema', NULL, NULL, 'TRAV-2026-PROY4-PROT', '{"titulo": "Asistente Virtual Conversacional basado en IA"}');
 
 -- Firmas Electrónicas (Cumple regulaciones del validador de FirmaEC)
-INSERT INTO inv_documentos_firmas (documento_uuid, firmante_id, firmante_rol, fecha_firma, firma_metadata, archivo_pdf_firmado, es_valida) VALUES
-('d1111111-1111-1111-1111-111111111111', '1718161126', 'Director de Proyecto', '2025-06-18 10:15:00', '{"CN":"GIOVANNY NARANJO","SERIALNUMBER":"1718161126","O":"TRAVERSARI","ISSUER":"UANATACA CA"}', 'uploads/documentos/protocolo_iot_proy1_firmado_dir.pdf', 1),
-('d1111111-2222-1111-1111-111111111111', '0302144159', 'Director de Investigación', '2025-06-20 09:30:00', '{"CN":"ESTEFANI SANCHEZ","SERIALNUMBER":"0302144159","O":"TRAVERSARI","ISSUER":"SECURITY DATA CA"}', 'uploads/documentos/acta_aprobacion_proy1_firmada.pdf', 1),
-('d2222222-1111-2222-2222-222222222222', '1802707511', 'Director de Proyecto', '2025-06-20 14:00:00', '{"CN":"FREDDY BAÑO","SERIALNUMBER":"1802707511","O":"TRAVERSARI","ISSUER":"BANCO CENTRAL CA"}', 'uploads/documentos/protocolo_fotovoltaico_proy2_firmado_dir.pdf', 1),
-('d2222222-2222-2222-2222-222222222222', '1802707511', 'Director de Proyecto', '2026-01-04 10:15:00', '{"CN":"FREDDY BAÑO","SERIALNUMBER":"1802707511","O":"TRAVERSARI","ISSUER":"BANCO CENTRAL CA"}', 'uploads/documentos/informe_final_proy2_firmado_dir.pdf', 1),
-('d2222222-2222-2222-2222-222222222222', '0302144159', 'Director de Investigación', '2026-01-05 16:15:00', '{"CN":"ESTEFANI SANCHEZ","SERIALNUMBER":"0302144159","O":"TRAVERSARI","ISSUER":"SECURITY DATA CA"}', 'uploads/documentos/informe_final_proy2_firmado_completo.pdf', 1);
+INSERT INTO inv_documentos_firmas (uuid, documento_uuid, firmante_id, firmante_rol, fecha_firma, firma_metadata, archivo_pdf_firmado, es_valida) VALUES
+(UUID(), 'd1111111-1111-1111-1111-111111111111', '1718161126', 'Director de Proyecto', '2025-06-18 10:15:00', '{"CN":"GIOVANNY NARANJO","SERIALNUMBER":"1718161126","O":"TRAVERSARI","ISSUER":"UANATACA CA"}', 'uploads/documentos/protocolo_iot_proy1_firmado_dir.pdf', 1),
+(UUID(), 'd1111111-2222-1111-1111-111111111111', '0302144159', 'Director de Investigación', '2025-06-20 09:30:00', '{"CN":"ESTEFANI SANCHEZ","SERIALNUMBER":"0302144159","O":"TRAVERSARI","ISSUER":"SECURITY DATA CA"}', 'uploads/documentos/acta_aprobacion_proy1_firmada.pdf', 1),
+(UUID(), 'd2222222-1111-2222-2222-222222222222', '1802707511', 'Director de Proyecto', '2025-06-20 14:00:00', '{"CN":"FREDDY BAÑO","SERIALNUMBER":"1802707511","O":"TRAVERSARI","ISSUER":"BANCO CENTRAL CA"}', 'uploads/documentos/protocolo_fotovoltaico_proy2_firmado_dir.pdf', 1),
+(UUID(), 'd2222222-2222-2222-2222-222222222222', '1802707511', 'Director de Proyecto', '2026-01-04 10:15:00', '{"CN":"FREDDY BAÑO","SERIALNUMBER":"1802707511","O":"TRAVERSARI","ISSUER":"BANCO CENTRAL CA"}', 'uploads/documentos/informe_final_proy2_firmado_dir.pdf', 1),
+(UUID(), 'd2222222-2222-2222-2222-222222222222', '0302144159', 'Director de Investigación', '2026-01-05 16:15:00', '{"CN":"ESTEFANI SANCHEZ","SERIALNUMBER":"0302144159","O":"TRAVERSARI","ISSUER":"SECURITY DATA CA"}', 'uploads/documentos/informe_final_proy2_firmado_completo.pdf', 1);
 
 -- Auditoría CACES de compilación documental
 INSERT INTO inv_document_audit (traceability_code, template_code, template_version, project_uuid, entity_uuid, generated_by, generated_at, was_blind_mode, file_name, file_hash, data_snapshot_json) VALUES
