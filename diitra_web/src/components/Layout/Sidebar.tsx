@@ -320,7 +320,6 @@ const Sidebar = ({
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
-        { name: 'Parámetros', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], group: 3, hasChevron: true },
     ];
 
     const menuItems = allMenuItems.filter(item => {

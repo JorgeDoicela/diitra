@@ -75,7 +75,11 @@ interface EventoNormativo {
     activo?: boolean;
 }
 
-const ConfiguracionPage = () => {
+interface ConfiguracionPageProps {
+    embedded?: boolean;
+}
+
+const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab');
     const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores' || tabParam === 'calendario') ? tabParam : 'lineas';
@@ -687,20 +691,22 @@ const ConfiguracionPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
-                <div className="space-y-2">
-                    <div className="section-label text-text-main">
-                        <Settings2 size={10} className="text-text-main animate-spin-slow" />
-                        <span>Catálogos Institucionales</span>
+        <main className={`flex-1 ${embedded ? '' : 'bg-bg-deep p-4 md:p-10 overflow-y-auto'}`}>
+            <header className={`flex flex-col lg:flex-row ${embedded ? 'justify-end mb-6' : 'justify-between mb-10 lg:mb-16'} items-start lg:items-end animate-fade-up gap-8 lg:gap-0`}>
+                {!embedded && (
+                    <div className="space-y-2">
+                        <div className="section-label text-text-main">
+                            <Settings2 size={10} className="text-text-main animate-spin-slow" />
+                            <span>Catálogos Institucionales</span>
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
+                            Parámetros Normativos
+                        </h2>
+                        <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
+                            Administración de líneas de investigación, períodos académicos, dominios institucionales y métricas del CACES / SENESCYT.
+                        </p>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        Parámetros Normativos
-                    </h2>
-                    <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Administración de líneas de investigación, períodos académicos, dominios institucionales y métricas del CACES / SENESCYT.
-                    </p>
-                </div>
+                )}
 
                 <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
                     <div className="relative group w-full md:w-64">

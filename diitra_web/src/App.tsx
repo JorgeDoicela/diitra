@@ -264,7 +264,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/papelera" element={<RecycleBinPage />} />
-                            <Route path="/configuracion" element={<AdminRoute><SettingsPage /></AdminRoute>} />
+                            <Route path="/configuracion" element={<SettingsPage />} />
                             <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
                             <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
@@ -273,7 +273,7 @@ function App() {
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
-                            <Route path="/parametros-normativos" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
+                            <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                              <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                              <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
