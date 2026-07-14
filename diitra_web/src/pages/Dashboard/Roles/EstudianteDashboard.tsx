@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, Loader2 } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, Loader2, RotateCw } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -22,27 +22,56 @@ export const EstudianteDashboard: React.FC = () => {
     const [colaboraciones, setColaboraciones] = useState<ProyectoResumen[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Estudiante';
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [myRes, statsRes] = await Promise.all([
-                    api.get('/projects/my'),
-                    api.get('/projects/stats')
-                ]);
-                setColaboraciones(myRes.data);
-                setStats(statsRes.data);
-            } catch (e) {
-                console.error('[DIITRA] Error al cargar datos del estudiante:', e);
-            } finally {
-                setLoading(false);
+    const fetchData = async (isInitial = false, silent = false) => {
+        const startTime = Date.now();
+        if (isInitial) {
+            setLoading(true);
+        } else if (!silent) {
+            setIsRefreshing(true);
+        }
+        try {
+            const [myRes, statsRes] = await Promise.all([
+                api.get('/projects/my'),
+                api.get('/projects/stats')
+            ]);
+            setColaboraciones(myRes.data);
+            setStats(statsRes.data);
+        } catch (e) {
+            console.error('[DIITRA] Error al cargar datos del estudiante:', e);
+        } finally {
+            if (!silent && !isInitial) {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 600 - elapsed);
+                if (remaining > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remaining));
+                }
             }
+            setLoading(false);
+            setIsRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData(true, false);
+
+        const interval = setInterval(() => {
+            fetchData(false, true);
+        }, 60000);
+
+        const handleFocus = () => {
+            fetchData(false, true);
         };
-        fetchData();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     // Puntuación acumulada: base de 100 puntos + 250 por proyecto activo + 500 por producto registrado
@@ -104,6 +133,16 @@ export const EstudianteDashboard: React.FC = () => {
                 title={`Hola, ${firstName}`} 
                 subtitle="Participa en proyectos de vanguardia, gana experiencia y construye tu perfil científico." 
                 roleName="Estudiante Colaborador"
+                actions={
+                    <button
+                        onClick={() => fetchData(false, false)}
+                        disabled={isRefreshing}
+                        className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
+                        title="Actualizar datos"
+                    >
+                        <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                    </button>
+                }
             />
 
             {loading ? (

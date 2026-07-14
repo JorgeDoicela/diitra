@@ -918,6 +918,7 @@ namespace diitra_infrastructure.Research
             dto.Estado = p.Estado;
             dto.IdConvocatoria = p.IdConvocatoria;
             dto.ConvocatoriaTitulo = p.IdConvocatoriaNavigation?.Titulo;
+            dto.ConvocatoriaMontoMaximo = p.IdConvocatoriaNavigation?.MontoMaximoProyecto;
             dto.IdCarrera = p.InvProyectosCarreras?.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera ?? p.InvProyectosCarreras?.FirstOrDefault()?.IdCarrera;
             if (dto.IdCarrera.HasValue)
             {

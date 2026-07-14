@@ -1,21 +1,23 @@
 import React from 'react';
 import { 
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare, 
-    AlertCircle, BarChart, Activity 
+    AlertCircle, BarChart, Activity, Shield 
 } from 'lucide-react';
 
 const WorkflowPhases = [
     { id: 'Borrador', label: 'Formulación', icon: FileText },
+    { id: 'Enviado', label: 'Revisión Administrador', icon: Shield },
     { id: 'En Revisión', label: 'Evaluación Pares', icon: CheckCircle2 },
     { id: 'Aprobado', label: 'Aprobación Legal', icon: FileSignature },
     { id: 'En Ejecución', label: 'Ejecución y Avance', icon: Settings },
 ];
 
 const getPhaseIndex = (status: string) => {
-    if (status === 'Borrador') return 0;
-    if (status === 'Enviado' || status === 'En Revisión') return 1;
-    if (status === 'Aprobado') return 2;
-    if (status === 'En Ejecución' || status === 'Finalizado') return 3;
+    if (status === 'Borrador' || status === 'En Corrección') return 0;
+    if (status === 'Enviado') return 1;
+    if (status === 'En Revisión') return 2;
+    if (status === 'Aprobado') return 3;
+    if (status === 'En Ejecución' || status === 'Finalizado') return 4;
     return -1;
 };
 
@@ -111,6 +113,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         } else {
                                             resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                         }
+                                    } else if (phase.id === 'Enviado') {
+                                        // Fase de revisión técnica inicial por el administrador.
                                     } else if (phase.id === 'En Revisión') {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
@@ -134,6 +138,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 </h3>
                                 <p className="text-[11px] text-text-dim mt-1.5 leading-relaxed">
                                     {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
+                                    {phase.id === 'Enviado' && 'Revisión técnica inicial de requisitos institucionales y CACES por el administrador.'}
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
@@ -160,6 +165,32 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             <FileText size={14} />
                                             <span>{(currentProject.puedeEditar === false || isPast) ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
                                         </button>
+                                    </div>
+                                )}
+
+                                {phase.id === 'Enviado' && (isCurrent || isPast) && (
+                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                        <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
+                                            <Shield size={14} className="text-brand shrink-0 mt-0.5" />
+                                            <span>
+                                                {isAdmin 
+                                                    ? 'El proyecto requiere validación formal del administrador (CACES, carga horaria, firmas y presupuesto) antes de pasar a evaluación por pares.'
+                                                    : 'El proyecto ha sido firmado digitalmente y enviado para la revisión técnica inicial por parte del administrador.'}
+                                            </span>
+                                        </div>
+                                        {isAdmin && isCurrentActive && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                                }}
+                                                className="btn-vercel-primary !py-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                            >
+                                                <Shield size={12} />
+                                                <span>Iniciar Revisión Técnica</span>
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                                 

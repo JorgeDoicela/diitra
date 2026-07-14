@@ -48,23 +48,49 @@ export const AdminDashboard: React.FC = () => {
     const [animate, setAnimate] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const fetchData = async () => {
-        setIsRefreshing(true);
-        setError(null);
+    const fetchData = async (silent = false) => {
+        const startTime = Date.now();
+        if (!silent) {
+            setIsRefreshing(true);
+            setError(null);
+        }
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
         } catch (e) {
             console.error('[DIITRA] Error al cargar datos:', e);
-            setError('No se pudieron obtener las estadísticas de investigación de la base de datos. Por favor, comprueba que el servidor esté activo o intenta de nuevo.');
+            if (!silent) {
+                setError('No se pudieron obtener las estadísticas de investigación de la base de datos. Por favor, comprueba que el servidor esté activo o intenta de nuevo.');
+            }
         } finally {
+            if (!silent) {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 600 - elapsed);
+                if (remaining > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remaining));
+                }
+            }
             setLoading(false);
             setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        fetchData(false);
+
+        const interval = setInterval(() => {
+            fetchData(true);
+        }, 60000);
+
+        const handleFocus = () => {
+            fetchData(true);
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     useEffect(() => {
@@ -88,6 +114,14 @@ export const AdminDashboard: React.FC = () => {
                 roleName="Director / Administrador"
                 actions={
                     <>
+                        <button
+                            onClick={() => fetchData(false)}
+                            disabled={isRefreshing}
+                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
+                            title="Actualizar datos"
+                        >
+                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                        </button>
                         <button
                             onClick={() => navigate('/usuarios')}
                             className="btn-vercel-secondary flex-1 md:flex-none"
@@ -327,9 +361,6 @@ export const AdminDashboard: React.FC = () => {
 
                         <VercelUsageCard
                             title="Resumen Institucional"
-                            buttonLabel="Actualizar"
-                            onButtonClick={fetchData}
-                            isRefreshing={isRefreshing}
                             animate={animate}
                             items={[
                                 {

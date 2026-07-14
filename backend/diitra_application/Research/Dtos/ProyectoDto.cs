@@ -11,6 +11,7 @@ namespace Diitra.Application.Research.Dtos
         public string? CodigoInstitucional { get; set; }
         public int? IdConvocatoria { get; set; }
         public string? ConvocatoriaTitulo { get; set; }
+        public decimal? ConvocatoriaMontoMaximo { get; set; }
         public int? IdCarrera { get; set; }
         public int? IdObjetivoPnd { get; set; }
 

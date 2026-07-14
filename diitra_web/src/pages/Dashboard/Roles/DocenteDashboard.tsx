@@ -40,21 +40,45 @@ export const DocenteDashboard: React.FC = () => {
     const [animate, setAnimate] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const fetchStats = async () => {
-        setIsRefreshing(true);
+    const fetchStats = async (silent = false) => {
+        const startTime = Date.now();
+        if (!silent) {
+            setIsRefreshing(true);
+        }
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
         } catch (e) {
             console.error('[DIITRA] Error al cargar stats:', e);
         } finally {
+            if (!silent) {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 600 - elapsed);
+                if (remaining > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remaining));
+                }
+            }
             setLoading(false);
             setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
-        fetchStats();
+        fetchStats(false);
+
+        const interval = setInterval(() => {
+            fetchStats(true);
+        }, 60000);
+
+        const handleFocus = () => {
+            fetchStats(true);
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     useEffect(() => {
@@ -75,13 +99,23 @@ export const DocenteDashboard: React.FC = () => {
                 subtitle="Gestiona tus proyectos, carga horaria y productos científicos en un solo lugar."
                 roleName="Docente Investigador"
                 actions={
-                    <button
-                        onClick={() => navigate('/investigacion/mis-proyectos')}
-                        className="btn-vercel-secondary flex-1 md:flex-none"
-                    >
-                        <ClipboardList size={14} />
-                        <span>Mis Proyectos</span>
-                    </button>
+                    <>
+                        <button
+                            onClick={() => fetchStats(false)}
+                            disabled={isRefreshing}
+                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
+                            title="Actualizar datos"
+                        >
+                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                        </button>
+                        <button
+                            onClick={() => navigate('/investigacion/mis-proyectos')}
+                            className="btn-vercel-secondary flex-1 md:flex-none"
+                        >
+                            <ClipboardList size={14} />
+                            <span>Mis Proyectos</span>
+                        </button>
+                    </>
                 }
             />
 
@@ -289,9 +323,6 @@ export const DocenteDashboard: React.FC = () => {
                         <VercelUsageCard
                             title="Resumen del Periodo"
                             animate={animate}
-                            buttonLabel="Actualizar"
-                            onButtonClick={fetchStats}
-                            isRefreshing={isRefreshing}
                             items={[
                                 {
                                     label: 'Mis Proyectos Activos',

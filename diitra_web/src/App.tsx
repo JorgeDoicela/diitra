@@ -25,6 +25,7 @@ const EvaluacionPage         = lazy(() => import('./pages/Investigacion/PeerRevi
 const ArbitrajePage          = lazy(() => import('./pages/Investigacion/Arbitraje/ArbitrajePage'));
 const ArbitrajeProyecto      = lazy(() => import('./pages/Investigacion/Arbitraje/ArbitrajeProyecto'));
 const ProjectWorkspace       = lazy(() => import('./pages/Investigacion/Proyectos/Workspace/ProjectWorkspace').then(m => ({ default: m.ProjectWorkspace })));
+const RevisionTecnicaPage    = lazy(() => import('./pages/Investigacion/Proyectos/RevisionTecnicaPage').then(m => ({ default: m.RevisionTecnicaPage })));
 const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
 const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
 const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
@@ -293,6 +294,7 @@ function App() {
                             <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={<AdminRoute><ProjectWorkspace /></AdminRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
+                            <Route path="/investigacion/revision-tecnica/:projectUuid" element={<AdminRoute><RevisionTecnicaPage /></AdminRoute>} />
                             
                             {/* Researcher Context (Docentes, Estudiantes, Externos) */}
                             <Route path="/investigacion/mis-proyectos" element={<ResearcherRoute><MyProjectsPage /></ResearcherRoute>} />

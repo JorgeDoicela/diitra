@@ -1439,6 +1439,7 @@ VALUES
 -- Flujo principal de postulación
 ('Borrador',         'Enviado',         NULL,             0,                   0,                       0,                     0,                      0,                    0,             'Enviado',        '#3B82F6', 1),
 ('Enviado',          'En Revisión',     'DIITRA_ADMIN',   0,                   1,                       0,                     0,                      0,                    0,             'En Revisión',    '#F59E0B', 1),
+('Enviado',          'En Corrección',   'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    0,             'En Corrección',  '#F97316', 1),
 ('En Revisión',      'Aprobado',        'DIITRA_ADMIN',   1,                   1,                       0,                     0,                      0,                    0,             'Aprobado',       '#10B981', 1),
 ('En Revisión',      'Rechazado',       'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Rechazado',      '#EF4444', 1),
 ('En Revisión',      'En Corrección',   'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    0,             'En Corrección',  '#F97316', 1),

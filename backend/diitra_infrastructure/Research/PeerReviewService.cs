@@ -963,9 +963,9 @@ public class PeerReviewService : IPeerReviewService
             throw new InvalidOperationException("No se pueden asignar árbitros a un proyecto inactivo.");
         }
 
-        if (project.Estado != "Enviado" && project.Estado != "En Revisión")
+        if (project.Estado != "En Revisión")
         {
-            throw new InvalidOperationException($"No se pueden asignar árbitros a un proyecto en estado '{project.Estado}'.");
+            throw new InvalidOperationException($"No se pueden asignar árbitros a un proyecto en estado '{project.Estado}'. El proyecto debe estar en estado 'En Revisión' tras la aprobación técnica del administrador.");
         }
 
         // 2. Validar que el revisor exista y esté activo
@@ -1126,9 +1126,6 @@ public class PeerReviewService : IPeerReviewService
         };
 
         _context.Set<InvRevisionesPares>().Add(revision);
-
-        if (project.Estado == "Enviado")
-            project.Estado = "En Revisión";
 
         await _context.SaveChangesAsync();
 

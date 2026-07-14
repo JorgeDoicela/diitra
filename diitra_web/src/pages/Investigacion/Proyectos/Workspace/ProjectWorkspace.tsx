@@ -2,6 +2,18 @@
 // DIITRA ARCHITECTURE NOTE: DIRECTRIZ DE EXTENSIBILIDAD DE TRABAJO (DECISIÓN DE DISEÑO)
 // ══════════════════════════════════════════════════════════════════════════════
 //
+// TODO: WORKFLOW DE REVISIÓN INTEGRAL (ESTADO: COMPLETADO)
+// - `[x]` Ejecutar script SQL `update_workflow_transitions.sql` en base de datos.
+// - `[x]` Modificar backend C# (`PeerReviewService.cs`): limitar asignación a estado "En Revisión" y remover transición automática.
+// - `[x]` Modificar frontend TypeScript (`CacesWorkflow.tsx`): ampliar a 5 fases e indexación.
+// - `[x]` Modificar frontend TypeScript (`ProjectWorkspace.tsx`): implementar Panel de Revisión del Administrador y banners informativos.
+// - `[x]` Modificar `RevisionTecnicaPage.tsx`: agregar selector de modo de vista (PDF vs Interactivo).
+// - `[x]` Diseñar formulario estructurado de lectura en el panel izquierdo con burbujas de comentarios.
+// - `[x]` Diseñar panel "Observación Contextual" a la derecha (cabecera, historial, input, Speech-to-Text y enviar).
+// - `[x]` Integrar la Web Speech API para reconocimiento de voz en tiempo real.
+// - `[x]` Guardar y concatenar los comentarios por sección en la transición final.
+// - `[x]` Probar el flujo completo de extremo a extremo.
+//
 // 1. ESTABILIDAD DEL WORKSPACE CORE:
 //    - Este componente (ProjectWorkspace) es estable y resuelve las transiciones y carga de equipo.
 //    - DECISIÓN: NO realizar refactorizaciones masivas ni fragmentaciones forzadas aquí.
@@ -44,6 +56,7 @@ import CacesWorkflow from './components/CacesWorkflow';
 import TeamManagement from './components/TeamManagement';
 import ResearchProductsList from './components/ResearchProductsList';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
+import AdminReviewPanel from './components/AdminReviewPanel';
 import ProductRegistrationModal from './components/ProductRegistrationModal';
 import DirectorTransferModal from './components/DirectorTransferModal';
 import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
@@ -534,10 +547,10 @@ export const ProjectWorkspace: React.FC = () => {
         }
 
         if (success && res) {
-            const directorObj = (res.data.investigadores || []).find((inv: any) => 
+            const directorObj = (res.data.investigadores || []).find((inv: any) =>
                 inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal')
             );
-            const directorNombre = directorObj 
+            const directorNombre = directorObj
                 ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
                 : '';
 
@@ -560,7 +573,8 @@ export const ProjectWorkspace: React.FC = () => {
                 dominio: res.data.dominio || '',
                 descripcion: res.data.descripcion_proyecto || res.data.descripcionProyecto || '',
                 carrera: res.data.carrera || '',
-                convocatoria: res.data.convocatoria_titulo || res.data.convocatoriaTitulo || ''
+                convocatoria: res.data.convocatoria_titulo || res.data.convocatoriaTitulo || '',
+                convocatoriaMontoMaximo: res.data.convocatoria_monto_maximo ?? res.data.convocatoriaMontoMaximo ?? res.data.ConvocatoriaMontoMaximo ?? null
             });
             setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
 
@@ -636,8 +650,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     useEffect(() => {
         const fetchTrazabilidad = async () => {
-            const status = currentProject?.status;
-            if (!resolvedProjectUuid || (status !== 'Prepropuesta' && status !== 'Prepropuesta Rechazada')) return;
+            if (!resolvedProjectUuid) return;
             setIsLoadingTrazabilidad(true);
             try {
                 const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
@@ -649,7 +662,7 @@ export const ProjectWorkspace: React.FC = () => {
             }
         };
         fetchTrazabilidad();
-    }, [resolvedProjectUuid, currentProject?.status]);
+    }, [resolvedProjectUuid]);
 
     useEffect(() => {
         if (currentProject) {
@@ -680,8 +693,8 @@ export const ProjectWorkspace: React.FC = () => {
             if (!pInstanceUuid) throw new Error("No se pudo resolver el expediente del protocolo.");
 
             const instanceRes = await api.get(`/documents/instances/${pInstanceUuid}`);
-            const currentMetadata = instanceRes.data?.data_snapshot_json 
-                ? JSON.parse(instanceRes.data.data_snapshot_json) 
+            const currentMetadata = instanceRes.data?.data_snapshot_json
+                ? JSON.parse(instanceRes.data.data_snapshot_json)
                 : {};
 
             const updatedMetadata = {
@@ -714,7 +727,7 @@ export const ProjectWorkspace: React.FC = () => {
             cancelText: "Cancelar",
             variant: "warning"
         })) return;
-        
+
         setIsSubmittingAdminReview(true);
         try {
             const obs = adminObservation.trim() || "Idea de proyecto aprobada por Dirección de Investigación";
@@ -1251,8 +1264,8 @@ export const ProjectWorkspace: React.FC = () => {
     }
 
 
-    const ultimaObservacion = isLoadingTrazabilidad 
-        ? "Cargando observaciones..." 
+    const ultimaObservacion = isLoadingTrazabilidad
+        ? "Cargando observaciones..."
         : (trazabilidad.find(t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada')?.observacion || 'Sin observaciones especificadas.');
 
     if (isPreproposalState) {
@@ -1266,10 +1279,10 @@ export const ProjectWorkspace: React.FC = () => {
                         isPublishingDSpace={false}
                         urlPrefix={urlPrefix}
                         navigate={navigate}
-                        onExportCaces={() => {}}
-                        onPublishDSpace={() => {}}
+                        onExportCaces={() => { }}
+                        onPublishDSpace={() => { }}
                     />
-                    
+
                     <main className="max-w-6xl mx-auto p-6 md:p-12 animate-fade-up w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Panel Izquierdo: Contenido de la Prepropuesta */}
                         <div className="lg:col-span-2 space-y-6">
@@ -1309,7 +1322,6 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="bento-card p-8 rounded-2xl border border-brand/20 bg-brand/[0.01] shadow-md space-y-6">
                                     <div className="border-b border-border pb-4">
                                         <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-2">
-                                            <Shield size={16} className="text-brand" />
                                             Panel de Evaluación
                                         </h3>
                                         <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1">Revisión de Idea de Investigación</p>
@@ -1379,9 +1391,8 @@ export const ProjectWorkspace: React.FC = () => {
 
                                                     return (
                                                         <div key={index} className="relative">
-                                                            <div className={`absolute -left-[13px] top-1.5 w-1.5 h-1.5 rounded-full ${
-                                                                isErrorState ? 'bg-error animate-pulse' : 'bg-success'
-                                                            }`} />
+                                                            <div className={`absolute -left-[13px] top-1.5 w-1.5 h-1.5 rounded-full ${isErrorState ? 'bg-error animate-pulse' : 'bg-success'
+                                                                }`} />
                                                             <div className="space-y-1">
                                                                 <p className="text-[10px] font-black text-text-main uppercase tracking-widest">{statusName}</p>
                                                                 {formattedDate && <p className="text-[8px] text-text-dim font-mono">{formattedDate}</p>}
@@ -1414,10 +1425,10 @@ export const ProjectWorkspace: React.FC = () => {
                     isPublishingDSpace={false}
                     urlPrefix={urlPrefix}
                     navigate={navigate}
-                    onExportCaces={() => {}}
-                    onPublishDSpace={() => {}}
+                    onExportCaces={() => { }}
+                    onPublishDSpace={() => { }}
                 />
-                
+
                 <main className="max-w-4xl mx-auto p-6 md:p-12 space-y-8 animate-fade-up w-full">
                     {/* Banner de Revisión */}
                     {currentProject.status === 'Prepropuesta' && (
@@ -1426,7 +1437,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div className="space-y-1.5">
                                 <h4 className="text-sm font-bold text-text-main uppercase tracking-wider">Idea de Proyecto en Revisión</h4>
                                 <p className="text-xs text-text-dim leading-relaxed">
-                                    Su propuesta de idea de investigación está bajo análisis del Departamento de Investigación e Innovación. 
+                                    Su propuesta de idea de investigación está bajo análisis del Departamento de Investigación e Innovación.
                                     Se le notificará en cuanto sea aprobada para proceder con el protocolo completo.
                                 </p>
                             </div>
@@ -1570,6 +1581,34 @@ export const ProjectWorkspace: React.FC = () => {
                         setActiveDocument={setActiveDocument}
                     />
 
+                    {/* Banner de observaciones si el proyecto está En Corrección */}
+                    {currentProject?.status === 'En Corrección' && (
+                        <div className="mb-4 bento-card border-error/30 bg-error/[0.03] p-5 flex flex-col gap-3 rounded-2xl shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <Shield className="text-error shrink-0 mt-0.5" size={20} />
+                                <div className="space-y-1">
+                                    <h4 className="text-xs font-bold text-error uppercase tracking-wider">Protocolo Devuelto para Correcciones</h4>
+                                    <p className="text-[11px] text-text-dim leading-relaxed">
+                                        El administrador ha revisado el protocolo y solicita que realice los ajustes detallados en las observaciones a continuación. Una vez finalizadas las correcciones, firme digitalmente el documento de nuevo para reenviarlo a revisión.
+                                    </p>
+                                </div>
+                            </div>
+                            {trazabilidad.length > 0 && (
+                                <div className="border-t border-error/20 pt-2.5 pl-8">
+                                    <p className="text-[9px] font-bold text-error uppercase tracking-wider">Observaciones del Administrador:</p>
+                                    <p className="text-xs text-text-main font-medium italic mt-1 font-mono break-words">
+                                        {(() => {
+                                            const lastCorrection = [...trazabilidad]
+                                                .reverse()
+                                                .find((t: any) => (t.estadoNuevo || t.EstadoNuevo) === 'En Corrección');
+                                            return lastCorrection ? (lastCorrection.observacion || lastCorrection.Observacion || 'Sin observaciones especificadas.') : 'Sin observaciones especificadas.';
+                                        })()}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Layout dos columnas: contenido principal izquierda, panel info derecha */}
                     <div className="px-2 flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-3 lg:items-start">
 
@@ -1641,11 +1680,24 @@ export const ProjectWorkspace: React.FC = () => {
 
                         {/* Columna derecha: info del proyecto sticky */}
                         <div className="lg:sticky lg:top-0 flex flex-col gap-3">
-                            <WorkspaceSidebar
-                                currentProject={currentProject}
-                                resolvedProjectUuid={resolvedProjectUuid}
-                                setActiveDocument={setActiveDocument}
-                            />
+                            {currentProject.status === 'Enviado' && isAdmin ? (
+                                <AdminReviewPanel
+                                    currentProject={currentProject}
+                                    investigadores={investigadores}
+                                    addToast={addToast}
+                                    confirm={confirm}
+                                    onStatusChanged={(newStatus) => {
+                                        // Recargar proyecto y actualizar el estado
+                                        fetchProject();
+                                    }}
+                                />
+                            ) : (
+                                <WorkspaceSidebar
+                                    currentProject={currentProject}
+                                    resolvedProjectUuid={resolvedProjectUuid}
+                                    setActiveDocument={setActiveDocument}
+                                />
+                            )}
                         </div>
                     </div>
                 </main>

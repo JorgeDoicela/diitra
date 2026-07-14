@@ -1675,4 +1675,75 @@ tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
     transform-origin: center !important;
 }
 
+/* ==========================================
+ * ESTILOS DE REVISIÓN TÉCNICA INTERACTIVA
+ * ========================================== */
+.input-review-container {
+    position: relative;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    border-radius: 12px;
+    padding: 16px 16px 10px 16px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.input-review-container.focused {
+    border-color: rgba(0, 112, 243, 0.4);
+    background-color: rgba(0, 112, 243, 0.01);
+}
+
+.input-review-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.input-review-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 6px;
+    display: block;
+}
+
+.input-review-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background-color: rgba(148, 163, 184, 0.4);
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.input-review-dot:hover {
+    background-color: var(--brand, #0070f3);
+    transform: scale(1.25);
+}
+
+.input-review-dot.active {
+    background-color: #f5a623;
+    box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.2);
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+}
+
 

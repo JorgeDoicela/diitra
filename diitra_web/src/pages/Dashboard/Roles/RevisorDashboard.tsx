@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch, Loader2, RotateCw } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -14,25 +14,56 @@ export const RevisorDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [reviews, setReviews] = useState<PeerReviewDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Evaluador';
 
-    useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                setLoading(true);
-                const data = await getMyReviews();
-                setReviews(data);
-            } catch (err) {
-                console.error('[DIITRA] Error al cargar revisiones:', err);
+    const fetchReviews = async (isInitial = false, silent = false) => {
+        const startTime = Date.now();
+        if (isInitial) {
+            setLoading(true);
+        } else if (!silent) {
+            setIsRefreshing(true);
+        }
+        try {
+            const data = await getMyReviews();
+            setReviews(data);
+        } catch (err) {
+            console.error('[DIITRA] Error al cargar revisiones:', err);
+            if (!silent) {
                 setError('No se pudieron cargar las asignaciones de evaluación.');
-            } finally {
-                setLoading(false);
             }
+        } finally {
+            if (!silent && !isInitial) {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 600 - elapsed);
+                if (remaining > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remaining));
+                }
+            }
+            setLoading(false);
+            setIsRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchReviews(true, false);
+
+        const interval = setInterval(() => {
+            fetchReviews(false, true);
+        }, 60000);
+
+        const handleFocus = () => {
+            fetchReviews(false, true);
         };
-        fetchReviews();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     const pendingReviews = reviews.filter(r => r.estado === 'Pendiente');
@@ -46,6 +77,14 @@ export const RevisorDashboard: React.FC = () => {
                 roleName="Evaluador Externo"
                 actions={
                     <>
+                        <button
+                            onClick={() => fetchReviews(false, false)}
+                            disabled={isRefreshing}
+                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
+                            title="Actualizar datos"
+                        >
+                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                        </button>
                         <button 
                             onClick={() => navigate('/revisiones')}
                             className="btn-vercel-primary flex-1 md:flex-none"
