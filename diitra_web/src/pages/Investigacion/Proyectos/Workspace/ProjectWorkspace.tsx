@@ -56,7 +56,6 @@ import CacesWorkflow from './components/CacesWorkflow';
 import TeamManagement from './components/TeamManagement';
 import ResearchProductsList from './components/ResearchProductsList';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
-import AdminReviewPanel from './components/AdminReviewPanel';
 import ProductRegistrationModal from './components/ProductRegistrationModal';
 import DirectorTransferModal from './components/DirectorTransferModal';
 import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
@@ -1581,33 +1580,7 @@ export const ProjectWorkspace: React.FC = () => {
                         setActiveDocument={setActiveDocument}
                     />
 
-                    {/* Banner de observaciones si el proyecto está En Corrección */}
-                    {currentProject?.status === 'En Corrección' && (
-                        <div className="mb-4 bento-card border-error/30 bg-error/[0.03] p-5 flex flex-col gap-3 rounded-2xl shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <Shield className="text-error shrink-0 mt-0.5" size={20} />
-                                <div className="space-y-1">
-                                    <h4 className="text-xs font-bold text-error uppercase tracking-wider">Protocolo Devuelto para Correcciones</h4>
-                                    <p className="text-[11px] text-text-dim leading-relaxed">
-                                        El administrador ha revisado el protocolo y solicita que realice los ajustes detallados en las observaciones a continuación. Una vez finalizadas las correcciones, firme digitalmente el documento de nuevo para reenviarlo a revisión.
-                                    </p>
-                                </div>
-                            </div>
-                            {trazabilidad.length > 0 && (
-                                <div className="border-t border-error/20 pt-2.5 pl-8">
-                                    <p className="text-[9px] font-bold text-error uppercase tracking-wider">Observaciones del Administrador:</p>
-                                    <p className="text-xs text-text-main font-medium italic mt-1 font-mono break-words">
-                                        {(() => {
-                                            const lastCorrection = [...trazabilidad]
-                                                .reverse()
-                                                .find((t: any) => (t.estadoNuevo || t.EstadoNuevo) === 'En Corrección');
-                                            return lastCorrection ? (lastCorrection.observacion || lastCorrection.Observacion || 'Sin observaciones especificadas.') : 'Sin observaciones especificadas.';
-                                        })()}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+
 
                     {/* Layout dos columnas: contenido principal izquierda, panel info derecha */}
                     <div className="px-2 flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-3 lg:items-start">
@@ -1680,24 +1653,12 @@ export const ProjectWorkspace: React.FC = () => {
 
                         {/* Columna derecha: info del proyecto sticky */}
                         <div className="lg:sticky lg:top-0 flex flex-col gap-3">
-                            {currentProject.status === 'Enviado' && isAdmin ? (
-                                <AdminReviewPanel
-                                    currentProject={currentProject}
-                                    investigadores={investigadores}
-                                    addToast={addToast}
-                                    confirm={confirm}
-                                    onStatusChanged={(newStatus) => {
-                                        // Recargar proyecto y actualizar el estado
-                                        fetchProject();
-                                    }}
-                                />
-                            ) : (
-                                <WorkspaceSidebar
-                                    currentProject={currentProject}
-                                    resolvedProjectUuid={resolvedProjectUuid}
-                                    setActiveDocument={setActiveDocument}
-                                />
-                            )}
+                            <WorkspaceSidebar
+                                currentProject={currentProject}
+                                resolvedProjectUuid={resolvedProjectUuid}
+                                setActiveDocument={setActiveDocument}
+                                isAdmin={isAdmin}
+                            />
                         </div>
                     </div>
                 </main>

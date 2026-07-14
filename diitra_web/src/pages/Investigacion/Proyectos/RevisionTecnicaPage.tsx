@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    ArrowLeft, Shield, CheckCircle2, AlertTriangle, 
-    RotateCcw, Scale, Loader2, FileText, CheckCircle, 
-    MessageSquare, AlertCircle, BarChart2, Eye, Mic, 
-    MicOff, Send, Users, Activity, DollarSign, Target, 
-    BookOpen, ChevronRight, X, HelpCircle 
+import {
+    ArrowLeft, Shield, AlertTriangle,
+    RotateCcw, Scale, Loader2, FileText, CheckCircle,
+    MessageSquare, AlertCircle, BarChart2, Eye, Mic,
+    MicOff, Send, Users, Activity, DollarSign, Target,
+    BookOpen, ChevronLeft, ChevronRight, Sun, Moon
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { useAuth } from '../../../api/AuthContext';
 
 interface ProjectDetail {
     uuid: string;
@@ -63,20 +65,103 @@ export const RevisionTecnicaPage: React.FC = () => {
     const navigate = useNavigate();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+    const { user } = useAuth();
+
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+        return document.documentElement.getAttribute('data-theme') !== 'light';
+    });
+
+    const toggleTheme = () => {
+        const nextMode = !isDarkMode;
+        setIsDarkMode(nextMode);
+        document.documentElement.setAttribute('data-theme', nextMode ? 'dark' : 'light');
+        localStorage.setItem('theme', nextMode ? 'dark' : 'light');
+    };
 
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [investigadores, setInvestigadores] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [activeTab, setActiveTab] = useState<'consistencia' | 'metricas'>('consistencia');
+    const [rightSidebarTab, setRightSidebarTab] = useState<'consistencia' | 'metricas' | 'comentario'>('consistencia');
 
     // Modos de Vista
     const [viewMode, setViewMode] = useState<'interactive' | 'pdf'>('interactive');
     const [activeSection, setActiveSection] = useState<string>('identificacion');
     const [activeCommentField, setActiveCommentField] = useState<string>('titulo');
-    const [showContextualPanel, setShowContextualPanel] = useState<boolean>(false);
     const [contextualInput, setContextualInput] = useState('');
     const [isListening, setIsListening] = useState(false);
+
+    // Columnas Ajustables e Interactivas (Estilo DIITRA Workspace)
+    const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
+        const saved = localStorage.getItem('rev_left_sidebar_width');
+        return saved ? parseInt(saved, 10) : 260;
+    });
+    const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(() => {
+        return localStorage.getItem('rev_left_sidebar_open') !== 'false';
+    });
+
+    const [rightSidebarWidth, setRightSidebarWidth] = useState<number>(() => {
+        const saved = localStorage.getItem('rev_right_sidebar_width');
+        return saved ? parseInt(saved, 10) : 380;
+    });
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(() => {
+        return localStorage.getItem('rev_right_sidebar_open') !== 'false';
+    });
+
+    const leftSidebarRef = React.useRef<HTMLDivElement>(null);
+    const rightSidebarRef = React.useRef<HTMLDivElement>(null);
+
+    const startDraggingLeft = (mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+
+        const startWidth = leftSidebarWidth;
+        const startX = mouseDownEvent.clientX;
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const deltaX = mouseMoveEvent.clientX - startX;
+            const newWidth = Math.max(220, Math.min(380, startWidth + deltaX));
+            setLeftSidebarWidth(newWidth);
+            localStorage.setItem('rev_left_sidebar_width', String(newWidth));
+        };
+
+        const stopDrag = () => {
+            document.body.style.removeProperty('user-select');
+            document.body.style.removeProperty('cursor');
+            document.removeEventListener('mousemove', doDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        };
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    };
+
+    const startDraggingRight = (mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+
+        const startWidth = rightSidebarWidth;
+        const startX = mouseDownEvent.clientX;
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const deltaX = startX - mouseMoveEvent.clientX;
+            const newWidth = Math.max(360, Math.min(650, startWidth + deltaX));
+            setRightSidebarWidth(newWidth);
+            localStorage.setItem('rev_right_sidebar_width', String(newWidth));
+        };
+
+        const stopDrag = () => {
+            document.body.style.removeProperty('user-select');
+            document.body.style.removeProperty('cursor');
+            document.removeEventListener('mousemove', doDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        };
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    };
 
     // Visor de PDF
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -122,17 +207,26 @@ export const RevisionTecnicaPage: React.FC = () => {
 
     const [generalFeedback, setGeneralFeedback] = useState('');
 
+    // Validación de Carga Horaria (CACES/DIITRA Compliance)
+    const teachersWithExceedingHours = investigadores.filter(inv => {
+        const proposed = inv.horasSemanales || 0;
+        const available = inv.horasDisponibles || inv.horas_disponibles || 0;
+        const assigned = inv.horasAsignadas || inv.horas_asignadas || 0;
+        return (assigned + proposed) > available;
+    });
+    const isHoursOk = teachersWithExceedingHours.length === 0;
+
     // Cargar datos
     const loadProjectData = useCallback(async () => {
         if (!projectUuid) return;
         setLoading(true);
         try {
             const res = await api.get(`/projects/${projectUuid}/detail`);
-            
-            const directorObj = (res.data.investigadores || []).find((inv: any) => 
+
+            const directorObj = (res.data.investigadores || []).find((inv: any) =>
                 inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal')
             );
-            const directorNombre = directorObj 
+            const directorNombre = directorObj
                 ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
                 : 'No asignado';
 
@@ -164,6 +258,39 @@ export const RevisionTecnicaPage: React.FC = () => {
 
             // Calcular métricas dinámicas de la instancia del documento
             await calculateMetrics(projectUuid, projectDetail);
+
+            // Cargar comentarios del backend (colaborativos) para reconstruir observaciones de revisión técnica
+            try {
+                const collabRes = await api.get(`/collaboration/${projectUuid}/pulse`);
+                if (collabRes.data && collabRes.data.comments) {
+                    const backendComments: Record<string, SectionComment> = {};
+                    collabRes.data.comments.forEach((c: any) => {
+                        const content = c.contenido || '';
+                        const match = content.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
+                        if (match) {
+                            const label = match[1];
+                            const statusStr = match[2];
+                            const text = match[3];
+                            const fieldKey = Object.keys(FIELD_LABELS).find(k => FIELD_LABELS[k] === label);
+                            if (fieldKey) {
+                                backendComments[fieldKey] = {
+                                    status: statusStr === 'Aprobado' ? 'Aprobado' : 'Corregir',
+                                    text: text
+                                };
+                            }
+                        }
+                    });
+                    if (Object.keys(backendComments).length > 0) {
+                        setComments(prev => {
+                            const merged = { ...prev, ...backendComments };
+                            localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(merged));
+                            return merged;
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('[DIITRA] Error al sincronizar comentarios de colaboración del backend:', err);
+            }
 
         } catch (err) {
             console.error('[DIITRA] Error al cargar detalles de revisión:', err);
@@ -253,35 +380,36 @@ export const RevisionTecnicaPage: React.FC = () => {
                 progressPercent
             });
 
-            // 5. Simular Verificación Semántica de Línea de Investigación
+            // 5. Verificación Semántica Dinámica de Línea de Investigación (IA)
             const titleUpper = details.title.toUpperCase();
             const descUpper = details.descripcion.toUpperCase();
             const lineaUpper = details.linea.toUpperCase();
+            const sublineaUpper = (metadata.SublineaInvestigacion || '').toUpperCase();
 
-            const lineKeywords: Record<string, string[]> = {
-                'TECNOLOGÍAS': ['SOFTWARE', 'SISTEMA', 'WEB', 'REDES', 'DATOS', 'CLOUD', 'IA', 'ALGORITMO', 'APLICACIÓN', 'MÓVIL', 'TECNOLOGÍA'],
-                'DESARROLLO': ['SOCIAL', 'COMUNIDAD', 'ECONOMÍA', 'DERECHOS', 'CRECIMIENTO', 'EMPLEO'],
-                'SALUD': ['MEDICINA', 'CLÍNICO', 'PACIENTE', 'BIOMÉDICO', 'TRATAMIENTO', 'EPIDEMIOLOGÍA', 'PREVENCIÓN']
-            };
+            // Filtrar stop-words en español
+            const stopWords = new Set([
+                'DE', 'LA', 'EL', 'Y', 'EN', 'LOS', 'LAS', 'PARA', 'CON', 'POR', 'O', 'UN', 'UNA', 'DEL', 'AL', 'SOBRE'
+            ]);
+
+            const wordsToCompare = `${lineaUpper} ${sublineaUpper}`
+                .split(/[\s,./()]+/)
+                .filter(w => w.length > 3 && !stopWords.has(w));
 
             let matchedKeywords: string[] = [];
-            let score = 30;
-
-            Object.entries(lineKeywords).forEach(([key, list]) => {
-                if (lineaUpper.includes(key)) {
-                    list.forEach(word => {
-                        if (titleUpper.includes(word) || descUpper.includes(word)) {
-                            matchedKeywords.push(word);
-                        }
-                    });
+            wordsToCompare.forEach(word => {
+                if (titleUpper.includes(word) || descUpper.includes(word)) {
+                    if (!matchedKeywords.includes(word)) {
+                        matchedKeywords.push(word);
+                    }
                 }
             });
 
+            let score = 30;
             if (matchedKeywords.length > 0) {
-                score = Math.min(100, 40 + matchedKeywords.length * 15);
+                score = Math.min(100, 40 + matchedKeywords.length * 12);
             }
 
-            const status = score >= 80 ? 'excelente' : score >= 50 ? 'bueno' : 'bajo';
+            const status = score >= 70 ? 'excelente' : score >= 50 ? 'bueno' : 'bajo';
             let recommendation = '';
             if (status === 'excelente') {
                 recommendation = `El protocolo presenta una alta correspondencia semántica con la línea institucional de "${details.linea}". Las palabras clave (${matchedKeywords.join(', ')}) están fuertemente alineadas.`;
@@ -303,8 +431,8 @@ export const RevisionTecnicaPage: React.FC = () => {
         }
     };
 
-    // Guardar cambios en el localStorage
-    const handleCommentChange = (section: string, field: 'status' | 'text', value: string) => {
+    // Guardar cambios en el localStorage y sincronizar con backend
+    const handleCommentChange = async (section: string, field: 'status' | 'text', value: string) => {
         const updated = {
             ...comments,
             [section]: {
@@ -314,15 +442,50 @@ export const RevisionTecnicaPage: React.FC = () => {
         };
         setComments(updated);
         localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(updated));
+
+        // Sincronización si se cambia el estado (Aprobado / Corregir) y el comentario ya tiene texto
+        if (field === 'status' && updated[section]?.text?.trim()) {
+            try {
+                const label = FIELD_LABELS[section] || section.toUpperCase();
+                const statusLabel = value === 'Aprobado' ? 'Aprobado' : 'Observación';
+                const content = `[${label}] (${statusLabel}): ${updated[section].text.trim()}`;
+                await api.post('/collaboration/comments', {
+                    documentoUuid: projectUuid,
+                    contenido: content,
+                    idPadre: null
+                });
+            } catch (e) {
+                console.error("Error al sincronizar estado de comentario en backend", e);
+            }
+        }
     };
 
-    // Guardar comentario contextual del input
-    const saveContextualComment = () => {
+    // Guardar comentario contextual del input y sincronizar con backend
+    const saveContextualComment = async () => {
         if (!contextualInput.trim()) return;
         const currentFieldStatus = comments[activeCommentField]?.status === 'Pendiente' ? 'Corregir' : comments[activeCommentField]?.status;
-        handleCommentChange(activeCommentField, 'text', contextualInput.trim());
-        handleCommentChange(activeCommentField, 'status', currentFieldStatus);
-        addToast("Observación guardada", `Comentario registrado para: ${FIELD_LABELS[activeCommentField]}`, "success");
+
+        try {
+            // Guardar local
+            await handleCommentChange(activeCommentField, 'text', contextualInput.trim());
+            await handleCommentChange(activeCommentField, 'status', currentFieldStatus);
+
+            // Persistir en backend como comentario de colaboración (coworking)
+            const label = FIELD_LABELS[activeCommentField] || activeCommentField.toUpperCase();
+            const statusLabel = currentFieldStatus === 'Aprobado' ? 'Aprobado' : 'Observación';
+            const content = `[${label}] (${statusLabel}): ${contextualInput.trim()}`;
+
+            await api.post('/collaboration/comments', {
+                documentoUuid: projectUuid,
+                contenido: content,
+                idPadre: null
+            });
+
+            addToast("Observación guardada y sincronizada", `Comentario registrado para: ${label}`, "success");
+        } catch (err: any) {
+            console.error("Error al persistir comentario en backend:", err);
+            addToast("Observación guardada localmente", `Se registró en caché local (Error de red backend).`, "warning");
+        }
     };
 
     // Reconocimiento de Voz nativo (Speech-to-Text)
@@ -374,11 +537,15 @@ export const RevisionTecnicaPage: React.FC = () => {
 
         const isBudgetOk = project.convocatoriaMontoMaximo ? project.presupuesto <= project.convocatoriaMontoMaximo : true;
         const hasTeam = investigadores.length > 0;
-        
-        if (!isBudgetOk || !hasTeam) {
+
+        if (!isBudgetOk || !hasTeam || !isHoursOk) {
+            let msg = "La propuesta no cumple con todos los controles de consistencia automática.";
+            if (!isHoursOk) {
+                msg += ` Se detectó exceso de carga horaria en los siguientes docentes: ${teachersWithExceedingHours.map(t => t.nombres_completos || t.nombre).join(', ')}.`;
+            }
             if (!await confirm({
                 title: "Advertencia de Cumplimiento CACES",
-                message: "La propuesta no cumple con todos los controles de consistencia automática. ¿Desea aprobarla de todos modos?",
+                message: `${msg} ¿Desea aprobarla de todos modos?`,
                 confirmText: "Aprobar de todos modos",
                 cancelText: "Cancelar",
                 variant: "warning"
@@ -400,8 +567,10 @@ export const RevisionTecnicaPage: React.FC = () => {
                 .map(([sec, c]) => `[${sec.toUpperCase()}]: ${c.text}`)
                 .join('; ');
 
-            const obs = generalFeedback.trim() 
+            const obs = generalFeedback.trim()
                 || (sectionIssues ? `Revisión Técnica aprobada con observaciones menores: ${sectionIssues}` : 'Aprobación Técnica Inicial del Administrador. Protocolo completo y consistente.');
+
+            const originalState = project.status;
 
             await api.post(`/projects/${project.uuid}/transition`, null, {
                 params: {
@@ -410,7 +579,28 @@ export const RevisionTecnicaPage: React.FC = () => {
                 }
             });
 
-            addToast("Revisión Aprobada", "El protocolo ha avanzado a la fase de Evaluación por Pares.", "success");
+            addToast(
+                "Revisión Aprobada",
+                "El protocolo ha avanzado a la fase de Evaluación por Pares.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${project.uuid}/transition`, null, {
+                            params: {
+                                newState: originalState,
+                                observation: "Reversión (Undo): Retorno al estado anterior por cancelación de la aprobación."
+                            }
+                        });
+                        addToast("Acción Revertida", `La aprobación ha sido cancelada. Proyecto en estado: ${originalState}`, "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        navigate(`/investigacion/revision-tecnica/${projectUuid}`);
+                    } catch (err) {
+                        console.error("[Undo Approval] Failed:", err);
+                        addToast("Error al Revertir", "No se pudo deshacer la aprobación del protocolo.", "error");
+                    }
+                }
+            );
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
         } catch (err: any) {
             console.error(err);
@@ -449,6 +639,8 @@ export const RevisionTecnicaPage: React.FC = () => {
                 ? `${generalFeedback.trim()}\n\nObservaciones por Sección:\n${sectionIssues}`
                 : `Correcciones solicitadas en las siguientes secciones:\n${sectionIssues}`;
 
+            const originalState = project.status;
+
             await api.post(`/projects/${project.uuid}/transition`, null, {
                 params: {
                     newState: 'En Corrección',
@@ -456,7 +648,28 @@ export const RevisionTecnicaPage: React.FC = () => {
                 }
             });
 
-            addToast("Proyecto Devuelto", "El protocolo ha sido devuelto al docente para correcciones.", "warning");
+            addToast(
+                "Proyecto Devuelto",
+                "El protocolo ha sido devuelto al docente para correcciones.",
+                "warning",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${project.uuid}/transition`, null, {
+                            params: {
+                                newState: originalState,
+                                observation: "Reversión (Undo): Retorno al estado anterior por cancelación de la devolución."
+                            }
+                        });
+                        addToast("Acción Revertida", `La devolución ha sido cancelada. Proyecto en estado: ${originalState}`, "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        navigate(`/investigacion/revision-tecnica/${projectUuid}`);
+                    } catch (err) {
+                        console.error("[Undo Return] Failed:", err);
+                        addToast("Error al Revertir", "No se pudo deshacer la devolución del proyecto.", "error");
+                    }
+                }
+            );
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
         } catch (err: any) {
             console.error(err);
@@ -477,21 +690,23 @@ export const RevisionTecnicaPage: React.FC = () => {
         );
     }
 
+    const showContextualPanel = rightSidebarTab === 'comentario' && isRightSidebarOpen;
+
     // Renderizar burbuja de comentario flotante al lado de las cabeceras de cada tarjeta
-    const renderCommentButton = (fieldKey: string, fieldName: string) => {
+    const renderCommentButton = (fieldKey: string, _fieldName: string) => {
         const hasComment = (comments[fieldKey]?.text || '').trim().length > 0;
         return (
             <button
                 onClick={(e) => {
                     e.stopPropagation();
                     setActiveCommentField(fieldKey);
-                    setShowContextualPanel(true); // Abre el Inspector Contextual Flotante
+                    setRightSidebarTab('comentario');
+                    setIsRightSidebarOpen(true);
                 }}
-                className={`flex items-center gap-1 p-1 rounded-lg border transition-all active:scale-95 shrink-0 cursor-pointer ${
-                    hasComment
-                        ? 'bg-amber-500/5 border-amber-500/20 text-amber-500 hover:bg-amber-500/10'
-                        : 'border-transparent text-text-dim/40 hover:text-text-main hover:bg-surface-hover'
-                }`}
+                className={`flex items-center gap-1 p-1 rounded-lg border transition-all active:scale-95 shrink-0 cursor-pointer ${hasComment
+                    ? 'bg-amber-500/5 border-amber-500/20 text-amber-500 hover:bg-amber-500/10'
+                    : 'border-transparent text-text-dim/40 hover:text-text-main hover:bg-surface-hover'
+                    }`}
                 title={hasComment ? 'Ver observación registrada' : 'Agregar observación contextual'}
             >
                 <MessageSquare size={13} className={hasComment ? 'fill-amber-500/5 text-amber-500' : ''} />
@@ -504,171 +719,73 @@ export const RevisionTecnicaPage: React.FC = () => {
         );
     };
 
-    return (
-        <div className="h-screen w-full flex flex-col bg-bg-deep overflow-hidden selection:bg-text-main selection:text-bg-deep transition-colors duration-300 font-sans relative">
-            
-            {/* PANEL CONTEXTUAL FLOTANTE (SATELLITE POPOVER - ESTILO GEIST / GRUPOS DE INVESTIGACIÓN) */}
-            {showContextualPanel && viewMode === 'interactive' && (
-                <div className="fixed md:right-[380px] right-4 top-[100px] bottom-[100px] w-auto md:w-[340px] bg-surface border border-border-thin rounded-2xl flex flex-col z-50 animate-fade-in shadow-2xl overflow-hidden transition-all duration-300">
-                    {/* Cabecera del Inspector Contextual con chevron de cerrado ">" */}
-                    <div className="shrink-0 py-3 px-4 bg-bg-deep/40 border-b border-border-thin flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.05)] shrink-0">
-                                <MessageSquare size={14} />
-                            </div>
-                            <div className="min-w-0">
-                                <h4 className="text-[10px] font-black text-text-main uppercase tracking-tight truncate leading-none mb-1">Observación Contextual</h4>
-                                <p className="text-[9px] font-mono font-bold text-amber-400 uppercase tracking-widest truncate leading-none" title={FIELD_LABELS[activeCommentField]}>
-                                    {FIELD_LABELS[activeCommentField]}
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => {
-                                setShowContextualPanel(false);
-                                setIsListening(false);
-                            }}
-                            className="p-1 hover:bg-surface-hover rounded-lg text-text-dim hover:text-text-main transition-colors shrink-0 cursor-pointer"
-                            title="Cerrar panel de comentarios"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex flex-col bg-bg-deep overflow-hidden selection:bg-text-main selection:text-bg-deep transition-colors duration-300 font-sans">
 
-                    {/* Historial o vacío */}
-                    <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center bg-bg-deep/5 custom-scrollbar text-center text-text-dim">
-                        {comments[activeCommentField]?.text ? (
-                            <div className="w-full bg-surface border border-border-thin p-4 rounded-xl text-left space-y-3 shadow-sm">
-                                <div className="flex items-center justify-between border-b border-border-thin/20 pb-1.5">
-                                    <span className="text-[9px] font-bold text-brand uppercase tracking-wider font-mono">Auditoría Registrada:</span>
-                                    <span className={`text-[8px] font-mono font-bold uppercase tracking-widest ${
-                                        comments[activeCommentField].status === 'Aprobado' ? 'text-success' : 'text-error'
-                                    }`}>
-                                        {comments[activeCommentField].status}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-text-main font-mono leading-relaxed italic break-words">
-                                    "{comments[activeCommentField].text}"
-                                </p>
-                                <div className="flex justify-end gap-2 pt-2 border-t border-border-thin/40">
-                                    <button 
-                                        onClick={() => handleCommentChange(activeCommentField, 'status', 'Aprobado')}
-                                        className="text-[8px] font-bold uppercase tracking-widest text-success px-2 py-1 rounded bg-success/5 hover:bg-success/10 transition-all cursor-pointer"
-                                    >
-                                        Marcar Aprobado
-                                    </button>
-                                    <button 
-                                        onClick={() => handleCommentChange(activeCommentField, 'status', 'Corregir')}
-                                        className="text-[8px] font-bold uppercase tracking-widest text-error px-2 py-1 rounded bg-error/5 hover:bg-error/10 transition-all cursor-pointer"
-                                    >
-                                        Solicitar Corrección
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="p-3 bg-surface rounded-full border border-border-thin mb-3 shadow-sm">
-                                    <MessageSquare size={16} className="text-text-dim" />
-                                </div>
-                                <p className="text-[9px] font-black text-text-main uppercase tracking-wider">Sin observaciones</p>
-                                <p className="text-[8px] text-text-dim mt-1 max-w-[190px] leading-relaxed uppercase font-mono">
-                                    Agregue observaciones por escrito o grabe explicaciones de voz sobre este campo.
-                                </p>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Input y Speech-to-Text */}
-                    <div className="shrink-0 p-3 border-t border-border-thin bg-surface space-y-2">
-                        <div className="flex items-center gap-2 bg-bg-deep border border-border-thin rounded-xl px-3 py-2.5 focus-within:border-brand/45 transition-all">
-                            <textarea
-                                value={contextualInput}
-                                onChange={(e) => setContextualInput(e.target.value)}
-                                placeholder="Escriba la observación..."
-                                className="flex-1 bg-transparent border-0 outline-none text-xs text-text-main placeholder:text-text-dim/60 resize-none h-10 font-mono leading-relaxed"
-                                disabled={submitting}
-                            />
-                            <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={handleStartListening}
-                                    className={`p-2 rounded-full border transition-all cursor-pointer ${
-                                        isListening 
-                                            ? 'bg-error/15 text-error border-error/30 animate-pulse' 
-                                            : 'bg-surface hover:bg-surface-hover border-border-thin text-text-dim hover:text-text-main'
-                                    }`}
-                                    title={isListening ? "Detener voz" : "Grabar explicación de voz"}
-                                >
-                                    {isListening ? <MicOff size={12} /> : <Mic size={12} />}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={saveContextualComment}
-                                    disabled={!contextualInput.trim()}
-                                    className="p-2 rounded-full bg-text-main hover:bg-text-main/90 text-bg-deep disabled:opacity-30 transition-all cursor-pointer"
-                                    title="Guardar comentario"
-                                >
-                                    <Send size={12} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Header de la Página */}
-            <header className="px-6 py-4 border-b border-border-thin bg-surface flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-4 min-w-0">
-                    <button 
-                        onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)} 
-                        className="p-2 rounded-xl border border-border-thin hover:border-border-hover bg-surface hover:bg-surface-hover transition-all text-text-dim hover:text-text-main"
-                    >
-                        <ArrowLeft size={16} />
-                    </button>
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                            <span className="badge-vercel badge-vercel-info !text-[9px] !py-0.5 uppercase tracking-wider font-mono">Revisión Técnica</span>
-                            <span className="text-[10px] text-text-dim font-mono">UUID: {project.uuid.substring(0, 8).toUpperCase()}</span>
+            <div className="px-4 md:px-8 py-3 border-b border-border-thin bg-bg-deep/75 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-[50] shrink-0">
+                <div className="flex items-center justify-between w-full md:w-auto gap-4">
+                    <div className="flex items-center gap-3">
+                        {/* Botón Volver/Cerrar */}
+                        <button
+                            onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                            className="flex items-center gap-2 py-1.5 text-text-dim hover:text-text-main transition-all duration-200 group cursor-pointer text-[10px] md:text-xs font-bold uppercase tracking-wider bg-transparent border-0 active:scale-95"
+                            title="Salir del documento y guardar cambios"
+                            aria-label="Salir del documento"
+                        >
+                            <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+                            <span>Volver</span>
+                        </button>
+
+                        {/* Divisor Vertical */}
+                        <div className="h-5 w-[1px] bg-border-thin mx-1" />
+
+                        {/* Identidad */}
+                        <div className="min-w-0">
+                            <h2 className="text-xs md:text-sm font-black text-text-main tracking-tighter uppercase leading-none truncate max-w-[150px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[500px]" title={project ? project.title : ''}>
+                                {project ? project.title : 'Cargando...'}
+                            </h2>
+                            <p className="text-[8px] text-text-dim font-bold uppercase tracking-widest mt-0.5 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[500px]">
+                                Revisión Técnica del Protocolo de Investigación
+                            </p>
                         </div>
-                        <h1 className="text-sm font-bold text-text-main uppercase tracking-tight mt-0.5 truncate max-w-xl" title={project.title}>
-                            {project.title}
-                        </h1>
                     </div>
                 </div>
 
-                {/* Selector de Vista */}
-                <div className="flex items-center gap-1.5 border border-border-thin bg-surface-hover/30 p-1 rounded-xl">
-                    <button
-                        onClick={() => {
-                            setViewMode('pdf');
-                            setShowContextualPanel(false);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                            viewMode === 'pdf' 
-                                ? 'bg-text-main text-bg-deep' 
+                <div className="flex items-center gap-3">
+                    {/* Selector de Vista */}
+                    <div className="flex items-center gap-1.5 border border-border-thin bg-surface-hover/30 p-1 rounded-xl">
+                        <button
+                            onClick={() => {
+                                setViewMode('pdf');
+                                setRightSidebarTab('consistencia');
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'pdf'
+                                ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
                                 : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                        }`}
-                    >
-                        <FileText size={12} />
-                        Vista PDF
-                    </button>
-                    <button
-                        onClick={() => setViewMode('interactive')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                            viewMode === 'interactive' 
-                                ? 'bg-text-main text-bg-deep' 
+                                }`}
+                        >
+                            <FileText size={12} />
+                            Vista PDF
+                        </button>
+                        <button
+                            onClick={() => setViewMode('interactive')}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'interactive'
+                                ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
                                 : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                        }`}
-                    >
-                        <Eye size={12} />
-                        Revisión Contextual
-                    </button>
+                                }`}
+                        >
+                            <Eye size={12} />
+                            Revisión Contextual
+                        </button>
+                    </div>
                 </div>
-            </header>
+            </div>
 
             {/* Layout Principal de Tres Columnas */}
             <div className="flex-1 flex overflow-hidden">
-                
+
                 {/* LADO IZQUIERDO: VISOR INTERACTIVO O PDF (FLEX-1) */}
                 <div className="flex-1 h-full border-r border-border-thin bg-bg-deep flex overflow-hidden">
                     {viewMode === 'pdf' ? (
@@ -677,9 +794,9 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 <Loader2 size={16} className="animate-spin text-brand" /> Generando vista previa del PDF...
                             </div>
                         ) : pdfUrl ? (
-                            <iframe 
-                                src={`${pdfUrl}#toolbar=0`} 
-                                className="w-full h-full border-0 bg-bg-deep" 
+                            <iframe
+                                src={`${pdfUrl}#toolbar=0`}
+                                className="w-full h-full border-0 bg-bg-deep"
                                 title="Visor PDF Protocolo"
                             />
                         ) : (
@@ -690,57 +807,107 @@ export const RevisionTecnicaPage: React.FC = () => {
                         )
                     ) : (
                         /* SECCIONES Y CAMPOS ESTRUCTURADOS */
-                        <div className="flex-1 flex h-full overflow-hidden">
-                            {/* Menú de Secciones (220px) */}
-                            <div className="w-[220px] h-full bg-surface-hover/20 border-r border-border-thin/80 p-4 flex flex-col gap-1.5 overflow-y-auto shrink-0">
-                                <div className="px-2.5 pb-3 pt-1 border-b border-border-thin/50 mb-2">
-                                    <span className="text-[9px] font-black text-text-dim uppercase tracking-widest block font-mono">Dossier de Secciones</span>
+                        <div className="flex-1 flex h-full overflow-hidden relative">
+                            {/* Menú de Secciones Colapsable y Resizable */}
+                            <div
+                                ref={leftSidebarRef}
+                                style={{ width: isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px' }}
+                                className="h-full bg-surface-hover/20 border-r border-border-thin flex flex-col shrink-0 relative overflow-hidden transition-all duration-300"
+                            >
+                                <div className="px-4 pb-3 pt-4 border-b border-border-thin/50 flex justify-between items-center shrink-0">
+                                    <span className="text-[9px] font-black text-text-dim uppercase tracking-widest block font-mono">Secciones</span>
+                                    <button
+                                        onClick={() => {
+                                            setIsLeftSidebarOpen(false);
+                                            localStorage.setItem('rev_left_sidebar_open', 'false');
+                                        }}
+                                        className="p-1 hover:bg-surface-hover rounded text-text-dim hover:text-text-main cursor-pointer"
+                                        title="Ocultar Secciones"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
                                 </div>
-                                {SECTIONS.map((sec) => {
-                                    const SecIcon = sec.icon;
-                                    const isActive = activeSection === sec.id;
-                                    
-                                    let hasActiveComments = false;
-                                    if (sec.id === 'identificacion') {
-                                        hasActiveComments = ['titulo', 'programa', 'grupo', 'dominio_linea', 'campos', 'carrera'].some(k => (comments[k]?.text || '').trim().length > 0);
-                                    } else if (sec.id === 'equipo') {
-                                        hasActiveComments = (comments.equipo?.text || '').trim().length > 0;
-                                    } else if (sec.id === 'plan_tecnico') {
-                                        hasActiveComments = ['antecedentes', 'justificacion', 'objetivos', 'metodologia'].some(k => (comments[k]?.text || '').trim().length > 0);
-                                    } else if (sec.id === 'recursos') {
-                                        hasActiveComments = (comments.presupuesto?.text || '').trim().length > 0;
-                                    } else if (sec.id === 'impacto') {
-                                        hasActiveComments = (comments.impacto?.text || '').trim().length > 0;
-                                    } else if (sec.id === 'cronograma') {
-                                        hasActiveComments = (comments.cronograma?.text || '').trim().length > 0;
-                                    } else if (sec.id === 'bibliografia') {
-                                        hasActiveComments = (comments.bibliografia?.text || '').trim().length > 0;
-                                    }
+                                <div className="p-4 flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar">
+                                    {SECTIONS.map((sec) => {
+                                        const SecIcon = sec.icon;
+                                        const isActive = activeSection === sec.id;
 
-                                    return (
-                                        <button
-                                            key={sec.id}
-                                            onClick={() => setActiveSection(sec.id)}
-                                            className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer ${
-                                                isActive 
-                                                    ? 'bg-text-main text-bg-deep font-bold shadow-sm' 
+                                        let hasActiveComments = false;
+                                        if (sec.id === 'identificacion') {
+                                            hasActiveComments = ['titulo', 'programa', 'grupo', 'dominio_linea', 'campos', 'carrera'].some(k => (comments[k]?.text || '').trim().length > 0);
+                                        } else if (sec.id === 'equipo') {
+                                            hasActiveComments = (comments.equipo?.text || '').trim().length > 0;
+                                        } else if (sec.id === 'plan_tecnico') {
+                                            hasActiveComments = ['antecedentes', 'justificacion', 'objetivos', 'metodologia'].some(k => (comments[k]?.text || '').trim().length > 0);
+                                        } else if (sec.id === 'recursos') {
+                                            hasActiveComments = (comments.presupuesto?.text || '').trim().length > 0;
+                                        } else if (sec.id === 'impacto') {
+                                            hasActiveComments = (comments.impacto?.text || '').trim().length > 0;
+                                        } else if (sec.id === 'cronograma') {
+                                            hasActiveComments = (comments.cronograma?.text || '').trim().length > 0;
+                                        } else if (sec.id === 'bibliografia') {
+                                            hasActiveComments = (comments.bibliografia?.text || '').trim().length > 0;
+                                        }
+
+                                        return (
+                                            <button
+                                                key={sec.id}
+                                                onClick={() => setActiveSection(sec.id)}
+                                                className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer ${isActive
+                                                    ? 'bg-text-main text-bg-deep font-bold shadow-sm'
                                                     : 'text-text-dim hover:text-text-main hover:bg-surface-hover/60'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2.5 truncate">
-                                                <SecIcon size={14} className="shrink-0" />
-                                                <span className="text-[10px] uppercase tracking-wider truncate">{sec.label}</span>
-                                            </div>
-                                            {hasActiveComments && (
-                                                <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse shrink-0 ml-1.5" />
-                                            )}
-                                        </button>
-                                    );
-                                })}
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-2.5 truncate">
+                                                    <SecIcon size={14} className="shrink-0" />
+                                                    <span className="text-[10px] uppercase tracking-wider truncate">{sec.label}</span>
+                                                </div>
+                                                {hasActiveComments && (
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse shrink-0 ml-1.5" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Tirador Resizer derecho */}
+                                <div
+                                    onMouseDown={startDraggingLeft}
+                                    className="absolute top-0 right-0 bottom-0 w-1.5 cursor-col-resize hover:bg-brand/35 active:bg-brand/50 z-20 transition-all"
+                                    title="Arrastra para cambiar ancho"
+                                />
                             </div>
 
                             {/* Campos del Formulario de la Sección Activa */}
-                            <div className="flex-1 h-full p-8 overflow-y-auto space-y-6">
+                            <div className="flex-1 h-full p-8 overflow-y-auto space-y-6 relative custom-scrollbar bg-bg-deep/20">
+                                {/* Botón de reapertura del Dossier si está cerrado */}
+                                {!isLeftSidebarOpen && (
+                                    <button
+                                        onClick={() => {
+                                            setIsLeftSidebarOpen(true);
+                                            localStorage.setItem('rev_left_sidebar_open', 'true');
+                                        }}
+                                        className="absolute left-4 top-4 z-30 p-2.5 bg-surface hover:bg-surface-hover border border-border-thin rounded-xl text-text-dim hover:text-text-main flex items-center gap-1.5 shadow-md transition-all duration-200"
+                                        title="Mostrar Secciones"
+                                    >
+                                        <BookOpen size={14} />
+                                        <span className="text-[9px] font-bold uppercase tracking-widest">Secciones</span>
+                                    </button>
+                                )}
+                                {/* Botón de reapertura del Panel de Auditoría si está cerrado */}
+                                {!isRightSidebarOpen && (
+                                    <button
+                                        onClick={() => {
+                                            setIsRightSidebarOpen(true);
+                                            localStorage.setItem('rev_right_sidebar_open', 'true');
+                                        }}
+                                        className="absolute right-4 top-4 z-30 p-2.5 bg-surface hover:bg-surface-hover border border-border-thin rounded-xl text-text-dim hover:text-text-main flex items-center gap-1.5 shadow-md transition-all duration-200 animate-fade-in"
+                                        title="Mostrar Panel de Auditoría"
+                                    >
+                                        <Shield size={14} />
+                                        <span className="text-[9px] font-bold uppercase tracking-widest">Auditoría</span>
+                                    </button>
+                                )}
                                 {/* 1. IDENTIFICACIÓN */}
                                 {activeSection === 'identificacion' && (
                                     <div className="space-y-5 animate-fade-in">
@@ -1051,30 +1218,63 @@ export const RevisionTecnicaPage: React.FC = () => {
                     )}
                 </div>
 
-                {/* LADO DERECHO: SIDEBAR FIJO PERSISTENTE (360px) */}
-                <div className="w-[360px] h-full bg-surface border-l border-border-thin flex flex-col shrink-0">
-                    <div className="tabs-vercel shrink-0 px-6 border-b border-border-thin bg-surface-hover/20">
-                        <button 
-                            onClick={() => setActiveTab('consistencia')} 
-                            className={`tab-vercel-item ${activeTab === 'consistencia' ? 'active' : ''}`}
+                {/* LADO DERECHO: SIDEBAR AJUSTABLE Y COLAPSABLE DE AUDITORÍA */}
+                <div
+                    ref={rightSidebarRef}
+                    style={{ width: isRightSidebarOpen ? `${rightSidebarWidth}px` : '0px' }}
+                    className="h-full bg-surface border-l border-border-thin flex flex-col shrink-0 relative overflow-hidden transition-all duration-300"
+                >
+                    {/* Tirador Resizer izquierdo */}
+                    <div
+                        onMouseDown={startDraggingRight}
+                        className="absolute top-0 left-0 bottom-0 w-1.5 cursor-col-resize hover:bg-brand/35 active:bg-brand/50 z-20 transition-all"
+                        title="Arrastra para cambiar ancho"
+                    />
+
+                    {/* Cabecera / Pestañas */}
+                    <div className="tabs-vercel shrink-0 px-6 border-b border-border-thin bg-surface-hover/20 flex items-center justify-between">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setRightSidebarTab('consistencia')}
+                                className={`tab-vercel-item ${rightSidebarTab === 'consistencia' ? 'active' : ''}`}
+                            >
+                                <Shield size={12} className="mr-1.5" /> Consistencia
+                            </button>
+                            <button
+                                onClick={() => setRightSidebarTab('metricas')}
+                                className={`tab-vercel-item ${rightSidebarTab === 'metricas' ? 'active' : ''}`}
+                            >
+                                <BarChart2 size={12} className="mr-1.5" /> Métricas
+                            </button>
+                            {activeCommentField && (comments[activeCommentField]?.text || rightSidebarTab === 'comentario') && (
+                                <button
+                                    onClick={() => setRightSidebarTab('comentario')}
+                                    className={`tab-vercel-item ${rightSidebarTab === 'comentario' ? 'active' : ''}`}
+                                >
+                                    <MessageSquare size={12} className="mr-1.5" /> Comentario
+                                </button>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => {
+                                setIsRightSidebarOpen(false);
+                                localStorage.setItem('rev_right_sidebar_open', 'false');
+                            }}
+                            className="p-1 hover:bg-surface-hover rounded text-text-dim hover:text-text-main cursor-pointer"
+                            title="Ocultar Auditoría"
                         >
-                            <Shield size={12} className="mr-1.5" /> Consistencia
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('metricas')} 
-                            className={`tab-vercel-item ${activeTab === 'metricas' ? 'active' : ''}`}
-                        >
-                            <BarChart2 size={12} className="mr-1.5" /> Métricas
+                            <ChevronRight size={14} />
                         </button>
                     </div>
 
-                    <div className="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                    {/* Contenido Dinámico */}
+                    <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
                         {/* TAB 1: CONSISTENCIA */}
-                        {activeTab === 'consistencia' && (
-                            <div className="space-y-6 animate-fade-in">
+                        {rightSidebarTab === 'consistencia' && (
+                            <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black text-text-main uppercase tracking-widest">Chequeos de Consistencia Automática</h3>
-                                    
+
                                     <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/30 flex items-start gap-3">
                                         {project.convocatoriaMontoMaximo && project.presupuesto > project.convocatoriaMontoMaximo ? (
                                             <AlertTriangle size={16} className="text-error mt-0.5 shrink-0 animate-bounce" />
@@ -1106,15 +1306,31 @@ export const RevisionTecnicaPage: React.FC = () => {
                                             <p className="text-[9px] text-text-dim">Director: {project.directorProyecto}</p>
                                         </div>
                                     </div>
+
+                                    {/* Carga Horaria Docente (CACES Compliance) */}
+                                    <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/30 flex items-start gap-3">
+                                        {!isHoursOk ? (
+                                            <AlertTriangle size={16} className="text-warning mt-0.5 shrink-0 animate-pulse" />
+                                        ) : (
+                                            <CheckCircle size={16} className="text-success mt-0.5 shrink-0" />
+                                        )}
+                                        <div className="flex-1 leading-snug">
+                                            <p className="text-xs font-bold text-text-main">Carga Horaria Docente</p>
+                                            <p className="text-[10px] text-text-dim mt-0.5">
+                                                {isHoursOk
+                                                    ? 'Todos los docentes cuentan con carga horaria disponible.'
+                                                    : `Exceso detectado en: ${teachersWithExceedingHours.map(t => t.nombres_completos || t.nombre || `${t.nombre || ''} ${t.apellido || ''}`).join(', ')}`}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {semanticCheck && (
                                     <div className="p-5 rounded-2xl border border-brand/20 bg-brand/[0.01] space-y-3.5">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-brand uppercase tracking-wider">Alineación Semántica IA</span>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider font-mono ${
-                                                semanticCheck.status === 'excelente' ? 'text-success' : 'text-warning'
-                                            }`}>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider font-mono ${semanticCheck.status === 'excelente' ? 'text-success' : 'text-warning'
+                                                }`}>
                                                 Ajuste: {semanticCheck.score}%
                                             </span>
                                         </div>
@@ -1138,10 +1354,10 @@ export const RevisionTecnicaPage: React.FC = () => {
                         )}
 
                         {/* TAB 2: MÉTRICAS */}
-                        {activeTab === 'metricas' && (
-                            <div className="space-y-6 animate-fade-in">
+                        {rightSidebarTab === 'metricas' && (
+                            <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                                 <h3 className="text-[10px] font-black text-text-main uppercase tracking-widest">Estadísticas Clave del Protocolo</h3>
-                                
+
                                 <div className="grid grid-cols-2 gap-3.5">
                                     <div className="p-3.5 rounded-xl border border-border-thin bg-bg-deep/20 text-center space-y-1">
                                         <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Palabras</p>
@@ -1168,7 +1384,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 pt-4">
                                     <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-text-dim">
                                         <span>Completitud de Secciones</span>
                                         <span>{metrics.progressPercent}%</span>
@@ -1179,10 +1395,114 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* TAB 3: OBSERVACIÓN CONTEXTUAL (ACOPLADA) */}
+                        {rightSidebarTab === 'comentario' && (
+                            <div className="flex-1 flex flex-col min-h-0 bg-surface">
+                                {/* Historial o Vacío */}
+                                <div className="flex-1 overflow-y-auto p-5 flex flex-col justify-center items-center bg-bg-deep/5 custom-scrollbar text-center text-text-dim">
+                                    <div className="w-full px-1 py-2 text-left mb-2.5 shrink-0">
+                                        <p className="text-[8px] font-mono font-bold text-amber-500 uppercase tracking-widest leading-none mb-1">CAMPO BAJO INSPECCIÓN:</p>
+                                        <p className="text-xs font-bold text-text-main uppercase tracking-tight truncate leading-tight" title={FIELD_LABELS[activeCommentField]}>
+                                            {FIELD_LABELS[activeCommentField] || 'Sin selección'}
+                                        </p>
+                                    </div>
+
+                                    {comments[activeCommentField]?.text ? (
+                                        <div className="w-full bg-surface border border-border-thin p-4 rounded-xl text-left space-y-3.5 shadow-sm">
+                                            <div className="flex items-center justify-between border-b border-border-thin/20 pb-1.5">
+                                                <span className="text-[9px] font-bold text-brand uppercase tracking-wider font-mono">Dictamen del Auditor:</span>
+                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest ${comments[activeCommentField].status === 'Aprobado' ? 'text-success' : 'text-error'
+                                                    }`}>
+                                                    {comments[activeCommentField].status}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-text-main font-mono leading-relaxed italic break-words">
+                                                "{comments[activeCommentField].text}"
+                                            </p>
+                                            <div className="flex justify-end gap-2 pt-2 border-t border-border-thin/40">
+                                                <button
+                                                    onClick={() => handleCommentChange(activeCommentField, 'status', 'Aprobado')}
+                                                    className="text-[8px] font-bold uppercase tracking-widest text-success px-2 py-1 rounded bg-success/5 hover:bg-success/10 transition-all cursor-pointer"
+                                                >
+                                                    Aprobado
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCommentChange(activeCommentField, 'status', 'Corregir')}
+                                                    className="text-[8px] font-bold uppercase tracking-widest text-error px-2 py-1 rounded bg-error/5 hover:bg-error/10 transition-all cursor-pointer"
+                                                >
+                                                    Solicitar Corrección
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-fade-in flex flex-col items-center">
+                                            <div className="p-3 bg-surface rounded-full border border-border-thin mb-3 shadow-sm text-amber-500">
+                                                <MessageSquare size={16} />
+                                            </div>
+                                            <p className="text-[10px] font-black text-text-main uppercase tracking-wider">Sin observaciones aún</p>
+                                            <p className="text-[9px] text-text-dim mt-1.5 max-w-[200px] leading-relaxed uppercase font-mono">
+                                                Escriba retroalimentación específica o grabe con voz los ajustes requeridos para este campo.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Formulario de Comentario de Campo */}
+                                <div className="shrink-0 p-4 border-t border-border-thin bg-surface-hover/20">
+                                    <div className="flex items-center gap-2 bg-bg-deep border border-border-thin rounded-xl px-3 py-2.5 focus-within:border-brand/45 transition-all">
+                                        <textarea
+                                            value={contextualInput}
+                                            onChange={(e) => setContextualInput(e.target.value)}
+                                            placeholder="Escriba la retroalimentación..."
+                                            className="flex-1 bg-transparent border-0 outline-none text-xs text-text-main placeholder:text-text-dim/60 resize-none h-10 font-mono leading-relaxed"
+                                            disabled={submitting}
+                                        />
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <style>{`
+                                                @keyframes soundwave {
+                                                    0% { height: 4px; }
+                                                    100% { height: 20px; }
+                                                }
+                                            `}</style>
+                                            {isListening && (
+                                                <div className="flex items-center gap-0.5 px-1 shrink-0 h-6">
+                                                    <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.1s', height: '12px' }} />
+                                                    <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.4s', height: '18px' }} />
+                                                    <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.2s', height: '14px' }} />
+                                                    <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.6s', height: '16px' }} />
+                                                    <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.3s', height: '10px' }} />
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={handleStartListening}
+                                                className={`p-2 rounded-full border transition-all cursor-pointer ${isListening
+                                                    ? 'bg-error/15 text-error border-error/30 animate-pulse'
+                                                    : 'bg-surface hover:bg-surface-hover border-border-thin text-text-dim hover:text-text-main'
+                                                    }`}
+                                                title={isListening ? "Detener voz" : "Grabar explicación de voz"}
+                                            >
+                                                {isListening ? <MicOff size={12} /> : <Mic size={12} />}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={saveContextualComment}
+                                                disabled={!contextualInput.trim()}
+                                                className="p-2 rounded-full bg-text-main hover:bg-text-main/90 text-bg-deep disabled:opacity-30 transition-all cursor-pointer"
+                                                title="Guardar dictamen"
+                                            >
+                                                <Send size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Decisiones Generales (Sticky inferior persistente) */}
-                    <div className="p-6 border-t border-border-thin bg-surface-hover/30 space-y-4 shrink-0 font-sans">
+                    <div className="p-6 pb-20 border-t border-border-thin bg-surface-hover/30 space-y-4 shrink-0 font-sans">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-0.5">Observaciones Generales de la Auditoría</label>
                             <textarea
@@ -1198,7 +1518,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                             <button
                                 onClick={handleAprobar}
                                 disabled={submitting}
-                                className="flex items-center justify-center gap-1.5 btn-vercel-primary py-3 text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer"
+                                className="flex items-center justify-center gap-1.5 btn-vercel-primary py-3 text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer animate-fade-in"
                             >
                                 {submitting ? <Loader2 size={12} className="animate-spin" /> : <Scale size={12} />}
                                 Aprobar Requisitos
@@ -1207,7 +1527,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                             <button
                                 onClick={handleDevolver}
                                 disabled={submitting}
-                                className="flex items-center justify-center gap-1.5 bg-transparent hover:bg-error/10 text-error border border-error/20 hover:border-error/40 rounded-xl py-3 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer"
+                                className="flex items-center justify-center gap-1.5 bg-transparent hover:bg-error/10 text-error border border-error/20 hover:border-error/40 rounded-xl py-3 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer animate-fade-in"
                             >
                                 {submitting ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                                 Devolver Proyecto
@@ -1217,7 +1537,8 @@ export const RevisionTecnicaPage: React.FC = () => {
                 </div>
 
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

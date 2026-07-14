@@ -1712,6 +1712,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FileHash).HasColumnName("file_hash").HasMaxLength(100);
             entity.Property(e => e.TraceabilityCode).HasColumnName("traceability_code").HasMaxLength(100);
             entity.Property(e => e.DataSnapshotJson).HasColumnName("data_snapshot_json").HasColumnType("longtext");
+            entity.Property(e => e.IsFilePurged).HasColumnName("is_file_purged").HasDefaultValue(false).IsRequired();
+            entity.Property(e => e.PurgedAt).HasColumnName("purged_at");
+            entity.Property(e => e.PurgedBy).HasColumnName("purged_by").HasMaxLength(100);
         });
 
         modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentTemplate>(entity =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff, CheckCircle, XCircle, Settings2 } from 'lucide-react';
+import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff, CheckCircle, XCircle, Settings2, HardDrive } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -7,6 +7,7 @@ import { useAuth } from '../../api/AuthContext';
 import { useConfirm } from '../../api/ConfirmContext';
 import { SignatureProfileCard } from './components/SignatureProfileCard';
 import ConfiguracionPage from '../Admin/ConfiguracionPage';
+import DocumentMaintenancePage from '../Admin/DocumentMaintenancePage';
 
 interface PerfilData {
     orcid_id?: string;
@@ -34,19 +35,23 @@ const SettingsPage: React.FC = () => {
         ? 'parametros' 
         : (isAdmin && (tabParam === 'plantillas' || mainTabParam === 'plantillas')) 
             ? 'plantillas' 
-            : 'perfil';
+            : (isAdmin && (tabParam === 'almacenamiento' || mainTabParam === 'almacenamiento'))
+                ? 'almacenamiento'
+                : 'perfil';
 
-    const setActiveMainTab = (tab: 'perfil' | 'parametros' | 'plantillas') => {
+    const setActiveMainTab = (tab: 'perfil' | 'parametros' | 'plantillas' | 'almacenamiento') => {
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('mainTab', tab);
             if (tab === 'parametros') {
                 const currentTab = next.get('tab');
-                if (!currentTab || currentTab === 'parametros' || currentTab === 'plantillas') {
+                if (!currentTab || currentTab === 'parametros' || currentTab === 'plantillas' || currentTab === 'almacenamiento') {
                     next.set('tab', 'lineas');
                 }
             } else if (tab === 'plantillas') {
                 next.set('tab', 'plantillas');
+            } else if (tab === 'almacenamiento') {
+                next.set('tab', 'almacenamiento');
             } else {
                 next.delete('tab');
                 next.delete('mainTab');
@@ -268,6 +273,11 @@ const SettingsPage: React.FC = () => {
                             <Shield size={12} className="text-brand" />
                             <span>Seguridad Documental</span>
                         </>
+                    ) : activeMainTab === 'almacenamiento' ? (
+                        <>
+                            <HardDrive size={12} className="text-brand" />
+                            <span>Mantenimiento y Almacenamiento</span>
+                        </>
                     ) : (
                         <>
                             <User size={12} className="text-brand" />
@@ -276,14 +286,16 @@ const SettingsPage: React.FC = () => {
                     )}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">
-                    {activeMainTab === 'parametros' ? 'Administración Global' : activeMainTab === 'plantillas' ? 'Firmas por Plantilla' : 'Mi Cuenta'}
+                    {activeMainTab === 'parametros' ? 'Administración Global' : activeMainTab === 'plantillas' ? 'Firmas por Plantilla' : activeMainTab === 'almacenamiento' ? 'Ciclo de Vida Documental' : 'Mi Cuenta'}
                 </h1>
                 <p className="text-xs md:text-sm text-text-dim max-w-xl leading-relaxed">
                     {activeMainTab === 'parametros'
                         ? 'Administre las líneas de investigación, períodos académicos, dominios institucionales e hitos normativos CACES.'
                         : activeMainTab === 'plantillas'
                             ? 'Configure las firmas requeridas y el tipo de firma electrónica para cada plantilla de documento oficial de la institución.'
-                            : 'Administre su perfil científico, identificadores de investigación y otorgue su consentimiento de firma conforme a la LOPDP.'
+                            : activeMainTab === 'almacenamiento'
+                                ? 'Depure y audite el almacenamiento físico de versiones preliminares de documentos obsoletos bajo políticas del CACES.'
+                                : 'Administre su perfil científico, identificadores de investigación y otorgue su consentimiento de firma conforme a la LOPDP.'
                     }
                 </p>
             </header>
@@ -316,6 +328,15 @@ const SettingsPage: React.FC = () => {
                     >
                         <Shield size={14} />
                         <span>Firmas por Plantilla</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveMainTab('almacenamiento')}
+                        className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                            activeMainTab === 'almacenamiento' ? 'active' : ''
+                        }`}
+                    >
+                        <HardDrive size={14} />
+                        <span>Almacenamiento</span>
                     </button>
                 </div>
             )}
@@ -550,7 +571,7 @@ const SettingsPage: React.FC = () => {
                 <div className="animate-fade-up">
                     <ConfiguracionPage embedded={true} />
                 </div>
-            ) : (
+            ) : activeMainTab === 'plantillas' ? (
                 <div className="max-w-6xl space-y-6 animate-fade-up">
                     <div className="bento-card static p-6 space-y-6">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -639,6 +660,8 @@ const SettingsPage: React.FC = () => {
                         )}
                     </div>
                 </div>
+            ) : (
+                <DocumentMaintenancePage isEmbedded={true} />
             )}
         </div>
     );

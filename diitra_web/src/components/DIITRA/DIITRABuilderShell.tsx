@@ -1529,6 +1529,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             sectionName={activeTab}
                                             cowork={cowork}
                                             allSections={sections.map(s => s.id)}
+                                            entityUuid={entityUuid}
+                                            projectStatus={projectStatus}
                                             onClose={() => setIsSidebarOpen(false)}
                                         />
                                     </div>

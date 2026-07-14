@@ -29,7 +29,6 @@ const RevisionTecnicaPage    = lazy(() => import('./pages/Investigacion/Proyecto
 const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
 const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
 const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
-const ConfiguracionPage      = lazy(() => import('./pages/Admin/ConfiguracionPage'));
 const PublicConvocatoriasPage = lazy(() => import('./pages/Investigacion/Convocatorias/PublicConvocatoriasPage'));
 const VerifyDocument         = lazy(() => import('./pages/Public/VerifyDocument'));
 const PublicGroupsPage       = lazy(() => import('./pages/Public/PublicGroupsPage'));
@@ -44,6 +43,7 @@ const LopdpAdminPage         = lazy(() => import('./pages/Lopdp/LopdpAdminPage')
 const CalendarioPage         = lazy(() => import('./pages/Calendario/CalendarioPage').then(m => ({ default: m.CalendarioPage })));
 const RecycleBinPage         = lazy(() => import('./pages/RecycleBin/RecycleBinPage'));
 const ResetAlertPage         = lazy(() => import('./pages/Auth/ResetAlertPage'));
+const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMaintenancePage'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -277,6 +277,7 @@ function App() {
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
                             <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
+                             <Route path="/admin/documentos" element={<AdminRoute><DocumentMaintenancePage /></AdminRoute>} />
                              <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                              <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
                              <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />

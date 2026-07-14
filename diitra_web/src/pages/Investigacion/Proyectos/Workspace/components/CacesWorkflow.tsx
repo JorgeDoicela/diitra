@@ -114,7 +114,9 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                         }
                                     } else if (phase.id === 'Enviado') {
-                                        // Fase de revisión técnica inicial por el administrador.
+                                        if (isAdmin) {
+                                            navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                        }
                                     } else if (phase.id === 'En Revisión') {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
@@ -138,7 +140,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 </h3>
                                 <p className="text-[11px] text-text-dim mt-1.5 leading-relaxed">
                                     {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
-                                    {phase.id === 'Enviado' && 'Revisión técnica inicial de requisitos institucionales y CACES por el administrador.'}
+                                    {phase.id === 'Enviado' && (
+                                        isAdmin 
+                                            ? 'Revisión de requisitos CACES, carga horaria, firmas y presupuesto.'
+                                            : 'El proyecto está siendo revisado técnicamente por el administrador.'
+                                    )}
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
@@ -168,29 +174,19 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     </div>
                                 )}
 
-                                {phase.id === 'Enviado' && (isCurrent || isPast) && (
+                                {phase.id === 'Enviado' && isAdmin && isCurrentActive && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
-                                            <Shield size={14} className="text-brand shrink-0 mt-0.5" />
-                                            <span>
-                                                {isAdmin 
-                                                    ? 'El proyecto requiere validación formal del administrador (CACES, carga horaria, firmas y presupuesto) antes de pasar a evaluación por pares.'
-                                                    : 'El proyecto ha sido firmado digitalmente y enviado para la revisión técnica inicial por parte del administrador.'}
-                                            </span>
-                                        </div>
-                                        {isAdmin && isCurrentActive && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
-                                                }}
-                                                className="btn-vercel-primary !py-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
-                                            >
-                                                <Shield size={12} />
-                                                <span>Iniciar Revisión Técnica</span>
-                                            </button>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                            }}
+                                            className="btn-vercel-primary !py-2.5 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                        >
+                                            <Shield size={12} />
+                                            <span>Iniciar Revisión Técnica</span>
+                                        </button>
                                     </div>
                                 )}
                                 

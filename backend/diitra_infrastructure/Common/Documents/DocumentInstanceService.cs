@@ -183,6 +183,214 @@ namespace Diitra.Infrastructure.Common.Documents
             return instance;
         }
 
+        private long GetFileSize(string? relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath)) return 0;
+            try
+            {
+                var config = _serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                var basePath = config["Storage:BasePath"] ?? Path.Combine(AppContext.BaseDirectory, "diitra_data");
+                var fullPath = Path.Combine(basePath, relativePath);
+                if (System.IO.File.Exists(fullPath))
+                {
+                    return new System.IO.FileInfo(fullPath).Length;
+                }
+            }
+            catch {}
+            return 0;
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            if (bytes <= 0) return "0 Bytes";
+            string[] suffixes = { "Bytes", "KB", "MB", "GB" };
+            int counter = 0;
+            decimal number = bytes;
+            while (Math.Round(number / 1024) >= 1)
+            {
+                number /= 1024;
+                counter++;
+            }
+            return $"{number:n1} {suffixes[counter]}";
+        }
+
+        public async Task<IEnumerable<object>> GetObsoleteDocumentDiagnosisAsync(CancellationToken ct = default)
+        {
+            int retentionDays = 1825; // 5 años por defecto (CACES)
+            var configParam = await _context.InvConfigsGenerales
+                .FirstOrDefaultAsync(c => c.Clave == "DocumentMaintenance.RetentionDays", ct);
+
+            if (configParam != null && int.TryParse(configParam.Valor, out var dbDays))
+            {
+                retentionDays = dbDays;
+            }
+            var retentionLimitDate = DateTime.UtcNow.AddDays(-retentionDays);
+
+            var signedInstances = await _context.DocumentInstances
+                .Where(i => i.State == DocumentState.Signed || i.State == DocumentState.Archived)
+                .ToListAsync(ct);
+
+            var projectUuids = signedInstances.Select(i => i.EntityUuid).Distinct().ToList();
+            var projects = await _context.InvProyectos
+                .Where(p => projectUuids.Contains(p.Uuid))
+                .Select(p => new { p.Uuid, p.Titulo })
+                .ToDictionaryAsync(p => p.Uuid, p => p.Titulo, ct);
+
+            var diagnosis = new List<object>();
+
+            var grouped = signedInstances
+                .GroupBy(i => new { i.EntityUuid, i.TemplateCode })
+                .Where(g => g.Count() > 1);
+
+            foreach (var group in grouped)
+            {
+                var sorted = group.OrderByDescending(i => i.UpdatedAt).ToList();
+                // El primero (índice 0) es la versión oficial activa.
+                // El segundo (índice 1) es el respaldo caliente (política de retención).
+                // Las versiones obsoletas candidatas a purga masiva son del índice 2 en adelante.
+                // Para el listado de diagnóstico, mostramos todas las que no son la oficial activa (índice 1 en adelante)
+                // e indicamos si son candidatas de seguridad o respaldo.
+                var obsolete = sorted.Skip(1);
+
+                foreach (var inst in obsolete)
+                {
+                    bool isPurged = inst.IsFilePurged;
+                    long size = isPurged ? 0 : GetFileSize(inst.FinalPdfPath);
+                    string projectTitle = projects.TryGetValue(inst.EntityUuid, out var title) ? title : "Proyecto Desconocido";
+
+                    // Determinar si es la versión de respaldo caliente (v1 anterior)
+                    var isBackupVersion = sorted.Count > 1 && sorted[1].Uuid == inst.Uuid;
+
+                    // Determinar si está protegido por la política de retención del CACES (fecha reciente dentro de los 5 años)
+                    bool isProtectedByRetention = inst.CreatedAt >= retentionLimitDate;
+
+                    diagnosis.Add(new
+                    {
+                        uuid = inst.Uuid,
+                        projectUuid = inst.EntityUuid,
+                        projectTitle = projectTitle,
+                        documentTitle = inst.Title ?? $"Documento {inst.TemplateCode}",
+                        templateCode = inst.TemplateCode,
+                        version = inst.TemplateVersion,
+                        createdBy = inst.CreatedBy,
+                        createdAt = inst.CreatedAt,
+                        updatedAt = inst.UpdatedAt,
+                        finalPdfPath = isPurged 
+                            ? $"[PURGED] Purgado por {inst.PurgedBy} el {inst.PurgedAt:dd/MM/yyyy HH:mm:ss} (UTC)"
+                            : inst.FinalPdfPath,
+                        fileHash = inst.FileHash,
+                        isFilePurged = isPurged,
+                        fileSizeBytes = size,
+                        fileSizeFormatted = isPurged ? "Liberado" : FormatFileSize(size),
+                        traceabilityCode = inst.TraceabilityCode,
+                        isBackupVersion = isBackupVersion, // Bandera para la UI
+                        isProtectedByRetention = isProtectedByRetention // Indica si no califica para purga automática
+                    });
+                }
+            }
+
+            return diagnosis;
+        }
+
+        public async Task<bool> PurgeObsoleteFileByUuidAsync(string uuid, string purgedBy, CancellationToken ct = default)
+        {
+            var inst = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+            if (inst == null) return false;
+
+            if (inst.State != DocumentState.Signed && inst.State != DocumentState.Archived)
+            {
+                throw new InvalidOperationException("Solo se pueden purgar archivos de instancias firmadas o archivadas.");
+            }
+
+            if (inst.IsFilePurged)
+            {
+                return true;
+            }
+
+            var siblings = await _context.DocumentInstances
+                .Where(i => i.EntityUuid == inst.EntityUuid && i.TemplateCode == inst.TemplateCode)
+                .ToListAsync(ct);
+
+            var newest = siblings.OrderByDescending(i => i.UpdatedAt).First();
+            if (newest.Uuid == inst.Uuid)
+            {
+                throw new InvalidOperationException("No se puede purgar la versión firmada oficial más reciente de un proyecto activo.");
+            }
+
+            // Eliminar físicamente el archivo del disco primero
+            if (!string.IsNullOrEmpty(inst.FinalPdfPath))
+            {
+                try
+                {
+                    await _storageService.DeleteFileAsync(inst.FinalPdfPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Garbage Collector] Advertencia al eliminar archivo físico: {ex.Message}");
+                }
+            }
+
+            // Cambiar de forma estructurada el estado en base de datos
+            inst.PurgeFile(purgedBy);
+            await _context.SaveChangesAsync(ct);
+            return true;
+        }
+
+        public async Task<int> PurgeAllObsoleteDocumentFilesAsync(string purgedBy, CancellationToken ct = default)
+        {
+            int retentionDays = 1825; // 5 años por defecto (CACES)
+            var configParam = await _context.InvConfigsGenerales
+                .FirstOrDefaultAsync(c => c.Clave == "DocumentMaintenance.RetentionDays", ct);
+
+            if (configParam != null && int.TryParse(configParam.Valor, out var dbDays))
+            {
+                retentionDays = dbDays;
+            }
+            var retentionLimitDate = DateTime.UtcNow.AddDays(-retentionDays);
+
+            // Filtrar directamente desde la base de datos solo aquellas instancias obsoletas creadas antes de la fecha límite de retención
+            var signedInstances = await _context.DocumentInstances
+                .Where(i => (i.State == DocumentState.Signed || i.State == DocumentState.Archived) && i.FinalPdfPath != null && !i.IsFilePurged && i.CreatedAt < retentionLimitDate)
+                .ToListAsync(ct);
+
+            var grouped = signedInstances
+                .GroupBy(i => new { i.EntityUuid, i.TemplateCode })
+                .Where(g => g.Count() > 2); // Exige más de 2 versiones para purgar masivamente (política N-1)
+
+            int purgedCount = 0;
+
+            foreach (var group in grouped)
+            {
+                var sorted = group.OrderByDescending(i => i.UpdatedAt).ToList();
+                // Saltamos 2 versiones: la activa oficial (índice 0) y el respaldo caliente (índice 1).
+                var obsoleteInstances = sorted.Skip(2);
+
+                foreach (var inst in obsoleteInstances)
+                {
+                    if (!string.IsNullOrEmpty(inst.FinalPdfPath) && !inst.IsFilePurged)
+                    {
+                        try
+                        {
+                            await _storageService.DeleteFileAsync(inst.FinalPdfPath);
+                            inst.PurgeFile(purgedBy);
+                            purgedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Garbage Collector] Error al purgar archivo {inst.FinalPdfPath}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            if (purgedCount > 0)
+            {
+                await _context.SaveChangesAsync(ct);
+            }
+
+            return purgedCount;
+        }
+
         private static readonly HashSet<string> VolatileFields = new(StringComparer.OrdinalIgnoreCase)
         {
             // PROTOCOLO_INVESTIGACION

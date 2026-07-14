@@ -37,6 +37,10 @@ namespace Diitra.Domain.Common.Documents
         public string? TraceabilityCode { get; private set; }
         public string? DataSnapshotJson { get; private set; }
 
+        public bool IsFilePurged { get; private set; } = false;
+        public DateTime? PurgedAt { get; private set; }
+        public string? PurgedBy { get; private set; }
+
         protected DocumentInstance() { }
 
         public static DocumentInstance Create(
@@ -77,6 +81,15 @@ namespace Diitra.Domain.Common.Documents
             FileHash = hash;
             TraceabilityCode = traceabilityCode;
             State = DocumentState.Signed;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void PurgeFile(string purgedBy)
+        {
+            IsFilePurged = true;
+            PurgedAt = DateTime.UtcNow;
+            PurgedBy = purgedBy;
+            State = DocumentState.Archived;
             UpdatedAt = DateTime.UtcNow;
         }
 

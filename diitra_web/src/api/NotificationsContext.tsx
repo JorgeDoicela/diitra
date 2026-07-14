@@ -21,6 +21,7 @@ export interface Toast {
     body: string;
     type?: 'success' | 'error' | 'warning' | 'info' | 'default';
     url?: string;
+    onUndo?: () => void | Promise<void>;
 }
 
 interface NotificationsContextType {
@@ -31,7 +32,7 @@ interface NotificationsContextType {
     markAllAsRead: () => Promise<void>;
     isLoading: boolean;
     isConnected: boolean;
-    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string) => void;
+    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -58,6 +59,96 @@ class ToastErrorBoundary extends React.Component<{ children: React.ReactNode }, 
     }
 }
 
+interface VercelToastItemProps {
+    toast: Toast;
+    onDismiss: (id: string) => void;
+    navigate: (url: string) => void;
+}
+
+const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, navigate }) => {
+    const [isUndoing, setIsUndoing] = useState(false);
+    const toastType = toast.type || 'default';
+    let IconComponent = Bell;
+    let typeClass = 'toast-vercel-default';
+
+    if (toastType === 'success') {
+        IconComponent = CheckCircle2;
+        typeClass = 'toast-vercel-success';
+    } else if (toastType === 'error') {
+        IconComponent = XCircle;
+        typeClass = 'toast-vercel-error';
+    } else if (toastType === 'warning') {
+        IconComponent = AlertCircle;
+        typeClass = 'toast-vercel-warning';
+    } else if (toastType === 'info') {
+        IconComponent = Info;
+        typeClass = 'toast-vercel-info';
+    }
+
+    return (
+        <div 
+            className={`toast-vercel ${typeClass} group cursor-pointer`}
+            translate="no"
+            onClick={() => {
+                if (toast.url && !isUndoing) {
+                    navigate(toast.url);
+                }
+                onDismiss(toast.id);
+            }}
+        >
+            <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
+                <IconComponent size={14} />
+            </div>
+            <div className="flex-1 min-w-0 space-y-0.5">
+                <h4 className="text-xs font-semibold text-text-main leading-tight">{toast.title}</h4>
+                <p className="text-[10px] text-text-dim leading-relaxed">{toast.body}</p>
+                <div className="flex items-center gap-2.5 mt-1">
+                    {toast.url && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase hover:text-text-main transition-colors">
+                            Ver detalle
+                        </span>
+                    )}
+                    {toast.onUndo && (
+                        <button
+                            type="button"
+                            disabled={isUndoing}
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setIsUndoing(true);
+                                try {
+                                    await toast.onUndo?.();
+                                } catch (err) {
+                                    console.error("[Toast Undo] Error al revertir la acción:", err);
+                                } finally {
+                                    setIsUndoing(false);
+                                    onDismiss(toast.id);
+                                }
+                            }}
+                            className={`text-[9px] font-brand font-black uppercase transition-all px-2 py-0.5 rounded border shadow-sm ${
+                                isUndoing 
+                                    ? 'text-text-dim bg-surface border-border-thin cursor-not-allowed' 
+                                    : 'text-amber-400 hover:text-amber-300 hover:underline bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20'
+                            }`}
+                        >
+                            {isUndoing ? "Revirtiendo..." : "Deshacer"}
+                        </button>
+                    )}
+                </div>
+            </div>
+            <button 
+                className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDismiss(toast.id);
+                }}
+            >
+                <X size={12} />
+            </button>
+        </div>
+    );
+};
+
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -78,18 +169,20 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string) => {
+    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>) => {
         const id = Math.random().toString(36).substring(2, 9);
         
         // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
         const cleanBody = body.replace(/<\/?[^>]+(>|$)/g, "");
         
-        setToasts(prev => [...prev, { id, title, body: cleanBody, type, url }]);
+        setToasts(prev => [...prev, { id, title, body: cleanBody, type, url, onUndo }]);
         
-        // Auto-remove after 5 seconds
+        const duration = onUndo ? 8000 : 5000;
+        
+        // Auto-remove after duration
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, 5000);
+        }, duration);
 
         // Evitar duplicar la notificación nativa si Web Push está activo y sincronizado en este navegador
         const isWebPushActive = localStorage.getItem('web_push_active') === 'true';
@@ -241,61 +334,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             {/* Real-time Vercel-style Toasts */}
             <ToastErrorBoundary key={toasts.length}>
                 <div className="toast-container-vercel">
-                    {toasts.map(t => {
-                        const toastType = t.type || 'default';
-                        let IconComponent = Bell;
-                        let typeClass = 'toast-vercel-default';
-
-                        if (toastType === 'success') {
-                            IconComponent = CheckCircle2;
-                            typeClass = 'toast-vercel-success';
-                        } else if (toastType === 'error') {
-                            IconComponent = XCircle;
-                            typeClass = 'toast-vercel-error';
-                        } else if (toastType === 'warning') {
-                            IconComponent = AlertCircle;
-                            typeClass = 'toast-vercel-warning';
-                        } else if (toastType === 'info') {
-                            IconComponent = Info;
-                            typeClass = 'toast-vercel-info';
-                        }
-
-                        return (
-                            <div 
-                                key={t.id} 
-                                className={`toast-vercel ${typeClass} group cursor-pointer`}
-                                translate="no"
-                                onClick={() => {
-                                    if (t.url) {
-                                        navigate(t.url);
-                                    }
-                                    setToasts(prev => prev.filter(x => x.id !== t.id));
-                                }}
-                            >
-                                <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
-                                    <IconComponent size={14} />
-                                </div>
-                                <div className="flex-1 min-w-0 space-y-0.5">
-                                    <h4 className="text-xs font-semibold text-text-main leading-tight">{t.title}</h4>
-                                    <p className="text-[10px] text-text-dim leading-relaxed">{t.body}</p>
-                                    {t.url && (
-                                        <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase mt-1">
-                                            Ver detalle
-                                        </span>
-                                    )}
-                                </div>
-                                <button 
-                                    className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setToasts(prev => prev.filter(x => x.id !== t.id));
-                                    }}
-                                >
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        );
-                    })}
+                    {toasts.map(t => (
+                        <VercelToastItem
+                            key={t.id}
+                            toast={t}
+                            onDismiss={(id) => setToasts(prev => prev.filter(x => x.id !== id))}
+                            navigate={navigate}
+                        />
+                    ))}
                 </div>
             </ToastErrorBoundary>
         </NotificationsContext.Provider>

@@ -230,7 +230,8 @@ namespace Diitra.Infrastructure.Research
                                 "Proyecto Postulado",
                                 $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
                                 new[] { "DIITRA_ADMIN" },
-                                $"/arbitraje/proyecto/{proyecto.Uuid}"
+                                $"/arbitraje/proyecto/{proyecto.Uuid}",
+                                excludeUserId: idUsuario
                             );
                         }
                         catch (Exception ex)
@@ -253,7 +254,8 @@ namespace Diitra.Infrastructure.Research
                                 "Prepropuesta Registrada",
                                 $"La prepropuesta del proyecto '{proyecto.Titulo}' ha sido registrada/reenviada y está pendiente de aprobación de idea.",
                                 new[] { "DIITRA_ADMIN" },
-                                $"/investigacion"
+                                $"/investigacion",
+                                excludeUserId: idUsuario
                             );
                         }
                         catch (Exception ex)
@@ -276,7 +278,8 @@ namespace Diitra.Infrastructure.Research
                                 "Prepropuesta Aprobada",
                                 $"Su prepropuesta '{proyecto.Titulo}' ha sido APROBADA. Ya puede iniciar la formulación completa del proyecto.",
                                 new[] { "DIITRA_DOCENTE" },
-                                $"/investigacion/mis-proyectos/workspace/PROTOCOLO_INVESTIGACION/{proyecto.Uuid}"
+                                $"/investigacion/mis-proyectos/workspace/PROTOCOLO_INVESTIGACION/{proyecto.Uuid}",
+                                excludeUserId: idUsuario
                             );
                         }
                         catch (Exception ex)
@@ -299,7 +302,8 @@ namespace Diitra.Infrastructure.Research
                                 "Prepropuesta Devuelta",
                                 $"Su prepropuesta '{proyecto.Titulo}' ha sido devuelta con observaciones: {observacion}",
                                 new[] { "DIITRA_DOCENTE" },
-                                $"/investigacion/mis-proyectos"
+                                $"/investigacion/mis-proyectos",
+                                excludeUserId: idUsuario
                             );
                         }
                         catch (Exception ex)

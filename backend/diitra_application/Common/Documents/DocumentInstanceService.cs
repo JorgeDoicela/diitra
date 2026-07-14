@@ -14,5 +14,8 @@ namespace Diitra.Application.Common.Documents
         Task<DocumentInstance> FinalizeAsync(string uuid, byte[] pdfContent, string fileName, string hash, string traceabilityCode, CancellationToken ct = default);
         Task<DocumentInstance> UpdateMetadataAsync(string uuid, string metadataJson, CancellationToken ct = default);
         Task<DocumentInstance> ResolveAsync(string templateCode, string entityUuid, string createdBy, string? title = null, string entityType = "Proyecto", CancellationToken ct = default);
+        Task<IEnumerable<object>> GetObsoleteDocumentDiagnosisAsync(CancellationToken ct = default);
+        Task<bool> PurgeObsoleteFileByUuidAsync(string uuid, string purgedBy, CancellationToken ct = default);
+        Task<int> PurgeAllObsoleteDocumentFilesAsync(string purgedBy, CancellationToken ct = default);
     }
 }

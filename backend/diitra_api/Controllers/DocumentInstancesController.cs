@@ -556,6 +556,51 @@ namespace diitra_api.Controllers
                 return BadRequest(new { success = false, message = ex.Message });
             }
         }
+
+        [HttpGet("maintenance/diagnose")]
+        public async Task<IActionResult> DiagnoseObsolete(CancellationToken ct)
+        {
+            try
+            {
+                var diagnosis = await _instanceService.GetObsoleteDocumentDiagnosisAsync(ct);
+                return Ok(diagnosis);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost("maintenance/purge-all")]
+        public async Task<IActionResult> PurgeAllObsolete(CancellationToken ct)
+        {
+            try
+            {
+                var actor = User.Identity?.Name ?? "Administrador DIITRA";
+                int count = await _instanceService.PurgeAllObsoleteDocumentFilesAsync(actor, ct);
+                return Ok(new { success = true, message = $"Se depuraron exitosamente {count} archivos físicos obsoletos.", count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost("maintenance/purge/{uuid}")]
+        public async Task<IActionResult> PurgeObsoleteFile(string uuid, CancellationToken ct)
+        {
+            try
+            {
+                var actor = User.Identity?.Name ?? "Administrador DIITRA";
+                bool success = await _instanceService.PurgeObsoleteFileByUuidAsync(uuid, actor, ct);
+                if (!success) return NotFound(new { success = false, message = "Instancia no encontrada." });
+                return Ok(new { success = true, message = "El archivo físico obsoleto ha sido purgado exitosamente." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
     }
 
     public record CreateInstanceRequest(

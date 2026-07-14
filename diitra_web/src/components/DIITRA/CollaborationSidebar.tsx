@@ -12,7 +12,8 @@ import {
     Edit2,
     XCircle,
     Edit3,
-    Eye
+    Eye,
+    Shield
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
@@ -27,6 +28,8 @@ interface CollaborationSidebarProps {
     sectionName: string;
     cowork: CoWorkHandle;
     allSections: string[];
+    entityUuid?: string;
+    projectStatus?: string;
     onClose: () => void;
 }
 
@@ -35,16 +38,32 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     sectionName,
     cowork,
     allSections,
+    entityUuid,
+    projectStatus,
     onClose
 }) => {
     const { user } = useAuth();
     const confirm = useConfirm();
-    const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity'>(() => {
+
+    const parseAuditComment = (contenido: string) => {
+        const match = contenido.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
+        if (match) {
+            return {
+                seccion: match[1],
+                estado: match[2],
+                texto: match[3]
+            };
+        }
+        return null;
+    };
+
+    const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity' | 'correcciones'>(() => {
+        if (projectStatus === 'En Corrección') return 'correcciones';
         const saved = localStorage.getItem('document_sidebar_tab');
-        return (saved === 'comments' || saved === 'status' || saved === 'activity') ? saved : 'comments';
+        return (saved === 'comments' || saved === 'status' || saved === 'activity' || saved === 'correcciones') ? saved : 'comments';
     });
 
-    const setActiveTab = useCallback((tab: 'comments' | 'status' | 'activity') => {
+    const setActiveTab = useCallback((tab: 'comments' | 'status' | 'activity' | 'correcciones') => {
         localStorage.setItem('document_sidebar_tab', tab);
         setActiveTabState(tab);
     }, []);
@@ -67,6 +86,33 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
+    const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
+
+    useEffect(() => {
+        const fetchTrazabilidad = async () => {
+            if (!entityUuid) return;
+            setIsLoadingTrazabilidad(true);
+            try {
+                const res = await api.get(`/projects/${entityUuid}/traceability`);
+                setTrazabilidad(res.data || []);
+            } catch (e) {
+                console.error("Error al cargar la trazabilidad en Sidebar", e);
+            } finally {
+                setIsLoadingTrazabilidad(false);
+            }
+        };
+        fetchTrazabilidad();
+    }, [entityUuid]);
+
+    const ultimaObservacion = useMemo(() => {
+        if (isLoadingTrazabilidad) return "Cargando observaciones...";
+        const lastCorrection = [...trazabilidad]
+            .reverse()
+            .find((t: any) => (t.estadoNuevo || t.EstadoNuevo) === 'En Corrección');
+        return lastCorrection ? (lastCorrection.observacion || lastCorrection.Observacion) : null;
+    }, [trazabilidad, isLoadingTrazabilidad]);
 
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -371,6 +417,16 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
             {/* Tabs */}
             <div className="flex border-b border-border-thin bg-surface-hover/30">
+                {(projectStatus === 'En Corrección' || comments.some(c => parseAuditComment(c.contenido) !== null)) && (
+                    <button
+                        onClick={() => setActiveTab('correcciones')}
+                        className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'correcciones' ? 'border-text-main text-text-main bg-text-main/5' : 'border-transparent text-text-dim hover:text-text-main'
+                            }`}
+                    >
+                        <Shield size={14} className={projectStatus === 'En Corrección' ? 'text-warning animate-pulse' : ''} />
+                        <span>Correcciones</span>
+                    </button>
+                )}
                 <button
                     onClick={() => setActiveTab('comments')}
                     className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'comments' ? 'border-text-main text-text-main bg-text-main/5' : 'border-transparent text-text-dim hover:text-text-main'
@@ -409,118 +465,125 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                         {activeTab === 'comments' && (
                             <div className="flex flex-col h-full flex-1 overflow-hidden">
                                 <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 custom-scrollbar">
-                                    {comments.length === 0 ? (
-                                        <div className="text-center py-12 opacity-50 flex flex-col items-center justify-center">
-                                            <div className="p-3 bg-surface rounded-full border border-border-thin mb-3">
-                                                <MessageSquare size={20} className="text-text-dim" />
-                                            </div>
-                                            <p className="text-[9px] font-black text-text-dim uppercase tracking-wider">Sin comentarios aún</p>
-                                            <p className="text-[8px] text-text-dim mt-1 max-w-[150px] leading-relaxed">Escribe un mensaje para coordinar la redacción.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3 flex flex-col">
-                                            {comments.map((c, i) => {
-                                                const parsed = parseCommentContent(c.contenido);
-                                                const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
-                                                const isMe = c.usuarioUuid === user?.id_referencia;
+                                    {(() => {
+                                        const chatComments = comments.filter(c => parseAuditComment(c.contenido) === null);
+                                        if (chatComments.length === 0) {
+                                            return (
+                                                <div className="text-center py-12 opacity-50 flex flex-col items-center justify-center">
+                                                    <div className="p-3 bg-surface rounded-full border border-border-thin mb-3">
+                                                        <MessageSquare size={20} className="text-text-dim" />
+                                                    </div>
+                                                    <p className="text-[9px] font-black text-text-dim uppercase tracking-wider">Sin comentarios aún</p>
+                                                    <p className="text-[8px] text-text-dim mt-1 max-w-[150px] leading-relaxed">Escribe un mensaje para coordinar la redacción.</p>
+                                                </div>
+                                            );
+                                        }
 
-                                                return (
-                                                    <div
-                                                        key={c.idComentario || c.uuid || i}
-                                                        className={`flex flex-col w-full max-w-[90%] ${
-                                                            isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                                                        } animate-fade-up`}
-                                                    >
-                                                        <div className="flex items-center gap-1.5 mb-0.5">
-                                                            <span className={`text-[8px] font-black uppercase tracking-wider ${
-                                                                isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
-                                                            }`}>
-                                                                {isMe ? 'Tú' : c.nombreUsuario}
-                                                            </span>
-                                                            <span className="text-[7px] text-text-dim font-mono">
-                                                                {formatTime(c.creadoEn)}
-                                                            </span>
-                                                            {isMe && (
-                                                                <div className="flex items-center gap-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
-                                                                    {!parsed?.audioUrl && (
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setEditingCommentId(c.idComentario);
-                                                                                setEditingCommentText(parsed ? parsed.text : c.contenido);
-                                                                            }}
-                                                                            className="text-[8px] text-text-dim hover:text-text-main"
-                                                                            title="Editar"
-                                                                        >
-                                                                            <Edit2 size={10} />
-                                                                        </button>
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() => handleDeleteComment(c.idComentario)}
-                                                                        className="text-[8px] text-text-dim hover:text-red-500"
-                                                                        title="Eliminar"
-                                                                    >
-                                                                        <XCircle size={10} />
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                        return (
+                                            <div className="space-y-3 flex flex-col">
+                                                {chatComments.map((c, i) => {
+                                                    const parsed = parseCommentContent(c.contenido);
+                                                    const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
+                                                    const isMe = c.usuarioUuid === user?.id_referencia;
 
-                                                        <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${
-                                                            isMe
-                                                                ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
-                                                                : isMsgFromAdmin
-                                                                    ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
-                                                                    : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
-                                                        }`}>
-                                                            {editingCommentId === c.idComentario ? (
-                                                                <div className="space-y-2">
-                                                                    <textarea
-                                                                        value={editingCommentText}
-                                                                        onChange={(e) => setEditingCommentText(e.target.value)}
-                                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
-                                                                    />
-                                                                    <div className="flex justify-end gap-1">
+                                                    return (
+                                                        <div
+                                                            key={c.idComentario || c.uuid || i}
+                                                            className={`flex flex-col w-full max-w-[90%] ${
+                                                                isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                            } animate-fade-up`}
+                                                        >
+                                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                                <span className={`text-[8px] font-black uppercase tracking-wider ${
+                                                                    isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
+                                                                }`}>
+                                                                    {isMe ? 'Tú' : c.nombreUsuario}
+                                                                </span>
+                                                                <span className="text-[7px] text-text-dim font-mono">
+                                                                    {formatTime(c.creadoEn)}
+                                                                </span>
+                                                                {isMe && (
+                                                                    <div className="flex items-center gap-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                                                                        {!parsed?.audioUrl && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setEditingCommentId(c.idComentario);
+                                                                                    setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                                }}
+                                                                                className="text-[8px] text-text-dim hover:text-text-main"
+                                                                                title="Editar"
+                                                                            >
+                                                                                <Edit2 size={10} />
+                                                                            </button>
+                                                                        )}
                                                                         <button
-                                                                            onClick={() => {
-                                                                                setEditingCommentId(null);
-                                                                                setEditingCommentText('');
-                                                                            }}
-                                                                            className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                            onClick={() => handleDeleteComment(c.idComentario)}
+                                                                            className="text-[8px] text-text-dim hover:text-red-500"
+                                                                            title="Eliminar"
                                                                         >
-                                                                            Cancelar
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                let updatedContent = editingCommentText;
-                                                                                if (parsed) {
-                                                                                    updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
-                                                                                }
-                                                                                handleUpdateComment(c.idComentario, updatedContent);
-                                                                            }}
-                                                                            className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
-                                                                        >
-                                                                            Guardar
+                                                                            <XCircle size={10} />
                                                                         </button>
                                                                     </div>
-                                                                </div>
-                                                            ) : parsed ? (
-                                                                <div className="space-y-2">
-                                                                    {parsed.text && <p className="text-xs text-text-main leading-relaxed select-text">{parsed.text}</p>}
-                                                                    {parsed.audioUrl && (
-                                                                        <div className="mt-1">
-                                                                            <AudioBubblePlayer src={parsed.audioUrl} />
+                                                                )}
+                                                            </div>
+
+                                                            <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${
+                                                                isMe
+                                                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                                    : isMsgFromAdmin
+                                                                        ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
+                                                                        : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
+                                                            }`}>
+                                                                {editingCommentId === c.idComentario ? (
+                                                                    <div className="space-y-2">
+                                                                        <textarea
+                                                                            value={editingCommentText}
+                                                                            onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                                                        />
+                                                                        <div className="flex justify-end gap-1">
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setEditingCommentId(null);
+                                                                                    setEditingCommentText('');
+                                                                                }}
+                                                                                className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
+                                                                            >
+                                                                                Cancelar
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    let updatedContent = editingCommentText;
+                                                                                    if (parsed) {
+                                                                                        updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
+                                                                                    }
+                                                                                    handleUpdateComment(c.idComentario, updatedContent);
+                                                                                }}
+                                                                                className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
+                                                                            >
+                                                                                Guardar
+                                                                            </button>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
-                                                            )}
+                                                                    </div>
+                                                                ) : parsed ? (
+                                                                    <div className="space-y-2">
+                                                                        {parsed.text && <p className="text-xs text-text-main leading-relaxed select-text">{parsed.text}</p>}
+                                                                        {parsed.audioUrl && (
+                                                                            <div className="mt-1">
+                                                                                <AudioBubblePlayer src={parsed.audioUrl} />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
                                     <div ref={commentsEndRef} />
                                 </div>
                                 <div className="mt-auto pt-2 shrink-0 space-y-3">
@@ -697,6 +760,78 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         </div>
                                     ))
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'correcciones' && (
+                            <div className="flex flex-col h-full flex-1 overflow-hidden space-y-5">
+                                {/* Observación General del Administrador */}
+                                {ultimaObservacion && (
+                                    <div className="p-4 rounded-xl border border-error/20 bg-error/[0.02] space-y-2 animate-fade-in shadow-inner">
+                                        <div className="flex items-center gap-2">
+                                            <Shield size={13} className="text-error shrink-0" />
+                                            <span className="text-[10px] font-black text-error uppercase tracking-widest block">Observación General del Administrador</span>
+                                        </div>
+                                        <p className="text-[11px] text-text-main font-medium italic font-mono leading-relaxed break-words pl-5">
+                                            "{ultimaObservacion}"
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Checklist de correcciones por sección */}
+                                <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                    <div className="pb-1.5 border-b border-border-thin flex justify-between items-center">
+                                        <h4 className="text-[9px] font-black text-text-dim uppercase tracking-widest">Ajustes Solicitados</h4>
+                                        <span className="text-[8px] font-mono font-bold text-text-dim/60">
+                                            {comments.filter(c => parseAuditComment(c.contenido) !== null).length} Observaciones
+                                        </span>
+                                    </div>
+                                    
+                                    {(() => {
+                                        const auditItems = comments
+                                            .map(c => ({ comment: c, audit: parseAuditComment(c.contenido) }))
+                                            .filter(item => item.audit !== null);
+
+                                        if (auditItems.length === 0) {
+                                            return (
+                                                <div className="text-center py-12 opacity-60 flex flex-col items-center justify-center">
+                                                    <div className="p-3 bg-surface rounded-full border border-border-thin mb-3">
+                                                        <CheckCircle size={20} className="text-success" />
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-text-main uppercase tracking-wider">Sin observaciones de sección</p>
+                                                    <p className="text-[8px] text-text-dim mt-1 max-w-[180px] leading-relaxed">El administrador no ha registrado observaciones específicas en los campos del protocolo.</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="space-y-2.5 pt-1.5">
+                                                {auditItems.map((item, idx) => {
+                                                    const isAprobado = item.audit.estado === 'Aprobado';
+                                                    return (
+                                                        <div key={idx} className="p-3.5 rounded-2xl border border-border-thin bg-surface hover:border-border-hover transition-all space-y-2 shadow-sm">
+                                                            <div className="flex justify-between items-center gap-2">
+                                                                <span className="text-[9px] font-black text-text-main uppercase tracking-wider truncate" title={item.audit.seccion}>
+                                                                    {item.audit.seccion}
+                                                                </span>
+                                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
+                                                                    isAprobado 
+                                                                        ? 'bg-success/15 text-success border border-success/20' 
+                                                                        : 'bg-warning/15 text-warning border border-warning/20'
+                                                                }`}>
+                                                                    {item.audit.estado}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[11px] text-text-dim font-medium leading-relaxed">
+                                                                {item.audit.texto}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         )}
                     </>

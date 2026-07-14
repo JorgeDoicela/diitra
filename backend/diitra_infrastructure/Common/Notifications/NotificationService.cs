@@ -130,17 +130,24 @@ namespace diitra_infrastructure.Common.Notifications
                 failedCount);
         }
 
-        public async Task NotifyByRoleCodesAsync(string title, string body, IEnumerable<string> roleCodes, string? url = null, Dictionary<string, string>? extraData = null)
+        public async Task NotifyByRoleCodesAsync(string title, string body, IEnumerable<string> roleCodes, string? url = null, Dictionary<string, string>? extraData = null, int? excludeUserId = null)
         {
             var roleCodesList = roleCodes.ToList();
 
-            _logger.LogInformation("Iniciando NotifyByRoleCodes: {Title} (Roles: {Roles})", title, string.Join(", ", roleCodesList));
+            _logger.LogInformation("Iniciando NotifyByRoleCodes: {Title} (Roles: {Roles}, ExcludeUserId: {ExcludeUserId})", title, string.Join(", ", roleCodesList), excludeUserId?.ToString() ?? "Ninguno");
 
-            var recipients = await _context.UserRoles
+            var query = _context.UserRoles
                 .Include(ur => ur.User)
                 .Include(ur => ur.Role)
                 .Where(ur => roleCodesList.Contains(ur.Role.CodigoRol) && (ur.EsActivo ?? true))
-                .Where(ur => ur.User != null && ur.User.Activo)
+                .Where(ur => ur.User != null && ur.User.Activo);
+
+            if (excludeUserId.HasValue)
+            {
+                query = query.Where(ur => ur.User.IdUsuario != excludeUserId.Value);
+            }
+
+            var recipients = await query
                 .Select(ur => ur.User)
                 .Distinct()
                 .ToListAsync();

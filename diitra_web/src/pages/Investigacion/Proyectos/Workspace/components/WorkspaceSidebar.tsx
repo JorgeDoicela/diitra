@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, BarChart, FileSignature, CheckCircle2 } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
@@ -14,17 +15,46 @@ interface WorkspaceSidebarProps {
     };
     resolvedProjectUuid: string | null;
     setActiveDocument?: (doc: string) => void;
+    isAdmin?: boolean;
 }
 
 export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     currentProject,
     resolvedProjectUuid,
-    setActiveDocument
+    setActiveDocument,
+    isAdmin = false
 }) => {
+    const navigate = useNavigate();
     const isSigned = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
 
     return (
         <div className="flex flex-col gap-3">
+            {/* Banner de Revisión Técnica para el Administrador */}
+            {isAdmin && currentProject.status === 'Enviado' && resolvedProjectUuid && (
+                <div className="bento-card static p-5 flex flex-col justify-between border border-brand/40 bg-brand/[0.02] shadow-md animate-fade-in relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
+                    <div>
+                        <div className="flex items-center gap-2.5 mb-2">
+                            <Shield size={16} className="text-brand animate-pulse" />
+                            <h3 className="text-xs font-black tracking-widest text-brand uppercase">Revisión Técnica Requerida</h3>
+                        </div>
+                        <p className="text-[10px] text-text-dim leading-relaxed mt-1">
+                            Este protocolo ha sido enviado y requiere que el administrador realice la validación técnica e integridad de los datos.
+                        </p>
+                    </div>
+                    <div className="mt-4">
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`)}
+                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm"
+                        >
+                            <Shield size={12} />
+                            <span>Iniciar Revisión Técnica</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Firmas */}
             <div className="bento-card static p-5 flex flex-col justify-between group relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-28 h-28 bg-text-main/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-text-main/8 transition-colors duration-500"></div>
