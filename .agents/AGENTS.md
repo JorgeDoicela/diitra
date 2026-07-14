@@ -10,16 +10,14 @@ Este archivo define las directrices y estándares obligatorios de desarrollo par
 
 ---
 
-## Directrices de Comportamiento y Ahorro de Tokens
-1. **Limitar Búsquedas al Mínimo**: Si se especifica un archivo o ruta concreta, la búsqueda DEBE limitarse únicamente a ese archivo. Queda estrictamente prohibido usar `grep_search` o `list_dir` para buscar archivos cuya ubicación ya es conocida o deducible.
-2. **Evitar Uso Innecesario de Herramientas**: Responder directamente utilizando conocimiento interno para consultas teóricas o explicaciones conceptuales sin llamar a herramientas del sistema.
-3. **No hacer Diagnósticos ni Planes Redundantes**: No generar archivos de planificación (`implementation_plan.md` o `task.md`) para tareas simples o medianas a menos que el usuario lo solicite expresamente. Proceder directamente a la edición.
-4. **Respuestas Concisas y Sin Duplicación**: Ir al grano en las respuestas. Queda prohibido re-escribir bloques completos de código modificado en el chat si estos ya se muestran en las salidas de las herramientas (como los diff de las ediciones).
-5. **No Ejecutar 'dotnet run'**: Queda prohibido proponer o ejecutar `dotnet run` para iniciar/reiniciar el backend de forma redundante.
-6. **Enfoque Exclusivo en el Archivo Objetivo**: En tareas de edición simples, modificar únicamente el archivo objetivo de manera aislada y directa.
-7. **Delegación y Colaboración Activa**: Si es necesario diagnosticar la base de datos, revisar logs, probar el navegador o verificar el estado del sistema, **pedirle directamente al usuario que lo revise o ejecute la acción**, proporcionando una guía paso a paso sumamente clara y concisa de lo que debe hacer.
-8. **Evitar Análisis en Cascada**: Formular una hipótesis simple y validarla con el usuario antes de continuar abriendo archivos en cadena.
-9. **Evitar Uso de Herramientas del Navegador**: Queda prohibido lanzar subagentes de navegador (`browser_subagent`) a menos que el usuario lo solicite explícitamente.
+## Directrices de Comportamiento y Colaboración
+1. **Búsquedas Enfocadas**: Priorizar la lectura directa si la ruta del archivo es conocida. Si es necesario explorar archivos relacionados para garantizar que los tipos, firmas o dependencias no se rompan, el agente puede investigar de manera proactiva pero eficiente.
+2. **Uso Eficiente de Herramientas**: Utilizar conocimiento interno para responder preguntas conceptuales y usar herramientas del sistema solo cuando se necesite interactuar con el entorno.
+3. **Planes Ágiles**: No es obligatorio crear planes extensos para tareas sencillas, pero si una refactorización requiere alterar múltiples capas (Frontend/Backend/Base de Datos), se puede proponer un borrador rápido para acordar el diseño.
+4. **Respuestas Claras e Ilustrativas**: Mantener explicaciones claras y fluidas. No es necesario copiar bloques gigantes de código que ya están en el diff del IDE, pero sí se pueden incluir pequeños fragmentos de ejemplo para ilustrar ideas y explicar el razonamiento detrás de los cambios.
+5. **Autonomía y Validación de Diagnósticos**: El agente puede colaborar para analizar la base de datos o logs guiando al usuario o proponiendo comandos específicos cuando sea necesario para resolver problemas complejos.
+6. **Evitar Exploración Innecesaria**: Evitar abrir archivos no relacionados con la tarea principal, pero permitiendo la lectura de archivos de definición o tipos compartidos para evitar fallos de compilación.
+7. **Uso de Navegador**: Preferir la validación manual por parte del desarrollador para ahorrar recursos, recurriendo a subagentes de navegador solo si la validación interactiva es compleja.
 
 ---
 

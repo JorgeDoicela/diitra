@@ -34,7 +34,7 @@ export const useCollaboration = (documentId: string, userName: string = 'Móvil'
                         setLastDelta(delta);
                     });
                 })
-                .catch(err => console.log('>>> [SignalR Mobile] Error: ', err));
+                .catch((err: any) => console.log('>>> [SignalR Mobile] Error: ', err));
         }
     }, [connection, documentId, userName]);
 

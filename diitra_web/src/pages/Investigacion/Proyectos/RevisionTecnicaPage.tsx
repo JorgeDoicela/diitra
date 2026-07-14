@@ -4,13 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Shield,
     RotateCcw, Scale, Loader2, FileText,
-    MessageSquare, AlertCircle, Eye, Mic,
-    MicOff, Send, Users, Activity, DollarSign, Target,
-    BookOpen, ChevronLeft, ChevronRight
+    MessageSquare, AlertCircle, Eye, Users, Activity, DollarSign, Target,
+    BookOpen, ChevronLeft, CheckCircle, X
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { ObservationsSidebar } from './components/ObservationsSidebar';
+import { InteractiveSections } from './components/InteractiveSections';
 
 interface ProjectDetail {
     uuid: string;
@@ -27,8 +28,11 @@ interface ProjectDetail {
 }
 
 interface SectionComment {
+    id: number;
     status: 'Pendiente' | 'Aprobado' | 'Corregir';
     text: string;
+    creadoEn?: string;
+    nombreUsuario?: string;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -77,12 +81,29 @@ export const RevisionTecnicaPage: React.FC = () => {
         return [];
     };
 
+    const getFieldCardClasses = (fieldKey: string, extraClasses: string = 'space-y-1') => {
+        const isActive = activeCommentField === fieldKey && showContextualPanel;
+        
+        const borderClass = 'border-border-thin bg-surface';
+        
+        const activeClass = isActive 
+            ? '!border-brand/45 bg-brand/[0.003] shadow-[0_4px_20px_rgba(99,102,241,0.04)] ring-1 ring-brand/5 scale-[1.002]' 
+            : '';
+        
+        return `p-4 rounded-xl border ${extraClasses} relative cursor-pointer hover:bg-surface-hover/80 active:scale-[0.99] transition-all duration-200 ${borderClass} ${activeClass}`;
+    };
+
+    const renderFieldStatusBadge = (_fieldKey: string) => {
+        return null;
+    };
+
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [investigadores, setInvestigadores] = useState<any[]>([]);
     const [isDraggingLeft, setIsDraggingLeft] = useState(false);
     const [isDraggingRight, setIsDraggingRight] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
 
     // Modos de Vista
     const [viewMode, setViewMode] = useState<'interactive' | 'pdf'>('interactive');
@@ -100,6 +121,124 @@ export const RevisionTecnicaPage: React.FC = () => {
         return localStorage.getItem('rev_left_sidebar_open') !== 'false';
     });
 
+    const [auditoriaButtonTop, setAuditoriaButtonTop] = useState<number>(() => {
+        const saved = localStorage.getItem('rev_auditoria_button_top');
+        return saved ? parseInt(saved, 10) : 180;
+    });
+    const [auditoriaButtonLeft, setAuditoriaButtonLeft] = useState<number | null>(null);
+    const [isDraggingButton, setIsDraggingButton] = useState(false);
+
+    const handleButtonDragStart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDraggingButton(true);
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startTop = auditoriaButtonTop;
+        const buttonWidth = 34;
+        const initialX = window.innerWidth - buttonWidth;
+        let hasMoved = false;
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const deltaX = moveEvent.clientX - startX;
+            const deltaY = moveEvent.clientY - startY;
+
+            if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                hasMoved = true;
+            }
+
+            let newX = initialX + deltaX;
+            newX = Math.max(window.innerWidth / 2, Math.min(window.innerWidth - buttonWidth, newX));
+
+            let newTop = startTop + deltaY;
+            newTop = Math.max(70, Math.min(window.innerHeight - 150, newTop));
+
+            setAuditoriaButtonLeft(newX);
+            setAuditoriaButtonTop(newTop);
+        };
+
+        const handleMouseUp = (mouseUpEvent: MouseEvent) => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            setIsDraggingButton(false);
+
+            if (hasMoved) {
+                setAuditoriaButtonLeft(null); // Snap back to right
+
+                const finalY = startTop + (mouseUpEvent.clientY - startY);
+                const boundedY = Math.max(70, Math.min(window.innerHeight - 150, finalY));
+                setAuditoriaButtonTop(boundedY);
+                localStorage.setItem('rev_auditoria_button_top', boundedY.toString());
+            } else {
+                setAuditoriaButtonLeft(null);
+                setIsRightSidebarOpen(true);
+                localStorage.setItem('rev_right_sidebar_open', 'true');
+            }
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    const [seccionesButtonTop, setSeccionesButtonTop] = useState<number>(() => {
+        const saved = localStorage.getItem('rev_secciones_button_top');
+        return saved ? parseInt(saved, 10) : 180;
+    });
+    const [seccionesButtonLeft, setSeccionesButtonLeft] = useState<number | null>(null);
+    const [isDraggingSeccionesButton, setIsDraggingSeccionesButton] = useState(false);
+
+    const handleSeccionesButtonDragStart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDraggingSeccionesButton(true);
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startTop = seccionesButtonTop;
+        const buttonWidth = 36;
+        const initialX = 0;
+        let hasMoved = false;
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            const deltaX = moveEvent.clientX - startX;
+            const deltaY = moveEvent.clientY - startY;
+
+            if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                hasMoved = true;
+            }
+
+            let newX = initialX + deltaX;
+            newX = Math.max(0, Math.min(window.innerWidth / 2 - buttonWidth, newX));
+
+            let newTop = startTop + deltaY;
+            newTop = Math.max(70, Math.min(window.innerHeight - 150, newTop));
+
+            setSeccionesButtonLeft(newX);
+            setSeccionesButtonTop(newTop);
+        };
+
+        const handleMouseUp = (mouseUpEvent: MouseEvent) => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            setIsDraggingSeccionesButton(false);
+
+            if (hasMoved) {
+                setSeccionesButtonLeft(null); // Snap back to left
+
+                const finalY = startTop + (mouseUpEvent.clientY - startY);
+                const boundedY = Math.max(70, Math.min(window.innerHeight - 150, finalY));
+                setSeccionesButtonTop(boundedY);
+                localStorage.setItem('rev_secciones_button_top', boundedY.toString());
+            } else {
+                setSeccionesButtonLeft(null);
+                setIsLeftSidebarOpen(true);
+                localStorage.setItem('rev_left_sidebar_open', 'true');
+            }
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
     const [rightSidebarWidth, setRightSidebarWidth] = useState<number>(() => {
         const saved = localStorage.getItem('rev_right_sidebar_width');
         return saved ? parseInt(saved, 10) : 380;
@@ -109,7 +248,6 @@ export const RevisionTecnicaPage: React.FC = () => {
     });
 
     const leftSidebarRef = React.useRef<HTMLDivElement>(null);
-    const rightSidebarRef = React.useRef<HTMLDivElement>(null);
 
     const startDraggingLeft = (mouseDownEvent: React.MouseEvent) => {
         mouseDownEvent.preventDefault();
@@ -176,24 +314,8 @@ export const RevisionTecnicaPage: React.FC = () => {
 
     // Removido estado metrics
 
-    // Comentarios por sección
-    const [comments, setComments] = useState<Record<string, SectionComment>>({
-        titulo: { status: 'Pendiente', text: '' },
-        programa: { status: 'Pendiente', text: '' },
-        grupo: { status: 'Pendiente', text: '' },
-        dominio_linea: { status: 'Pendiente', text: '' },
-        carrera: { status: 'Pendiente', text: '' },
-        campos: { status: 'Pendiente', text: '' },
-        equipo: { status: 'Pendiente', text: '' },
-        antecedentes: { status: 'Pendiente', text: '' },
-        justificacion: { status: 'Pendiente', text: '' },
-        objetivos: { status: 'Pendiente', text: '' },
-        metodologia: { status: 'Pendiente', text: '' },
-        presupuesto: { status: 'Pendiente', text: '' },
-        impacto: { status: 'Pendiente', text: '' },
-        cronograma: { status: 'Pendiente', text: '' },
-        bibliografia: { status: 'Pendiente', text: '' }
-    });
+    // Comentarios por sección (soporta múltiples observaciones)
+    const [comments, setComments] = useState<Record<string, SectionComment[]>>({});
 
     const [generalFeedback, setGeneralFeedback] = useState('');
 
@@ -253,7 +375,7 @@ export const RevisionTecnicaPage: React.FC = () => {
             try {
                 const collabRes = await api.get(`/collaboration/${projectUuid}/pulse`);
                 if (collabRes.data && collabRes.data.comments) {
-                    const backendComments: Record<string, SectionComment> = {};
+                    const backendComments: Record<string, SectionComment[]> = {};
                     collabRes.data.comments.forEach((c: any) => {
                         const content = c.contenido || '';
                         const match = content.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
@@ -263,17 +385,35 @@ export const RevisionTecnicaPage: React.FC = () => {
                             const text = match[3];
                             const fieldKey = Object.keys(FIELD_LABELS).find(k => FIELD_LABELS[k] === label);
                             if (fieldKey) {
-                                backendComments[fieldKey] = {
+                                if (!backendComments[fieldKey]) {
+                                    backendComments[fieldKey] = [];
+                                }
+                                backendComments[fieldKey].push({
+                                    id: c.idComentario || c.id,
                                     status: statusStr === 'Aprobado' ? 'Aprobado' : 'Corregir',
-                                    text: text
-                                };
+                                    text: text,
+                                    creadoEn: c.creadoEn,
+                                    nombreUsuario: c.nombreUsuario
+                                });
                             }
                         }
                     });
+
+                    // Ordenar observaciones cronológicamente por ID (más viejos primero en la lista)
+                    Object.keys(backendComments).forEach(key => {
+                        backendComments[key].sort((a, b) => a.id - b.id);
+                    });
+
                     if (Object.keys(backendComments).length > 0) {
                         setComments(prev => {
                             const merged = { ...prev, ...backendComments };
                             localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(merged));
+                            
+                            // Inicializar el input contextual con el comentario del campo activo por defecto
+                            if (merged[activeCommentField] && merged[activeCommentField].length > 0) {
+                                setContextualInput(merged[activeCommentField][0].text || '');
+                            }
+                            
                             return merged;
                         });
                     }
@@ -308,12 +448,18 @@ export const RevisionTecnicaPage: React.FC = () => {
 
     // Inicializar input contextual al cambiar de campo activo
     useEffect(() => {
-        if (comments[activeCommentField]) {
-            setContextualInput(comments[activeCommentField].text || '');
-        } else {
-            setContextualInput('');
+        setContextualInput('');
+        setEditingCommentId(null);
+    }, [activeCommentField]);
+
+    // Auto-Scroll suave a la tarjeta seleccionada en el visor interactivo
+    useEffect(() => {
+        if (!activeCommentField || viewMode === 'pdf') return;
+        const targetElement = document.getElementById(`field-card-${activeCommentField}`);
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-    }, [activeCommentField, comments]);
+    }, [activeCommentField, viewMode]);
 
     // Carga de PDF
     const loadPdf = async (uuid: string) => {
@@ -356,60 +502,94 @@ export const RevisionTecnicaPage: React.FC = () => {
         }
     };
 
-    // Guardar cambios en el localStorage y sincronizar con backend
-    const handleCommentChange = async (section: string, field: 'status' | 'text', value: string) => {
-        const updated = {
-            ...comments,
-            [section]: {
-                ...comments[section],
-                [field]: value
-            }
-        };
-        setComments(updated);
-        localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(updated));
+    // Rastrear si estamos editando una observación específica
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
 
-        // Sincronización si se cambia el estado (Aprobado / Corregir) y el comentario ya tiene texto
-        if (field === 'status' && updated[section]?.text?.trim()) {
-            try {
-                const label = FIELD_LABELS[section] || section.toUpperCase();
-                const statusLabel = value === 'Aprobado' ? 'Aprobado' : 'Observación';
-                const content = `[${label}] (${statusLabel}): ${updated[section].text.trim()}`;
-                await api.post('/collaboration/comments', {
-                    documentoUuid: projectUuid,
-                    contenido: content,
-                    idPadre: null
-                });
-            } catch (e) {
-                console.error("Error al sincronizar estado de comentario en backend", e);
-            }
-        }
+    // Helpers locales para manipular el estado de arrays de comentarios
+    const addCommentLocal = (section: string, comment: SectionComment) => {
+        setComments(prev => {
+            const current = prev[section] || [];
+            const updated = {
+                ...prev,
+                [section]: [...current, comment]
+            };
+            localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(updated));
+            return updated;
+        });
     };
 
-    // Guardar comentario contextual del input y sincronizar con backend
+    const updateCommentLocal = (section: string, id: number, text: string) => {
+        setComments(prev => {
+            const current = prev[section] || [];
+            const updatedList = current.map(c => c.id === id ? { ...c, text } : c);
+            const updated = {
+                ...prev,
+                [section]: updatedList
+            };
+            localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    const removeCommentLocal = (section: string, id: number) => {
+        setComments(prev => {
+            const current = prev[section] || [];
+            const updatedList = current.filter(c => c.id !== id);
+            const updated = {
+                ...prev,
+                [section]: updatedList
+            };
+            localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    // Guardar o modificar comentario contextual y sincronizar con backend
     const saveContextualComment = async () => {
         if (!contextualInput.trim()) return;
-        const currentFieldStatus = comments[activeCommentField]?.status === 'Pendiente' ? 'Corregir' : comments[activeCommentField]?.status;
+        const newStatus = 'Corregir';
+        const label = FIELD_LABELS[activeCommentField] || activeCommentField.toUpperCase();
+        const content = `[${label}] (Observación): ${contextualInput.trim()}`;
 
         try {
-            // Guardar local
-            await handleCommentChange(activeCommentField, 'text', contextualInput.trim());
-            await handleCommentChange(activeCommentField, 'status', currentFieldStatus);
+            if (editingCommentId) {
+                // Modo Edición: Actualizar comentario existente (PUT)
+                await api.put(`/collaboration/comments/${editingCommentId}`, {
+                    contenido: content,
+                    Contenido: content
+                });
 
-            // Persistir en backend como comentario de colaboración (coworking)
-            const label = FIELD_LABELS[activeCommentField] || activeCommentField.toUpperCase();
-            const statusLabel = currentFieldStatus === 'Aprobado' ? 'Aprobado' : 'Observación';
-            const content = `[${label}] (${statusLabel}): ${contextualInput.trim()}`;
+                // Actualizar localmente
+                updateCommentLocal(activeCommentField, editingCommentId, contextualInput.trim());
+                setEditingCommentId(null);
+            } else {
+                // Modo Creación: Crear nueva observación (POST)
+                const res = await api.post('/collaboration/comments', {
+                    documentoUuid: projectUuid,
+                    DocumentoUuid: projectUuid,
+                    documento_uuid: projectUuid,
+                    contenido: content,
+                    Contenido: content,
+                    idPadre: null,
+                    IdPadre: null,
+                    id_padre: null
+                });
 
-            await api.post('/collaboration/comments', {
-                documentoUuid: projectUuid,
-                contenido: content,
-                idPadre: null
-            });
+                const newId = res.data?.idComentario || res.data?.id || Date.now();
 
-            addToast("Observación guardada y sincronizada", `Comentario registrado para: ${label}`, "success");
+                // Agregar localmente
+                addCommentLocal(activeCommentField, {
+                    id: newId,
+                    status: newStatus,
+                    text: contextualInput.trim()
+                });
+            }
+
+            // Limpiar la caja de texto
+            setContextualInput("");
         } catch (err: any) {
             console.error("Error al persistir comentario en backend:", err);
-            addToast("Observación guardada localmente", `Se registró en caché local (Error de red backend).`, "warning");
+            addToast("Error de conexión", "No se pudo sincronizar el comentario con el servidor backend.", "error");
         }
     };
 
@@ -432,9 +612,15 @@ export const RevisionTecnicaPage: React.FC = () => {
             };
 
             recognition.onerror = (e: any) => {
-                console.error(e);
+                console.error("Speech recognition error:", e);
                 setIsListening(false);
-                addToast("Error de grabación", "No se pudo transcribir el audio. Intente de nuevo.", "error");
+                if (e.error === 'not-allowed') {
+                    addToast("Permiso denegado", "Habilite el acceso al micrófono en su navegador para usar el dictado por voz.", "warning");
+                } else if (e.error === 'no-speech') {
+                    addToast("No se detectó voz", "No se escuchó ningún sonido. Intente hablar más fuerte o cerca del micrófono.", "info");
+                } else {
+                    addToast("Error de dictado", "No se pudo procesar el audio. Intente de nuevo.", "error");
+                }
             };
 
             recognition.onend = () => {
@@ -488,9 +674,12 @@ export const RevisionTecnicaPage: React.FC = () => {
         setSubmitting(true);
         try {
             const sectionIssues = Object.entries(comments)
-                .filter(([_, c]) => c.status === 'Corregir')
-                .map(([sec, c]) => `[${sec.toUpperCase()}]: ${c.text}`)
-                .join('; ');
+                .filter(([_, list]) => list && list.length > 0)
+                .map(([sec, list]) => {
+                    const label = FIELD_LABELS[sec] || sec.toUpperCase();
+                    return `[${label}]: ${list.map(c => c.text).join('; ')}`;
+                })
+                .join(' | ');
 
             const obs = generalFeedback.trim()
                 || (sectionIssues ? `Revisión Técnica aprobada con observaciones menores: ${sectionIssues}` : 'Aprobación Técnica Inicial del Administrador. Protocolo completo y consistente.');
@@ -539,7 +728,7 @@ export const RevisionTecnicaPage: React.FC = () => {
     const handleDevolver = async () => {
         if (!project) return;
 
-        const hasContextualComments = Object.values(comments).some(c => c.text.trim().length > 0);
+        const hasContextualComments = Object.values(comments).some(list => list && list.length > 0);
         if (!generalFeedback.trim() && !hasContextualComments) {
             addToast("Justificación Requerida", "Por favor redacte observaciones generales o específicas con las correcciones para el docente.", "warning");
             return;
@@ -556,8 +745,11 @@ export const RevisionTecnicaPage: React.FC = () => {
         setSubmitting(true);
         try {
             const sectionIssues = Object.entries(comments)
-                .filter(([_, c]) => c.text.trim().length > 0)
-                .map(([sec, c]) => `* ${FIELD_LABELS[sec] || sec.toUpperCase()} (${c.status}): ${c.text}`)
+                .filter(([_, list]) => list && list.length > 0)
+                .map(([sec, list]) => {
+                    const label = FIELD_LABELS[sec] || sec.toUpperCase();
+                    return `* ${label}:\n  ` + list.map(c => `- ${c.text}`).join('\n  ');
+                })
                 .join('\n');
 
             const fullObs = generalFeedback.trim()
@@ -619,7 +811,7 @@ export const RevisionTecnicaPage: React.FC = () => {
 
     // Renderizar burbuja de comentario flotante al lado de las cabeceras de cada tarjeta
     const renderCommentButton = (fieldKey: string, _fieldName: string) => {
-        const hasComment = (comments[fieldKey]?.text || '').trim().length > 0;
+        const hasComment = comments[fieldKey] && comments[fieldKey].length > 0;
         return (
             <button
                 onClick={(e) => {
@@ -635,7 +827,7 @@ export const RevisionTecnicaPage: React.FC = () => {
             >
                 <MessageSquare size={13} className={hasComment ? 'fill-amber-500/5 text-amber-500' : ''} />
                 {hasComment && (
-                    <span className="text-[8px] font-mono font-bold leading-none bg-amber-500 text-bg-deep px-1 py-0.5 rounded-full animate-pulse">
+                    <span className="text-[8px] font-mono font-bold leading-none bg-amber-500 text-bg-deep px-1 py-0.5 rounded-full">
                         !
                     </span>
                 )}
@@ -701,14 +893,23 @@ export const RevisionTecnicaPage: React.FC = () => {
                             Revisión Contextual
                         </button>
                     </div>
+
+                    {/* Botón de Finalizar Auditoría */}
+                    <button
+                        onClick={() => setIsFinalizeModalOpen(true)}
+                        className="px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-brand text-white hover:bg-brand/90 shadow-sm transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 duration-150"
+                    >
+                        <Scale size={12} />
+                        Finalizar Auditoría
+                    </button>
                 </div>
             </div>
 
             {/* Layout Principal de Tres Columnas */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
 
                 {/* LADO IZQUIERDO: VISOR INTERACTIVO O PDF (FLEX-1) */}
-                <div className="flex-1 h-full border-r border-border-thin bg-bg-deep flex overflow-hidden">
+                <div className="flex-1 h-full border-r border-border-thin bg-bg-deep flex overflow-hidden relative">
                     {viewMode === 'pdf' ? (
                         loadingPdf ? (
                             <div className="flex-1 flex items-center justify-center text-text-dim text-xs gap-2 font-mono">
@@ -756,19 +957,19 @@ export const RevisionTecnicaPage: React.FC = () => {
 
                                         let hasActiveComments = false;
                                         if (sec.id === 'identificacion') {
-                                            hasActiveComments = ['titulo', 'programa', 'grupo', 'dominio_linea', 'campos', 'carrera'].some(k => (comments[k]?.text || '').trim().length > 0);
+                                            hasActiveComments = ['titulo', 'programa', 'grupo', 'dominio_linea', 'campos', 'carrera'].some(k => comments[k] && comments[k].length > 0);
                                         } else if (sec.id === 'equipo') {
-                                            hasActiveComments = (comments.equipo?.text || '').trim().length > 0;
+                                            hasActiveComments = !!(comments.equipo && comments.equipo.length > 0);
                                         } else if (sec.id === 'plan_tecnico') {
-                                            hasActiveComments = ['antecedentes', 'justificacion', 'objetivos', 'metodologia'].some(k => (comments[k]?.text || '').trim().length > 0);
+                                            hasActiveComments = ['antecedentes', 'justificacion', 'objetivos', 'metodologia'].some(k => comments[k] && comments[k].length > 0);
                                         } else if (sec.id === 'recursos') {
-                                            hasActiveComments = (comments.presupuesto?.text || '').trim().length > 0;
+                                            hasActiveComments = !!(comments.presupuesto && comments.presupuesto.length > 0);
                                         } else if (sec.id === 'impacto') {
-                                            hasActiveComments = (comments.impacto?.text || '').trim().length > 0;
+                                            hasActiveComments = !!(comments.impacto && comments.impacto.length > 0);
                                         } else if (sec.id === 'cronograma') {
-                                            hasActiveComments = (comments.cronograma?.text || '').trim().length > 0;
+                                            hasActiveComments = !!(comments.cronograma && comments.cronograma.length > 0);
                                         } else if (sec.id === 'bibliografia') {
-                                            hasActiveComments = (comments.bibliografia?.text || '').trim().length > 0;
+                                            hasActiveComments = !!(comments.bibliografia && comments.bibliografia.length > 0);
                                         }
 
                                         return (
@@ -785,7 +986,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                                                     <span className="text-[10px] uppercase tracking-wider truncate">{sec.label}</span>
                                                 </div>
                                                 {hasActiveComments && (
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse shrink-0 ml-1.5" />
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0 ml-1.5" />
                                                 )}
                                             </button>
                                         );
@@ -800,608 +1001,152 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Campos del Formulario de la Sección Activa */}
-                            <div className="flex-1 h-full p-8 overflow-y-auto space-y-6 relative custom-scrollbar bg-bg-deep/20">
-                                {/* Botón de reapertura del Dossier si está cerrado */}
-                                {!isLeftSidebarOpen && (
-                                    <button
-                                        onClick={() => {
-                                            setIsLeftSidebarOpen(true);
-                                            localStorage.setItem('rev_left_sidebar_open', 'true');
-                                        }}
-                                        className="absolute left-4 top-4 z-30 p-2.5 bg-surface hover:bg-surface-hover border border-border-thin rounded-xl text-text-dim hover:text-text-main flex items-center gap-1.5 shadow-md transition-all duration-200"
-                                        title="Mostrar Secciones"
-                                    >
-                                        <BookOpen size={14} />
-                                        <span className="text-[9px] font-bold uppercase tracking-widest">Secciones</span>
-                                    </button>
-                                )}
-                                {/* Botón de reapertura del Panel de Auditoría si está cerrado */}
-                                {!isRightSidebarOpen && (
-                                    <button
-                                        onClick={() => {
-                                            setIsRightSidebarOpen(true);
-                                            localStorage.setItem('rev_right_sidebar_open', 'true');
-                                        }}
-                                        className="absolute right-4 top-4 z-30 p-2.5 bg-surface hover:bg-surface-hover border border-border-thin rounded-xl text-text-dim hover:text-text-main flex items-center gap-1.5 shadow-md transition-all duration-200 animate-fade-in"
-                                        title="Mostrar Panel de Auditoría"
-                                    >
-                                        <Shield size={14} />
-                                        <span className="text-[9px] font-bold uppercase tracking-widest">Auditoría</span>
-                                    </button>
-                                )}
-                                {/* 1. IDENTIFICACIÓN */}
-                                {activeSection === 'identificacion' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">1. Identificación del Proyecto</h3>
-                                        </div>
+                            <InteractiveSections
+                                activeSection={activeSection}
+                                project={project}
+                                investigadores={investigadores}
+                                docSnapshot={docSnapshot}
+                                isLeftSidebarOpen={isLeftSidebarOpen}
+                                setIsLeftSidebarOpen={setIsLeftSidebarOpen}
+                                isHoursOk={isHoursOk}
+                                teachersWithExceedingHours={teachersWithExceedingHours}
+                                getFieldCardClasses={getFieldCardClasses}
+                                renderFieldStatusBadge={renderFieldStatusBadge}
+                                renderCommentButton={renderCommentButton}
+                                setActiveCommentField={setActiveCommentField}
+                                setIsRightSidebarOpen={setIsRightSidebarOpen}
+                                getSafeArray={getSafeArray}
+                            />
+                        </div>
+                    )}
 
-                                        {/* TÍTULO */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('titulo'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'titulo' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Tema / Nombre del Proyecto</span>
-                                                {renderCommentButton('titulo', 'Tema / Nombre del Proyecto')}
-                                            </div>
-                                            <p className="text-xs font-bold text-text-main uppercase leading-relaxed pr-6">{project.title}</p>
-                                        </div>
 
-                                        {/* PROGRAMA */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('programa'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'programa' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">PROGRAMA</span>
-                                                {renderCommentButton('programa', 'Programa')}
-                                            </div>
-                                            <p className="text-xs font-medium text-text-main pr-6">{docSnapshot.Programa || 'Programa de Transformación Digital'}</p>
-                                        </div>
 
-                                        {/* GRUPO */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('grupo'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-2.5 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'grupo' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">¿GRUPO DE INVESTIGACIÓN?</span>
-                                                {renderCommentButton('grupo', 'Grupo de Investigación')}
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-4">
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">¿Aplica Grupo?</span>
-                                                    <p className="text-xs font-bold text-text-main mt-0.5">{docSnapshot.GrupoInvestigacionTipo || 'SI'}</p>
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Nombre del Grupo</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5">{docSnapshot.GrupoInvestigacionNombre || 'Grupo de Investigación en Ingeniería de Software y TI (GIIST)'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
+                    {/* Botón flotante unificado de reapertura del Panel de Secciones (izquierda) si está cerrado */}
+                    {!isLeftSidebarOpen && (
+                        <div
+                            onMouseDown={handleSeccionesButtonDragStart}
+                            style={{ 
+                                top: `${seccionesButtonTop}px`,
+                                left: seccionesButtonLeft !== null ? `${seccionesButtonLeft}px` : '0px',
+                            }}
+                            className={`fixed z-[60] py-4 px-2.5 w-[36px] bg-surface hover:bg-surface-hover border border-border-thin rounded-full text-text-dim hover:text-text-main flex flex-col items-center gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.12)] cursor-grab active:cursor-grabbing select-none active:scale-95 group font-bold ${
+                                isDraggingSeccionesButton ? 'transition-none cursor-grabbing border-brand/50 ring-1 ring-brand/20 shadow-[0_8px_24px_rgba(99,102,241,0.18)]' : 'transition-all duration-300'
+                            }`}
+                            title="Arrastra libremente por la pantalla / Clic para abrir"
+                        >
+                            <BookOpen size={13} className="text-brand group-hover:scale-110 transition-transform shrink-0" />
+                            <span className="[writing-mode:vertical-lr] tracking-widest text-[9px] font-black uppercase text-center cursor-pointer select-none">
+                                Secciones
+                            </span>
+                        </div>
+                    )}
 
-                                        {/* DOMINIO, LÍNEA */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('dominio_linea'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-2.5 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'dominio_linea' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">DOMINIO Y LÍNEAS DE INVESTIGACIÓN</span>
-                                                {renderCommentButton('dominio_linea', 'Dominio y Líneas')}
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-3">
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Dominio Académico</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{project.dominio || 'Tecnologías de la Información'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Línea de Investigación</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{project.linea}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Sublínea</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{docSnapshot.SublineaInvestigacion || 'Desarrollo de Software Multiplataforma'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* CAMPOS CACES */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('campos'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-2.5 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'campos' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">CAMPOS METADATOS CACES</span>
-                                                {renderCommentButton('campos', 'Campos CACES')}
-                                            </div>
-                                            <div className="grid grid-cols-4 gap-3">
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Tipo</span>
-                                                    <p className="text-xs font-bold text-text-main mt-0.5">{docSnapshot.TipoInvestigacion || 'APLICADA'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Amplio</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{docSnapshot.CampoAmplio || 'TI'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Específico</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{docSnapshot.CampoEspecifico || 'SOFTWARE'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Detallado</span>
-                                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{docSnapshot.CampoDetallado || 'INGENIERÍA'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* CARRERA */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('carrera'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-2.5 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'carrera' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">CARRERA Y CONVOCATORIA ACTIVA</span>
-                                                {renderCommentButton('carrera', 'Carrera')}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Carrera / Unidad</span>
-                                                    <p className="text-xs font-semibold text-text-main mt-0.5">{project.carrera || 'DESARROLLO DE SOFTWARE'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Convocatoria</span>
-                                                    <p className="text-xs font-semibold text-text-main mt-0.5 truncate">{project.convocatoria}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 2. EQUIPO HUMANO */}
-                                {activeSection === 'equipo' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">2. Equipo Humano del Proyecto</h3>
-                                            {renderCommentButton('equipo', 'Equipo Humano')}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            {investigadores.map((inv, idx) => (
-                                                <div 
-                                                    key={idx} 
-                                                    onClick={() => { setActiveCommentField('equipo'); setIsRightSidebarOpen(true); }}
-                                                    className={`p-4 rounded-xl border border-border-thin bg-surface flex justify-between items-center cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'equipo' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                                >
-                                                    <div>
-                                                        <p className="text-xs font-bold text-text-main">{inv.nombres_completos || `${inv.nombre} ${inv.apellido}`}</p>
-                                                        <p className="text-[10px] text-brand uppercase tracking-wider font-semibold mt-0.5">{inv.rol || 'Investigador'}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Horas</p>
-                                                        <p className="text-xs font-mono font-bold text-text-main">{inv.horasSemanales || 0} hrs</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 3. PLAN TÉCNICO */}
-                                {activeSection === 'plan_tecnico' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">3. Plan Técnico de Investigación</h3>
-                                        </div>
-
-                                        {/* ANTECEDENTES */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('antecedentes'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'antecedentes' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">ANTECEDENTES</span>
-                                                {renderCommentButton('antecedentes', 'Antecedentes')}
-                                            </div>
-                                            <div 
-                                                className="text-xs text-text-main leading-relaxed text-justify font-mono pr-4 html-content animate-fade-in"
-                                                dangerouslySetInnerHTML={{ __html: docSnapshot.Antecedentes || 'No redactado.' }}
-                                            />
-                                        </div>
-
-                                        {/* JUSTIFICACIÓN */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('justificacion'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'justificacion' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">JUSTIFICACIÓN DEL PROYECTO</span>
-                                                {renderCommentButton('justificacion', 'Justificación')}
-                                            </div>
-                                            <div 
-                                                className="text-xs text-text-main leading-relaxed text-justify font-mono pr-4 html-content animate-fade-in"
-                                                dangerouslySetInnerHTML={{ __html: docSnapshot.Justificacion || 'No redactado.' }}
-                                            />
-                                        </div>
-
-                                        {/* OBJETIVOS */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('objetivos'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-2.5 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'objetivos' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">OBJETIVOS INSTITUCIONALES</span>
-                                                {renderCommentButton('objetivos', 'Objetivos')}
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="text-[8px] font-bold text-brand uppercase tracking-widest block">Objetivo General</span>
-                                                    <div 
-                                                        className="text-xs font-bold text-text-main mt-0.5 leading-relaxed html-content animate-fade-in"
-                                                        dangerouslySetInnerHTML={{ __html: docSnapshot.ObjetivoGeneral || 'No definido.' }}
-                                                    />
-                                                </div>
-                                                <div className="border-t border-border-thin/30 pt-2">
-                                                    <span className="text-[8px] font-bold text-brand uppercase tracking-widest block mb-1">Objetivos Específicos</span>
-                                                    <ul className="list-disc pl-4 space-y-1 text-xs text-text-main html-content animate-fade-in">
-                                                        {getSafeArray(docSnapshot.ObjetivosEspecificos).map((obj: string, i: number) => (
-                                                            <li key={i} dangerouslySetInnerHTML={{ __html: obj }} />
-                                                        ))}
-                                                        {getSafeArray(docSnapshot.ObjetivosEspecificos).length === 0 && (
-                                                            <li className="text-text-dim italic">Sin objetivos específicos registrados.</li>
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* METODOLOGÍA */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('metodologia'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'metodologia' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">METODOLOGÍA Y DISEÑO</span>
-                                                {renderCommentButton('metodologia', 'Metodología')}
-                                            </div>
-                                            <div 
-                                                className="text-xs text-text-main leading-relaxed text-justify font-mono pr-4 html-content animate-fade-in"
-                                                dangerouslySetInnerHTML={{ __html: docSnapshot.Metodologia || 'No redactada.' }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 4. RECURSOS & FINANCIAMIENTO */}
-                                {activeSection === 'recursos' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">4. Recursos & Presupuesto</h3>
-                                            {renderCommentButton('presupuesto', 'Presupuesto')}
-                                        </div>
-
-                                        <div 
-                                            onClick={() => { setActiveCommentField('presupuesto'); setIsRightSidebarOpen(true); }}
-                                            className={`p-5 rounded-2xl border border-border-thin bg-surface flex justify-between items-center cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'presupuesto' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div>
-                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Presupuesto Planificado</span>
-                                                <span className="text-base font-black text-success font-mono">${project.presupuesto.toLocaleString('es-EC')} USD</span>
-                                            </div>
-                                            {project.convocatoriaMontoMaximo && (
-                                                <div className="text-right">
-                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Tope Permitido</span>
-                                                    <span className="text-xs font-bold text-text-main font-mono">${project.convocatoriaMontoMaximo.toLocaleString('es-EC')} USD</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            {getSafeArray(docSnapshot.RecursosNecesarios).map((r: any, idx: number) => {
-                                                const desc = r.Descripcion || r.descripcion || 'Sin descripción';
-                                                const cant = Number(r.Cantidad ?? r.cantidad ?? 0);
-                                                const costo = Number(r.CostoUnitario ?? r.costoUnitario ?? r.costo_unitario ?? r.ValorUnitario ?? r.valorUnitario ?? r.valor_unitario ?? 0);
-                                                return (
-                                                    <div 
-                                                        key={idx} 
-                                                        onClick={() => { setActiveCommentField('presupuesto'); setIsRightSidebarOpen(true); }}
-                                                        className="p-3.5 rounded-xl border border-border-thin bg-surface/50 flex justify-between text-xs items-center cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all animate-fade-in"
-                                                    >
-                                                        <div>
-                                                            <p className="font-semibold text-text-main">{desc}</p>
-                                                            <p className="text-[9px] text-text-dim font-mono mt-0.5">Cant: {cant}</p>
-                                                        </div>
-                                                        <span className="font-mono text-text-main">${(costo * cant).toLocaleString()} USD</span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {getSafeArray(docSnapshot.RecursosNecesarios).length === 0 && (
-                                                <p className="text-xs text-text-dim italic text-center py-4 bg-surface/10 rounded-xl border border-dashed border-border-thin animate-fade-in">Sin recursos necesarios registrados en el plan de financiamiento.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 5. IMPACTO & PRODUCTOS */}
-                                {activeSection === 'impacto' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">5. Impacto & Productos Esperados</h3>
-                                            {renderCommentButton('impacto', 'Impacto')}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            {getSafeArray(docSnapshot.ProductosEsperados).map((p: any, idx: number) => {
-                                                const tipo = p.Tipo || p.tipo || 'Publicación Indexada';
-                                                const cant = p.Cantidad ?? p.cantidad ?? 1;
-                                                return (
-                                                    <div 
-                                                        key={idx} 
-                                                        onClick={() => { setActiveCommentField('impacto'); setIsRightSidebarOpen(true); }}
-                                                        className={`p-3.5 rounded-xl border border-border-thin bg-surface flex justify-between text-xs items-center cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all animate-fade-in ${activeCommentField === 'impacto' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                                    >
-                                                        <span className="font-semibold text-text-main">{tipo}</span>
-                                                        <span className="badge-vercel badge-vercel-neutral font-mono">Cantidad: {cant}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {getSafeArray(docSnapshot.ProductosEsperados).length === 0 && (
-                                                <p className="text-xs text-text-dim italic text-center py-4 bg-surface/10 rounded-xl border border-dashed border-border-thin animate-fade-in">Sin productos esperados registrados.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 6. CRONOGRAMA */}
-                                {activeSection === 'cronograma' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">6. Cronograma de Actividades (Gantt)</h3>
-                                            {renderCommentButton('cronograma', 'Cronograma')}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            {getSafeArray(docSnapshot.Cronograma).map((c: any, idx: number) => {
-                                                const actividad = c.Actividad || c.actividad || 'Sin actividad';
-                                                const recursos = c.RecursosNecesarios || c.recursosNecesarios || c.recursos_necesarios || 'No especificados';
-                                                const num = c.Numero ?? c.numero ?? (idx + 1);
-                                                return (
-                                                    <div 
-                                                        key={idx} 
-                                                        onClick={() => { setActiveCommentField('cronograma'); setIsRightSidebarOpen(true); }}
-                                                        className={`p-4 rounded-xl border border-border-thin bg-surface flex justify-between items-center text-xs cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all animate-fade-in ${activeCommentField === 'cronograma' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                                    >
-                                                        <div>
-                                                            <p className="font-bold text-text-main">{actividad}</p>
-                                                            <p className="text-[9px] text-text-dim font-mono mt-0.5">Recursos: {recursos}</p>
-                                                        </div>
-                                                        <span className="badge-vercel badge-vercel-info">Secuencia {num}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {getSafeArray(docSnapshot.Cronograma).length === 0 && (
-                                                <p className="text-xs text-text-dim italic text-center py-4 bg-surface/10 rounded-xl border border-dashed border-border-thin animate-fade-in">Sin actividades programadas registradas en el cronograma.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 7. BIBLIOGRAFÍA & FIRMAS */}
-                                {activeSection === 'bibliografia' && (
-                                    <div className="space-y-5 animate-fade-in">
-                                        <div className="border-b border-border-thin/60 pb-3">
-                                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">7. Bibliografía & Firmas</h3>
-                                        </div>
-
-                                        {/* BIBLIOGRAFÍA */}
-                                        <div 
-                                            onClick={() => { setActiveCommentField('bibliografia'); setIsRightSidebarOpen(true); }}
-                                            className={`p-4 rounded-xl border border-border-thin bg-surface space-y-1 relative cursor-pointer hover:bg-surface-hover/80 hover:border-brand/20 active:scale-[0.99] transition-all ${activeCommentField === 'bibliografia' && showContextualPanel ? 'border-brand/40 bg-brand/[0.01]' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">REFERENCIAS BIBLIOGRÁFICAS (APA)</span>
-                                                {renderCommentButton('bibliografia', 'Bibliografía')}
-                                            </div>
-                                            <div 
-                                                className="text-xs text-text-main leading-relaxed text-justify font-mono pr-4 html-content animate-fade-in"
-                                                dangerouslySetInnerHTML={{ __html: docSnapshot.Bibliografia || 'Sin bibliografía declarada.' }}
-                                            />
-                                        </div>
-
-                                        {/* FIRMAS */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-4 rounded-xl border border-border-thin bg-surface">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest block">Director de Proyecto</span>
-                                                <p className="text-xs font-bold text-text-main mt-1">{project.directorProyecto}</p>
-                                                <span className="text-[9px] text-emerald-500 font-semibold flex items-center gap-1 mt-2">
-                                                    Firmado Digitalmente
-                                                </span>
-                                            </div>
-                                            <div className="p-4 rounded-xl border border-border-thin bg-surface">
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest block">Coordinador de Carrera</span>
-                                                <p className="text-xs font-bold text-text-main mt-1">Coordinación DIITRA ISTPET</p>
-                                                <span className="text-[9px] text-emerald-500 font-semibold flex items-center gap-1 mt-2">
-                                                    Firmado Digitalmente
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                    {/* Botón flotante unificado de reapertura del Panel de Auditoría (derecha) si está cerrado */}
+                    {!isRightSidebarOpen && (
+                        <div
+                            onMouseDown={handleButtonDragStart}
+                            style={{ 
+                                top: `${auditoriaButtonTop}px`,
+                                left: auditoriaButtonLeft !== null ? `${auditoriaButtonLeft}px` : undefined,
+                                right: auditoriaButtonLeft !== null ? 'auto' : '0px'
+                            }}
+                            className={`fixed z-[60] py-4 px-2.5 w-[36px] bg-surface hover:bg-surface-hover border border-border-thin rounded-full text-text-dim hover:text-text-main flex flex-col items-center gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.12)] cursor-grab active:cursor-grabbing select-none active:scale-95 group font-bold ${
+                                isDraggingButton ? 'transition-none cursor-grabbing border-brand/50 ring-1 ring-brand/20 shadow-[0_8px_24px_rgba(99,102,241,0.18)]' : 'transition-all duration-300'
+                            }`}
+                            title="Arrastra libremente por la pantalla / Clic para abrir"
+                        >
+                            <Shield size={13} className="text-brand group-hover:scale-110 transition-transform shrink-0" />
+                            <span className="[writing-mode:vertical-lr] tracking-widest text-[9px] font-black uppercase text-center cursor-pointer select-none">
+                                Auditoría
+                            </span>
                         </div>
                     )}
                 </div>
 
                 {/* LADO DERECHO: SIDEBAR AJUSTABLE Y COLAPSABLE DE AUDITORÍA */}
-                <div
-                    ref={rightSidebarRef}
-                    style={{ width: isRightSidebarOpen ? `${rightSidebarWidth}px` : '0px' }}
-                    className={`h-full bg-surface border-l border-border-thin flex flex-col shrink-0 relative overflow-hidden ${isDraggingRight ? 'transition-none' : 'transition-all duration-300'
-                        }`}
-                >
-                    {/* Tirador Resizer izquierdo */}
-                    <div
-                        onMouseDown={startDraggingRight}
-                        className="absolute top-0 left-0 bottom-0 w-1.5 cursor-col-resize hover:bg-brand/35 active:bg-brand/50 z-20 transition-all"
-                        title="Arrastra para cambiar ancho"
-                    />
+                <ObservationsSidebar
+                    isOpen={isRightSidebarOpen}
+                    width={rightSidebarWidth}
+                    isDragging={isDraggingRight}
+                    startDragging={startDraggingRight}
+                    toggleOpen={() => {
+                        setIsRightSidebarOpen(false);
+                        localStorage.setItem('rev_right_sidebar_open', 'false');
+                    }}
+                    activeCommentField={activeCommentField}
+                    setActiveCommentField={setActiveCommentField}
+                    comments={comments}
+                    contextualInput={contextualInput}
+                    setContextualInput={setContextualInput}
+                    isListening={isListening}
+                    submitting={submitting}
+                    editingCommentId={editingCommentId}
+                    setEditingCommentId={setEditingCommentId}
+                    saveContextualComment={saveContextualComment}
+                    handleStartListening={handleStartListening}
+                    removeCommentLocal={removeCommentLocal}
+                    FIELD_LABELS={FIELD_LABELS}
+                />
+            </div>
 
-                    {/* Cabecera del Panel de Observaciones */}
-                    <div className="px-6 py-4 border-b border-border-thin bg-surface-hover/20 flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                            <MessageSquare size={14} className="text-text-dim" />
-                            <span className="text-[10px] font-black text-text-main uppercase tracking-widest block font-mono">Observaciones de Revisión</span>
-                        </div>
-                        <button
-                            onClick={() => {
-                                setIsRightSidebarOpen(false);
-                                localStorage.setItem('rev_right_sidebar_open', 'false');
-                            }}
-                            className="p-1 hover:bg-surface-hover rounded text-text-dim hover:text-text-main cursor-pointer"
-                            title="Ocultar Observaciones"
-                        >
-                            <ChevronRight size={14} />
-                        </button>
-                    </div>
-
-                    {/* Contenido del Panel */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-surface">
-                        {/* Historial o Vacío */}
-                        <div className="flex-1 overflow-y-auto p-5 flex flex-col justify-center items-center bg-bg-deep/5 custom-scrollbar text-center text-text-dim">
-                            <div className="w-full px-1 py-2 text-left mb-2.5 shrink-0">
-                                <p className="text-[8px] font-mono font-bold text-amber-500 uppercase tracking-widest leading-none mb-1">CAMPO BAJO INSPECCIÓN:</p>
-                                <p className="text-xs font-bold text-text-main uppercase tracking-tight truncate leading-tight" title={FIELD_LABELS[activeCommentField]}>
-                                    {FIELD_LABELS[activeCommentField] || 'Sin selección'}
-                                </p>
+            {/* Modal de Finalización de Auditoría */}
+            {isFinalizeModalOpen && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/65 backdrop-blur-sm animate-fade-in">
+                    <div className="w-[500px] max-w-[90%] bg-surface border border-border-thin rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.35)] p-5 space-y-4 animate-scale-up font-sans">
+                        <div className="flex items-center justify-between border-b border-border-thin/50 pb-3.5">
+                            <div className="flex items-center gap-2">
+                                <Scale size={16} className="text-brand" />
+                                <span className="text-[10px] font-black text-text-main uppercase tracking-widest font-mono">Finalizar Auditoría</span>
                             </div>
-
-                            {comments[activeCommentField]?.text ? (
-                                <div className="w-full bg-surface border border-border-thin p-4 rounded-xl text-left space-y-3.5 shadow-sm">
-                                    <div className="flex items-center justify-between border-b border-border-thin/20 pb-1.5">
-                                        <span className="text-[9px] font-bold text-brand uppercase tracking-wider font-mono">Dictamen del Auditor:</span>
-                                        <span className={`text-[8px] font-mono font-bold uppercase tracking-widest ${comments[activeCommentField].status === 'Aprobado' ? 'text-success' : 'text-error'
-                                            }`}>
-                                            {comments[activeCommentField].status}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-text-main font-mono leading-relaxed italic break-words">
-                                        "{comments[activeCommentField].text}"
-                                    </p>
-                                    <div className="flex justify-end gap-2 pt-2 border-t border-border-thin/40">
-                                        <button
-                                            onClick={() => handleCommentChange(activeCommentField, 'status', 'Aprobado')}
-                                            className="text-[8px] font-bold uppercase tracking-widest text-success px-2 py-1 rounded bg-success/5 hover:bg-success/10 transition-all cursor-pointer"
-                                        >
-                                            Aprobado
-                                        </button>
-                                        <button
-                                            onClick={() => handleCommentChange(activeCommentField, 'status', 'Corregir')}
-                                            className="text-[8px] font-bold uppercase tracking-widest text-error px-2 py-1 rounded bg-error/5 hover:bg-error/10 transition-all cursor-pointer"
-                                        >
-                                            Solicitar Corrección
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="animate-fade-in flex flex-col items-center">
-                                    <div className="p-3 bg-surface rounded-full border border-border-thin mb-3 shadow-sm text-amber-500">
-                                        <MessageSquare size={16} />
-                                    </div>
-                                    <p className="text-[10px] font-black text-text-main uppercase tracking-wider">Sin observaciones aún</p>
-                                    <p className="text-[9px] text-text-dim mt-1.5 max-w-[200px] leading-relaxed uppercase font-mono">
-                                        Escriba retroalimentación específica o grabe con voz los ajustes requeridos para este campo.
-                                    </p>
-                                </div>
-                            )}
+                            <button
+                                onClick={() => setIsFinalizeModalOpen(false)}
+                                className="p-1.5 hover:bg-surface-hover border border-border-thin rounded-lg text-text-dim hover:text-text-main transition-all cursor-pointer"
+                                title="Cerrar modal"
+                            >
+                                <X size={12} />
+                            </button>
                         </div>
 
-                        {/* Formulario de Comentario de Campo */}
-                        <div className="shrink-0 p-4 border-t border-border-thin bg-surface-hover/20">
-                            <div className="flex items-center gap-2 bg-bg-deep border border-border-thin rounded-xl px-3 py-2.5 focus-within:border-brand/45 transition-all">
-                                <textarea
-                                    value={contextualInput}
-                                    onChange={(e) => setContextualInput(e.target.value)}
-                                    placeholder="Escriba la retroalimentación..."
-                                    className="flex-1 bg-transparent border-0 outline-none text-xs text-text-main placeholder:text-text-dim/60 resize-none h-10 font-mono leading-relaxed"
-                                    disabled={submitting}
-                                />
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                    <style>{`
-                                                @keyframes soundwave {
-                                                    0% { height: 4px; }
-                                                    100% { height: 20px; }
-                                                }
-                                            `}</style>
-                                    {isListening && (
-                                        <div className="flex items-center gap-0.5 px-1 shrink-0 h-6">
-                                            <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.1s', height: '12px' }} />
-                                            <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.4s', height: '18px' }} />
-                                            <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.2s', height: '14px' }} />
-                                            <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.6s', height: '16px' }} />
-                                            <span className="w-0.5 bg-error rounded-full animate-[soundwave_0.8s_infinite_ease-in-out_alternate]" style={{ animationDelay: '0.3s', height: '10px' }} />
-                                        </div>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={handleStartListening}
-                                        className={`p-2 rounded-full border transition-all cursor-pointer ${isListening
-                                            ? 'bg-error/15 text-error border-error/30 animate-pulse'
-                                            : 'bg-surface hover:bg-surface-hover border-border-thin text-text-dim hover:text-text-main'
-                                            }`}
-                                        title={isListening ? "Detener voz" : "Grabar explicación de voz"}
-                                    >
-                                        {isListening ? <MicOff size={12} /> : <Mic size={12} />}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={saveContextualComment}
-                                        disabled={!contextualInput.trim()}
-                                        className="p-2 rounded-full bg-text-main hover:bg-text-main/90 text-bg-deep disabled:opacity-30 transition-all cursor-pointer"
-                                        title="Guardar dictamen"
-                                    >
-                                        <Send size={12} />
-                                    </button>
-                                </div>
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-[8px] font-black text-text-dim uppercase tracking-widest block font-mono ml-0.5">Observaciones Generales de la Auditoría</label>
+                            <textarea
+                                value={generalFeedback}
+                                onChange={(e) => setGeneralFeedback(e.target.value)}
+                                placeholder="Escriba la síntesis del informe o instrucciones generales de corrección para el docente..."
+                                className="w-full h-32 bg-bg-deep border border-border-thin rounded-xl p-3.5 text-xs text-text-main placeholder:text-text-dim/60 outline-none focus:border-brand/45 transition-all resize-none font-sans leading-relaxed custom-scrollbar"
+                                disabled={submitting}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 border-t border-border-thin/50 pt-4">
+                            <button
+                                onClick={async () => {
+                                    await handleAprobar();
+                                    setIsFinalizeModalOpen(false);
+                                }}
+                                disabled={submitting}
+                                className="flex items-center justify-center gap-1.5 btn-vercel-primary py-3 text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer active:scale-95 transition-all"
+                            >
+                                {submitting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                                Aprobar Requisitos
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    await handleDevolver();
+                                    setIsFinalizeModalOpen(false);
+                                }}
+                                disabled={submitting}
+                                className="flex items-center justify-center gap-1.5 bg-transparent hover:bg-error/10 text-error border border-error/20 hover:border-error/40 rounded-xl py-3 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer active:scale-95"
+                            >
+                                {submitting ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                                Devolver Proyecto
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Decisiones Generales (Sticky inferior persistente) */}
-            <div className="p-6 pb-6 border-t border-border-thin bg-surface-hover/30 space-y-4 shrink-0 font-sans">
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-0.5">Observaciones Generales de la Auditoría</label>
-                    <textarea
-                        value={generalFeedback}
-                        onChange={(e) => setGeneralFeedback(e.target.value)}
-                        placeholder="Escriba la síntesis del informe o instrucciones generales de corrección para el docente..."
-                        className="input-vercel !h-20 !text-xs resize-none"
-                        disabled={submitting}
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={handleAprobar}
-                        disabled={submitting}
-                        className="flex items-center justify-center gap-1.5 btn-vercel-primary py-3 text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer animate-fade-in"
-                    >
-                        {submitting ? <Loader2 size={12} className="animate-spin" /> : <Scale size={12} />}
-                        Aprobar Requisitos
-                    </button>
-
-                    <button
-                        onClick={handleDevolver}
-                        disabled={submitting}
-                        className="flex items-center justify-center gap-1.5 bg-transparent hover:bg-error/10 text-error border border-error/20 hover:border-error/40 rounded-xl py-3 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer animate-fade-in"
-                    >
-                        {submitting ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
-                        Devolver Proyecto
-                    </button>
-                </div>
-            </div>
+            )}
         </div>,
         document.body
     );
