@@ -693,6 +693,8 @@ export const RevisionTecnicaPage: React.FC = () => {
                 }
             });
 
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+
             addToast(
                 "Revisión Aprobada",
                 "El protocolo ha avanzado a la fase de Evaluación por Pares.",
@@ -764,6 +766,8 @@ export const RevisionTecnicaPage: React.FC = () => {
                     observation: fullObs
                 }
             });
+
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
 
             addToast(
                 "Proyecto Devuelto",

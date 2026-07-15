@@ -87,10 +87,27 @@ const ResearchProjectsPage = () => {
         const handleFocus = () => {
             loadProjects(true);
         };
+        const handleProjectsChanged = () => {
+            loadProjects(true);
+        };
+
         window.addEventListener('focus', handleFocus);
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
         return () => {
             window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
         };
+    }, []);
+
+    // Sondeo periódico (polling) de respaldo de 60 segundos si la pestaña está visible
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadProjects(true);
+            }
+        }, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     const lineasDisponibles = useMemo(() => {
@@ -173,6 +190,7 @@ const ResearchProjectsPage = () => {
         if (!window.confirm(`¿Está seguro de aprobar la idea del proyecto "${project.titulo}"? Esto habilitará al docente para iniciar la formulación completa.`)) return;
         try {
             await api.post(`/projects/${project.uuid}/transition?newState=Borrador&observation=${encodeURIComponent("Idea de proyecto aprobada por Dirección de Investigación")}`);
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             loadProjects();
         } catch (e: any) {
             console.error("Error al aprobar prepropuesta", e);
@@ -189,6 +207,7 @@ const ResearchProjectsPage = () => {
             await api.post(`/projects/${rejectingProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(rejectObservation.trim())}`);
             setRejectingProject(null);
             setRejectObservation('');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             loadProjects();
         } catch (e: any) {
             console.error("Error al rechazar prepropuesta", e);
@@ -212,20 +231,20 @@ const ResearchProjectsPage = () => {
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                         Supervisión de Investigaciones
                     </h2>
-                    <p className="text-xs text-text-dim max-w-lg font-medium leading-relaxed">
-                        Administre y califique los proyectos de investigación registrados en el sistema, supervise su presupuesto y valide sus productos.
-                    </p>
+                    <div className="flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1 text-xs text-text-dim max-w-lg font-medium leading-relaxed">
+                        <span>
+                            Administre y califique los proyectos de investigación registrados en el sistema, supervise su presupuesto y valide sus productos.
+                        </span>
+                        {refreshing && (
+                            <span className="flex items-center gap-1 text-brand text-[10px] uppercase tracking-wider font-mono animate-pulse shrink-0">
+                                <Loader2 className="animate-spin" size={10} />
+                                Sincronizando...
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <button
-                        onClick={() => loadProjects(true)}
-                        disabled={refreshing || loading}
-                        className="btn-vercel-secondary !p-2 h-9 w-9 flex items-center justify-center rounded-lg"
-                        title="Actualizar proyectos"
-                    >
-                        <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-                    </button>
                     <button
                         onClick={() => setShowReportLauncher(true)}
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"

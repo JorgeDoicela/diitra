@@ -43,6 +43,7 @@ const MyProjectsPage: React.FC = () => {
     const { isDocente } = useAuth();
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [filterEstado, setFilterEstado] = useState<string>('todos');
@@ -75,20 +76,54 @@ const MyProjectsPage: React.FC = () => {
         }
     };
 
+    const loadProjects = async (isSilent = false) => {
+        if (isSilent) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+        setError(null);
+        try {
+            const res = await api.get('/projects/my');
+            setProyectos(res.data || []);
+        } catch (e: any) {
+            setError('No se pudieron cargar tus proyectos. Verifica la conexión con el servidor.');
+            console.error('[DIITRA] Error al cargar proyectos:', e);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchProyectos = async () => {
-            try {
-                setLoading(true);
-                const res = await api.get('/projects/my');
-                setProyectos(res.data);
-            } catch (e: any) {
-                setError('No se pudieron cargar tus proyectos. Verifica la conexión con el servidor.');
-                console.error('[DIITRA] Error al cargar proyectos:', e);
-            } finally {
-                setLoading(false);
-            }
+        loadProjects();
+    }, []);
+
+    useEffect(() => {
+        const handleFocus = () => {
+            loadProjects(true);
         };
-        fetchProyectos();
+        const handleProjectsChanged = () => {
+            loadProjects(true);
+        };
+
+        window.addEventListener('focus', handleFocus);
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
+        };
+    }, []);
+
+    // Sondeo periódico (polling) de respaldo de 60 segundos si la pestaña está visible
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadProjects(true);
+            }
+        }, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     const lineasDisponibles = Array.from(
@@ -162,9 +197,17 @@ const MyProjectsPage: React.FC = () => {
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                         Mis proyectos de investigación
                     </h2>
-                    <p className="text-xs text-text-dim max-w-lg font-medium">
-                        {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-text-dim font-medium">
+                        <span>
+                            {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
+                        </span>
+                        {refreshing && (
+                            <span className="flex items-center gap-1 text-brand text-[10px] uppercase tracking-wider font-mono animate-pulse">
+                                <Loader2 className="animate-spin" size={10} />
+                                Sincronizando...
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
                     <button
@@ -297,6 +340,14 @@ const MyProjectsPage: React.FC = () => {
                             className="btn-vercel-primary px-6 py-2.5"
                         >
                             <Plus size={14} strokeWidth={3} /> Crear primer proyecto
+                        </button>
+                    )}
+                    {!hasActiveFilters && isDocente && (
+                        <button
+                            onClick={() => navigate('/convocatorias')}
+                            className="btn-vercel-primary px-6 py-2.5 flex items-center justify-center gap-2"
+                        >
+                            <Plus size={14} strokeWidth={3} /> Postular a Convocatoria
                         </button>
                     )}
                 </div>

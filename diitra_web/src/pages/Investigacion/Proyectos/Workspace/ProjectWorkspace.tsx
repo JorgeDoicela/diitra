@@ -500,6 +500,7 @@ export const ProjectWorkspace: React.FC = () => {
                 codigoInstitucional: res.data.codigo_institucional,
             });
             addToast("Inicio de Ejecución", "Se ha iniciado la fase de ejecución exitosamente.", "success");
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (e: any) {
             addToast("Error al Iniciar Ejecución", e?.response?.data?.message ?? 'No se pudo iniciar la ejecución.', "error");
         } finally {
@@ -708,6 +709,7 @@ export const ProjectWorkspace: React.FC = () => {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reenvío de prepropuesta corregida")}`);
 
             addToast("Reenvío Exitoso", "Su prepropuesta ha sido corregida y reenviada para revisión.", "success");
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
             console.error("Error al reenviar prepropuesta", e);
@@ -733,6 +735,7 @@ export const ProjectWorkspace: React.FC = () => {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
             addToast("Idea Aprobada", "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.", "success");
             setAdminObservation('');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
             console.error("Error al aprobar prepropuesta", e);
@@ -761,6 +764,7 @@ export const ProjectWorkspace: React.FC = () => {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(adminObservation.trim())}`);
             addToast("Prepropuesta Devuelta", "La prepropuesta ha sido devuelta al docente con sus observaciones.", "success");
             setAdminObservation('');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
             console.error("Error al devolver prepropuesta", e);

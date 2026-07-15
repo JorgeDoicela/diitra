@@ -219,99 +219,207 @@ namespace Diitra.Infrastructure.Research
             // Notify admins/directors when a project is submitted
             if (nuevoEstado == "Enviado")
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    using (var scope = _scopeFactory.CreateScope())
-                    {
-                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                        try
-                        {
-                            await notificationService.NotifyByRoleCodesAsync(
-                                "Proyecto Postulado",
-                                $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
-                                new[] { "DIITRA_ADMIN" },
-                                $"/arbitraje/proyecto/{proyecto.Uuid}",
-                                excludeUserId: idUsuario
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DIITRA] Error al notificar postulación de proyecto en segundo plano: {ex.Message}");
-                        }
-                    }
-                });
+                    var profs = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => $"{pp.IdUsuarioNavigation.Nombre} ({pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")})")
+                        .ToListAsync();
+                    var alumnos = await _context.InvProyectosAlumnos
+                        .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                        .Select(pa => $"{pa.IdUsuarioNavigation.Nombre} (Estudiante)")
+                        .ToListAsync();
+                    var allParticipants = profs.Concat(alumnos).ToList();
+                    string participantes = allParticipants.Count > 0 ? string.Join(", ", allParticipants) : "un docente";
+
+                    await _notificationService.NotifyByRoleCodesAsync(
+                        "Proyecto Postulado",
+                        $"El proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido postulado y requiere revisión.",
+                        new[] { "DIITRA_ADMIN" },
+                        $"/arbitraje/proyecto/{proyecto.Uuid}"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar postulación de proyecto: {ex.Message}");
+                }
             }
             else if (nuevoEstado == "Prepropuesta")
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    using (var scope = _scopeFactory.CreateScope())
-                    {
-                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                        try
-                        {
-                            await notificationService.NotifyByRoleCodesAsync(
-                                "Prepropuesta Registrada",
-                                $"La prepropuesta del proyecto '{proyecto.Titulo}' ha sido registrada/reenviada y está pendiente de aprobación de idea.",
-                                new[] { "DIITRA_ADMIN" },
-                                $"/investigacion",
-                                excludeUserId: idUsuario
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DIITRA] Error al notificar prepropuesta en segundo plano: {ex.Message}");
-                        }
-                    }
-                });
+                    var profs = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => $"{pp.IdUsuarioNavigation.Nombre} ({pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")})")
+                        .ToListAsync();
+                    var alumnos = await _context.InvProyectosAlumnos
+                        .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                        .Select(pa => $"{pa.IdUsuarioNavigation.Nombre} (Estudiante)")
+                        .ToListAsync();
+                    var allParticipants = profs.Concat(alumnos).ToList();
+                    string participantes = allParticipants.Count > 0 ? string.Join(", ", allParticipants) : "un docente";
+
+                    var docInstance = await _context.DocumentInstances
+                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                    string actionUrl = docInstance != null 
+                        ? $"/investigacion/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        : $"/investigacion";
+
+                    await _notificationService.NotifyByRoleCodesAsync(
+                        "Prepropuesta Registrada",
+                        $"La prepropuesta del proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
+                        new[] { "DIITRA_ADMIN" },
+                        actionUrl
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar prepropuesta: {ex.Message}");
+                }
             }
             else if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador")
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    using (var scope = _scopeFactory.CreateScope())
+                    var participantUserIds = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => pp.IdUsuario)
+                        .Concat(_context.InvProyectosAlumnos
+                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                            .Select(pa => pa.IdUsuario))
+                        .Distinct()
+                        .ToListAsync();
+
+                    var docInstance = await _context.DocumentInstances
+                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                    string actionUrl = docInstance != null 
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        : $"/investigacion/mis-proyectos";
+
+                    foreach (var userId in participantUserIds)
                     {
-                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                        try
-                        {
-                            await notificationService.NotifyByRoleCodesAsync(
-                                "Prepropuesta Aprobada",
-                                $"Su prepropuesta '{proyecto.Titulo}' ha sido APROBADA. Ya puede iniciar la formulación completa del proyecto.",
-                                new[] { "DIITRA_DOCENTE" },
-                                $"/investigacion/mis-proyectos/workspace/PROTOCOLO_INVESTIGACION/{proyecto.Uuid}",
-                                excludeUserId: idUsuario
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DIITRA] Error al notificar aprobación de prepropuesta en segundo plano: {ex.Message}");
-                        }
+                        await _notificationService.NotifyUserAsync(
+                            userId,
+                            "Prepropuesta Aprobada",
+                            $"Su prepropuesta '{proyecto.Titulo}' ha sido APROBADA. Ya puede iniciar la formulación completa del proyecto.",
+                            "INVESTIGACION",
+                            actionUrl
+                        );
                     }
-                });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar aprobación de prepropuesta: {ex.Message}");
+                }
             }
             else if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Prepropuesta Rechazada")
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    using (var scope = _scopeFactory.CreateScope())
+                    var participantUserIds = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => pp.IdUsuario)
+                        .Concat(_context.InvProyectosAlumnos
+                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                            .Select(pa => pa.IdUsuario))
+                        .Distinct()
+                        .ToListAsync();
+
+                    var docInstance = await _context.DocumentInstances
+                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                    string actionUrl = docInstance != null 
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        : $"/investigacion/mis-proyectos";
+
+                    foreach (var userId in participantUserIds)
                     {
-                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                        try
-                        {
-                            await notificationService.NotifyByRoleCodesAsync(
-                                "Prepropuesta Devuelta",
-                                $"Su prepropuesta '{proyecto.Titulo}' ha sido devuelta con observaciones: {observacion}",
-                                new[] { "DIITRA_DOCENTE" },
-                                $"/investigacion/mis-proyectos",
-                                excludeUserId: idUsuario
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DIITRA] Error al notificar devolución de prepropuesta en segundo plano: {ex.Message}");
-                        }
+                        await _notificationService.NotifyUserAsync(
+                            userId,
+                            "Prepropuesta Devuelta",
+                            $"Su prepropuesta '{proyecto.Titulo}' ha sido devuelta con observaciones: {observacion}",
+                            "INVESTIGACION",
+                            actionUrl
+                        );
                     }
-                });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar devolución de prepropuesta: {ex.Message}");
+                }
+            }
+            else if (estadoAnterior == "Enviado" && nuevoEstado == "En Revisión")
+            {
+                try
+                {
+                    var participantUserIds = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => pp.IdUsuario)
+                        .Concat(_context.InvProyectosAlumnos
+                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                            .Select(pa => pa.IdUsuario))
+                        .Distinct()
+                        .ToListAsync();
+
+                    var docInstance = await _context.DocumentInstances
+                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                    string actionUrl = docInstance != null 
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        : $"/investigacion/mis-proyectos";
+
+                    foreach (var userId in participantUserIds)
+                    {
+                        await _notificationService.NotifyUserAsync(
+                            userId,
+                            "Revisión Técnica Aprobada",
+                            $"La revisión técnica inicial del proyecto '{proyecto.Titulo}' ha sido Aprobada. Ha avanzado a la fase de Evaluación por Pares.",
+                            "INVESTIGACION",
+                            actionUrl
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar aprobación técnica: {ex.Message}");
+                }
+            }
+            else if (estadoAnterior == "Enviado" && nuevoEstado == "En Corrección")
+            {
+                try
+                {
+                    var participantUserIds = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => pp.IdUsuario)
+                        .Concat(_context.InvProyectosAlumnos
+                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
+                            .Select(pa => pa.IdUsuario))
+                        .Distinct()
+                        .ToListAsync();
+
+                    string obsResumen = string.IsNullOrEmpty(observacion) 
+                        ? "Sin observaciones detalladas." 
+                        : (observacion.Length > 150 ? observacion.Substring(0, 147) + "..." : observacion);
+
+                    var docInstance = await _context.DocumentInstances
+                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                    string actionUrl = docInstance != null 
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        : $"/investigacion/mis-proyectos";
+
+                    foreach (var userId in participantUserIds)
+                    {
+                        await _notificationService.NotifyUserAsync(
+                            userId,
+                            "Revisión Técnica Devuelta",
+                            $"Su propuesta de proyecto '{proyecto.Titulo}' ha sido devuelta para correcciones. Observación: {obsResumen}",
+                            "INVESTIGACION",
+                            actionUrl
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar devolución técnica: {ex.Message}");
+                }
             }
 
             return true;

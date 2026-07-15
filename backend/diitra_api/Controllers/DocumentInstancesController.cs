@@ -529,6 +529,43 @@ namespace diitra_api.Controllers
                                 {
                                     dbInstance.SetEntityUuid(dto.Uuid);
                                     await context.SaveChangesAsync(ct);
+                                    if (dto.Estado == "Prepropuesta")
+                                    {
+                                        var notificationService = HttpContext.RequestServices.GetRequiredService<diitra_application.Common.Notifications.INotificationService>();
+
+                                        var participantsList = new List<string>();
+                                        if (!string.IsNullOrEmpty(dto.DirectorProyecto))
+                                        {
+                                            participantsList.Add($"{dto.DirectorProyecto} (Director)");
+                                        }
+                                        if (dto.Investigadores != null)
+                                        {
+                                            foreach (var inv in dto.Investigadores)
+                                            {
+                                                if (inv.Nombre != dto.DirectorProyecto && !string.IsNullOrEmpty(inv.Nombre))
+                                                {
+                                                    participantsList.Add($"{inv.Nombre} ({inv.Rol ?? "Investigador"})");
+                                                }
+                                            }
+                                        }
+                                        string participantes = participantsList.Count > 0 
+                                            ? string.Join(", ", participantsList) 
+                                            : "un docente";
+
+                                        try
+                                        {
+                                            await notificationService.NotifyByRoleCodesAsync(
+                                                "Prepropuesta Registrada",
+                                                $"La prepropuesta del proyecto '{dto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
+                                                new[] { "DIITRA_ADMIN" },
+                                                $"/investigacion/workspace/{instance.TemplateCode}/{instance.Uuid}"
+                                            );
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine($"[DIITRA] Error al notificar prepropuesta nueva: {ex.Message}");
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -276,6 +276,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 setIsConnected(true);
                 newConnection.on('ReceiveNotification', (payload?: any) => {
                     fetchNotifications();
+                    
+                    // Dispatch custom event to notify components that projects state might have changed
+                    window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+
                     if (payload && payload.title && payload.body) {
                         // Mapear categoría si viene en el payload o usar 'default'
                         let type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default';

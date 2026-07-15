@@ -4,7 +4,8 @@ import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
 import {
     ClipboardList, Search, ArrowRight, Loader2, BookOpen, User, 
-    CheckCircle2, AlertTriangle, ShieldCheck, ChevronRight, X, Check, Info, Award
+    CheckCircle2, AlertTriangle, ShieldCheck, ChevronRight, X, Check, Info, Award,
+    ArrowLeft
 } from 'lucide-react';
 
 interface UnfinishedProject {
@@ -196,7 +197,20 @@ const ProjectAdoptionPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <div className="max-w-[1400px] mx-auto">
-                
+
+                {/* Breadcrumb / Back Button */}
+                <div className="flex items-center gap-2 mb-6 animate-fade-up text-xs select-none">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer"
+                    >
+                        <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
+                        <span>Mis Investigaciones</span>
+                    </button>
+                    <span className="text-text-dim/30">/</span>
+                    <span className="text-text-main/80 font-medium">Adopción de Proyectos</span>
+                </div>
+
                 {/* Header */}
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-up">
                     <div className="space-y-2">
@@ -214,7 +228,7 @@ const ProjectAdoptionPage: React.FC = () => {
 
                     {/* Admin Switch View */}
                     {isAdmin && (
-                        <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none">
+                        <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none self-start md:self-end">
                             <button
                                 onClick={() => { setAdminActiveTab('view'); setSearchQuery(''); }}
                                 className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${

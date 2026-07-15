@@ -1370,6 +1370,12 @@ public class PeerReviewService : IPeerReviewService
                 _ => $"El proyecto '{project.Titulo}' ha entrado en fase de Desempate tras el proceso de arbitraje."
             };
 
+            var docInstance = await _context.DocumentInstances
+                .FirstOrDefaultAsync(di => di.EntityUuid == project.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+            string actionUrl = docInstance != null 
+                ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                : $"/investigacion/mis-proyectos";
+
             foreach (var userId in participantUserIds)
             {
                 await _notificationService.NotifyUserAsync(
@@ -1377,7 +1383,7 @@ public class PeerReviewService : IPeerReviewService
                     title,
                     body,
                     "INVESTIGACION",
-                    $"/investigacion/workspace/protocolo-investigacion/{project.Uuid}"
+                    actionUrl
                 );
             }
         }
@@ -1466,6 +1472,12 @@ public class PeerReviewService : IPeerReviewService
                 .Distinct()
                 .ToList();
 
+            var docInstance = await _context.DocumentInstances
+                .FirstOrDefaultAsync(di => di.EntityUuid == project.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+            string actionUrl = docInstance != null 
+                ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                : $"/investigacion/mis-proyectos";
+
             foreach (var userId in participantUserIds)
             {
                 await _notificationService.NotifyUserAsync(
@@ -1473,7 +1485,7 @@ public class PeerReviewService : IPeerReviewService
                     "Proyecto en Ejecución",
                     $"Su proyecto '{project.Titulo}' ha iniciado la fase de ejecución operativa.",
                     "INVESTIGACION",
-                    $"/investigacion/workspace/protocolo-investigacion/{project.Uuid}"
+                    actionUrl
                 );
             }
         }

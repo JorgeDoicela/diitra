@@ -94,6 +94,7 @@ const ArbitrajeProyecto: React.FC = () => {
             setDictamen(result);
             loadData();
             addToast('Evaluación Cerrada', 'La evaluación por pares ha sido cerrada y el dictamen final emitido con éxito.', 'success');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             addToast('Error', err?.response?.data?.message ?? 'Error al cerrar el arbitraje.', 'error');
         } finally {
@@ -154,6 +155,7 @@ const ArbitrajeProyecto: React.FC = () => {
             await iniciarEjecucion(projectUuid);
             loadData();
             addToast('Ejecución Iniciada', 'El proyecto ha pasado a la fase de ejecución con éxito.', 'success');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             addToast('Error', err?.response?.data?.message ?? 'Error al iniciar ejecución.', 'error');
         } finally {

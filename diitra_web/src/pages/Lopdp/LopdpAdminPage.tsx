@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Loader2, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Loader2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 
@@ -17,6 +18,7 @@ interface ConsentimientoData {
 }
 
 const LopdpAdminPage: React.FC = () => {
+    const navigate = useNavigate();
     const { addToast } = useNotifications();
 
     // Consentimientos State
@@ -43,6 +45,19 @@ const LopdpAdminPage: React.FC = () => {
 
     return (
         <div className="p-4 md:p-10 space-y-8 animate-fade-up">
+            {/* Breadcrumb / Back Button */}
+            <div className="flex items-center gap-2 text-xs select-none">
+                <button
+                    onClick={() => navigate('/auditoria')}
+                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer bg-transparent border-0"
+                >
+                    <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span>Registro de Auditoría</span>
+                </button>
+                <span className="text-text-dim/30">/</span>
+                <span className="text-text-main/80 font-medium">Panel LOPDP</span>
+            </div>
+
             <header className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
                     <ShieldCheck size={12} className="text-brand" />
