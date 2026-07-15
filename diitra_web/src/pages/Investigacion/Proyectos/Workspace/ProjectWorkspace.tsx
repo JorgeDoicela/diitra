@@ -33,7 +33,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Check, RotateCcw } from 'lucide-react';
+import { Shield, Check, RotateCcw, MessageSquare } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -132,6 +132,13 @@ export const ProjectWorkspace: React.FC = () => {
     const isPreproposalState = currentProject?.status === 'Prepropuesta' || currentProject?.status === 'Prepropuesta Rechazada';
     const [isLoading, setIsLoading] = useState(true);
     const [adminObservation, setAdminObservation] = useState('');
+    const [feedbackMode, setFeedbackMode] = useState<'general' | 'secciones'>('general');
+    const [sectionObservations, setSectionObservations] = useState({
+        carrera: '',
+        titulo: '',
+        descripcion: ''
+    });
+    const [activeSectionTab, setActiveSectionTab] = useState<'carrera' | 'titulo' | 'descripcion'>('carrera');
     const [isSubmittingAdminReview, setIsSubmittingAdminReview] = useState(false);
 
     const setActiveDocument = useCallback((doc: string | null) => {
@@ -731,10 +738,28 @@ export const ProjectWorkspace: React.FC = () => {
 
         setIsSubmittingAdminReview(true);
         try {
-            const obs = adminObservation.trim() || "Idea de proyecto aprobada por Dirección de Investigación";
+            let finalObservation = '';
+            if (feedbackMode === 'general') {
+                finalObservation = adminObservation.trim();
+            } else {
+                const lines = [];
+                if (sectionObservations.carrera.trim()) {
+                    lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
+                }
+                if (sectionObservations.titulo.trim()) {
+                    lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
+                }
+                if (sectionObservations.descripcion.trim()) {
+                    lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
+                }
+                finalObservation = lines.join('\n\n');
+            }
+
+            const obs = finalObservation || "Idea de proyecto aprobada por Dirección de Investigación";
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
             addToast("Idea Aprobada", "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.", "success");
             setAdminObservation('');
+            setSectionObservations({ carrera: '', titulo: '', descripcion: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
@@ -747,10 +772,29 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleAdminDevolverPrepropuesta = async () => {
         if (!currentProject?.uuid) return;
-        if (!adminObservation.trim()) {
+
+        let finalObservation = '';
+        if (feedbackMode === 'general') {
+            finalObservation = adminObservation.trim();
+        } else {
+            const lines = [];
+            if (sectionObservations.carrera.trim()) {
+                lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
+            }
+            if (sectionObservations.titulo.trim()) {
+                lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
+            }
+            if (sectionObservations.descripcion.trim()) {
+                lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
+            }
+            finalObservation = lines.join('\n\n');
+        }
+
+        if (!finalObservation) {
             addToast("Validación", "Debe ingresar una observación detallando los motivos de la devolución.", "warning");
             return;
         }
+
         if (!await confirm({
             title: "Devolver Prepropuesta",
             message: "¿Está seguro de devolver esta prepropuesta al docente para correcciones?",
@@ -761,9 +805,10 @@ export const ProjectWorkspace: React.FC = () => {
 
         setIsSubmittingAdminReview(true);
         try {
-            await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(adminObservation.trim())}`);
+            await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(finalObservation)}`);
             addToast("Prepropuesta Devuelta", "La prepropuesta ha sido devuelta al docente con sus observaciones.", "success");
             setAdminObservation('');
+            setSectionObservations({ carrera: '', titulo: '', descripcion: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
@@ -1289,7 +1334,14 @@ export const ProjectWorkspace: React.FC = () => {
                     <main className="max-w-6xl mx-auto p-6 md:p-12 animate-fade-up w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Panel Izquierdo: Contenido de la Prepropuesta */}
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="bento-card p-8 space-y-6 rounded-2xl border border-border-thin shadow-sm bg-surface">
+                            <div
+                                onClick={() => setFeedbackMode('general')}
+                                className={`bento-card p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${
+                                    feedbackMode === 'general'
+                                        ? '!border-text-main !ring-2 !ring-text-main shadow-md'
+                                        : 'border-border-thin shadow-sm'
+                                }`}
+                            >
                                 <div className="border-b border-border pb-4 flex justify-between items-center">
                                     <div>
                                         <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Detalle de la Prepropuesta</h3>
@@ -1301,19 +1353,82 @@ export const ProjectWorkspace: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Carrera / Unidad Postulante</label>
-                                        <div className="input-vercel opacity-70 bg-bg-deep select-none">{currentProject.carrera || 'No definida'}</div>
+                                    {/* Carrera / Unidad Postulante */}
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedbackMode('secciones');
+                                            setActiveSectionTab('carrera');
+                                        }}
+                                        className="space-y-2 group cursor-pointer"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 cursor-pointer transition-colors group-hover:text-text-main">
+                                                Carrera / Unidad Postulante
+                                            </label>
+                                            {feedbackMode === 'secciones' && activeSectionTab === 'carrera' && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                            )}
+                                        </div>
+                                        <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${
+                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
+                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                                : 'opacity-70 group-hover:border-border'
+                                        }`}>
+                                            {currentProject.carrera || 'No definida'}
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tema / Título de la Investigación</label>
-                                        <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase">{currentProject.title}</div>
+                                    {/* Tema / Título de la Investigación */}
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedbackMode('secciones');
+                                            setActiveSectionTab('titulo');
+                                        }}
+                                        className="space-y-2 group cursor-pointer"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 cursor-pointer transition-colors group-hover:text-text-main">
+                                                Tema / Título de la Investigación
+                                            </label>
+                                            {feedbackMode === 'secciones' && activeSectionTab === 'titulo' && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                            )}
+                                        </div>
+                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${
+                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
+                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                                : 'opacity-85 group-hover:border-border'
+                                        }`}>
+                                            {currentProject.title}
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Descripción / Justificación detallada</label>
-                                        <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed">{currentProject.descripcion || 'Sin descripción ingresada.'}</div>
+                                    {/* Descripción / Justificación detallada */}
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedbackMode('secciones');
+                                            setActiveSectionTab('descripcion');
+                                        }}
+                                        className="space-y-2 group cursor-pointer"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 cursor-pointer transition-colors group-hover:text-text-main">
+                                                Descripción / Justificación detallada
+                                            </label>
+                                            {feedbackMode === 'secciones' && activeSectionTab === 'descripcion' && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                            )}
+                                        </div>
+                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${
+                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
+                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                                : 'opacity-85 group-hover:border-border'
+                                        }`}>
+                                            {currentProject.descripcion || 'Sin descripción ingresada.'}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1331,15 +1446,115 @@ export const ProjectWorkspace: React.FC = () => {
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones / Retroalimentación</label>
-                                            <textarea
-                                                value={adminObservation}
-                                                onChange={(e) => setAdminObservation(e.target.value)}
-                                                placeholder="Ingrese las observaciones sobre el tema o justificación de la idea..."
-                                                className="input-vercel !h-32 !text-xs resize-none"
-                                            />
+                                        {/* Selector de Modo de Retroalimentación */}
+                                        <div className="flex bg-bg-deep p-1.5 rounded-xl border border-border-thin gap-1 shadow-inner">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFeedbackMode('general')}
+                                                className={`flex-1 py-1.5 px-3 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'general'
+                                                        ? 'bg-surface text-text-main shadow-sm border border-border-thin font-black'
+                                                        : 'text-text-dim hover:text-text-main'
+                                                    }`}
+                                            >
+                                                <Shield size={10} />
+                                                General
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFeedbackMode('secciones')}
+                                                className={`flex-1 py-1.5 px-3 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'secciones'
+                                                        ? 'bg-surface text-text-main shadow-sm border border-border-thin font-black'
+                                                        : 'text-text-dim hover:text-text-main'
+                                                    }`}
+                                            >
+                                                <MessageSquare size={10} />
+                                                Por Secciones
+                                            </button>
                                         </div>
+
+                                        {feedbackMode === 'general' ? (
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones Generales</label>
+                                                <textarea
+                                                    key="general-obs"
+                                                    autoFocus
+                                                    value={adminObservation}
+                                                    onChange={(e) => setAdminObservation(e.target.value)}
+                                                    placeholder="Ingrese las observaciones sobre el tema o justificación de la idea..."
+                                                    className="input-vercel !h-32 !text-xs resize-none"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4 animate-in fade-in duration-200">
+                                                {/* Sub-selector de sección minimalista */}
+                                                <div className="flex border-b border-border-thin text-[9px] font-bold uppercase tracking-wider mb-2 gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveSectionTab('carrera')}
+                                                        className={`pb-1.5 border-b-2 transition-all duration-200 ${activeSectionTab === 'carrera' ? 'border-brand text-text-main font-black' : 'border-transparent text-text-dim'
+                                                            }`}
+                                                    >
+                                                        Carrera
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveSectionTab('titulo')}
+                                                        className={`pb-1.5 border-b-2 transition-all duration-200 ${activeSectionTab === 'titulo' ? 'border-brand text-text-main font-black' : 'border-transparent text-text-dim'
+                                                            }`}
+                                                    >
+                                                        Título
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveSectionTab('descripcion')}
+                                                        className={`pb-1.5 border-b-2 transition-all duration-200 ${activeSectionTab === 'descripcion' ? 'border-brand text-text-main font-black' : 'border-transparent text-text-dim'
+                                                            }`}
+                                                    >
+                                                        Descripción
+                                                    </button>
+                                                </div>
+
+                                                {activeSectionTab === 'carrera' && (
+                                                    <div className="space-y-2 animate-in fade-in duration-200">
+                                                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Carrera / Unidad</label>
+                                                        <textarea
+                                                            key="carrera-obs"
+                                                            autoFocus
+                                                            value={sectionObservations.carrera}
+                                                            onChange={(e) => setSectionObservations({ ...sectionObservations, carrera: e.target.value })}
+                                                            placeholder="Ingrese las observaciones sobre la carrera o unidad postulante..."
+                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                        />
+                                                    </div>
+                                                )}
+                                                {activeSectionTab === 'titulo' && (
+                                                    <div className="space-y-2 animate-in fade-in duration-200">
+                                                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Tema / Título</label>
+                                                        <textarea
+                                                            key="titulo-obs"
+                                                            autoFocus
+                                                            value={sectionObservations.titulo}
+                                                            onChange={(e) => setSectionObservations({ ...sectionObservations, titulo: e.target.value })}
+                                                            placeholder="Ingrese las observaciones sobre el tema o título..."
+                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                        />
+                                                    </div>
+                                                )}
+                                                {activeSectionTab === 'descripcion' && (
+                                                    <div className="space-y-2 animate-in fade-in duration-200">
+                                                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Descripción / Justificación</label>
+                                                        <textarea
+                                                            key="descripcion-obs"
+                                                            autoFocus
+                                                            value={sectionObservations.descripcion}
+                                                            onChange={(e) => setSectionObservations({ ...sectionObservations, descripcion: e.target.value })}
+                                                            placeholder="Ingrese las observaciones sobre la descripción..."
+                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         <div className="space-y-3 pt-2">
                                             <button
@@ -1353,7 +1568,12 @@ export const ProjectWorkspace: React.FC = () => {
 
                                             <button
                                                 onClick={handleAdminDevolverPrepropuesta}
-                                                disabled={isSubmittingAdminReview || !adminObservation.trim()}
+                                                disabled={
+                                                    isSubmittingAdminReview ||
+                                                    (feedbackMode === 'general'
+                                                        ? !adminObservation.trim()
+                                                        : !(sectionObservations.carrera.trim() || sectionObservations.titulo.trim() || sectionObservations.descripcion.trim()))
+                                                }
                                                 className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-error/10 text-error border border-error/30 hover:border-error/50 rounded-lg py-3 px-6 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                             >
                                                 <RotateCcw size={14} />
