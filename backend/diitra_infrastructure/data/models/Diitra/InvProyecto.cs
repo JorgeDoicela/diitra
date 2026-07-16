@@ -28,6 +28,7 @@ public partial class InvProyecto
     public string Estado { get; set; } = "Borrador";
     public decimal? PuntajeEvaluacion { get; set; }
     public decimal? ValorEjecucion { get; set; }
+    public decimal? PresupuestoEstimado { get; set; }
     public string? IdDspaceHandle { get; set; }
     public string? MetadataCacesJson { get; set; }
     public bool? Activo { get; set; }

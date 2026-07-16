@@ -601,7 +601,7 @@ export const ProjectWorkspace: React.FC = () => {
                 status: 'Borrador',
                 presupuesto: 0,
                 linea: 'No definida',
-                directorProyecto: user?.nombres_completos || user?.nombre || '',
+                directorProyecto: user?.nombre_completo || '',
                 puedeEditar: true,
                 puedeSolicitarCambioEquipo: false,
                 puedeFirmar: true,
@@ -728,6 +728,17 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleAdminAprobarPrepropuesta = async () => {
         if (!currentProject?.uuid) return;
+
+        if (!currentProject.title?.trim()) {
+            addToast("Validación de Prepropuesta", "No se puede aprobar la prepropuesta porque el tema/título está vacío.", "warning");
+            return;
+        }
+
+        if (!currentProject.descripcion?.trim()) {
+            addToast("Validación de Prepropuesta", "No se puede aprobar la prepropuesta porque la descripción está vacía.", "warning");
+            return;
+        }
+
         if (!await confirm({
             title: "Aprobar Prepropuesta",
             message: `¿Está seguro de aprobar la idea del proyecto "${currentProject.title}"? Esto habilitará al docente para iniciar la formulación completa.`,
@@ -792,6 +803,11 @@ export const ProjectWorkspace: React.FC = () => {
 
         if (!finalObservation) {
             addToast("Validación", "Debe ingresar una observación detallando los motivos de la devolución.", "warning");
+            return;
+        }
+
+        if (finalObservation.length < 10) {
+            addToast("Validación", "Debe ingresar una observación detallada de al menos 10 caracteres para justificar la devolución.", "warning");
             return;
         }
 
@@ -1336,20 +1352,20 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             <div
                                 onClick={() => setFeedbackMode('general')}
-                                className={`bento-card p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${
+                                className={`bento-card relative p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${
                                     feedbackMode === 'general'
                                         ? '!border-text-main !ring-2 !ring-text-main shadow-md'
                                         : 'border-border-thin shadow-sm'
                                 }`}
                             >
+                                {feedbackMode === 'general' && (
+                                    <span className="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                )}
                                 <div className="border-b border-border pb-4 flex justify-between items-center">
                                     <div>
                                         <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Detalle de la Prepropuesta</h3>
                                         <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
                                     </div>
-                                    <span className="text-[9px] font-bold bg-brand/10 border border-brand/20 text-brand px-2.5 py-1 rounded-full uppercase tracking-wider animate-pulse">
-                                        Fase de Idea
-                                    </span>
                                 </div>
 
                                 <div className="space-y-6">
@@ -1477,11 +1493,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones Generales</label>
                                                 <textarea
                                                     key="general-obs"
-                                                    autoFocus
                                                     value={adminObservation}
                                                     onChange={(e) => setAdminObservation(e.target.value)}
                                                     placeholder="Ingrese las observaciones sobre el tema o justificación de la idea..."
-                                                    className="input-vercel !h-32 !text-xs resize-none"
+                                                    className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
                                                 />
                                             </div>
                                         ) : (
@@ -1519,11 +1534,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                         <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Carrera / Unidad</label>
                                                         <textarea
                                                             key="carrera-obs"
-                                                            autoFocus
                                                             value={sectionObservations.carrera}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, carrera: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre la carrera o unidad postulante..."
-                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -1532,11 +1546,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                         <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Tema / Título</label>
                                                         <textarea
                                                             key="titulo-obs"
-                                                            autoFocus
                                                             value={sectionObservations.titulo}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, titulo: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre el tema o título..."
-                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -1545,11 +1558,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                         <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Descripción / Justificación</label>
                                                         <textarea
                                                             key="descripcion-obs"
-                                                            autoFocus
                                                             value={sectionObservations.descripcion}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, descripcion: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre la descripción..."
-                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}

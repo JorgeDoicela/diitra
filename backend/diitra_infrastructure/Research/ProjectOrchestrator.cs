@@ -106,6 +106,7 @@ namespace diitra_infrastructure.Research
                 project.FechaPresentacion = ParseDateOnly(dto.FechaPresentacion);
                 project.FechaInicio = ParseDateOnly(dto.FechaInicio ?? dto.FechaInicioEstimada);
                 project.FechaFin = ParseDateOnly(dto.FechaFin ?? dto.FechaFinEstimada);
+                project.PresupuestoEstimado = dto.CostoTotal;
 
                 // Cumplimiento CACES: si es asociativo, la adscripción solo puede ser a un grupo aprobado y activo.
                 bool isAssociative = dto.TieneGrupoInvestigacion == true ||
@@ -444,7 +445,9 @@ namespace diitra_infrastructure.Research
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                     Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),
-                    PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
+                    PresupuestoTotal = p.InvPresupuestoItems.Any()
+                        ? p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad)
+                        : p.PresupuestoEstimado,
                     PresupuestoEjecutado = p.ValorEjecucion,
                     PuntajeEvaluacion = p.PuntajeEvaluacion,
                     FechaRegistro = p.FechaRegistro,
@@ -523,7 +526,9 @@ namespace diitra_infrastructure.Research
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                     Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),
-                    PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
+                    PresupuestoTotal = p.InvPresupuestoItems.Any()
+                        ? p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad)
+                        : p.PresupuestoEstimado,
                     PresupuestoEjecutado = p.ValorEjecucion,
                     PuntajeEvaluacion = p.PuntajeEvaluacion,
                     FechaRegistro = p.FechaRegistro,
@@ -983,7 +988,9 @@ namespace diitra_infrastructure.Research
                 dto.TieneGrupoInvestigacion = dto.TieneGrupoInvestigacion ?? false;
                 dto.GrupoInvestigacionTipo = dto.GrupoInvestigacionTipo ?? "NO";
             }
-            dto.CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad);
+            dto.CostoTotal = p.InvPresupuestoItems.Any()
+                ? p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad)
+                : p.PresupuestoEstimado ?? 0;
             dto.Investigadores = investigadoresList;
 
             dto.FechaPresentacion = p.FechaPresentacion?.ToString("dd/MM/yyyy");

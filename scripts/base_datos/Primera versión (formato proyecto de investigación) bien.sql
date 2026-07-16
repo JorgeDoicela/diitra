@@ -399,6 +399,7 @@ CREATE TABLE inv_proyectos (
     disponibleAdopcion    TINYINT(1)    DEFAULT 0 COMMENT 'Indica si el proyecto inconcluso esta disponible para adopcion por otros profesores',
     puntajeEvaluacion     DECIMAL(5,2)  NULL,
     valorEjecucion        DECIMAL(12,2) DEFAULT 0.00,
+    presupuesto_estimado  DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Presupuesto inicial estimado ingresado en la prepropuesta',
     idObjetivoPnd         INT           NULL COMMENT 'Vínculo con el Plan Nacional de Desarrollo',
     activo                TINYINT(1)    DEFAULT 1,
     eliminado             TINYINT(1)    DEFAULT 0,

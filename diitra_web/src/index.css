@@ -646,6 +646,11 @@ input:autofill::first-line {
     box-shadow: 0 0 0 1px var(--fg);
 }
 
+.input-vercel-no-highlight:focus {
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+}
+
 .input-vercel::placeholder {
     color: var(--text-dim);
 }

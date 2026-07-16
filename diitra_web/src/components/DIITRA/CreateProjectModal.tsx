@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText } from 'lucide-react';
+import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
@@ -33,6 +33,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
+    const [presupuestoEstimado, setPresupuestoEstimado] = useState<string>('');
     const [idCarrera, setIdCarrera] = useState<number>(0);
     const [idConvocatoria, setIdConvocatoria] = useState<number>(preselectedConvocatoriaId || 0);
     const [careerLocked, setCareerLocked] = useState(false);
@@ -143,6 +144,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
         if (!descripcion.trim()) return setError("La descripción de la prepropuesta es obligatoria.");
+        
+        const parsedBudget = parseFloat(presupuestoEstimado);
+        if (isNaN(parsedBudget) || parsedBudget <= 0) {
+            return setError("Debe ingresar un presupuesto estimado válido y mayor a cero.");
+        }
         if (idCarrera === 0) {
             return setError(isDocente
                 ? "No se encontró una carrera vinculada a su perfil docente. Contacte al administrador institucional."
@@ -180,6 +186,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 IdConvocatoria: idConvocatoria,
                 DirectorProyecto: user?.nombre_completo || '',
                 DescripcionProyecto: descripcion.trim(),
+                CostoTotal: parsedBudget,
                 Estado: 'Prepropuesta'
             };
 
@@ -208,21 +215,16 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const isSelectedExpired = selectedConvocatoria && isPastDeadline(selectedConvocatoria.fecha_cierre || selectedConvocatoria.fechaCierre);
 
     return createPortal(
-        <div className="modal-overlay">
-            <div className="modal-card bg-glow animate-fade-up relative">
-                
-                {!isCreating && (
-                    <button 
-                        onClick={onClose} 
-                        className="absolute top-6 right-6 p-2 rounded-full hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
-                    >
-                        <X size={16} />
-                    </button>
-                )}
+        <div className="fixed inset-0 z-[110] flex justify-end">
+            <div
+                className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                onClick={() => !isCreating && onClose()}
+            />
 
-                <div className="p-8">
-                    
-                    <div className="flex items-center gap-3 border-b border-border pb-4 mb-8">
+            <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
+                
+                <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                    <div className="flex items-center gap-3">
                         <div className="text-text-main">
                             <Shield size={20} />
                         </div>
@@ -231,7 +233,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <h3 className="text-sm font-black text-text-main uppercase tracking-widest leading-none mt-1">Iniciar Nueva Postulación</h3>
                         </div>
                     </div>
+                    {!isCreating && (
+                        <button 
+                            onClick={onClose} 
+                            className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
+                </div>
 
+                <div className="flex-1 overflow-y-auto p-8 bg-surface">
                     {isCreating ? (
                         <div className="py-16 flex flex-col items-center justify-center gap-6 animate-fade-in text-center">
                             <div className="w-10 h-10 border-2 border-text-main border-t-transparent rounded-full animate-spin" />
@@ -283,6 +295,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 <div className="text-[9px] text-text-dim/60 ml-1 flex justify-end">
                                     <span>Caracteres ingresados: {descripcion.length}</span>
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
+                                    <DollarSign size={10} className="text-text-dim" />
+                                    Presupuesto Estimado (USD)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    value={presupuestoEstimado}
+                                    onChange={(e) => setPresupuestoEstimado(e.target.value)}
+                                    placeholder="Ej: 15000.00"
+                                    className="input-vercel !text-xs !font-bold !placeholder:text-text-dim/30"
+                                    required
+                                />
                             </div>
 
                             <div className="space-y-2" ref={carreraRef}>

@@ -225,15 +225,6 @@ const PublicConvocatoriasPage = () => {
                                             Postular Ahora
                                         </button>
                                     )}
-                                    <a
-                                        href={c.url_bases}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="btn-vercel-secondary"
-                                    >
-                                        <ExternalLink size={18} />
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -384,14 +375,6 @@ const PublicConvocatoriasPage = () => {
                                     Iniciar Postulación
                                 </button>
                             )}
-                            <a
-                                href={selectedConvocatoria.url_bases}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn-vercel-secondary"
-                            >
-                                <ExternalLink size={16} />
-                            </a>
                         </div>
                     </div>
                 </div>,

@@ -62,6 +62,27 @@ namespace Diitra.Infrastructure.Research
                 throw new InvalidOperationException($"La transición {estadoAnterior} -> {nuevoEstado} no está permitida por la normativa vigente para este tipo de proyecto.");
             }
 
+            // 1.05 Validaciones de Prepropuesta (Idea de Investigación)
+            if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador")
+            {
+                if (string.IsNullOrWhiteSpace(proyecto.Titulo))
+                {
+                    throw new InvalidOperationException("No se puede aprobar la prepropuesta porque el título del proyecto está vacío.");
+                }
+                if (string.IsNullOrWhiteSpace(proyecto.DescripcionProyecto))
+                {
+                    throw new InvalidOperationException("No se puede aprobar la prepropuesta porque la descripción/justificación del proyecto está vacía.");
+                }
+            }
+
+            if (nuevoEstado == "Prepropuesta Rechazada")
+            {
+                if (string.IsNullOrWhiteSpace(observacion) || observacion.Trim().Length < 10)
+                {
+                    throw new InvalidOperationException("Debe ingresar una observación detallada de al menos 10 caracteres para justificar la devolución al docente.");
+                }
+            }
+
             // 1.1 Validación de Reglas de Convocatoria (CACES & SENESCYT Compliance)
             if (nuevoEstado == "Enviado" && proyecto.IdConvocatoria.HasValue)
             {

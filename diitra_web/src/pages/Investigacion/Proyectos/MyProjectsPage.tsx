@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -210,6 +210,14 @@ const MyProjectsPage: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+                    <button
+                        onClick={() => navigate('/convocatorias')}
+                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
+                        title="Ver convocatorias vigentes"
+                    >
+                        <PenTool size={14} />
+                        <span>Convocatorias</span>
+                    </button>
                     <button
                         onClick={() => navigate('/investigacion/adopcion')}
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"

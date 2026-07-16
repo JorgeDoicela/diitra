@@ -960,6 +960,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.DisponibleAdopcion).HasColumnName("disponibleAdopcion").HasColumnType("tinyint(1)").HasDefaultValue(false);
             entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);
             entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.PresupuestoEstimado).HasColumnName("presupuesto_estimado").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
             entity.Property(e => e.IdDspaceHandle).HasColumnName("idDspaceHandle").HasMaxLength(255);
             entity.Property(e => e.MetadataCacesJson).HasColumnName("metadataCacesJson").HasColumnType("json");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
