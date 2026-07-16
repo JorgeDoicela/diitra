@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     Search, Users, ArrowLeft, Layers, Loader2,
     ChevronRight, ArrowRight, Activity, Trash, Camera,
@@ -1382,7 +1382,7 @@ const PublicGroupsPage: React.FC<PublicGroupsPageProps> = ({
                                 (() => {
                                     const featuredProjects = groups
                                         .flatMap(g => (g.proyectos || []).map(p => ({ ...p, grupoSiglas: g.siglas, grupoUuid: g.uuid })))
-                                        .slice(0, 3);
+                                                        .slice(0, 3);
                                     
                                     if (featuredProjects.length === 0) return null;
 
@@ -1393,9 +1393,9 @@ const PublicGroupsPage: React.FC<PublicGroupsPageProps> = ({
                                                 <span className="text-[9px] font-mono text-brand uppercase tracking-widest">Actividad</span>
                                             </div>
                                             {featuredProjects.map((p) => (
-                                                <div key={p.uuid}
-                                                    className="flex items-center justify-between px-6 py-4 hover:bg-surface-hover/30 transition-all cursor-pointer group/destacado"
-                                                    onClick={() => navigate(`/grupos-investigacion/${p.grupoUuid}`)}>
+                                                <Link key={p.uuid}
+                                                    to={`/grupos-investigacion/${p.grupoUuid}`}
+                                                    className="flex items-center justify-between px-6 py-4 hover:bg-surface-hover/30 transition-all cursor-pointer group/destacado">
                                                     <div className="min-w-0 pr-4">
                                                         <p className="text-sm font-semibold text-text-main leading-snug truncate group-hover/destacado:text-brand transition-colors">{p.titulo}</p>
                                                         <div className="flex items-center gap-2 mt-1">
@@ -1408,7 +1408,7 @@ const PublicGroupsPage: React.FC<PublicGroupsPageProps> = ({
                                                         </div>
                                                     </div>
                                                     <ChevronRight size={14} className="text-text-dim/40 group-hover/destacado:text-text-main group-hover/destacado:translate-x-0.5 transition-all shrink-0" />
-                                                </div>
+                                                </Link>
                                             ))}
                                             <div className="px-6 py-4 border-t border-border-thin/30 bg-surface/10">
                                                 <a href="#catalogo" className="text-xs text-brand font-medium hover:underline transition-colors flex items-center gap-1.5 w-fit">
@@ -1501,10 +1501,10 @@ const PublicGroupsPage: React.FC<PublicGroupsPageProps> = ({
                 ) : filteredGroups.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-up">
                         {filteredGroups.map((grupo, idx) => (
-                            <div key={grupo.uuid}
+                            <Link key={grupo.uuid}
+                                to={`/grupos-investigacion/${grupo.uuid}`}
                                 className="bento-card p-5 cursor-pointer flex flex-col justify-between"
-                                style={{ animationDelay: `${idx * 40}ms` }}
-                                onClick={() => navigate(`/grupos-investigacion/${grupo.uuid}`)}>
+                                style={{ animationDelay: `${idx * 40}ms` }}>
                                 <div>
                                     {/* Banner de grupo (Foto o Gradiente de Siglas) */}
                                     <div className="h-32 w-full rounded-lg overflow-hidden mb-5 bg-surface/30 relative border border-border-thin/30 select-none">
@@ -1554,7 +1554,7 @@ const PublicGroupsPage: React.FC<PublicGroupsPageProps> = ({
                                         <ChevronRight size={12} className="text-text-dim/40 group-hover:text-text-main group-hover:translate-x-0.5 transition-all" />
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 ) : (

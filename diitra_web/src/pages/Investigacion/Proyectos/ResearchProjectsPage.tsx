@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
     ClipboardList, Plus, FileCheck, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award
@@ -41,7 +41,6 @@ export interface ProyectoResumen {
 }
 
 const ResearchProjectsPage = () => {
-    const navigate = useNavigate();
     const { states, getEstadoConfig } = useWorkflowStates();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
@@ -164,10 +163,6 @@ const ResearchProjectsPage = () => {
                 return 0;
             });
     }, [proyectos, search, filterEstado, filterLinea, filterConvocatoria, sortBy]);
-
-    const abrirWorkspace = (p: ProyectoResumen) => {
-        navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion'));
-    };
 
     const confirmarEliminar = (uuid: string, titulo: string) => {
         setDeletingUuid(uuid);
@@ -317,14 +312,14 @@ const ResearchProjectsPage = () => {
                         <FileCheck size={14} />
                         <span>Informe Final</span>
                     </button>
-                    <button
-                        onClick={() => navigate('/investigacion/adopcion')}
+                    <Link
+                        to="/investigacion/adopcion"
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
                         title="Adoptar proyectos de investigación inconclusos"
                     >
                         <Award size={14} />
                         <span>Adopción</span>
-                    </button>
+                    </Link>
                     <button
                         onClick={() => setShowWizard(true)}
                         className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
@@ -459,9 +454,12 @@ const ResearchProjectsPage = () => {
                         return (
                             <div
                                 key={p.uuid}
-                                onClick={() => abrirWorkspace(p)}
-                                className="bento-card group relative p-6 cursor-pointer overflow-hidden flex flex-col justify-between"
+                                className="bento-card group relative p-6 overflow-hidden flex flex-col justify-between"
                             >
+                                <Link
+                                    to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion')}
+                                    className="absolute inset-0 z-10"
+                                />
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-brand-subtle rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                 <div className="space-y-4">
@@ -484,7 +482,7 @@ const ResearchProjectsPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-1.5 shrink-0 ml-2 mt-0.5">
+                                        <div className="flex items-center gap-1.5 shrink-0 ml-2 mt-0.5 relative z-20">
                                             {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
                                                 <button
                                                     onClick={(e) => {
@@ -513,7 +511,7 @@ const ResearchProjectsPage = () => {
                                     </div>
 
                                     {p.estado === 'Prepropuesta' && (
-                                        <div className="flex gap-2 pt-1.5" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex gap-2 pt-1.5 relative z-20" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 onClick={() => handleAprobarIdea(p)}
                                                 className="btn-vercel-primary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider bg-brand text-white border-brand hover:bg-transparent hover:text-brand"

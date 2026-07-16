@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { DashboardSkeleton } from '../Components/DashboardSkeleton';
@@ -144,51 +144,36 @@ export const DocenteDashboard: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                     {/* Card Activos */}
-                                    <div
-                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-success/5 transition-all duration-300 group"
-                                        style={{ borderLeftColor: 'var(--success)' }}
-                                    >
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Activos</span>
-                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
-                                                <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
-                                            </p>
+                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="text-[13px] text-text-dim font-medium">Activos</span>
+                                            <Activity size={16} className="text-text-dim/50" />
                                         </div>
-                                        <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success transition-transform duration-300 group-hover:scale-105">
-                                            <Activity size={18} />
-                                        </div>
+                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
+                                            <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
+                                        </p>
                                     </div>
 
                                     {/* Card Borradores */}
-                                    <div
-                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-neutral/5 transition-all duration-300 group"
-                                        style={{ borderLeftColor: 'var(--text-dim)' }}
-                                    >
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Borradores</span>
-                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
-                                                <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
-                                            </p>
+                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="text-[13px] text-text-dim font-medium">Borradores</span>
+                                            <FileEdit size={16} className="text-text-dim/50" />
                                         </div>
-                                        <div className="w-9 h-9 rounded-lg bg-text-dim/10 flex items-center justify-center text-text-dim transition-transform duration-300 group-hover:scale-105">
-                                            <FileEdit size={18} />
-                                        </div>
+                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
+                                            <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
+                                        </p>
                                     </div>
 
                                     {/* Card Total */}
-                                    <div
-                                        className="flex items-center justify-between p-5 bg-surface border border-border-thin border-l-4 rounded-xl hover:shadow-md hover:shadow-brand/5 transition-all duration-300 group"
-                                        style={{ borderLeftColor: 'var(--brand)' }}
-                                    >
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Total</span>
-                                            <p className="text-3xl font-semibold text-text-main font-mono leading-none">
-                                                <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
-                                            </p>
+                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="text-[13px] text-text-dim font-medium">Total</span>
+                                            <Briefcase size={16} className="text-text-dim/50" />
                                         </div>
-                                        <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center text-brand transition-transform duration-300 group-hover:scale-105">
-                                            <Briefcase size={18} />
-                                        </div>
+                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
+                                            <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -247,23 +232,15 @@ export const DocenteDashboard: React.FC = () => {
 
                                         // 2. Real UUID from system (shortened)
                                         const shortUuid = item.uuid ? item.uuid.substring(0, 8).toUpperCase() : 'SELLO PEND.';
-
                                         const isInforme = item.tipo?.toLowerCase().includes('informe');
+                                        const itemUrl = item.uuid && item.tipo?.toLowerCase().includes('proyecto')
+                                            ? `/proyectos/${item.uuid}`
+                                            : '/investigacion/mis-proyectos';
 
                                         return (
-                                            <div
+                                            <Link
                                                 key={i}
-                                                onClick={() => {
-                                                    if (item.uuid) {
-                                                        if (item.tipo?.toLowerCase().includes('proyecto')) {
-                                                            navigate(`/proyectos/${item.uuid}`);
-                                                        } else {
-                                                            navigate('/investigacion/mis-proyectos');
-                                                        }
-                                                    } else {
-                                                        navigate('/investigacion/mis-proyectos');
-                                                    }
-                                                }}
+                                                to={itemUrl}
                                                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
                                             >
                                                 {/* Col 1: Title & Description */}
@@ -308,7 +285,7 @@ export const DocenteDashboard: React.FC = () => {
                                                     </div>
 
                                                 </div>
-                                            </div>
+                                            </Link>
                                         );
                                     })
                                 )}

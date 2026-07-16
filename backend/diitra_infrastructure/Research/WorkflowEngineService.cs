@@ -42,10 +42,13 @@ namespace Diitra.Infrastructure.Research
                 if (ultimaTransicionReciente != null)
                 {
                     var fechaTrans = ultimaTransicionReciente.FechaTransicion;
-                    var diferencia = DateTime.Now - fechaTrans;
-                    if (diferencia.TotalSeconds > 20) // Margen de seguridad de 20 segundos para la sincronización de red
+                    if (fechaTrans.HasValue)
                     {
-                        throw new InvalidOperationException("El tiempo límite para deshacer la última acción ha expirado. El docente podría haber iniciado modificaciones.");
+                        var diferencia = DateTime.Now - fechaTrans.Value;
+                        if (diferencia.TotalSeconds > 20) // Margen de seguridad de 20 segundos para la sincronización de red
+                        {
+                            throw new InvalidOperationException("El tiempo límite para deshacer la última acción ha expirado. El docente podría haber iniciado modificaciones.");
+                        }
                     }
                 }
             }

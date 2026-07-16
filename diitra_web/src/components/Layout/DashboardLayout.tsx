@@ -296,7 +296,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 pathname={location.pathname}
             />
 
-            <StickyNotesFloatingButton />
+            <StickyNotesFloatingButton onOpenHelp={() => setIsHelpOpen(true)} />
         </div>
     );
 };

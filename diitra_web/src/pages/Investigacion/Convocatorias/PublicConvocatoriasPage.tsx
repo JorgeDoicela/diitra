@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PenTool, Calendar, Filter, Search, X, BookOpen } from 'lucide-react';
+import { PenTool, Calendar, Search, X, BookOpen } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import { useAuth } from '../../../api/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 interface Convocatoria {
     id_convocatoria: number;
@@ -67,6 +67,8 @@ const PublicConvocatoriasPage = () => {
     const [preselectedConvocatoriaId, setPreselectedConvocatoriaId] = useState<number | null>(null);
     const [selectedConvocatoria, setSelectedConvocatoria] = useState<Convocatoria | null>(null);
 
+    const postularId = searchParams.get('postular');
+
     useEffect(() => {
         if (openUuid && convocatorias.length > 0) {
             const target = convocatorias.find(c => c.uuid === openUuid);
@@ -81,10 +83,18 @@ const PublicConvocatoriasPage = () => {
         }
     }, [openUuid, convocatorias, setSearchParams]);
 
-    const handlePostular = (idConvocatoria: number) => {
-        setPreselectedConvocatoriaId(idConvocatoria);
-        setShowNewProject(true);
-    };
+    useEffect(() => {
+        if (postularId && convocatorias.length > 0) {
+            const id = parseInt(postularId, 10);
+            if (!isNaN(id)) {
+                const target = convocatorias.find(c => c.id_convocatoria === id);
+                if (target) {
+                    setPreselectedConvocatoriaId(id);
+                    setShowNewProject(true);
+                }
+            }
+        }
+    }, [postularId, convocatorias]);
 
     useEffect(() => {
         const fetchConvocatorias = async () => {
@@ -153,13 +163,14 @@ const PublicConvocatoriasPage = () => {
                     {filtered.map((c) => (
                         <div
                             key={c.uuid}
-                            onClick={() => setSelectedConvocatoria(c)}
-                            className={`bento-card p-6 group cursor-pointer overflow-hidden transition-all ${selectedConvocatoria?.uuid === c.uuid
+                            className={`bento-card p-6 group relative overflow-hidden transition-all ${selectedConvocatoria?.uuid === c.uuid
                                 ? 'bg-brand/[0.05] border-brand/35 shadow-[0_0_12px_rgba(0,112,243,0.08)]'
                                 : ''
                                 }`}
                         >
-                            <div className="space-y-6 relative z-10">
+                            <Link to={`?open=${c.uuid}`} className="absolute inset-0 z-10" />
+
+                            <div className="space-y-6 relative z-0 pointer-events-none">
                                 <div className="flex justify-between items-start">
                                     <span className="badge-vercel">
                                         {c.codigo_convocatoria}
@@ -203,30 +214,24 @@ const PublicConvocatoriasPage = () => {
                                         </p>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="pt-6 flex items-center gap-4">
-                                    {isPastDeadline(c.fecha_cierre) ? (
-                                        <button
-                                            disabled
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                            }}
-                                            className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
-                                        >
-                                            Plazo Vencido
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handlePostular(c.id_convocatoria);
-                                            }}
-                                            className="btn-vercel-primary flex-1"
-                                        >
-                                            Postular Ahora
-                                        </button>
-                                    )}
-                                </div>
+                            <div className="pt-6 flex items-center gap-4 relative z-20 pointer-events-auto">
+                                {isPastDeadline(c.fecha_cierre) ? (
+                                    <button
+                                        disabled
+                                        className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
+                                    >
+                                        Plazo Vencido
+                                    </button>
+                                ) : (
+                                    <Link
+                                        to={`?postular=${c.id_convocatoria}`}
+                                        className="btn-vercel-primary flex-1 justify-center text-center flex items-center"
+                                    >
+                                        Postular Ahora
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -240,6 +245,11 @@ const PublicConvocatoriasPage = () => {
                     onClose={() => {
                         setShowNewProject(false);
                         setPreselectedConvocatoriaId(null);
+                        setSearchParams(prev => {
+                            const next = new URLSearchParams(prev);
+                            next.delete('postular');
+                            return next;
+                        });
                     }}
                 />
             )}
@@ -348,15 +358,13 @@ const PublicConvocatoriasPage = () => {
                                     Plazo Vencido
                                 </button>
                             ) : (
-                                <button
-                                    onClick={() => {
-                                        handlePostular(selectedConvocatoria.id_convocatoria);
-                                        setSelectedConvocatoria(null);
-                                    }}
-                                    className="btn-vercel-primary flex-1"
+                                <Link
+                                    to={`?postular=${selectedConvocatoria.id_convocatoria}`}
+                                    onClick={() => setSelectedConvocatoria(null)}
+                                    className="btn-vercel-primary flex-1 justify-center text-center flex items-center"
                                 >
                                     Iniciar Postulación
-                                </button>
+                                </Link>
                             )}
                         </div>
                     </div>

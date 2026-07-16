@@ -107,7 +107,6 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
                                 onClick={() => handleEventoClick(ev)}
                                 style={{ '--accent-color': ev.color_hex || '#6B7280' } as React.CSSProperties}
                             >
-                                <div className="evento-indicator"></div>
                                 <div className="evento-date">
                                     <span className="day">{ev.fecha_inicio.split('-')[2]}</span>
                                     <span className="month">

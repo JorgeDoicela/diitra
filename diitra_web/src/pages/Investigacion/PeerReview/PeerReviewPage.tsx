@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
     ShieldCheck, Clock, CheckCircle, FileText,
     ChevronRight, Loader2, Award
@@ -25,7 +25,6 @@ const parseLocalDate = (dateStr: string) => {
 };
 
 const PeerReviewPage: React.FC = () => {
-    const navigate = useNavigate();
     const [reviews, setReviews] = useState<PeerReviewDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [drafts, setDrafts] = useState<Record<string, boolean>>({});
@@ -148,10 +147,10 @@ const PeerReviewPage: React.FC = () => {
                                         const hasDraft = drafts[review.uuid];
 
                                         return (
-                                            <div
+                                            <Link
                                                 key={review.uuid}
+                                                to={`/revisiones/${review.uuid}`}
                                                 className="bento-card p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 group cursor-pointer"
-                                                onClick={() => navigate(`/revisiones/${review.uuid}`)}
                                             >
                                                 <div className="flex items-start md:items-center gap-4 flex-1 min-w-0">
                                                     <div className="icon-circle shrink-0 group-hover:scale-110 transition-transform bg-surface border border-border-thin text-text-dim">
@@ -200,12 +199,12 @@ const PeerReviewPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="flex items-center gap-4 shrink-0 w-full lg:w-auto justify-end">
-                                                    <button className="btn-brand flex items-center gap-2 text-xs w-full lg:w-auto group-hover:shadow-lg transition-all" tabIndex={-1}>
+                                                    <span className="btn-brand flex items-center justify-center gap-2 text-xs w-full lg:w-auto group-hover:shadow-lg transition-all">
                                                         {hasDraft ? 'Continuar Evaluación' : 'Evaluar Ahora'}
                                                         <ChevronRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                                                    </button>
+                                                    </span>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         );
                                     })}
                                 </div>
@@ -234,10 +233,10 @@ const PeerReviewPage: React.FC = () => {
                                     {reviewsCompletadas.map((review) => {
                                         const statusCfg = ESTADO_REVISION_CONFIG[review.estado] ?? ESTADO_REVISION_CONFIG['Completada'];
                                         return (
-                                            <div
+                                            <Link
                                                 key={review.uuid}
+                                                to={`/revisiones/${review.uuid}`}
                                                 className="bento-card p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 group cursor-pointer opacity-90 hover:opacity-100 transition-opacity"
-                                                onClick={() => navigate(`/revisiones/${review.uuid}`)}
                                             >
                                                 <div className="flex items-start md:items-center gap-4 flex-1 min-w-0">
                                                     <div className="icon-circle shrink-0 group-hover:scale-105 transition-transform bg-surface border border-border-thin text-text-dim">
@@ -280,12 +279,12 @@ const PeerReviewPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="flex items-center gap-4 shrink-0 w-full lg:w-auto justify-end">
-                                                    <button className="btn-vercel-secondary flex items-center gap-2 text-xs w-full lg:w-auto" tabIndex={-1}>
+                                                    <span className="btn-vercel-secondary flex items-center justify-center gap-2 text-xs w-full lg:w-auto">
                                                         Ver Detalle
                                                         <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                                                    </button>
+                                                    </span>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         );
                                     })}
                                 </div>

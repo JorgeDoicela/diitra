@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { DashboardSkeleton } from '../Components/DashboardSkeleton';
@@ -287,21 +287,15 @@ export const AdminDashboard: React.FC = () => {
 
                                         // 2. Real UUID from system (shortened)
                                         const shortUuid = item.uuid ? item.uuid.substring(0, 8).toUpperCase() : 'N/A';
-
                                         const isInforme = item.tipo?.toLowerCase() === 'informe';
+                                        const itemUrl = item.uuid && item.tipo?.toLowerCase() === 'proyecto'
+                                            ? `/proyectos/${item.uuid}`
+                                            : '/investigacion';
 
                                         return (
-                                            <div
+                                            <Link
                                                 key={i}
-                                                onClick={() => {
-                                                    if (item.uuid) {
-                                                        if (item.tipo?.toLowerCase() === 'proyecto') {
-                                                            navigate(`/proyectos/${item.uuid}`);
-                                                        } else {
-                                                            navigate('/investigacion');
-                                                        }
-                                                    }
-                                                }}
+                                                to={itemUrl}
                                                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
                                             >
                                                 {/* Col 1: Title & Description */}
@@ -346,7 +340,7 @@ export const AdminDashboard: React.FC = () => {
                                                     </div>
 
                                                 </div>
-                                            </div>
+                                            </Link>
                                         );
                                     })
                                 )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool
@@ -39,7 +39,6 @@ interface ProyectoResumen {
 }
 
 const MyProjectsPage: React.FC = () => {
-    const navigate = useNavigate();
     const { states, getEstadoConfig } = useWorkflowStates();
     const { isDocente } = useAuth();
     const { addToast } = useNotifications();
@@ -192,10 +191,6 @@ const MyProjectsPage: React.FC = () => {
             return 0;
         });
 
-    const abrirWorkspace = (p: ProyectoResumen) => {
-        navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos'));
-    };
-
     const hasActiveFilters = search !== '' || filterEstado !== 'todos' || filterLinea !== 'todas' || filterConvocatoria !== 'todas';
 
     if (loading) return (
@@ -231,22 +226,22 @@ const MyProjectsPage: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <button
-                        onClick={() => navigate('/convocatorias')}
+                    <Link
+                        to="/convocatorias"
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
                         title="Ver convocatorias vigentes"
                     >
                         <PenTool size={14} />
                         <span>Convocatorias</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/investigacion/adopcion')}
+                    </Link>
+                    <Link
+                        to="/investigacion/adopcion"
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
                         title="Adoptar proyectos de investigación inconclusos"
                     >
                         <Award size={14} />
                         <span>Adopción de Proyectos</span>
-                    </button>
+                    </Link>
                     {!isDocente && (
                         <button
                             onClick={() => setShowNewProject(true)}
@@ -372,12 +367,12 @@ const MyProjectsPage: React.FC = () => {
                         </button>
                     )}
                     {!hasActiveFilters && isDocente && (
-                        <button
-                            onClick={() => navigate('/convocatorias')}
+                        <Link
+                            to="/convocatorias"
                             className="btn-vercel-primary px-6 py-2.5 flex items-center justify-center gap-2"
                         >
                             <Plus size={14} strokeWidth={3} /> Postular a Convocatoria
-                        </button>
+                        </Link>
                     )}
                 </div>
             )}
@@ -392,9 +387,12 @@ const MyProjectsPage: React.FC = () => {
                     return (
                         <div
                             key={p.uuid}
-                            onClick={() => abrirWorkspace(p)}
-                            className="bento-card group relative p-6 cursor-pointer overflow-hidden"
+                            className="bento-card group relative p-6 overflow-hidden"
                         >
+                            <Link
+                                to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos')}
+                                className="absolute inset-0 z-10"
+                            />
                             <div className="absolute top-0 right-0 w-24 h-24 bg-brand-subtle rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
                             <div className="flex items-start justify-between mb-4">
@@ -416,7 +414,7 @@ const MyProjectsPage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5">
+                                <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5 relative z-20">
                                     {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
                                         <button
                                             onClick={(e) => {

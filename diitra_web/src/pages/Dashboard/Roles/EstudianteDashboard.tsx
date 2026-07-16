@@ -3,7 +3,7 @@ import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, RotateCw } 
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
@@ -18,7 +18,6 @@ interface ProyectoResumen {
 
 export const EstudianteDashboard: React.FC = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [colaboraciones, setColaboraciones] = useState<ProyectoResumen[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -167,9 +166,9 @@ export const EstudianteDashboard: React.FC = () => {
                         ) : (
                             <div className="mt-4 space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
                                 {colaboraciones.map(p => (
-                                    <div 
+                                    <Link 
                                         key={p.uuid}
-                                        onClick={() => navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos'))}
+                                        to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos')}
                                         className="p-3 rounded-lg border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all"
                                     >
                                         <div className="min-w-0 flex-1 pr-2">
@@ -179,7 +178,7 @@ export const EstudianteDashboard: React.FC = () => {
                                             </p>
                                         </div>
                                         <ArrowRight size={12} className="text-text-dim group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0" />
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         )}

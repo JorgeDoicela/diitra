@@ -206,9 +206,9 @@ INSERT INTO inv_grupos_miembros (idGrupo, idUsuario, rol, activo, fechaInicio) V
 (5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0105057335' LIMIT 1), 'Semillerista', 1, '2025-03-15');
 
 -- 6. Poblar Convocatorias
-INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo, idPeriodo, fechaApertura, fechaCierre, anio, descripcion, presupuestoTotal, montoMaximoProyecto, urlBases, requisitosMinimos, idTipoConvocatoria, idAgendaZonal, idRubrica, puntajeMinimoAprobacion, estado) VALUES
-(1, '84f8846c-c918-406b-a25e-336ff326e632', 'CONV-2025-I', 'Convocatoria Proyectos de Investigación y Desarrollo 2025-I', 'ABD2025', '2025-04-15', '2025-06-15', 2025, 'Convocatoria abierta para el financiamiento de proyectos aplicados de I+D en el IST Traversari', 25000.00, 10000.00, 'https://bases.traversari.edu.ec/2025-I', 'Poseer título de tercer nivel y pertenecer a un grupo de investigación', 1, 9, 1, 70.00, 'Cerrada'),
-(2, '9fb183ea-e522-4828-98e3-841853ad76aa', 'CONV-2026-I', 'Convocatoria Proyectos de Innovación Tecnológica 2026-I', 'ABR2026', '2026-04-10', '2026-06-10', 2026, 'Enfoque en desarrollo de software, prototipos de hardware y transferencia tecnológica', 30000.00, 12000.00, 'https://bases.traversari.edu.ec/2026-I', 'Tener grupo de investigación registrado o semillero activo', 2, 9, 2, 75.00, 'Abierta');
+INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo, idPeriodo, fechaApertura, fechaCierre, anio, descripcion, urlBases, requisitosMinimos, idTipoConvocatoria, estado) VALUES
+(1, '84f8846c-c918-406b-a25e-336ff326e632', 'CONV-2025-I', 'Convocatoria Proyectos de Investigación y Desarrollo 2025-I', 'ABD2025', '2025-04-15', '2025-06-15', '2025', 'Convocatoria abierta para el financiamiento de proyectos aplicados de I+D en el IST Traversari', 'https://bases.traversari.edu.ec/2025-I', 'Poseer título de tercer nivel y pertenecer a un grupo de investigación', 1, 'Cerrada'),
+(2, '9fb183ea-e522-4828-98e3-841853ad76aa', 'CONV-2026-I', 'Convocatoria Proyectos de Innovación Tecnológica 2026-I', 'ABR2026', '2026-04-10', '2026-06-10', '2026', 'Enfoque en desarrollo de software, prototipos de hardware y transferencia tecnológica', 'https://bases.traversari.edu.ec/2026-I', 'Tener grupo de investigación registrado o semillero activo', 2, 'Abierta');
 
 
 -- 7. Poblar Proyectos (Se cubren todos los estados del ciclo de vida útil del sistema)
@@ -323,14 +323,14 @@ INSERT INTO inv_proyectos_alumnos (idProyecto, idUsuario, rol, nivelAcademico, t
 (5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0103057584' LIMIT 1), 'Semillerista', 'Estudiante de Electrónica', '0988888885', 1);
 
 -- Documentos Adjuntos del Proyecto (Checklist de Postulación para demo)
-INSERT INTO inv_proyectos_documentos_adjuntos (idDocAdj, uuid, idProyecto, idDocReq, nombreArchivo, rutaArchivo) VALUES
-(1, UUID(), 1, 1, 'protocolo_iot_proy1_firmado.pdf', 'uploads/proyectos/1/protocolo_iot_proy1_firmado.pdf'),
-(2, UUID(), 1, 2, 'carta_aval_giist_proy1.pdf', 'uploads/proyectos/1/carta_aval_giist_proy1.pdf'),
-(3, UUID(), 1, 3, 'certificado_no_adeudar_naranjo.pdf', 'uploads/proyectos/1/certificado_no_adeudar_naranjo.pdf'),
-(4, UUID(), 2, 1, 'protocolo_fotovoltaico_proy2.pdf', 'uploads/proyectos/2/protocolo_fotovoltaico_proy2.pdf'),
-(5, UUID(), 2, 2, 'carta_aval_gersa_proy2.pdf', 'uploads/proyectos/2/carta_aval_gersa_proy2.pdf'),
-(6, UUID(), 3, 1, 'protocolo_teletrabajo_proy3.pdf', 'uploads/proyectos/3/protocolo_teletrabajo_proy3.pdf'),
-(7, UUID(), 3, 2, 'carta_aval_sige_proy3.pdf', 'uploads/proyectos/3/carta_aval_sige_proy3.pdf');
+INSERT INTO inv_proyectos_documentos_adjuntos (idDocAdj, uuid, idProyecto, nombreArchivo, rutaArchivo) VALUES
+(1, UUID(), 1, 'protocolo_iot_proy1_firmado.pdf', 'uploads/proyectos/1/protocolo_iot_proy1_firmado.pdf'),
+(2, UUID(), 1, 'carta_aval_giist_proy1.pdf', 'uploads/proyectos/1/carta_aval_giist_proy1.pdf'),
+(3, UUID(), 1, 'certificado_no_adeudar_naranjo.pdf', 'uploads/proyectos/1/certificado_no_adeudar_naranjo.pdf'),
+(4, UUID(), 2, 'protocolo_fotovoltaico_proy2.pdf', 'uploads/proyectos/2/protocolo_fotovoltaico_proy2.pdf'),
+(5, UUID(), 2, 'carta_aval_gersa_proy2.pdf', 'uploads/proyectos/2/carta_aval_gersa_proy2.pdf'),
+(6, UUID(), 3, 'protocolo_teletrabajo_proy3.pdf', 'uploads/proyectos/3/protocolo_teletrabajo_proy3.pdf'),
+(7, UUID(), 3, 'carta_aval_sige_proy3.pdf', 'uploads/proyectos/3/carta_aval_sige_proy3.pdf');
 
 -- 8. Poblar Objetivos de Proyecto
 INSERT INTO inv_objetivos_proyecto (idObjetivo, idProyecto, esGeneral, descripcion, orden) VALUES

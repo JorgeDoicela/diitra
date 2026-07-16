@@ -9,7 +9,7 @@ export const useCollaboration = (documentId: string, userName: string = 'Móvil'
     useEffect(() => {
         // En móviles, localhost no suele funcionar para el backend. 
         // Se debería usar la IP de la máquina o una variable de entorno.
-        const hubUrl = 'http://192.168.1.10:5175/hubs/collaboration'; // Ajustar según IP local
+        const hubUrl = 'http://192.168.7.104:5175/hubs/collaboration';
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl)

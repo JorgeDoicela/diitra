@@ -188,3 +188,35 @@
         width: calc(100vw - 32px);
     }
 }
+
+.sticky-floating-triggers-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.sticky-floating-help-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--fg);
+    color: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.sticky-floating-help-btn:hover {
+    transform: scale(1.05);
+    background: var(--fg);
+    opacity: 0.9;
+}
+
+.sticky-floating-help-btn:active {
+    transform: scale(0.95);
+}

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FileText, X, Plus } from 'lucide-react';
+import { FileText, X, Plus, HelpCircle } from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
 import './StickyNotesFloatingButton.css';
 
-export const StickyNotesFloatingButton: React.FC = () => {
+interface StickyNotesFloatingButtonProps {
+    onOpenHelp?: () => void;
+}
+
+export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps> = ({ onOpenHelp }) => {
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [text, setText] = useState('');
@@ -94,17 +98,30 @@ export const StickyNotesFloatingButton: React.FC = () => {
                     </form>
                 </div>
             ) : (
-                <button
-                    type="button"
-                    onClick={() => setIsOpen(true)}
-                    className="sticky-floating-trigger-btn"
-                    title="Nueva Nota Adhesiva (Inbox)"
-                >
-                    <FileText size={18} />
-                    <span className="sticky-floating-badge-plus">
-                        <Plus size={8} />
-                    </span>
-                </button>
+                <div className="sticky-floating-triggers-wrapper">
+                    {onOpenHelp && (
+                        <button
+                            type="button"
+                            onClick={onOpenHelp}
+                            className="sticky-floating-help-btn"
+                            title="Guía Interactiva de la página"
+                        >
+                            <HelpCircle size={15} />
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen(true)}
+                        className="sticky-floating-trigger-btn"
+                        title="Nueva Nota Adhesiva (Inbox)"
+                    >
+                        <FileText size={18} />
+                        <span className="sticky-floating-badge-plus">
+                            <Plus size={8} />
+                        </span>
+                    </button>
+                </div>
             )}
         </div>
     );

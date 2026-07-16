@@ -1,8 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare, 
     AlertCircle, BarChart, Activity, Shield 
 } from 'lucide-react';
+import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
 const WorkflowPhases = [
     { id: 'Borrador', label: 'Formulación', icon: FileText },
@@ -152,17 +154,12 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 
                                 {phase.id === 'Borrador' && (
                                     <div className="mt-4">
-                                        <button 
-                                            type="button"
+                                        <Link 
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PROTOCOLO_INVESTIGACION')}`, urlPrefix)}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (templateCode === 'PROTOCOLO_INVESTIGACION') {
-                                                    setActiveDocument('PROTOCOLO_INVESTIGACION');
-                                                } else {
-                                                    resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
-                                                }
                                             }}
-                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold ${
+                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${
                                                 isCurrentActive 
                                                     ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]' 
                                                     : 'btn-vercel-secondary'
@@ -170,23 +167,22 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         >
                                             <FileText size={14} />
                                             <span>{(currentProject.puedeEditar === false || isPast) ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
-                                        </button>
+                                        </Link>
                                     </div>
                                 )}
 
                                 {phase.id === 'Enviado' && isAdmin && isCurrentActive && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        <button
-                                            type="button"
+                                        <Link
+                                            to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
                                             }}
                                             className="btn-vercel-primary !py-2.5 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
                                         >
                                             <Shield size={12} />
                                             <span>Iniciar Revisión Técnica</span>
-                                        </button>
+                                        </Link>
                                     </div>
                                 )}
                                 
@@ -194,29 +190,27 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     <div className="mt-4 animate-fade-in flex flex-col gap-3 w-full">
                                         <div className="flex flex-col gap-2.5 w-full">
                                             {assignedRevisionUuid ? (
-                                                <button 
-                                                    type="button"
+                                                <Link 
+                                                    to={`/revisiones/${assignedRevisionUuid}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate(`/revisiones/${assignedRevisionUuid}`);
                                                     }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)] flex items-center gap-1.5"
                                                 >
                                                     <CheckSquare size={14} />
                                                     <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
-                                                </button>
+                                                </Link>
                                             ) : isAdmin ? (
-                                                <button 
-                                                    type="button"
+                                                <Link 
+                                                    to={`/evaluacion-pares/proyecto/${resolvedProjectUuid}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`);
                                                     }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)] flex items-center gap-1.5"
                                                 >
                                                     <Settings size={14} />
                                                     <span>Gestionar Evaluación por Pares</span>
-                                                </button>
+                                                </Link>
                                             ) : (
                                                 <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
                                                     <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
@@ -266,44 +260,36 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
                                 {phase.id === 'En Ejecución' && (isCurrent || isPast) && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        <button 
-                                            type="button"
+                                        <Link 
+                                            to={`${urlPrefix}/informes-avance/${currentProject.uuid}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate(`${urlPrefix}/informes-avance/${currentProject.uuid}`);
                                             }}
-                                            className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold"
+                                            className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
                                         >
                                             <BarChart size={14} />
                                             <span>Informes de Avance</span>
-                                        </button>
-                                        <button 
-                                            type="button"
+                                        </Link>
+                                        <Link 
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix)}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (templateCode === 'INFORME_FINAL_INVESTIGACION') {
-                                                    setActiveDocument('INFORME_FINAL_INVESTIGACION');
-                                                } else {
-                                                    resolveDocumentInstance('INFORME_FINAL_INVESTIGACION');
-                                                }
                                             }}
-                                            disabled={resolvingDocument === 'INFORME_FINAL_INVESTIGACION'}
-                                            className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold"
+                                            className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === 'INFORME_FINAL_INVESTIGACION' ? 'pointer-events-none opacity-50' : ''}`}
                                         >
                                             <FileSignature size={14} />
                                             <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
-                                        </button>
-                                        <button 
-                                            type="button"
+                                        </Link>
+                                        <Link 
+                                            to={`${urlPrefix}/monitoreo/${currentProject.uuid}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate(`${urlPrefix}/monitoreo/${currentProject.uuid}`);
                                             }}
-                                            className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold"
+                                            className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
                                         >
                                             <Activity size={14} className="text-brand animate-pulse" />
                                             <span>Ver Monitoreo Financiero</span>
-                                        </button>
+                                        </Link>
                                     </div>
                                 )}
                             </div>

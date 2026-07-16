@@ -19,6 +19,7 @@ export default defineConfig(({ command }) => {
           changeOrigin: true,
           secure: false,
           configure: (proxy) => {
+            proxy.removeAllListeners('error');
             proxy.on('error', (err, _req, res) => {
               if (err.message.includes('ECONNREFUSED')) {
                 if (res) {
@@ -43,6 +44,7 @@ export default defineConfig(({ command }) => {
           changeOrigin: true,
           secure: false,
           configure: (proxy) => {
+            proxy.removeAllListeners('error');
             proxy.on('error', (err, _req, res) => {
               if (err.message.includes('ECONNREFUSED')) {
                 if (res) {
