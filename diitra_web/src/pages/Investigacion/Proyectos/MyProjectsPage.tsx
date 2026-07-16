@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool, FileText
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -10,6 +10,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 interface ProyectoResumen {
     uuid: string;
@@ -42,6 +43,8 @@ const MyProjectsPage: React.FC = () => {
     const { states, getEstadoConfig } = useWorkflowStates();
     const { isDocente } = useAuth();
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
+
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -55,6 +58,10 @@ const MyProjectsPage: React.FC = () => {
     const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
     const [deletingTitle, setDeletingTitle] = useState<string>('');
     const [deletionError, setDeletionError] = useState<string | null>(null);
+
+    // Draft external management states
+    const [pendingDraft, setPendingDraft] = useState<{ titulo: string; timestamp: number } | null>(null);
+    const [restoreDraftOnOpen, setRestoreDraftOnOpen] = useState(false);
 
     const confirmarEliminar = (uuid: string, titulo: string) => {
         setDeletingUuid(uuid);
@@ -115,16 +122,53 @@ const MyProjectsPage: React.FC = () => {
         }
     };
 
+    const checkPendingDraft = () => {
+        const metaStr = localStorage.getItem('preproposal_draft_metadata');
+        if (metaStr) {
+            try {
+                setPendingDraft(JSON.parse(metaStr));
+            } catch (e) {
+                console.error("Error reading draft metadata", e);
+                setPendingDraft(null);
+            }
+        } else {
+            setPendingDraft(null);
+        }
+    };
+
+    const handleRestoreDraftExternal = () => {
+        setRestoreDraftOnOpen(true);
+        setShowNewProject(true);
+    };
+
+    const handleDiscardDraftExternal = async () => {
+        if (await confirm({
+            title: "Descartar Borrador",
+            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
+            confirmText: "Descartar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) {
+            localStorage.removeItem('preproposal_form_draft');
+            localStorage.removeItem('preproposal_draft_metadata');
+            setPendingDraft(null);
+            setRestoreDraftOnOpen(false);
+        }
+    };
+
     useEffect(() => {
         loadProjects();
+        checkPendingDraft();
     }, []);
 
     useEffect(() => {
         const handleFocus = () => {
             loadProjects(true);
+            checkPendingDraft();
         };
         const handleProjectsChanged = () => {
             loadProjects(true);
+            checkPendingDraft();
         };
 
         window.addEventListener('focus', handleFocus);
@@ -141,6 +185,7 @@ const MyProjectsPage: React.FC = () => {
         const interval = setInterval(() => {
             if (document.visibilityState === 'visible') {
                 loadProjects(true);
+                checkPendingDraft();
             }
         }, 60000);
         return () => clearInterval(interval);
@@ -253,6 +298,46 @@ const MyProjectsPage: React.FC = () => {
                     )}
                 </div>
             </header>
+
+            {/* Banner de Recuperación de Borrador */}
+            {pendingDraft && (
+                <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                            <FileText size={16} />
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
+                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
+                                    No guardado
+                                </span>
+                            </div>
+                            <p className="text-xs text-text-dim">
+                                Tienes un borrador sin guardar de una postulación: <span className="text-text-main font-medium">"{pendingDraft.titulo}"</span>.
+                            </p>
+                            <p className="text-[10px] text-text-dim/60 font-mono">
+                                Guardado automáticamente el {new Date(pendingDraft.timestamp).toLocaleDateString()} a las {new Date(pendingDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 w-full md:w-auto shrink-0">
+                        <button
+                            onClick={handleRestoreDraftExternal}
+                            className="btn-vercel-primary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
+                        >
+                            Restaurar borrador
+                        </button>
+                        <button
+                            onClick={handleDiscardDraftExternal}
+                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:100ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">
                 <div className="flex flex-col lg:flex-row gap-3">
@@ -516,7 +601,11 @@ const MyProjectsPage: React.FC = () => {
 
             {showNewProject && (
                 <CreateProjectModal
-                    onClose={() => setShowNewProject(false)}
+                    onClose={() => {
+                        setShowNewProject(false);
+                        setRestoreDraftOnOpen(false);
+                    }}
+                    restoreDraftOnOpen={restoreDraftOnOpen}
                 />
             )}
 

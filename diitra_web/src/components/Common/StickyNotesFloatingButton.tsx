@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FileText, X, Plus, HelpCircle } from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
@@ -14,11 +14,19 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
     const [text, setText] = useState('');
     const [color, setColor] = useState('#F59E0B');
 
-    // Evitar renderizar en rutas públicas como login
-    const publicRoutes = ['/login', '/registro', '/recuperar-password', '/restablecer-password'];
-    if (publicRoutes.includes(location.pathname)) {
-        return null;
-    }
+    // Escuchar la tecla Escape para cerrar la nota si está abierta
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,6 +60,12 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
         });
     };
 
+    // Evitar renderizar en rutas públicas como login
+    const publicRoutes = ['/login', '/registro', '/recuperar-password', '/restablecer-password'];
+    if (publicRoutes.includes(location.pathname)) {
+        return null;
+    }
+
     return (
         <div className="sticky-floating-container">
             {isOpen ? (
@@ -59,7 +73,7 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                     <div className="sticky-floating-header">
                         <h3>Añadir Nota Rápida</h3>
                         <button type="button" onClick={() => setIsOpen(false)} className="sticky-floating-close">
-                            <X size={14} />
+                            <X size={18} />
                         </button>
                     </div>
 
@@ -87,13 +101,22 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                                 ))}
                             </div>
 
-                            <button
-                                type="submit"
-                                className="btn-vercel-primary text-xs py-1 px-3 rounded"
-                                disabled={!text.trim()}
-                            >
-                                Guardar
-                            </button>
+                            <div className="sticky-floating-buttons">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="btn-vercel-secondary text-xs py-1 px-3 rounded"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-vercel-primary text-xs py-1 px-3 rounded"
+                                    disabled={!text.trim()}
+                                >
+                                    Guardar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

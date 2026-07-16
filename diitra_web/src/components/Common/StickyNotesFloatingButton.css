@@ -81,12 +81,12 @@
     border: none;
     color: var(--text-dim);
     cursor: pointer;
-    padding: 2px;
-    border-radius: 4px;
+    padding: 6px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.1s, color 0.1s;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .sticky-floating-close:hover {
@@ -124,6 +124,32 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+}
+
+.sticky-floating-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-vercel-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-vercel-secondary:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.btn-vercel-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .sticky-floating-colors {

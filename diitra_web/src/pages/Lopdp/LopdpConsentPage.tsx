@@ -53,8 +53,8 @@ const LopdpConsentPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-4 md:p-6 vercel-grid-fade bg-glow">
-            <div className="w-full max-w-xl bento-card static p-6 md:p-8 space-y-6 shadow-sm border border-border-thin rounded-lg animate-scale-up">
+        <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-4 md:p-6">
+            <div className="w-full max-w-2xl bento-card static p-6 md:p-8 space-y-6 shadow-sm border border-border-thin rounded-lg animate-scale-up">
                 
                 {/* Header */}
                 <div className="flex flex-col items-center text-center space-y-3">
@@ -73,12 +73,12 @@ const LopdpConsentPage: React.FC = () => {
                 <div 
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="border border-border-thin bg-bg-deep/40 rounded-lg p-4 h-64 overflow-y-auto custom-scrollbar text-[11px] text-text-dim space-y-4 leading-relaxed"
+                    className="border border-border-thin bg-bg-deep/40 rounded-lg p-4 md:p-6 h-[340px] overflow-y-auto custom-scrollbar text-xs md:text-sm text-text-dim space-y-4 leading-relaxed"
                 >
-                    <h3 className="font-bold text-text-main text-center uppercase tracking-wider text-[10px] mb-2">
+                    <h3 className="font-bold text-text-main text-center uppercase tracking-wider text-xs md:text-sm mb-2">
                         TÉRMINOS DE CONSENTIMIENTO Y POLÍTICA DE PROTECCIÓN DE DATOS PERSONALES
                     </h3>
-                    <p className="text-center font-semibold text-text-main text-[9px]">
+                    <p className="text-center font-semibold text-text-main text-xs">
                         DIITRA — DEPARTAMENTO DE INVESTIGACIÓN E INNOVACIÓN TRAVERSARI (ECUADOR)
                     </p>
 
@@ -136,7 +136,7 @@ const LopdpConsentPage: React.FC = () => {
                     />
                     <label 
                         htmlFor="lopdpAcceptanceCheckbox"
-                        className={`text-[11px] leading-relaxed select-none ${hasRead ? 'text-text-main cursor-pointer' : 'text-text-dim cursor-not-allowed'}`}
+                        className={`text-xs md:text-sm leading-relaxed select-none ${hasRead ? 'text-text-main cursor-pointer' : 'text-text-dim cursor-not-allowed'}`}
                     >
                         Declaro que he leído atentamente y otorgo mi consentimiento libre, específico, informado e inequívoco para el tratamiento de mis datos personales y autorizo el procesamiento temporal de mi firma electrónica en DIITRA según los términos descritos.
                     </label>

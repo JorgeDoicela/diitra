@@ -4,11 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
+import { useNotifications } from '../../api/NotificationsContext';
+import { useConfirm } from '../../api/ConfirmContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
 
 interface CreateProjectModalProps {
     preselectedConvocatoriaId?: number | null;
     onClose: () => void;
+    restoreDraftOnOpen?: boolean;
 }
 
 const isPastDeadline = (fechaCierre: string) => {
@@ -36,10 +39,13 @@ const formatCurrency = (val: string) => {
 
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     preselectedConvocatoriaId,
-    onClose
+    onClose,
+    restoreDraftOnOpen = false
 }) => {
     const navigate = useNavigate();
     const { user, isDocente, isAdmin } = useAuth();
+    const { addToast } = useNotifications();
+    const confirm = useConfirm();
 
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
@@ -62,6 +68,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const [creationStepMsg, setCreationStepMsg] = useState('');
     const [error, setError] = useState<string | null>(null);
 
+    // Draft management states
+    const [isDraftRestored, setIsDraftRestored] = useState(false);
+    const isInitializedRef = useRef(false);
+    const [pendingDraft, setPendingDraft] = useState<{
+        titulo: string;
+        timestamp: number;
+    } | null>(null);
+
     const getCarreraId = (c: any): number => c.idCarrera ?? c.id_carrera ?? 0;
     const getCarreraName = (c: any): string => c.carrera1 ?? c.nombre_carrera ?? c.carrera ?? 'Sin Nombre';
 
@@ -70,6 +84,137 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         const code = c.codigo_convocatoria ?? c.codigoConvocatoria ?? '';
         const title = c.titulo ?? '';
         return code ? `${code} - ${title}` : title;
+    };
+
+    const justRestoredRef = useRef(false);
+
+    const handleRestoreDraft = () => {
+        const draftStr = localStorage.getItem('preproposal_form_draft');
+        if (draftStr) {
+            try {
+                const parsed = JSON.parse(draftStr);
+                if (parsed) {
+                    setTitulo(parsed.titulo || '');
+                    setDescripcion(parsed.descripcion || '');
+                    setPresupuestoEstimado(parsed.presupuestoEstimado || '');
+                    if (!careerLocked && parsed.idCarrera) {
+                        setIdCarrera(parsed.idCarrera);
+                    }
+                    if (!preselectedConvocatoriaId && parsed.idConvocatoria) {
+                        setIdConvocatoria(parsed.idConvocatoria);
+                    }
+                    setIsDraftRestored(true);
+                }
+            } catch (e) {
+                console.error("Error restoring draft", e);
+            }
+        }
+        justRestoredRef.current = true;
+        isInitializedRef.current = true;
+        setPendingDraft(null);
+    };
+
+    // Load draft metadata on mount
+    useEffect(() => {
+        if (restoreDraftOnOpen) {
+            handleRestoreDraft();
+            return;
+        }
+
+        const metaStr = localStorage.getItem('preproposal_draft_metadata');
+        if (metaStr) {
+            try {
+                setPendingDraft(JSON.parse(metaStr));
+                isInitializedRef.current = false;
+            } catch (e) {
+                console.error("Error reading draft metadata", e);
+                isInitializedRef.current = true;
+            }
+        } else {
+            isInitializedRef.current = true;
+        }
+    }, [restoreDraftOnOpen]);
+
+    // Auto-save draft on state changes
+    useEffect(() => {
+        if (!isInitializedRef.current) return;
+
+        // Skip the very first save cycle right after a restore to avoid
+        // overwriting localStorage with stale empty state before React applies the restored values.
+        if (justRestoredRef.current) {
+            justRestoredRef.current = false;
+            return;
+        }
+
+        const draftData = {
+            titulo,
+            descripcion,
+            presupuestoEstimado,
+            idCarrera,
+            idConvocatoria
+        };
+
+        localStorage.setItem('preproposal_form_draft', JSON.stringify(draftData));
+
+        const meta = {
+            titulo: titulo || 'Postulación sin título',
+            timestamp: Date.now()
+        };
+        localStorage.setItem('preproposal_draft_metadata', JSON.stringify(meta));
+    }, [titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria]);
+
+    const handleDiscardDraft = async () => {
+        if (await confirm({
+            title: "Descartar Borrador",
+            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
+            confirmText: "Descartar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) {
+            clearDraft();
+            isInitializedRef.current = true;
+        }
+    };
+
+    const clearDraft = () => {
+        localStorage.removeItem('preproposal_form_draft');
+        localStorage.removeItem('preproposal_draft_metadata');
+        setPendingDraft(null);
+        setIsDraftRestored(false);
+    };
+
+    // Tracking inputs for unsaved changes checks on close
+    const stateRef = useRef({ titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria });
+    useEffect(() => {
+        stateRef.current = { titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria };
+    }, [titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria]);
+
+    const hasUnsavedChanges = () => {
+        const current = stateRef.current;
+        return (
+            current.titulo.trim() !== '' ||
+            current.descripcion.trim() !== '' ||
+            current.presupuestoEstimado.trim() !== '' ||
+            (!careerLocked && current.idCarrera !== 0) ||
+            (!preselectedConvocatoriaId && current.idConvocatoria !== 0)
+        );
+    };
+
+    const handleRequestClose = async () => {
+        if (hasUnsavedChanges()) {
+            const confirmed = await confirm({
+                title: "Salir del Formulario",
+                message: "¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.",
+                confirmText: "Salir",
+                cancelText: "Cancelar",
+                variant: "warning"
+            });
+            if (confirmed) {
+                onClose();
+            }
+        } else {
+            onClose();
+        }
     };
 
     useEffect(() => {
@@ -100,7 +245,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 if (isDocente && linkedCareers.length > 0) {
                     setCarreras(linkedCareers);
                     if (linkedCareers.length === 1) {
-                        setIdCarrera(getCarreraId(linkedCareers[0]));
+                        // Solo auto-asignar carrera si NO estamos restaurando un borrador
+                        // (para no sobreescribir el idCarrera guardado en el draft)
+                        if (!restoreDraftOnOpen) {
+                            setIdCarrera(getCarreraId(linkedCareers[0]));
+                        }
                         setCareerLocked(true);
                     }
                 } else {
@@ -144,11 +293,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 setIsOpenConvocatoria(false);
                 return;
             }
-            onClose();
+            handleRequestClose();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isCreating, isOpenCarrera, isOpenConvocatoria, onClose]);
+    }, [isCreating, isOpenCarrera, isOpenConvocatoria]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -209,6 +358,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             setCreationStepMsg("Enviando prepropuesta a revisión institucional...");
 
+            clearDraft();
+
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                 navigate('/investigacion/mis-proyectos', { replace: true });
@@ -233,7 +384,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <div className="fixed inset-0 z-[110] flex justify-end">
             <div
                 className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
-                onClick={() => !isCreating && onClose()}
+                onClick={() => !isCreating && handleRequestClose()}
             />
 
             <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
@@ -250,7 +401,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     </div>
                     {!isCreating && (
                         <button
-                            onClick={onClose}
+                            onClick={handleRequestClose}
                             className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
                         >
                             <X size={18} />
@@ -274,6 +425,63 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
+
+                            {/* Banner de Recuperación de Borrador */}
+                            {pendingDraft && (
+                                <div className="border border-border-thin bg-surface-hover rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-bg-deep border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                                            <FileText size={16} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Borrador detectado</h4>
+                                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
+                                                    No guardado
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-text-dim">
+                                                Tienes un borrador sin guardar de esta postulación.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={handleRestoreDraft}
+                                            className="btn-vercel-primary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex-1 sm:flex-initial"
+                                        >
+                                            Restaurar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleDiscardDraft}
+                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex-1 sm:flex-initial"
+                                        >
+                                            Descartar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Banner de Borrador Restaurado */}
+                            {isDraftRestored && (
+                                <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <FileText size={16} className="text-text-main shrink-0" />
+                                        <p className="text-xs text-text-dim">
+                                            <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={clearDraft}
+                                        className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
+                                    >
+                                        Descartar borrador
+                                    </button>
+                                </div>
+                            )}
 
                             {error && (
                                 <div className="badge-vercel-error !rounded-md !p-3 text-[10px] font-black uppercase tracking-wider w-full">
@@ -431,7 +639,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <div className="pt-4 flex gap-3">
                                 <button
                                     type="button"
-                                    onClick={onClose}
+                                    onClick={handleRequestClose}
                                     className="btn-vercel-secondary flex-1 py-3"
                                 >
                                     Cancelar
