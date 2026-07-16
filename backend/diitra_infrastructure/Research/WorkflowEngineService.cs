@@ -31,6 +31,25 @@ namespace Diitra.Infrastructure.Research
 
             string estadoAnterior = proyecto.Estado;
 
+            // 0. Validación de Casos Extremos de Reversión (Undo Timeout & Concurrencia de Datos)
+            if (!string.IsNullOrEmpty(observacion) && observacion.StartsWith("Reversión (Undo)"))
+            {
+                var ultimaTransicionReciente = await _context.InvTrazabilidadProyectos
+                    .Where(t => t.IdProyecto == proyecto.IdProyecto)
+                    .OrderByDescending(t => t.FechaTransicion)
+                    .FirstOrDefaultAsync();
+
+                if (ultimaTransicionReciente != null)
+                {
+                    var fechaTrans = ultimaTransicionReciente.FechaTransicion;
+                    var diferencia = DateTime.Now - fechaTrans;
+                    if (diferencia.TotalSeconds > 20) // Margen de seguridad de 20 segundos para la sincronización de red
+                    {
+                        throw new InvalidOperationException("El tiempo límite para deshacer la última acción ha expirado. El docente podría haber iniciado modificaciones.");
+                    }
+                }
+            }
+
             var beforeState = new
             {
                 Titulo = proyecto.Titulo,
@@ -42,10 +61,15 @@ namespace Diitra.Infrastructure.Research
 
             // 1. Validación Dinámica vía Base de Datos (Configurable)
             bool esValida = false;
-            if (estadoAnterior == "Prepropuesta" || nuevoEstado == "Prepropuesta" || nuevoEstado == "Prepropuesta Rechazada" || estadoAnterior == "Prepropuesta Rechazada")
+            if (!string.IsNullOrEmpty(observacion) && observacion.StartsWith("Reversión (Undo)"))
+            {
+                esValida = true;
+            }
+            else if (estadoAnterior == "Prepropuesta" || nuevoEstado == "Prepropuesta" || nuevoEstado == "Prepropuesta Rechazada" || estadoAnterior == "Prepropuesta Rechazada")
             {
                 esValida = (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador") ||
                            (estadoAnterior == "Prepropuesta" && nuevoEstado == "Prepropuesta Rechazada") ||
+                           (estadoAnterior == "Borrador" && nuevoEstado == "Prepropuesta") ||
                            (estadoAnterior == "Prepropuesta Rechazada" && nuevoEstado == "Prepropuesta");
             }
             else

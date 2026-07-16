@@ -9,6 +9,7 @@ import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModa
 import { useAuth } from '../../../api/AuthContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 interface ProyectoResumen {
     uuid: string;
@@ -41,6 +42,7 @@ const MyProjectsPage: React.FC = () => {
     const navigate = useNavigate();
     const { states, getEstadoConfig } = useWorkflowStates();
     const { isDocente } = useAuth();
+    const { addToast } = useNotifications();
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -63,13 +65,32 @@ const MyProjectsPage: React.FC = () => {
 
     const ejecutarEliminacion = async () => {
         if (!deletingUuid) return;
+        const projectUuid = deletingUuid;
+        const projectTitle = deletingTitle;
         try {
             setDeletionError(null);
-            await api.delete(`/projects/${deletingUuid}`);
-            setProyectos(prev => prev.filter(p => p.uuid !== deletingUuid));
+            await api.delete(`/projects/${projectUuid}`);
+            setProyectos(prev => prev.filter(p => p.uuid !== projectUuid));
             setDeletingUuid(null);
             setDeletingTitle('');
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+            addToast(
+                "Propuesta Eliminada",
+                `La propuesta "${projectTitle}" se envió a la papelera de reciclaje.`,
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/recyclebin/restore/project/${projectUuid}`);
+                        addToast("Acción Revertida", "La propuesta de investigación ha sido restaurada con éxito.", "success");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        loadProjects(true);
+                    } catch (err: any) {
+                        console.error("[Undo Delete] Failed:", err);
+                        addToast("Error al Restaurar", err.response?.data?.message || "No se pudo restaurar la propuesta.", "error");
+                    }
+                }
+            );
         } catch (err: any) {
             console.error('[DIITRA] Error al eliminar borrador:', err);
             setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador de investigación debido a un error del servidor.');

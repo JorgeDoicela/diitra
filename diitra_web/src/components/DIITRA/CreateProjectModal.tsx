@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign, Info } from 'lucide-react';
+import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
@@ -329,10 +329,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 </div>
 
                                 {presupuestoEstimado && !isNaN(parseFloat(presupuestoEstimado)) && parseFloat(presupuestoEstimado) > 0 && (
-                                     <div className="text-[11px] font-medium text-text-dim/90 ml-1 mt-1.5 p-2 bg-bg-deep/80 border border-border-thin rounded animate-fade-in w-fit">
-                                         <span>Valor: {formatCurrency(presupuestoEstimado)} USD</span>
-                                     </div>
-                                 )}
+                                    <div className="text-[11px] font-medium text-text-dim/90 ml-1 mt-1.5 p-2 bg-bg-deep/80 border border-border-thin rounded animate-fade-in w-fit">
+                                        <span>Valor: {formatCurrency(presupuestoEstimado)} USD</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2" ref={carreraRef}>

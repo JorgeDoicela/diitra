@@ -87,7 +87,7 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
 
     return (
         <div 
-            className={`toast-vercel ${typeClass} group cursor-pointer`}
+            className={`toast-vercel ${typeClass} group cursor-pointer items-center`}
             translate="no"
             onClick={() => {
                 if (toast.url && !isUndoing) {
@@ -96,55 +96,59 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                 onDismiss(toast.id);
             }}
         >
-            <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
+            <div className={`toast-icon-wrapper toast-icon-${toastType} self-start mt-0.5`}>
                 <IconComponent size={14} />
             </div>
-            <div className="flex-1 min-w-0 space-y-0.5">
-                <h4 className="text-xs font-semibold text-text-main leading-tight">{toast.title}</h4>
-                <p className="text-[10px] text-text-dim leading-relaxed">{toast.body}</p>
-                <div className="flex items-center gap-2.5 mt-1">
-                    {toast.url && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase hover:text-text-main transition-colors">
-                            Ver detalle
-                        </span>
-                    )}
-                    {toast.onUndo && (
-                        <button
-                            type="button"
-                            disabled={isUndoing}
-                            onClick={async (e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                setIsUndoing(true);
-                                try {
-                                    await toast.onUndo?.();
-                                } catch (err) {
-                                    console.error("[Toast Undo] Error al revertir la acción:", err);
-                                } finally {
-                                    setIsUndoing(false);
-                                    onDismiss(toast.id);
-                                }
-                            }}
-                            className={`text-[9px] font-brand font-black uppercase transition-all px-2 py-0.5 rounded border shadow-sm ${
-                                isUndoing 
-                                    ? 'text-text-dim bg-surface border-border-thin cursor-not-allowed' 
-                                    : 'text-amber-400 hover:text-amber-300 hover:underline bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20'
-                            }`}
-                        >
-                            {isUndoing ? "Revirtiendo..." : "Deshacer"}
-                        </button>
-                    )}
-                </div>
+            <div className="flex-1 min-w-0 pr-2">
+                <h4 className="text-xs font-semibold text-text-main leading-snug">{toast.title}</h4>
+                <p className="text-[10px] text-text-dim leading-normal mt-0.5">{toast.body}</p>
             </div>
-            <button 
-                className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onDismiss(toast.id);
-                }}
-            >
-                <X size={12} />
-            </button>
+            <div className="flex items-center gap-3 shrink-0 ml-2 border-l border-border-thin pl-3">
+                {toast.url && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(toast.url!);
+                            onDismiss(toast.id);
+                        }}
+                        className="text-[9px] font-sans font-bold uppercase tracking-wider text-text-dim hover:text-text-main hover:underline bg-transparent border-0 cursor-pointer select-none"
+                    >
+                        Ver
+                    </button>
+                )}
+                {toast.onUndo && (
+                    <button
+                        type="button"
+                        disabled={isUndoing}
+                        onClick={async (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setIsUndoing(true);
+                            try {
+                                await toast.onUndo?.();
+                            } catch (err) {
+                                console.error("[Toast Undo] Error al revertir la acción:", err);
+                            } finally {
+                                setIsUndoing(false);
+                                onDismiss(toast.id);
+                            }
+                        }}
+                        className="text-[10px] font-sans font-black uppercase tracking-widest text-brand hover:underline bg-transparent border-0 cursor-pointer select-none disabled:opacity-50"
+                    >
+                        {isUndoing ? "..." : "Deshacer"}
+                    </button>
+                )}
+                <button 
+                    className="text-text-dim hover:text-text-main p-1 rounded hover:bg-surface-hover transition-colors cursor-pointer"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDismiss(toast.id);
+                    }}
+                >
+                    <X size={12} />
+                </button>
+            </div>
         </div>
     );
 };

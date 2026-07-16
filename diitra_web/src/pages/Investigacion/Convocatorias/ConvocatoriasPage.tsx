@@ -592,7 +592,22 @@ const ConvocatoriasPage = () => {
         try {
             await api.delete(`/Convocatorias/${uuid}`);
             fetchConvocatorias();
-            addToast('Convocatoria Eliminada', 'La convocatoria se eliminó correctamente.', 'success');
+            addToast(
+                'Convocatoria Eliminada',
+                'La convocatoria se envió a la papelera de reciclaje.',
+                'success',
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/recyclebin/restore/convocatoria/${uuid}`);
+                        addToast('Acción Revertida', 'La convocatoria ha sido restaurada con éxito.', 'success');
+                        fetchConvocatorias();
+                    } catch (err: any) {
+                        console.error('[Undo Delete Convocatoria] Failed:', err);
+                        addToast('Error al Restaurar', err.response?.data?.message || 'No se pudo restaurar la convocatoria.', 'error');
+                    }
+                }
+            );
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || 'Ocurrió un error inesperado al intentar eliminar la convocatoria.';
             addToast('Error al Eliminar', errorMsg, 'error');

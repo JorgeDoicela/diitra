@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, RotateCcw, FileText, Calendar, Award, RefreshCw, Trash } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
+import { useConfirm } from '../../api/ConfirmContext';
+import { useNotifications } from '../../api/NotificationsContext';
 
 interface DeletedItem {
     uuid: string;
@@ -17,6 +19,8 @@ interface DeletedItem {
 
 const RecycleBinPage: React.FC = () => {
     const { isAdmin } = useAuth();
+    const confirm = useConfirm();
+    const { addToast } = useNotifications();
     const [activeTab, setActiveTab] = useState<'projects' | 'convocatorias' | 'groups'>('projects');
     const [items, setItems] = useState<DeletedItem[]>([]);
     const [loading, setLoading] = useState(false);
@@ -40,16 +44,23 @@ const RecycleBinPage: React.FC = () => {
 
     const handleRestore = async (uuid: string, title: string) => {
         const entityLabel = activeTab === 'projects' ? 'proyecto' : activeTab === 'convocatorias' ? 'convocatoria' : 'grupo';
-        if (!window.confirm(`¿Está seguro de restaurar el ${entityLabel} "${title}"?`)) return;
+        if (!await confirm({
+            title: `Restaurar ${entityLabel === 'proyecto' ? 'Proyecto' : entityLabel === 'convocatoria' ? 'Convocatoria' : 'Grupo'}`,
+            message: `¿Está seguro de restaurar el ${entityLabel} "${title}"?`,
+            confirmText: "Restaurar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
 
         try {
             setActionLoading(uuid);
             const type = activeTab === 'projects' ? 'project' : activeTab === 'convocatorias' ? 'convocatoria' : 'group';
             await api.post(`/recyclebin/restore/${type}/${uuid}`);
             setItems(items.filter(item => item.uuid !== uuid));
+            addToast('Restauración Exitosa', `El ${entityLabel} "${title}" ha sido restaurado con éxito.`, 'success');
         } catch (error: any) {
             console.error('Error restoring item:', error);
-            alert('No se pudo restaurar el elemento: ' + (error.response?.data?.message || error.message));
+            addToast('Error al Restaurar', error.response?.data?.message || 'No se pudo restaurar el elemento en este momento.', 'error');
         } finally {
             setActionLoading(null);
         }
@@ -58,19 +69,26 @@ const RecycleBinPage: React.FC = () => {
     const handlePurge = async (uuid: string, title: string) => {
         const entityLabel = activeTab === 'projects' ? 'proyecto' : activeTab === 'convocatorias' ? 'convocatoria' : 'grupo';
         const warningMessage = activeTab === 'projects'
-            ? `¿Está seguro de ELIMINAR PERMANENTEMENTE el ${entityLabel} "${title}"?\n\n¡Esta acción eliminará de forma irreversible el proyecto, su presupuesto, su cronograma, sus productos y todos los datos asociados!`
-            : `¿Está seguro de ELIMINAR PERMANENTEMENTE la ${entityLabel} "${title}"? Esta acción no se puede deshacer.`;
+            ? `¿Está seguro de ELIMINAR PERMANENTEMENTE el proyecto "${title}"? Esta acción es irreversible e incluye el presupuesto, cronograma, productos y todos los datos asociados.`
+            : `¿Está seguro de ELIMINAR PERMANENTEMENTE la ${entityLabel} "${title}"? Esta acción no se puede deshacer de ninguna manera.`;
 
-        if (!window.confirm(warningMessage)) return;
+        if (!await confirm({
+            title: "Eliminación Permanente",
+            message: warningMessage,
+            confirmText: "Eliminar Definitivamente",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
 
         try {
             setActionLoading(uuid);
             const type = activeTab === 'projects' ? 'project' : activeTab === 'convocatorias' ? 'convocatoria' : 'group';
             await api.delete(`/recyclebin/purge/${type}/${uuid}`);
             setItems(items.filter(item => item.uuid !== uuid));
+            addToast('Eliminado Definitivamente', `El ${entityLabel} "${title}" ha sido purgado permanentemente del sistema.`, 'success');
         } catch (error: any) {
             console.error('Error purging item:', error);
-            alert('No se pudo eliminar permanentemente: ' + (error.response?.data?.message || error.message));
+            addToast('Error al Eliminar', error.response?.data?.message || 'No se pudo eliminar el elemento de forma permanente.', 'error');
         } finally {
             setActionLoading(null);
         }

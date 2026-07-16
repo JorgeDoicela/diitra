@@ -33,7 +33,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Check, RotateCcw, MessageSquare, AlertTriangle, Info } from 'lucide-react';
+import { Shield, Check, RotateCcw, MessageSquare, AlertTriangle } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -834,7 +834,23 @@ export const ProjectWorkspace: React.FC = () => {
 
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reenvío de prepropuesta corregida")}`);
 
-            addToast("Reenvío Exitoso", "Su prepropuesta ha sido corregida y reenviada para revisión.", "success");
+            addToast(
+                "Reenvío Exitoso",
+                "Su prepropuesta ha sido corregida y reenviada para revisión.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent("Reversión (Undo): Cancelación del reenvío de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "El reenvío ha sido cancelado. Proyecto en estado: Prepropuesta Rechazada (en corrección)", "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        await fetchProject();
+                    } catch (err: any) {
+                        console.error("[Undo Resubmission] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer el reenvío de la prepropuesta.", "error");
+                    }
+                }
+            );
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
@@ -888,7 +904,23 @@ export const ProjectWorkspace: React.FC = () => {
 
             const obs = finalObservation || "Idea de proyecto aprobada por Dirección de Investigación";
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
-            addToast("Idea Aprobada", "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.", "success");
+            addToast(
+                "Idea Aprobada",
+                "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la aprobación de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La aprobación ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        await fetchProject();
+                    } catch (err: any) {
+                        console.error("[Undo Approval] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la aprobación de la prepropuesta.", "error");
+                    }
+                }
+            );
             setAdminObservation('');
             setSectionObservations({ carrera: '', titulo: '', descripcion: '', presupuesto: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
@@ -943,7 +975,23 @@ export const ProjectWorkspace: React.FC = () => {
         setIsSubmittingAdminReview(true);
         try {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(finalObservation)}`);
-            addToast("Prepropuesta Devuelta", "La prepropuesta ha sido devuelta al docente con sus observaciones.", "success");
+            addToast(
+                "Prepropuesta Devuelta",
+                "La prepropuesta ha sido devuelta al docente con sus observaciones.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la devolución de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La devolución ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        await fetchProject();
+                    } catch (err: any) {
+                        console.error("[Undo Return] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la devolución de la prepropuesta.", "error");
+                    }
+                }
+            );
             setAdminObservation('');
             setSectionObservations({ carrera: '', titulo: '', descripcion: '', presupuesto: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
@@ -1476,8 +1524,8 @@ export const ProjectWorkspace: React.FC = () => {
                             <div
                                 onClick={() => setFeedbackMode('general')}
                                 className={`bento-card relative p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${feedbackMode === 'general'
-                                        ? '!border-text-main !ring-2 !ring-text-main shadow-md'
-                                        : 'border-border-thin shadow-sm'
+                                    ? '!border-text-main !ring-2 !ring-text-main shadow-md'
+                                    : 'border-border-thin shadow-sm'
                                     }`}
                             >
                                 {feedbackMode === 'general' && (
@@ -1510,8 +1558,8 @@ export const ProjectWorkspace: React.FC = () => {
                                             )}
                                         </div>
                                         <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
-                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                                : 'opacity-70 group-hover:border-border'
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-70 group-hover:border-border'
                                             }`}>
                                             {currentProject.carrera || 'No definida'}
                                         </div>
@@ -1535,8 +1583,8 @@ export const ProjectWorkspace: React.FC = () => {
                                             )}
                                         </div>
                                         <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
-                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                                : 'opacity-85 group-hover:border-border'
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border'
                                             }`}>
                                             {currentProject.title}
                                         </div>
@@ -1560,8 +1608,8 @@ export const ProjectWorkspace: React.FC = () => {
                                             )}
                                         </div>
                                         <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
-                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                                : 'opacity-85 group-hover:border-border'
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border'
                                             }`}>
                                             {currentProject.descripcion || 'Sin descripción ingresada.'}
                                         </div>
@@ -1585,8 +1633,8 @@ export const ProjectWorkspace: React.FC = () => {
                                             )}
                                         </div>
                                         <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
-                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                                : 'opacity-85 group-hover:border-border'
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border'
                                             }`}>
                                             ${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                                         </div>

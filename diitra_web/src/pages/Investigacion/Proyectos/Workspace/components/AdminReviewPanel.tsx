@@ -22,7 +22,7 @@ interface AdminReviewPanelProps {
         horasDisponibles?: number | null;
         horasAsignadas?: number | null;
     }>;
-    addToast: (title: string, message: string, type: 'success' | 'error' | 'warning') => void;
+    addToast: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
     confirm: (options: {
         title: string;
         message: string;
@@ -100,7 +100,27 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                     observation: obs
                 }
             });
-            addToast("Revisión Aprobada", "El proyecto ha sido enviado exitosamente a Evaluación por Pares.", "success");
+            addToast(
+                "Revisión Aprobada",
+                "El proyecto ha sido enviado exitosamente a Evaluación por Pares.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${currentProject.uuid}/transition`, null, {
+                            params: {
+                                newState: 'Enviado',
+                                observation: "Reversión (Undo): Cancelación de la aprobación técnica inicial."
+                            }
+                        });
+                        addToast("Acción Revertida", "La aprobación técnica ha sido cancelada. Proyecto en estado: Enviado", "info");
+                        onStatusChanged('Enviado', "Reversión (Undo)");
+                    } catch (err: any) {
+                        console.error("[Undo Technical Approval] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la aprobación técnica.", "error");
+                    }
+                }
+            );
             onStatusChanged('En Revisión', obs);
         } catch (err: any) {
             console.error(err);
@@ -132,7 +152,27 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                     observation: feedback.trim()
                 }
             });
-            addToast("Proyecto Devuelto", "El proyecto se ha retornado a etapa de correcciones.", "warning");
+            addToast(
+                "Proyecto Devuelto",
+                "El proyecto se ha retornado a etapa de correcciones.",
+                "warning",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${currentProject.uuid}/transition`, null, {
+                            params: {
+                                newState: 'Enviado',
+                                observation: "Reversión (Undo): Cancelación de la devolución al docente."
+                            }
+                        });
+                        addToast("Acción Revertida", "La devolución del proyecto ha sido cancelada. Proyecto en estado: Enviado", "info");
+                        onStatusChanged('Enviado', "Reversión (Undo)");
+                    } catch (err: any) {
+                        console.error("[Undo Technical Return] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la devolución del proyecto.", "error");
+                    }
+                }
+            );
             onStatusChanged('En Corrección', feedback.trim());
         } catch (err: any) {
             console.error(err);

@@ -10,6 +10,8 @@ import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
+import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 export interface ProyectoResumen {
     uuid: string;
@@ -41,6 +43,8 @@ export interface ProyectoResumen {
 const ResearchProjectsPage = () => {
     const navigate = useNavigate();
     const { states, getEstadoConfig } = useWorkflowStates();
+    const { addToast } = useNotifications();
+    const confirm = useConfirm();
     const [showWizard, setShowWizard] = useState(false);
     const [showReportLauncher, setShowReportLauncher] = useState(false);
     
@@ -173,13 +177,32 @@ const ResearchProjectsPage = () => {
 
     const ejecutarEliminacion = async () => {
         if (!deletingUuid) return;
+        const projectUuid = deletingUuid;
+        const projectTitle = deletingTitle;
         try {
             setDeletionError(null);
-            await api.delete(`/projects/${deletingUuid}`);
-            setProyectos(prev => prev.filter(p => p.uuid !== deletingUuid));
+            await api.delete(`/projects/${projectUuid}`);
+            setProyectos(prev => prev.filter(p => p.uuid !== projectUuid));
             setDeletingUuid(null);
             setDeletingTitle('');
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+            addToast(
+                "Propuesta Eliminada",
+                `La propuesta "${projectTitle}" se envió a la papelera de reciclaje.`,
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/recyclebin/restore/project/${projectUuid}`);
+                        addToast("Acción Revertida", "La propuesta de investigación ha sido restaurada con éxito.", "success");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        loadProjects(true);
+                    } catch (err: any) {
+                        console.error("[Undo Delete] Failed:", err);
+                        addToast("Error al Restaurar", err.response?.data?.message || "No se pudo restaurar la propuesta.", "error");
+                    }
+                }
+            );
         } catch (err: any) {
             console.error('[DIITRA Admin] Error al eliminar borrador:', err);
             setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador del proyecto.');
@@ -187,14 +210,38 @@ const ResearchProjectsPage = () => {
     };
 
     const handleAprobarIdea = async (project: ProyectoResumen) => {
-        if (!window.confirm(`¿Está seguro de aprobar la idea del proyecto "${project.titulo}"? Esto habilitará al docente para iniciar la formulación completa.`)) return;
+        if (!await confirm({
+            title: "Aprobar Prepropuesta",
+            message: `¿Está seguro de aprobar la idea del proyecto "${project.titulo}"? Esto habilitará al docente para iniciar la formulación completa.`,
+            confirmText: "Aprobar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
+
         try {
             await api.post(`/projects/${project.uuid}/transition?newState=Borrador&observation=${encodeURIComponent("Idea de proyecto aprobada por Dirección de Investigación")}`);
+            addToast(
+                "Idea Aprobada",
+                "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${project.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la aprobación de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La aprobación ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        loadProjects();
+                    } catch (err: any) {
+                        console.error("[Undo Approval] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la aprobación de la prepropuesta.", "error");
+                    }
+                }
+            );
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             loadProjects();
         } catch (e: any) {
             console.error("Error al aprobar prepropuesta", e);
-            alert(e.response?.data?.message || "Ocurrió un error al intentar aprobar la prepropuesta.");
+            addToast("Error", e.response?.data?.message || "Ocurrió un error al intentar aprobar la prepropuesta.", "error");
         }
     };
 
@@ -204,7 +251,25 @@ const ResearchProjectsPage = () => {
         setIsSubmittingReview(true);
         setReviewError(null);
         try {
-            await api.post(`/projects/${rejectingProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(rejectObservation.trim())}`);
+            const projectUuid = rejectingProject.uuid;
+            await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(rejectObservation.trim())}`);
+            addToast(
+                "Prepropuesta Devuelta",
+                "La prepropuesta ha sido devuelta al docente con sus observaciones.",
+                "success",
+                undefined,
+                async () => {
+                    try {
+                        await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la devolución de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La devolución ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                        loadProjects();
+                    } catch (err: any) {
+                        console.error("[Undo Return] Failed:", err);
+                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la devolución de la prepropuesta.", "error");
+                    }
+                }
+            );
             setRejectingProject(null);
             setRejectObservation('');
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
