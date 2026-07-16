@@ -305,9 +305,8 @@ namespace diitra_infrastructure.Common.Notifications
                             contextReplacements["[[convocatoria_anio]]"] = conv.Anio.ToString();
                             contextReplacements["[[convocatoria_apertura]]"] = conv.FechaApertura.ToString("yyyy-MM-dd");
                             contextReplacements["[[convocatoria_cierre]]"] = conv.FechaCierre.ToString("yyyy-MM-dd");
-                            var topeProyectoEfectivo = conv.MontoMaximoProyecto ?? conv.PresupuestoTotal;
-                            contextReplacements["[[convocatoria_presupuesto]]"] = conv.PresupuestoTotal?.ToString("C") ?? "$0.00";
-                            contextReplacements["[[convocatoria_monto_maximo]]"] = topeProyectoEfectivo?.ToString("C") ?? "$0.00";
+                            contextReplacements["[[convocatoria_presupuesto]]"] = "$0.00";
+                            contextReplacements["[[convocatoria_monto_maximo]]"] = "$0.00";
                             contextReplacements["[[convocatoria_bases_url]]"] = conv.UrlBases ?? "";
                             contextReplacements["[[convocatoria_estado]]"] = conv.Estado ?? "";
                         }
@@ -934,7 +933,7 @@ namespace diitra_infrastructure.Common.Notifications
 
             var puntajes = revisiones.Where(r => r.PuntajeTotal.HasValue).Select(r => r.PuntajeTotal!.Value).ToList();
             decimal promedio = puntajes.Any() ? puntajes.Average() : 0.00m;
-            decimal puntajeMinimo = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70.00m;
+            decimal puntajeMinimo = 70.00m;
 
             var votos = revisiones.Select(r => r.DictamenRevisor).ToList();
             string resultado = "Pendiente";

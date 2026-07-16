@@ -647,6 +647,24 @@ namespace diitra_infrastructure.Research
                     Investigadores = new List<InvestigadorDto>()
                 };
 
+                var projectProfs = await _context.InvProyectosProfesores
+                    .Include(pp => pp.IdUsuarioNavigation)
+                    .Where(pp => pp.IdProyecto == basicProject.IdProyecto)
+                    .ToListAsync();
+
+                foreach (var pp in projectProfs)
+                {
+                    lightDto.Investigadores.Add(new InvestigadorDto
+                    {
+                        Nombre = pp.IdUsuarioNavigation?.Nombre,
+                        Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                        Email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "",
+                        Rol = pp.Rol,
+                        Activo = pp.Activo ?? true,
+                        EsDirector = pp.EsDirector ?? (pp.EsDirector == true)
+                    });
+                }
+
                 var principalCarrera = await _context.InvProyectosCarreras
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => pc.IdProyecto == basicProject.IdProyecto)
@@ -923,7 +941,7 @@ namespace diitra_infrastructure.Research
             dto.Estado = p.Estado;
             dto.IdConvocatoria = p.IdConvocatoria;
             dto.ConvocatoriaTitulo = p.IdConvocatoriaNavigation?.Titulo;
-            dto.ConvocatoriaMontoMaximo = p.IdConvocatoriaNavigation?.MontoMaximoProyecto;
+            dto.ConvocatoriaMontoMaximo = null;
             dto.IdCarrera = p.InvProyectosCarreras?.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera ?? p.InvProyectosCarreras?.FirstOrDefault()?.IdCarrera;
             if (dto.IdCarrera.HasValue)
             {

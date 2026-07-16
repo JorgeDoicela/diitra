@@ -70,7 +70,6 @@ DROP TABLE IF EXISTS
     inv_trazabilidad_proyectos,
     inv_proyecto_extensiones,
     inv_proyectos,
-    inv_convocatorias_lineas,
     inv_convocatorias,
     inv_rubrica_criterios,
     inv_rubricas,
@@ -90,8 +89,6 @@ DROP TABLE IF EXISTS
     inv_evaluaciones_detalle,
     inv_proyectos_documentos_adjuntos,
     inv_proyectos_mml,
-    inv_convocatorias_documentos_req,
-    inv_convocatorias_hitos,
     inv_pnd_objetivos,
 
     -- Catálogos y Configuración adicionales
@@ -314,57 +311,18 @@ CREATE TABLE inv_convocatorias (
     idPeriodo          CHAR(7) CHARACTER SET latin1 NOT NULL,
     fechaApertura      DATE          NOT NULL,
     fechaCierre        DATE          NOT NULL,
-    anio               INT           NOT NULL,
+    anio               VARCHAR(50)   NOT NULL,
     descripcion        TEXT,
-    presupuestoTotal   DECIMAL(12,2),
-    montoMaximoProyecto DECIMAL(12,2),
     urlBases           VARCHAR(512),
     requisitosMinimos  TEXT,
     idTipoConvocatoria INT           NULL,
-    idAgendaZonal      INT           NULL,
-    idRubrica          INT           NULL,
-    puntajeMinimoAprobacion DECIMAL(5,2) DEFAULT 70.00,
-    financiamientoExt  TINYINT(1)    DEFAULT 0,
-    metaProduccion     VARCHAR(255),
     estado             ENUM('Borrador','Abierta','Cerrada','Anulada') DEFAULT 'Borrador',
     eliminado             TINYINT(1)    DEFAULT 0,
     fechaEliminacion      TIMESTAMP     NULL,
     eliminadoPorUsuarioId INT(11)       NULL,
     FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo),
     FOREIGN KEY (idTipoConvocatoria) REFERENCES inv_tipos_convocatoria(idTipoConvocatoria),
-    FOREIGN KEY (idAgendaZonal) REFERENCES inv_agendas_zonales(idAgendaZonal),
-    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica),
     FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE inv_convocatorias_hitos (
-    idHito           INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid             VARCHAR(36)      NOT NULL UNIQUE,
-    idConvocatoria   INT           NOT NULL,
-    nombreHito       VARCHAR(150)  NOT NULL COMMENT 'Ej: Publicación de Resultados Preliminares',
-    fechaHito        DATE          NOT NULL,
-    esCritico        TINYINT(1)    DEFAULT 0 COMMENT 'Si es crítico, bloquea acciones del usuario',
-    descripcion      VARCHAR(255),
-    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE inv_convocatorias_documentos_req (
-    idDocReq         INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid             VARCHAR(36)      NOT NULL UNIQUE,
-    idConvocatoria   INT           NOT NULL,
-    nombreDocumento  VARCHAR(255)  NOT NULL COMMENT 'Ej: Certificado de no tener deudas',
-    descripcion      TEXT,
-    esObligatorio    TINYINT(1)    DEFAULT 1,
-    formatoAceptado  VARCHAR(50)   DEFAULT 'PDF',
-    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE inv_convocatorias_lineas (
-    idConvocatoria INT NOT NULL,
-    idLinea        INT NOT NULL,
-    PRIMARY KEY (idConvocatoria, idLinea),
-    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE,
-    FOREIGN KEY (idLinea)        REFERENCES inv_lineas_investigacion(idLinea) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
@@ -452,12 +410,10 @@ CREATE TABLE inv_proyectos_documentos_adjuntos (
     idDocAdj        INT          AUTO_INCREMENT PRIMARY KEY,
     uuid            VARCHAR(36)     NOT NULL UNIQUE,
     idProyecto      INT          NOT NULL,
-    idDocReq        INT          NULL COMMENT 'Referencia al requisito de la convocatoria',
     nombreArchivo   VARCHAR(255) NOT NULL,
     rutaArchivo     VARCHAR(512) NOT NULL,
     fechaSubida     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idDocReq)   REFERENCES inv_convocatorias_documentos_req(idDocReq) ON DELETE SET NULL
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Trazabilidad de Estados para Auditoría (CACES)
@@ -840,10 +796,6 @@ CREATE TRIGGER trg_tipos_inv_uuid BEFORE INSERT ON inv_tipos_investigacion FOR E
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_grupos_uuid BEFORE INSERT ON inv_grupos_investigacion FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_conv_hitos_uuid BEFORE INSERT ON inv_convocatorias_hitos FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_conv_docreq_uuid BEFORE INSERT ON inv_convocatorias_documentos_req FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_pnd_obj_uuid BEFORE INSERT ON inv_pnd_objetivos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_proy_docadj_uuid BEFORE INSERT ON inv_proyectos_documentos_adjuntos FOR EACH ROW
@@ -1091,9 +1043,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_SAFE_UPDATES = 0;
 
-TRUNCATE TABLE inv_convocatorias_lineas;
-TRUNCATE TABLE inv_convocatorias_hitos;
-TRUNCATE TABLE inv_convocatorias_documentos_req;
 TRUNCATE TABLE inv_rubrica_criterios;
 TRUNCATE TABLE inv_rubricas;
 TRUNCATE TABLE inv_agendas_zonales;
@@ -2285,29 +2234,6 @@ SELECT
     NULL                                    AS alertaDias,
     0                                       AS recurrenciaAnual
 FROM inv_convocatorias
-
-UNION ALL
-
--- 4. Hitos específicos de convocatoria
-SELECT
-    CONCAT('HITO-', h.idHito),
-    h.uuid,
-    h.nombreHito,
-    COALESCE(h.descripcion, CONCAT('Hito de la convocatoria: ', c.titulo)),
-    'Convocatoria', 'HitoConvocatoria',
-    h.fechaHito, NULL, 1,
-    IF(h.esCritico, '#EF4444', '#F59E0B'),
-    h.idConvocatoria, c.uuid, 'CONVOCATORIA',
-    '/convocatorias', 'DIITRA_ADMIN',
-    1,
-    0                                       AS esPrivado,
-    IF(h.esCritico, 'Alta', 'Media')       AS prioridad,
-    'Pendiente'                             AS estado,
-    NULL                                    AS creadoPor,
-    NULL                                    AS alertaDias,
-    0                                       AS recurrenciaAnual
-FROM inv_convocatorias_hitos h
-JOIN inv_convocatorias c ON c.idConvocatoria = h.idConvocatoria
 
 UNION ALL
 

@@ -87,7 +87,6 @@ namespace Diitra.Infrastructure.Research
             if (nuevoEstado == "Enviado" && proyecto.IdConvocatoria.HasValue)
             {
                 var convocatoria = await _context.InvConvocatorias
-                    .Include(c => c.Lineas)
                     .FirstOrDefaultAsync(c => c.IdConvocatoria == proyecto.IdConvocatoria.Value);
 
                 if (convocatoria != null)
@@ -103,16 +102,7 @@ namespace Diitra.Infrastructure.Research
                         throw new InvalidOperationException($"No es posible enviar la postulación. La convocatoria '{convocatoria.Titulo}' abre el {convocatoria.FechaApertura:dd/MM/yyyy}.");
                     }
 
-                    // B. Validación de Presupuesto Máximo
-                    var totalPresupuesto = await _context.InvPresupuestoItems
-                        .Where(i => i.IdProyecto == proyecto.IdProyecto)
-                        .SumAsync(i => (decimal?)(i.ValorUnitario * i.Cantidad)) ?? 0;
-
-                    var topeProyectoEfectivo = convocatoria.MontoMaximoProyecto ?? convocatoria.PresupuestoTotal;
-                    if (topeProyectoEfectivo.HasValue && topeProyectoEfectivo.Value > 0 && totalPresupuesto > topeProyectoEfectivo.Value)
-                    {
-                        throw new InvalidOperationException($"El presupuesto total del proyecto (${totalPresupuesto:N2}) excede el tope por proyecto permitido para esta convocatoria (${topeProyectoEfectivo.Value:N2}).");
-                    }
+                    // B. Validación de Presupuesto Máximo (Simplificada: Sin tope de convocatoria en BD)
 
                     // C. Validación de al menos un Investigador
                     var totalInvestigadores = await _context.InvProyectosProfesores.CountAsync(p => p.IdProyecto == proyecto.IdProyecto)

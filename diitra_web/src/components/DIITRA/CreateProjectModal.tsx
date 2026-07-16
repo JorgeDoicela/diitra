@@ -24,6 +24,16 @@ const isPastDeadline = (fechaCierre: string) => {
     return now > deadline;
 };
 
+const formatCurrency = (val: string) => {
+    const num = parseFloat(val);
+    if (isNaN(num) || num <= 0) return '';
+    return new Intl.NumberFormat('es-EC', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    }).format(num);
+};
+
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     preselectedConvocatoriaId,
     onClose
@@ -46,7 +56,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
-    
+
     const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [creationStepMsg, setCreationStepMsg] = useState('');
@@ -96,7 +106,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 } else {
                     setCarreras(rCarreras.data || []);
                 }
-                
+
                 if (preselectedConvocatoriaId) {
                     setIdConvocatoria(preselectedConvocatoriaId);
                 }
@@ -144,7 +154,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
         if (!descripcion.trim()) return setError("La descripción de la prepropuesta es obligatoria.");
-        
+
         const parsedBudget = parseFloat(presupuestoEstimado);
         if (isNaN(parsedBudget) || parsedBudget <= 0) {
             return setError("Debe ingresar un presupuesto estimado válido y mayor a cero.");
@@ -166,9 +176,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
         try {
             setCreationStepMsg("Creando el expediente digital del proyecto...");
-            const response = await api.post('/documents/instances', { 
-                templateCode: 'PROTOCOLO_INVESTIGACION', 
-                entityUuid: 'GLOBAL', 
+            const response = await api.post('/documents/instances', {
+                templateCode: 'PROTOCOLO_INVESTIGACION',
+                entityUuid: 'GLOBAL',
                 title: titulo.trim().toUpperCase()
             });
 
@@ -193,7 +203,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
             setCreationStepMsg("Enviando prepropuesta a revisión institucional...");
-            
+
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                 navigate('/investigacion/mis-proyectos', { replace: true });
@@ -222,7 +232,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             />
 
             <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
-                
+
                 <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                     <div className="flex items-center gap-3">
                         <div className="text-text-main">
@@ -234,8 +244,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                     </div>
                     {!isCreating && (
-                        <button 
-                            onClick={onClose} 
+                        <button
+                            onClick={onClose}
                             className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
                         >
                             <X size={18} />
@@ -259,7 +269,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
-                            
+
                             {error && (
                                 <div className="badge-vercel-error !rounded-md !p-3 text-[10px] font-black uppercase tracking-wider w-full">
                                     {error}
@@ -292,9 +302,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     className="input-vercel !h-24 !text-xs resize-none !placeholder:text-text-dim/30"
                                     required
                                 />
-                                <div className="text-[9px] text-text-dim/60 ml-1 flex justify-end">
-                                    <span>Caracteres ingresados: {descripcion.length}</span>
-                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -302,16 +309,26 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     <DollarSign size={10} className="text-text-dim" />
                                     Presupuesto Estimado (USD)
                                 </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    value={presupuestoEstimado}
-                                    onChange={(e) => setPresupuestoEstimado(e.target.value)}
-                                    placeholder="Ej: 15000.00"
-                                    className="input-vercel !text-xs !font-bold !placeholder:text-text-dim/30"
-                                    required
-                                />
+                                <div className="relative flex items-center">
+                                    <span className="absolute left-3 text-xs font-bold text-text-dim/60 select-none">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={presupuestoEstimado}
+                                        onChange={(e) => setPresupuestoEstimado(e.target.value)}
+                                        placeholder="15000.00"
+                                        className="input-vercel !pl-7 !text-xs !font-bold !placeholder:text-text-dim/30"
+                                        required
+                                    />
+                                </div>
+
+                                {presupuestoEstimado && !isNaN(parseFloat(presupuestoEstimado)) && parseFloat(presupuestoEstimado) > 0 && (
+                                    <div className="text-xs font-bold text-success ml-1 mt-1.5 p-2 bg-success/[0.04] border border-success/15 rounded flex items-center gap-1.5 animate-fade-in">
+                                        <Check size={12} className="text-success" />
+                                        <span>Valor: {formatCurrency(presupuestoEstimado)} USD</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2" ref={carreraRef}>
@@ -335,7 +352,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                             </span>
                                             <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none' }} />
                                         </button>
-                                        
+
                                         {isOpenCarrera && (
                                             <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
                                                 {carreras.map(c => {
@@ -381,7 +398,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                             <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenConvocatoria ? 'rotate(180deg)' : 'none' }} />
                                         )}
                                     </button>
-                                    
+
                                     {isOpenConvocatoria && !preselectedConvocatoriaId && (
                                         <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
                                             {convocatorias.map(c => {

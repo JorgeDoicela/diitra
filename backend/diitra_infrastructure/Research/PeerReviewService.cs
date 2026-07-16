@@ -164,8 +164,6 @@ public class PeerReviewService : IPeerReviewService
             .Include(r => r.Detalles)
             .Include(r => r.Proyecto)
                 .ThenInclude(p => p.IdConvocatoriaNavigation)
-                    .ThenInclude(c => c!.IdRubricaNavigation)
-                        .ThenInclude(rub => rub!.InvRubricaCriterios)
             .Include(r => r.Proyecto)
                 .ThenInclude(p => p.IdSublineaNavigation)
             .FirstOrDefaultAsync(r => r.Uuid == revisionUuid);
@@ -204,8 +202,10 @@ public class PeerReviewService : IPeerReviewService
         }
 
         var proyecto = revision.Proyecto;
-        var conv = proyecto.IdConvocatoriaNavigation;
-        var rubrica = conv?.IdRubricaNavigation;
+        var conv = proyecto?.IdConvocatoriaNavigation;
+        var rubrica = await _context.InvRubricas
+            .Include(r => r.InvRubricaCriterios)
+            .FirstOrDefaultAsync(r => r.Activo == true);
 
         // Si no hay rúbrica configurada, usar criterios genéricos CACES (fallback)
         List<CriterioRubricaDto> criterios;
@@ -227,7 +227,7 @@ public class PeerReviewService : IPeerReviewService
                 }).ToList();
             nombreRubrica = rubrica.Nombre;
             idRubrica = rubrica.IdRubrica;
-            puntajeMinimo = conv?.PuntajeMinimoAprobacion ?? 70m;
+            puntajeMinimo = 70m;
         }
         else
         {
@@ -383,7 +383,7 @@ public class PeerReviewService : IPeerReviewService
         revision.PuntajeTotal = totalScore;
 
         // Usar el umbral de aprobación de la convocatoria (por defecto 70/100 si no está configurado)
-        decimal umbralAprobacion = project?.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+        decimal umbralAprobacion = 70m;
         revision.DictamenRevisor = totalScore >= umbralAprobacion ? "Aprueba" : "Rechaza";
 
         await _context.SaveChangesAsync();
@@ -548,7 +548,7 @@ public class PeerReviewService : IPeerReviewService
                 ? CalcularPromedioPonderado(completadas, criteriosProyecto)
                 : null;
 
-            decimal umbralProyecto = proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+            decimal umbralProyecto = 70m;
             string estadoArbitraje = DeterminarEstadoArbitraje(revisiones, umbralProyecto);
             if (proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado")
             {
@@ -626,7 +626,7 @@ public class PeerReviewService : IPeerReviewService
                 if (list.All(r => r.Estado == "Completada"))
                 {
                     var scores = list.Where(r => r.PuntajeTotal.HasValue).Select(r => r.PuntajeTotal!.Value).ToList();
-                    var threshold = list.FirstOrDefault()?.Proyecto?.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+                    var threshold = 70m;
                     var aprobadosCount = scores.Count(s => s >= threshold);
                     var rechazadosCount = scores.Count(s => s < threshold);
                     return aprobadosCount == rechazadosCount && scores.Count > 0;
@@ -718,7 +718,7 @@ public class PeerReviewService : IPeerReviewService
             PuntajePromedio = promedio,
             EstadoArbitraje = (proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado")
                 ? "Completado"
-                : DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
+                : DeterminarEstadoArbitraje(revisiones, 70m),
             ArbitrajeCerrado = proyecto.PuntajeEvaluacion.HasValue
                 || proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado",
             AutoExtendDeadlines = proyecto.AutoExtendDeadlines,
@@ -1273,7 +1273,7 @@ public class PeerReviewService : IPeerReviewService
         if (!revisiones.Any())
             throw new InvalidOperationException("No hay evaluaciones completadas para cerrar el arbitraje.");
 
-        decimal puntajeMinimo = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+        decimal puntajeMinimo = 70m;
         var criteriosRubrica = await ObtenerCriteriosRubricaAsync(project.IdConvocatoria);
         decimal promedio = CalcularPromedioPonderado(revisiones, criteriosRubrica);
 
@@ -1503,20 +1503,16 @@ public class PeerReviewService : IPeerReviewService
 
     private async Task<List<(string Nombre, decimal Peso)>> ObtenerCriteriosRubricaAsync(int? idConvocatoria)
     {
-        if (idConvocatoria.HasValue)
-        {
-            var conv = await _context.InvConvocatorias
-                .Include(c => c.IdRubricaNavigation)
-                    .ThenInclude(r => r!.InvRubricaCriterios)
-                .FirstOrDefaultAsync(c => c.IdConvocatoria == idConvocatoria);
+        var rubrica = await _context.InvRubricas
+            .Include(r => r.InvRubricaCriterios)
+            .FirstOrDefaultAsync(r => r.Activo == true);
 
-            if (conv?.IdRubricaNavigation?.InvRubricaCriterios.Any() == true)
-            {
-                return conv.IdRubricaNavigation.InvRubricaCriterios
-                    .OrderBy(c => c.Orden)
-                    .Select(c => (c.Nombre, c.PesoPorcentaje))
-                    .ToList();
-            }
+        if (rubrica?.InvRubricaCriterios.Any() == true)
+        {
+            return rubrica.InvRubricaCriterios
+                .OrderBy(c => c.Orden)
+                .Select(c => (c.Nombre, c.PesoPorcentaje))
+                .ToList();
         }
 
         return new List<(string, decimal)>
@@ -1864,7 +1860,7 @@ public class PeerReviewService : IPeerReviewService
         decimal promedio = project.PuntajeEvaluacion
             ?? CalcularPromedioPonderado(revisiones, await ObtenerCriteriosRubricaAsync(project.IdConvocatoria));
 
-        decimal puntajeMinimo = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+        decimal puntajeMinimo = 70m;
         string resultado = promedio >= puntajeMinimo ? "Aprobado" : "Rechazado";
 
         // Detectar desempate

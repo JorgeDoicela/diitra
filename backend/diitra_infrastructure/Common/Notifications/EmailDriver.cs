@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using diitra_infrastructure.data.models;
 
 namespace diitra_infrastructure.Common.Notifications
 {
@@ -43,17 +44,20 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailDriver> _logger;
         private readonly EmailMasterLayoutRenderer _layoutRenderer;
+        private readonly DiitraContext _context;
 
         public string Name => "Email";
 
         public EmailDriver(
             IConfiguration configuration,
             ILogger<EmailDriver> logger,
-            EmailMasterLayoutRenderer layoutRenderer)
+            EmailMasterLayoutRenderer layoutRenderer,
+            DiitraContext context)
         {
             _configuration = configuration;
             _logger = logger;
             _layoutRenderer = layoutRenderer;
+            _context = context;
         }
 
         public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
@@ -66,45 +70,30 @@ namespace diitra_infrastructure.Common.Notifications
                 : null;
             var name = recipientName ?? "Investigador";
 
-            var host = _configuration["Email:Host"];
-            var isMock = string.IsNullOrEmpty(host);
-
-            var htmlBody = await _layoutRenderer.RenderAsync(title, name, body, absoluteUrl, extraData);
-
-            if (isMock)
-            {
-                _logger.LogWarning("[MOCK EMAIL] Para: {Recipient} | Titulo: {Title}", recipient, title);
-                return;
-            }
-
-            var port = int.Parse(_configuration["Email:Port"] ?? "587");
-            var user = _configuration["Email:Username"];
-            var pass = _configuration["Email:Password"];
-            var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
-            var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
-
             try
             {
-                using var client = new SmtpClient(host, port)
+                var htmlBody = await _layoutRenderer.RenderAsync(title, name, body, absoluteUrl, extraData);
+
+                // En lugar de enviar SMTP directamente bloqueando el hilo de ejecución, 
+                // encolamos el correo en inv_email_historial para que el servicio EmailBackgroundProcessorService lo despache de forma asíncrona.
+                var emailHistorial = new InvEmailHistorial
                 {
-                    Credentials = new NetworkCredential(user, pass),
-                    EnableSsl = true
+                    Uuid = Guid.NewGuid().ToString(),
+                    Destinatario = recipient,
+                    Asunto = title,
+                    Cuerpo = htmlBody,
+                    Estado = "Pendiente",
+                    FechaEnvio = DateTime.UtcNow
                 };
 
-                using var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(fromEmail, fromName),
-                    Subject = title
-                };
-                mailMessage.To.Add(recipient);
-                _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
+                _context.InvEmailHistorials.Add(emailHistorial);
+                await _context.SaveChangesAsync();
 
-                await client.SendMailAsync(mailMessage);
-                _logger.LogInformation("Email enviado con éxito a {Recipient}", recipient);
+                _logger.LogInformation("Notificación por correo encolada en inv_email_historial para {Recipient} con asunto '{Title}'", recipient, title);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al enviar email a {Recipient}", recipient);
+                _logger.LogError(ex, "Error al encolar notificación de email para {Recipient}", recipient);
                 throw;
             }
         }

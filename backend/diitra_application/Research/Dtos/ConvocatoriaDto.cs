@@ -11,7 +11,7 @@ public class ConvocatoriaDto
     public string Titulo { get; set; } = null!;
     public string IdPeriodo { get; set; } = null!;
     public string? PeriodoNombre { get; set; }
-    public int Anio { get; set; }
+    public string Anio { get; set; } = null!;
     public string? Descripcion { get; set; }
     public decimal? PresupuestoTotal { get; set; }
     public decimal? MontoMaximoProyecto { get; set; }
@@ -73,7 +73,7 @@ public class CreateConvocatoriaDto
     public string CodigoConvocatoria { get; set; } = null!;
     public string Titulo { get; set; } = null!;
     public string IdPeriodo { get; set; } = null!;
-    public int Anio { get; set; }
+    public string Anio { get; set; } = null!;
     public string? Descripcion { get; set; }
     public decimal? PresupuestoTotal { get; set; }
     public decimal? MontoMaximoProyecto { get; set; }

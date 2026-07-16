@@ -51,9 +51,6 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         return await _context.InvConvocatorias
             .Include(c => c.IdPeriodoNavigation)
-            .Include(c => c.IdRubricaNavigation)
-            .Include(c => c.Hitos)
-            .Include(c => c.DocumentosReq)
             .OrderByDescending(c => c.Anio)
             .Select(c => new ConvocatoriaDto
             {
@@ -65,37 +62,12 @@ public class ConvocatoriaService : IConvocatoriaService
                 PeriodoNombre = c.IdPeriodoNavigation.Detalle,
                 Anio = c.Anio,
                 Descripcion = c.Descripcion,
-                PresupuestoTotal = c.PresupuestoTotal,
-                MontoMaximoProyecto = c.MontoMaximoProyecto,
                 UrlBases = c.UrlBases,
                 RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
-                IdAgendaZonal = c.IdAgendaZonal,
-                IdRubrica = c.IdRubrica,
-                RubricaNombre = c.IdRubricaNavigation != null ? c.IdRubricaNavigation.Nombre : null,
-                PuntajeMinimoAprobacion = c.PuntajeMinimoAprobacion,
-                FinanciamientoExt = c.FinanciamientoExt,
-                MetaProduccion = c.MetaProduccion,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
                 Estado = c.Estado,
-                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
-                Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
-                    IdHito = h.IdHito,
-                    Uuid = h.Uuid,
-                    NombreHito = h.NombreHito,
-                    FechaHito = h.FechaHito,
-                    EsCritico = h.EsCritico ?? false,
-                    Descripcion = h.Descripcion
-                }).ToList(),
-                DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
-                    IdDocReq = d.IdDocReq,
-                    Uuid = d.Uuid,
-                    NombreDocumento = d.NombreDocumento,
-                    Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio ?? false,
-                    FormatoAceptado = d.FormatoAceptado
-                }).ToList(),
                 Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
                     Uuid = p.Uuid,
                     Titulo = p.Titulo,
@@ -110,10 +82,6 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         return await _context.InvConvocatorias
             .Include(c => c.IdPeriodoNavigation)
-            .Include(c => c.IdRubricaNavigation)
-            .Include(c => c.Lineas)
-            .Include(c => c.Hitos)
-            .Include(c => c.DocumentosReq)
             .Where(c => c.Uuid == uuid)
             .Select(c => new ConvocatoriaDto
             {
@@ -125,37 +93,12 @@ public class ConvocatoriaService : IConvocatoriaService
                 PeriodoNombre = c.IdPeriodoNavigation.Detalle,
                 Anio = c.Anio,
                 Descripcion = c.Descripcion,
-                PresupuestoTotal = c.PresupuestoTotal,
-                MontoMaximoProyecto = c.MontoMaximoProyecto,
                 UrlBases = c.UrlBases,
                 RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
-                IdAgendaZonal = c.IdAgendaZonal,
-                IdRubrica = c.IdRubrica,
-                RubricaNombre = c.IdRubricaNavigation != null ? c.IdRubricaNavigation.Nombre : null,
-                PuntajeMinimoAprobacion = c.PuntajeMinimoAprobacion,
-                FinanciamientoExt = c.FinanciamientoExt,
-                MetaProduccion = c.MetaProduccion,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
                 Estado = c.Estado,
-                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
-                Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
-                    IdHito = h.IdHito,
-                    Uuid = h.Uuid,
-                    NombreHito = h.NombreHito,
-                    FechaHito = h.FechaHito,
-                    EsCritico = h.EsCritico ?? false,
-                    Descripcion = h.Descripcion
-                }).ToList(),
-                DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
-                    IdDocReq = d.IdDocReq,
-                    Uuid = d.Uuid,
-                    NombreDocumento = d.NombreDocumento,
-                    Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio ?? false,
-                    FormatoAceptado = d.FormatoAceptado
-                }).ToList(),
                 Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
                     Uuid = p.Uuid,
                     Titulo = p.Titulo,
@@ -179,8 +122,28 @@ public class ConvocatoriaService : IConvocatoriaService
             throw new InvalidOperationException($"Ya existe una convocatoria con el código \"{normalized}\". Usa un código diferente.");
     }
 
+    private void ValidateConvocatoria(CreateConvocatoriaDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Titulo))
+            throw new InvalidOperationException("El título de la convocatoria es obligatorio.");
+
+        if (string.IsNullOrWhiteSpace(dto.Anio))
+            throw new InvalidOperationException("El año calendario es obligatorio.");
+
+        var anioRegex = new System.Text.RegularExpressions.Regex(@"^(?:19|20|21)\d{2}(?:\s*[-\/]\s*(?:19|20|21)\d{2})?$");
+        if (!anioRegex.IsMatch(dto.Anio.Trim()))
+            throw new InvalidOperationException("El año calendario debe ser un año de 4 dígitos (ej: 2026) o un rango de años válido (ej: 2026 - 2027).");
+
+        if (dto.IdTipoConvocatoria == null || dto.IdTipoConvocatoria <= 0)
+            throw new InvalidOperationException("El tipo de convocatoria es obligatorio.");
+
+        if (dto.FechaApertura > dto.FechaCierre)
+            throw new InvalidOperationException("La fecha de apertura debe ser anterior o igual a la fecha de cierre.");
+    }
+
     public async Task<string> CreateAsync(CreateConvocatoriaDto dto)
     {
+        ValidateConvocatoria(dto);
         await EnsureCodigoConvocatoriaUniqueAsync(dto.CodigoConvocatoria);
 
         var convocatoria = new InvConvocatoria
@@ -191,58 +154,13 @@ public class ConvocatoriaService : IConvocatoriaService
             IdPeriodo = dto.IdPeriodo,
             Anio = dto.Anio,
             Descripcion = dto.Descripcion,
-            PresupuestoTotal = dto.PresupuestoTotal,
-            MontoMaximoProyecto = dto.MontoMaximoProyecto,
             UrlBases = dto.UrlBases,
             RequisitosMinimos = dto.RequisitosMinimos,
             IdTipoConvocatoria = dto.IdTipoConvocatoria,
-            IdAgendaZonal = dto.IdAgendaZonal,
-            IdRubrica = dto.IdRubrica,
-            PuntajeMinimoAprobacion = dto.PuntajeMinimoAprobacion,
-            FinanciamientoExt = dto.FinanciamientoExt,
-            MetaProduccion = dto.MetaProduccion,
             FechaApertura = dto.FechaApertura,
             FechaCierre = dto.FechaCierre,
             Estado = "Borrador"
         };
-
-        if (dto.Hitos != null)
-        {
-            foreach (var h in dto.Hitos)
-            {
-                convocatoria.Hitos.Add(new InvConvocatoriaHito {
-                    Uuid = Guid.NewGuid().ToString(),
-                    NombreHito = h.NombreHito,
-                    FechaHito = h.FechaHito,
-                    EsCritico = h.EsCritico,
-                    Descripcion = h.Descripcion
-                });
-            }
-        }
-
-        if (dto.DocumentosReq != null)
-        {
-            foreach (var d in dto.DocumentosReq)
-            {
-                convocatoria.DocumentosReq.Add(new InvConvocatoriaDocumentoReq {
-                    Uuid = Guid.NewGuid().ToString(),
-                    NombreDocumento = d.NombreDocumento,
-                    Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio,
-                });
-            }
-        }
-
-        if (dto.LineasIds != null && dto.LineasIds.Any())
-        {
-            var lineas = await _context.InvLineasInvestigacion
-                .Where(l => dto.LineasIds.Contains(l.IdLinea))
-                .ToListAsync();
-            foreach (var linea in lineas)
-            {
-                convocatoria.Lineas.Add(linea);
-            }
-        }
 
         _context.InvConvocatorias.Add(convocatoria);
         await _context.SaveChangesAsync();
@@ -253,8 +171,6 @@ public class ConvocatoriaService : IConvocatoriaService
             convocatoria.CodigoConvocatoria,
             convocatoria.Titulo,
             convocatoria.Anio,
-            convocatoria.PresupuestoTotal,
-            convocatoria.MontoMaximoProyecto,
             convocatoria.FechaApertura,
             convocatoria.FechaCierre,
             convocatoria.Estado
@@ -268,10 +184,8 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<bool> UpdateAsync(string uuid, CreateConvocatoriaDto dto)
     {
+        ValidateConvocatoria(dto);
         var conv = await _context.InvConvocatorias
-            .Include(c => c.Lineas)
-            .Include(c => c.Hitos)
-            .Include(c => c.DocumentosReq)
             .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
@@ -286,16 +200,9 @@ public class ConvocatoriaService : IConvocatoriaService
             conv.Titulo,
             conv.Anio,
             conv.Descripcion,
-            conv.PresupuestoTotal,
-            conv.MontoMaximoProyecto,
             conv.UrlBases,
             conv.RequisitosMinimos,
             conv.IdTipoConvocatoria,
-            conv.IdAgendaZonal,
-            conv.IdRubrica,
-            conv.PuntajeMinimoAprobacion,
-            conv.FinanciamientoExt,
-            conv.MetaProduccion,
             conv.FechaApertura,
             conv.FechaCierre,
             conv.Estado
@@ -307,62 +214,11 @@ public class ConvocatoriaService : IConvocatoriaService
         conv.IdPeriodo = dto.IdPeriodo;
         conv.Anio = dto.Anio;
         conv.Descripcion = dto.Descripcion;
-        conv.PresupuestoTotal = dto.PresupuestoTotal;
-        conv.MontoMaximoProyecto = dto.MontoMaximoProyecto;
         conv.UrlBases = dto.UrlBases;
         conv.RequisitosMinimos = dto.RequisitosMinimos;
         conv.IdTipoConvocatoria = dto.IdTipoConvocatoria;
-        conv.IdAgendaZonal = dto.IdAgendaZonal;
-        conv.IdRubrica = dto.IdRubrica;
-        conv.PuntajeMinimoAprobacion = dto.PuntajeMinimoAprobacion;
-        conv.FinanciamientoExt = dto.FinanciamientoExt;
-        conv.MetaProduccion = dto.MetaProduccion;
         conv.FechaApertura = dto.FechaApertura;
         conv.FechaCierre = dto.FechaCierre;
-
-        // Update Lineas
-        conv.Lineas.Clear();
-        if (dto.LineasIds != null && dto.LineasIds.Any())
-        {
-            var lineas = await _context.InvLineasInvestigacion
-                .Where(l => dto.LineasIds.Contains(l.IdLinea))
-                .ToListAsync();
-            foreach (var linea in lineas)
-            {
-                conv.Lineas.Add(linea);
-            }
-        }
-
-        // Update Hitos
-        _context.InvConvocatoriasHitos.RemoveRange(conv.Hitos);
-        if (dto.Hitos != null)
-        {
-            foreach (var h in dto.Hitos)
-            {
-                conv.Hitos.Add(new InvConvocatoriaHito {
-                    Uuid = Guid.NewGuid().ToString(),
-                    NombreHito = h.NombreHito,
-                    FechaHito = h.FechaHito,
-                    EsCritico = h.EsCritico,
-                    Descripcion = h.Descripcion
-                });
-            }
-        }
-
-        // Update DocumentosReq
-        _context.InvConvocatoriasDocumentosReq.RemoveRange(conv.DocumentosReq);
-        if (dto.DocumentosReq != null)
-        {
-            foreach (var d in dto.DocumentosReq)
-            {
-                conv.DocumentosReq.Add(new InvConvocatoriaDocumentoReq {
-                    Uuid = Guid.NewGuid().ToString(),
-                    NombreDocumento = d.NombreDocumento,
-                    Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio,
-                });
-            }
-        }
 
         await _context.SaveChangesAsync();
 
@@ -372,16 +228,9 @@ public class ConvocatoriaService : IConvocatoriaService
             conv.Titulo,
             conv.Anio,
             conv.Descripcion,
-            conv.PresupuestoTotal,
-            conv.MontoMaximoProyecto,
             conv.UrlBases,
             conv.RequisitosMinimos,
             conv.IdTipoConvocatoria,
-            conv.IdAgendaZonal,
-            conv.IdRubrica,
-            conv.PuntajeMinimoAprobacion,
-            conv.FinanciamientoExt,
-            conv.MetaProduccion,
             conv.FechaApertura,
             conv.FechaCierre,
             conv.Estado

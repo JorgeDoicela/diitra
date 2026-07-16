@@ -136,9 +136,10 @@ export const ProjectWorkspace: React.FC = () => {
     const [sectionObservations, setSectionObservations] = useState({
         carrera: '',
         titulo: '',
-        descripcion: ''
+        descripcion: '',
+        presupuesto: ''
     });
-    const [activeSectionTab, setActiveSectionTab] = useState<'carrera' | 'titulo' | 'descripcion'>('carrera');
+    const [activeSectionTab, setActiveSectionTab] = useState<'carrera' | 'titulo' | 'descripcion' | 'presupuesto'>('carrera');
     const [isSubmittingAdminReview, setIsSubmittingAdminReview] = useState(false);
 
     const setActiveDocument = useCallback((doc: string | null) => {
@@ -763,6 +764,9 @@ export const ProjectWorkspace: React.FC = () => {
                 if (sectionObservations.descripcion.trim()) {
                     lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
                 }
+                if (sectionObservations.presupuesto.trim()) {
+                    lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
+                }
                 finalObservation = lines.join('\n\n');
             }
 
@@ -770,7 +774,7 @@ export const ProjectWorkspace: React.FC = () => {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
             addToast("Idea Aprobada", "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.", "success");
             setAdminObservation('');
-            setSectionObservations({ carrera: '', titulo: '', descripcion: '' });
+            setSectionObservations({ carrera: '', titulo: '', descripcion: '', presupuesto: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
@@ -798,6 +802,9 @@ export const ProjectWorkspace: React.FC = () => {
             if (sectionObservations.descripcion.trim()) {
                 lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
             }
+            if (sectionObservations.presupuesto.trim()) {
+                lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
+            }
             finalObservation = lines.join('\n\n');
         }
 
@@ -824,7 +831,7 @@ export const ProjectWorkspace: React.FC = () => {
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(finalObservation)}`);
             addToast("Prepropuesta Devuelta", "La prepropuesta ha sido devuelta al docente con sus observaciones.", "success");
             setAdminObservation('');
-            setSectionObservations({ carrera: '', titulo: '', descripcion: '' });
+            setSectionObservations({ carrera: '', titulo: '', descripcion: '', presupuesto: '' });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             await fetchProject();
         } catch (e: any) {
@@ -1446,6 +1453,42 @@ export const ProjectWorkspace: React.FC = () => {
                                             {currentProject.descripcion || 'Sin descripción ingresada.'}
                                         </div>
                                     </div>
+ 
+                                    {/* Presupuesto Estimado (USD) */}
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedbackMode('secciones');
+                                            setActiveSectionTab('presupuesto');
+                                        }}
+                                        className="space-y-2 group cursor-pointer"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 cursor-pointer transition-colors group-hover:text-text-main">
+                                                Presupuesto Estimado (USD)
+                                            </label>
+                                            {feedbackMode === 'secciones' && activeSectionTab === 'presupuesto' && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                            )}
+                                        </div>
+                                        <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${
+                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
+                                                ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                                : 'opacity-85 group-hover:border-border'
+                                        }`}>
+                                            ${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                                        </div>
+                                    </div>
+ 
+                                    {/* Director / Docente Proponente */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">
+                                            Director / Docente Proponente
+                                        </label>
+                                        <div className="input-vercel bg-bg-deep opacity-75 select-none font-bold">
+                                            {currentProject.directorProyecto || 'No asignado'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1463,13 +1506,13 @@ export const ProjectWorkspace: React.FC = () => {
 
                                     <div className="space-y-4">
                                         {/* Selector de Modo de Retroalimentación */}
-                                        <div className="flex bg-bg-deep p-1.5 rounded-xl border border-border-thin gap-1 shadow-inner">
+                                        <div className="flex border border-border-thin rounded-lg overflow-hidden shadow-sm">
                                             <button
                                                 type="button"
                                                 onClick={() => setFeedbackMode('general')}
-                                                className={`flex-1 py-1.5 px-3 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'general'
-                                                        ? 'bg-surface text-text-main shadow-sm border border-border-thin font-black'
-                                                        : 'text-text-dim hover:text-text-main'
+                                                className={`flex-1 py-2 px-3 text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 border-r border-border-thin ${feedbackMode === 'general'
+                                                        ? 'bg-text-main text-bg-deep font-black shadow-sm'
+                                                        : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
                                                     }`}
                                             >
                                                 <Shield size={10} />
@@ -1478,9 +1521,9 @@ export const ProjectWorkspace: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setFeedbackMode('secciones')}
-                                                className={`flex-1 py-1.5 px-3 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'secciones'
-                                                        ? 'bg-surface text-text-main shadow-sm border border-border-thin font-black'
-                                                        : 'text-text-dim hover:text-text-main'
+                                                className={`flex-1 py-2 px-3 text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'secciones'
+                                                        ? 'bg-text-main text-bg-deep font-black shadow-sm'
+                                                        : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
                                                     }`}
                                             >
                                                 <MessageSquare size={10} />
@@ -1496,7 +1539,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     value={adminObservation}
                                                     onChange={(e) => setAdminObservation(e.target.value)}
                                                     placeholder="Ingrese las observaciones sobre el tema o justificación de la idea..."
-                                                    className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
+                                                    className="input-vercel !h-32 !text-xs resize-none"
                                                 />
                                             </div>
                                         ) : (
@@ -1527,6 +1570,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                     >
                                                         Descripción
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveSectionTab('presupuesto')}
+                                                        className={`pb-1.5 border-b-2 transition-all duration-200 ${activeSectionTab === 'presupuesto' ? 'border-brand text-text-main font-black' : 'border-transparent text-text-dim'
+                                                            }`}
+                                                    >
+                                                        Presupuesto
+                                                    </button>
                                                 </div>
 
                                                 {activeSectionTab === 'carrera' && (
@@ -1537,7 +1588,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             value={sectionObservations.carrera}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, carrera: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre la carrera o unidad postulante..."
-                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
+                                                            className="input-vercel !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -1549,7 +1600,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             value={sectionObservations.titulo}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, titulo: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre el tema o título..."
-                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
+                                                            className="input-vercel !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -1561,7 +1612,19 @@ export const ProjectWorkspace: React.FC = () => {
                                                             value={sectionObservations.descripcion}
                                                             onChange={(e) => setSectionObservations({ ...sectionObservations, descripcion: e.target.value })}
                                                             placeholder="Ingrese las observaciones sobre la descripción..."
-                                                            className="input-vercel input-vercel-no-highlight !h-32 !text-xs resize-none"
+                                                            className="input-vercel !h-32 !text-xs resize-none"
+                                                        />
+                                                    </div>
+                                                )}
+                                                {activeSectionTab === 'presupuesto' && (
+                                                    <div className="space-y-2 animate-in fade-in duration-200">
+                                                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-widest ml-1">Observaciones sobre Presupuesto</label>
+                                                        <textarea
+                                                            key="presupuesto-obs"
+                                                            value={sectionObservations.presupuesto}
+                                                            onChange={(e) => setSectionObservations({ ...sectionObservations, presupuesto: e.target.value })}
+                                                            placeholder="Ingrese las observaciones sobre el presupuesto estimado..."
+                                                            className="input-vercel !h-32 !text-xs resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -1584,7 +1647,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     isSubmittingAdminReview ||
                                                     (feedbackMode === 'general'
                                                         ? !adminObservation.trim()
-                                                        : !(sectionObservations.carrera.trim() || sectionObservations.titulo.trim() || sectionObservations.descripcion.trim()))
+                                                        : !(sectionObservations.carrera.trim() || sectionObservations.titulo.trim() || sectionObservations.descripcion.trim() || sectionObservations.presupuesto.trim()))
                                                 }
                                                 className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-error/10 text-error border border-error/30 hover:border-error/50 rounded-lg py-3 px-6 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                             >

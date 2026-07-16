@@ -210,29 +210,6 @@ INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo,
 (1, '84f8846c-c918-406b-a25e-336ff326e632', 'CONV-2025-I', 'Convocatoria Proyectos de Investigación y Desarrollo 2025-I', 'ABD2025', '2025-04-15', '2025-06-15', 2025, 'Convocatoria abierta para el financiamiento de proyectos aplicados de I+D en el IST Traversari', 25000.00, 10000.00, 'https://bases.traversari.edu.ec/2025-I', 'Poseer título de tercer nivel y pertenecer a un grupo de investigación', 1, 9, 1, 70.00, 'Cerrada'),
 (2, '9fb183ea-e522-4828-98e3-841853ad76aa', 'CONV-2026-I', 'Convocatoria Proyectos de Innovación Tecnológica 2026-I', 'ABR2026', '2026-04-10', '2026-06-10', 2026, 'Enfoque en desarrollo de software, prototipos de hardware y transferencia tecnológica', 30000.00, 12000.00, 'https://bases.traversari.edu.ec/2026-I', 'Tener grupo de investigación registrado o semillero activo', 2, 9, 2, 75.00, 'Abierta');
 
--- 6.1 Relaciones de Convocatorias con Líneas
-INSERT INTO inv_convocatorias_lineas (idConvocatoria, idLinea) VALUES
-(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
-(2, 1), (2, 3), (2, 4), (2, 7);
-
--- 6.2 Poblar Requisitos de Convocatoria (Documentos Requeridos)
-INSERT INTO inv_convocatorias_documentos_req (idDocReq, uuid, idConvocatoria, nombreDocumento, descripcion, esObligatorio, formatoAceptado) VALUES
-(1, UUID(), 1, 'Protocolo de Investigación Firmado', 'Ficha completa de la propuesta en formato oficial PDF.', 1, 'PDF'),
-(2, UUID(), 1, 'Carta de Aval del Coordinador del Grupo', 'Aval del grupo de investigación que respalda el proyecto.', 1, 'PDF'),
-(3, UUID(), 1, 'Certificado de no adeudar al instituto', 'Documento emitido por tesorería.', 0, 'PDF'),
-(4, UUID(), 2, 'Protocolo de Innovación Tecnológica', 'Propuesta de innovación y transferencia tecnológica.', 1, 'PDF'),
-(5, UUID(), 2, 'Carta de Aval del Aliado Externo / Empresa Co-ejecutora', 'Aval firmado por el representante de la entidad aliada.', 1, 'PDF');
-
--- 6.3 Poblar Hitos de Convocatorias
-INSERT INTO inv_convocatorias_hitos (idHito, uuid, idConvocatoria, nombreHito, fechaHito, esCritico, descripcion) VALUES
-(1, UUID(), 1, 'Publicación de la Convocatoria', '2025-04-15', 0, 'Lanzamiento de las bases y formularios de postulación.'),
-(2, UUID(), 1, 'Cierre de Postulación', '2025-06-15', 1, 'Límite improrrogable para la carga del protocolo, presupuesto y cronograma.'),
-(3, UUID(), 1, 'Evaluación por Pares', '2025-06-30', 0, 'Período asignado para la revisión doble ciego.'),
-(4, UUID(), 1, 'Publicación de Resultados Finales', '2025-07-05', 0, 'Emisión de resoluciones y códigos institucionales.'),
-(5, UUID(), 2, 'Publicación de la Convocatoria', '2026-04-10', 0, 'Lanzamiento enfocado en innovación y transferencia.'),
-(6, UUID(), 2, 'Cierre de Postulación', '2026-06-10', 1, 'Límite improrrogable de carga digital.'),
-(7, UUID(), 2, 'Evaluación por Pares', '2026-06-20', 0, 'Arbitraje plenario y resolución de discordancias.'),
-(8, UUID(), 2, 'Publicación de Resultados Finales', '2026-06-25', 0, 'Emisión de resoluciones.');
 
 -- 7. Poblar Proyectos (Se cubren todos los estados del ciclo de vida útil del sistema)
 INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional, titulo, descripcionProyecto, antecedentes, justificacion, marcoTeorico, metodologia, metodoEvaluacion, idSublinea, idPrograma, idGrupo, tieneGrupo, idTipo, fechaPresentacion, fechaInicio, fechaFin, tiempoEjecucion, estado, disponibleAdopcion, puntajeEvaluacion, valorEjecucion, idObjetivoPnd, idEntidadAliada, trlInicial, trlActual, trlMeta, hashActaAprobacion, fechaAprobacion, firmadoPor, idDspaceHandle, metadataCacesJson) VALUES

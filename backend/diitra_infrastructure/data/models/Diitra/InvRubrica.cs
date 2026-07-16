@@ -12,6 +12,6 @@ public partial class InvRubrica
     public bool Activo { get; set; } = true;
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
-    public virtual ICollection<InvConvocatoria> Convocatorias { get; set; } = new List<InvConvocatoria>();
+
     public virtual ICollection<InvRubricaCriterio> InvRubricaCriterios { get; set; } = new List<InvRubricaCriterio>();
 }
