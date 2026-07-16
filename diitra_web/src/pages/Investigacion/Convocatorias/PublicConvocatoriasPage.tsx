@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, X, BookOpen } from 'lucide-react';
+import { PenTool, Calendar, DollarSign, Filter, Search, Award, X, BookOpen } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

@@ -3,7 +3,7 @@ import {
     Users, Activity, BarChart3,
     Megaphone,
     Fingerprint, FileText, Layers, ExternalLink,
-    RotateCw, HelpCircle, Inbox
+    RotateCw, HelpCircle
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -152,7 +152,7 @@ export const AdminDashboard: React.FC = () => {
                         {error}
                     </p>
                     <button
-                        onClick={fetchData}
+                        onClick={() => fetchData()}
                         className="btn-vercel-primary px-5 py-2 text-xs font-semibold flex items-center gap-2 hover:shadow-md transition-all active:scale-98"
                     >
                         <span>Reintentar Carga</span>

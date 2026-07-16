@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon, AlertCircle } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import type { CoWorkHandle } from '../../core/cowork/types';
@@ -89,6 +89,7 @@ interface DIITRABuilderShellProps {
     canSign?: boolean;
     onUpdateField?: (name: string, value: any) => void;
     signatureType?: string;
+    documentUuid?: string;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({

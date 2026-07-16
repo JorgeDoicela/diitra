@@ -790,7 +790,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     {(() => {
                                         const auditItems = comments
                                             .map(c => ({ comment: c, audit: parseAuditComment(c.contenido) }))
-                                            .filter(item => item.audit !== null);
+                                            .filter((item): item is { comment: any; audit: { seccion: string; estado: string; texto: string } } => item.audit !== null);
 
                                         if (auditItems.length === 0) {
                                             return (

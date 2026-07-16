@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, FileText, UploadCloud, ArrowLeft, Activity } from 'lucide-react';
+import { ChevronRight, FileText, UploadCloud, ArrowLeft } from 'lucide-react';
 import { useWorkflowStates } from '../../../../../hooks/useWorkflowStates';
 interface WorkspaceHeaderProps {
     currentProject: {

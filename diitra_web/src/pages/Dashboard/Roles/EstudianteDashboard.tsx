@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, Loader2, RotateCw } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, RotateCw } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';

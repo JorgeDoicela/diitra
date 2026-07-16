@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    TrendingUp, Briefcase, Loader2, ClipboardList,
+    TrendingUp, Briefcase, ClipboardList,
     Fingerprint, FileText, Layers, ExternalLink,
     Activity, FileEdit, RotateCw, Inbox, HelpCircle, ArrowRight
 } from 'lucide-react';
