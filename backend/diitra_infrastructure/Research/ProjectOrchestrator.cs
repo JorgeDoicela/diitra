@@ -644,6 +644,7 @@ namespace diitra_infrastructure.Research
                     SublineaInvestigacion = basicProject.IdSublineaNavigation?.Nombre,
                     Programa = basicProject.IdProgramaNavigation?.Nombre,
                     TipoInvestigacion = basicProject.IdTipoNavigation?.Nombre,
+                    CostoTotal = basicProject.PresupuestoEstimado ?? 0,
                     Investigadores = new List<InvestigadorDto>()
                 };
 

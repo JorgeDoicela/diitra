@@ -33,7 +33,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Check, RotateCcw, MessageSquare } from 'lucide-react';
+import { Shield, Check, RotateCcw, MessageSquare, AlertTriangle, Info } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -80,6 +80,108 @@ const mapInvestigador = (inv: any) => {
         horasDisponibles: inv.horasDisponibles ?? inv.horas_disponibles ?? null,
         horasAsignadas: inv.horasAsignadas ?? inv.horas_asignadas ?? null,
     };
+};
+
+interface ParsedObservations {
+    general?: string;
+    carrera?: string;
+    titulo?: string;
+    descripcion?: string;
+    presupuesto?: string;
+}
+
+const parseObservation = (obsText: string): ParsedObservations => {
+    if (!obsText) return {};
+
+    const hasAnyTag = obsText.includes('[GENERAL]') ||
+        obsText.includes('[CARRERA/UNIDAD]') ||
+        obsText.includes('[TEMA/TÍTULO]') ||
+        obsText.includes('[DESCRIPCIÓN]') ||
+        obsText.includes('[PRESUPUESTO]');
+
+    if (!hasAnyTag) {
+        return { general: obsText };
+    }
+
+    const parsed: ParsedObservations = {};
+
+    const regexGeneral = /\[GENERAL\]\s*([\s\S]*?)(?=\[CARRERA\/UNIDAD\]|\[TEMA\/TÍTULO\]|\[DESCRIPCIÓN\]|\[PRESUPUESTO\]|$)/i;
+    const regexCarrera = /\[CARRERA\/UNIDAD\]\s*([\s\S]*?)(?=\[GENERAL\]|\[TEMA\/TÍTULO\]|\[DESCRIPCIÓN\]|\[PRESUPUESTO\]|$)/i;
+    const regexTitulo = /\[TEMA\/TÍTULO\]\s*([\s\S]*?)(?=\[GENERAL\]|\[CARRERA\/UNIDAD\]|\[DESCRIPCIÓN\]|\[PRESUPUESTO\]|$)/i;
+    const regexDescripcion = /\[DESCRIPCIÓN\]\s*([\s\S]*?)(?=\[GENERAL\]|\[CARRERA\/UNIDAD\]|\[TEMA\/TÍTULO\]|\[PRESUPUESTO\]|$)/i;
+    const regexPresupuesto = /\[PRESUPUESTO\]\s*([\s\S]*?)(?=\[GENERAL\]|\[CARRERA\/UNIDAD\]|\[TEMA\/TÍTULO\]|\[DESCRIPCIÓN\]|$)/i;
+
+    const matchGeneral = obsText.match(regexGeneral);
+    const matchCarrera = obsText.match(regexCarrera);
+    const matchTitulo = obsText.match(regexTitulo);
+    const matchDescripcion = obsText.match(regexDescripcion);
+    const matchPresupuesto = obsText.match(regexPresupuesto);
+
+    if (matchGeneral && matchGeneral[1].trim()) parsed.general = matchGeneral[1].trim();
+    if (matchCarrera && matchCarrera[1].trim()) parsed.carrera = matchCarrera[1].trim();
+    if (matchTitulo && matchTitulo[1].trim()) parsed.titulo = matchTitulo[1].trim();
+    if (matchDescripcion && matchDescripcion[1].trim()) parsed.descripcion = matchDescripcion[1].trim();
+    if (matchPresupuesto && matchPresupuesto[1].trim()) parsed.presupuesto = matchPresupuesto[1].trim();
+
+    return parsed;
+};
+
+const renderTrazabilidadObservation = (observationText: string) => {
+    if (!observationText) return null;
+    const parsed = parseObservation(observationText);
+
+    if (parsed.general && !parsed.carrera && !parsed.titulo && !parsed.descripcion && !parsed.presupuesto) {
+        return (
+            <p className="text-[10px] text-text-dim italic bg-bg-deep p-2.5 rounded border border-border-thin mt-1 break-words font-mono whitespace-pre-wrap">
+                {parsed.general}
+            </p>
+        );
+    }
+
+    return (
+        <div className="bg-bg-deep p-2.5 rounded border border-border-thin mt-1 space-y-2 font-mono text-[9px] text-text-dim">
+            {parsed.general && (
+                <div className="border-b border-border-thin pb-1.5 mb-1.5">
+                    <span className="font-bold text-text-main block mb-0.5 text-[8px] uppercase tracking-wider">General</span>
+                    <p className="whitespace-pre-wrap italic">{parsed.general}</p>
+                </div>
+            )}
+            {parsed.carrera && (
+                <div>
+                    <span className="font-bold text-error block mb-0.5 text-[8px] uppercase tracking-wider">Carrera / Unidad</span>
+                    <p className="whitespace-pre-wrap italic">{parsed.carrera}</p>
+                </div>
+            )}
+            {parsed.titulo && (
+                <div>
+                    <span className="font-bold text-error block mb-0.5 text-[8px] uppercase tracking-wider">Tema / Título</span>
+                    <p className="whitespace-pre-wrap italic">{parsed.titulo}</p>
+                </div>
+            )}
+            {parsed.descripcion && (
+                <div>
+                    <span className="font-bold text-error block mb-0.5 text-[8px] uppercase tracking-wider">Descripción</span>
+                    <p className="whitespace-pre-wrap italic">{parsed.descripcion}</p>
+                </div>
+            )}
+            {parsed.presupuesto && (
+                <div>
+                    <span className="font-bold text-error block mb-0.5 text-[8px] uppercase tracking-wider">Presupuesto</span>
+                    <p className="whitespace-pre-wrap italic">{parsed.presupuesto}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const formatCurrency = (val: string) => {
+    const num = parseFloat(val);
+    if (isNaN(num) || num <= 0) return '';
+    return new Intl.NumberFormat('es-EC', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    }).format(num);
 };
 
 export const ProjectWorkspace: React.FC = () => {
@@ -218,6 +320,7 @@ export const ProjectWorkspace: React.FC = () => {
     const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN');
     const [editTitulo, setEditTitulo] = useState('');
     const [editDescripcion, setEditDescripcion] = useState('');
+    const [editPresupuesto, setEditPresupuesto] = useState('');
     const [isSavingPreproposal, setIsSavingPreproposal] = useState(false);
     const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
     const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
@@ -567,7 +670,7 @@ export const ProjectWorkspace: React.FC = () => {
                 uuid: res.data.uuid,
                 title: res.data.titulo?.trim() || '(Sin título)',
                 status: res.data.estado || 'Borrador',
-                presupuesto: res.data.costo_total || 0,
+                presupuesto: res.data.costoTotal ?? res.data.costo_total ?? res.data.CostoTotal ?? 0,
                 linea: res.data.linea_investigacion || 'No definida',
                 directorProyecto: directorNombre,
                 puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
@@ -622,19 +725,34 @@ export const ProjectWorkspace: React.FC = () => {
         setIsLoading(false);
     }, [resolvedProjectUuid, fetchTeamChangeRequests]);
 
+    const fetchTrazabilidad = useCallback(async () => {
+        if (!resolvedProjectUuid) return;
+        setIsLoadingTrazabilidad(true);
+        try {
+            const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
+            setTrazabilidad(res.data || []);
+        } catch (e) {
+            console.error("Error al cargar la trazabilidad", e);
+        } finally {
+            setIsLoadingTrazabilidad(false);
+        }
+    }, [resolvedProjectUuid]);
+
     useEffect(() => {
         fetchProject();
+        fetchTrazabilidad();
 
         const handleProjectsChanged = () => {
-            console.log("[DIITRA] Evento diitra-projects-changed capturado. Recargando datos del proyecto...");
+            console.log("[DIITRA] Evento diitra-projects-changed capturado. Recargando datos del proyecto y trazabilidad...");
             fetchProject();
+            fetchTrazabilidad();
         };
 
         window.addEventListener('diitra-projects-changed', handleProjectsChanged);
         return () => {
             window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
         };
-    }, [fetchProject, activeDocument]);
+    }, [fetchProject, fetchTrazabilidad, activeDocument]);
 
     useEffect(() => {
         if (!transferSearchQuery.trim()) {
@@ -657,35 +775,29 @@ export const ProjectWorkspace: React.FC = () => {
     }, [transferSearchQuery]);
 
     useEffect(() => {
-        const fetchTrazabilidad = async () => {
-            if (!resolvedProjectUuid) return;
-            setIsLoadingTrazabilidad(true);
-            try {
-                const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
-                setTrazabilidad(res.data || []);
-            } catch (e) {
-                console.error("Error al cargar la trazabilidad", e);
-            } finally {
-                setIsLoadingTrazabilidad(false);
-            }
-        };
         fetchTrazabilidad();
-    }, [resolvedProjectUuid]);
+    }, [fetchTrazabilidad]);
 
     useEffect(() => {
         if (currentProject) {
             setEditTitulo(currentProject.title || '');
             setEditDescripcion(currentProject.descripcion || '');
+            setEditPresupuesto(currentProject.presupuesto?.toString() || '');
         }
     }, [currentProject]);
 
-    const handleGuardarYReenviar = async (nuevoTitulo: string, nuevaDescripcion: string) => {
+    const handleGuardarYReenviar = async (nuevoTitulo: string, nuevaDescripcion: string, nuevoPresupuesto: string) => {
         if (!nuevoTitulo.trim()) {
             addToast("Validación", "El título de la prepropuesta es obligatorio.", "warning");
             return;
         }
         if (!nuevaDescripcion.trim()) {
             addToast("Validación", "La descripción de la prepropuesta es obligatoria.", "warning");
+            return;
+        }
+        const parsedBudget = parseFloat(nuevoPresupuesto);
+        if (isNaN(parsedBudget) || parsedBudget <= 0) {
+            addToast("Validación", "Debe ingresar un presupuesto estimado válido y mayor a cero.", "warning");
             return;
         }
 
@@ -709,6 +821,12 @@ export const ProjectWorkspace: React.FC = () => {
                 ...currentMetadata,
                 Titulo: nuevoTitulo.trim().toUpperCase(),
                 DescripcionProyecto: nuevaDescripcion.trim(),
+                CostoTotal: parsedBudget,
+                costoTotal: parsedBudget,
+                costo_total: parsedBudget,
+                PresupuestoEstimado: parsedBudget,
+                presupuestoEstimado: parsedBudget,
+                presupuesto_estimado: parsedBudget,
                 Estado: 'Prepropuesta'
             };
 
@@ -750,25 +868,23 @@ export const ProjectWorkspace: React.FC = () => {
 
         setIsSubmittingAdminReview(true);
         try {
-            let finalObservation = '';
-            if (feedbackMode === 'general') {
-                finalObservation = adminObservation.trim();
-            } else {
-                const lines = [];
-                if (sectionObservations.carrera.trim()) {
-                    lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
-                }
-                if (sectionObservations.titulo.trim()) {
-                    lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
-                }
-                if (sectionObservations.descripcion.trim()) {
-                    lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
-                }
-                if (sectionObservations.presupuesto.trim()) {
-                    lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
-                }
-                finalObservation = lines.join('\n\n');
+            const lines = [];
+            if (adminObservation.trim()) {
+                lines.push(`[GENERAL] ${adminObservation.trim()}`);
             }
+            if (sectionObservations.carrera.trim()) {
+                lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
+            }
+            if (sectionObservations.titulo.trim()) {
+                lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
+            }
+            if (sectionObservations.descripcion.trim()) {
+                lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
+            }
+            if (sectionObservations.presupuesto.trim()) {
+                lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
+            }
+            const finalObservation = lines.join('\n\n');
 
             const obs = finalObservation || "Idea de proyecto aprobada por Dirección de Investigación";
             await api.post(`/projects/${currentProject.uuid}/transition?newState=Borrador&observation=${encodeURIComponent(obs)}`);
@@ -788,25 +904,23 @@ export const ProjectWorkspace: React.FC = () => {
     const handleAdminDevolverPrepropuesta = async () => {
         if (!currentProject?.uuid) return;
 
-        let finalObservation = '';
-        if (feedbackMode === 'general') {
-            finalObservation = adminObservation.trim();
-        } else {
-            const lines = [];
-            if (sectionObservations.carrera.trim()) {
-                lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
-            }
-            if (sectionObservations.titulo.trim()) {
-                lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
-            }
-            if (sectionObservations.descripcion.trim()) {
-                lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
-            }
-            if (sectionObservations.presupuesto.trim()) {
-                lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
-            }
-            finalObservation = lines.join('\n\n');
+        const lines = [];
+        if (adminObservation.trim()) {
+            lines.push(`[GENERAL] ${adminObservation.trim()}`);
         }
+        if (sectionObservations.carrera.trim()) {
+            lines.push(`[CARRERA/UNIDAD] ${sectionObservations.carrera.trim()}`);
+        }
+        if (sectionObservations.titulo.trim()) {
+            lines.push(`[TEMA/TÍTULO] ${sectionObservations.titulo.trim()}`);
+        }
+        if (sectionObservations.descripcion.trim()) {
+            lines.push(`[DESCRIPCIÓN] ${sectionObservations.descripcion.trim()}`);
+        }
+        if (sectionObservations.presupuesto.trim()) {
+            lines.push(`[PRESUPUESTO] ${sectionObservations.presupuesto.trim()}`);
+        }
+        const finalObservation = lines.join('\n\n');
 
         if (!finalObservation) {
             addToast("Validación", "Debe ingresar una observación detallando los motivos de la devolución.", "warning");
@@ -1339,6 +1453,8 @@ export const ProjectWorkspace: React.FC = () => {
         ? "Cargando observaciones..."
         : (trazabilidad.find(t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada')?.observacion || 'Sin observaciones especificadas.');
 
+    const parsedObs = parseObservation(ultimaObservacion);
+
     if (isPreproposalState) {
         if (isAdmin) {
             // PANTALLA PERSONALIZADA PARA EL ADMINISTRADOR (EVALUACIÓN Y TRAZABILIDAD)
@@ -1359,11 +1475,10 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             <div
                                 onClick={() => setFeedbackMode('general')}
-                                className={`bento-card relative p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${
-                                    feedbackMode === 'general'
+                                className={`bento-card relative p-8 space-y-6 rounded-2xl border transition-all duration-300 bg-surface cursor-default ${feedbackMode === 'general'
                                         ? '!border-text-main !ring-2 !ring-text-main shadow-md'
                                         : 'border-border-thin shadow-sm'
-                                }`}
+                                    }`}
                             >
                                 {feedbackMode === 'general' && (
                                     <span className="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
@@ -1371,6 +1486,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="border-b border-border pb-4 flex justify-between items-center">
                                     <div>
                                         <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Detalle de la Prepropuesta</h3>
+                                        <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Docente Proponente: {currentProject.directorProyecto || 'No asignado'}</p>
                                         <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
                                     </div>
                                 </div>
@@ -1393,11 +1509,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                             )}
                                         </div>
-                                        <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${
-                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
+                                        <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
                                                 ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
                                                 : 'opacity-70 group-hover:border-border'
-                                        }`}>
+                                            }`}>
                                             {currentProject.carrera || 'No definida'}
                                         </div>
                                     </div>
@@ -1419,11 +1534,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                             )}
                                         </div>
-                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${
-                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
+                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
                                                 ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
                                                 : 'opacity-85 group-hover:border-border'
-                                        }`}>
+                                            }`}>
                                             {currentProject.title}
                                         </div>
                                     </div>
@@ -1445,15 +1559,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                             )}
                                         </div>
-                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${
-                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
+                                        <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
                                                 ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
                                                 : 'opacity-85 group-hover:border-border'
-                                        }`}>
+                                            }`}>
                                             {currentProject.descripcion || 'Sin descripción ingresada.'}
                                         </div>
                                     </div>
- 
+
                                     {/* Presupuesto Estimado (USD) */}
                                     <div
                                         onClick={(e) => {
@@ -1471,24 +1584,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                             )}
                                         </div>
-                                        <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${
-                                            feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
+                                        <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
                                                 ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
                                                 : 'opacity-85 group-hover:border-border'
-                                        }`}>
+                                            }`}>
                                             ${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                                         </div>
                                     </div>
- 
-                                    {/* Director / Docente Proponente */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">
-                                            Director / Docente Proponente
-                                        </label>
-                                        <div className="input-vercel bg-bg-deep opacity-75 select-none font-bold">
-                                            {currentProject.directorProyecto || 'No asignado'}
-                                        </div>
-                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -1511,8 +1614,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                 type="button"
                                                 onClick={() => setFeedbackMode('general')}
                                                 className={`flex-1 py-2 px-3 text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 border-r border-border-thin ${feedbackMode === 'general'
-                                                        ? 'bg-text-main text-bg-deep font-black shadow-sm'
-                                                        : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
+                                                    ? 'bg-text-main text-bg-deep font-black shadow-sm'
+                                                    : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
                                                     }`}
                                             >
                                                 <Shield size={10} />
@@ -1522,8 +1625,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                 type="button"
                                                 onClick={() => setFeedbackMode('secciones')}
                                                 className={`flex-1 py-2 px-3 text-[9px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${feedbackMode === 'secciones'
-                                                        ? 'bg-text-main text-bg-deep font-black shadow-sm'
-                                                        : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
+                                                    ? 'bg-text-main text-bg-deep font-black shadow-sm'
+                                                    : 'bg-surface text-text-dim hover:text-text-main hover:bg-bg-deep'
                                                     }`}
                                             >
                                                 <MessageSquare size={10} />
@@ -1661,15 +1764,60 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="bento-card p-8 rounded-2xl border border-border-thin shadow-sm space-y-6 bg-surface">
                                     <div className="border-b border-border pb-4">
                                         <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-2">
-                                            <RotateCcw size={16} className="text-error" />
                                             Prepropuesta Devuelta
                                         </h3>
                                         <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1">Esperando Correcciones</p>
                                     </div>
 
-                                    <div className="bg-error/[0.02] border border-error/20 p-4 rounded-xl space-y-2">
-                                        <h4 className="text-[10px] font-bold text-error uppercase tracking-wider">Última Observación Enviada:</h4>
-                                        <p className="text-xs text-text-main italic font-mono leading-relaxed break-words">{ultimaObservacion}</p>
+                                    <div className="bg-error/[0.02] border border-error/20 p-4 rounded-xl space-y-3">
+                                        <h4 className="text-[10px] font-bold text-error uppercase tracking-wider">Observaciones Generales del Administrador:</h4>
+                                        <div className="space-y-3">
+                                            {parsedObs.general && (
+                                                <div className="text-[11px] leading-relaxed pl-1">
+                                                    <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0 animate-pulse" />
+                                                        General
+                                                    </span>
+                                                    <p className="text-xs text-text-main italic font-mono leading-relaxed break-words whitespace-pre-wrap pl-3">{parsedObs.general}</p>
+                                                </div>
+                                            )}
+                                            {parsedObs.carrera && (
+                                                <div className="text-[11px] leading-relaxed pl-1">
+                                                    <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                        Carrera / Unidad
+                                                    </span>
+                                                    <span className="text-text-main italic font-mono block pl-3">{parsedObs.carrera}</span>
+                                                </div>
+                                            )}
+                                            {parsedObs.titulo && (
+                                                <div className="text-[11px] leading-relaxed pl-1">
+                                                    <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                        Tema / Título
+                                                    </span>
+                                                    <span className="text-text-main italic font-mono block pl-3">{parsedObs.titulo}</span>
+                                                </div>
+                                            )}
+                                            {parsedObs.descripcion && (
+                                                <div className="text-[11px] leading-relaxed pl-1">
+                                                    <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                        Descripción / Justificación
+                                                    </span>
+                                                    <span className="text-text-main italic font-mono block pl-3">{parsedObs.descripcion}</span>
+                                                </div>
+                                            )}
+                                            {parsedObs.presupuesto && (
+                                                <div className="text-[11px] leading-relaxed pl-1">
+                                                    <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                        Presupuesto
+                                                    </span>
+                                                    <span className="text-text-main italic font-mono block pl-3">{parsedObs.presupuesto}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4">
@@ -1694,11 +1842,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             <div className="space-y-1">
                                                                 <p className="text-[10px] font-black text-text-main uppercase tracking-widest">{statusName}</p>
                                                                 {formattedDate && <p className="text-[8px] text-text-dim font-mono">{formattedDate}</p>}
-                                                                {observationText && (
-                                                                    <p className="text-[10px] text-text-dim italic bg-bg-deep p-2 rounded border border-border-thin mt-1 break-words font-mono">
-                                                                        {observationText}
-                                                                    </p>
-                                                                )}
+                                                                {observationText && renderTrazabilidadObservation(observationText)}
                                                             </div>
                                                         </div>
                                                     );
@@ -1727,102 +1871,237 @@ export const ProjectWorkspace: React.FC = () => {
                     onPublishDSpace={() => { }}
                 />
 
-                <main className="max-w-4xl mx-auto p-6 md:p-12 space-y-8 animate-fade-up w-full">
-                    {/* Banner de Revisión */}
-                    {currentProject.status === 'Prepropuesta' && (
-                        <div className="bento-card border-brand/35 bg-brand/[0.03] p-6 flex items-start gap-4 rounded-2xl shadow-sm">
-                            <Shield className="text-brand shrink-0 mt-0.5" size={24} />
-                            <div className="space-y-1.5">
-                                <h4 className="text-sm font-bold text-text-main uppercase tracking-wider">Idea de Proyecto en Revisión</h4>
-                                <p className="text-xs text-text-dim leading-relaxed">
-                                    Su propuesta de idea de investigación está bajo análisis del Departamento de Investigación e Innovación.
-                                    Se le notificará en cuanto sea aprobada para proceder con el protocolo completo.
-                                </p>
+                <main className="max-w-6xl mx-auto p-6 md:p-12 animate-fade-up w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Panel Izquierdo: Formulario */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bento-card p-8 space-y-6 rounded-2xl border border-border-thin shadow-sm">
+                            <div className="border-b border-border pb-4 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Datos de la Prepropuesta</h3>
+                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Docente Proponente: {currentProject.directorProyecto || 'No asignado'}</p>
+                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
+                                </div>
+                                {!currentProject.puedeEditar && (
+                                    <span className="text-[9px] font-bold bg-surface border border-border-thin text-text-dim px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                        Modo Lectura
+                                    </span>
+                                )}
                             </div>
-                        </div>
-                    )}
 
-                    {/* Banner de Devolución */}
-                    {currentProject.status === 'Prepropuesta' ? null : (
-                        <div className="bento-card border-error/30 bg-error/[0.03] p-6 flex flex-col gap-4 rounded-2xl shadow-sm">
-                            <div className="flex items-start gap-4">
-                                <Shield className="text-error shrink-0 mt-0.5" size={24} />
-                                <div className="space-y-1.5 flex-1">
-                                    <h4 className="text-sm font-bold text-error uppercase tracking-wider">Prepropuesta Devuelta / Rechazada</h4>
-                                    <p className="text-xs text-text-dim leading-relaxed">
-                                        Su propuesta ha sido devuelta por la Dirección de Investigación con observaciones.
-                                        Corrija el tema y la descripción en el formulario a continuación y reenvíe la prepropuesta para su revisión.
-                                    </p>
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Carrera / Unidad Postulante</label>
+                                    <div className={`input-vercel opacity-70 bg-bg-deep select-none ${parsedObs.carrera ? 'border-error/40 ring-1 ring-error/20' : ''}`}>{currentProject.carrera || 'No definida'}</div>
+                                    {parsedObs.carrera && (
+                                        <div className="mt-1.5 text-xs text-error font-medium flex items-start gap-1.5 animate-in slide-in-from-top-1 duration-200 ml-1">
+                                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold">Observación:</span> {parsedObs.carrera}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tema / Título de la Investigación</label>
+                                    {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
+                                        <textarea
+                                            value={editTitulo}
+                                            onChange={(e) => setEditTitulo(e.target.value.toUpperCase())}
+                                            className={`input-vercel !h-20 !font-bold !text-xs uppercase resize-none ${parsedObs.titulo ? 'border-error/40 ring-1 ring-error/20 shadow-sm' : ''}`}
+                                        />
+                                    ) : (
+                                        <div className={`input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase ${parsedObs.titulo ? 'border-error/40 ring-1 ring-error/20' : ''}`}>{currentProject.title}</div>
+                                    )}
+                                    {parsedObs.titulo && (
+                                        <div className="mt-1.5 text-xs text-error font-medium flex items-start gap-1.5 animate-in slide-in-from-top-1 duration-200 ml-1">
+                                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold">Observación:</span> {parsedObs.titulo}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Descripción / Justificación detallada</label>
+                                    {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
+                                        <div className="space-y-1.5">
+                                            <textarea
+                                                value={editDescripcion}
+                                                onChange={(e) => setEditDescripcion(e.target.value)}
+                                                className={`input-vercel !h-40 !text-xs resize-none ${parsedObs.descripcion ? 'border-error/40 ring-1 ring-error/20 shadow-sm' : ''}`}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className={`input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[100px] !h-auto text-xs ${parsedObs.descripcion ? 'border-error/40 ring-1 ring-error/20' : ''}`}>{currentProject.descripcion || 'Sin descripción ingresada.'}</div>
+                                    )}
+                                    {parsedObs.descripcion && (
+                                        <div className="mt-1.5 text-xs text-error font-medium flex items-start gap-1.5 animate-in slide-in-from-top-1 duration-200 ml-1">
+                                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold">Observación:</span> {parsedObs.descripcion}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Presupuesto Estimado (USD)</label>
+                                    {currentProject.status === 'Prepropuesta' || !currentProject.puedeEditar ? (
+                                        <div className={`input-vercel bg-bg-deep font-mono font-bold select-none ${parsedObs.presupuesto ? 'border-error/40 ring-1 ring-error/20' : ''}`}>
+                                            ${Number(currentProject.presupuesto || 0).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2 w-full">
+                                            <div className="relative flex items-center">
+                                                <span className="absolute left-3 text-xs font-bold text-text-dim/60 select-none">$</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0.01"
+                                                    value={editPresupuesto}
+                                                    onChange={(e) => setEditPresupuesto(e.target.value)}
+                                                    placeholder="15000.00"
+                                                    className={`input-vercel !pl-7 !font-bold !text-xs ${parsedObs.presupuesto ? 'border-error/40 ring-1 ring-error/20 shadow-sm' : ''}`}
+                                                    required
+                                                />
+                                            </div>
+                                            {editPresupuesto && !isNaN(parseFloat(editPresupuesto)) && parseFloat(editPresupuesto) > 0 && (
+                                                <div className="text-[11px] font-medium text-text-dim/90 ml-1 mt-1.5 p-2 bg-bg-deep/80 border border-border-thin rounded animate-fade-in w-fit">
+                                                    <span>Valor: {formatCurrency(editPresupuesto)} USD</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {parsedObs.presupuesto && (
+                                        <div className="mt-1.5 text-xs text-error font-medium flex items-start gap-1.5 animate-in slide-in-from-top-1 duration-200 ml-1">
+                                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold">Observación:</span> {parsedObs.presupuesto}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <div className="border-t border-error/20 pt-3 pl-10">
-                                <p className="text-[10px] font-bold text-error uppercase tracking-wider">Observaciones del Administrador:</p>
-                                <p className="text-xs text-text-main font-medium italic mt-1 font-mono break-words">{ultimaObservacion}</p>
-                            </div>
-                        </div>
-                    )}
 
-                    {/* Formulario */}
-                    <div className="bento-card p-8 space-y-6 rounded-2xl border border-border-thin shadow-sm">
-                        <div className="border-b border-border pb-4 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Datos de la Prepropuesta</h3>
-                                <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">Convocatoria: {currentProject.convocatoria || 'No especificada'}</p>
-                            </div>
-                            {!currentProject.puedeEditar && (
-                                <span className="text-[9px] font-bold bg-surface border border-border-thin text-text-dim px-2.5 py-1 rounded-full uppercase tracking-wider">
-                                    Modo Lectura
-                                </span>
+                            {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar && (
+                                <div className="pt-4 border-t border-border flex justify-end">
+                                    <button
+                                        onClick={() => handleGuardarYReenviar(editTitulo, editDescripcion, editPresupuesto)}
+                                        disabled={isSavingPreproposal || !editDescripcion.trim() || !editTitulo.trim() || !editPresupuesto.trim()}
+                                        className="btn-vercel-primary py-2.5 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSavingPreproposal ? "Guardando..." : "Corregir y Reenviar Prepropuesta"}
+                                    </button>
+                                </div>
                             )}
                         </div>
+                    </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Carrera / Unidad Postulante</label>
-                                <div className="input-vercel opacity-70 bg-bg-deep select-none">{currentProject.carrera || 'No definida'}</div>
+                    {/* Panel Derecho: Estado, Observaciones y Trazabilidad */}
+                    <div className="space-y-6">
+                        {currentProject.status === 'Prepropuesta' && (
+                            <div className="bento-card p-8 rounded-2xl border border-brand/20 bg-brand/[0.01] shadow-md space-y-4">
+                                <div className="border-b border-border pb-4 flex items-center gap-2">
+                                    <h3 className="text-sm font-black text-text-main uppercase tracking-widest">En Revisión</h3>
+                                </div>
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    Su propuesta de idea de investigación está bajo análisis de la Dirección de Investigación. Se le notificará en cuanto sea aprobada para proceder con el protocolo completo.
+                                </p>
                             </div>
+                        )}
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tema / Título de la Investigación</label>
-                                {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
-                                    <textarea
-                                        value={editTitulo}
-                                        onChange={(e) => setEditTitulo(e.target.value.toUpperCase())}
-                                        className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none"
-                                    />
-                                ) : (
-                                    <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase">{currentProject.title}</div>
-                                )}
-                            </div>
+                        {currentProject.status !== 'Prepropuesta' && (
+                            <div className="bento-card p-8 rounded-2xl border border-error/20 bg-error/[0.01] shadow-md space-y-6">
+                                <div className="border-b border-border pb-4">
+                                    <h3 className="text-sm font-black text-error uppercase tracking-widest flex items-center gap-2">
+                                        Prepropuesta Devuelta
+                                    </h3>
+                                    <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1">Esperando Correcciones</p>
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Descripción / Justificación detallada</label>
-                                {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar ? (
-                                    <div className="space-y-1.5">
-                                        <textarea
-                                            value={editDescripcion}
-                                            onChange={(e) => setEditDescripcion(e.target.value)}
-                                            className="input-vercel !h-40 !text-xs resize-none"
-                                        />
-                                        <div className="text-[9px] text-text-dim/60 ml-1 flex justify-end">
-                                            <span>Caracteres ingresados: {editDescripcion.length}</span>
-                                        </div>
+                                <div className="bg-error/[0.02] border border-error/10 p-4 rounded-xl space-y-3">
+                                    <h4 className="text-[10px] font-bold text-error uppercase tracking-wider">Observaciones Generales del Administrador:</h4>
+                                    <div className="space-y-3">
+                                        {parsedObs.general && (
+                                            <div className="text-[11px] leading-relaxed pl-1">
+                                                <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0 animate-pulse" />
+                                                    General
+                                                </span>
+                                                <p className="text-xs text-text-main italic font-mono leading-relaxed break-words whitespace-pre-wrap pl-3">{parsedObs.general}</p>
+                                            </div>
+                                        )}
+                                        {parsedObs.carrera && (
+                                            <div className="text-[11px] leading-relaxed pl-1">
+                                                <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                    Carrera / Unidad
+                                                </span>
+                                                <span className="text-text-main italic font-mono block pl-3">{parsedObs.carrera}</span>
+                                            </div>
+                                        )}
+                                        {parsedObs.titulo && (
+                                            <div className="text-[11px] leading-relaxed pl-1">
+                                                <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                    Tema / Título
+                                                </span>
+                                                <span className="text-text-main italic font-mono block pl-3">{parsedObs.titulo}</span>
+                                            </div>
+                                        )}
+                                        {parsedObs.descripcion && (
+                                            <div className="text-[11px] leading-relaxed pl-1">
+                                                <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                    Descripción / Justificación
+                                                </span>
+                                                <span className="text-text-main italic font-mono block pl-3">{parsedObs.descripcion}</span>
+                                            </div>
+                                        )}
+                                        {parsedObs.presupuesto && (
+                                            <div className="text-[11px] leading-relaxed pl-1">
+                                                <span className="font-bold text-error text-[9px] uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" />
+                                                    Presupuesto
+                                                </span>
+                                                <span className="text-text-main italic font-mono block pl-3">{parsedObs.presupuesto}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="input-vercel opacity-80 bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[100px] !h-auto text-xs">{currentProject.descripcion || 'Sin descripción ingresada.'}</div>
-                                )}
-                            </div>
-                        </div>
+                                </div>
 
-                        {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar && (
-                            <div className="pt-4 border-t border-border flex justify-end">
-                                <button
-                                    onClick={() => handleGuardarYReenviar(editTitulo, editDescripcion)}
-                                    disabled={isSavingPreproposal || !editDescripcion.trim() || !editTitulo.trim()}
-                                    className="btn-vercel-primary py-2.5 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isSavingPreproposal ? "Guardando..." : "Corregir y Reenviar Prepropuesta"}
-                                </button>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Línea de Tiempo del Estado</label>
+                                    {isLoadingTrazabilidad ? (
+                                        <div className="text-[10px] text-text-dim animate-pulse pl-2 font-mono">Cargando historial...</div>
+                                    ) : trazabilidad.length === 0 ? (
+                                        <div className="text-[10px] text-text-dim italic pl-2">Sin transiciones registradas.</div>
+                                    ) : (
+                                        <div className="space-y-4 pl-2 border-l border-border-thin ml-2">
+                                            {trazabilidad.map((item: any, index: number) => {
+                                                const statusName = String(item.estadoNuevo ?? item.EstadoNuevo ?? 'Estado Desconocido');
+                                                const dateStr = item.fechaTransicion ?? item.FechaTransicion;
+                                                const formattedDate = dateStr ? new Date(dateStr).toLocaleString('es-EC') : '';
+                                                const observationText = String(item.observacion ?? item.Observacion ?? '');
+                                                const isErrorState = statusName.toLowerCase().includes('rechazado') || statusName.toLowerCase().includes('devuelto');
+
+                                                return (
+                                                    <div key={index} className="relative">
+                                                        <div className={`absolute -left-[13px] top-1.5 w-1.5 h-1.5 rounded-full ${isErrorState ? 'bg-error animate-pulse' : 'bg-success'
+                                                            }`} />
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-text-main uppercase tracking-widest">{statusName}</p>
+                                                            {formattedDate && <p className="text-[8px] text-text-dim font-mono">{formattedDate}</p>}
+                                                            {observationText && renderTrazabilidadObservation(observationText)}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
