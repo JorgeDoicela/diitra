@@ -9,6 +9,20 @@ interface Props {
     onClose: () => void;
 }
 
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
+
 const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
     const { addToast } = useNotifications();
     const cfg = DICTAMEN_CONFIG[dictamen.resultado] ?? DICTAMEN_CONFIG['Rechazado'];
@@ -53,9 +67,12 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                                 Dictamen Final Emitido
                             </h3>
                             <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest mt-0.5">
-                                {new Date(dictamen.fecha_cierre).toLocaleDateString('es-EC', {
-                                    day: '2-digit', month: 'long', year: 'numeric'
-                                })}
+                                {(() => {
+                                    const d = parseLocalDate(dictamen.fecha_cierre);
+                                    return d ? d.toLocaleDateString('es-EC', {
+                                        day: '2-digit', month: 'long', year: 'numeric'
+                                    }) : '—';
+                                })()}
                             </p>
                         </div>
                     </div>

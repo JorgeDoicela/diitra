@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PenTool, Calendar, DollarSign, Filter, Search, Award, X, BookOpen } from 'lucide-react';
+import { PenTool, Calendar, Filter, Search, X, BookOpen } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,9 +23,24 @@ interface Convocatoria {
     codigo_convocatoria: string;
 }
 
-const getTopeProyectoEfectivo = (c: { monto_maximo_proyecto?: number | null; presupuesto_total?: number | null }) => {
-    if (c.monto_maximo_proyecto != null && c.monto_maximo_proyecto > 0) return c.monto_maximo_proyecto;
-    return c.presupuesto_total ?? 0;
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
+
+const formatLocalDate = (dateStr: string, formatStr = 'dd MMM, yyyy') => {
+    const date = parseLocalDate(dateStr);
+    if (!date) return 'Por definir';
+    return format(date, formatStr, { locale: es });
 };
 
 const isPastDeadline = (fechaCierre: string) => {
@@ -114,13 +129,6 @@ const PublicConvocatoriasPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button
-                    type="button"
-                    className="shrink-0 p-2.5 rounded-xl bg-bg-deep border border-border-thin text-text-dim hover:text-text-main hover:border-text-main transition-all self-end sm:self-auto"
-                    aria-label="Filtros"
-                >
-                    <Filter size={18} />
-                </button>
             </div>
 
             {/* Grid of Convocatorias */}
@@ -177,28 +185,21 @@ const PublicConvocatoriasPage = () => {
                                     <h3 className="text-lg font-semibold text-text-main leading-tight group-hover:text-text-main transition-colors">
                                         {c.titulo}
                                     </h3>
-                                    <p className="text-xs text-text-dim leading-relaxed font-medium">
-                                        {c.descripcion}
-                                    </p>
+                                    {c.descripcion && (
+                                        <p className="text-xs text-text-dim leading-relaxed font-medium">
+                                            {c.descripcion}
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 pt-4">
+                                <div className="pt-4">
                                     <div className="space-y-1">
                                         <div className="section-label">
                                             <Calendar size={10} />
                                             <span>Cierre</span>
                                         </div>
                                         <p className="text-xs font-semibold text-text-main font-mono">
-                                            {c.fecha_cierre ? format(new Date(c.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'Por definir'}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="section-label">
-                                            <DollarSign size={10} />
-                                            <span>Tope por Proyecto</span>
-                                        </div>
-                                        <p className="text-xs font-semibold text-text-main font-mono">
-                                            ${getTopeProyectoEfectivo(c).toLocaleString()}
+                                            {formatLocalDate(c.fecha_cierre)}
                                         </p>
                                     </div>
                                 </div>
@@ -288,9 +289,11 @@ const PublicConvocatoriasPage = () => {
                                 <h2 className="text-3xl font-semibold tracking-tight text-text-main leading-tight font-sans">
                                     {selectedConvocatoria.titulo}
                                 </h2>
-                                <p className="text-sm text-text-dim leading-relaxed font-medium">
-                                    {selectedConvocatoria.descripcion}
-                                </p>
+                                {selectedConvocatoria.descripcion && (
+                                    <p className="text-sm text-text-dim leading-relaxed font-medium">
+                                        {selectedConvocatoria.descripcion}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -299,7 +302,7 @@ const PublicConvocatoriasPage = () => {
                                         <Calendar size={12} /> Fecha de Apertura
                                     </div>
                                     <div className="text-sm font-semibold text-text-main font-mono">
-                                        {selectedConvocatoria.fecha_apertura ? format(new Date(selectedConvocatoria.fecha_apertura), 'dd MMM, yyyy', { locale: es }) : 'N/A'}
+                                        {formatLocalDate(selectedConvocatoria.fecha_apertura)}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
@@ -307,23 +310,7 @@ const PublicConvocatoriasPage = () => {
                                         <Calendar size={12} /> Fecha de Cierre (Límite)
                                     </div>
                                     <div className="text-sm font-semibold text-error font-mono">
-                                        {selectedConvocatoria.fecha_cierre ? format(new Date(selectedConvocatoria.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'N/A'}
-                                    </div>
-                                </div>
-                                <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-semibold text-brand uppercase tracking-widest flex items-center gap-1.5">
-                                        <DollarSign size={12} /> Tope por Proyecto
-                                    </div>
-                                    <div className="text-sm font-semibold text-brand font-mono">
-                                        ${getTopeProyectoEfectivo(selectedConvocatoria).toLocaleString()}
-                                    </div>
-                                </div>
-                                <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Award size={12} /> Rúbrica Evaluativa
-                                    </div>
-                                    <div className="text-sm font-semibold text-text-main break-words leading-snug">
-                                        {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
+                                        {formatLocalDate(selectedConvocatoria.fecha_cierre)}
                                     </div>
                                 </div>
                             </div>
@@ -343,10 +330,6 @@ const PublicConvocatoriasPage = () => {
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />
                                         <span>El equipo debe constar al menos de un Docente Investigador titular del ISTPET.</span>
-                                    </li>
-                                    <li className="flex items-start gap-2.5">
-                                        <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />
-                                        <span>El presupuesto total agregado del proyecto no debe exceder el tope por proyecto de <strong>${getTopeProyectoEfectivo(selectedConvocatoria).toLocaleString()}</strong>.</span>
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />

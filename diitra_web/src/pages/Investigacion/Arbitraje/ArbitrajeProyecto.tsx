@@ -18,6 +18,20 @@ import { formatNombre } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
+
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
@@ -195,9 +209,10 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const renderRevisionRow = (rev: PeerReviewDto) => {
         const cfg = ESTADO_REVISION_CONFIG[rev.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
-        const diasRestantes = Math.ceil(
-            (new Date(rev.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        );
+        const limite = parseLocalDate(rev.fecha_limite);
+        const diasRestantes = limite
+            ? Math.ceil((limite.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : 0;
         return (
             <tr
                 key={rev.uuid}
@@ -720,9 +735,12 @@ const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose
                     <div className="space-y-1">
                         <p className="text-xs text-text-dim">Fecha límite actual:</p>
                         <p className="text-sm font-medium text-text-main">
-                            {new Date(review.fecha_limite).toLocaleDateString('es-EC', {
-                                day: '2-digit', month: 'long', year: 'numeric'
-                            })}
+                            {(() => {
+                                const d = parseLocalDate(review.fecha_limite);
+                                return d ? d.toLocaleDateString('es-EC', {
+                                    day: '2-digit', month: 'long', year: 'numeric'
+                                }) : '—';
+                            })()}
                         </p>
                     </div>
 

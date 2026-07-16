@@ -25,9 +25,19 @@ import {
 // ── DocumentEditor (Builder Core con 4 secciones CACES) ──────────────────────
 import DocumentEditor from './Wizard/DocumentEditor';
 
-// ─────────────────────────────────────────────────────────────────
-//  Página principal
-// ─────────────────────────────────────────────────────────────────
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
 
 const InformesAvancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -373,7 +383,10 @@ const InformesAvancePage: React.FC = () => {
                                                 Informe de Avance #{inf.numero_informe}
                                             </p>
                                             <p className="text-xs text-text-dim">
-                                                Período: {new Date(inf.fecha_reporte).toLocaleDateString('es-EC', { year: 'numeric', month: 'long' })}
+                                                Período: {(() => {
+                                                    const d = parseLocalDate(inf.fecha_reporte);
+                                                    return d ? d.toLocaleDateString('es-EC', { year: 'numeric', month: 'long' }) : '—';
+                                                })()}
                                                 {inf.validado_por_nombre && (
                                                     <span className="ml-2 text-text-dim/60">
                                                         · Validado por: {inf.validado_por_nombre}

@@ -70,6 +70,20 @@ const getConvocatoriaSaveErrorMessage = (error: unknown, fallback = 'Error al gu
     return fallback;
 };
 
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
+
 const DIAS_PROXIMO_CIERRE = 30;
 
 const getProximasACerrar = (items: Convocatoria[]) => {
@@ -80,8 +94,8 @@ const getProximasACerrar = (items: Convocatoria[]) => {
 
     return items.filter(c => {
         if (c.estado !== 'Abierta' || !c.fecha_cierre) return false;
-        const cierre = new Date(c.fecha_cierre);
-        if (Number.isNaN(cierre.getTime())) return false;
+        const cierre = parseLocalDate(c.fecha_cierre);
+        if (!cierre) return false;
         cierre.setHours(0, 0, 0, 0);
         return cierre >= hoy && cierre <= limite;
     }).length;
@@ -92,10 +106,14 @@ const canEditConvocatoria = (estado: Convocatoria['estado']) => estado !== 'Cerr
 const getAnioDisplay = (conv: Convocatoria) => {
     if (!conv.fecha_apertura || !conv.fecha_cierre) return conv.anio.toString();
     try {
-        const startYear = new Date(conv.fecha_apertura).getFullYear();
-        const endYear = new Date(conv.fecha_cierre).getFullYear();
-        if (!Number.isNaN(startYear) && !Number.isNaN(endYear) && startYear !== endYear) {
-            return `${startYear} - ${endYear}`;
+        const start = parseLocalDate(conv.fecha_apertura);
+        const end = parseLocalDate(conv.fecha_cierre);
+        if (start && end) {
+            const startYear = start.getFullYear();
+            const endYear = end.getFullYear();
+            if (startYear !== endYear) {
+                return `${startYear} - ${endYear}`;
+            }
         }
     } catch (e) {
         // Fallback
@@ -1156,9 +1174,11 @@ const ConvocatoriasPage = () => {
                                 <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
                                     {selectedConvocatoria.titulo}
                                 </h2>
-                                <p className="text-sm text-text-dim leading-relaxed font-medium">
-                                    {selectedConvocatoria.descripcion || 'Sin descripción detallada.'}
-                                </p>
+                                {selectedConvocatoria.descripcion && (
+                                    <p className="text-sm text-text-dim leading-relaxed font-medium">
+                                        {selectedConvocatoria.descripcion}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

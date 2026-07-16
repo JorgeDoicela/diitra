@@ -10,6 +10,20 @@ import {
 } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
 
+const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const onlyDate = dateStr.split('T')[0];
+    const parts = onlyDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+};
+
 const PeerReviewPage: React.FC = () => {
     const navigate = useNavigate();
     const [reviews, setReviews] = useState<PeerReviewDto[]>([]);
@@ -50,7 +64,9 @@ const PeerReviewPage: React.FC = () => {
     const pendientesCount = reviewsPendientes.length;
     const completadasCount = reviewsCompletadas.length;
     const vencidasCount = reviewsPendientes.filter(r => {
-        const dias = Math.ceil((new Date(r.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const limite = parseLocalDate(r.fecha_limite);
+        if (!limite) return false;
+        const dias = Math.ceil((limite.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
         return dias < 0;
     }).length;
 
@@ -113,9 +129,10 @@ const PeerReviewPage: React.FC = () => {
                                 <div className="grid gap-4">
                                     {reviewsPendientes.map((review) => {
                                         const statusCfg = ESTADO_REVISION_CONFIG[review.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
-                                        const diasRestantes = Math.ceil(
-                                            (new Date(review.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                                        );
+                                        const limite = parseLocalDate(review.fecha_limite);
+                                        const diasRestantes = limite
+                                            ? Math.ceil((limite.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                                            : 0;
                                         const isVencida = diasRestantes < 0;
                                         
                                         // Determine semaforic color for days remaining
@@ -173,7 +190,10 @@ const PeerReviewPage: React.FC = () => {
                                                                 }
                                                             </span>
                                                             <span className="text-[10px] text-text-dim">
-                                                                Asignado: {new Date(review.fecha_asignacion).toLocaleDateString()}
+                                                                Asignado: {(() => {
+                                                                    const d = parseLocalDate(review.fecha_asignacion);
+                                                                    return d ? d.toLocaleDateString() : '—';
+                                                                })()}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -250,7 +270,10 @@ const PeerReviewPage: React.FC = () => {
                                                                 </span>
                                                             )}
                                                             <span className="text-[10px] text-text-dim">
-                                                                Entregada: {new Date(review.fecha_limite).toLocaleDateString()}
+                                                                Entregada: {(() => {
+                                                                    const d = parseLocalDate(review.fecha_limite);
+                                                                    return d ? d.toLocaleDateString() : '—';
+                                                                })()}
                                                             </span>
                                                         </div>
                                                     </div>

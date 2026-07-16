@@ -133,19 +133,37 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
     // --- MANEJO DE FECHAS ---
     const parseProjectDate = (dStr: any): Date | null => {
         if (!dStr) return null;
-        const d = new Date(dStr);
-        if (!isNaN(d.getTime())) return d;
-        if (typeof dStr === 'string' && dStr.includes('/')) {
-            const parts = dStr.split('/');
-            if (parts.length === 3) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const year = parseInt(parts[2], 10);
+        if (dStr instanceof Date) {
+            return isNaN(dStr.getTime()) ? null : dStr;
+        }
+        if (typeof dStr === 'string') {
+            const cleanStr = dStr.trim();
+            
+            // Caso 1: Formato yyyy-MM-dd (con guiones, opcionalmente con hora T00:00:00)
+            const isoDateOnlyMatch = cleanStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:T|\s|$)/);
+            if (isoDateOnlyMatch) {
+                const year = parseInt(isoDateOnlyMatch[1], 10);
+                const month = parseInt(isoDateOnlyMatch[2], 10) - 1;
+                const day = parseInt(isoDateOnlyMatch[3], 10);
                 const parsed = new Date(year, month, day);
                 if (!isNaN(parsed.getTime())) return parsed;
             }
+            
+            // Caso 2: Formato dd/MM/yyyy (con barras)
+            if (cleanStr.includes('/')) {
+                const parts = cleanStr.split('/');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    const parsed = new Date(year, month, day);
+                    if (!isNaN(parsed.getTime())) return parsed;
+                }
+            }
         }
-        return null;
+        
+        const d = new Date(dStr);
+        return isNaN(d.getTime()) ? null : d;
     };
 
     const formatDateForInput = (dStr: any): string => {
