@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import _withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
@@ -9,7 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../api/ConfirmContext';
 import {
     X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2,
-    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers, FileText
+    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers, FileText, Search,
+    Folder, BarChart3, BookOpen, TrendingUp
 } from 'lucide-react';
 import {
     type EventoCalendario,
@@ -134,8 +136,17 @@ export const CalendarioPage: React.FC = () => {
     const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
+    // Estados para la búsqueda y filtros rápidos en la bandeja de notas (Inbox)
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedFilterContext, setSelectedFilterContext] = useState<string | null>(null);
+    const [selectedFilterColor, setSelectedFilterColor] = useState<string | null>(null);
+
     // Reordenamiento de notas en rejilla
     const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
+    const [draggedNote, setDraggedNote] = useState<EventoCalendario | null>(null);
+    const [dragStartOffset, setDragStartOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [draggedSize, setDraggedSize] = useState<{ width: number; height: number }>({ width: 280, height: 150 });
+    const dragPreviewRef = useRef<HTMLDivElement | null>(null);
 
     // ── Popover de planificación (al soltar nota en Kanban) ───────────────────
     const [planificando, setPlanificando] = useState<{
@@ -144,38 +155,192 @@ export const CalendarioPage: React.FC = () => {
         anchorPos: { x: number; y: number };
     } | null>(null);
 
-    // Controladores de drag & drop para reordenar en la rejilla
-    const handleNoteDragStartGrid = (e: React.DragEvent, index: number) => {
-        setDraggedNoteIndex(index);
-        e.dataTransfer.effectAllowed = 'move';
-    };
+    // Refs para evitar fugas al perder el foco en la pestaña (blur de ventana)
+    const draggedNoteIndexRef = useRef<number | null>(null);
+    const draggedNoteRef = useRef<EventoCalendario | null>(null);
 
-    const handleNoteDragOverGrid = (e: React.DragEvent, index: number) => {
+    useEffect(() => {
+        draggedNoteIndexRef.current = draggedNoteIndex;
+        draggedNoteRef.current = draggedNote;
+    }, [draggedNoteIndex, draggedNote]);
+
+    useEffect(() => {
+        const handleWindowBlur = () => {
+            if (draggedNoteRef.current) {
+                handleGlobalDragEnd();
+            }
+        };
+
+        window.addEventListener('blur', handleWindowBlur);
+        return () => {
+            window.removeEventListener('blur', handleWindowBlur);
+        };
+    }, []);
+
+    // Controladores de arrastre basados en PointerEvents estilo Google Keep
+    const handleInboxPointerDown = (e: React.PointerEvent<HTMLDivElement>, note: EventoCalendario, index: number) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.inbox-note-actions') || target.closest('.inbox-note-priority-select') || target.closest('.inbox-note-quick-colors') || target.closest('button') || target.closest('select') || target.closest('option')) {
+            return;
+        }
+
         e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const startOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+        setDraggedNote(note);
+        setDraggedNoteIndex(index);
+        setDraggedSize({ width: rect.width, height: rect.height });
+        setDragStartOffset(startOffset);
+
+        document.body.classList.add('body-dragging-active');
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        // Posicionar el clon flotante inmediatamente en el primer tick
+        setTimeout(() => {
+            if (dragPreviewRef.current) {
+                dragPreviewRef.current.style.left = `${e.clientX - startOffset.x}px`;
+                dragPreviewRef.current.style.top = `${e.clientY - startOffset.y}px`;
+            }
+        }, 0);
     };
 
-    const handleNoteDropGrid = async (targetIndex: number) => {
-        if (draggedNoteIndex === null || draggedNoteIndex === targetIndex) return;
+    const handleInboxPointerMove = (e: React.PointerEvent<HTMLDivElement>, currentIndex: number) => {
+        if (draggedNote === null || draggedNoteIndex === null) return;
+        e.preventDefault();
 
-        const reordered = [...stickyNotes];
-        const [removed] = reordered.splice(draggedNoteIndex, 1);
-        reordered.splice(targetIndex, 0, removed);
+        // Mover el preview de forma imperativa en el DOM para rendimiento extremo a 120fps sin re-renders
+        if (dragPreviewRef.current) {
+            dragPreviewRef.current.style.left = `${e.clientX - dragStartOffset.x}px`;
+            dragPreviewRef.current.style.top = `${e.clientY - dragStartOffset.y}px`;
+        }
 
-        // Optimista: actualizar orden local
-        setStickyNotes(reordered);
-        setDraggedNoteIndex(null);
+        // Encontrar elemento bajo el cursor
+        const elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+        if (!elementUnderCursor) return;
+
+        const cardUnderCursor = elementUnderCursor.closest('.inbox-note-card') as HTMLElement;
+        if (cardUnderCursor) {
+            const targetUuid = cardUnderCursor.getAttribute('data-note-uuid');
+            if (targetUuid && targetUuid !== draggedNote.uuid) {
+                const targetIndex = stickyNotes.findIndex(n => n.uuid === targetUuid);
+                if (targetIndex !== -1 && targetIndex !== draggedNoteIndex) {
+                    const targetRect = cardUnderCursor.getBoundingClientRect();
+                    const targetCenterX = targetRect.left + targetRect.width / 2;
+                    const targetCenterY = targetRect.top + targetRect.height / 2;
+
+                    const isForward = draggedNoteIndex < targetIndex;
+
+                    // Si cruzamos horizontalmente en el eje X, o verticalmente en el eje Y, disparamos el swap
+                    const passedHorizontal = isForward ? e.clientX > targetCenterX : e.clientX < targetCenterX;
+                    const passedVertical = isForward ? e.clientY > targetCenterY : e.clientY < targetCenterY;
+
+                    if (passedHorizontal || passedVertical) {
+                        const reordered = [...stickyNotes];
+                        const [removed] = reordered.splice(draggedNoteIndex, 1);
+                        reordered.splice(targetIndex, 0, removed);
+
+                        setStickyNotes(reordered);
+                        setDraggedNoteIndex(targetIndex);
+                    }
+                }
+            }
+        }
+    };
+
+    const handleInboxPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+        if (draggedNote === null) return;
+        e.preventDefault();
 
         try {
-            const payload = reordered.map((note, idx) => ({
-                uuid: note.uuid,
-                orden: idx + 1
-            }));
-            await reordenarBandeja(payload);
+            e.currentTarget.releasePointerCapture(e.pointerId);
         } catch (err) {
-            console.error('Error al persistir orden de bandeja:', err);
+            // Ignorar
+        }
+
+        const wasReorderingInbox = draggedNoteIndex !== null;
+        const currentNotes = [...stickyNotes];
+
+        setDraggedNote(null);
+        setDraggedNoteIndex(null);
+        document.body.classList.remove('body-dragging-active');
+
+        if (wasReorderingInbox) {
+            try {
+                const payload = currentNotes.map((note, idx) => ({
+                    uuid: note.uuid,
+                    orden: idx + 1
+                }));
+                await reordenarBandeja(payload);
+            } catch (err) {
+                console.error('Error al persistir orden de bandeja:', err);
+                fetchStickyNotes();
+            }
+        }
+    };
+
+    // Cambio rápido de prioridad desde la rejilla de notas
+    const handleQuickPriorityChange = async (note: EventoCalendario, newPriority: string) => {
+        const payload = buildPayload({
+            titulo: note.titulo,
+            descripcion: note.descripcion || '',
+            tipo: note.subcategoria || 'Personal',
+            fechaInicio: null,
+            fechaFin: null,
+            esTodoElDia: note.es_todo_el_dia,
+            colorHex: note.color_hex || '#F59E0B',
+            esPrivado: note.es_privado,
+            prioridad: newPriority,
+            estado: note.estado,
+            alertaDias: note.alerta_dias ?? '',
+            recurrenciaAnual: note.recurrencia_anual ?? false,
+            urlAccion: note.url_accion,
+            notaDetalle: note.nota_detalle,
+        });
+
+        // Actualización optimista local
+        setStickyNotes(prev => prev.map(n => n.uuid === note.uuid ? { ...n, prioridad: newPriority } : n));
+
+        try {
+            await updateEvento(note.uuid, payload);
+            fetchStickyNotes();
+        } catch (err) {
+            console.error('Error al actualizar prioridad rápida:', err);
             fetchStickyNotes();
         }
     };
+
+    // Cambio rápido de color desde la rejilla de notas
+    const handleQuickColorChange = async (note: EventoCalendario, newColor: string) => {
+        const payload = buildPayload({
+            titulo: note.titulo,
+            descripcion: note.descripcion || '',
+            tipo: note.subcategoria || 'Personal',
+            fechaInicio: null,
+            fechaFin: null,
+            esTodoElDia: note.es_todo_el_dia,
+            colorHex: newColor,
+            esPrivado: note.es_privado,
+            prioridad: note.prioridad,
+            estado: note.estado,
+            alertaDias: note.alerta_dias ?? '',
+            recurrenciaAnual: note.recurrencia_anual ?? false,
+            urlAccion: note.url_accion,
+            notaDetalle: note.nota_detalle,
+        });
+
+        // Actualización optimista local
+        setStickyNotes(prev => prev.map(n => n.uuid === note.uuid ? { ...n, color_hex: newColor } : n));
+
+        try {
+            await updateEvento(note.uuid, payload);
+            fetchStickyNotes();
+        } catch (err) {
+            console.error('Error al actualizar color rápido:', err);
+            fetchStickyNotes();
+        }
+    };
+
 
     const kanbanColumnas = [
         { id: 'Pendiente', label: 'Pendiente' },
@@ -207,19 +372,45 @@ export const CalendarioPage: React.FC = () => {
     };
 
     const handleNoteDragStart = (e: React.DragEvent, note: EventoCalendario) => {
+        document.body.classList.add('body-dragging-active');
         e.dataTransfer.setData('diitra/note', JSON.stringify(note));
         e.dataTransfer.effectAllowed = 'copyMove';
+        setTimeout(() => {
+            setDraggingUuid(note.uuid);
+        }, 0);
     };
 
     const handleDragStart = (e: React.DragEvent, uuid: string) => {
-        setDraggingUuid(uuid);
+        document.body.classList.add('body-dragging-active');
         e.dataTransfer.setData('text/plain', uuid);
         e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => {
+            setDraggingUuid(uuid);
+        }, 0);
     };
 
-    const handleDragEnd = () => {
+    const handleGlobalDragEnd = async () => {
+        const wasReorderingInbox = draggedNoteIndex !== null;
+        const currentNotes = [...stickyNotes];
+
         setDraggingUuid(null);
+        setDraggedNoteIndex(null);
+        setDraggedNote(null);
         setDragOverColumn(null);
+        document.body.classList.remove('body-dragging-active');
+
+        if (wasReorderingInbox) {
+            try {
+                const payload = currentNotes.map((note, idx) => ({
+                    uuid: note.uuid,
+                    orden: idx + 1
+                }));
+                await reordenarBandeja(payload);
+            } catch (err) {
+                console.error('Error al persistir orden de bandeja:', err);
+                fetchStickyNotes();
+            }
+        }
     };
 
     const handleDragOver = (e: React.DragEvent, columnId: string) => {
@@ -232,6 +423,7 @@ export const CalendarioPage: React.FC = () => {
     const handleDrop = async (e: React.DragEvent, targetEstado: string) => {
         e.preventDefault();
         setDragOverColumn(null);
+        handleGlobalDragEnd();
 
         const noteData = e.dataTransfer.getData('diitra/note');
         if (noteData) {
@@ -817,12 +1009,12 @@ export const CalendarioPage: React.FC = () => {
                                 // Derivar chip de contexto desde url_accion
                                 const contextoChip = (() => {
                                     const url = note.url_accion || '';
-                                    if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: '📁' };
-                                    if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: '📢' };
-                                    if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: '📊' };
-                                    if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: '🔬' };
-                                    if (url.startsWith('/agenda')) return { label: 'Agenda', icon: '📅' };
-                                    if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: '📈' };
+                                    if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
+                                    if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
+                                    if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
+                                    if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
+                                    if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
+                                    if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
                                     return null;
                                 })();
 
@@ -831,7 +1023,8 @@ export const CalendarioPage: React.FC = () => {
                                         key={note.uuid}
                                         draggable
                                         onDragStart={(e) => handleNoteDragStart(e, note)}
-                                        className="sticky-note-card"
+                                        onDragEnd={handleGlobalDragEnd}
+                                        className={`sticky-note-card ${draggingUuid === note.uuid ? 'dragging' : ''}`}
                                         style={{ '--note-color': note.color_hex || '#F59E0B' } as React.CSSProperties}
                                     >
                                         <div className="sticky-note-content">
@@ -841,7 +1034,7 @@ export const CalendarioPage: React.FC = () => {
                                             )}
                                             {contextoChip && (
                                                 <div className="sticky-note-ctx-chip">
-                                                    <span>{contextoChip.icon}</span>
+                                                    <contextoChip.icon size={10} className="opacity-70" />
                                                     <span>{contextoChip.label}</span>
                                                 </div>
                                             )}
@@ -1202,7 +1395,7 @@ export const CalendarioPage: React.FC = () => {
                                                         key={r.uuid}
                                                         draggable={isPersonal}
                                                         onDragStart={(e) => handleDragStart(e, r.uuid)}
-                                                        onDragEnd={handleDragEnd}
+                                                        onDragEnd={handleGlobalDragEnd}
                                                         className={`kanban-card ${draggingUuid === r.uuid ? 'dragging' : ''}`}
                                                         style={{ '--card-color': r.color_hex || '#6B7280' } as React.CSSProperties}
                                                         onClick={() => setSelectedEvent(r)}
@@ -1301,44 +1494,169 @@ export const CalendarioPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="sticky-inbox-view">
+                        {/* ── Barra de herramientas premium (Búsqueda + Filtros) ── */}
+                        <div className="sticky-inbox-toolbar animate-slide-up">
+                            <div className="sticky-inbox-search-wrapper">
+                                <Search size={14} className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por título o contenido de la nota..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="sticky-inbox-search-input"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="search-clear-btn"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                )}
+                            </div>
 
-                        <div className="sticky-inbox-grid">
-                            {stickyNotes.length === 0 ? (
-                                <div className="sticky-inbox-empty animate-slide-up">
-                                    <div className="text-center p-12 bg-surface border border-border-thin rounded-xl max-w-md mx-auto">
-                                        <FileText size={40} className="text-text-dim mx-auto mb-4 opacity-50" />
-                                        <h4 className="text-sm font-bold text-fg mb-1">Tu bandeja de notas está vacía</h4>
-                                        <p className="text-xs text-text-dim leading-relaxed">
-                                            Usa el botón flotante en la esquina inferior derecha o el botón "Añadir Nota" de arriba para guardar recordatorios rápidos.
-                                        </p>
-                                    </div>
+                            <div className="sticky-inbox-filters-wrapper">
+                                {/* Filtro por módulo de origen */}
+                                <div className="sticky-inbox-context-filters">
+                                    <button
+                                        type="button"
+                                        className={`inbox-filter-chip ${selectedFilterContext === null ? 'active' : ''}`}
+                                        onClick={() => setSelectedFilterContext(null)}
+                                    >
+                                        Todos
+                                    </button>
+                                    {[
+                                        { key: 'Proyectos', label: 'Proyectos', icon: Folder },
+                                        { key: 'Convocatorias', label: 'Convocatorias', icon: Bell },
+                                        { key: 'Monitoreo', label: 'Monitoreo', icon: BarChart3 },
+                                        { key: 'Investigacion', label: 'Investigación', icon: BookOpen },
+                                        { key: 'Agenda', label: 'Agenda', icon: CalendarIcon },
+                                    ].map(ctx => (
+                                        <button
+                                            key={ctx.key}
+                                            type="button"
+                                            className={`inbox-filter-chip ${selectedFilterContext === ctx.key ? 'active' : ''}`}
+                                            onClick={() => setSelectedFilterContext(ctx.key)}
+                                        >
+                                            <ctx.icon size={11} className="mr-1.5 opacity-70" />
+                                            {ctx.label}
+                                        </button>
+                                    ))}
                                 </div>
-                            ) : (
-                                stickyNotes.map((note, index) => {
+
+                                {/* Filtro por color de tarjeta */}
+                                <div className="sticky-inbox-color-filters">
+                                    {COLORES_OPCIONES.map(col => (
+                                        <button
+                                            key={col.value}
+                                            type="button"
+                                            className={`inbox-color-filter-dot ${selectedFilterColor === col.value ? 'active' : ''}`}
+                                            style={{ backgroundColor: col.value }}
+                                            onClick={() => setSelectedFilterColor(prev => prev === col.value ? null : col.value)}
+                                            title={`Filtrar por ${col.label}`}
+                                        />
+                                    ))}
+                                    {selectedFilterColor && (
+                                        <button
+                                            type="button"
+                                            className="inbox-color-filter-clear"
+                                            onClick={() => setSelectedFilterColor(null)}
+                                            title="Limpiar filtro de color"
+                                        >
+                                            <RotateCcw size={10} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Rejilla responsiva de notas filtradas ── */}
+                        <div className="sticky-inbox-grid">
+                            {(() => {
+                                const filteredNotes = stickyNotes.filter(note => {
+                                    const matchesSearch = note.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        (note.nota_detalle || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+                                    const matchesContext = !selectedFilterContext ? true : (() => {
+                                        const url = note.url_accion || '';
+                                        if (selectedFilterContext === 'Proyectos') return url.startsWith('/investigacion/proyectos');
+                                        if (selectedFilterContext === 'Convocatorias') return url.startsWith('/investigacion/convocatorias');
+                                        if (selectedFilterContext === 'Monitoreo') return url.startsWith('/investigacion/monitoreo');
+                                        if (selectedFilterContext === 'Investigacion') return url.startsWith('/investigacion') && !url.includes('/proyectos') && !url.includes('/convocatorias');
+                                        if (selectedFilterContext === 'Agenda') return url.startsWith('/agenda');
+                                        return false;
+                                    })();
+
+                                    const matchesColor = !selectedFilterColor ? true : note.color_hex === selectedFilterColor;
+
+                                    return matchesSearch && matchesContext && matchesColor;
+                                });
+
+                                if (filteredNotes.length === 0) {
+                                    return (
+                                        <div className="sticky-inbox-empty col-span-full animate-slide-up">
+                                            <div className="text-center p-12 bg-surface border border-border-thin rounded-xl max-w-md mx-auto">
+                                                <FileText size={40} className="text-text-dim mx-auto mb-4 opacity-50" />
+                                                <h4 className="text-sm font-bold text-fg mb-1">Sin notas coincidentes</h4>
+                                                <p className="text-xs text-text-dim leading-relaxed">
+                                                    {stickyNotes.length === 0
+                                                        ? 'Usa el botón flotante en la esquina inferior derecha o el botón "Añadir Nota" de arriba para guardar recordatorios rápidos.'
+                                                        : 'Prueba a cambiar tus términos de búsqueda o a limpiar los filtros activos de arriba.'
+                                                    }
+                                                </p>
+                                                {(searchQuery || selectedFilterContext || selectedFilterColor) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSearchQuery('');
+                                                            setSelectedFilterContext(null);
+                                                            setSelectedFilterColor(null);
+                                                        }}
+                                                        className="btn-vercel-secondary text-[11px] py-1.5 px-4 mt-4 rounded mx-auto"
+                                                    >
+                                                        Limpiar Filtros
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                return filteredNotes.map((note, index) => {
+                                    const indexReal = stickyNotes.findIndex(n => n.uuid === note.uuid);
+
                                     // Derivar chip de contexto desde url_accion
                                     const contextoChip = (() => {
                                         const url = note.url_accion || '';
-                                        if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: '📁' };
-                                        if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: '📢' };
-                                        if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: '📊' };
-                                        if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: '🔬' };
-                                        if (url.startsWith('/agenda')) return { label: 'Agenda', icon: '📅' };
-                                        if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: '📈' };
+                                        if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
+                                        if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
+                                        if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
+                                        if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
+                                        if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
+                                        if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
                                         return null;
                                     })();
 
                                     return (
-                                        <div
+                                        <motion.div
                                             key={note.uuid}
-                                            draggable
-                                            onDragStart={(e) => handleNoteDragStartGrid(e, index)}
-                                            onDragOver={(e) => handleNoteDragOverGrid(e, index)}
-                                            onDrop={() => handleNoteDropGrid(index)}
-                                            className="inbox-note-card animate-slide-up"
+                                            layout
+                                            onPointerDown={(e) => handleInboxPointerDown(e, note, indexReal !== -1 ? indexReal : index)}
+                                            onPointerMove={(e) => handleInboxPointerMove(e, indexReal !== -1 ? indexReal : index)}
+                                            onPointerUp={handleInboxPointerUp}
+                                            data-note-uuid={note.uuid}
+                                            className={`inbox-note-card animate-slide-up ${draggedNoteIndex === (indexReal !== -1 ? indexReal : index) ? 'dragging' : ''}`}
                                             style={{
                                                 '--note-color': note.color_hex || '#F59E0B',
-                                                animationDelay: `${index * 0.05}s`
+                                                animationDelay: `${index * 0.04}s`,
+                                                touchAction: 'none'
                                             } as React.CSSProperties}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 220,
+                                                damping: 26
+                                            }}
                                         >
                                             <div className="inbox-note-header">
                                                 <h4 className="inbox-note-title">{note.titulo}</h4>
@@ -1383,21 +1701,98 @@ export const CalendarioPage: React.FC = () => {
                                             )}
 
                                             <div className="inbox-note-footer">
-                                                {contextoChip && (
-                                                    <div className="inbox-note-context">
-                                                        <span>{contextoChip.icon}</span>
-                                                        <span>{contextoChip.label}</span>
-                                                    </div>
-                                                )}
-                                                <span className="inbox-note-date">
-                                                    {note.uuid && parse(note.uuid.slice(0, 8), '16', new Date()) ? 'Creada' : 'Guardada'}
-                                                </span>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {contextoChip && (
+                                                        <div className="inbox-note-context">
+                                                            <contextoChip.icon size={10} className="opacity-70" />
+                                                            <span>{contextoChip.label}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Selector de prioridad rápido e interactivo */}
+                                                    <select
+                                                        value={note.prioridad}
+                                                        onChange={(e) => handleQuickPriorityChange(note, e.target.value)}
+                                                        className="inbox-note-priority-select"
+                                                        title="Cambiar prioridad"
+                                                    >
+                                                        <option value="Baja">Prioridad Baja</option>
+                                                        <option value="Media">Prioridad Media</option>
+                                                        <option value="Alta">Prioridad Alta</option>
+                                                    </select>
+                                                </div>
+
+                                                {/* Mini paleta de colores flotante en hover */}
+                                                <div className="inbox-note-quick-colors">
+                                                    {COLORES_OPCIONES.map(col => (
+                                                        <button
+                                                            key={col.value}
+                                                            type="button"
+                                                            className={`inbox-note-quick-color-dot ${note.color_hex === col.value ? 'active' : ''}`}
+                                                            style={{ backgroundColor: col.value }}
+                                                            onClick={() => handleQuickColorChange(note, col.value)}
+                                                            title={col.label}
+                                                        />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     );
-                                })
-                            )}
+                                });
+                            })()}
                         </div>
+                        {draggedNote && (() => {
+                            const draggedContextoChip = (() => {
+                                const url = draggedNote.url_accion || '';
+                                if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
+                                if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
+                                if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
+                                if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
+                                if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
+                                if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
+                                return null;
+                            })();
+
+                            return createPortal(
+                                <div
+                                    ref={dragPreviewRef}
+                                    className="inbox-note-card-drag-preview"
+                                    style={{
+                                        position: 'fixed',
+                                        width: draggedSize.width,
+                                        height: draggedSize.height,
+                                        pointerEvents: 'none',
+                                        zIndex: 99999,
+                                        '--note-color': draggedNote.color_hex || '#F59E0B',
+                                        background: `color-mix(in srgb, ${draggedNote.color_hex || '#F59E0B'} 8%, var(--surface))`,
+                                        border: `1px solid color-mix(in srgb, ${draggedNote.color_hex || '#F59E0B'} 30%, var(--border))`,
+                                    } as React.CSSProperties}
+                                >
+                                    <div className="inbox-note-header">
+                                        <h4 className="inbox-note-title">{draggedNote.titulo}</h4>
+                                    </div>
+                                    {draggedNote.nota_detalle && (
+                                        <p className="inbox-note-description">{draggedNote.nota_detalle}</p>
+                                    )}
+                                    <div className="inbox-note-footer" style={{ border: 'none', padding: 0 }}>
+                                        <div className="flex flex-col items-start gap-1.5">
+                                            {draggedContextoChip && (
+                                                <div className="inbox-note-context" style={{ margin: 0 }}>
+                                                    <draggedContextoChip.icon size={10} className="opacity-70" />
+                                                    <span>{draggedContextoChip.label}</span>
+                                                </div>
+                                            )}
+                                            {draggedNote.prioridad && (
+                                                <span className="inbox-note-priority-select" style={{ cursor: 'default', margin: 0 }}>
+                                                    Prioridad {draggedNote.prioridad}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>,
+                                document.body
+                            );
+                        })()}
                     </div>
                 )}
             </div>

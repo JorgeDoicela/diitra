@@ -704,8 +704,9 @@
 }
 
 .kanban-column.drag-over {
-    border-color: var(--fg);
-    background: var(--surface-hover);
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 4%, var(--surface-hover));
+    box-shadow: 0 0 0 1px var(--brand-subtle);
 }
 
 .kanban-column-header {
@@ -821,8 +822,37 @@
     cursor: grabbing;
 }
 
-.kanban-card.dragging {
-    opacity: 0.35;
+.kanban-card.dragging,
+.sticky-note-card.dragging {
+    opacity: 0.65 !important;
+    border-color: color-mix(in srgb, var(--note-color, var(--card-color)) 50%, var(--border-hover)) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transform: scale(0.98) !important;
+    filter: brightness(0.98);
+}
+
+.inbox-note-card.dragging {
+    opacity: 0.12 !important;
+    border-style: dashed !important;
+    border-color: var(--border-hover) !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.inbox-note-card-drag-preview {
+    z-index: 99999 !important;
+    position: fixed !important;
+    pointer-events: none !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.18), 0 20px 30px rgba(0,0,0,0.12) !important;
+    transform: rotate(1.5deg) scale(1.02) !important;
+    cursor: grabbing !important;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: 1 !important;
+    box-sizing: border-box;
 }
 
 .kanban-card-title {
@@ -995,7 +1025,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .sticky-note-card:hover {
@@ -1579,7 +1609,7 @@
     flex-direction: column;
     gap: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     cursor: grab;
     user-select: none;
     position: relative;
@@ -1693,3 +1723,224 @@
     pointer-events: none;
     transition: opacity 0.25s ease;
 }
+
+/* ─── Barra de Herramientas Premium (Inbox) ─── */
+.sticky-inbox-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.sticky-inbox-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 280px;
+    max-width: 420px;
+}
+
+.sticky-inbox-search-wrapper .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-dim);
+    pointer-events: none;
+}
+
+.sticky-inbox-search-input {
+    width: 100%;
+    padding: 7px 12px 7px 34px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--fg);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sticky-inbox-search-input:focus {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--border) 25%, transparent);
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 50%;
+}
+
+.search-clear-btn:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+.sticky-inbox-filters-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+}
+
+.sticky-inbox-context-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.inbox-filter-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.inbox-filter-chip:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.inbox-filter-chip.active {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+}
+
+.sticky-inbox-color-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+}
+
+.inbox-color-filter-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.inbox-color-filter-dot:hover {
+    transform: scale(1.2);
+}
+
+.inbox-color-filter-dot.active {
+    transform: scale(1.25);
+    border: 2px solid var(--fg);
+    box-shadow: 0 0 0 1px var(--bg);
+}
+
+.inbox-color-filter-clear {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.inbox-color-filter-clear:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+/* Selector de prioridad interactivo en la tarjeta */
+.inbox-note-priority-select {
+    background: color-mix(in srgb, var(--note-color, var(--border)) 10%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 25%, var(--border));
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--fg);
+    border-radius: 12px;
+    padding: 2px 6px;
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.inbox-note-priority-select:hover {
+    background: color-mix(in srgb, var(--note-color, var(--border)) 18%, var(--bg));
+}
+
+/* Paleta de colores rápida en la tarjeta */
+.inbox-note-quick-colors {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.inbox-note-card:hover .inbox-note-quick-colors {
+    opacity: 1;
+}
+
+.inbox-note-quick-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.inbox-note-quick-color-dot:hover {
+    transform: scale(1.3);
+}
+
+.inbox-note-quick-color-dot.active {
+    box-shadow: 0 0 0 1px var(--fg);
+}
+
+/* Ocultar botones de acción y selectores interactivos durante el arrastre */
+body.body-dragging-active {
+    user-select: none !important;
+}
+
+body.body-dragging-active .sticky-note-actions,
+body.body-dragging-active .kanban-card-actions,
+body.body-dragging-active .inbox-note-actions,
+body.body-dragging-active .inbox-note-quick-colors {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: none !important;
+}
+
+body.body-dragging-active .inbox-note-priority-select {
+    pointer-events: none !important;
+}
+
+
