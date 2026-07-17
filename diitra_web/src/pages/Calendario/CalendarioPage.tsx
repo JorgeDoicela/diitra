@@ -158,6 +158,7 @@ export const CalendarioPage: React.FC = () => {
     // Refs para evitar fugas al perder el foco en la pestaña (blur de ventana)
     const draggedNoteIndexRef = useRef<number | null>(null);
     const draggedNoteRef = useRef<EventoCalendario | null>(null);
+    const lastSwapTimeRef = useRef<number>(0);
 
     useEffect(() => {
         draggedNoteIndexRef.current = draggedNoteIndex;
@@ -192,6 +193,7 @@ export const CalendarioPage: React.FC = () => {
         setDraggedNoteIndex(index);
         setDraggedSize({ width: rect.width, height: rect.height });
         setDragStartOffset(startOffset);
+        lastSwapTimeRef.current = 0;
 
         document.body.classList.add('body-dragging-active');
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -213,6 +215,12 @@ export const CalendarioPage: React.FC = () => {
         if (dragPreviewRef.current) {
             dragPreviewRef.current.style.left = `${e.clientX - dragStartOffset.x}px`;
             dragPreviewRef.current.style.top = `${e.clientY - dragStartOffset.y}px`;
+        }
+
+        // Evitar swaps excesivamente rápidos (jittering) mientras framer-motion realiza la animación de layout
+        const now = Date.now();
+        if (now - lastSwapTimeRef.current < 180) {
+            return;
         }
 
         // Encontrar elemento bajo el cursor
@@ -242,6 +250,7 @@ export const CalendarioPage: React.FC = () => {
 
                         setStickyNotes(reordered);
                         setDraggedNoteIndex(targetIndex);
+                        lastSwapTimeRef.current = now;
                     }
                 }
             }
