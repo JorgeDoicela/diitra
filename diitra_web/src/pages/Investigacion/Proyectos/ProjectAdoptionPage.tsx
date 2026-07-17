@@ -7,6 +7,7 @@ import {
     CheckCircle2, AlertTriangle, ShieldCheck, ChevronRight, X, Check, Info, Award,
     ArrowLeft
 } from 'lucide-react';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 
 interface UnfinishedProject {
     id_proyecto: number;
@@ -185,11 +186,8 @@ const ProjectAdoptionPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="animate-spin text-brand" size={32} />
-                    <p className="text-text-dim text-xs font-mono uppercase tracking-widest">Cargando catálogo de reasignaciones...</p>
-                </div>
+            <div className="flex-1 relative min-h-[60vh] w-full bg-bg-deep">
+                <FullscreenLoader fullscreen={false} message="Cargando catálogo de reasignaciones..." />
             </div>
         );
     }

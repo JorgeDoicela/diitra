@@ -12,6 +12,7 @@ import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { ObservationsSidebar } from './components/ObservationsSidebar';
 import { InteractiveSections } from './components/InteractiveSections';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 
 interface ProjectDetail {
     uuid: string;
@@ -801,14 +802,7 @@ export const RevisionTecnicaPage: React.FC = () => {
     };
 
     if (loading || !project) {
-        return (
-            <main className="h-screen w-full bg-bg-deep flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-text-dim">
-                    <Loader2 size={24} className="animate-spin text-brand" />
-                    <span className="text-xs font-semibold uppercase tracking-widest font-mono">Cargando revisión técnica...</span>
-                </div>
-            </main>
-        );
+        return <FullscreenLoader message="Cargando revisión técnica..." />;
     }
 
     const showContextualPanel = isRightSidebarOpen;

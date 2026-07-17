@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader } from 'lucide-react';
 import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Library, Award, Shield } from 'lucide-react';
 
 import api from '../../../../api/axios_config';
@@ -9,6 +8,7 @@ import { useAuth } from '../../../../api/AuthContext';
 // ── DIITRA CoWork — importar SOLO desde el índice público ────────
 import { useCoWork, coworkUserFromAuth } from '../../../../core/cowork';
 import { coworkLog } from '../../../../core/cowork/utils/log';
+import { FullscreenLoader } from '../../../../components/Common/FullscreenLoader';
 
 
 // ── DIITRA Documents ─────────────────────────────────────────────
@@ -198,14 +198,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     }, [templateCode, initialData?.Uuid, isAdmin]);
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
-                <Loader size={48} className="animate-spin text-primary" />
-                <p className="text-text-dim text-sm font-black uppercase tracking-widest animate-pulse">
-                    Cargando editor colaborativo...
-                </p>
-            </div>
-        );
+        return <FullscreenLoader message="Cargando editor colaborativo..." />;
     }
 
     if (!templateConfig) {

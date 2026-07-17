@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import { ConfirmProvider } from './api/ConfirmContext';
 import { buildWorkspacePath } from './core/documents/templateUrl';
+import { FullscreenLoader } from './components/Common/FullscreenLoader';
 
 // ─── Lazy imports: cada página se carga solo cuando se necesita ───────────────
 const DashboardLayout        = lazy(() => import('./components/Layout/DashboardLayout'));
@@ -47,9 +48,7 @@ const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMainten
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
-    <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
-    </div>
+    <FullscreenLoader />
 );
 
 // ─── Guards de ruta ───────────────────────────────────────────────────────────
@@ -68,11 +67,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (!isAuthenticated) {
@@ -123,11 +118,7 @@ const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNode; allo
     const { isAuthenticated, isLoading, isAdmin, isDocente, isEstudiante, isRevisor, roles } = useAuth();
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -151,11 +142,7 @@ const ResearcherRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading, isAdmin } = useAuth();
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;

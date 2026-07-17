@@ -38,6 +38,7 @@ import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
+import { FullscreenLoader } from '../../../../components/Common/FullscreenLoader';
 import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
 import {
@@ -1236,14 +1237,7 @@ export const ProjectWorkspace: React.FC = () => {
     }, [activeDocument, resolvedProjectUuid, templateCode, subDocumentUuids, resolvingDocument, resolveDocumentInstance]);
 
     if (isLoading || !resolvedProjectUuid) {
-        return (
-            <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
-                    <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Cargando proyecto...</p>
-                </div>
-            </div>
-        );
+        return <FullscreenLoader message="Cargando proyecto..." />;
     }
 
     if (isUnauthorized) {
@@ -1448,14 +1442,7 @@ export const ProjectWorkspace: React.FC = () => {
             : subDocumentUuids[activeDocument];
 
         if (!isPrimaryDocument && !editorUuid) {
-            return (
-                <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
-                        <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Resolviendo documento...</p>
-                    </div>
-                </div>
-            );
+            return <FullscreenLoader message="Resolviendo documento..." />;
         }
 
         // Determinar permisos de sólo lectura por tipo de documento y estado del proyecto

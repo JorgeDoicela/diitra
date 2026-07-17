@@ -8,6 +8,7 @@ import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from
 import { useNavigate, useLocation } from 'react-router-dom';
 import { coworkLog } from '../../core/cowork/utils/log';
 import { SignatureBlock } from './SignatureBlock';
+import { FullscreenLoader } from '../Common/FullscreenLoader';
 
 
 /**
@@ -1332,9 +1333,19 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                                                     <div className="border-t border-border-thin shrink-0" />
                                                     {/* Sección 2: Firma Electrónica */}
-                                                    <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
-
-                                                        <div className="flex flex-col gap-4">
+                                                    <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar relative">
+                                                        {isSigning ? (
+                                                            <FullscreenLoader 
+                                                                fullscreen={false} 
+                                                                message={[
+                                                                    "Verificando credenciales...",
+                                                                    "Aplicando firma electrónica...",
+                                                                    "Estampando sello institucional...",
+                                                                    "Regenerando documento PDF..."
+                                                                ]} 
+                                                            />
+                                                        ) : (
+                                                            <div className="flex flex-col gap-4">
                                                             {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
                                                                 <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
                                                                     <div className="flex justify-center">
@@ -1467,20 +1478,23 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                                     refreshTrigger={signatureRefreshTrigger} 
                                                                 />
                                                             </div>
-                                                        </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
                                                 {/* Visor de PDF */}
                                                 <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
                                                     {isGenerating ? (
-                                                        <div className="flex-1 flex flex-col items-center justify-center gap-6">
-                                                            <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />
-                                                            <div className="text-center px-4">
-                                                                <p className="text-[10px] md:text-xs font-black text-text-main uppercase tracking-[0.3em]">Generando documento</p>
-                                                                <p className="text-[8px] md:text-[9px] text-text-dim uppercase tracking-widest mt-2">Preparando vista previa...</p>
-                                                            </div>
-                                                        </div>
+                                                        <FullscreenLoader 
+                                                            fullscreen={false} 
+                                                            message={[
+                                                                "Generando documento...",
+                                                                "Preparando vista previa...",
+                                                                "Compilando plantilla PDF...",
+                                                                "Cargando firmas registradas..."
+                                                            ]} 
+                                                        />
                                                     ) : pdfUrl ? (
                                                         <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
                                                     ) : (
