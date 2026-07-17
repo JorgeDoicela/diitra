@@ -42,8 +42,14 @@ public record EventoNormativoDto(
     bool Activo,
     bool EsPrivado,
     string Prioridad,
-    string Estado
+    string Estado,
+    // Notas Rápidas — campos extendidos
+    string? NotaDetalle = null,
+    int? OrdenBandeja = null
 );
+
+/// <summary>Payload para reordenar notas en la bandeja Inbox.</summary>
+public record ReordenarBandejaItem(string Uuid, int Orden);
 
 public interface ICalendarioService
 {
@@ -62,8 +68,14 @@ public interface ICalendarioService
     Task<bool> UpdateNormativoAsync(string uuid, EventoNormativoDto dto);
     Task<bool> DeleteNormativoAsync(string uuid);
 
-    /// <summary>Obtiene las notas adhesivas/rápidas sin programar del usuario.</summary>
+    /// <summary>Obtiene las notas adhesivas/rápidas sin programar del usuario, ordenadas por OrdenBandeja.</summary>
     Task<IEnumerable<EventoNormativoDto>> GetStickyNotesAsync(int idUsuario);
+
+    /// <summary>Devuelve un evento del Kanban a la bandeja Inbox (limpia FechaInicio, estado = Inbox).</summary>
+    Task<bool> DevolverAInboxAsync(string uuid, int idUsuario);
+
+    /// <summary>Reordena las notas de la bandeja actualizando OrdenBandeja en batch.</summary>
+    Task ReordenarBandejaAsync(IEnumerable<ReordenarBandejaItem> items, int idUsuario);
 
     /// <summary>Llamado por el job diario: envía alertas por email de eventos próximos.</summary>
     Task ProcesarAlertasDiariasAsync();

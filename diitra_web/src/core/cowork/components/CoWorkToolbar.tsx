@@ -1,10 +1,9 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import {
     Bold,
     Italic,
     Strikethrough,
-    Underline,
     List,
     ListOrdered,
     Quote,
@@ -37,15 +36,6 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
 
     if (!editor || readonly) return null;
 
-    // ── Contadores automáticos ────────────────────────────────────────────
-    const countNodesByClass = (className: string): number => {
-        let count = 0;
-        editor.state.doc.descendants((node: any) => {
-            const htmlStr = node.attrs?.class || '';
-            if (htmlStr.includes(className)) count++;
-        });
-        return count;
-    };
 
     const countTables = (): number => {
         let count = 0;

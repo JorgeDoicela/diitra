@@ -25,6 +25,9 @@ export interface EventoCalendario {
     id_entidad_origen?: number | null;
     uuid_entidad_origen?: string | null;
     tipo_entidad_origen?: string | null;
+    // Notas Rápidas — campos extendidos
+    nota_detalle?: string | null;
+    orden_bandeja?: number | null;
 }
 
 export interface EventoPayload {
@@ -45,6 +48,9 @@ export interface EventoPayload {
     es_privado: boolean;
     prioridad: string;
     estado: string;
+    // Notas Rápidas — campos extendidos
+    nota_detalle?: string | null;
+    orden_bandeja?: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -77,6 +83,12 @@ export const updateEvento = (uuid: string, payload: EventoPayload): Promise<Even
 
 export const deleteEvento = (uuid: string): Promise<void> =>
     api.delete(`/calendario/usuario/eventos/${uuid}`).then(() => undefined);
+
+export const devolverAInbox = (uuid: string): Promise<void> =>
+    api.patch(`/calendario/usuario/eventos/${uuid}/inbox`).then(() => undefined);
+
+export const reordenarBandeja = (items: { uuid: string; orden: number }[]): Promise<void> =>
+    api.patch('/calendario/usuario/notas/reordenar', items).then(() => undefined);
 
 export const getIcalToken = (): Promise<{ feed_url: string }> =>
     api.post('/calendario/ical/token').then(r => r.data);
@@ -131,6 +143,8 @@ export const buildPayload = (fields: {
     alertaDias: number | '';
     recurrenciaAnual: boolean;
     urlAccion?: string | null;
+    notaDetalle?: string | null;
+    ordenBandeja?: number | null;
 }): EventoPayload => ({
     titulo: fields.titulo,
     descripcion: fields.descripcion,
@@ -149,6 +163,8 @@ export const buildPayload = (fields: {
     es_privado: fields.esPrivado,
     prioridad: fields.prioridad,
     estado: fields.estado,
+    nota_detalle: fields.notaDetalle ?? null,
+    orden_bandeja: fields.ordenBandeja ?? null,
 });
 
 export const EVENTO_CONTEXTO_HELP: Record<string, string> = {

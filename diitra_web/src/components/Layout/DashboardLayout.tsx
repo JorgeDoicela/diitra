@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
@@ -8,6 +8,7 @@ import NotificationBell from '../Notifications/NotificationBell';
 import { HelpModal } from './Help/HelpModal';
 import api from '../../api/axios_config';
 import { StickyNotesFloatingButton } from '../Common/StickyNotesFloatingButton';
+import { getStickyNotes } from '../../services/calendarioService';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -51,6 +52,29 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
     });
+
+    // ── Contador de notas rápidas sin planificar (badge del botón flotante) ─────
+    const [pendingNotesCount, setPendingNotesCount] = useState(0);
+
+    const fetchPendingCount = useCallback(async () => {
+        if (!isAuthenticated || isLoading) return;
+        try {
+            const notas = await getStickyNotes();
+            setPendingNotesCount(notas.length);
+        } catch {
+            // silencioso — no romper el layout por esto
+        }
+    }, [isAuthenticated, isLoading]);
+
+    useEffect(() => {
+        fetchPendingCount();
+    }, [fetchPendingCount]);
+
+    useEffect(() => {
+        const handleNoteCreated = () => fetchPendingCount();
+        window.addEventListener('diitra:note-created', handleNoteCreated);
+        return () => window.removeEventListener('diitra:note-created', handleNoteCreated);
+    }, [fetchPendingCount]);
 
     useEffect(() => {
         if (!isAuthenticated || isLoading || !user) return;
@@ -296,7 +320,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 pathname={location.pathname}
             />
 
-            <StickyNotesFloatingButton onOpenHelp={() => setIsHelpOpen(true)} />
+            <StickyNotesFloatingButton
+                onOpenHelp={() => setIsHelpOpen(true)}
+                pendingCount={pendingNotesCount}
+            />
         </div>
     );
 };

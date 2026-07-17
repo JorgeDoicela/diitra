@@ -9,11 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../api/ConfirmContext';
 import {
     X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2,
-    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers
+    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers, FileText
 } from 'lucide-react';
 import {
     type EventoCalendario,
     getEventos, getStickyNotes, createEvento, updateEvento, deleteEvento, getIcalToken,
+    devolverAInbox, reordenarBandeja,
     buildPayload, CATEGORIAS_CONFIG, PRIORIDAD_COLORS, ESTADO_LABELS, COLORES_OPCIONES,
     getContextDescription,
 } from '../../services/calendarioService';
@@ -75,7 +76,7 @@ const EventoEnAgenda: React.FC<{ event: CalendarEventExtended }> = ({ event }) =
     const ev = event.resource;
     const isCompleted = ev.estado === 'Completado';
     const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
-    
+
     // Mapeo para nombres de clases de color
     const colorHex = color.toUpperCase();
     const colorClassMap: Record<string, string> = {
@@ -88,15 +89,15 @@ const EventoEnAgenda: React.FC<{ event: CalendarEventExtended }> = ({ event }) =
         '#1E3A8A': 'darkblue',
     };
     const colorName = colorClassMap[colorHex] || 'gray';
-    
+
     // Crear un color de fondo translúcido (8% de opacidad)
     const badgeBg = `${color}14`; // 14 en hexadecimal es aprox 8% de opacidad
     const badgeBorder = `${color}30`; // 30 en hexadecimal es aprox 18% de opacidad
-    
+
     return (
-        <div 
+        <div
             className={`agenda-event-badge color-${colorName} ${isCompleted ? 'completado' : ''}`}
-            style={{ 
+            style={{
                 '--event-color': color,
                 '--event-bg': badgeBg,
                 '--event-border': badgeBorder
@@ -114,10 +115,12 @@ const EventoEnAgenda: React.FC<{ event: CalendarEventExtended }> = ({ event }) =
 };
 
 export const CalendarioPage: React.FC = () => {
-    const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
+    const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [view, setView] = useState<View>('month');
+
+    // Filtros de Categorías
     const [categoriasVisibles, setCategoriasVisibles] = useState<Record<string, boolean>>({
         'Normativo': true,
         'Convocatoria': true,
@@ -127,9 +130,52 @@ export const CalendarioPage: React.FC = () => {
         'Personal': true,
     });
 
-    const [viewMode, setViewMode] = useState<'calendar' | 'kanban'>('calendar');
+    const [viewMode, setViewMode] = useState<'calendar' | 'kanban' | 'inbox'>('calendar');
     const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+    // Reordenamiento de notas en rejilla
+    const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
+
+    // ── Popover de planificación (al soltar nota en Kanban) ───────────────────
+    const [planificando, setPlanificando] = useState<{
+        note: EventoCalendario;
+        targetEstado: string;
+        anchorPos: { x: number; y: number };
+    } | null>(null);
+
+    // Controladores de drag & drop para reordenar en la rejilla
+    const handleNoteDragStartGrid = (e: React.DragEvent, index: number) => {
+        setDraggedNoteIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleNoteDragOverGrid = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+    };
+
+    const handleNoteDropGrid = async (targetIndex: number) => {
+        if (draggedNoteIndex === null || draggedNoteIndex === targetIndex) return;
+
+        const reordered = [...stickyNotes];
+        const [removed] = reordered.splice(draggedNoteIndex, 1);
+        reordered.splice(targetIndex, 0, removed);
+
+        // Optimista: actualizar orden local
+        setStickyNotes(reordered);
+        setDraggedNoteIndex(null);
+
+        try {
+            const payload = reordered.map((note, idx) => ({
+                uuid: note.uuid,
+                orden: idx + 1
+            }));
+            await reordenarBandeja(payload);
+        } catch (err) {
+            console.error('Error al persistir orden de bandeja:', err);
+            fetchStickyNotes();
+        }
+    };
 
     const kanbanColumnas = [
         { id: 'Pendiente', label: 'Pendiente' },
@@ -191,63 +237,15 @@ export const CalendarioPage: React.FC = () => {
         if (noteData) {
             try {
                 const note: EventoCalendario = JSON.parse(noteData);
-                const payload = buildPayload({
-                    titulo: note.titulo,
-                    descripcion: note.descripcion || '',
-                    tipo: note.subcategoria || 'Personal',
-                    fechaInicio: format(new Date(), 'yyyy-MM-dd'),
-                    fechaFin: format(new Date(), 'yyyy-MM-dd'),
-                    esTodoElDia: note.es_todo_el_dia,
-                    colorHex: note.color_hex || '#F59E0B',
-                    esPrivado: note.es_privado,
-                    prioridad: note.prioridad,
-                    estado: targetEstado,
-                    alertaDias: note.alerta_dias ?? '',
-                    recurrenciaAnual: note.recurrencia_anual ?? false,
-                    urlAccion: note.url_accion,
-                });
-
-                // Actualización Optimista
-                setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
-                const newEv: Evento = {
-                    id_evento_calendario: '0',
-                    uuid: note.uuid,
-                    titulo: note.titulo,
-                    descripcion: note.descripcion || '',
-                    categoria_global: 'Personal',
-                    subcategoria: note.subcategoria || 'Personal',
-                    fecha_inicio: format(new Date(), 'yyyy-MM-dd'),
-                    fecha_fin: format(new Date(), 'yyyy-MM-dd'),
-                    es_todo_el_dia: note.es_todo_el_dia,
-                    color_hex: note.color_hex || '#F59E0B',
-                    es_privado: note.es_privado,
-                    prioridad: note.prioridad,
-                    estado: targetEstado,
-                    url_accion: note.url_accion,
-                    creado_por: 0,
-                    alerta_dias: note.alerta_dias,
-                    recurrencia_anual: note.recurrencia_anual
-                };
-                const newEvCal: CalendarEventExtended = {
-                    title: note.titulo,
-                    start: new Date(),
-                    end: new Date(),
-                    allDay: note.es_todo_el_dia,
-                    resource: newEv
-                };
-                setEventos(prev => [...prev, newEvCal]);
-
-                // Ejecución asíncrona en segundo plano
-                updateEvento(note.uuid, payload).then(() => {
-                    fetchStickyNotes();
-                    fetchEventos(currentDate);
-                }).catch(err => {
-                    console.error('Error al actualizar nota en el servidor:', err);
-                    fetchStickyNotes();
-                    fetchEventos(currentDate);
+                // Mostrar popover de planificación en lugar de fijar fecha=hoy automáticamente
+                const dropRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                setPlanificando({
+                    note,
+                    targetEstado,
+                    anchorPos: { x: dropRect.left + dropRect.width / 2, y: dropRect.top + 60 },
                 });
             } catch (err) {
-                console.error('Error al convertir nota adhesiva a tarea:', err);
+                console.error('Error al parsear nota para planificación:', err);
             }
             return;
         }
@@ -306,6 +304,78 @@ export const CalendarioPage: React.FC = () => {
             console.error('Error al actualizar estado del evento en Kanban:', err);
             fetchEventos(currentDate);
         });
+    };
+
+    /** Confirma la planificación de una nota: asigna fecha y la mueve al Kanban */
+    const handleConfirmPlanificacion = async (fechaElegida: string) => {
+        if (!planificando) return;
+        const { note, targetEstado } = planificando;
+        setPlanificando(null);
+
+        const payload = buildPayload({
+            titulo: note.titulo,
+            descripcion: note.descripcion || '',
+            tipo: note.subcategoria || 'Personal',
+            fechaInicio: fechaElegida,
+            fechaFin: fechaElegida,
+            esTodoElDia: note.es_todo_el_dia,
+            colorHex: note.color_hex || '#F59E0B',
+            esPrivado: note.es_privado,
+            prioridad: note.prioridad,
+            estado: targetEstado,
+            alertaDias: note.alerta_dias ?? '',
+            recurrenciaAnual: note.recurrencia_anual ?? false,
+            urlAccion: note.url_accion,
+            notaDetalle: note.nota_detalle,
+        });
+
+        // Actualización optimista: quitar de la bandeja
+        setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
+        const fechaDate = new Date(fechaElegida + 'T12:00:00');
+        const newEv: Evento = {
+            id_evento_calendario: '0',
+            uuid: note.uuid,
+            titulo: note.titulo,
+            descripcion: note.descripcion || '',
+            categoria_global: 'Personal',
+            subcategoria: note.subcategoria || 'Personal',
+            fecha_inicio: fechaElegida,
+            fecha_fin: fechaElegida,
+            es_todo_el_dia: note.es_todo_el_dia,
+            color_hex: note.color_hex || '#F59E0B',
+            es_privado: note.es_privado,
+            prioridad: note.prioridad,
+            estado: targetEstado,
+            url_accion: note.url_accion,
+            creado_por: 0,
+            alerta_dias: note.alerta_dias,
+            recurrencia_anual: note.recurrencia_anual,
+        };
+        setEventos(prev => [...prev, { title: note.titulo, start: fechaDate, end: fechaDate, allDay: true, resource: newEv }]);
+
+        updateEvento(note.uuid, payload).then(() => {
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        }).catch(err => {
+            console.error('Error al confirmar planificación:', err);
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        });
+    };
+
+    /** Devuelve una tarjeta del Kanban a la bandeja Inbox */
+    const handleDevolverAInbox = async (uuid: string) => {
+        try {
+            // Optimista: quitar del Kanban localmente
+            setEventos(prev => prev.filter(ev => ev.resource.uuid !== uuid));
+            await devolverAInbox(uuid);
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        } catch (err) {
+            console.error('Error al devolver evento a Inbox:', err);
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        }
     };
 
     const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null);
@@ -737,41 +807,66 @@ export const CalendarioPage: React.FC = () => {
                 {/* Notas Rápidas (Inbox) */}
                 <div className="sidebar-section sticky-notes-section">
                     <h3>Notas Rápidas</h3>
-                    <p className="ical-help-text mb-3">Arrastra las notas adhesivas pendientes al tablero Kanban para planificarlas.</p>
+                    <p className="ical-help-text mb-3">Arrastra las notas al tablero <strong>Kanban</strong> para planificarlas.</p>
 
                     <div className="sticky-notes-grid">
                         {stickyNotes.length === 0 ? (
                             <p className="proximos-empty">Bandeja vacía</p>
                         ) : (
-                            stickyNotes.map(note => (
-                                <div
-                                    key={note.uuid}
-                                    draggable
-                                    onDragStart={(e) => handleNoteDragStart(e, note)}
-                                    className="sticky-note-card"
-                                    style={{ '--note-color': note.color_hex || '#F59E0B' } as React.CSSProperties}
-                                >
-                                    <p className="sticky-note-text">{note.titulo}</p>
-                                    <div className="sticky-note-actions" onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                            type="button"
-                                            className="sticky-note-action-btn"
-                                            onClick={() => handleEditEventClick(note)}
-                                            title="Editar nota"
-                                        >
-                                            <Edit2 size={11} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="sticky-note-action-btn delete"
-                                            onClick={() => handleDeleteStickyNote(note.uuid)}
-                                            title="Eliminar nota"
-                                        >
-                                            <Trash2 size={11} />
-                                        </button>
+                            stickyNotes.map(note => {
+                                // Derivar chip de contexto desde url_accion
+                                const contextoChip = (() => {
+                                    const url = note.url_accion || '';
+                                    if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: '📁' };
+                                    if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: '📢' };
+                                    if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: '📊' };
+                                    if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: '🔬' };
+                                    if (url.startsWith('/agenda')) return { label: 'Agenda', icon: '📅' };
+                                    if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: '📈' };
+                                    return null;
+                                })();
+
+                                return (
+                                    <div
+                                        key={note.uuid}
+                                        draggable
+                                        onDragStart={(e) => handleNoteDragStart(e, note)}
+                                        className="sticky-note-card"
+                                        style={{ '--note-color': note.color_hex || '#F59E0B' } as React.CSSProperties}
+                                    >
+                                        <div className="sticky-note-content">
+                                            <p className="sticky-note-text">{note.titulo}</p>
+                                            {note.nota_detalle && (
+                                                <p className="sticky-note-detalle">{note.nota_detalle}</p>
+                                            )}
+                                            {contextoChip && (
+                                                <div className="sticky-note-ctx-chip">
+                                                    <span>{contextoChip.icon}</span>
+                                                    <span>{contextoChip.label}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="sticky-note-actions" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                type="button"
+                                                className="sticky-note-action-btn"
+                                                onClick={() => handleEditEventClick(note)}
+                                                title="Editar nota"
+                                            >
+                                                <Edit2 size={11} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="sticky-note-action-btn delete"
+                                                onClick={() => handleDeleteStickyNote(note.uuid)}
+                                                title="Eliminar nota"
+                                            >
+                                                <Trash2 size={11} />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -866,6 +961,14 @@ export const CalendarioPage: React.FC = () => {
                                 <Layers size={12} />
                                 Tablero Kanban
                             </button>
+                            <button
+                                type="button"
+                                className={`view-selector-btn ${viewMode === 'inbox' ? 'active' : ''}`}
+                                onClick={() => setViewMode('inbox')}
+                            >
+                                <FileText size={12} />
+                                Bandeja de Notas
+                            </button>
                         </div>
                     </div>
 
@@ -915,14 +1018,18 @@ export const CalendarioPage: React.FC = () => {
                             </>
                         )}
 
-                        {/* Botón Global de Añadir Tarea */}
+                        {/* Botón Global de Añadir Tarea / Nota */}
                         <button
                             type="button"
                             className="global-add-task-btn"
-                            onClick={handleNewEventClick}
+                            onClick={viewMode === 'inbox' ? () => {
+                                // Simular el clic en el botón flotante abriendo su modal
+                                const floatingTrigger = document.querySelector('.sticky-floating-trigger-btn') as HTMLElement;
+                                if (floatingTrigger) floatingTrigger.click();
+                            } : handleNewEventClick}
                         >
                             <Plus size={14} />
-                            <span>Añadir Tarea</span>
+                            <span>{viewMode === 'inbox' ? 'Añadir Nota' : 'Añadir Tarea'}</span>
                         </button>
                     </div>
                 </div>
@@ -944,26 +1051,26 @@ export const CalendarioPage: React.FC = () => {
                                         const sortedEvents = [...filteredEventos].sort(
                                             (a, b) => (a.start as Date).getTime() - (b.start as Date).getTime()
                                         );
-                                        
+
                                         let lastDateStr = '';
-                                        
+
                                         return sortedEvents.map(event => {
                                             const ev = event.resource;
                                             const isCompleted = ev.estado === 'Completado';
                                             const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
-                                            
+
                                             // Formatear fecha
                                             const dateStr = format(event.start as Date, "eee d 'de' MMM", { locale: es });
                                             // Si es la misma fecha que el anterior, la dejamos en blanco pero conservamos el espacio
                                             const showDate = dateStr !== lastDateStr ? dateStr : '';
                                             lastDateStr = dateStr;
-                                            
+
                                             // Formatear hora
                                             let horaStr = 'todo el día';
                                             if (!ev.es_todo_el_dia && event.start && event.end) {
                                                 horaStr = `${format(event.start as Date, 'HH:mm')} - ${format(event.end as Date, 'HH:mm')}`;
                                             }
-                                            
+
                                             const colorHex = color.toUpperCase();
                                             const colorClassMap: Record<string, string> = {
                                                 '#F59E0B': 'orange',
@@ -975,7 +1082,7 @@ export const CalendarioPage: React.FC = () => {
                                                 '#1E3A8A': 'darkblue',
                                             };
                                             const colorName = colorClassMap[colorHex] || 'gray';
-                                            
+
                                             return (
                                                 <div
                                                     key={ev.uuid}
@@ -1046,7 +1153,7 @@ export const CalendarioPage: React.FC = () => {
                             }}
                         />
                     )
-                ) : (
+                ) : viewMode === 'kanban' ? (
                     <div className="kanban-board-container">
                         {kanbanColumnas.map(col => {
                             const colEvents = filteredEventos.filter(ev => {
@@ -1148,6 +1255,14 @@ export const CalendarioPage: React.FC = () => {
                                                                         <button
                                                                             type="button"
                                                                             className="kanban-action-btn"
+                                                                            onClick={() => handleDevolverAInbox(r.uuid)}
+                                                                            title="Devolver a la bandeja Inbox"
+                                                                        >
+                                                                            <RotateCcw size={12} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="kanban-action-btn"
                                                                             onClick={() => handleEditEventClick(r)}
                                                                             title="Editar"
                                                                         >
@@ -1183,6 +1298,106 @@ export const CalendarioPage: React.FC = () => {
                                 </div>
                             );
                         })}
+                    </div>
+                ) : (
+                    <div className="sticky-inbox-view">
+
+                        <div className="sticky-inbox-grid">
+                            {stickyNotes.length === 0 ? (
+                                <div className="sticky-inbox-empty animate-slide-up">
+                                    <div className="text-center p-12 bg-surface border border-border-thin rounded-xl max-w-md mx-auto">
+                                        <FileText size={40} className="text-text-dim mx-auto mb-4 opacity-50" />
+                                        <h4 className="text-sm font-bold text-fg mb-1">Tu bandeja de notas está vacía</h4>
+                                        <p className="text-xs text-text-dim leading-relaxed">
+                                            Usa el botón flotante en la esquina inferior derecha o el botón "Añadir Nota" de arriba para guardar recordatorios rápidos.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                stickyNotes.map((note, index) => {
+                                    // Derivar chip de contexto desde url_accion
+                                    const contextoChip = (() => {
+                                        const url = note.url_accion || '';
+                                        if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: '📁' };
+                                        if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: '📢' };
+                                        if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: '📊' };
+                                        if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: '🔬' };
+                                        if (url.startsWith('/agenda')) return { label: 'Agenda', icon: '📅' };
+                                        if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: '📈' };
+                                        return null;
+                                    })();
+
+                                    return (
+                                        <div
+                                            key={note.uuid}
+                                            draggable
+                                            onDragStart={(e) => handleNoteDragStartGrid(e, index)}
+                                            onDragOver={(e) => handleNoteDragOverGrid(e, index)}
+                                            onDrop={() => handleNoteDropGrid(index)}
+                                            className="inbox-note-card animate-slide-up"
+                                            style={{
+                                                '--note-color': note.color_hex || '#F59E0B',
+                                                animationDelay: `${index * 0.05}s`
+                                            } as React.CSSProperties}
+                                        >
+                                            <div className="inbox-note-header">
+                                                <h4 className="inbox-note-title">{note.titulo}</h4>
+                                                <div className="inbox-note-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="inbox-note-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const btnRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                            setPlanificando({
+                                                                note,
+                                                                targetEstado: 'Pendiente',
+                                                                anchorPos: { x: btnRect.left + btnRect.width / 2, y: btnRect.top + window.scrollY - 10 }
+                                                            });
+                                                        }}
+                                                        title="Planificar en Agenda"
+                                                    >
+                                                        <Clock size={12} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="inbox-note-btn"
+                                                        onClick={() => handleEditEventClick(note)}
+                                                        title="Editar nota"
+                                                    >
+                                                        <Edit2 size={12} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="inbox-note-btn delete"
+                                                        onClick={() => handleDeleteStickyNote(note.uuid)}
+                                                        title="Eliminar nota"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {note.nota_detalle && (
+                                                <p className="inbox-note-description">{note.nota_detalle}</p>
+                                            )}
+
+                                            <div className="inbox-note-footer">
+                                                {contextoChip && (
+                                                    <div className="inbox-note-context">
+                                                        <span>{contextoChip.icon}</span>
+                                                        <span>{contextoChip.label}</span>
+                                                    </div>
+                                                )}
+                                                <span className="inbox-note-date">
+                                                    {note.uuid && parse(note.uuid.slice(0, 8), '16', new Date()) ? 'Creada' : 'Guardada'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -1280,9 +1495,9 @@ export const CalendarioPage: React.FC = () => {
                                 <div className="bento-card static p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Estado</div>
                                     <span className={`px-2.5 py-0.5 text-xs font-bold rounded inline-block font-sans ${selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
-                                            selectedEvent.estado === 'EnProgreso' || selectedEvent.estado === 'En Ejecución' ? 'bg-info-subtle text-info' :
-                                                selectedEvent.estado === 'Cancelado' ? 'bg-bg-deep text-text-dim' :
-                                                    'bg-warning-subtle text-warning'
+                                        selectedEvent.estado === 'EnProgreso' || selectedEvent.estado === 'En Ejecución' ? 'bg-info-subtle text-info' :
+                                            selectedEvent.estado === 'Cancelado' ? 'bg-bg-deep text-text-dim' :
+                                                'bg-warning-subtle text-warning'
                                         }`}>
                                         {ESTADO_LABELS[selectedEvent.estado] ?? selectedEvent.estado}
                                     </span>
@@ -1577,6 +1792,59 @@ export const CalendarioPage: React.FC = () => {
                         </div>
                     </form>
                 </div>,
+                document.body
+            )}
+            {/* ── Popover de Planificación ───────────────────────────────────── */}
+            {planificando && createPortal(
+                <>
+                    {/* Backdrop para cerrar al hacer click fuera */}
+                    <div
+                        className="kanban-popover-backdrop"
+                        onClick={() => setPlanificando(null)}
+                    />
+                    <div
+                        className="kanban-popover-planificacion animate-slide-up"
+                        style={{
+                            left: Math.min(planificando.anchorPos.x, window.innerWidth - 260),
+                            top: planificando.anchorPos.y,
+                        }}
+                    >
+                        <div className="kanban-popover-header">
+                            <Clock size={13} />
+                            <span>¿Cuándo planificarla?</span>
+                            <button type="button" onClick={() => setPlanificando(null)} className="kanban-popover-close">
+                                <X size={14} />
+                            </button>
+                        </div>
+                        <p className="kanban-popover-note-title">{planificando.note.titulo}</p>
+                        <div className="kanban-popover-opciones">
+                            {[
+                                { label: 'Hoy', fecha: format(new Date(), 'yyyy-MM-dd') },
+                                { label: 'Mañana', fecha: format(addDays(new Date(), 1), 'yyyy-MM-dd') },
+                                { label: 'En 3 días', fecha: format(addDays(new Date(), 3), 'yyyy-MM-dd') },
+                                { label: 'Esta semana', fecha: format(addDays(new Date(), 7), 'yyyy-MM-dd') },
+                            ].map(op => (
+                                <button
+                                    key={op.label}
+                                    type="button"
+                                    className="kanban-popover-opcion"
+                                    onClick={() => handleConfirmPlanificacion(op.fecha)}
+                                >
+                                    {op.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="kanban-popover-custom">
+                            <label className="kanban-popover-label">O elige una fecha:</label>
+                            <input
+                                type="date"
+                                className="kanban-popover-date-input"
+                                min={format(new Date(), 'yyyy-MM-dd')}
+                                onChange={(e) => e.target.value && handleConfirmPlanificacion(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </>,
                 document.body
             )}
         </div>

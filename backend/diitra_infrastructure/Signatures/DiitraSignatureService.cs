@@ -190,17 +190,18 @@ public class DiitraSignatureService : IDiitraSignatureService
         }
         else
         {
+            var existingPerfil = perfil!;
             valoresAnteriores = JsonSerializer.Serialize(new
             {
-                perfil.Cargo,
-                perfil.Departamento,
-                perfil.Iniciales,
-                perfil.EsConfigurado
+                existingPerfil.Cargo,
+                existingPerfil.Departamento,
+                existingPerfil.Iniciales,
+                existingPerfil.EsConfigurado
             });
         }
 
         // Si antes tenía un archivo guardado, eliminarlo del disco
-        if (!string.IsNullOrWhiteSpace(perfil.FirmaImagenB64)
+        if (!string.IsNullOrWhiteSpace(perfil!.FirmaImagenB64)
             && !perfil.FirmaImagenB64.StartsWith("data:image/")
             && perfil.FirmaImagenB64.Length <= 512)
         {

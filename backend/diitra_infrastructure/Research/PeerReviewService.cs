@@ -202,7 +202,11 @@ public class PeerReviewService : IPeerReviewService
         }
 
         var proyecto = revision.Proyecto;
-        var conv = proyecto?.IdConvocatoriaNavigation;
+        if (proyecto == null)
+        {
+            throw new InvalidOperationException("El proyecto asociado a esta revisión no pudo ser cargado.");
+        }
+        var conv = proyecto.IdConvocatoriaNavigation;
         var rubrica = await _context.InvRubricas
             .Include(r => r.InvRubricaCriterios)
             .FirstOrDefaultAsync(r => r.Activo == true);

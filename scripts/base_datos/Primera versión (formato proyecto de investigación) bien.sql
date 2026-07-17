@@ -2089,6 +2089,9 @@ CREATE TABLE inv_calendario_eventos_normativos (
     colorHex          VARCHAR(7)    NULL DEFAULT '#6B7280' COMMENT 'Color personalizado del evento en el calendario',
     -- 🔔 ALERTAS AUTOMÁTICAS por email
     alertaDias        INT           NULL DEFAULT 7 COMMENT 'Días antes del evento para enviar alerta. NULL = sin alerta.',
+    -- Notas Rápidas — campos extendidos
+    notaDetalle       TEXT          NULL      COMMENT 'Descripción extendida opcional de la nota rápida (campo expandible en UI)',
+    ordenBandeja      INT           NULL      COMMENT 'Posición manual de la nota en la bandeja Inbox (drag-to-reorder). NULL = no ordenada',
     -- Trazabilidad
     activo            TINYINT(1)    NOT NULL DEFAULT 1,
     creadoPor         INT(11)       NULL,
@@ -2376,3 +2379,4 @@ VALUES
 -- Índices para rendimiento del módulo de calendario
 CREATE INDEX idx_cal_norm_fechas ON inv_calendario_eventos_normativos(fechaInicio, fechaFin);
 CREATE INDEX idx_cal_norm_tipo   ON inv_calendario_eventos_normativos(tipoEvento, activo);
+CREATE INDEX idx_cal_nota_bandeja ON inv_calendario_eventos_normativos(creadoPor, fechaInicio, ordenBandeja);

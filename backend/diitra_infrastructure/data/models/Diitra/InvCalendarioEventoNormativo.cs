@@ -24,4 +24,10 @@ public partial class InvCalendarioEventoNormativo
     public int? CreadoPor { get; set; }
     public DateTime FechaRegistro { get; set; }
     public DateTime FechaModificacion { get; set; }
+
+    // ── Notas Rápidas — campos extendidos ────────────────────────────────────
+    /// <summary>Descripción extendida de la nota rápida (campo expandible en UI).</summary>
+    public string? NotaDetalle { get; set; }
+    /// <summary>Posición manual de la nota en la bandeja Inbox (drag-to-reorder). NULL = no ordenada.</summary>
+    public int? OrdenBandeja { get; set; }
 }

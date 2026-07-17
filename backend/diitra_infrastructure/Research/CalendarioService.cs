@@ -269,7 +269,9 @@ public class CalendarioService : ICalendarioService
             EsPrivado = dto.EsPrivado,
             Prioridad = dto.Prioridad,
             Estado = dto.Estado,
-            CreadoPor = idUsuarioAdmin
+            CreadoPor = idUsuarioAdmin,
+            NotaDetalle = dto.NotaDetalle,
+            OrdenBandeja = dto.OrdenBandeja
         };
         _context.Set<InvCalendarioEventoNormativo>().Add(entity);
         await _context.SaveChangesAsync();
@@ -299,6 +301,8 @@ public class CalendarioService : ICalendarioService
         entity.EsPrivado = dto.EsPrivado;
         entity.Prioridad = dto.Prioridad;
         entity.Estado = dto.Estado;
+        entity.NotaDetalle = dto.NotaDetalle;
+        entity.OrdenBandeja = dto.OrdenBandeja;
 
         await _context.SaveChangesAsync();
         return true;
@@ -435,11 +439,47 @@ public class CalendarioService : ICalendarioService
 
     public async Task<IEnumerable<EventoNormativoDto>> GetStickyNotesAsync(int idUsuario)
     {
+        // Notas sin fecha = Inbox. Se ordenan primero por OrdenBandeja (manual),
+        // luego por fecha de registro descendente como fallback.
         return await _context.Set<InvCalendarioEventoNormativo>()
             .Where(e => e.CreadoPor == idUsuario && e.FechaInicio == null && e.Activo)
-            .OrderByDescending(e => e.FechaRegistro)
+            .OrderBy(e => e.OrdenBandeja == null ? 1 : 0)
+            .ThenBy(e => e.OrdenBandeja)
+            .ThenByDescending(e => e.FechaRegistro)
             .Select(e => ToDto(e))
             .ToListAsync();
+    }
+
+    public async Task<bool> DevolverAInboxAsync(string uuid, int idUsuario)
+    {
+        var entity = await _context.Set<InvCalendarioEventoNormativo>()
+            .FirstOrDefaultAsync(e => e.Uuid == uuid && e.CreadoPor == idUsuario);
+        if (entity == null) return false;
+
+        entity.FechaInicio = null;
+        entity.FechaFin = null;
+        entity.Estado = "Inbox";
+        entity.OrdenBandeja = null; // Irá al fondo de la bandeja
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task ReordenarBandejaAsync(IEnumerable<ReordenarBandejaItem> items, int idUsuario)
+    {
+        var uuids = items.Select(i => i.Uuid).ToList();
+        var entities = await _context.Set<InvCalendarioEventoNormativo>()
+            .Where(e => uuids.Contains(e.Uuid) && e.CreadoPor == idUsuario && e.FechaInicio == null)
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            var entity = entities.FirstOrDefault(e => e.Uuid == item.Uuid);
+            if (entity != null)
+                entity.OrdenBandeja = item.Orden;
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -461,7 +501,8 @@ public class CalendarioService : ICalendarioService
         e.RecurrenciaAnual, e.RecurrenciaHasta,
         e.RolesVisibles, e.ModuloOrigen, e.UrlAccion,
         e.ColorHex, e.AlertaDias, e.Activo,
-        e.EsPrivado, e.Prioridad, e.Estado
+        e.EsPrivado, e.Prioridad, e.Estado,
+        e.NotaDetalle, e.OrdenBandeja
     );
 
     private static string EscapeIcal(string s) =>

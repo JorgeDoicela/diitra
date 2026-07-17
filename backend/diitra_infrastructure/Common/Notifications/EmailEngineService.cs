@@ -264,8 +264,6 @@ namespace diitra_infrastructure.Common.Notifications
 
             var frontendUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
 
-            var isAllSuccess = true;
-
             // 3.5. Cargar variables de contexto dinámico (una sola vez por envío)
             var contextReplacements = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(request.EntityType) && !string.IsNullOrEmpty(request.EntityUuid))

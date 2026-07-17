@@ -1007,6 +1007,14 @@
     cursor: grabbing;
 }
 
+.sticky-note-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0; /* previene desbordamientos de flex */
+}
+
 .sticky-note-text {
     font-size: 11px;
     line-height: 1.35;
@@ -1050,6 +1058,164 @@
     color: var(--error);
 }
 
+/* Chip de contexto de origen en la tarjeta de nota */
+.sticky-note-ctx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--note-color, var(--border)) 10%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 25%, var(--border));
+    font-size: 9.5px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-top: 4px;
+    width: fit-content;
+}
+
+/* Descripción extendida de la nota en la tarjeta */
+.sticky-note-detalle {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    line-height: 1.45;
+    margin: 2px 0 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+/* ─── Popover de Planificación (al arrastrar nota al Kanban) ─── */
+.kanban-popover-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: transparent;
+}
+
+.kanban-popover-planificacion {
+    position: fixed;
+    z-index: 301;
+    width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: var(--font-sans);
+    transform: translateX(-50%);
+}
+
+.kanban-popover-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--fg);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.kanban-popover-header span {
+    flex: 1;
+}
+
+.kanban-popover-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    padding: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.kanban-popover-close:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+.kanban-popover-note-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    padding: 6px 10px;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.kanban-popover-opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.kanban-popover-opcion {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg);
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.kanban-popover-opcion:hover {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+    transform: scale(1.02);
+}
+
+.kanban-popover-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.kanban-popover-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.kanban-popover-date-input {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--fg);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+    cursor: pointer;
+}
+
+.kanban-popover-date-input:focus {
+    border-color: var(--border-hover);
+}
 
 /* ─── Vista Agenda (Vercel Style) ───────────────────────────────── */
 .rbc-agenda-view {
@@ -1370,6 +1536,156 @@
 
 .global-add-task-btn:active {
     transform: scale(0.98) !important;
+}
+
+/* ─── Vista Inbox / Rejilla de Notas Adhesivas a Pantalla Completa ─── */
+.sticky-inbox-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: calc(100% - 50px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.sticky-inbox-info {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.sticky-inbox-info .ical-help-text {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.sticky-inbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    align-content: start;
+    padding-bottom: 24px;
+}
+
+.inbox-note-card {
+    background: color-mix(in srgb, var(--note-color, var(--border)) 6%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 24%, var(--border));
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
+    user-select: none;
+    position: relative;
+}
+
+.inbox-note-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--note-color, var(--border)) 50%, var(--border-hover));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.inbox-note-card:active {
+    cursor: grabbing;
+}
+
+.inbox-note-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.inbox-note-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--fg);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+    flex: 1;
+}
+
+.inbox-note-actions {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.inbox-note-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.inbox-note-btn:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+}
+
+.inbox-note-btn.delete:hover {
+    background: var(--error-subtle);
+    color: var(--error);
+}
+
+.inbox-note-description {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin: 0;
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.inbox-note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 12%, var(--border));
+    font-size: 9.5px;
+}
+
+.inbox-note-context {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--note-color, var(--border)) 10%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--note-color, var(--border)) 20%, var(--border));
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.inbox-note-date {
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.sticky-inbox-empty {
+    width: 100%;
+    margin-top: 40px;
 }
 
 .calendario-main.calendario-loading {

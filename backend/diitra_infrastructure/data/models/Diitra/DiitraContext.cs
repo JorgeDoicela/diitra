@@ -2003,6 +2003,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.CreadoPor).HasColumnName("creadoPor");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+            // Notas Rápidas — campos extendidos
+            entity.Property(e => e.NotaDetalle).HasColumnName("notaDetalle").HasColumnType("text");
+            entity.Property(e => e.OrdenBandeja).HasColumnName("ordenBandeja");
         });
 
         modelBuilder.Entity<InvIcalToken>(entity =>

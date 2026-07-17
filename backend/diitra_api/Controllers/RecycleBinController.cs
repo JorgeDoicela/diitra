@@ -181,7 +181,7 @@ namespace diitra_api.Controllers
             {
                 var result = await _projectOrchestrator.PurgeProjectAsync(uuid, userIdRef);
                 success = result.Success;
-                message = result.Message;
+                message = result.Message ?? string.Empty;
             }
             else if (entityType.Equals("convocatoria", StringComparison.OrdinalIgnoreCase))
             {

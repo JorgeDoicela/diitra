@@ -138,19 +138,21 @@ public class SignaturesController : ControllerBase
     {
         var idUsuario = GetCurrentUserId();
         if (idUsuario == 0) return Unauthorized();
+        if (certificate == null || certificate.Length == 0)
+        {
+            return BadRequest(new { error = "Se requiere el archivo del certificado (.p12) de firma electrónica." });
+        }
 
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers["User-Agent"].ToString();
 
         try
         {
-            byte[]? certificateBytes = null;
-            if (certificate != null && certificate.Length > 0)
-            {
-                using var ms = new System.IO.MemoryStream();
-                await certificate.CopyToAsync(ms);
-                certificateBytes = ms.ToArray();
-            }
+            byte[] certificateBytes;
+            using var ms = new System.IO.MemoryStream();
+            await certificate.CopyToAsync(ms);
+            certificateBytes = ms.ToArray();
+
 
             var result = await _signatureService.SignDocumentWithP12Async(
                 idUsuario: idUsuario,

@@ -139,6 +139,35 @@ public class CalendarioController : ControllerBase
         return Ok(new { message = "Evento de usuario eliminado." });
     }
 
+    // Devolver una tarjeta Kanban a la bandeja Inbox (limpia fecha e estado)
+    [HttpPatch("usuario/eventos/{uuid}/inbox")]
+    public async Task<IActionResult> DevolverAInbox(string uuid)
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var result = await _calendarioService.DevolverAInboxAsync(uuid, dbUser.IdUsuario);
+        if (!result) return NotFound(new { message = "Nota no encontrada o no pertenece al usuario." });
+        return Ok(new { message = "Evento devuelto a la bandeja Inbox." });
+    }
+
+    // Reordenar notas en la bandeja Inbox
+    [HttpPatch("usuario/notas/reordenar")]
+    public async Task<IActionResult> ReordenarBandeja([FromBody] List<ReordenarBandejaItem> items)
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        await _calendarioService.ReordenarBandejaAsync(items, dbUser.IdUsuario);
+        return Ok(new { message = "Bandeja reordenada." });
+    }
+
     // ── CRUD Normativos (Solo Administradores) ──────────────────────────────
     [HttpGet("normativos")]
     [Authorize(Roles = "DIITRA_ADMIN")]
