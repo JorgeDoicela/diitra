@@ -1,4 +1,4 @@
-﻿// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 // DIITRA CoWork — Editor Component (v2.0 — correct origin detection)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -95,12 +95,22 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const fieldRef = React.useRef(field);
     const knownImagesRef = React.useRef<string[]>([]);
     const lastTrWasRemoteRef = React.useRef(false);
+    const lastSelectionSendRef = React.useRef<number>(0);
+    const selectionTimeoutRef = React.useRef<any>(null);
 
     React.useEffect(() => {
         onChangeRef.current = onChange;
         coworkRef.current = cowork;
         fieldRef.current = field;
     });
+
+    React.useEffect(() => {
+        return () => {
+            if (selectionTimeoutRef.current) {
+                clearTimeout(selectionTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const extensions = React.useMemo(() => {
         return buildCoWorkExtensions({
@@ -167,12 +177,30 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
         onSelectionUpdate: ({ editor }) => {
             const { anchor, head } = editor.state.selection;
             const currentField = fieldRef.current;
-            setTimeout(() => {
-                if (coworkRef.current.awareness) {
-                    coworkRef.current.awareness.setLocalStateField(`anchor_${currentField}`, anchor);
-                    coworkRef.current.awareness.setLocalStateField(`head_${currentField}`, head);
-                }
-            }, 0);
+            const now = Date.now();
+            const delay = 30; // ms de throttle para no saturar la red con mensajes WebSocket (30ms = ~33 FPS, prácticamente instantáneo)
+            const elapsed = now - lastSelectionSendRef.current;
+
+            if (selectionTimeoutRef.current) {
+                clearTimeout(selectionTimeoutRef.current);
+                selectionTimeoutRef.current = null;
+            }
+
+            const send = () => {
+                lastSelectionSendRef.current = Date.now();
+                setTimeout(() => {
+                    if (coworkRef.current.awareness) {
+                        coworkRef.current.awareness.setLocalStateField(`anchor_${currentField}`, anchor);
+                        coworkRef.current.awareness.setLocalStateField(`head_${currentField}`, head);
+                    }
+                }, 0);
+            };
+
+            if (elapsed >= delay) {
+                send();
+            } else {
+                selectionTimeoutRef.current = setTimeout(send, delay - elapsed);
+            }
         },
         onFocus: () => {
             const currentField = fieldRef.current;

@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import type { CoWorkUser } from '../types';
-import { coworkLog } from '../utils/log';
 
 
 interface RemoteCursorsProps {
@@ -20,6 +19,7 @@ interface CursorState {
     y: number;
     height: number;
     selectionRects: Array<{ x: number, y: number, width: number, height: number }>;
+    isNearRightEdge?: boolean;
 }
 
 // Comparador para evitar re-renders innecesarios en React
@@ -34,6 +34,7 @@ const cursorsAreEqual = (a: CursorState[], b: CursorState[]) => {
             ca.height !== cb.height ||
             ca.user.color !== cb.user.color ||
             ca.user.name !== cb.user.name ||
+            ca.isNearRightEdge !== cb.isNearRightEdge ||
             ca.selectionRects.length !== cb.selectionRects.length) {
             return false;
         }
@@ -49,36 +50,28 @@ const cursorsAreEqual = (a: CursorState[], b: CursorState[]) => {
 };
 
 export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness, field = 'default' }) => {
-    coworkLog(`[RemoteCursors:${field}] Component rendered: editor=${!!editor} awareness=${!!awareness}`);
     const [cursors, setCursors] = useState<CursorState[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const lastUpdateRef = useRef<number>(0);
     const timeoutRef = useRef<any>(null);
+    // Mapa clientId → último estado válido renderizado. Evita saltos al borrar texto.
+    const lastValidCursorRef = useRef<Map<number, CursorState>>(new Map());
 
     const updateCursors = () => {
-        const hasContainer = !!containerRef.current;
-        const hasEditor = !!editor;
-        const hasView = !!editor?.view;
-        const hasAwareness = !!awareness;
-        const statesCount = awareness ? awareness.getStates().size : 0;
-        
-        coworkLog(`[RemoteCursors:${field}] updateCursors called: container=${hasContainer} editor=${hasEditor} view=${hasView} awareness=${hasAwareness} statesCount=${statesCount}`);
-
         if (!editor || !editor.view || !containerRef.current || !awareness) return;
 
         const states = awareness.getStates();
         const nextCursors: CursorState[] = [];
         const containerRect = containerRef.current.getBoundingClientRect();
-        
-        // Mapa para deduplicar: si un mismo usuario+pestaña aparece con varios clientIDs (fantasmas), 
+
+        // Mapa para deduplicar: si un mismo usuario+pestaña aparece con varios clientIDs (fantasmas),
         // nos quedamos con el más reciente (el clientId más alto suele ser el nuevo).
         const uniqueUsers = new Map<string, { clientId: number, state: any }>();
 
         states.forEach((state: any, clientId) => {
             if (clientId === awareness.clientID) return;
-            
+
             const anchor = state[`anchor_${field}`];
-            coworkLog(`[RemoteCursors:${field}] client ${clientId} user=${state.user?.name} focusedField=${state.focusedField} anchor=${anchor} type=${typeof anchor}`);
 
             if (!state.user || typeof anchor !== 'number') return;
 
@@ -87,7 +80,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
 
             const userKey = `${state.user.id}_${state.user.tabId || clientId}`;
             const existing = uniqueUsers.get(userKey);
-            
+
             if (!existing || clientId > existing.clientId) {
                 uniqueUsers.set(userKey, { clientId, state });
             }
@@ -97,30 +90,43 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
 
         uniqueUsers.forEach(({ clientId, state }) => {
             try {
-                const anchor = state[`anchor_${field}`];
-                const head = state[`head_${field}`] ?? anchor;
-                
-                // Evitar crashes por posiciones desincronizadas u obsoletas
-                if (head < 0 || head > docSize) return;
+                const rawAnchor = state[`anchor_${field}`];
+                const rawHead = state[`head_${field}`] ?? rawAnchor;
+
+                if (typeof rawAnchor !== 'number') return;
+
+                // Si la posición remota está fuera del documento local (borrado reciente),
+                // reutilizamos la última posición válida renderizada para ESTE cursor.
+                // Esto evita el salto al fondo del doc que producía clampear al docSize.
+                if (rawHead < 0 || rawHead > docSize || rawAnchor < 0) {
+                    const last = lastValidCursorRef.current.get(clientId);
+                    if (last) nextCursors.push(last);
+                    return;
+                }
+
+                const head = rawHead;
+                const anchor = rawAnchor <= docSize ? rawAnchor : head;
 
                 const coords = editor.view.coordsAtPos(head);
                 if (!coords) return;
-                
+
                 const selectionRects: CursorState['selectionRects'] = [];
-                if (anchor !== head && anchor >= 0 && anchor <= docSize) {
+                // Solo dibujar el resaltado si la selección abarca más de 1 carácter.
+                // Esto previene micro-resaltados fantasmas (de 1 carácter) causados por desincronizaciones de red durante la escritura fluida.
+                if (Math.abs(anchor - head) > 1) {
                     const from = Math.min(anchor, head);
                     const to = Math.max(anchor, head);
-                    
+
                     try {
                         // Obtener los rangos del DOM y rectángulos exactos por cada línea (Multilínea Perfecto)
                         const start = editor.view.domAtPos(from);
                         const end = editor.view.domAtPos(to);
-                        
+
                         if (start && end) {
                             const range = document.createRange();
                             range.setStart(start.node, start.offset);
                             range.setEnd(end.node, end.offset);
-                            
+
                             const rects = range.getClientRects();
                             for (let i = 0; i < rects.length; i++) {
                                 const rect = rects[i];
@@ -158,16 +164,33 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                     }
                 }
 
-                nextCursors.push({
+                const x = coords.left - containerRect.left;
+                const y = coords.top - containerRect.top;
+                const lineH = coords.bottom - coords.top;
+                const badgeWidth = 220;
+                const isNearRightEdge = x > (containerRect.width - badgeWidth) && x > badgeWidth;
+
+                // Validar que la posición sea razonable (no NaN, no negativa extrema).
+                // Coordenadas fuera de rango significan un estado de transición del DOM; conservamos la última.
+                if (!isFinite(x) || !isFinite(y) || lineH <= 0 || lineH > 500) {
+                    const last = lastValidCursorRef.current.get(clientId);
+                    if (last) nextCursors.push(last);
+                    return;
+                }
+
+                const cursorEntry: CursorState = {
                     clientId,
                     user: state.user,
                     anchor,
                     head,
-                    x: coords.left - containerRect.left,
-                    y: coords.top - containerRect.top,
-                    height: coords.bottom - coords.top,
-                    selectionRects
-                });
+                    x,
+                    y,
+                    height: lineH,
+                    selectionRects,
+                    isNearRightEdge
+                };
+                lastValidCursorRef.current.set(clientId, cursorEntry);
+                nextCursors.push(cursorEntry);
             } catch (e) {
                 // Silently catch errors for individual cursors to not crash others
             }
@@ -182,52 +205,58 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
     };
 
     useEffect(() => {
-        coworkLog(`[RemoteCursors:${field}] useEffect registering listeners: editor=${!!editor} awareness=${!!awareness}`);
         if (!editor || !awareness) return;
+
+        let rafId: number | null = null;
 
         const handleUpdate = () => {
             const now = Date.now();
             const remaining = 30 - (now - lastUpdateRef.current);
-            
+
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
 
-            if (remaining <= 0) {
-                lastUpdateRef.current = now;
-                try {
-                    updateCursors();
-                } catch (error: any) {
-                    console.error(`[RemoteCursors:${field}] Error inside updateCursors:`, error);
-                }
-            } else {
-                timeoutRef.current = setTimeout(() => {
-                    timeoutRef.current = null;
-                    lastUpdateRef.current = Date.now();
+            const scheduleUpdate = () => {
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    rafId = null;
                     try {
                         updateCursors();
                     } catch (error: any) {
                         console.error(`[RemoteCursors:${field}] Error inside updateCursors:`, error);
                     }
+                });
+            };
+
+            if (remaining <= 0) {
+                lastUpdateRef.current = now;
+                scheduleUpdate();
+            } else {
+                timeoutRef.current = setTimeout(() => {
+                    timeoutRef.current = null;
+                    lastUpdateRef.current = Date.now();
+                    scheduleUpdate();
                 }, remaining);
             }
         };
 
         // Escuchar actualizaciones del protocolo de awareness
         awareness.on('update', handleUpdate);
-        
+
         // Escuchar redimensiones de la ventana
         window.addEventListener('resize', handleUpdate);
-        
-        // Escuchar transacciones del editor local (escritura, scroll interno, layout)
-        editor.on('transaction', handleUpdate);
+
+        // Escuchar cambios de contenido y de selección (después de actualizar el DOM)
+        editor.on('update', handleUpdate);
+        editor.on('selectionUpdate', handleUpdate);
 
         // Escuchar cambios de tamaño en el editor para cuando colapsan/expanden el sidebar
         const resizeObserver = new ResizeObserver(() => {
             handleUpdate();
         });
-        
+
         if (editor?.view?.dom?.parentElement) {
             resizeObserver.observe(editor.view.dom.parentElement);
         }
@@ -238,11 +267,15 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
         return () => {
             awareness.off('update', handleUpdate);
             window.removeEventListener('resize', handleUpdate);
-            editor.off('transaction', handleUpdate);
+            editor.off('update', handleUpdate);
+            editor.off('selectionUpdate', handleUpdate);
             resizeObserver.disconnect();
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
+            }
+            if (rafId) {
+                cancelAnimationFrame(rafId);
             }
         };
     }, [editor, awareness, field]);
@@ -255,7 +288,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                 <React.Fragment key={cursor.clientId}>
                     {/* ── Resaltado de Selección (Highlight) ── */}
                     {cursor.selectionRects.map((rect, i) => (
-                        <div 
+                        <div
                             key={i}
                             className="absolute opacity-25 rounded-[2px] pointer-events-none"
                             style={{
@@ -269,32 +302,31 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                     ))}
 
                     {/* ── Cursor Line ── */}
-                    <div 
-                        className="absolute transition-all duration-150 ease-out"
-                        style={{ 
-                            left: `${cursor.x}px`, 
+                    <div
+                        className="absolute"
+                        style={{
+                            left: `${cursor.x}px`,
                             top: `${cursor.y}px`,
-                            height: `${cursor.height}px` 
+                            height: `${cursor.height}px`
                         }}
                     >
-                        {/* Línea Principal con Pulso */}
-                        <div 
-                            className="w-[2.5px] h-full relative"
+                        {/* Línea Principal del Cursor */}
+                        <div
+                            className="w-[2.5px] h-full"
                             style={{ backgroundColor: cursor.user.color }}
-                        >
-                            {/* Efecto de Pulso en la punta */}
-                            <div 
-                                className="absolute -top-1 -left-[3px] w-2.5 h-2.5 rounded-full animate-ping opacity-40"
-                                style={{ backgroundColor: cursor.user.color }}
-                            />
-                        </div>
+                        />
 
                         {/* Etiqueta Flotante (Pill Style) */}
-                        <div 
-                            className="absolute top-0 left-0 px-2 py-1 rounded-full rounded-tl-none whitespace-nowrap text-[10px] font-black text-white shadow-lg flex items-center gap-1.5 transform -translate-y-[110%] transition-transform hover:scale-105"
-                            style={{ 
+                        <div
+                            className={`absolute top-0 px-2 py-1 rounded-full whitespace-nowrap text-[10px] font-black text-white shadow-lg flex items-center gap-1.5 ${
+                                cursor.isNearRightEdge
+                                    ? 'right-0 rounded-tr-none'
+                                    : 'left-0 rounded-tl-none'
+                            }`}
+                            style={{
                                 backgroundColor: cursor.user.color,
-                                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))'
+                                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))',
+                                transform: 'translateY(calc(-100% - 4px))'
                             }}
                         >
                             {/* Avatar/Iniciales Círculo */}
@@ -306,14 +338,6 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                     </div>
                 </React.Fragment>
             ))}
-
-            <style>{`
-                @keyframes pulse {
-                    0% { transform: scale(1); opacity: 0.8; }
-                    50% { transform: scale(1.1); opacity: 1; }
-                    100% { transform: scale(1); opacity: 0.8; }
-                }
-            `}</style>
         </div>
     );
 };
