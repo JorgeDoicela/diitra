@@ -63,12 +63,6 @@ namespace diitra_infrastructure.Research
                     {
                         Titulo = project.Titulo,
                         CodigoInstitucional = project.CodigoInstitucional,
-                        DescripcionProyecto = project.DescripcionProyecto,
-                        Antecedentes = project.Antecedentes,
-                        Justificacion = project.Justificacion,
-                        MarcoTeorico = project.MarcoTeorico,
-                        Metodologia = project.Metodologia,
-                        Evaluacion = project.MetodoEvaluacion,
                         TiempoEjecucion = project.TiempoEjecucion,
                         TieneGrupoInvestigacion = project.TieneGrupo,
                         IdGrupo = project.IdGrupo,
@@ -96,12 +90,9 @@ namespace diitra_infrastructure.Research
                 // 2. Mapeo de Atributos Nucleares
                 project.Titulo = dto.Titulo ?? "PROYECTO SIN TÍTULO";
                 project.CodigoInstitucional = dto.CodigoInstitucional;
-                project.DescripcionProyecto = dto.DescripcionProyecto;
-                project.Antecedentes = dto.Antecedentes;
-                project.Justificacion = dto.Justificacion;
-                project.MarcoTeorico = dto.MarcoTeorico;
-                project.Metodologia = dto.Metodologia;
-                project.MetodoEvaluacion = dto.Evaluacion;
+                // Los campos descriptivos (Antecedentes, Justificacion, MarcoTeorico, Metodologia,
+                // MetodoEvaluacion, DescripcionProyecto) NO se mapean a columnas relacionales;
+                // viven exclusivamente en MetadataCacesJson (línea ~245) y en DocumentInstances.
                 project.TiempoEjecucion = dto.TiempoEjecucion;
                 project.FechaPresentacion = ParseDateOnly(dto.FechaPresentacion);
                 project.FechaInicio = ParseDateOnly(dto.FechaInicio ?? dto.FechaInicioEstimada);
@@ -320,33 +311,39 @@ namespace diitra_infrastructure.Research
                     var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == creatorUserIdRef);
                     if (internalUser != null && !await IsOversightUserAsync(internalUser.IdUsuario))
                     {
-                        var isLinked = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == internalUser.IdUsuario) ||
-                                       await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == internalUser.IdUsuario);
-
+                        var isLinked = await _context.InvProyectoParticipantes.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == internalUser.IdUsuario);
+ 
                         if (!isLinked)
                         {
                             var phone = await GetUserPhoneFromCatalogAsync(internalUser.IdSigafi, internalUser.TablaSigafi);
                             if (internalUser.TablaSigafi == "alumno")
                             {
-                                _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
+                                _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                                 {
                                     IdProyecto = project.IdProyecto,
                                     IdUsuario = internalUser.IdUsuario,
+                                    TipoParticipante = "Alumno",
                                     Rol = "Semillerista",
                                     NivelAcademico = "Pregrado",
-                                    Telefono = phone
+                                    Telefono = phone,
+                                    EsDirector = false,
+                                    Activo = true,
+                                    FechaInicio = DateTime.Now
                                 });
                             }
                             else
                             {
-                                _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                                _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                                 {
                                     IdProyecto = project.IdProyecto,
                                     IdUsuario = internalUser.IdUsuario,
+                                    TipoParticipante = "Docente",
                                     Rol = "Director de Proyecto",
                                     NivelAcademico = "Tercer Nivel",
                                     Telefono = phone,
-                                    EsDirector = true
+                                    EsDirector = true,
+                                    Activo = true,
+                                    FechaInicio = DateTime.Now
                                 });
                             }
                         }
@@ -385,12 +382,6 @@ namespace diitra_infrastructure.Research
                 {
                     Titulo = project.Titulo,
                     CodigoInstitucional = project.CodigoInstitucional,
-                    DescripcionProyecto = project.DescripcionProyecto,
-                    Antecedentes = project.Antecedentes,
-                    Justificacion = project.Justificacion,
-                    MarcoTeorico = project.MarcoTeorico,
-                    Metodologia = project.Metodologia,
-                    Evaluacion = project.MetodoEvaluacion,
                     TiempoEjecucion = project.TiempoEjecucion,
                     TieneGrupoInvestigacion = project.TieneGrupo,
                     IdGrupo = project.IdGrupo,
@@ -430,8 +421,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.IdObjetivoPndNavigation)
                 .Include(p => p.IdEntidadAliadaNavigation)
-                .Include(p => p.InvProyectosProfesores)
-                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProyectoParticipantes)
                 .Include(p => p.InvProductos)
                 .Include(p => p.InvInformesAvance)
                 .Include(p => p.InvProyectosCarreras).ThenInclude(pc => pc.IdCarreraNavigation)
@@ -456,27 +446,23 @@ namespace diitra_infrastructure.Research
                     FechaFin = p.FechaFin,
                     TiempoEjecucion = p.TiempoEjecucion,
                     ConvocatoriaTitulo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.Titulo : null,
-                    TotalInvestigadores = p.InvProyectosProfesores.Count + p.InvProyectosAlumnos.Count,
-                TotalProductos = p.InvProductos.Count,
+                    TotalInvestigadores = p.InvProyectoParticipantes.Count(pp => pp.Activo != false),
+                    TotalProductos = p.InvProductos.Count,
                     TotalInformes = p.InvInformesAvance.Count,
                     InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
                     TrlActual = (int?)p.TrlActual,
                     TrlMeta = (int?)p.TrlMeta,
-                    TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
+                    TotalEstudiantes = p.InvProyectoParticipantes.Count(pp => pp.TipoParticipante == "Alumno" && pp.Activo != false),
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
-                    DirectorNombre = p.InvProyectosProfesores
+                    DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
                         .FirstOrDefault()
-                        ?? p.InvProyectosProfesores
+                        ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
-                        .FirstOrDefault()
-                        ?? p.InvProyectosAlumnos
-                        .Where(pa => pa.IdUsuarioNavigation != null)
-                        .Select(pa => pa.IdUsuarioNavigation.Nombre)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
@@ -489,30 +475,24 @@ namespace diitra_infrastructure.Research
                 .Where(u => u.IdSigafi == userIdReferencia)
                 .Select(u => (int?)u.IdUsuario)
                 .FirstOrDefaultAsync();
-
+ 
             if (userId == null)
                 return new List<ProyectoResumenDto>();
-
-            // Proyectos donde participa como profesor
-            var proyectosProfesor = _context.InvProyectosProfesores
+ 
+            // Proyectos donde participa (docente o alumno)
+            var misProyectosIds = await _context.InvProyectoParticipantes
                 .Where(pp => pp.IdUsuario == userId.Value)
-                .Select(pp => pp.IdProyecto);
-
-            // Proyectos donde participa como alumno
-            var proyectosAlumno = _context.InvProyectosAlumnos
-                .Where(pa => pa.IdUsuario == userId.Value)
-                .Select(pa => pa.IdProyecto);
-
-            var misProyectosIds = proyectosProfesor.Union(proyectosAlumno);
-
+                .Select(pp => pp.IdProyecto)
+                .Distinct()
+                .ToListAsync();
+ 
             return await _context.InvProyectos
                 .Where(p => misProyectosIds.Contains(p.IdProyecto))
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.IdObjetivoPndNavigation)
                 .Include(p => p.IdEntidadAliadaNavigation)
-                .Include(p => p.InvProyectosProfesores)
-                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProyectoParticipantes)
                 .Include(p => p.InvProductos)
                 .Include(p => p.InvInformesAvance)
                 .Include(p => p.InvProyectosCarreras).ThenInclude(pc => pc.IdCarreraNavigation)
@@ -537,35 +517,27 @@ namespace diitra_infrastructure.Research
                     FechaFin = p.FechaFin,
                     TiempoEjecucion = p.TiempoEjecucion,
                     ConvocatoriaTitulo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.Titulo : null,
-                    RolEnProyecto = p.InvProyectosProfesores
+                    RolEnProyecto = p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuario == userId.Value)
                         .Select(pp => pp.Rol)
-                        .FirstOrDefault()
-                        ?? p.InvProyectosAlumnos
-                        .Where(pa => pa.IdUsuario == userId.Value)
-                        .Select(pa => pa.Rol)
                         .FirstOrDefault() ?? "Investigador",
-                    TotalInvestigadores = p.InvProyectosProfesores.Count + p.InvProyectosAlumnos.Count,
+                    TotalInvestigadores = p.InvProyectoParticipantes.Count(pp => pp.Activo != false),
                     TotalProductos = p.InvProductos.Count,
                     TotalInformes = p.InvInformesAvance.Count,
                     InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
                     TrlActual = (int?)p.TrlActual,
                     TrlMeta = (int?)p.TrlMeta,
-                    TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
+                    TotalEstudiantes = p.InvProyectoParticipantes.Count(pp => pp.TipoParticipante == "Alumno" && pp.Activo != false),
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
-                    DirectorNombre = p.InvProyectosProfesores
+                    DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
                         .FirstOrDefault()
-                        ?? p.InvProyectosProfesores
+                        ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
-                        .FirstOrDefault()
-                        ?? p.InvProyectosAlumnos
-                        .Where(pa => pa.IdUsuarioNavigation != null)
-                        .Select(pa => pa.IdUsuarioNavigation.Nombre)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
@@ -629,15 +601,28 @@ namespace diitra_infrastructure.Research
 
             if (basicProject.Estado == "Prepropuesta" || basicProject.Estado == "Prepropuesta Rechazada")
             {
+                string desc = "";
+                if (!string.IsNullOrEmpty(basicProject.MetadataCacesJson))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(basicProject.MetadataCacesJson);
+                        if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                        {
+                            desc = el.GetString() ?? "";
+                        }
+                    }
+                    catch {}
+                }
+
                 var lightDto = new ProyectoDto
                 {
                     Uuid = basicProject.Uuid,
                     Estado = basicProject.Estado,
-                    CodigoInstitucional = basicProject.CodigoInstitucional,
                     IdConvocatoria = basicProject.IdConvocatoria,
                     ConvocatoriaTitulo = basicProject.IdConvocatoriaNavigation?.Titulo,
                     Titulo = basicProject.Titulo,
-                    DescripcionProyecto = basicProject.DescripcionProyecto,
+                    DescripcionProyecto = desc,
                     TieneGrupoInvestigacion = basicProject.TieneGrupo,
                     PuntajeEvaluacion = basicProject.PuntajeEvaluacion,
                     LineaInvestigacion = basicProject.IdSublineaNavigation?.IdLineaNavigation?.NombreLinea,
@@ -647,12 +632,12 @@ namespace diitra_infrastructure.Research
                     CostoTotal = basicProject.PresupuestoEstimado ?? 0,
                     Investigadores = new List<InvestigadorDto>()
                 };
-
-                var projectProfs = await _context.InvProyectosProfesores
+ 
+                var projectProfs = await _context.InvProyectoParticipantes
                     .Include(pp => pp.IdUsuarioNavigation)
-                    .Where(pp => pp.IdProyecto == basicProject.IdProyecto)
+                    .Where(pp => pp.IdProyecto == basicProject.IdProyecto && pp.TipoParticipante == "Docente")
                     .ToListAsync();
-
+ 
                 foreach (var pp in projectProfs)
                 {
                     lightDto.Investigadores.Add(new InvestigadorDto
@@ -665,18 +650,18 @@ namespace diitra_infrastructure.Research
                         EsDirector = pp.EsDirector ?? (pp.EsDirector == true)
                     });
                 }
-
+ 
                 var principalCarrera = await _context.InvProyectosCarreras
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => pc.IdProyecto == basicProject.IdProyecto)
                     .OrderByDescending(pc => pc.Modalidad == "PRINCIPAL")
                     .Select(pc => pc.IdCarreraNavigation.Carrera1)
                     .FirstOrDefaultAsync();
-
+ 
                 lightDto.Carrera = principalCarrera;
                 return lightDto;
             }
-
+ 
             var p = await _context.InvProyectos
                 .AsSplitQuery()
                 .Include(p => p.IdSublineaNavigation).ThenInclude(s => s!.IdLineaNavigation)
@@ -685,8 +670,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.IdProgramaNavigation)
                 .Include(p => p.IdTipoNavigation)
                 .Include(p => p.InvProyectosCarreras)
-                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
-                .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
+                .Include(p => p.InvProyectoParticipantes).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
                 .Include(p => p.InvCronogramas)
@@ -735,18 +719,18 @@ namespace diitra_infrastructure.Research
 
             var researchSubcatId = await GetResearchSubcatIdAsync();
 
-            var profCedulas = p.InvProyectosProfesores
-                .Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim())
+            var profCedulas = p.InvProyectoParticipantes
+                .Where(pp => pp.TipoParticipante == "Docente" && pp.IdUsuarioNavigation != null)
+                .Select(pp => pp.IdUsuarioNavigation!.IdSigafi.Trim())
                 .Where(c => !string.IsNullOrEmpty(c))
-                .Cast<string>()
                 .ToList();
-
-            var studentCedulas = p.InvProyectosAlumnos
-                .Select(pa => pa.IdUsuarioNavigation?.IdSigafi?.Trim())
+ 
+            var studentCedulas = p.InvProyectoParticipantes
+                .Where(pp => pp.TipoParticipante == "Alumno" && pp.IdUsuarioNavigation != null)
+                .Select(pp => pp.IdUsuarioNavigation!.IdSigafi.Trim())
                 .Where(c => !string.IsNullOrEmpty(c))
-                .Cast<string>()
                 .ToList();
-
+ 
             var profCareers = new List<ProfesoresCarrerasPeriodo>();
             if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
             {
@@ -755,17 +739,17 @@ namespace diitra_infrastructure.Research
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdProfesor != null && profCedulaLts.Contains(pc.IdProfesor))
                     .ToListAsync();
-
+ 
                 profCareers = rawCareers
                     .Where(pc => profCedulas.Any(ced => pc.IdProfesor!.Trim().Equals(ced, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             }
-
+ 
             var alumCareers = new List<AlumnosCarrera>();
             var students = new List<Alumno>();
             var currentMatriculas = new List<Matricula>();
             var relevantCursos = new List<Curso>();
-
+ 
             if (studentCedulas.Any())
             {
                 var studentCedulaLts = studentCedulas.Select(c => c.Trim()).ToList();
@@ -775,52 +759,53 @@ namespace diitra_infrastructure.Research
                 alumCareers = rawAlumCareers
                     .Where(ac => studentCedulas.Any(ced => ac.IdAlumno!.Trim().Equals(ced, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
-
+ 
                 students = await _context.Alumnos
                     .Where(s => studentCedulas.Contains(s.IdAlumno.Trim()))
                     .ToListAsync();
-
+ 
                 if (!string.IsNullOrEmpty(periodId))
                 {
                     currentMatriculas = await _context.Matriculas
                         .Where(m => studentCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == periodId)
                         .ToListAsync();
                 }
-
+ 
                 var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
                     .Concat(students.Select(s => s.IdNivel))
                     .Where(id => id.HasValue)
                     .Select(id => id!.Value)
                     .Distinct()
                     .ToList();
-
+ 
                 relevantCursos = await _context.Cursos.Where(c => levelIds.Contains(c.IdNivel)).ToListAsync();
             }
-
+ 
             var allCarrerasList = await _context.Carreras.ToListAsync();
-
+ 
             var researchHours = new List<ProfesoresActividade>();
-            var otherAssignedHours = new List<InvProyectoProfesor>();
+            var otherAssignedHours = new List<InvProyectoParticipante>();
             if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
             {
                 researchHours = await _context.ProfesoresActividades
                     .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == periodId)
                     .ToListAsync();
-
-                var profUserIds = p.InvProyectosProfesores.Select(pp => pp.IdUsuario).Distinct().ToList();
+ 
+                var profUserIds = p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Docente").Select(pp => pp.IdUsuario).Distinct().ToList();
                 var estadosConCarga = await GetEstadosConCargaHorariaAsync();
-                otherAssignedHours = await _context.InvProyectosProfesores
+                otherAssignedHours = await _context.InvProyectoParticipantes
                     .Include(pp => pp.IdProyectoNavigation)
-                    .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
+                    .Where(pp => pp.TipoParticipante == "Docente" &&
+                                 profUserIds.Contains(pp.IdUsuario) &&
                                  pp.IdProyecto != p.IdProyecto &&
                                  pp.Activo != false &&
-                                 estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
+                                 estadosConCarga.Contains(pp.IdProyectoNavigation!.Estado))
                     .ToListAsync();
             }
-
+ 
             var investigadoresList = new List<InvestigadorDto>();
-
-            foreach (var pp in p.InvProyectosProfesores)
+ 
+            foreach (var pp in p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Docente"))
             {
                 var phone = await GetUserPhoneFromCatalogAsync(pp.IdUsuarioNavigation?.IdSigafi, pp.IdUsuarioNavigation?.TablaSigafi);
                 if (string.IsNullOrEmpty(phone)) phone = pp.Telefono ?? string.Empty;
@@ -871,7 +856,7 @@ namespace diitra_infrastructure.Research
                 });
             }
 
-            foreach (var pa in p.InvProyectosAlumnos)
+            foreach (var pa in p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Alumno"))
             {
                 var phone = await GetUserPhoneFromCatalogAsync(pa.IdUsuarioNavigation?.IdSigafi, pa.IdUsuarioNavigation?.TablaSigafi);
                 if (string.IsNullOrEmpty(phone)) phone = pa.Telefono ?? string.Empty;
@@ -954,11 +939,9 @@ namespace diitra_infrastructure.Research
             }
             dto.IdObjetivoPnd = p.IdObjetivoPnd;
             dto.Titulo = p.Titulo;
-            dto.DescripcionProyecto = p.DescripcionProyecto;
-            dto.Antecedentes = p.Antecedentes;
-            dto.Justificacion = p.Justificacion;
-            dto.MarcoTeorico = p.MarcoTeorico;
-            dto.Metodologia = p.Metodologia;
+            // Nota: Los textos descriptivos (Antecedentes, Justificacion, MarcoTeorico, Metodologia, etc.)
+            // se obtienen exclusivamente del MetadataCacesJson (deserializado arriba al DTO).
+            // No se leen desde columnas relacionales.
             dto.TiempoEjecucion = p.TiempoEjecucion;
             dto.TieneGrupoInvestigacion = p.TieneGrupo;
             dto.TrlInicial = (int?)p.TrlInicial;
@@ -976,12 +959,12 @@ namespace diitra_infrastructure.Research
             dto.Programa = p.IdProgramaNavigation?.Nombre ?? dto.Programa;
             dto.TipoInvestigacion = p.IdTipoNavigation?.Nombre ?? dto.TipoInvestigacion;
 
-            dto.DirectorProyecto = p.InvProyectosProfesores
-                .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
+            dto.DirectorProyecto = p.InvProyectoParticipantes
+                .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null && pp.TipoParticipante == "Docente")
                 .Select(pp => pp.IdUsuarioNavigation.Nombre)
                 .FirstOrDefault()
-                ?? p.InvProyectosProfesores
-                .Where(pp => pp.IdUsuarioNavigation != null)
+                ?? p.InvProyectoParticipantes
+                .Where(pp => pp.IdUsuarioNavigation != null && pp.TipoParticipante == "Docente")
                 .Select(pp => pp.IdUsuarioNavigation.Nombre)
                 .FirstOrDefault()
                 ?? dto.DirectorProyecto;
@@ -1141,16 +1124,9 @@ namespace diitra_infrastructure.Research
                 .SumAsync(p => p.ValorEjecucion ?? 0);
 
             // Contar investigadores activos únicos (docentes y alumnos en proyectos que no estén borrador/rechazado/anulado)
-            var profesoresActivosQuery = _context.InvProyectosProfesores
-                .Where(pp => pp.Activo != false && pp.IdProyectoNavigation.Estado != "Borrador" && pp.IdProyectoNavigation.Estado != "Rechazado" && pp.IdProyectoNavigation.Estado != "Anulado")
-                .Select(pp => pp.IdUsuario);
-
-            var alumnosActivosQuery = _context.InvProyectosAlumnos
-                .Where(pa => pa.Activo != false && pa.IdProyectoNavigation.Estado != "Borrador" && pa.IdProyectoNavigation.Estado != "Rechazado" && pa.IdProyectoNavigation.Estado != "Anulado")
-                .Select(pa => pa.IdUsuario);
-
-            stats.TotalInvestigadoresActivos = await profesoresActivosQuery
-                .Union(alumnosActivosQuery)
+            stats.TotalInvestigadoresActivos = await _context.InvProyectoParticipantes
+                .Where(pp => pp.Activo != false && pp.IdProyectoNavigation!.Estado != "Borrador" && pp.IdProyectoNavigation.Estado != "Rechazado" && pp.IdProyectoNavigation.Estado != "Anulado")
+                .Select(pp => pp.IdUsuario)
                 .Distinct()
                 .CountAsync();
 
@@ -1183,10 +1159,8 @@ namespace diitra_infrastructure.Research
 
             if (userId != null)
             {
-                var misIds = _context.InvProyectosProfesores
-                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto)
-                    .Union(_context.InvProyectosAlumnos
-                    .Where(pa => pa.IdUsuario == userId.Value).Select(pa => pa.IdProyecto));
+                var misIds = _context.InvProyectoParticipantes
+                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto);
 
                 stats.MisProyectosActivos = await _context.InvProyectos
                     .Where(p => misIds.Contains(p.IdProyecto) && (p.Estado == "En Ejecución" || p.Estado == "Aprobado"))
@@ -1208,8 +1182,8 @@ namespace diitra_infrastructure.Research
                     .Where(i => misIds.Contains(i.IdProyecto) && i.Estado == "Pendiente")
                     .CountAsync();
 
-                stats.MisHorasInvestigacion = await _context.InvProyectosProfesores
-                    .Where(pp => pp.IdUsuario == userId.Value && pp.Activo != false && (pp.IdProyectoNavigation.Estado == "En Ejecución" || pp.IdProyectoNavigation.Estado == "Aprobado"))
+                stats.MisHorasInvestigacion = await _context.InvProyectoParticipantes
+                    .Where(pp => pp.IdUsuario == userId.Value && pp.Activo != false && pp.TipoParticipante == "Docente" && (pp.IdProyectoNavigation!.Estado == "En Ejecución" || pp.IdProyectoNavigation.Estado == "Aprobado"))
                     .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
 
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -1241,10 +1215,8 @@ namespace diitra_infrastructure.Research
 
             if (!isAdmin && userId != null)
             {
-                var misIds = _context.InvProyectosProfesores
-                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto)
-                    .Union(_context.InvProyectosAlumnos
-                    .Where(pa => pa.IdUsuario == userId.Value).Select(pa => pa.IdProyecto));
+                var misIds = _context.InvProyectoParticipantes
+                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto);
 
                 ultimosProyectosQuery = ultimosProyectosQuery.Where(p => misIds.Contains(p.IdProyecto));
                 ultimosInformesQuery = ultimosInformesQuery.Where(i => misIds.Contains(i.IdProyecto));
@@ -1356,15 +1328,13 @@ namespace diitra_infrastructure.Research
             if (investigadores == null) return;
 
             // 1. Obtener los integrantes actuales de la base de datos (tanto activos como inactivos)
-            var currentProfs = await _context.InvProyectosProfesores
+            var currentParticipants = await _context.InvProyectoParticipantes
                 .Include(pp => pp.IdUsuarioNavigation)
                 .Where(p => p.IdProyecto == projectId)
                 .ToListAsync();
 
-            var currentAlums = await _context.InvProyectosAlumnos
-                .Include(pa => pa.IdUsuarioNavigation)
-                .Where(p => p.IdProyecto == projectId)
-                .ToListAsync();
+            var currentProfs = currentParticipants.Where(pp => pp.TipoParticipante == "Docente").ToList();
+            var currentAlums = currentParticipants.Where(pp => pp.TipoParticipante == "Alumno").ToList();
 
             // Guardar cédulas activas recibidas (filtrar las que explícitamente vienen inactivas)
             var activeCedulas = investigadores
@@ -1470,15 +1440,17 @@ namespace diitra_infrastructure.Research
                     else if (!isFromWizard)
                     {
                         // Agregar nuevo
-                        _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
+                        _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
+                            TipoParticipante = "Alumno",
                             Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await GetUserPhoneFromCatalogAsync(persona.IdSigafi, persona.TablaSigafi),
                             HorasSemanales = inv.HorasSemanales,
                             Activo = inv.Activo ?? true,
+                            EsDirector = false,
                             FechaInicio = DateTime.Now,
                             FechaFin = inv.Activo == false ? DateTime.Now : null,
                             MotivoCambio = inv.Activo == false ? "Retirado del equipo" : null
@@ -1546,10 +1518,11 @@ namespace diitra_infrastructure.Research
                     else if (!isFromWizard)
                     {
                         // Agregar nuevo
-                        _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                        _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
+                            TipoParticipante = "Docente",
                             Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await GetUserPhoneFromCatalogAsync(persona.IdSigafi, persona.TablaSigafi),
@@ -1750,8 +1723,14 @@ namespace diitra_infrastructure.Research
         private async Task SyncPresupuestoAsync(int projectId, System.Collections.Generic.List<RecursoNecesarioDto>? recursos)
         {
             if (recursos == null) return;
-            var old = _context.InvPresupuestoItems.Where(p => p.IdProyecto == projectId);
-            _context.InvPresupuestoItems.RemoveRange(old);
+
+            // Upsert diferencial: solo elimina lo que realmente ya no existe
+            var existing = await _context.InvPresupuestoItems
+                .Where(p => p.IdProyecto == projectId)
+                .ToListAsync();
+
+            _context.InvPresupuestoItems.RemoveRange(existing);
+            await _context.SaveChangesAsync(); // flush antes de reinsertar (columna GENERATED valorTotal)
 
             foreach (var r in recursos)
             {
@@ -1771,12 +1750,30 @@ namespace diitra_infrastructure.Research
         private async Task SyncMmlAsync(int projectId, System.Collections.Generic.List<MmlRowDto>? mml)
         {
             if (mml == null) return;
-            var old = _context.InvProyectosMml.Where(m => m.IdProyecto == projectId);
-            _context.InvProyectosMml.RemoveRange(old);
+
+            // Upsert diferencial: limpia solo si hay contenido nuevo que reemplazar
+            var existing = await _context.InvProyectosMml
+                .Where(m => m.IdProyecto == projectId)
+                .ToListAsync();
+
+            var newResumenes = mml
+                .Where(r => !string.IsNullOrWhiteSpace(r.Resumen))
+                .Select(r => r.Resumen!.Trim())
+                .ToHashSet();
+
+            var toDelete = existing
+                .Where(e => !newResumenes.Contains(e.ResumenNarrativo.Trim()))
+                .ToList();
+            _context.InvProyectosMml.RemoveRange(toDelete);
+
+            var existingResumenes = existing
+                .Select(e => e.ResumenNarrativo.Trim())
+                .ToHashSet();
 
             foreach (var row in mml)
             {
                 if (string.IsNullOrWhiteSpace(row.Resumen)) continue;
+                if (existingResumenes.Contains(row.Resumen.Trim())) continue; // ya existe
                 _context.InvProyectosMml.Add(new InvProyectoMml
                 {
                     IdProyecto = projectId,
@@ -1792,16 +1789,35 @@ namespace diitra_infrastructure.Research
         private async Task SyncImpactosAsync(int projectId, ImpactoProyectoDto? impacto)
         {
             if (impacto == null) return;
-            var old = _context.InvImpactosProyecto.Where(i => i.IdProyecto == projectId);
-            _context.InvImpactosProyecto.RemoveRange(old);
 
-            // Mapeo basado en el catálogo estándar (ID 1-6)
-            if (!string.IsNullOrWhiteSpace(impacto.Social)) AddImpacto(projectId, 1, impacto.Social);
-            if (!string.IsNullOrWhiteSpace(impacto.Cientifico)) AddImpacto(projectId, 2, impacto.Cientifico);
-            if (!string.IsNullOrWhiteSpace(impacto.Economico)) AddImpacto(projectId, 3, impacto.Economico);
-            if (!string.IsNullOrWhiteSpace(impacto.Politico)) AddImpacto(projectId, 4, impacto.Politico);
-            if (!string.IsNullOrWhiteSpace(impacto.Ambiental)) AddImpacto(projectId, 5, impacto.Ambiental);
-            if (!string.IsNullOrWhiteSpace(impacto.Otro)) AddImpacto(projectId, 6, impacto.Otro);
+            // Upsert diferencial: actualiza descripción si ya existe la categoría, agrega si no
+            var existing = await _context.InvImpactosProyecto
+                .Where(i => i.IdProyecto == projectId)
+                .ToListAsync();
+
+            var newImpactos = new Dictionary<int, string?>
+            {
+                { 1, impacto.Social },
+                { 2, impacto.Cientifico },
+                { 3, impacto.Economico },
+                { 4, impacto.Politico },
+                { 5, impacto.Ambiental },
+                { 6, impacto.Otro }
+            };
+
+            foreach (var kvp in newImpactos)
+            {
+                var existingItem = existing.FirstOrDefault(e => e.IdCatImpacto == kvp.Key);
+                if (string.IsNullOrWhiteSpace(kvp.Value))
+                {
+                    if (existingItem != null) _context.InvImpactosProyecto.Remove(existingItem);
+                    continue;
+                }
+                if (existingItem != null)
+                    existingItem.Descripcion = kvp.Value;
+                else
+                    AddImpacto(projectId, kvp.Key, kvp.Value);
+            }
         }
 
         private void AddImpacto(int projectId, int catId, string desc)
@@ -1817,20 +1833,32 @@ namespace diitra_infrastructure.Research
         private async Task SyncProductosAsync(int projectId, System.Collections.Generic.List<ProductoEsperadoDto>? productos)
         {
             if (productos == null) return;
-            var old = _context.InvProductos.Where(p => p.IdProyecto == projectId);
-            _context.InvProductos.RemoveRange(old);
+
+            var existing = await _context.InvProductos
+                .Where(p => p.IdProyecto == projectId)
+                .ToListAsync();
+
+            var newTitulos = productos
+                .Where(p => !string.IsNullOrWhiteSpace(p.Tipo))
+                .Select(p => p.Tipo!.Trim())
+                .ToHashSet();
+
+            // Eliminar productos que ya no están en la lista
+            var toDelete = existing.Where(e => !newTitulos.Contains(e.Titulo.Trim())).ToList();
+            _context.InvProductos.RemoveRange(toDelete);
+
+            var existingTitulos = existing.Select(e => e.Titulo.Trim()).ToHashSet();
 
             foreach (var p in productos)
             {
                 if (string.IsNullOrWhiteSpace(p.Tipo)) continue;
+                if (existingTitulos.Contains(p.Tipo.Trim())) continue; // ya existe
 
-                // Intentamos buscar el ID del tipo de producto por nombre o UUID si viniera
                 var cat = await _context.InvCatTipoProductos.FirstOrDefaultAsync(c => c.Nombre == p.Tipo);
-
                 _context.InvProductos.Add(new InvProducto
                 {
                     IdProyecto = projectId,
-                    IdTipoProducto = cat?.IdTipoProducto ?? 1, // Default a Académico si no se encuentra
+                    IdTipoProducto = cat?.IdTipoProducto ?? 1,
                     Titulo = p.Tipo,
                     Cantidad = int.TryParse(p.Cantidad, out var cant) ? cant : 1
                 });
@@ -1927,12 +1955,25 @@ namespace diitra_infrastructure.Research
         private async Task SyncBibliografiaAsync(int projectId, System.Collections.Generic.List<string>? biblio)
         {
             if (biblio == null) return;
-            var old = _context.InvBibliografiasProyecto.Where(b => b.IdProyecto == projectId);
-            _context.InvBibliografiasProyecto.RemoveRange(old);
 
+            var existing = await _context.InvBibliografiasProyecto
+                .Where(b => b.IdProyecto == projectId)
+                .ToListAsync();
+
+            var newCitas = biblio
+                .Where(b => !string.IsNullOrWhiteSpace(b))
+                .Select(b => b.Trim())
+                .ToHashSet();
+
+            // Eliminar citas que ya no están
+            var toDelete = existing.Where(e => !newCitas.Contains(e.CitaApa.Trim())).ToList();
+            _context.InvBibliografiasProyecto.RemoveRange(toDelete);
+
+            // Agregar solo las que no existen ya
+            var existingCitas = existing.Select(e => e.CitaApa.Trim()).ToHashSet();
             foreach (var b in biblio)
             {
-                if (string.IsNullOrWhiteSpace(b)) continue;
+                if (string.IsNullOrWhiteSpace(b) || existingCitas.Contains(b.Trim())) continue;
                 _context.InvBibliografiasProyecto.Add(new InvBibliografiaProyecto
                 {
                     IdProyecto = projectId,
@@ -1944,12 +1985,23 @@ namespace diitra_infrastructure.Research
         private async Task SyncRecursosDisponiblesAsync(int projectId, System.Collections.Generic.List<RecursoDisponibleDto>? recursos)
         {
             if (recursos == null) return;
-            var old = _context.InvRecursosDisponibles.Where(r => r.IdProyecto == projectId);
-            _context.InvRecursosDisponibles.RemoveRange(old);
 
+            var existing = await _context.InvRecursosDisponibles
+                .Where(r => r.IdProyecto == projectId)
+                .ToListAsync();
+
+            var newDetalles = recursos
+                .Where(r => !string.IsNullOrWhiteSpace(r.Descripcion))
+                .Select(r => r.Descripcion!.Trim())
+                .ToHashSet();
+
+            var toDelete = existing.Where(e => !newDetalles.Contains(e.Detalle.Trim())).ToList();
+            _context.InvRecursosDisponibles.RemoveRange(toDelete);
+
+            var existingDetalles = existing.Select(e => e.Detalle.Trim()).ToHashSet();
             foreach (var r in recursos)
             {
-                if (string.IsNullOrWhiteSpace(r.Descripcion)) continue;
+                if (string.IsNullOrWhiteSpace(r.Descripcion) || existingDetalles.Contains(r.Descripcion.Trim())) continue;
                 _context.InvRecursosDisponibles.Add(new InvRecursoDisponible
                 {
                     IdProyecto = projectId,
@@ -1980,7 +2032,7 @@ namespace diitra_infrastructure.Research
                 Titulo = project.Titulo,
                 CodigoInstitucional = project.CodigoInstitucional,
                 Estado = project.Estado,
-                DescripcionProyecto = project.DescripcionProyecto,
+                DescripcionProyecto = "",
                 Activo = project.Activo,
                 FechaRegistro = project.FechaRegistro
             });
@@ -2029,8 +2081,7 @@ namespace diitra_infrastructure.Research
             var project = await _context.InvProyectos
                 .IgnoreQueryFilters()
                 .Include(p => p.InvProyectosCarreras)
-                .Include(p => p.InvProyectosProfesores)
-                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProyectoParticipantes)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
                 .Include(p => p.InvCronogramas)
@@ -2051,7 +2102,7 @@ namespace diitra_infrastructure.Research
                 Titulo = project.Titulo,
                 CodigoInstitucional = project.CodigoInstitucional,
                 Estado = project.Estado,
-                DescripcionProyecto = project.DescripcionProyecto,
+                DescripcionProyecto = "",
                 Activo = project.Activo,
                 FechaRegistro = project.FechaRegistro
             });
@@ -2060,8 +2111,7 @@ namespace diitra_infrastructure.Research
             try
             {
                 _context.InvProyectosCarreras.RemoveRange(project.InvProyectosCarreras);
-                _context.InvProyectosProfesores.RemoveRange(project.InvProyectosProfesores);
-                _context.InvProyectosAlumnos.RemoveRange(project.InvProyectosAlumnos);
+                _context.InvProyectoParticipantes.RemoveRange(project.InvProyectoParticipantes);
                 _context.InvObjetivosProyecto.RemoveRange(project.InvObjetivosProyecto);
                 _context.InvPresupuestoItems.RemoveRange(project.InvPresupuestoItems);
 
@@ -2146,9 +2196,9 @@ namespace diitra_infrastructure.Research
                 effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto, investigadores);
 
                 // Preservar al Director de Proyecto activo para que no pierda la autoría y acceso al borrador
-                var activeDirector = await _context.InvProyectosProfesores
+                var activeDirector = await _context.InvProyectoParticipantes
                     .Include(pp => pp.IdUsuarioNavigation)
-                    .FirstOrDefaultAsync(pp => pp.IdProyecto == project.IdProyecto && pp.EsDirector == true && pp.Activo != false);
+                    .FirstOrDefaultAsync(pp => pp.IdProyecto == project.IdProyecto && pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente");
 
                 if (activeDirector != null && activeDirector.IdUsuarioNavigation != null && !string.IsNullOrEmpty(activeDirector.IdUsuarioNavigation.IdSigafi))
                 {
@@ -2217,11 +2267,12 @@ namespace diitra_infrastructure.Research
                     .Select(pa => pa.HorasSemana)
                     .FirstOrDefaultAsync() ?? 0;
 
-                var otherProjectsHours = await _context.InvProyectosProfesores
-                    .Where(pp => pp.IdUsuario == persona.IdUsuario &&
+                var otherProjectsHours = await _context.InvProyectoParticipantes
+                    .Where(pp => pp.TipoParticipante == "Docente" &&
+                                 pp.IdUsuario == persona.IdUsuario &&
                                  pp.IdProyecto != project.IdProyecto &&
                                  pp.Activo != false &&
-                                 pp.IdProyectoNavigation.Activo != false &&
+                                 pp.IdProyectoNavigation!.Activo != false &&
                                  estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                     .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
 
@@ -2359,7 +2410,7 @@ namespace diitra_infrastructure.Research
         public async Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request)
         {
             var project = await _context.InvProyectos
-                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
+                .Include(p => p.InvProyectoParticipantes).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .FirstOrDefaultAsync(p => p.Uuid == uuid);
 
             if (project == null)
@@ -2367,8 +2418,8 @@ namespace diitra_infrastructure.Research
                 return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
             }
 
-            var currentDirectorForAudit = project.InvProyectosProfesores
-                .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+            var currentDirectorForAudit = project.InvProyectoParticipantes
+                .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente");
 
             var beforeState = new
             {
@@ -2383,8 +2434,8 @@ namespace diitra_infrastructure.Research
             try
             {
                 // 1. Obtener director activo actual
-                var currentDirector = project.InvProyectosProfesores
-                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+                var currentDirector = project.InvProyectoParticipantes
+                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente");
 
                 // 2. Registrar baja del director actual (si hay uno)
                 if (currentDirector != null)
@@ -2419,8 +2470,8 @@ namespace diitra_infrastructure.Research
                 }
 
                 // 4. Designar al nuevo director
-                var existingProf = project.InvProyectosProfesores
-                    .FirstOrDefault(pp => pp.IdUsuario == nuevoDirectorUser.IdUsuario);
+                var existingProf = project.InvProyectoParticipantes
+                    .FirstOrDefault(pp => pp.IdUsuario == nuevoDirectorUser.IdUsuario && pp.TipoParticipante == "Docente");
 
                 if (existingProf != null)
                 {
@@ -2434,10 +2485,11 @@ namespace diitra_infrastructure.Research
                 else
                 {
                     var phone = await GetUserPhoneFromCatalogAsync(nuevoDirectorUser.IdSigafi, nuevoDirectorUser.TablaSigafi);
-                    _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                    _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                     {
                         IdProyecto = project.IdProyecto,
                         IdUsuario = nuevoDirectorUser.IdUsuario,
+                        TipoParticipante = "Docente",
                         Rol = "Director de Proyecto",
                         NivelAcademico = "Tercer Nivel", // Valor inicial, actualizable por el usuario
                         Telefono = phone,
@@ -2517,15 +2569,13 @@ namespace diitra_infrastructure.Research
                 }
 
                 // Volver a leer la lista de investigadores activos e inactivos para actualizar el JSON
-                var updatedProfs = await _context.InvProyectosProfesores
+                var updatedParticipants = await _context.InvProyectoParticipantes
                     .Include(pp => pp.IdUsuarioNavigation)
                     .Where(pp => pp.IdProyecto == project.IdProyecto)
                     .ToListAsync();
 
-                var updatedAlums = await _context.InvProyectosAlumnos
-                    .Include(pa => pa.IdUsuarioNavigation)
-                    .Where(pa => pa.IdProyecto == project.IdProyecto)
-                    .ToListAsync();
+                var updatedProfs = updatedParticipants.Where(pp => pp.TipoParticipante == "Docente").ToList();
+                var updatedAlums = updatedParticipants.Where(pp => pp.TipoParticipante == "Alumno").ToList();
 
                 var profCedulas = updatedProfs.Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "").Where(c => !string.IsNullOrEmpty(c)).ToList();
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -2542,7 +2592,7 @@ namespace diitra_infrastructure.Research
                 var estadosConCarga = await GetEstadosConCargaHorariaAsync();
 
                 var researchHours = new List<ProfesoresActividade>();
-                var otherAssignedHours = new List<InvProyectoProfesor>();
+                var otherAssignedHours = new List<InvProyectoParticipante>();
                 if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
                 {
                     researchHours = await _context.ProfesoresActividades
@@ -2550,12 +2600,13 @@ namespace diitra_infrastructure.Research
                         .ToListAsync();
 
                     var profUserIds = updatedProfs.Select(pp => pp.IdUsuario).Distinct().ToList();
-                    otherAssignedHours = await _context.InvProyectosProfesores
+                    otherAssignedHours = await _context.InvProyectoParticipantes
                         .Include(pp => pp.IdProyectoNavigation)
-                        .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
+                        .Where(pp => pp.TipoParticipante == "Docente" &&
+                                     profUserIds.Contains(pp.IdUsuario) &&
                                      pp.IdProyecto != project.IdProyecto &&
                                      pp.Activo != false &&
-                                     estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
+                                     estadosConCarga.Contains(pp.IdProyectoNavigation!.Estado))
                         .ToListAsync();
                 }
 
@@ -2767,7 +2818,7 @@ namespace diitra_infrastructure.Research
 
         private async Task<Dictionary<string, InvestigadorDto>> BuildExistingProjectInvestigadoresByCedulaAsync(int projectId)
         {
-            var profesores = await _context.InvProyectosProfesores
+            var participantes = await _context.InvProyectoParticipantes
                 .Include(p => p.IdUsuarioNavigation)
                 .Where(p => p.IdProyecto == projectId && p.Activo != false && p.IdUsuarioNavigation != null && !string.IsNullOrEmpty(p.IdUsuarioNavigation.IdSigafi))
                 .Select(p => new InvestigadorDto
@@ -2785,52 +2836,24 @@ namespace diitra_infrastructure.Research
                     FechaInicio = p.FechaInicio,
                     FechaFin = p.FechaFin,
                     MotivoCambio = p.MotivoCambio,
-                    EsDirector = p.EsDirector
+                    EsDirector = p.EsDirector ?? false,
+                    Carrera = p.TipoParticipante 
                 })
                 .ToListAsync();
 
-            foreach (var p in profesores)
+            foreach (var p in participantes)
             {
                 p.Rol = NormalizeRole(p.Rol);
-                var phone = await GetUserPhoneFromCatalogAsync(p.Cedula, "profesor");
+                var isAlumno = p.Carrera == "Alumno";
+                var phone = await GetUserPhoneFromCatalogAsync(p.Cedula, isAlumno ? "alumno" : "profesor");
                 if (!string.IsNullOrEmpty(phone))
                 {
                     p.Telefono = phone;
                 }
+                p.Carrera = null;
             }
 
-            var alumnos = await _context.InvProyectosAlumnos
-                .Include(a => a.IdUsuarioNavigation)
-                .Where(a => a.IdProyecto == projectId && a.Activo != false && a.IdUsuarioNavigation != null && !string.IsNullOrEmpty(a.IdUsuarioNavigation.IdSigafi))
-                .Select(a => new InvestigadorDto
-                {
-                    Cedula = a.IdUsuarioNavigation!.IdSigafi,
-                    Nombre = a.IdUsuarioNavigation.Nombre,
-                    Email = a.IdUsuarioNavigation.EmailInstitucional ?? a.IdUsuarioNavigation.IdSigafi ?? "",
-                    Rol = a.Rol,
-                    NivelAcademico = a.NivelAcademico,
-                    Telefono = a.Telefono,
-                    Activo = a.Activo,
-                    HorasSemanales = a.HorasSemanales,
-                    FechaInicio = a.FechaInicio,
-                    FechaFin = a.FechaFin,
-                    MotivoCambio = a.MotivoCambio,
-                    EsDirector = false
-                })
-                .ToListAsync();
-
-            foreach (var a in alumnos)
-            {
-                a.Rol = NormalizeRole(a.Rol);
-                var phone = await GetUserPhoneFromCatalogAsync(a.Cedula, "alumno");
-                if (!string.IsNullOrEmpty(phone))
-                {
-                    a.Telefono = phone;
-                }
-            }
-
-            return profesores
-                .Concat(alumnos)
+            return participantes
                 .Where(i => !string.IsNullOrWhiteSpace(i.Cedula))
                 .GroupBy(i => i.Cedula!.Trim())
                 .ToDictionary(g => g.Key, g => g.First());
@@ -3369,8 +3392,7 @@ namespace diitra_infrastructure.Research
                 // (antes de vincular el grupo o vía transferencia de dirección)
             }
 
-            return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
-                   await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+            return await _context.InvProyectoParticipantes.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false);
         }
 
         public async Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId)
@@ -3385,8 +3407,7 @@ namespace diitra_infrastructure.Research
             if (project == null) return true;
 
             // 1. Verificar si es integrante directo del equipo del proyecto (Profesores o Alumnos)
-            var isTeamMember = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
-                               await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+            var isTeamMember = await _context.InvProyectoParticipantes.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false);
             if (isTeamMember) return true;
 
             // 2. Verificar si es miembro del grupo de investigación asociado al proyecto
@@ -3435,10 +3456,11 @@ namespace diitra_infrastructure.Research
             var project = await _context.InvProyectos.AsNoTracking().FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
             if (project == null) return false;
 
-            return await _context.InvProyectosProfesores.AsNoTracking().AnyAsync(pp =>
+            return await _context.InvProyectoParticipantes.AsNoTracking().AnyAsync(pp =>
                 pp.IdProyecto == project.IdProyecto &&
                 pp.IdUsuario == user.IdUsuario &&
                 pp.EsDirector == true &&
+                pp.TipoParticipante == "Docente" &&
                 pp.Activo != false);
         }
 
@@ -3460,10 +3482,8 @@ namespace diitra_infrastructure.Research
             if (await IsProjectDirectorAsync(projectUuid, userSigafiId)) return true;
 
             // Integrante activo del equipo del proyecto (p. ej. co-investigador si el director se retira)
-            var isProjectTeamMember = await _context.InvProyectosProfesores.AsNoTracking()
-                    .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false)
-                || await _context.InvProyectosAlumnos.AsNoTracking()
-                    .AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+            var isProjectTeamMember = await _context.InvProyectoParticipantes.AsNoTracking()
+                    .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false);
             if (isProjectTeamMember) return true;
 
             if (project.TieneGrupo == true && project.IdGrupo.HasValue)

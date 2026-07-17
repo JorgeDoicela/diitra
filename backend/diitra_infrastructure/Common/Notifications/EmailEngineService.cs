@@ -190,10 +190,10 @@ namespace diitra_infrastructure.Common.Notifications
                 if (request.TargetCarreraId.HasValue)
                 {
                     // 1. Docentes asociados a proyectos de la carrera
-                    var userIdsInCarrera = await _context.InvProyectosProfesores
+                    var userIdsInCarrera = await _context.InvProyectoParticipantes
                         .Include(pp => pp.IdProyectoNavigation)
-                        .ThenInclude(p => p.InvProyectosCarreras)
-                        .Where(pp => pp.IdProyectoNavigation.InvProyectosCarreras.Any(pc => pc.IdCarrera == request.TargetCarreraId.Value))
+                        .ThenInclude(p => p!.InvProyectosCarreras)
+                        .Where(pp => pp.TipoParticipante == "Docente" && pp.IdProyectoNavigation!.InvProyectosCarreras.Any(pc => pc.IdCarrera == request.TargetCarreraId.Value))
                         .Select(pp => pp.IdUsuario)
                         .Distinct()
                         .ToListAsync();
@@ -275,15 +275,30 @@ namespace diitra_infrastructure.Common.Notifications
                         var proj = await _context.InvProyectos
                             .Include(p => p.IdSublineaNavigation)
                             .ThenInclude(s => s!.IdLineaNavigation)
-                            .Include(p => p.InvProyectosProfesores)
+                            .Include(p => p.InvProyectoParticipantes)
                             .ThenInclude(pp => pp.IdUsuarioNavigation)
                             .FirstOrDefaultAsync(p => p.Uuid == request.EntityUuid);
                         if (proj != null)
                         {
-                            var dir = proj.InvProyectosProfesores.FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false)?.IdUsuarioNavigation;
+                            var dir = proj.InvProyectoParticipantes.FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente")?.IdUsuarioNavigation;
+                            
+                            string desc = "";
+                            if (!string.IsNullOrEmpty(proj.MetadataCacesJson))
+                            {
+                                try
+                                {
+                                    using var doc = System.Text.Json.JsonDocument.Parse(proj.MetadataCacesJson);
+                                    if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                                    {
+                                        desc = el.GetString() ?? "";
+                                    }
+                                }
+                                catch {}
+                            }
+
                             contextReplacements["[[proyecto_titulo]]"] = proj.Titulo ?? "";
                             contextReplacements["[[proyecto_codigo]]"] = proj.CodigoInstitucional ?? "";
-                            contextReplacements["[[proyecto_descripcion]]"] = proj.DescripcionProyecto ?? "";
+                            contextReplacements["[[proyecto_descripcion]]"] = desc;
                             contextReplacements["[[proyecto_estado]]"] = proj.Estado ?? "";
                             contextReplacements["[[proyecto_director]]"] = dir?.Nombre ?? "Sin asignar";
                             contextReplacements["[[proyecto_director_email]]"] = dir?.EmailInstitucional ?? "";
@@ -559,22 +574,37 @@ namespace diitra_infrastructure.Common.Notifications
             var list = await _context.InvProyectos
                 .Include(p => p.IdSublineaNavigation)
                 .ThenInclude(s => s!.IdLineaNavigation)
-                .Include(p => p.InvProyectosProfesores)
+                .Include(p => p.InvProyectoParticipantes)
                 .ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Where(p => p.Activo != false && (p.Estado == "Inconcluso" || p.DisponibleAdopcion == true))
                 .OrderByDescending(p => p.FechaModificacion)
                 .ToListAsync();
  
             return list.Select(p => {
-                var currentDirector = p.InvProyectosProfesores
-                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+                var currentDirector = p.InvProyectoParticipantes
+                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente");
+
+                string desc = "";
+                if (!string.IsNullOrEmpty(p.MetadataCacesJson))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(p.MetadataCacesJson);
+                        if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                        {
+                            desc = el.GetString() ?? "";
+                        }
+                    }
+                    catch {}
+                }
+
                 return new
                 {
                     id_proyecto = p.IdProyecto,
                     uuid = p.Uuid,
                     titulo = p.Titulo,
                     codigo_institucional = p.CodigoInstitucional,
-                    descripcion = p.DescripcionProyecto,
+                    descripcion = desc,
                     estado = p.Estado,
                     disponible_adopcion = p.DisponibleAdopcion,
                     linea_investigacion = p.IdSublineaNavigation?.IdLineaNavigation?.NombreLinea ?? "General",
@@ -645,6 +675,20 @@ namespace diitra_infrastructure.Common.Notifications
                 .Include(s => s.IdLineaNavigation)
                 .FirstOrDefaultAsync(s => s.IdSublinea == project.IdSublinea);
 
+            string desc = "";
+            if (!string.IsNullOrEmpty(project.MetadataCacesJson))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(project.MetadataCacesJson);
+                    if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                    {
+                        desc = el.GetString() ?? "";
+                    }
+                }
+                catch {}
+            }
+
             var sendRequest = new EmailSendRequest
             {
                 TemplateCodigo = "PROYECTO_INCONCLUSO_DISPONIBLE",
@@ -656,7 +700,7 @@ namespace diitra_infrastructure.Common.Notifications
                     { "[[proyecto_codigo]]", project.CodigoInstitucional ?? "Sin código" },
                     { "[[proyecto_titulo]]", project.Titulo ?? "Sin título" },
                     { "[[linea_investigacion]]", sublinea?.IdLineaNavigation?.NombreLinea ?? "General" },
-                    { "[[proyecto_descripcion]]", project.DescripcionProyecto ?? "Sin descripción detallada" },
+                    { "[[proyecto_descripcion]]", !string.IsNullOrEmpty(desc) ? desc : "Sin descripción detallada" },
                     { "[[url_adopcion]]", $"/investigacion/adopcion" }
                 }
             };
@@ -680,7 +724,7 @@ namespace diitra_infrastructure.Common.Notifications
         public async Task<bool> AdoptProjectAsync(int projectId, int newDirectorUserId)
         {
             var project = await _context.InvProyectos
-                .Include(p => p.InvProyectosProfesores)
+                .Include(p => p.InvProyectoParticipantes)
                 .FirstOrDefaultAsync(p => p.IdProyecto == projectId);
 
             if (project == null || project.Estado != "Inconcluso" || project.DisponibleAdopcion != true)
@@ -698,8 +742,8 @@ namespace diitra_infrastructure.Common.Notifications
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var oldDirector = project.InvProyectosProfesores
-                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+                var oldDirector = project.InvProyectoParticipantes
+                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false && pp.TipoParticipante == "Docente");
 
                 if (oldDirector != null)
                 {
@@ -709,8 +753,8 @@ namespace diitra_infrastructure.Common.Notifications
                     oldDirector.EsDirector = false;
                 }
 
-                var existingProf = project.InvProyectosProfesores
-                    .FirstOrDefault(pp => pp.IdUsuario == newDirectorUserId);
+                var existingProf = project.InvProyectoParticipantes
+                    .FirstOrDefault(pp => pp.IdUsuario == newDirectorUserId && pp.TipoParticipante == "Docente");
 
                 if (existingProf != null)
                 {
@@ -723,10 +767,11 @@ namespace diitra_infrastructure.Common.Notifications
                 }
                 else
                 {
-                    _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                    _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                     {
                         IdProyecto = project.IdProyecto,
                         IdUsuario = newDirectorUserId,
+                        TipoParticipante = "Docente",
                         Rol = "Director de Proyecto",
                         NivelAcademico = "Tercer Nivel",
                         Telefono = "",
@@ -781,9 +826,9 @@ namespace diitra_infrastructure.Common.Notifications
                         {
                             dto.Estado = estadoDestinoAdopcion;
                             
-                            var updatedProfs = await _context.InvProyectosProfesores
+                            var updatedProfs = await _context.InvProyectoParticipantes
                                 .Include(pp => pp.IdUsuarioNavigation)
-                                .Where(pp => pp.IdProyecto == project.IdProyecto)
+                                .Where(pp => pp.IdProyecto == project.IdProyecto && pp.TipoParticipante == "Docente")
                                 .ToListAsync();
 
                             dto.Investigadores = updatedProfs.Select(pp => new InvestigadorDto

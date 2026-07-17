@@ -10,12 +10,8 @@ public partial class InvProyecto
     public int? IdConvocatoria { get; set; }
     public string? CodigoInstitucional { get; set; }
     public string Titulo { get; set; } = null!;
-    public string? DescripcionProyecto { get; set; }
-    public string? Antecedentes { get; set; }
-    public string? Justificacion { get; set; }
-    public string? MarcoTeorico { get; set; }
-    public string? Metodologia { get; set; }
-    public string? MetodoEvaluacion { get; set; }
+    // Nota: Los textos descriptivos (Antecedentes, Justificacion, MarcoTeorico, Metodologia,
+    // MetodoEvaluacion) viven exclusivamente en MetadataCacesJson. No se duplican aquí.
     public int? IdSublinea { get; set; }
     public int? IdPrograma { get; set; }
     public int? IdGrupo { get; set; }
@@ -59,8 +55,8 @@ public partial class InvProyecto
 
     public virtual ICollection<InvProyectoCarrera> InvProyectosCarreras { get; set; } = new List<InvProyectoCarrera>();
     public virtual ICollection<InvProyectoDominio> InvProyectosDominios { get; set; } = new List<InvProyectoDominio>();
-    public virtual ICollection<InvProyectoProfesor> InvProyectosProfesores { get; set; } = new List<InvProyectoProfesor>();
-    public virtual ICollection<InvProyectoAlumno> InvProyectosAlumnos { get; set; } = new List<InvProyectoAlumno>();
+    /// <summary>Participantes unificados: docentes, alumnos y externos. Reemplaza InvProyectosProfesores e InvProyectosAlumnos.</summary>
+    public virtual ICollection<InvProyectoParticipante> InvProyectoParticipantes { get; set; } = new List<InvProyectoParticipante>();
     public virtual ICollection<InvObjetivoProyecto> InvObjetivosProyecto { get; set; } = new List<InvObjetivoProyecto>();
     public virtual ICollection<InvProyectoOds> InvProyectosOds { get; set; } = new List<InvProyectoOds>();
     public virtual ICollection<InvRecursoDisponible> InvRecursosDisponibles { get; set; } = new List<InvRecursoDisponible>();

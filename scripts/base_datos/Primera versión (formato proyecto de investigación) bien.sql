@@ -63,8 +63,7 @@ DROP TABLE IF EXISTS
     inv_recursos_disponibles,
     inv_objetivos_proyecto,
     inv_productos,
-    inv_proyectos_alumnos,
-    inv_proyectos_profesores,
+    inv_proyecto_participantes,
     inv_proyectos_carreras,
     inv_proyectos_dominios,
     inv_trazabilidad_proyectos,
@@ -335,12 +334,9 @@ CREATE TABLE inv_proyectos (
     idConvocatoria        INT,
     codigoInstitucional   VARCHAR(50)   UNIQUE,
     titulo                VARCHAR(500)  NOT NULL,
-    descripcionProyecto   TEXT,
-    antecedentes          TEXT,
-    justificacion         TEXT,
-    marcoTeorico          TEXT,
-    metodologia           TEXT,
-    metodoEvaluacion      TEXT,
+    -- Nota: Los textos descriptivos (antecedentes, justificacion, marcoTeorico, metodologia,
+    -- metodoEvaluacion) viven exclusivamente en metadataCacesJson y en el snapshot del
+    -- documento colaborativo (inv_documentos_instancias). No se duplican aquí.
     idSublinea            INT           NULL,
     idPrograma            INT           NULL,
     idGrupo               INT           NULL,
@@ -467,27 +463,15 @@ CREATE TABLE inv_proyectos_dominios (
     FOREIGN KEY (idDominio)  REFERENCES inv_dominios(idDominio)   ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE inv_proyectos_profesores (
-    idProyectoProfesor INT           AUTO_INCREMENT PRIMARY KEY,
-    idProyecto         INT           NOT NULL,
-    idUsuario          INT(11)       NOT NULL,
-    esDirector         TINYINT(1)    DEFAULT 0,
-    rol                VARCHAR(100),
-    nivelAcademico     VARCHAR(150),
-    telefono           VARCHAR(20),
-    horasSemanales     DECIMAL(4,1),
-    activo             TINYINT(1)    DEFAULT 1,
-    fecha_inicio       DATETIME      NULL,
-    fecha_fin          DATETIME      NULL,
-    motivo_cambio      VARCHAR(150)  NULL,
-    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE inv_proyectos_alumnos (
-    idProyectoAlumno INT           AUTO_INCREMENT PRIMARY KEY,
+-- Tabla unificada de participantes (docentes y alumnos bajo un mismo modelo)
+-- Reemplaza: inv_proyectos_profesores + inv_proyectos_alumnos
+-- tipoParticipante discrimina el origen: 'Docente' | 'Alumno' | 'Externo'
+CREATE TABLE inv_proyecto_participantes (
+    idParticipante   INT           AUTO_INCREMENT PRIMARY KEY,
     idProyecto       INT           NOT NULL,
     idUsuario        INT(11)       NOT NULL,
+    tipoParticipante VARCHAR(20)   NOT NULL DEFAULT 'Docente' COMMENT 'Docente | Alumno | Externo',
+    esDirector       TINYINT(1)    DEFAULT 0,
     rol              VARCHAR(100),
     nivelAcademico   VARCHAR(150),
     telefono         VARCHAR(20),
@@ -497,8 +481,10 @@ CREATE TABLE inv_proyectos_alumnos (
     fecha_fin        DATETIME      NULL,
     motivo_cambio    VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE CASCADE,
+    UNIQUE KEY uq_proyecto_usuario (idProyecto, idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Participantes del proyecto: docentes, alumnos y externos unificados';
+
 
 CREATE TABLE inv_proyecto_extensiones (
     idExtension      INT           AUTO_INCREMENT PRIMARY KEY,

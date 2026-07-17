@@ -326,9 +326,9 @@ public class AdminService : IAdminService
                 estadosConCarga = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
             }
 
-            var assignedHoursList = await _context.InvProyectosProfesores
+            var assignedHoursList = await _context.InvProyectoParticipantes
                 .Include(pp => pp.IdProyectoNavigation)
-                .Where(pp => linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
+                .Where(pp => pp.TipoParticipante == "Docente" && linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
                              estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                 .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
                 .ToListAsync();

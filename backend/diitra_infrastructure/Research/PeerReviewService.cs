@@ -289,12 +289,31 @@ public class PeerReviewService : IPeerReviewService
             return null;
         }
 
-        string? justificacionFinal = await ResolveFieldAsync("Justificacion", proyecto.Justificacion);
-        string? metodologiaFinal = await ResolveFieldAsync("Metodologia", proyecto.Metodologia);
-        string? antecedentesFinal = await ResolveFieldAsync("Antecedentes", proyecto.Antecedentes);
-        string? descripcionFinal = await ResolveFieldAsync("DescripcionProyecto", proyecto.DescripcionProyecto);
-        string? marcoTeoricoFinal = await ResolveFieldAsync("MarcoTeorico", proyecto.MarcoTeorico);
-        string? evaluacionFinal = await ResolveFieldAsync("Evaluacion", proyecto.MetodoEvaluacion);
+        System.Text.Json.JsonElement? projectMetadata = null;
+        if (!string.IsNullOrEmpty(proyecto.MetadataCacesJson))
+        {
+            try
+            {
+                projectMetadata = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(proyecto.MetadataCacesJson);
+            }
+            catch {}
+        }
+
+        string? GetMetadataFallback(string fieldName)
+        {
+            if (projectMetadata.HasValue && projectMetadata.Value.ValueKind == System.Text.Json.JsonValueKind.Object && projectMetadata.Value.TryGetProperty(fieldName, out var prop))
+            {
+                return prop.GetString();
+            }
+            return null;
+        }
+
+        string? justificacionFinal = await ResolveFieldAsync("Justificacion", GetMetadataFallback("justificacion") ?? GetMetadataFallback("Justificacion"));
+        string? metodologiaFinal = await ResolveFieldAsync("Metodologia", GetMetadataFallback("metodologia") ?? GetMetadataFallback("Metodologia"));
+        string? antecedentesFinal = await ResolveFieldAsync("Antecedentes", GetMetadataFallback("antecedentes") ?? GetMetadataFallback("Antecedentes"));
+        string? descripcionFinal = await ResolveFieldAsync("DescripcionProyecto", GetMetadataFallback("descripcionProyecto") ?? GetMetadataFallback("DescripcionProyecto") ?? GetMetadataFallback("descripcion") ?? GetMetadataFallback("Descripcion"));
+        string? marcoTeoricoFinal = await ResolveFieldAsync("MarcoTeorico", GetMetadataFallback("marcoTeorico") ?? GetMetadataFallback("MarcoTeorico"));
+        string? evaluacionFinal = await ResolveFieldAsync("Evaluacion", GetMetadataFallback("evaluacion") ?? GetMetadataFallback("Evaluacion") ?? GetMetadataFallback("metodoEvaluacion") ?? GetMetadataFallback("MetodoEvaluacion"));
         string? objetivoGeneralFinal = await ResolveFieldAsync("ObjetivoGeneral", null);
         string? objetivosEspecificosFinal = await ResolveFieldAsync("ObjetivosEspecificos", null);
         string? bibliografiaFinal = await ResolveFieldAsync("Bibliografia", null);
@@ -745,14 +764,12 @@ public class PeerReviewService : IPeerReviewService
         {
             var proyecto = await _context.InvProyectos
                 .AsSplitQuery()
-                .Include(p => p.InvProyectosProfesores)
-                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProyectoParticipantes)
                 .FirstOrDefaultAsync(p => p.Uuid == projectUuid);
 
             if (proyecto != null)
             {
-                var userIds = proyecto.InvProyectosProfesores.Select(p => p.IdUsuario)
-                    .Concat(proyecto.InvProyectosAlumnos.Select(a => a.IdUsuario))
+                var userIds = proyecto.InvProyectoParticipantes.Select(p => p.IdUsuario)
                     .Distinct()
                     .ToList();
 
@@ -1016,10 +1033,8 @@ public class PeerReviewService : IPeerReviewService
         }
 
         // 7. Validar conflicto de interés directo (miembro del proyecto)
-        var isMember = await _context.Set<InvProyectoProfesor>()
-            .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == dto.IdRevisor)
-            || await _context.Set<InvProyectoAlumno>()
-            .AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == dto.IdRevisor);
+        var isMember = await _context.Set<InvProyectoParticipante>()
+            .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == dto.IdRevisor);
         if (isMember)
         {
             throw new InvalidOperationException("Conflicto de interés: El revisor seleccionado es miembro (director o docente/alumno investigador) de este proyecto.");
@@ -1037,22 +1052,16 @@ public class PeerReviewService : IPeerReviewService
         }
 
         // 9. Validar conflicto de interés por evaluación cruzada (recíproca)
-        var reviewerProjects = await _context.Set<InvProyectoProfesor>()
+        var reviewerProjects = await _context.Set<InvProyectoParticipante>()
             .Where(pp => pp.IdUsuario == dto.IdRevisor)
             .Select(pp => pp.IdProyecto)
-            .Union(_context.Set<InvProyectoAlumno>()
-                .Where(pa => pa.IdUsuario == dto.IdRevisor)
-                .Select(pa => pa.IdProyecto))
             .ToListAsync();
 
         if (reviewerProjects.Any())
         {
-            var currentProjectMembers = await _context.Set<InvProyectoProfesor>()
+            var currentProjectMembers = await _context.Set<InvProyectoParticipante>()
                 .Where(pp => pp.IdProyecto == project.IdProyecto)
                 .Select(pp => pp.IdUsuario)
-                .Union(_context.Set<InvProyectoAlumno>()
-                    .Where(pa => pa.IdProyecto == project.IdProyecto)
-                    .Select(pa => pa.IdUsuario))
                 .ToListAsync();
 
             var hasCrossReview = await _context.Set<InvRevisionesPares>()
@@ -1264,8 +1273,7 @@ public class PeerReviewService : IPeerReviewService
     {
         var project = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
-            .Include(p => p.InvProyectosProfesores)
-            .Include(p => p.InvProyectosAlumnos)
+            .Include(p => p.InvProyectoParticipantes)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
@@ -1355,8 +1363,7 @@ public class PeerReviewService : IPeerReviewService
         // Notify all project participants
         try
         {
-            var participantUserIds = project.InvProyectosProfesores.Select(p => p.IdUsuario)
-                .Concat(project.InvProyectosAlumnos.Select(a => a.IdUsuario))
+            var participantUserIds = project.InvProyectoParticipantes.Select(p => p.IdUsuario)
                 .Distinct()
                 .ToList();
 
@@ -1429,8 +1436,7 @@ public class PeerReviewService : IPeerReviewService
     public async Task<bool> IniciarEjecucionAsync(string projectUuid, int directorId)
     {
         var project = await _context.InvProyectos
-            .Include(p => p.InvProyectosProfesores)
-            .Include(p => p.InvProyectosAlumnos)
+            .Include(p => p.InvProyectoParticipantes)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
@@ -1471,8 +1477,7 @@ public class PeerReviewService : IPeerReviewService
         // Notify all project participants
         try
         {
-            var participantUserIds = project.InvProyectosProfesores.Select(p => p.IdUsuario)
-                .Concat(project.InvProyectosAlumnos.Select(a => a.IdUsuario))
+            var participantUserIds = project.InvProyectoParticipantes.Select(p => p.IdUsuario)
                 .Distinct()
                 .ToList();
 

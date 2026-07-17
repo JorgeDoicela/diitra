@@ -27,7 +27,7 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
             // En este caso, entityUuid es el Uuid del PROYECTO al que pertenece el informe
             var proyecto = await _db.InvProyectos
                 .AsSplitQuery()
-                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
+                .Include(p => p.InvProyectoParticipantes).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
                 .Include(p => p.InvCronogramas)
@@ -45,7 +45,7 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 ? (double)proyecto.InvCronogramas.Average(c => c.Progreso) 
                 : 0;
 
-            var director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true && p.Activo != false);
+            var director = proyecto.InvProyectoParticipantes.FirstOrDefault(p => p.EsDirector == true && p.Activo != false && p.TipoParticipante == "Docente");
 
             return new
             {

@@ -36,14 +36,9 @@ public class CalendarioService : ICalendarioService
         if (rolUsuario != "DIITRA_ADMIN")
         {
             // Obtener IDs de proyectos de interés de forma fuertemente tipada usando LINQ
-            var proyectosDocente = await _context.Set<InvProyectoProfesor>()
+            var proyectosParticipante = await _context.Set<InvProyectoParticipante>()
                 .Where(p => p.IdUsuario == idUsuario && (p.Activo ?? true))
                 .Select(p => p.IdProyecto)
-                .ToListAsync();
-
-            var proyectosAlumno = await _context.Set<InvProyectoAlumno>()
-                .Where(a => a.IdUsuario == idUsuario && (a.Activo ?? true))
-                .Select(a => a.IdProyecto)
                 .ToListAsync();
 
             var gruposUsuario = await _context.Set<InvGrupoMiembro>()
@@ -56,8 +51,7 @@ public class CalendarioService : ICalendarioService
                 .Select(p => p.IdProyecto)
                 .ToListAsync();
 
-            var misProyectosIds = proyectosDocente
-                .Union(proyectosAlumno)
+            var misProyectosIds = proyectosParticipante
                 .Union(proyectosGrupo)
                 .Distinct()
                 .ToList();

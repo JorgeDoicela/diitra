@@ -37,8 +37,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvProyecto>           InvProyectos           { get; set; }
     public virtual DbSet<InvProyectoCarrera>    InvProyectosCarreras    { get; set; }
     public virtual DbSet<InvProyectoDominio>    InvProyectosDominios    { get; set; }
-    public virtual DbSet<InvProyectoProfesor>   InvProyectosProfesores { get; set; }
-    public virtual DbSet<InvProyectoAlumno>     InvProyectosAlumnos     { get; set; }
+    public virtual DbSet<InvProyectoParticipante> InvProyectoParticipantes { get; set; }
     public virtual DbSet<InvObjetivoProyecto>   InvObjetivosProyecto   { get; set; }
     public virtual DbSet<InvOdsEje>             InvOdsEjes             { get; set; }
     public virtual DbSet<InvOds>                InvOds                 { get; set; }
@@ -919,12 +918,6 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.CodigoInstitucional).HasColumnName("codigoInstitucional").HasMaxLength(50);
             entity.HasIndex(e => e.CodigoInstitucional).IsUnique();
             entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(500).IsRequired();
-            entity.Property(e => e.DescripcionProyecto).HasColumnName("descripcionProyecto").HasColumnType("text");
-            entity.Property(e => e.Antecedentes).HasColumnName("antecedentes").HasColumnType("text");
-            entity.Property(e => e.Justificacion).HasColumnName("justificacion").HasColumnType("text");
-            entity.Property(e => e.MarcoTeorico).HasColumnName("marcoTeorico").HasColumnType("text");
-            entity.Property(e => e.Metodologia).HasColumnName("metodologia").HasColumnType("text");
-            entity.Property(e => e.MetodoEvaluacion).HasColumnName("metodoEvaluacion").HasColumnType("text");
             entity.Property(e => e.IdSublinea).HasColumnName("idSublinea");
             entity.Property(e => e.IdPrograma).HasColumnName("idPrograma");
             entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
@@ -1014,13 +1007,14 @@ public partial class DiitraContext : DbContext
             entity.HasOne(d => d.IdDominioNavigation).WithMany(p => p.InvProyectosDominios).HasForeignKey(d => d.IdDominio).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pd_dominio");
         });
 
-        modelBuilder.Entity<InvProyectoProfesor>(entity =>
+        modelBuilder.Entity<InvProyectoParticipante>(entity =>
         {
-            entity.HasKey(e => e.IdProyectoProfesor).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos_profesores");
-            entity.Property(e => e.IdProyectoProfesor).HasColumnName("idProyectoProfesor");
+            entity.HasKey(e => e.IdParticipante).HasName("PRIMARY");
+            entity.ToTable("inv_proyecto_participantes");
+            entity.Property(e => e.IdParticipante).HasColumnName("idParticipante");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.TipoParticipante).HasColumnName("tipoParticipante").HasMaxLength(20).HasDefaultValue("Docente");
             entity.Property(e => e.EsDirector).HasColumnName("esDirector").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
@@ -1031,29 +1025,10 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaFin).HasColumnName("fecha_fin").HasColumnType("datetime");
             entity.Property(e => e.MotivoCambio).HasColumnName("motivo_cambio").HasMaxLength(150);
 
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosProfesores).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pp_proyecto");
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pp_usuario");
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectoParticipantes).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_part_proyecto");
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_part_usuario");
         });
 
-        modelBuilder.Entity<InvProyectoAlumno>(entity =>
-        {
-            entity.HasKey(e => e.IdProyectoAlumno).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos_alumnos");
-            entity.Property(e => e.IdProyectoAlumno).HasColumnName("idProyectoAlumno");
-            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
-            entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
-            entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
-            entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
-            entity.Property(e => e.HorasSemanales).HasColumnName("horasSemanales").HasPrecision(4, 1);
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(false);
-            entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio").HasColumnType("datetime");
-            entity.Property(e => e.FechaFin).HasColumnName("fecha_fin").HasColumnType("datetime");
-            entity.Property(e => e.MotivoCambio).HasColumnName("motivo_cambio").HasMaxLength(150);
-
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosAlumnos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pa_proyecto");
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pa_usuario");
-        });
 
         modelBuilder.Entity<InvObjetivoProyecto>(entity =>
         {

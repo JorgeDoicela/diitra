@@ -85,8 +85,7 @@ namespace diitra_infrastructure.Collaboration
                     var project = await _db.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
                     if (project != null)
                     {
-                        var isTeamMember = await _db.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
-                                           await _db.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+                        var isTeamMember = await _db.InvProyectoParticipantes.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false);
 
                         bool hasAccess = isTeamMember;
 
@@ -153,14 +152,10 @@ namespace diitra_infrastructure.Collaboration
 
                         if (observedProject != null)
                         {
-                            var isTeamMember = await _db.InvProyectosProfesores.AnyAsync(pp =>
+                            var isTeamMember = await _db.InvProyectoParticipantes.AnyAsync(pp =>
                                     pp.IdProyecto == observedProject.IdProyecto
                                     && pp.IdUsuario == observerUser.IdUsuario
-                                    && pp.Activo != false)
-                                || await _db.InvProyectosAlumnos.AnyAsync(pa =>
-                                    pa.IdProyecto == observedProject.IdProyecto
-                                    && pa.IdUsuario == observerUser.IdUsuario
-                                    && pa.Activo != false);
+                                    && pp.Activo != false);
 
                             if (!isTeamMember)
                             {

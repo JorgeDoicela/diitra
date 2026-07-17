@@ -246,31 +246,29 @@ public class GroupsService : IGroupsService
         }).ToList();
 
         var projects = await _context.InvProyectos
-            .Include(p => p.InvProyectosProfesores)
+            .Include(p => p.InvProyectoParticipantes)
                 .ThenInclude(pp => pp.IdUsuarioNavigation)
-            .Include(p => p.InvProyectosAlumnos)
-                .ThenInclude(pa => pa.IdUsuarioNavigation)
             .Where(p => p.IdGrupo == group.IdGrupo && p.Activo == true)
             .ToListAsync();
 
         dto.Proyectos = projects.Select(p =>
         {
             string? directorName = null;
-            var directorProf = p.InvProyectosProfesores.FirstOrDefault(pp => pp.EsDirector == true);
+            var directorProf = p.InvProyectoParticipantes.FirstOrDefault(pp => pp.EsDirector == true);
             if (directorProf != null)
             {
                 directorName = directorProf.IdUsuarioNavigation?.Nombre;
             }
             else
             {
-                var firstProf = p.InvProyectosProfesores.FirstOrDefault();
+                var firstProf = p.InvProyectoParticipantes.FirstOrDefault(pp => pp.TipoParticipante == "Docente");
                 if (firstProf != null)
                 {
                     directorName = firstProf.IdUsuarioNavigation?.Nombre;
                 }
                 else
                 {
-                    var firstStud = p.InvProyectosAlumnos.FirstOrDefault();
+                    var firstStud = p.InvProyectoParticipantes.FirstOrDefault(pp => pp.TipoParticipante == "Alumno");
                     if (firstStud != null)
                     {
                         directorName = firstStud.IdUsuarioNavigation?.Nombre;

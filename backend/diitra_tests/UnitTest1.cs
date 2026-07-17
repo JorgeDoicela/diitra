@@ -196,21 +196,22 @@ public class UnitTest1
         {
             Uuid = uniqueProjUuid,
             Titulo = "PROYECTO TEST CONFLICT",
-            Estado = "Enviado",
+            Estado = "En Revisión",
             Activo = true
         };
         context.InvProyectos.Add(project);
         await context.SaveChangesAsync();
 
-        var projProf = new InvProyectoProfesor
+        var projProf = new InvProyectoParticipante
         {
             IdProyecto = project.IdProyecto,
             IdUsuario = user.IdUsuario,
+            TipoParticipante = "Docente",
             EsDirector = true,
             Rol = "Director de Proyecto",
             Activo = true
         };
-        context.Set<InvProyectoProfesor>().Add(projProf);
+        context.Set<InvProyectoParticipante>().Add(projProf);
         await context.SaveChangesAsync();
 
         var assignDto = new AsignarArbitroDto
@@ -228,7 +229,7 @@ public class UnitTest1
 
         Assert.Contains("Conflicto de interés", exception.Message);
 
-        context.Set<InvProyectoProfesor>().Remove(projProf);
+        context.Set<InvProyectoParticipante>().Remove(projProf);
         context.InvProyectos.Remove(project);
         context.Users.Remove(user);
         await context.SaveChangesAsync();
@@ -447,11 +448,8 @@ public class UnitTest1
             var carreras = context.Set<InvProyectoCarrera>().Where(c => c.IdProyecto == project.IdProyecto);
             context.Set<InvProyectoCarrera>().RemoveRange(carreras);
 
-            var profesores = context.Set<InvProyectoProfesor>().Where(p => p.IdProyecto == project.IdProyecto);
-            context.Set<InvProyectoProfesor>().RemoveRange(profesores);
-
-            var alumnos = context.Set<InvProyectoAlumno>().Where(a => a.IdProyecto == project.IdProyecto);
-            context.Set<InvProyectoAlumno>().RemoveRange(alumnos);
+            var participantes = context.Set<InvProyectoParticipante>().Where(p => p.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoParticipante>().RemoveRange(participantes);
 
             var objetivos = context.Set<InvObjetivoProyecto>().Where(o => o.IdProyecto == project.IdProyecto);
             context.Set<InvObjetivoProyecto>().RemoveRange(objetivos);

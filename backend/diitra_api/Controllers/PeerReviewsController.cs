@@ -176,8 +176,7 @@ public class PeerReviewsController : ControllerBase
         bool isMember = false;
         if (!isPrivileged)
         {
-            isMember = await _context.Set<InvProyectoProfesor>().AnyAsync(pp => pp.IdProyecto == proyecto.IdProyecto && pp.IdUsuario == userId)
-                    || await _context.Set<InvProyectoAlumno>().AnyAsync(pa => pa.IdProyecto == proyecto.IdProyecto && pa.IdUsuario == userId);
+            isMember = await _context.Set<InvProyectoParticipante>().AnyAsync(pp => pp.IdProyecto == proyecto.IdProyecto && pp.IdUsuario == userId);
         }
 
         bool isReviewer = false;

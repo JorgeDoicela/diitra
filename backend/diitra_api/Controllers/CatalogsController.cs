@@ -450,7 +450,7 @@ namespace diitra_api.Controllers
                     .ToListAsync();
 
                 var researchHours = new List<ProfesoresActividade>();
-                var assignedHoursList = new List<InvProyectoProfesor>();
+                var assignedHoursList = new List<InvProyectoParticipante>();
                 var linkedUsersList = new List<User>();
                 var estadosConCarga = await _context.InvConfigWorkflows
                     .Where(w => w.Activo && w.ContabilizaCargaHoraria)
@@ -473,10 +473,11 @@ namespace diitra_api.Controllers
                         .ToListAsync();
                     var linkedUserIds = linkedUsersList.Select(u => u.IdUsuario).ToList();
 
-                    assignedHoursList = await _context.InvProyectosProfesores
+                    assignedHoursList = await _context.InvProyectoParticipantes
                         .Include(pp => pp.IdProyectoNavigation)
-                        .Where(pp => linkedUserIds.Contains(pp.IdUsuario) && pp.Activo != false &&
-                                     estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
+                        .Where(pp => pp.TipoParticipante == "Docente" &&
+                                     linkedUserIds.Contains(pp.IdUsuario) && pp.Activo != false &&
+                                     estadosConCarga.Contains(pp.IdProyectoNavigation!.Estado))
                         .ToListAsync();
                 }
 

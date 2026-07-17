@@ -96,7 +96,22 @@ namespace Diitra.Infrastructure.Research
                 {
                     throw new InvalidOperationException("No se puede aprobar la prepropuesta porque el título del proyecto está vacío.");
                 }
-                if (string.IsNullOrWhiteSpace(proyecto.DescripcionProyecto))
+
+                string desc = "";
+                if (!string.IsNullOrEmpty(proyecto.MetadataCacesJson))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(proyecto.MetadataCacesJson);
+                        if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                        {
+                            desc = el.GetString() ?? "";
+                        }
+                    }
+                    catch { }
+                }
+
+                if (string.IsNullOrWhiteSpace(desc))
                 {
                     throw new InvalidOperationException("No se puede aprobar la prepropuesta porque la descripción/justificación del proyecto está vacía.");
                 }
@@ -132,8 +147,7 @@ namespace Diitra.Infrastructure.Research
                     // B. Validación de Presupuesto Máximo (Simplificada: Sin tope de convocatoria en BD)
 
                     // C. Validación de al menos un Investigador
-                    var totalInvestigadores = await _context.InvProyectosProfesores.CountAsync(p => p.IdProyecto == proyecto.IdProyecto)
-                                            + await _context.InvProyectosAlumnos.CountAsync(a => a.IdProyecto == proyecto.IdProyecto);
+                    var totalInvestigadores = await _context.InvProyectoParticipantes.CountAsync(p => p.IdProyecto == proyecto.IdProyecto && p.Activo != false);
                     if (totalInvestigadores == 0)
                     {
                         throw new InvalidOperationException("No es posible enviar la propuesta. Debe registrar al menos un investigador en el equipo humano.");
@@ -176,16 +190,16 @@ namespace Diitra.Infrastructure.Research
                     estadosConCargaHoraria = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
                 }
 
-                var activeProfs = await _context.InvProyectosProfesores
+                var activeProfs = await _context.InvProyectoParticipantes
                     .Include(pp => pp.IdUsuarioNavigation)
-                    .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                    .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false && pp.TipoParticipante == "Docente")
                     .ToListAsync();
-
+ 
                 foreach (var prof in activeProfs)
                 {
                     var persona = prof.IdUsuarioNavigation;
                     if (persona == null || persona.TablaSigafi == "alumno") continue;
-
+ 
                     decimal proposedHours = prof.HorasSemanales ?? 0;
                     
                     // NOTA DE NOMENCLATURA & SISTEMA: Se aplica Trim() en los IDs de profesores para evitar desajustes por espacios en la persistencia.
@@ -193,12 +207,13 @@ namespace Diitra.Infrastructure.Research
                         .Where(pa => pa.IdProfesor.Trim() == persona.IdSigafi.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .Select(pa => pa.HorasSemana)
                         .FirstOrDefaultAsync() ?? 0;
-
-                    var otherProjectsHours = await _context.InvProyectosProfesores
-                        .Where(pp => pp.IdUsuario == persona.IdUsuario && 
+ 
+                    var otherProjectsHours = await _context.InvProyectoParticipantes
+                        .Where(pp => pp.TipoParticipante == "Docente" &&
+                                     pp.IdUsuario == persona.IdUsuario && 
                                      pp.IdProyecto != proyecto.IdProyecto && 
                                      pp.Activo != false && 
-                                     pp.IdProyectoNavigation.Activo != false &&
+                                     pp.IdProyectoNavigation!.Activo != false &&
                                      estadosConCargaHoraria.Contains(pp.IdProyectoNavigation.Estado))
                         .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
 
@@ -241,9 +256,7 @@ namespace Diitra.Infrastructure.Research
             }
 
             _context.InvTrazabilidadProyectos.Add(trazabilidad);
-            await _context.SaveChangesAsync();
-
-            var afterState = new
+               var afterState = new
             {
                 Titulo = proyecto.Titulo,
                 CodigoInstitucional = proyecto.CodigoInstitucional,
@@ -251,25 +264,20 @@ namespace Diitra.Infrastructure.Research
                 FechaModificacion = proyecto.FechaModificacion
             };
             string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
-
+ 
             await _auditService.LogActionAsync(idUsuario, "TRANSICIONAR_PROYECTO", $"Proyecto \"{proyecto.Titulo}\" transicionó de {estadoAnterior} a {nuevoEstado}", "PROYECTOS", beforeJson, afterJson);
-
+ 
             // Notify admins/directors when a project is submitted
             if (nuevoEstado == "Enviado")
             {
                 try
                 {
-                    var profs = await _context.InvProyectosProfesores
+                    var participants = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
-                        .Select(pp => $"{pp.IdUsuarioNavigation.Nombre} ({pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")})")
+                        .Select(pp => $"{pp.IdUsuarioNavigation!.Nombre} ({(pp.TipoParticipante == "Alumno" ? "Estudiante" : (pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")))})")
                         .ToListAsync();
-                    var alumnos = await _context.InvProyectosAlumnos
-                        .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                        .Select(pa => $"{pa.IdUsuarioNavigation.Nombre} (Estudiante)")
-                        .ToListAsync();
-                    var allParticipants = profs.Concat(alumnos).ToList();
-                    string participantes = allParticipants.Count > 0 ? string.Join(", ", allParticipants) : "un docente";
-
+                    string participantes = participants.Count > 0 ? string.Join(", ", participants) : "un docente";
+ 
                     await _notificationService.NotifyByRoleCodesAsync(
                         "Proyecto Postulado",
                         $"El proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido postulado y requiere revisión.",
@@ -286,23 +294,18 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    var profs = await _context.InvProyectosProfesores
+                    var participants = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
-                        .Select(pp => $"{pp.IdUsuarioNavigation.Nombre} ({pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")})")
+                        .Select(pp => $"{pp.IdUsuarioNavigation!.Nombre} ({(pp.TipoParticipante == "Alumno" ? "Estudiante" : (pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")))})")
                         .ToListAsync();
-                    var alumnos = await _context.InvProyectosAlumnos
-                        .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                        .Select(pa => $"{pa.IdUsuarioNavigation.Nombre} (Estudiante)")
-                        .ToListAsync();
-                    var allParticipants = profs.Concat(alumnos).ToList();
-                    string participantes = allParticipants.Count > 0 ? string.Join(", ", allParticipants) : "un docente";
-
+                    string participantes = participants.Count > 0 ? string.Join(", ", participants) : "un docente";
+ 
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
                         ? $"/investigacion/workspace/protocolo-investigacion/{docInstance.Uuid}"
                         : $"/investigacion";
-
+ 
                     await _notificationService.NotifyByRoleCodesAsync(
                         "Prepropuesta Registrada",
                         $"La prepropuesta del proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
@@ -319,21 +322,18 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    var participantUserIds = await _context.InvProyectosProfesores
+                    var participantUserIds = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
                         .Select(pp => pp.IdUsuario)
-                        .Concat(_context.InvProyectosAlumnos
-                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                            .Select(pa => pa.IdUsuario))
                         .Distinct()
                         .ToListAsync();
-
+ 
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
                         ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
                         : $"/investigacion/mis-proyectos";
-
+ 
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -354,21 +354,18 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    var participantUserIds = await _context.InvProyectosProfesores
+                    var participantUserIds = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
                         .Select(pp => pp.IdUsuario)
-                        .Concat(_context.InvProyectosAlumnos
-                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                            .Select(pa => pa.IdUsuario))
                         .Distinct()
                         .ToListAsync();
-
+ 
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
                         ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
                         : $"/investigacion/mis-proyectos";
-
+ 
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -389,21 +386,18 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    var participantUserIds = await _context.InvProyectosProfesores
+                    var participantUserIds = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
                         .Select(pp => pp.IdUsuario)
-                        .Concat(_context.InvProyectosAlumnos
-                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                            .Select(pa => pa.IdUsuario))
                         .Distinct()
                         .ToListAsync();
-
+ 
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
                         ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
                         : $"/investigacion/mis-proyectos";
-
+ 
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -424,25 +418,22 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    var participantUserIds = await _context.InvProyectosProfesores
+                    var participantUserIds = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
                         .Select(pp => pp.IdUsuario)
-                        .Concat(_context.InvProyectosAlumnos
-                            .Where(pa => pa.IdProyecto == proyecto.IdProyecto && pa.Activo != false)
-                            .Select(pa => pa.IdUsuario))
                         .Distinct()
                         .ToListAsync();
-
+ 
                     string obsResumen = string.IsNullOrEmpty(observacion) 
                         ? "Sin observaciones detalladas." 
                         : (observacion.Length > 150 ? observacion.Substring(0, 147) + "..." : observacion);
-
+ 
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
                         ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
                         : $"/investigacion/mis-proyectos";
-
+ 
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -459,7 +450,7 @@ namespace Diitra.Infrastructure.Research
                     Console.WriteLine($"[DIITRA] Error al notificar devolución técnica: {ex.Message}");
                 }
             }
-
+ 
             return true;
         }
 
