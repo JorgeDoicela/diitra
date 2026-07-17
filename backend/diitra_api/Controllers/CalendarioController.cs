@@ -60,7 +60,7 @@ public class CalendarioController : ControllerBase
         if (dbUser == null) return Unauthorized();
 
         var token = await _calendarioService.GenerarORegenerarTokenIcalAsync(dbUser.IdUsuario);
-        var feedUrl = $"{Request.Scheme}://{Request.Host}/api/calendario/feed?token={token}";
+        var feedUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/calendario/feed?token={token}";
         return Ok(new { token, feed_url = feedUrl });
     }
 

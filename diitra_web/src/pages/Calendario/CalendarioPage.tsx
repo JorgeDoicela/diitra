@@ -205,7 +205,7 @@ export const CalendarioPage: React.FC = () => {
         }, 0);
     };
 
-    const handleInboxPointerMove = (e: React.PointerEvent<HTMLDivElement>, currentIndex: number) => {
+    const handleInboxPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
         if (draggedNote === null || draggedNoteIndex === null) return;
         e.preventDefault();
 
@@ -1643,7 +1643,7 @@ export const CalendarioPage: React.FC = () => {
                                             key={note.uuid}
                                             layout
                                             onPointerDown={(e) => handleInboxPointerDown(e, note, indexReal !== -1 ? indexReal : index)}
-                                            onPointerMove={(e) => handleInboxPointerMove(e, indexReal !== -1 ? indexReal : index)}
+                                            onPointerMove={handleInboxPointerMove}
                                             onPointerUp={handleInboxPointerUp}
                                             data-note-uuid={note.uuid}
                                             className={`inbox-note-card animate-slide-up ${draggedNoteIndex === (indexReal !== -1 ? indexReal : index) ? 'dragging' : ''}`}

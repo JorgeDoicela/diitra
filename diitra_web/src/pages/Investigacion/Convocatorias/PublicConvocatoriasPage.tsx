@@ -7,7 +7,6 @@ import { es } from 'date-fns/locale';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import { useAuth } from '../../../api/AuthContext';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 
 interface Convocatoria {
@@ -72,7 +71,6 @@ const PublicConvocatoriasPage = () => {
     const postularId = searchParams.get('postular');
 
     const confirm = useConfirm();
-    const { addToast } = useNotifications();
     const [pendingDraft, setPendingDraft] = useState<{ titulo: string; timestamp: number } | null>(null);
     const [restoreDraftOnOpen, setRestoreDraftOnOpen] = useState(false);
 
