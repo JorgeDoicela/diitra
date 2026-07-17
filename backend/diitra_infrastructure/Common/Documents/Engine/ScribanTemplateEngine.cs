@@ -404,30 +404,33 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             });
         }
 
-        /// <summary>
-        /// Renderiza la plantilla HTML inyectando los datos y las variables globales del sistema.
-        /// </summary>
+        private static readonly object _compileLock = new();
+
         public async Task<string> RenderAsync(
             string templateHtml,
             object data,
             Dictionary<string, object?>? extraVariables = null,
             bool isBlindMode = false)
         {
-            // Compilar la plantilla (Handlebars cachea internamente)
             HandlebarsTemplate<object, object> compiled;
-            try
+            string rendered;
+
+            lock (_compileLock)
             {
-                compiled = _handlebars.Compile(templateHtml);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(
-                    $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
+                try
+                {
+                    compiled = _handlebars.Compile(templateHtml);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
+                }
+
+                var context = BuildContext(data, extraVariables, isBlindMode);
+                rendered = compiled(context);
             }
 
-            var context = BuildContext(data, extraVariables, isBlindMode);
-
-            var rendered = compiled(context);
             return await Task.FromResult(rendered);
         }
 

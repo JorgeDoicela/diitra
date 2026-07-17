@@ -15,9 +15,33 @@ import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import CodeBlock from '@tiptap/extension-code-block';
 import Collaboration from '@tiptap/extension-collaboration';
 import Placeholder from '@tiptap/extension-placeholder';
-import Image from '@tiptap/extension-image';
+import CustomImage from './CustomImage';
+import { Gapcursor } from '@tiptap/extension-gapcursor';
+import { Dropcursor } from '@tiptap/extension-dropcursor';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
+
+const CustomTable = Table.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            apa: {
+                default: true,
+                parseHTML: element => element.classList.contains('apa-table'),
+                renderHTML: attributes => {
+                    if (attributes.apa) {
+                        return { class: 'apa-table' };
+                    }
+                    return {};
+                },
+            },
+        };
+    },
+});
 
 export interface CoWorkExtensionsConfig {
     ydoc: Y.Doc | null;
@@ -50,10 +74,21 @@ export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
             placeholder: config.placeholder ?? 'Comienza a escribir tu propuesta académica...',
             emptyEditorClass: 'is-editor-empty',
         }),
-        Image.configure({
-            inline: true,
+        CustomImage.configure({
+            inline: false,
             allowBase64: false, // Desactivado intencionalmente para forzar la arquitectura Upload-on-Paste (alto rendimiento)
         }),
+        Gapcursor,
+        Dropcursor.configure({
+            color: '#6366f1',
+            width: 2,
+        }),
+        CustomTable.configure({
+            resizable: true,
+        }),
+        TableRow,
+        TableCell,
+        TableHeader,
     ];
 
     if (config.ydoc) {

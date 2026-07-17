@@ -65,6 +65,16 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
     );
 };
 
+const extractImageUrls = (html: string): string[] => {
+    const urls: string[] = [];
+    const regex = /<img[^>]+src=["']([^"']+)["']/g;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+        urls.push(match[1]);
+    }
+    return urls;
+};
+
 const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     cowork,
     field = 'default',
@@ -84,6 +94,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const onChangeRef = React.useRef(onChange);
     const coworkRef = React.useRef(cowork);
     const fieldRef = React.useRef(field);
+    const knownImagesRef = React.useRef<string[]>([]);
 
     /**
      * Track whether the last ProseMirror transaction was triggered by y-prosemirror
@@ -210,6 +221,25 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
             const source: 'local' | 'remote' = lastTrWasRemoteRef.current ? 'remote' : 'local';
+            
+            // Detección de imágenes locales eliminadas
+            const currentImages = extractImageUrls(html);
+            if (source === 'local') {
+                const deletedImages = knownImagesRef.current.filter(url => !currentImages.includes(url));
+                for (const imageUrl of deletedImages) {
+                    if (imageUrl.startsWith('/api/storage/cowork_images/')) {
+                        api.delete(`/collaboration/delete-image?url=${encodeURIComponent(imageUrl)}`)
+                            .then(() => {
+                                coworkLog(`[CoWorkEditor] Imagen eliminada del servidor: ${imageUrl}`);
+                            })
+                            .catch(err => {
+                                console.error('[DIITRA] Error al eliminar imagen de la base de datos:', err);
+                            });
+                    }
+                }
+            }
+            knownImagesRef.current = currentImages;
+
             coworkLog(`[CoWorkEditor] onUpdate field='${fieldRef.current}' source=${source} len=${html.length}`);
             const currentOnChange = onChangeRef.current;
             if (currentOnChange) {
@@ -338,6 +368,97 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                     float: left;
                     height: 0;
                     font-style: italic;
+                }
+
+                .cowork-editor-content .ProseMirror .ProseMirror-gapcursor {
+                    display: none;
+                    pointer-events: none;
+                    position: absolute;
+                }
+                .cowork-editor-content .ProseMirror .ProseMirror-gapcursor::after {
+                    content: "";
+                    display: block;
+                    position: absolute;
+                    top: -2px;
+                    left: 0;
+                    width: 2px;
+                    height: 1.2em;
+                    background-color: #6366f1;
+                    animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+                }
+                @keyframes ProseMirror-cursor-blink {
+                    to { visibility: hidden; }
+                }
+
+                /* Estilos Generales para Tablas */
+                .cowork-editor-content .ProseMirror table {
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    width: 100%;
+                    margin: 1.5rem 0;
+                    overflow: hidden;
+                }
+                .cowork-editor-content .ProseMirror table tr {
+                    height: auto !important;
+                }
+                .cowork-editor-content .ProseMirror table td,
+                .cowork-editor-content .ProseMirror table th {
+                    min-width: 1em;
+                    border: 1px dashed #e2e8f0;
+                    padding: 6px 10px;
+                    line-height: 1.4;
+                    font-size: 0.9rem;
+                    vertical-align: middle;
+                    box-sizing: border-box;
+                    position: relative;
+                    height: auto !important;
+                }
+                .cowork-editor-content .ProseMirror table th {
+                    font-weight: bold;
+                    text-align: left;
+                    background-color: rgba(0, 0, 0, 0.02);
+                }
+
+                /* Estilos NORMAS APA para Tablas (Líneas horizontales sólidas, sin líneas verticales) */
+                .cowork-editor-content .ProseMirror table.apa-table {
+                    border-collapse: collapse;
+                    border: none !important;
+                }
+                .cowork-editor-content .ProseMirror table.apa-table td,
+                .cowork-editor-content .ProseMirror table.apa-table th {
+                    border: none !important;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+                }
+                /* Borde superior doble/fuerte y borde inferior de cabecera en APA */
+                .cowork-editor-content .ProseMirror table.apa-table tr:first-child th,
+                .cowork-editor-content .ProseMirror table.apa-table tr:first-child td {
+                    border-top: 2px solid #111 !important;
+                    border-bottom: 1.5px solid #111 !important;
+                }
+                /* Borde inferior de la última fila en APA */
+                .cowork-editor-content .ProseMirror table.apa-table tr:last-child td {
+                    border-bottom: 2px solid #111 !important;
+                }
+                /* Quitar cualquier línea vertical interna */
+                .cowork-editor-content .ProseMirror table.apa-table td,
+                .cowork-editor-content .ProseMirror table.apa-table th {
+                    border-left: none !important;
+                    border-right: none !important;
+                }
+
+                /* Tirador de Redimensionamiento de Columnas de Tabla */
+                .cowork-editor-content .ProseMirror .column-resize-handle {
+                    position: absolute;
+                    right: -2px;
+                    top: 0;
+                    bottom: -2px;
+                    width: 4px;
+                    background-color: #6366f1;
+                    pointer-events: none;
+                    z-index: 20;
+                }
+                .cowork-editor-content .ProseMirror .resize-cursor {
+                    cursor: ew-resize;
                 }
             `}</style>
         </div>

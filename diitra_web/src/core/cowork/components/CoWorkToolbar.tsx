@@ -12,6 +12,7 @@ import {
     Quote, 
     Code, 
     Image as ImageIcon, 
+    Table,
     Undo, 
     Redo
 } from 'lucide-react';
@@ -25,6 +26,31 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!editor || readonly) return null;
+
+    const countTables = () => {
+        let count = 0;
+        editor.state.doc.descendants((node: any) => {
+            if (node.type.name === 'table') {
+                count++;
+            }
+        });
+        return count;
+    };
+
+    const handleInsertApaTable = () => {
+        const nextTableNum = countTables() + 1;
+        const htmlContent = 
+            `<p><strong>Tabla ${nextTableNum}</strong></p>` +
+            `<p><em>Título de la Tabla</em></p>` +
+            '<table class="apa-table"><thead><tr><th>Cabecera 1</th><th>Cabecera 2</th><th>Cabecera 3</th></tr></thead><tbody><tr><td>Dato 1</td><td>Dato 2</td><td>Dato 3</td></tr><tr><td>Dato 4</td><td>Dato 5</td><td>Dato 6</td></tr></tbody></table>' +
+            `<p class="text-xs text-text-dim"><em>Nota.</em> Descripción de los datos presentados.</p><p></p>`;
+
+        editor
+            .chain()
+            .focus()
+            .insertContent(htmlContent)
+            .run();
+    };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -156,6 +182,58 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
                     accept="image/*"
                     className="hidden"
                 />
+
+                <div className="w-px h-5 bg-border-thin mx-1" />
+
+                {/* Tablas APA */}
+                <button
+                    onClick={handleInsertApaTable}
+                    className={buttonClass(editor.isActive('table'))}
+                    title="Insertar Tabla APA"
+                >
+                    <Table size={14} />
+                </button>
+
+                {editor.isActive('table') && (
+                    <div className="flex items-center gap-1 bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-950/30 ml-1">
+                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mr-1">Tabla:</span>
+                        <button
+                            onClick={() => editor.chain().focus().addRowAfter().run()}
+                            className="px-1.5 py-0.5 rounded text-text-dim hover:text-indigo-500 hover:bg-indigo-100/50 text-[8px] font-bold"
+                            title="Añadir Fila Abajo"
+                        >
+                            +Fila
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().addColumnAfter().run()}
+                            className="px-1.5 py-0.5 rounded text-text-dim hover:text-indigo-500 hover:bg-indigo-100/50 text-[8px] font-bold"
+                            title="Añadir Columna Derecha"
+                        >
+                            +Col
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().deleteRow().run()}
+                            className="px-1.5 py-0.5 rounded text-text-dim hover:text-red-500 hover:bg-red-100/50 text-[8px] font-bold"
+                            title="Eliminar Fila"
+                        >
+                            -Fila
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().deleteColumn().run()}
+                            className="px-1.5 py-0.5 rounded text-text-dim hover:text-red-500 hover:bg-red-100/50 text-[8px] font-bold"
+                            title="Eliminar Columna"
+                        >
+                            -Col
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().deleteTable().run()}
+                            className="px-1.5 py-0.5 rounded text-text-dim hover:text-red-600 hover:bg-red-100/50 text-[8px] font-bold"
+                            title="Eliminar Tabla"
+                        >
+                            Borrar
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Historial y Ayuda */}

@@ -44,7 +44,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 }) => {
     const navigate = useNavigate();
     const { user, isDocente, isAdmin } = useAuth();
-    const { addToast } = useNotifications();
+    useNotifications();
     const confirm = useConfirm();
 
     const [titulo, setTitulo] = useState('');

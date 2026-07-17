@@ -388,6 +388,50 @@ namespace diitra_api.Controllers
                 return StatusCode(500, new { message = "Error interno al eliminar el comentario", detail = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Elimina una imagen de cowork_images.
+        /// </summary>
+        [HttpDelete("delete-image")]
+        public async Task<IActionResult> DeleteImage([FromQuery] string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return BadRequest(new { message = "No se proporcionó la URL de la imagen." });
+
+            try
+            {
+                // Extraer la ruta relativa de la URL
+                // Ejemplo de URL: /api/storage/cowork_images/639198926921636825_image.png
+                var prefix = "/api/storage/";
+                var idx = url.IndexOf(prefix);
+                if (idx == -1)
+                {
+                    return BadRequest(new { message = "URL de imagen no válida." });
+                }
+
+                var relativePath = url.Substring(idx + prefix.Length);
+
+                // Evitar path traversal por seguridad
+                if (relativePath.Contains("..") || relativePath.StartsWith("/") || relativePath.StartsWith("\\"))
+                {
+                    return BadRequest(new { message = "Ruta de archivo no permitida." });
+                }
+
+                // Asegurar que esté dentro de cowork_images
+                if (!relativePath.StartsWith("cowork_images/"))
+                {
+                    return BadRequest(new { message = "Solo se permite eliminar imágenes de colaboración." });
+                }
+
+                await _storageService.DeleteFileAsync(relativePath);
+                return Ok(new { message = "Imagen eliminada correctamente." });
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al eliminar imagen de colaboración: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al eliminar la imagen", detail = ex.Message });
+            }
+        }
     }
 
     public class UpdateCommentRequest

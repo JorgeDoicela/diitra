@@ -728,7 +728,15 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
             addAudit('PDF Generado exitosamente', 'success');
-        } catch {
+        } catch (err: any) {
+            let errorMsg = err;
+            if (err?.response?.data instanceof Blob) {
+                try {
+                    const text = await err.response.data.text();
+                    errorMsg = JSON.parse(text);
+                } catch {}
+            }
+            console.error('[DIITRA] PDF render error:', errorMsg);
             addAudit('Error al generar el documento PDF', 'error');
         } finally {
             setIsGenerating(false);

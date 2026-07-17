@@ -55,11 +55,14 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly ImageResourceLoader _imageLoader;
         private readonly DiitraContext _db;
 
-        // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
+        // Stateless engines: safe to share across requests
         private static readonly ScribanTemplateEngine _scribanEngine = new();
-        private static readonly ITextHtmlPdfRenderer _pdfRenderer = new();
-        private static readonly PdfMergerService _mergerService = new();
         private static readonly LegalComplianceInjector _complianceInjector = new();
+
+        // Stateful iText engines: must be per-request to avoid PDF indirect object corruption
+        // when concurrent requests share the same PdfDocument/PdfWriter instances.
+        private readonly ITextHtmlPdfRenderer _pdfRenderer = new();
+        private readonly PdfMergerService _mergerService = new();
 
         public DocumentEngine(
             IDocumentTemplateRepository templateRepository,

@@ -16,41 +16,72 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     /// </summary>
     public class ITextHtmlPdfRenderer
     {
-        private static readonly FontProvider _fontProvider;
-        private static readonly ConverterProperties _converterProperties;
+        // ── Thread-Safety: Professional Pattern ──────────────────────────────────────────────
+        // iText's FontProvider is NOT thread-safe: its internal FontSelectorCache writes to a
+        // plain Dictionary<> during rendering, causing concurrent corruption.
+        //
+        // Professional solution: cache the raw font file BYTES once at startup (immutable after
+        // init → zero contention), then build a fresh FontProvider per render call from those
+        // cached bytes. No shared mutable state, no locks, full parallelism.
+        //
+        // Compared to alternatives:
+        //   ✗ SemaphoreSlim(1,1)        — serializes all rendering, limits throughput
+        //   ✗ Static shared FontProvider — shared mutable cache → thread corruption
+        //   ✓ Per-render FontProvider    — isolated state, no contention, parallelism-safe
+        // ─────────────────────────────────────────────────────────────────────────────────────
+        private static readonly IReadOnlyList<byte[]> _cachedFontBytes;
 
         static ITextHtmlPdfRenderer()
         {
-            _fontProvider = new FontProvider();
-            _fontProvider.AddStandardPdfFonts();
+            var fontBytes = new List<byte[]>();
 
             // 1. Cargar fuentes locales del proyecto (Portabilidad total para Producción)
             string localFontsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Fonts");
             if (Directory.Exists(localFontsPath))
             {
-                _fontProvider.AddDirectory(localFontsPath);
+                foreach (var file in Directory.GetFiles(localFontsPath, "*.ttf", SearchOption.AllDirectories))
+                {
+                    try { fontBytes.Add(File.ReadAllBytes(file)); } catch { /* skip unreadable */ }
+                }
+                foreach (var file in Directory.GetFiles(localFontsPath, "*.otf", SearchOption.AllDirectories))
+                {
+                    try { fontBytes.Add(File.ReadAllBytes(file)); } catch { /* skip unreadable */ }
+                }
             }
 
-            // 2. Fallback: Registrar fuentes del sistema Windows (por si faltan en el proyecto)
+            // 2. Fallback: fuentes del sistema Windows (leídas a bytes una sola vez al arrancar)
             string fontsPath = "C:/Windows/Fonts";
             string[] requestedFonts = { 
                 "GOTHIC.TTF", "GOTHICB.TTF", "GOTHICI.TTF", "GOTHICBI.TTF", // Century Gothic
                 "CALIBRI.TTF", "CALIBRIB.TTF", "CALIBRII.TTF", "CALIBRIZ.TTF", // Calibri
-                "TIMES.TTF", "TIMESBD.TTF", "TIMESBI.TTF", "TIMESI.TTF" // Times New Roman
+                "TIMES.TTF", "TIMESBD.TTF", "TIMESBI.TTF", "TIMESI.TTF"       // Times New Roman
             };
-
             foreach (var fontFile in requestedFonts)
             {
                 var fullPath = System.IO.Path.Combine(fontsPath, fontFile);
                 if (File.Exists(fullPath))
                 {
-                    _fontProvider.AddFont(fullPath);
+                    try { fontBytes.Add(File.ReadAllBytes(fullPath)); } catch { /* skip unreadable */ }
                 }
             }
-            
-            _converterProperties = new ConverterProperties();
-            _converterProperties.SetFontProvider(_fontProvider);
-            _converterProperties.SetBaseUri("data://");
+
+            _cachedFontBytes = fontBytes.AsReadOnly();
+        }
+
+        /// <summary>
+        /// Crea un FontProvider fresco por llamada usando bytes de fuentes pre-cargados en memoria.
+        /// Los bytes son inmutables (cargados una sola vez al iniciar la app), por lo que
+        /// este método es completamente thread-safe y no requiere ningún tipo de lock.
+        /// </summary>
+        private static FontProvider CreateFontProvider()
+        {
+            var fp = new FontProvider();
+            fp.AddStandardPdfFonts();
+            foreach (var bytes in _cachedFontBytes)
+            {
+                fp.AddFont(bytes);
+            }
+            return fp;
         }
 
         // CSS base institucional DIITRA...
@@ -183,6 +214,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             string? customCss = null)
         {
             var extractedStyles = new StringBuilder();
+
             string cleanedHtmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"<style[^>]*>(.*?)</style>", m => {
                 extractedStyles.AppendLine(m.Groups[1].Value);
                 return string.Empty;
@@ -254,7 +286,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                         using (var tempPdf = new PdfDocument(tempWriter))
                         {
                             tempPdf.SetDefaultPageSize(PageSize.A4);
-                            using (var tempDoc = HtmlConverter.ConvertToDocument(fullHtml, tempPdf, _converterProperties))
+                            using (var tempDoc = HtmlConverter.ConvertToDocument(fullHtml, tempPdf, CreateConverterProperties()))
                             {
                                 int numPages = tempPdf.GetNumberOfPages();
                                 for (int i = 1; i <= numPages; i++)
@@ -306,7 +338,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 pdfDocument.AddEventHandler(PdfDocumentEvent.START_PAGE, handler);
                 pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-                HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, _converterProperties);
+                HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, CreateConverterProperties());
 
                 pdfDocument.Close();
                 return await Task.FromResult(outputStream.ToArray());
@@ -358,10 +390,23 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             pdfDocument.AddEventHandler(PdfDocumentEvent.START_PAGE, handler);
             pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-            HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, _converterProperties);
+            HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, CreateConverterProperties());
 
             pdfDocument.Close();
             return await Task.FromResult(outputStream.ToArray());
+        }
+
+        /// <summary>
+        /// Crea una instancia fresca de ConverterProperties por llamada, incluyendo un
+        /// FontProvider aislado construido desde bytes pre-cargados en memoria.
+        /// Garantiza cero estado mutable compartido entre renders concurrentes.
+        /// </summary>
+        private static ConverterProperties CreateConverterProperties()
+        {
+            var props = new ConverterProperties();
+            props.SetFontProvider(CreateFontProvider());
+            props.SetBaseUri("data://");
+            return props;
         }
 
         private int GetPageCount(byte[] pdfBytes)
