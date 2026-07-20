@@ -1,0 +1,97 @@
+/**
+ * DIITRA DESIGN TOKENS (THEME STYLESHEET)
+ * Centraliza la identidad de color y valores semánticos (Vercel Geist Theme) Claro/Oscuro.
+ */
+
+:root {
+    /* Fondo y color de texto base (Vercel Dark Mode) */
+    --bg: #000000;
+    --fg: #ffffff;
+
+    /* Superficie base para tarjetas, Bento cards, contenedores y sus hovers */
+    --surface: #0a0a0a;
+    --surface-hover: #151515;
+
+    /* Bordes ultra finos semitransparentes del look de Vercel */
+    --border: rgba(255, 255, 255, 0.15);
+    --border-hover: rgba(255, 255, 255, 0.25);
+
+    /* Textos secundarios / atenuados */
+    --text-dim: #888888;
+    --accent: #ffffff;
+    --radius: 8px;
+
+    /* Rejilla y mallas decorativas */
+    --grid-color: rgba(255, 255, 255, 0.05);
+    --selection-bg: #0070f3;
+    --selection-fg: #ffffff;
+
+    /* Colores de marca / llamadas a la acción (Azul Cobalto de Vercel) */
+    --brand: #0070f3;
+    --brand-dark: #0051c3;
+    --brand-light: #3291ff;
+
+    /* Colores para escenarios y estados específicos (Alertas / Estados de Proyectos) */
+    --error: #f33;
+    --success: #00e054;
+    --warning: #f5a623;
+    --info: #0070f3;
+
+    /* Colores de fondo traslúcidos para burbujas e iconos de estado */
+    --success-subtle: rgba(0, 224, 84, 0.08);
+    --error-subtle: rgba(255, 51, 51, 0.08);
+    --warning-subtle: rgba(245, 166, 35, 0.08);
+    --info-subtle: rgba(0, 112, 243, 0.08);
+    --brand-subtle: rgba(0, 112, 243, 0.08);
+
+    /* Escala de Grises Exclusiva (Geist Grays) */
+    --accents-1: #111111;
+    --accents-2: #333333;
+    --accents-3: #444444;
+    --accents-4: #666666;
+    --accents-5: #888888;
+    --accents-6: #999999;
+    --accents-7: #eaeaea;
+    --accents-8: #fafafa;
+}
+
+[data-theme="light"] {
+    /* TEMA CLARO: Inversión de tonos de grises y adaptabilidad semántica */
+    --bg: #fafafa;
+    --fg: #09090b;
+    --surface: #ffffff;
+    --surface-hover: #f4f4f5;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-hover: rgba(0, 0, 0, 0.1);
+    --text-dim: #71717a;
+    --accent: #09090b;
+    --grid-color: rgba(0, 0, 0, 0.02);
+    --selection-bg: #6366f1;
+    --selection-fg: #ffffff;
+
+    /* Marca corporativa */
+    --brand: #4f46e5;
+    --brand-dark: #3730a3;
+    --brand-light: #6366f1;
+
+    /* Feedback adaptativo a fondos claros */
+    --error: #e11d48;
+    --success: #059669;
+    --warning: #d97706;
+    --info: #0284c7;
+
+    --success-subtle: rgba(5, 150, 105, 0.06);
+    --error-subtle: rgba(225, 29, 72, 0.06);
+    --warning-subtle: rgba(217, 119, 6, 0.06);
+    --info-subtle: rgba(2, 132, 199, 0.06);
+    --brand-subtle: rgba(79, 70, 229, 0.06);
+
+    --accents-1: #ffffff;
+    --accents-2: #f4f4f5;
+    --accents-3: #e4e4e7;
+    --accents-4: #a1a1aa;
+    --accents-5: #71717a;
+    --accents-6: #52525b;
+    --accents-7: #27272a;
+    --accents-8: #09090b;
+}

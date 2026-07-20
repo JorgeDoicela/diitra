@@ -998,8 +998,8 @@ CREATE TABLE inv_config_general (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Configuración general llave-valor';
 
 
--- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
--- ⚙️ ADAPTABILIDAD CACES: Los umbrales de cada indicador son ahora campos propios.
+-- NÚCLEO: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
+-- ADAPTABILIDAD CACES: Los umbrales de cada indicador son ahora campos propios.
 -- El ReportsController debe leer umbralCumplido/umbralEnProceso desde aquí,
 -- evitando valores quemados en C# que fallan cuando el CACES actualiza sus metas.
 CREATE TABLE inv_config_indicadores (
@@ -1010,10 +1010,10 @@ CREATE TABLE inv_config_indicadores (
     descripcion         TEXT,
     tipoDato            ENUM('Cantidad', 'Monto', 'Booleano', 'Porcentaje') DEFAULT 'Cantidad',
     valorReferencia     DECIMAL(12,2) COMMENT 'Meta cuantitativa (ej: 0.5 publicaciones/investigador)',
-    -- ⚙️ UMBRALES DINÁMICOS: Permiten cambiar las metas del CACES sin tocar código C#
+    -- UMBRALES DINÁMICOS: Permiten cambiar las metas del CACES sin tocar código C#
     umbralCumplido      DECIMAL(12,2) NULL COMMENT 'Porcentaje mínimo para estado CUMPLIDO (ej: 80.00)',
     umbralEnProceso     DECIMAL(12,2) NULL COMMENT 'Porcentaje mínimo para estado EN PROCESO (ej: 50.00)',
-    -- ⚙️ FÓRMULA: Identificador de la función de cálculo en el motor de reportes
+    -- FÓRMULA: Identificador de la función de cálculo en el motor de reportes
     formulaCalculo      VARCHAR(50)   NULL COMMENT 'Clave de la fórmula de cálculo: PND_ALIGNMENT, PROD_RATE, INNOVATION_PCT, STUDENT_LINK, BUDGET_EXEC',
     unidadMedida        VARCHAR(50)   NULL COMMENT 'Ej: publicaciones/investigador, % proyectos, $',
     añoNormativa        INT           NOT NULL COMMENT 'Año del modelo de evaluación (ej: 2024)',
@@ -1328,7 +1328,7 @@ CREATE TABLE inv_cowork_updates (
 -- =============================================================================
 
 -- =============================================================================
--- ⚙️ MOTOR DE FLUJOS ADAPTABLE AL CACES
+-- MOTOR DE FLUJOS ADAPTABLE AL CACES
 -- Esta tabla es la ÚNICA fuente de verdad para el comportamiento de cada estado.
 -- Para agregar un nuevo estado normativo (ej: 'Pre-aprobado'), solo insertar aquí.
 -- Para cambiar qué estados cuentan para carga horaria o informes, solo hacer
@@ -1343,7 +1343,7 @@ CREATE TABLE inv_config_workflow (
     requiereObservacion     TINYINT(1)    NOT NULL DEFAULT 1 COMMENT '1 si el usuario debe escribir una justificación',
     activo                  TINYINT(1)    NOT NULL DEFAULT 1,
 
-    -- ⚙️ ATRIBUTOS DE NEGOCIO DEL ESTADO DESTINO
+    -- ATRIBUTOS DE NEGOCIO DEL ESTADO DESTINO
     -- Estas columnas centralizan la lógica que antes estaba quemada en 7+ archivos C#.
     -- El WorkflowEngineService debe consultarlas en lugar de usar arrays hardcodeados.
     contabilizaCargaHoraria TINYINT(1)    NOT NULL DEFAULT 0
@@ -1357,7 +1357,7 @@ CREATE TABLE inv_config_workflow (
     esEstadoFinal           TINYINT(1)    NOT NULL DEFAULT 0
         COMMENT '1 si estadoDestino es un estado terminal (sin más transiciones salvo excepción)',
 
-    -- ⚙️ APARIENCIA EN LA INTERFAZ
+    -- APARIENCIA EN LA INTERFAZ
     -- Evita que el frontend tenga colores de estado quemados en TypeScript.
     etiquetaUi              VARCHAR(80)   NULL         COMMENT 'Etiqueta legible para el usuario final en la UI',
     colorHex                VARCHAR(7)    NULL         COMMENT 'Color hexadecimal para badges y filtros de la UI (ej: #3B82F6)',
@@ -2075,7 +2075,7 @@ CREATE TABLE inv_calendario_eventos_normativos (
     moduloOrigen      VARCHAR(50)   NULL      COMMENT 'Módulo al que aplica: CONVOCATORIAS, PROYECTOS, SIIES, PERSONAL, etc.',
     urlAccion         VARCHAR(255)  NULL      COMMENT 'Ruta interna del sistema (ej: /convocatorias)',
     colorHex          VARCHAR(7)    NULL DEFAULT '#6B7280' COMMENT 'Color personalizado del evento en el calendario',
-    -- 🔔 ALERTAS AUTOMÁTICAS por email
+    -- ALERTAS AUTOMÁTICAS por email
     alertaDias        INT           NULL DEFAULT 7 COMMENT 'Días antes del evento para enviar alerta. NULL = sin alerta.',
     -- Notas Rápidas — campos extendidos
     notaDetalle       TEXT          NULL      COMMENT 'Descripción extendida opcional de la nota rápida (campo expandible en UI)',
@@ -2368,3 +2368,14 @@ VALUES
 CREATE INDEX idx_cal_norm_fechas ON inv_calendario_eventos_normativos(fechaInicio, fechaFin);
 CREATE INDEX idx_cal_norm_tipo   ON inv_calendario_eventos_normativos(tipoEvento, activo);
 CREATE INDEX idx_cal_nota_bandeja ON inv_calendario_eventos_normativos(creadoPor, fechaInicio, ordenBandeja);
+
+-- Sincronización automática con Entity Framework Core
+CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+    `MigrationId` varchar(150) NOT NULL,
+    `ProductVersion` varchar(32) NOT NULL,
+    PRIMARY KEY (`MigrationId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20260720202138_InitialCreate', '9.0.0');
+

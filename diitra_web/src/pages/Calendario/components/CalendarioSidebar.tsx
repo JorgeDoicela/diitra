@@ -10,6 +10,7 @@ import {
     CATEGORIAS_CONFIG
 } from '../../../services/calendarioService';
 import type { Event as BigCalendarEvent } from 'react-big-calendar';
+import './CalendarioSidebar.css';
 
 export interface CalendarEventExtended extends BigCalendarEvent {
     resource: EventoCalendario;

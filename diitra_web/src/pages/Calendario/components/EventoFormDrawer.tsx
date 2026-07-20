@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Bell, RotateCcw } from 'lucide-react';
 import { COLORES_OPCIONES } from '../../../services/calendarioService';
+import './EventoDrawers.css';
 
 interface EventoFormDrawerProps {
     isOpen: boolean;

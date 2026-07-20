@@ -1,0 +1,149 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - MODALS & DIALOG POPOVERS
+=================================================================================
+*/
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="light"] .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-card {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 32rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-theme="light"] .modal-card {
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+}
+
+.modal-card--lg {
+    max-width: 42rem;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--surface);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background-color: var(--surface);
+}
+
+/* Custom Select drop-down with SVG arrow */
+select.input-vercel {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+}
+
+/* Popover Autocomplete */
+.popover-vercel {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    max-height: 12rem;
+    overflow-y: auto;
+    z-index: 50;
+    padding: 0.375rem;
+    backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .popover-vercel {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    background-color: rgba(10, 10, 10, 0.95);
+    border-color: var(--accents-2);
+}
+
+[data-theme="light"] .popover-vercel {
+    background-color: rgba(255, 255, 255, 0.98);
+    border-color: var(--border);
+}
+
+.popover-header-vercel {
+    padding: 0.5rem 0.625rem 0.25rem 0.625rem;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    user-select: none;
+}
+
+.popover-item-vercel {
+    width: 100%;
+    padding: 0.5rem 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--fg);
+    outline: none;
+}
+
+.popover-item-vercel:hover,
+.popover-item-vercel:focus {
+    background-color: var(--surface-hover);
+}
+
+[data-theme="light"] .popover-item-vercel:hover,
+[data-theme="light"] .popover-item-vercel:focus {
+    background-color: rgba(0, 0, 0, 0.035);
+}
+
+[data-theme="dark"] .popover-item-vercel:hover,
+[data-theme="dark"] .popover-item-vercel:focus {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Dividers */
+.divider-vercel {
+    height: 1px;
+    background-color: var(--border);
+    width: 100%;
+    margin: 1.5rem 0;
+}

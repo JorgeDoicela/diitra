@@ -1,0 +1,86 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - CARDS & GRID BACKGROUNDS
+=================================================================================
+*/
+
+/* Vercel Grid Backgrounds */
+.vercel-grid {
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+
+.vercel-grid-fade {
+    position: relative;
+    overflow: hidden;
+}
+
+.vercel-grid-fade::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-glow::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.15), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+[data-theme="light"] .bg-glow::before {
+    background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.05), transparent 70%);
+}
+
+/* Bento Cards */
+.bento-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .bento-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+.bento-card.static,
+.bento-card-static {
+    transform: none !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01) !important;
+    cursor: default;
+}
+
+.vercel-card-glow {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
+}

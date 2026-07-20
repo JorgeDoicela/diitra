@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, CheckCircle, RotateCcw, Edit2, Trash2, ArrowRight } from 'lucide-react';
 import { PRIORIDAD_COLORS } from '../../../services/calendarioService';
 import { KANBAN_COLUMNAS, type CalendarEventExtended, type Evento } from '../types/calendarioTypes';
+import './KanbanView.css';
 
 interface KanbanViewProps {
     filteredEventos: CalendarEventExtended[];

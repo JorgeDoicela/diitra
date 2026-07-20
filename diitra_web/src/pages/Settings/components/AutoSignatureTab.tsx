@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import './AutoSignatureTab.css';
 
 const FONTS = [
     { id: 'Caveat',              label: 'Casual',      fontClass: 'font-caveat'     },

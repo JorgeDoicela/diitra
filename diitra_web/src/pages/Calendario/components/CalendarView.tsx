@@ -7,6 +7,7 @@ import { es } from 'date-fns/locale';
 import { CheckCircle, Clock, Bell } from 'lucide-react';
 import { CATEGORIAS_CONFIG } from '../../../services/calendarioService';
 import type { CalendarEventExtended } from '../types/calendarioTypes';
+import './CalendarView.css';
 
 const locales = { 'es': es };
 

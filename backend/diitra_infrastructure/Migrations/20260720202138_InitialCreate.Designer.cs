@@ -12,8 +12,8 @@ using diitra_infrastructure.data.models;
 namespace diitra_infrastructure.Migrations
 {
     [DbContext(typeof(DiitraContext))]
-    [Migration("20260617160910_AddSectionAndActionToSessions")]
-    partial class AddSectionAndActionToSessions
+    [Migration("20260720202138_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -142,6 +142,21 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("varchar(512)")
                         .HasColumnName("final_pdf_path");
 
+                    b.Property<bool>("IsFilePurged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_file_purged");
+
+                    b.Property<DateTime?>("PurgedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("purged_at");
+
+                    b.Property<string>("PurgedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("purged_by");
+
                     b.Property<int>("State")
                         .HasColumnType("int")
                         .HasColumnName("estado");
@@ -244,6 +259,14 @@ namespace diitra_infrastructure.Migrations
                     b.Property<bool>("RequiresTraceabilityCode")
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("requires_traceability");
+
+                    b.Property<string>("SignatureType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasDefaultValue("DIITRA")
+                        .HasColumnName("signature_type");
 
                     b.Property<bool>("SupportsBlindMode")
                         .HasColumnType("tinyint(1)")
@@ -1112,6 +1135,32 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("campo_especifico_unesco", (string)null);
                 });
 
+            modelBuilder.Entity("diitra_infrastructure.data.models.CargoInstituto", b =>
+                {
+                    b.Property<int>("IdCargoInstituto")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idCargoInstituto");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdCargoInstituto"));
+
+                    b.Property<int?>("DisponibilidadCargo")
+                        .HasColumnType("int")
+                        .HasColumnName("disponibilidad_cargo");
+
+                    b.Property<int>("IdTipoFuncionario")
+                        .HasColumnType("int")
+                        .HasColumnName("idTipoFuncionario");
+
+                    b.Property<string>("Nombre")
+                        .HasColumnType("longtext")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("IdCargoInstituto");
+
+                    b.ToTable("cargo_instituto");
+                });
+
             modelBuilder.Entity("diitra_infrastructure.data.models.Carrera", b =>
                 {
                     b.Property<int>("IdCarrera")
@@ -1188,6 +1237,10 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("tinyint")
                         .HasColumnName("esActivo");
 
+                    b.Property<int?>("IdCargoInstituto")
+                        .HasColumnType("int")
+                        .HasColumnName("idCargoInstituto");
+
                     b.Property<string>("IdProfesor")
                         .IsRequired()
                         .HasColumnType("longtext")
@@ -1197,9 +1250,17 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("idTiposContratos");
 
+                    b.Property<int?>("Iddepartamentos")
+                        .HasColumnType("int(11)")
+                        .HasColumnName("iddepartamentos");
+
                     b.HasKey("IdContrato");
 
+                    b.HasIndex("IdCargoInstituto");
+
                     b.HasIndex("IdTiposContratos");
+
+                    b.HasIndex("Iddepartamentos");
 
                     b.ToTable("contratos");
                 });
@@ -2101,6 +2162,189 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("inv_bibliografia_proyecto", (string)null);
                 });
 
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvCalendarioAlertaEnviada", b =>
+                {
+                    b.Property<int>("IdAlerta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idAlerta");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdAlerta"));
+
+                    b.Property<DateTime>("FechaEnvio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("fechaEnvio")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateOnly>("FechaEvento")
+                        .HasColumnType("date")
+                        .HasColumnName("fechaEvento");
+
+                    b.Property<string>("IdEventoCalendario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("idEventoCalendario");
+
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("idUsuario");
+
+                    b.HasKey("IdAlerta");
+
+                    b.HasIndex("IdEventoCalendario", "IdUsuario", "FechaEvento")
+                        .IsUnique()
+                        .HasDatabaseName("uk_alerta");
+
+                    b.ToTable("inv_calendario_alertas_enviadas", (string)null);
+                });
+
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvCalendarioEventoNormativo", b =>
+                {
+                    b.Property<int>("IdEvento")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idEvento");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdEvento"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("activo");
+
+                    b.Property<int?>("AlertaDias")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(7)
+                        .HasColumnName("alertaDias");
+
+                    b.Property<string>("ColorHex")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("varchar(7)")
+                        .HasDefaultValue("#6B7280")
+                        .HasColumnName("colorHex");
+
+                    b.Property<int?>("CreadoPor")
+                        .HasColumnType("int")
+                        .HasColumnName("creadoPor");
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("text")
+                        .HasColumnName("descripcion");
+
+                    b.Property<bool>("EsPrivado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("esPrivado");
+
+                    b.Property<bool>("EsTodoElDia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("esTodoElDia");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Pendiente")
+                        .HasColumnName("estado");
+
+                    b.Property<DateOnly?>("FechaFin")
+                        .HasColumnType("date")
+                        .HasColumnName("fechaFin");
+
+                    b.Property<DateOnly?>("FechaInicio")
+                        .HasColumnType("date")
+                        .HasColumnName("fechaInicio");
+
+                    b.Property<DateTime>("FechaModificacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("fechaModificacion")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("fechaRegistro")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("ModuloOrigen")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("moduloOrigen");
+
+                    b.Property<string>("NotaDetalle")
+                        .HasColumnType("text")
+                        .HasColumnName("notaDetalle");
+
+                    b.Property<int?>("OrdenBandeja")
+                        .HasColumnType("int")
+                        .HasColumnName("ordenBandeja");
+
+                    b.Property<string>("Prioridad")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(15)
+                        .HasColumnType("varchar(15)")
+                        .HasDefaultValue("Media")
+                        .HasColumnName("prioridad");
+
+                    b.Property<bool>("RecurrenciaAnual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("recurrenciaAnual");
+
+                    b.Property<DateOnly?>("RecurrenciaHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("recurrenciaHasta");
+
+                    b.Property<string>("RolesVisibles")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("rolesVisibles");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasDefaultValue("Normativo")
+                        .HasColumnName("tipoEvento");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("titulo");
+
+                    b.Property<string>("UrlAccion")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("urlAccion");
+
+                    b.Property<string>("Uuid")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)")
+                        .HasColumnName("uuid");
+
+                    b.HasKey("IdEvento");
+
+                    b.HasIndex("Uuid")
+                        .IsUnique();
+
+                    b.ToTable("inv_calendario_eventos_normativos", (string)null);
+                });
+
             modelBuilder.Entity("diitra_infrastructure.data.models.InvCatImpacto", b =>
                 {
                     b.Property<int>("IdCatImpacto")
@@ -2265,6 +2509,11 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("descripcion");
 
+                    b.Property<string>("FormulaCalculo")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("formulaCalculo");
+
                     b.Property<int?>("IdInstitucion")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -2282,6 +2531,21 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("enum('Cantidad','Monto','Booleano','Porcentaje')")
                         .HasColumnName("tipoDato")
                         .HasDefaultValueSql("'Cantidad'");
+
+                    b.Property<decimal?>("UmbralCumplido")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("umbralCumplido");
+
+                    b.Property<decimal?>("UmbralEnProceso")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("umbralEnProceso");
+
+                    b.Property<string>("UnidadMedida")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("unidadMedida");
 
                     b.Property<decimal?>("ValorReferencia")
                         .HasPrecision(12, 2)
@@ -2305,6 +2569,23 @@ namespace diitra_infrastructure.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("ColorHex")
+                        .HasMaxLength(7)
+                        .HasColumnType("varchar(7)")
+                        .HasColumnName("colorHex");
+
+                    b.Property<bool>("ContabilizaCargaHoraria")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("contabilizaCargaHoraria");
+
+                    b.Property<bool>("EsEstadoFinal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("esEstadoFinal");
+
                     b.Property<string>("EstadoDestino")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -2315,8 +2596,31 @@ namespace diitra_infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<string>("EtiquetaUi")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)")
+                        .HasColumnName("etiquetaUi");
+
                     b.Property<int?>("IdTipoProyecto")
                         .HasColumnType("int");
+
+                    b.Property<bool>("PermiteGastosCapital")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("permiteGastosCapital");
+
+                    b.Property<bool>("PermiteInformesAvance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("permiteInformesAvance");
+
+                    b.Property<bool>("PermiteRegistroEgresos")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("permiteRegistroEgresos");
 
                     b.Property<bool>("RequiereObservacion")
                         .HasColumnType("tinyint(1)");
@@ -2342,8 +2646,10 @@ namespace diitra_infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdConvocatoria"));
 
-                    b.Property<int>("Anio")
-                        .HasColumnType("int")
+                    b.Property<string>("Anio")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("anio");
 
                     b.Property<string>("CodigoConvocatoria")
@@ -2355,6 +2661,16 @@ namespace diitra_infrastructure.Migrations
                     b.Property<string>("Descripcion")
                         .HasColumnType("text")
                         .HasColumnName("descripcion");
+
+                    b.Property<bool?>("Eliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("eliminado")
+                        .HasDefaultValueSql("'0'");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("int")
+                        .HasColumnName("eliminadoPorUsuarioId");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -2371,15 +2687,9 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("fechaCierre");
 
-                    b.Property<bool>("FinanciamientoExt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("financiamientoExt")
-                        .HasDefaultValueSql("'0'");
-
-                    b.Property<int?>("IdAgendaZonal")
-                        .HasColumnType("int")
-                        .HasColumnName("idAgendaZonal");
+                    b.Property<DateTime?>("FechaEliminacion")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("fechaEliminacion");
 
                     b.Property<string>("IdPeriodo")
                         .IsRequired()
@@ -2395,28 +2705,6 @@ namespace diitra_infrastructure.Migrations
                     b.Property<int?>("IdTipoConvocatoria")
                         .HasColumnType("int")
                         .HasColumnName("idTipoConvocatoria");
-
-                    b.Property<string>("MetaProduccion")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("metaProduccion");
-
-                    b.Property<decimal?>("MontoMaximoProyecto")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("decimal(12,2)")
-                        .HasColumnName("montoMaximoProyecto");
-
-                    b.Property<decimal?>("PresupuestoTotal")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("decimal(12,2)")
-                        .HasColumnName("presupuestoTotal");
-
-                    b.Property<decimal>("PuntajeMinimoAprobacion")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)")
-                        .HasColumnName("puntajeMinimoAprobacion")
-                        .HasDefaultValueSql("'70.00'");
 
                     b.Property<string>("RequisitosMinimos")
                         .HasColumnType("text")
@@ -2455,110 +2743,6 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("inv_convocatorias", (string)null);
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoriaDocumentoReq", b =>
-                {
-                    b.Property<int>("IdDocReq")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("idDocReq");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdDocReq"));
-
-                    b.Property<string>("Descripcion")
-                        .HasColumnType("text")
-                        .HasColumnName("descripcion");
-
-                    b.Property<bool?>("EsObligatorio")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("esObligatorio")
-                        .HasDefaultValueSql("'1'");
-
-                    b.Property<string>("FormatoAceptado")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
-                        .HasColumnName("formatoAceptado")
-                        .HasDefaultValueSql("'PDF'");
-
-                    b.Property<int>("IdConvocatoria")
-                        .HasColumnType("int")
-                        .HasColumnName("idConvocatoria");
-
-                    b.Property<string>("NombreDocumento")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("nombreDocumento");
-
-                    b.Property<string>("Uuid")
-                        .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("varchar(36)")
-                        .HasColumnName("uuid");
-
-                    b.HasKey("IdDocReq")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("IdConvocatoria");
-
-                    b.HasIndex("Uuid")
-                        .IsUnique();
-
-                    b.ToTable("inv_convocatorias_documentos_req", (string)null);
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoriaHito", b =>
-                {
-                    b.Property<int>("IdHito")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("idHito");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdHito"));
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("descripcion");
-
-                    b.Property<bool?>("EsCritico")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("esCritico")
-                        .HasDefaultValueSql("'0'");
-
-                    b.Property<DateOnly>("FechaHito")
-                        .HasColumnType("date")
-                        .HasColumnName("fechaHito");
-
-                    b.Property<int>("IdConvocatoria")
-                        .HasColumnType("int")
-                        .HasColumnName("idConvocatoria");
-
-                    b.Property<string>("NombreHito")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
-                        .HasColumnName("nombreHito");
-
-                    b.Property<string>("Uuid")
-                        .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("varchar(36)")
-                        .HasColumnName("uuid");
-
-                    b.HasKey("IdHito")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("IdConvocatoria");
-
-                    b.HasIndex("Uuid")
-                        .IsUnique();
-
-                    b.ToTable("inv_convocatorias_hitos", (string)null);
-                });
-
             modelBuilder.Entity("diitra_infrastructure.data.models.InvCronograma", b =>
                 {
                     b.Property<int>("IdActividad")
@@ -2574,12 +2758,15 @@ namespace diitra_infrastructure.Migrations
                         .HasMaxLength(7)
                         .HasColumnType("varchar(7)")
                         .HasColumnName("colorHex")
-                        .HasDefaultValueSql("'#3498db'");
+                        .HasDefaultValueSql("'#0070f3'");
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("descripcion");
+
+                    b.Property<string>("Entregable")
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("EsEntregableCaces")
                         .ValueGeneratedOnAdd()
@@ -2629,6 +2816,9 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("recursosNecesarios");
 
+                    b.Property<string>("Responsable")
+                        .HasColumnType("longtext");
+
                     b.Property<Guid>("Uuid")
                         .HasMaxLength(36)
                         .HasColumnType("char(36)")
@@ -2647,43 +2837,6 @@ namespace diitra_infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("inv_cronograma", (string)null);
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvCronogramaSemana", b =>
-                {
-                    b.Property<int>("IdSemana")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("idSemana");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdSemana"));
-
-                    b.Property<bool>("Completada")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("completada")
-                        .HasDefaultValueSql("'0'");
-
-                    b.Property<int>("IdActividad")
-                        .HasColumnType("int")
-                        .HasColumnName("idActividad");
-
-                    b.Property<string>("Mes")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
-                        .HasColumnName("mes");
-
-                    b.Property<bool>("Semana")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("semana");
-
-                    b.HasKey("IdSemana")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("IdActividad");
-
-                    b.ToTable("inv_cronograma_semanas", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvDispositivoToken", b =>
@@ -2729,6 +2882,90 @@ namespace diitra_infrastructure.Migrations
                     b.HasIndex("IdUsuario");
 
                     b.ToTable("inv_dispositivos_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvDocumentoFirma", b =>
+                {
+                    b.Property<int>("IdFirma")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idFirma");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdFirma"));
+
+                    b.Property<string>("ArchivoPdfFirmado")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("archivo_pdf_firmado");
+
+                    b.Property<string>("DocHash")
+                        .HasColumnType("longtext")
+                        .HasColumnName("doc_hash");
+
+                    b.Property<string>("DocumentoUuid")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("documento_uuid");
+
+                    b.Property<bool>("EsValida")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("es_valida");
+
+                    b.Property<DateTime>("FechaFirma")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("fecha_firma");
+
+                    b.Property<string>("FirmaCode")
+                        .HasColumnType("longtext")
+                        .HasColumnName("firma_code");
+
+                    b.Property<string>("FirmaMetadata")
+                        .HasColumnType("longtext")
+                        .HasColumnName("firma_metadata");
+
+                    b.Property<string>("FirmanteId")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("firmante_id");
+
+                    b.Property<string>("FirmanteRol")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("firmante_rol");
+
+                    b.Property<string>("HmacHash")
+                        .HasColumnType("longtext")
+                        .HasColumnName("hmac_hash");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("longtext")
+                        .HasColumnName("ip_address");
+
+                    b.Property<string>("MotivoRevocacion")
+                        .HasColumnType("longtext")
+                        .HasColumnName("motivo_revocacion");
+
+                    b.Property<DateTime?>("RevocadaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("revocada_en");
+
+                    b.Property<string>("TipoFirma")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("tipo_firma");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("longtext")
+                        .HasColumnName("user_agent");
+
+                    b.Property<string>("Uuid")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("uuid");
+
+                    b.HasKey("IdFirma");
+
+                    b.ToTable("inv_documentos_firmas");
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvDominio", b =>
@@ -3234,6 +3471,16 @@ namespace diitra_infrastructure.Migrations
                         .HasDefaultValue("En Formación")
                         .HasColumnName("categoriaConsolidacion");
 
+                    b.Property<bool?>("Eliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("eliminado")
+                        .HasDefaultValueSql("'0'");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("int")
+                        .HasColumnName("eliminadoPorUsuarioId");
+
                     b.Property<string>("Estado")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
@@ -3245,11 +3492,18 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("fechaCreacion");
 
+                    b.Property<DateTime?>("FechaEliminacion")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("fechaEliminacion");
+
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasColumnName("fechaRegistro")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("FotoUrl")
+                        .HasColumnType("longtext");
 
                     b.Property<int?>("IdCoordinador")
                         .HasColumnType("int")
@@ -3258,6 +3512,11 @@ namespace diitra_infrastructure.Migrations
                     b.Property<int?>("IdDominio")
                         .HasColumnType("int")
                         .HasColumnName("idDominio");
+
+                    b.Property<string>("LinkWhatsapp")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("linkWhatsapp");
 
                     b.Property<string>("Mision")
                         .HasColumnType("text")
@@ -3282,6 +3541,11 @@ namespace diitra_infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)")
                         .HasColumnName("siglas");
+
+                    b.Property<string>("TelefonoCoordinador")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("telefonoCoordinador");
 
                     b.Property<string>("TipoGrupo")
                         .IsRequired()
@@ -3355,6 +3619,11 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("rol");
 
+                    b.Property<string>("TelefonoContacto")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("telefonoContacto");
+
                     b.HasKey("IdGrupoMiembro")
                         .HasName("PRIMARY");
 
@@ -3363,6 +3632,61 @@ namespace diitra_infrastructure.Migrations
                     b.HasIndex("IdUsuario");
 
                     b.ToTable("inv_grupos_miembros", (string)null);
+                });
+
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvIcalToken", b =>
+                {
+                    b.Property<int>("IdToken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idToken");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdToken"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("activo");
+
+                    b.Property<DateTime>("FechaGenerado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("fechaGenerado")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("FechaUltimoUso")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("fechaUltimoUso");
+
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("idUsuario");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("token");
+
+                    b.Property<string>("Uuid")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)")
+                        .HasColumnName("uuid");
+
+                    b.HasKey("IdToken");
+
+                    b.HasIndex("IdUsuario")
+                        .IsUnique();
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("Uuid")
+                        .IsUnique();
+
+                    b.ToTable("inv_ical_tokens", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvImpactoProyecto", b =>
@@ -3666,81 +3990,6 @@ namespace diitra_infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("inv_lopdp_consentimientos", (string)null);
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvLopdpDerechoArco", b =>
-                {
-                    b.Property<int>("IdSolicitudArco")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("idSolicitudArco");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdSolicitudArco"));
-
-                    b.Property<string>("DetalleSolicitud")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("detalleSolicitud");
-
-                    b.Property<string>("DocumentoResolucionPath")
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)")
-                        .HasColumnName("documentoResolucionPath");
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("enum('Recibido','En_Analisis','Aprobado','Rechazado')")
-                        .HasDefaultValue("Recibido")
-                        .HasColumnName("estado");
-
-                    b.Property<string>("EvidenciaPath")
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)")
-                        .HasColumnName("evidenciaPath");
-
-                    b.Property<DateOnly>("FechaLimiteResolucion")
-                        .HasColumnType("date")
-                        .HasColumnName("fechaLimiteResolucion");
-
-                    b.Property<DateTime?>("FechaResolucion")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("fechaResolucion");
-
-                    b.Property<DateTime>("FechaSolicitud")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("fechaSolicitud")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<int>("IdUsuario")
-                        .HasColumnType("int")
-                        .HasColumnName("idUsuario");
-
-                    b.Property<string>("ResolucionDetalle")
-                        .HasColumnType("text")
-                        .HasColumnName("resolucionDetalle");
-
-                    b.Property<string>("TipoSolicitud")
-                        .IsRequired()
-                        .HasColumnType("enum('Acceso','Rectificacion','Eliminacion','Oposicion','Portabilidad','Limitacion')")
-                        .HasColumnName("tipoSolicitud");
-
-                    b.Property<string>("Uuid")
-                        .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("varchar(36)")
-                        .HasColumnName("uuid");
-
-                    b.HasKey("IdSolicitudArco")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("IdUsuario");
-
-                    b.HasIndex("Uuid")
-                        .IsUnique();
-
-                    b.ToTable("inv_lopdp_derechos_arco", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvMagicLink", b =>
@@ -4239,10 +4488,6 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnName("activo")
                         .HasDefaultValueSql("'1'");
 
-                    b.Property<string>("Antecedentes")
-                        .HasColumnType("text")
-                        .HasColumnName("antecedentes");
-
                     b.Property<int>("AutoExtendDays")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -4260,22 +4505,33 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("codigoInstitucional");
 
-                    b.Property<string>("DescripcionProyecto")
-                        .HasColumnType("text")
-                        .HasColumnName("descripcionProyecto");
-
                     b.Property<bool?>("DisponibleAdopcion")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
                         .HasColumnName("disponibleAdopcion");
 
+                    b.Property<bool?>("Eliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("eliminado")
+                        .HasDefaultValueSql("'0'");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("int")
+                        .HasColumnName("eliminadoPorUsuarioId");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado','Inconcluso')")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'Borrador'");
+
+                    b.Property<DateTime?>("FechaEliminacion")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("fechaEliminacion");
 
                     b.Property<DateOnly?>("FechaFin")
                         .HasColumnType("date")
@@ -4336,25 +4592,16 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("idTipo");
 
-                    b.Property<string>("Justificacion")
-                        .HasColumnType("text")
-                        .HasColumnName("justificacion");
-
-                    b.Property<string>("MarcoTeorico")
-                        .HasColumnType("text")
-                        .HasColumnName("marcoTeorico");
-
                     b.Property<string>("MetadataCacesJson")
                         .HasColumnType("json")
                         .HasColumnName("metadataCacesJson");
 
-                    b.Property<string>("MetodoEvaluacion")
-                        .HasColumnType("text")
-                        .HasColumnName("metodoEvaluacion");
-
-                    b.Property<string>("Metodologia")
-                        .HasColumnType("text")
-                        .HasColumnName("metodologia");
+                    b.Property<decimal?>("PresupuestoEstimado")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("presupuesto_estimado")
+                        .HasDefaultValueSql("'0.00'");
 
                     b.Property<decimal?>("PuntajeEvaluacion")
                         .HasPrecision(5, 2)
@@ -4429,72 +4676,6 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("inv_proyectos", (string)null);
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoAlumno", b =>
-                {
-                    b.Property<int>("IdProyectoAlumno")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("idProyectoAlumno");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdProyectoAlumno"));
-
-                    b.Property<bool?>("Activo")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("activo")
-                        .HasDefaultValueSql("'1'");
-
-                    b.Property<DateTime?>("FechaFin")
-                        .HasColumnType("datetime")
-                        .HasColumnName("fecha_fin");
-
-                    b.Property<DateTime?>("FechaInicio")
-                        .HasColumnType("datetime")
-                        .HasColumnName("fecha_inicio");
-
-                    b.Property<decimal?>("HorasSemanales")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)")
-                        .HasColumnName("horasSemanales");
-
-                    b.Property<int>("IdProyecto")
-                        .HasColumnType("int")
-                        .HasColumnName("idProyecto");
-
-                    b.Property<int>("IdUsuario")
-                        .HasColumnType("int")
-                        .HasColumnName("idUsuario");
-
-                    b.Property<string>("MotivoCambio")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
-                        .HasColumnName("motivo_cambio");
-
-                    b.Property<string>("NivelAcademico")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
-                        .HasColumnName("nivelAcademico");
-
-                    b.Property<string>("Rol")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("rol");
-
-                    b.Property<string>("Telefono")
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
-                        .HasColumnName("telefono");
-
-                    b.HasKey("IdProyectoAlumno")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("IdProyecto");
-
-                    b.HasIndex("IdUsuario");
-
-                    b.ToTable("inv_proyectos_alumnos", (string)null);
-                });
-
             modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoCarrera", b =>
                 {
                     b.Property<int>("IdProyectoCarrera")
@@ -4542,10 +4723,6 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnName("fechaSubida")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("IdDocReq")
-                        .HasColumnType("int")
-                        .HasColumnName("idDocReq");
-
                     b.Property<int>("IdProyecto")
                         .HasColumnType("int")
                         .HasColumnName("idProyecto");
@@ -4570,8 +4747,6 @@ namespace diitra_infrastructure.Migrations
 
                     b.HasKey("IdDocAdj")
                         .HasName("PRIMARY");
-
-                    b.HasIndex("IdDocReq");
 
                     b.HasIndex("IdProyecto");
 
@@ -4722,14 +4897,14 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("inv_proyectos_ods", (string)null);
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoProfesor", b =>
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoParticipante", b =>
                 {
-                    b.Property<int>("IdProyectoProfesor")
+                    b.Property<int>("IdParticipante")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("idProyectoProfesor");
+                        .HasColumnName("idParticipante");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdProyectoProfesor"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdParticipante"));
 
                     b.Property<bool?>("Activo")
                         .ValueGeneratedOnAdd()
@@ -4784,14 +4959,22 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("varchar(20)")
                         .HasColumnName("telefono");
 
-                    b.HasKey("IdProyectoProfesor")
+                    b.Property<string>("TipoParticipante")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Docente")
+                        .HasColumnName("tipoParticipante");
+
+                    b.HasKey("IdParticipante")
                         .HasName("PRIMARY");
 
                     b.HasIndex("IdProyecto");
 
                     b.HasIndex("IdUsuario");
 
-                    b.ToTable("inv_proyectos_profesores", (string)null);
+                    b.ToTable("inv_proyecto_participantes", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvRecursoDisponible", b =>
@@ -5220,6 +5403,57 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("inv_trazabilidad_proyectos", (string)null);
                 });
 
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvUserSignaturePerfil", b =>
+                {
+                    b.Property<int>("IdPerfil")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("idPerfil");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdPerfil"));
+
+                    b.Property<DateTime>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<string>("Cargo")
+                        .HasColumnType("longtext")
+                        .HasColumnName("cargo");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Departamento")
+                        .HasColumnType("longtext")
+                        .HasColumnName("departamento");
+
+                    b.Property<bool>("EsConfigurado")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("es_configurado");
+
+                    b.Property<string>("FirmaImagenB64")
+                        .HasColumnType("longtext")
+                        .HasColumnName("firma_imagen_b64");
+
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("idUsuario");
+
+                    b.Property<string>("Iniciales")
+                        .HasColumnType("longtext")
+                        .HasColumnName("iniciales");
+
+                    b.Property<string>("Uuid")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("uuid");
+
+                    b.HasKey("IdPerfil");
+
+                    b.ToTable("inv_user_signature_profiles");
+                });
+
             modelBuilder.Entity("diitra_infrastructure.data.models.InvUsuarioMetadata", b =>
                 {
                     b.Property<int>("IdMetadata")
@@ -5257,12 +5491,6 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("fechaUltimoAcceso");
 
-                    b.Property<bool>("FirmaHabilitada")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("firmaHabilitada")
-                        .HasDefaultValueSql("'0'");
-
                     b.Property<string>("GoogleScholarUrl")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
@@ -5282,25 +5510,10 @@ namespace diitra_infrastructure.Migrations
                         .HasColumnType("varchar(20)")
                         .HasColumnName("orcidId");
 
-                    b.Property<string>("P12PasswordEncrypted")
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)")
-                        .HasColumnName("p12PasswordEncrypted");
-
                     b.Property<string>("ResearchGateUrl")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("researchGateUrl");
-
-                    b.Property<string>("RutaFirmaImagen")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("rutaFirmaImagen");
-
-                    b.Property<string>("RutaFirmaP12")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("rutaFirmaP12");
 
                     b.Property<string>("ScopusId")
                         .HasMaxLength(30)
@@ -6003,21 +6216,6 @@ namespace diitra_infrastructure.Migrations
                     b.ToTable("universidades", (string)null);
                 });
 
-            modelBuilder.Entity("inv_convocatorias_lineas", b =>
-                {
-                    b.Property<int>("idConvocatoria")
-                        .HasColumnType("int");
-
-                    b.Property<int>("idLinea")
-                        .HasColumnType("int");
-
-                    b.HasKey("idConvocatoria", "idLinea");
-
-                    b.HasIndex("idLinea");
-
-                    b.ToTable("inv_convocatorias_lineas", (string)null);
-                });
-
             modelBuilder.Entity("inv_grupos_carreras", b =>
                 {
                     b.Property<int>("idGrupo")
@@ -6136,9 +6334,21 @@ namespace diitra_infrastructure.Migrations
 
             modelBuilder.Entity("diitra_infrastructure.data.models.Contrato", b =>
                 {
+                    b.HasOne("diitra_infrastructure.data.models.CargoInstituto", "CargoInstitutoNavigation")
+                        .WithMany()
+                        .HasForeignKey("IdCargoInstituto");
+
                     b.HasOne("diitra_infrastructure.data.models.TiposContrato", "TipoContratoNavigation")
                         .WithMany()
                         .HasForeignKey("IdTiposContratos");
+
+                    b.HasOne("diitra_infrastructure.data.models.Departamento", "DepartamentoNavigation")
+                        .WithMany()
+                        .HasForeignKey("Iddepartamentos");
+
+                    b.Navigation("CargoInstitutoNavigation");
+
+                    b.Navigation("DepartamentoNavigation");
 
                     b.Navigation("TipoContratoNavigation");
                 });
@@ -6234,7 +6444,7 @@ namespace diitra_infrastructure.Migrations
                         .HasConstraintName("fk_conv_periodo");
 
                     b.HasOne("diitra_infrastructure.data.models.InvRubrica", "IdRubricaNavigation")
-                        .WithMany("Convocatorias")
+                        .WithMany()
                         .HasForeignKey("IdRubrica")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_conv_rubrica");
@@ -6242,30 +6452,6 @@ namespace diitra_infrastructure.Migrations
                     b.Navigation("IdPeriodoNavigation");
 
                     b.Navigation("IdRubricaNavigation");
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoriaDocumentoReq", b =>
-                {
-                    b.HasOne("diitra_infrastructure.data.models.InvConvocatoria", "IdConvocatoriaNavigation")
-                        .WithMany("DocumentosReq")
-                        .HasForeignKey("IdConvocatoria")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_docreq_conv");
-
-                    b.Navigation("IdConvocatoriaNavigation");
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoriaHito", b =>
-                {
-                    b.HasOne("diitra_infrastructure.data.models.InvConvocatoria", "IdConvocatoriaNavigation")
-                        .WithMany("Hitos")
-                        .HasForeignKey("IdConvocatoria")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_hito_conv");
-
-                    b.Navigation("IdConvocatoriaNavigation");
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvCronograma", b =>
@@ -6295,18 +6481,6 @@ namespace diitra_infrastructure.Migrations
                     b.Navigation("IdObjetivoNavigation");
 
                     b.Navigation("IdProyectoNavigation");
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvCronogramaSemana", b =>
-                {
-                    b.HasOne("diitra_infrastructure.data.models.InvCronograma", "IdActividadNavigation")
-                        .WithMany("InvCronogramaSemanas")
-                        .HasForeignKey("IdActividad")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_sem_actividad");
-
-                    b.Navigation("IdActividadNavigation");
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvDispositivoToken", b =>
@@ -6540,18 +6714,6 @@ namespace diitra_infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvLopdpDerechoArco", b =>
-                {
-                    b.HasOne("diitra_domain.Identity.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_arco_usuario");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("diitra_infrastructure.data.models.InvMagicLink", b =>
                 {
                     b.HasOne("diitra_domain.Identity.Entities.User", "Usuario")
@@ -6700,27 +6862,6 @@ namespace diitra_infrastructure.Migrations
                     b.Navigation("IdTipoNavigation");
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoAlumno", b =>
-                {
-                    b.HasOne("diitra_infrastructure.data.models.InvProyecto", "IdProyectoNavigation")
-                        .WithMany("InvProyectosAlumnos")
-                        .HasForeignKey("IdProyecto")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_pa_proyecto");
-
-                    b.HasOne("diitra_domain.Identity.Entities.User", "IdUsuarioNavigation")
-                        .WithMany()
-                        .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_pa_usuario");
-
-                    b.Navigation("IdProyectoNavigation");
-
-                    b.Navigation("IdUsuarioNavigation");
-                });
-
             modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoCarrera", b =>
                 {
                     b.HasOne("diitra_infrastructure.data.models.Carrera", "IdCarreraNavigation")
@@ -6744,20 +6885,12 @@ namespace diitra_infrastructure.Migrations
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoDocumentoAdjunto", b =>
                 {
-                    b.HasOne("diitra_infrastructure.data.models.InvConvocatoriaDocumentoReq", "IdDocReqNavigation")
-                        .WithMany("InvProyectoDocumentosAdjuntos")
-                        .HasForeignKey("IdDocReq")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_docadj_req");
-
                     b.HasOne("diitra_infrastructure.data.models.InvProyecto", "IdProyectoNavigation")
                         .WithMany("DocumentosAdjuntos")
                         .HasForeignKey("IdProyecto")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_docadj_proyecto");
-
-                    b.Navigation("IdDocReqNavigation");
 
                     b.Navigation("IdProyectoNavigation");
                 });
@@ -6827,21 +6960,21 @@ namespace diitra_infrastructure.Migrations
                     b.Navigation("IdProyectoNavigation");
                 });
 
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoProfesor", b =>
+            modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoParticipante", b =>
                 {
                     b.HasOne("diitra_infrastructure.data.models.InvProyecto", "IdProyectoNavigation")
-                        .WithMany("InvProyectosProfesores")
+                        .WithMany("InvProyectoParticipantes")
                         .HasForeignKey("IdProyecto")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_pp_proyecto");
+                        .HasConstraintName("fk_part_proyecto");
 
                     b.HasOne("diitra_domain.Identity.Entities.User", "IdUsuarioNavigation")
                         .WithMany()
                         .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_pp_usuario");
+                        .HasConstraintName("fk_part_usuario");
 
                     b.Navigation("IdProyectoNavigation");
 
@@ -6987,21 +7120,6 @@ namespace diitra_infrastructure.Migrations
                         .HasForeignKey("GradosAcademicoIdGradoAcademico");
                 });
 
-            modelBuilder.Entity("inv_convocatorias_lineas", b =>
-                {
-                    b.HasOne("diitra_infrastructure.data.models.InvConvocatoria", null)
-                        .WithMany()
-                        .HasForeignKey("idConvocatoria")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("diitra_infrastructure.data.models.InvLineaInvestigacion", null)
-                        .WithMany()
-                        .HasForeignKey("idLinea")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("inv_grupos_carreras", b =>
                 {
                     b.HasOne("diitra_infrastructure.data.models.Carrera", null)
@@ -7101,22 +7219,11 @@ namespace diitra_infrastructure.Migrations
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoria", b =>
                 {
-                    b.Navigation("DocumentosReq");
-
-                    b.Navigation("Hitos");
-
                     b.Navigation("Proyectos");
-                });
-
-            modelBuilder.Entity("diitra_infrastructure.data.models.InvConvocatoriaDocumentoReq", b =>
-                {
-                    b.Navigation("InvProyectoDocumentosAdjuntos");
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvCronograma", b =>
                 {
-                    b.Navigation("InvCronogramaSemanas");
-
                     b.Navigation("InverseIdActividadPadreNavigation");
                 });
 
@@ -7201,15 +7308,13 @@ namespace diitra_infrastructure.Migrations
 
                     b.Navigation("InvProductos");
 
-                    b.Navigation("InvProyectosAlumnos");
+                    b.Navigation("InvProyectoParticipantes");
 
                     b.Navigation("InvProyectosCarreras");
 
                     b.Navigation("InvProyectosDominios");
 
                     b.Navigation("InvProyectosOds");
-
-                    b.Navigation("InvProyectosProfesores");
 
                     b.Navigation("InvRecursosDisponibles");
 
@@ -7225,8 +7330,6 @@ namespace diitra_infrastructure.Migrations
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvRubrica", b =>
                 {
-                    b.Navigation("Convocatorias");
-
                     b.Navigation("InvRubricaCriterios");
                 });
 

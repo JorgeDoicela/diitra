@@ -1,0 +1,151 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - BASE & CORE STYLES (VERCEL GEIST PRESET)
+=================================================================================
+*/
+
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.3/index.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.3/index.css");
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+    --color-bg-deep: var(--bg);
+    --color-surface: var(--surface);
+    --color-surface-hover: var(--surface-hover);
+    --color-accent-vercel: var(--accent);
+    --color-border-thin: var(--border);
+    --color-border-hover: var(--border-hover);
+    --color-text-main: var(--fg);
+    --color-text-dim: var(--text-dim);
+    --color-brand: var(--brand);
+    --color-brand-dark: var(--brand-dark);
+    --color-brand-light: var(--brand-light);
+    --color-success: var(--success);
+    --color-error: var(--error);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+
+    /* Fuentes oficiales de Vercel mapeadas a clases Tailwind: font-sans y font-mono */
+    --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
+    --font-mono: "Geist Sans", "Inter", system-ui, sans-serif;
+
+    /* Transiciones y micro-animaciones premium */
+    --animate-fade-up: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-fade-in: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-spin-slow: spinSlow 8s linear infinite;
+    --animate-fade-left: fadeLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-right: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-scale-up: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-from-right: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-from-left: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+:root {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    min-height: 100vh;
+}
+
+/* Selección de Texto y Accesibilidad */
+::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+}
+
+*:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+    outline: none !important;
+}
+
+/* Enfoque Vercel en Inputs */
+input:focus,
+textarea:focus,
+select:focus,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none !important;
+    border-color: var(--fg) !important;
+    box-shadow: 0 0 0 1px var(--fg) !important;
+}
+
+/* Evitar outline azul en el editor */
+.ProseMirror:focus,
+.ProseMirror:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Scrollbars base (Webkit) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 99px;
+    border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.32);
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb,
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.32);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+[data-theme="light"],
+[data-theme="light"] * {
+    scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
+}
+
+/* Balanceo de Texto */
+.text-balance {
+    text-wrap: balance;
+}
+
+.text-pretty {
+    text-wrap: pretty;
+}
+
+/* Exclusión de Hover en Acciones de Tabla */
+tr:hover:has(.action-btn-exclude:hover) h4 {
+    color: var(--fg) !important;
+}
+
+tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
+    color: var(--text-dim) !important;
+}

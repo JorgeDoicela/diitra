@@ -1,0 +1,249 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - BADGES, TOASTS & CALLOUT ALERTS
+=================================================================================
+*/
+
+/* Badges */
+.badge-vercel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--fg);
+}
+
+.badge-vercel-success {
+    background-color: rgba(0, 224, 84, 0.08);
+    border-color: rgba(0, 224, 84, 0.2);
+    color: #00e054;
+}
+
+[data-theme="light"] .badge-vercel-success {
+    background-color: rgba(0, 224, 84, 0.06);
+    border-color: rgba(0, 224, 84, 0.15);
+    color: #008f37;
+}
+
+.badge-vercel-error {
+    background-color: rgba(255, 0, 0, 0.08);
+    border-color: rgba(255, 0, 0, 0.2);
+    color: #ff3333;
+}
+
+[data-theme="light"] .badge-vercel-error {
+    background-color: rgba(255, 0, 0, 0.06);
+    border-color: rgba(255, 0, 0, 0.15);
+    color: #cc0000;
+}
+
+.badge-vercel-warning {
+    background-color: rgba(245, 166, 35, 0.08);
+    border-color: rgba(245, 166, 35, 0.2);
+    color: #f5a623;
+}
+
+[data-theme="light"] .badge-vercel-warning {
+    background-color: rgba(245, 166, 35, 0.06);
+    border-color: rgba(245, 166, 35, 0.15);
+    color: #b87200;
+}
+
+.badge-vercel-info {
+    background-color: rgba(0, 112, 243, 0.08);
+    border-color: rgba(0, 112, 243, 0.2);
+    color: #3291ff;
+}
+
+[data-theme="light"] .badge-vercel-info {
+    background-color: rgba(0, 112, 243, 0.06);
+    border-color: rgba(0, 112, 243, 0.15);
+    color: #0070f3;
+}
+
+.badge-vercel-violet {
+    background-color: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
+}
+
+[data-theme="light"] .badge-vercel-violet {
+    background-color: rgba(139, 92, 246, 0.06);
+    border-color: rgba(139, 92, 246, 0.15);
+    color: #7c3aed;
+}
+
+.badge-vercel-neutral {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--text-dim);
+}
+
+/* Callouts */
+.callout-vercel {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1.125rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    transition: all 0.15s ease-in-out;
+}
+
+.callout-vercel-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--fg);
+}
+
+.callout-vercel-body {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin-top: 0.1875rem;
+}
+
+.callout-vercel-warning {
+    border-color: var(--warning);
+    background-color: var(--warning-subtle);
+}
+
+.callout-vercel-warning .callout-vercel-title {
+    color: var(--warning);
+}
+
+.callout-vercel-info {
+    border-color: var(--info);
+    background-color: var(--info-subtle);
+}
+
+.callout-vercel-info .callout-vercel-title {
+    color: var(--info);
+}
+
+.callout-vercel-success {
+    border-color: var(--success);
+    background-color: var(--success-subtle);
+}
+
+.callout-vercel-success .callout-vercel-title {
+    color: var(--success);
+}
+
+.callout-vercel-error {
+    border-color: var(--error);
+    background-color: var(--error-subtle);
+}
+
+.callout-vercel-error .callout-vercel-title {
+    color: var(--error);
+}
+
+.callout-vercel-neutral {
+    border-color: var(--accents-2);
+    background-color: var(--accents-1);
+}
+
+/* Toasts */
+.toast-container-vercel {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 10050;
+    max-width: 380px;
+    width: calc(100% - 3rem);
+}
+
+.toast-vercel {
+    background-color: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+[data-theme="dark"] .toast-vercel {
+    background-color: #000000;
+    border-color: var(--accents-2);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .toast-vercel {
+    background-color: #ffffff;
+    border-color: var(--accents-2);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.toast-vercel:hover {
+    transform: translateY(-1px);
+    border-color: var(--accents-3);
+}
+
+.toast-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.toast-icon-success {
+    background-color: rgba(0, 224, 84, 0.1);
+    color: #00e054;
+}
+
+[data-theme="light"] .toast-icon-success {
+    background-color: rgba(0, 143, 55, 0.1);
+    color: #008f37;
+}
+
+.toast-icon-error {
+    background-color: rgba(255, 51, 51, 0.1);
+    color: #ff3333;
+}
+
+[data-theme="light"] .toast-icon-error {
+    background-color: rgba(204, 0, 0, 0.1);
+    color: #cc0000;
+}
+
+.toast-icon-warning {
+    background-color: rgba(245, 166, 35, 0.1);
+    color: #f5a623;
+}
+
+[data-theme="light"] .toast-icon-warning {
+    background-color: rgba(184, 114, 0, 0.1);
+    color: #b87200;
+}
+
+.toast-icon-info {
+    background-color: rgba(0, 112, 243, 0.1);
+    color: #0070f3;
+}
+
+.toast-icon-default {
+    background-color: rgba(0, 112, 243, 0.1);
+    color: var(--brand);
+}

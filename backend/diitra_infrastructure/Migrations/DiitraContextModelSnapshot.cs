@@ -2170,7 +2170,7 @@ namespace diitra_infrastructure.Migrations
 
                     b.Property<DateTime>("FechaEnvio")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
+                        .HasColumnType("datetime")
                         .HasColumnName("fechaEnvio")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -2263,13 +2263,13 @@ namespace diitra_infrastructure.Migrations
 
                     b.Property<DateTime>("FechaModificacion")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
+                        .HasColumnType("datetime")
                         .HasColumnName("fechaModificacion")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
                     b.Property<DateTime>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
+                        .HasColumnType("datetime")
                         .HasColumnName("fechaRegistro")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -3648,7 +3648,7 @@ namespace diitra_infrastructure.Migrations
 
                     b.Property<DateTime>("FechaGenerado")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
+                        .HasColumnType("datetime")
                         .HasColumnName("fechaGenerado")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 

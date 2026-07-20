@@ -1,0 +1,115 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - AUTO GENERATION TAB STYLES
+=================================================================================
+*/
+
+.signature-profile-container {
+    /* Layout de dos columnas para generación automática de firma */
+    .sig-auto-layout {
+        display: grid;
+        grid-template-columns: 1.32fr 0.68fr;
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+        .sig-auto-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Panel de Estilos de Firma Directos */
+    .sig-fonts-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sig-font-option-btn {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        cursor: pointer;
+        text-align: left;
+        color: var(--fg);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sig-font-option-btn:hover {
+        border-color: var(--border-hover);
+        background: var(--surface-hover);
+    }
+
+    .sig-font-option-btn.active {
+        border-color: var(--brand, #0070f3);
+        background: var(--brand-subtle, rgba(0, 112, 243, 0.05));
+        box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.12);
+    }
+
+    .sig-font-option-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        font-family: var(--font-mono, monospace);
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sig-font-option-btn.active .sig-font-option-label {
+        color: var(--brand, #0070f3);
+    }
+
+    .sig-font-option-preview {
+        font-size: 1.05rem;
+        color: var(--fg);
+        white-space: nowrap;
+        padding-right: 4px;
+    }
+
+    /* Tipografías Cursivas Mapeadas */
+    .font-caveat {
+        font-family: 'Caveat', cursive;
+        font-weight: bold;
+    }
+
+    .font-dancing {
+        font-family: 'Dancing Script', cursive;
+        font-weight: bold;
+    }
+
+    .font-sacramento {
+        font-family: 'Sacramento', cursive;
+    }
+
+    .font-alex {
+        font-family: 'Alex Brush', cursive;
+    }
+
+    .font-vibes {
+        font-family: 'Great Vibes', cursive;
+    }
+
+    .font-allura {
+        font-family: 'Allura', cursive;
+    }
+
+    .font-pinyon {
+        font-family: 'Pinyon Script', cursive;
+    }
+
+    .font-delafield {
+        font-family: 'Mrs Saint Delafield', cursive;
+    }
+
+    /* Input del nombre de firma más grande y visible */
+    #sig-auto-text {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+}

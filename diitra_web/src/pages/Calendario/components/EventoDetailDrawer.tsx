@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { PRIORIDAD_COLORS, ESTADO_LABELS, getContextDescription } from '../../../services/calendarioService';
 import type { Evento } from '../types/calendarioTypes';
+import './EventoDrawers.css';
 
 interface EventoDetailDrawerProps {
     selectedEvent: Evento | null;

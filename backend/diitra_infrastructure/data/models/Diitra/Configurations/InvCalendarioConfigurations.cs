@@ -30,8 +30,8 @@ public class InvCalendarioEventoNormativoConfiguration : IEntityTypeConfiguratio
         entity.Property(e => e.AlertaDias).HasColumnName("alertaDias").HasDefaultValue(7);
         entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true);
         entity.Property(e => e.CreadoPor).HasColumnName("creadoPor");
-        entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-        entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
         entity.Property(e => e.NotaDetalle).HasColumnName("notaDetalle").HasColumnType("text");
         entity.Property(e => e.OrdenBandeja).HasColumnName("ordenBandeja");
     }
@@ -51,7 +51,7 @@ public class InvIcalTokenConfiguration : IEntityTypeConfiguration<InvIcalToken>
         entity.Property(e => e.Token).HasColumnName("token").HasMaxLength(64).IsRequired();
         entity.HasIndex(e => e.Token).IsUnique();
         entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true);
-        entity.Property(e => e.FechaGenerado).HasColumnName("fechaGenerado").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entity.Property(e => e.FechaGenerado).HasColumnName("fechaGenerado").HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
         entity.Property(e => e.FechaUltimoUso).HasColumnName("fechaUltimoUso");
     }
 }
@@ -66,7 +66,7 @@ public class InvCalendarioAlertaEnviadaConfiguration : IEntityTypeConfiguration<
         entity.Property(e => e.IdEventoCalendario).HasColumnName("idEventoCalendario").HasMaxLength(50).IsRequired();
         entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").IsRequired();
         entity.Property(e => e.FechaEvento).HasColumnName("fechaEvento").IsRequired();
-        entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
         entity.HasIndex(e => new { e.IdEventoCalendario, e.IdUsuario, e.FechaEvento }).IsUnique().HasDatabaseName("uk_alerta");
     }
 }

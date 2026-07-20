@@ -37,15 +37,18 @@ export const SignatureProfileCard: React.FC = () => {
 
     if (sig.loading) {
         return (
-            <div className="signature-profile-loading">
-                <div className="spinner" />
-                <p>Cargando configuración de firma institucional...</p>
+            <div className="signature-profile-container">
+                <div className="signature-profile-loading">
+                    <div className="spinner" />
+                    <p>Cargando configuración de firma institucional...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="signature-profile-card">
+        <div className="signature-profile-container">
+            <div className="signature-profile-card">
             <div className="signature-profile-header">
                 <div className="signature-profile-title-area">
                     <h3>Firma Digital Institucional</h3>
@@ -182,8 +185,9 @@ export const SignatureProfileCard: React.FC = () => {
 
             {/* ── MODAL DE CONFIRMACIÓN ─────────────────────────────────── */}
             {showConfirmModal && createPortal(
-                <div className="sig-modal-overlay">
-                    <div className="sig-modal-backdrop" onClick={() => setShowConfirmModal(false)} />
+                <div className="signature-profile-container">
+                    <div className="sig-modal-overlay">
+                        <div className="sig-modal-backdrop" onClick={() => setShowConfirmModal(false)} />
 
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
                         {/* Cabecera idéntica a Convocatoria */}
@@ -271,9 +275,11 @@ export const SignatureProfileCard: React.FC = () => {
                             </button>
                         </div>
                     </div>
+                </div>
                 </div>,
                 document.body
             )}
+            </div>
         </div>
     );
 };

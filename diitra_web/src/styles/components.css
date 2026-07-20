@@ -1,0 +1,16 @@
+/*
+=================================================================================
+             DIITRA DESIGN SYSTEM - REUSABLE COMPONENT STYLES
+=================================================================================
+Este archivo sirve como índice para estructurar las diferentes categorías de estilos
+de componentes comunes de la interfaz de usuario en sub-módulos legibles.
+=================================================================================
+*/
+
+@import "./components/cards.css";
+@import "./components/buttons.css";
+@import "./theme.css"; /* Mantiene theme.css acoplado */
+@import "./components/inputs.css";
+@import "./components/alerts.css";
+@import "./components/modals.css";
+@import "./components/misc.css";

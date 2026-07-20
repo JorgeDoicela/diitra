@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { COLORES_OPCIONES } from '../../../services/calendarioService';
 import type { Evento, PlanificandoState } from '../types/calendarioTypes';
+import './InboxView.css';
 
 interface InboxViewProps {
     stickyNotes: Evento[];

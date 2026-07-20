@@ -2,6 +2,7 @@ import React from 'react';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import type { ImageCropperState } from './useImageCropper';
+import './UploadSignatureTab.css';
 
 interface UploadSignatureTabProps extends ImageCropperState {
     firmaImagenB64: string | undefined;
