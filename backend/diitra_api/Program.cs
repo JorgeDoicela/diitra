@@ -126,6 +126,11 @@ builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 // DIITRA Firma
 builder.Services.AddSingleton<SignatureHashService>();
 builder.Services.AddSingleton<SignatureStamper>();
+builder.Services.AddScoped<diitra_infrastructure.Signatures.Subservices.ISignatureProfileSubservice, diitra_infrastructure.Signatures.Subservices.SignatureProfileSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Signatures.Subservices.IDiitraInternalSignerSubservice, diitra_infrastructure.Signatures.Subservices.DiitraInternalSignerSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Signatures.Subservices.IP12SignatureSubservice, diitra_infrastructure.Signatures.Subservices.P12SignatureSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Signatures.Subservices.ISignatureVerificationSubservice, diitra_infrastructure.Signatures.Subservices.SignatureVerificationSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Signatures.Subservices.ISignatureRevocationSubservice, diitra_infrastructure.Signatures.Subservices.SignatureRevocationSubservice>();
 builder.Services.AddScoped<IDiitraSignatureService, DiitraSignatureService>();
 builder.Services.AddSingleton<IPasswordHasher<object>, PasswordHasher<object>>();
 
@@ -178,10 +183,20 @@ builder.Services.AddScoped<Diitra.Application.Research.IProjectWizardService, Pr
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamChangeService, diitra_infrastructure.Research.ProjectTeamChangeService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamSyncService, diitra_infrastructure.Research.ProjectTeamSyncService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamService, ProjectTeamService>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectLookupSubservice, diitra_infrastructure.Research.Subservices.ProjectLookupSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDetailSubservice, diitra_infrastructure.Research.Subservices.ProjectDetailSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDashboardSubservice, diitra_infrastructure.Research.Subservices.ProjectDashboardSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectActivitySubservice, diitra_infrastructure.Research.Subservices.ProjectActivitySubservice>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectQueryService, ProjectQueryService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectSigningService, diitra_infrastructure.Research.ProjectSigningService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectExpensesService, diitra_infrastructure.Research.ProjectExpensesService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectPublishingService, diitra_infrastructure.Research.ProjectPublishingService>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationService, diitra_infrastructure.Common.Notifications.NotificationService>();
 builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.EmailMasterLayoutRenderer>();
+builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.IEmailTemplateService, diitra_infrastructure.Common.Notifications.EmailTemplateService>();
+builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.IEmailSenderSubservice, diitra_infrastructure.Common.Notifications.EmailSenderSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.IProjectAdoptionService, diitra_infrastructure.Common.Notifications.ProjectAdoptionService>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.IEmailEngineService, diitra_infrastructure.Common.Notifications.EmailEngineService>();
 // Notificación Drivers
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.SignalRDriver>();

@@ -1,43 +1,43 @@
 using System;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
-using Diitra.Application.Common.Documents;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers
 {
+    /// <summary>
+    /// Fachada HTTP para el Módulo de Proyectos de Investigación.
+    /// Controlador delgado que delega la lógica de negocio, firma, egresos y publicaciones
+    /// a sub-servicios especializados de la capa de aplicación e infraestructura.
+    /// </summary>
     [ApiController]
     [Route("api/projects")]
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Authorize]
     public class ProjectsController : ControllerBase
     {
-        private readonly IDocumentEngine _documentEngine;
-        private readonly IDocumentInstanceService _documentInstanceService;
-        private readonly diitra_application.Security.IAuthService _authService;
         private readonly IProjectOrchestrator _projectOrchestrator;
-        private readonly DiitraContext _context;
+        private readonly IProjectSigningService _projectSigningService;
+        private readonly IProjectExpensesService _projectExpensesService;
+        private readonly IProjectPublishingService _projectPublishingService;
 
         public ProjectsController(
-            IDocumentEngine documentEngine,
-            IDocumentInstanceService documentInstanceService,
-            diitra_application.Security.IAuthService authService,
             IProjectOrchestrator projectOrchestrator,
-            DiitraContext context)
+            IProjectSigningService projectSigningService,
+            IProjectExpensesService projectExpensesService,
+            IProjectPublishingService projectPublishingService)
         {
-            _documentEngine = documentEngine;
-            _documentInstanceService = documentInstanceService;
-            _authService = authService;
             _projectOrchestrator = projectOrchestrator;
-            _context = context;
+            _projectSigningService = projectSigningService;
+            _projectExpensesService = projectExpensesService;
+            _projectPublishingService = projectPublishingService;
         }
 
         /// <summary>
         /// Genera el PDF del protocolo de investigación usando el motor DIITRA.
-        /// El template "PROTOCOLO_INVESTIGACION" vive en BD y puede editarse sin redespliegue.
         /// </summary>
         [HttpPost("generate-pdf")]
         public async Task<IActionResult> GeneratePdf(
@@ -45,354 +45,57 @@ namespace diitra_api.Controllers
             [FromQuery] bool isDraft = true,
             [FromQuery] bool isBlind = false)
         {
-            // Robustez: Si el DTO está incompleto (ej: Titulo nulo) y tenemos el UUID, resolvemos los datos reales desde BD.
-            if (string.IsNullOrEmpty(dto.Titulo) && !string.IsNullOrEmpty(dto.Uuid))
-            {
-                var resolvedDto = await _projectOrchestrator.GetProjectDetailAsync(dto.Uuid);
-                if (resolvedDto != null)
-                {
-                    dto = resolvedDto;
-                }
-            }
-
-            var request = new DocumentRequest
-            {
-                TemplateCode = "PROTOCOLO_INVESTIGACION",
-                Data = dto,
-                IsDraftMode = isDraft,
-                IsBlindMode = isBlind,
-                RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
-                ProjectUuid = dto.Uuid,
-                EntityUuid = dto.Uuid // En producción siempre usamos el UUID real del proyecto
-            };
-
-            var result = await _documentEngine.GenerateAsync(request);
-
-            // AUTO-TRAZABILIDAD: Registramos esta emisión en la bandeja de instancias
-            try
-            {
-                await _documentInstanceService.CreateAsync(
-                    request.TemplateCode,
-                    request.EntityUuid ?? string.Empty,
-                    request.RequestedBy ?? "Sistema DIITRA",
-                    $"Preview Oficial: {dto.Titulo ?? "Sin Título"}",
-                    "Proyecto"
-                );
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DIITRA DEBUG] Error al registrar instancia: {ex.Message}");
-            }
-
+            var result = await _projectSigningService.GeneratePdfAsync(dto, isDraft, isBlind, User.Identity?.Name);
             return File(result.PdfBytes, "application/pdf", result.FileName);
         }
 
         /// <summary>
         /// Genera el PDF del protocolo en modo Doble Ciego para Peer Review.
-        /// Los datos de identidad son enmascarados automáticamente por el motor.
         /// </summary>
         [HttpPost("generate-pdf/blind-review")]
         public async Task<IActionResult> GeneratePdfBlindReview([FromBody] ProyectoDto dto)
         {
-            var request = new DocumentRequest
-            {
-                TemplateCode = "PROTOCOLO_INVESTIGACION",
-                Data = dto,
-                IsBlindMode = true,
-                RequestedBy = User.Identity?.Name ?? "sistema"
-            };
-
-            var result = await _documentEngine.GenerateAsync(request);
+            var result = await _projectSigningService.GeneratePdfAsync(dto, isDraft: false, isBlind: true, User.Identity?.Name);
             return File(result.PdfBytes, "application/pdf", result.FileName);
         }
-
-        // --- Endpoints Colaborativos (Workspace) ---
 
         [HttpPost("draft")]
         public IActionResult CreateDraft([FromBody] ProyectoDto dto)
         {
-            dto.Uuid = System.Guid.NewGuid().ToString();
+            dto.Uuid = Guid.NewGuid().ToString();
             dto.Estado = "Borrador";
             return Ok(new { message = "Workspace Borrador Creado", proyectoId = dto.Uuid });
         }
 
         /// <summary>
-        /// Simulación de firma electrónica PAdES usando el motor DIITRA.
-        /// </summary>
-        /// <summary>
-        /// Simulación y aplicación de firma electrónica PAdES usando el motor DIITRA.
+        /// Firma electrónica PAdES y sello digital del protocolo de investigación.
         /// </summary>
         [HttpPost("sign")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> SignDocument(
-            Microsoft.AspNetCore.Http.IFormFile? certificate,
+            IFormFile? certificate,
             [FromForm] string? password,
-            [FromForm] string projectUuid,
-            [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
-            [FromServices] Microsoft.Extensions.Logging.ILogger<ProjectsController> logger,
-            [FromServices] diitra_infrastructure.data.models.DiitraContext context,
-            [FromServices] diitra_application.Security.ILopdpService lopdpService)
+            [FromForm] string projectUuid)
         {
-            try
+            byte[]? certificateBytes = null;
+            if (certificate != null && certificate.Length > 0)
             {
-                logger.LogInformation("[DIITRA CORE] Solicitud de firma avanzada PAdES para proyecto {Uuid}", projectUuid);
-
-                // ── LOPDP: Verificar consentimiento de firma electrónica antes de firmar ──
-                var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
-
-                var dbUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
-                if (dbUser == null) return Unauthorized();
-
-                var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-                var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
-                var skipCertificateValidation = env.IsDevelopment()
-                    || config.GetValue<bool>("Firma:SkipCertificateValidation");
-
-                var userMeta = await context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == dbUser.IdUsuario);
-                if (!skipCertificateValidation && (userMeta == null || !userMeta.AceptoTerminosFirma))
-                {
-                    return BadRequest(new { error = "Debe aceptar los términos y condiciones de firma electrónica (conforme a la LOPDP) en su perfil antes de proceder a la firma." });
-                }
-
-                // 1. Obtener los datos reales del proyecto
-                var projectDto = await _projectOrchestrator.GetProjectDetailAsync(projectUuid);
-                if (projectDto == null)
-                {
-                    return NotFound(new { error = "El proyecto de investigación especificado no existe." });
-                }
-
-                if (projectDto.Estado == "Enviado" || projectDto.Estado == "Aprobado" || projectDto.Estado == "En Ejecución")
-                {
-                    return BadRequest(new { error = "El proyecto ya ha sido firmado y enviado oficialmente." });
-                }
-
-                // ── CONTROL DE ACCESO: Solo el Director de Proyecto está autorizado a firmar ──
-                var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(projectUuid, idReferencia);
-                if (!isProjectDirector)
-                {
-                    return StatusCode(403, new { error = "Solo el director del proyecto está autorizado para firmar digitalmente este protocolo." });
-                }
-
-                // 2. Cargar Firma (.p12 — upload-on-demand, nunca se guarda en servidor)
-                byte[]? certificateBytes = null;
-                string? finalPassword = password;
-
-                if (certificate != null && certificate.Length > 0)
-                {
-                    using (var ms = new System.IO.MemoryStream())
-                    {
-                        await certificate.CopyToAsync(ms);
-                        certificateBytes = ms.ToArray();
-                    }
-                }
-                else if (!skipCertificateValidation)
-                {
-                    // En producción, el certificado es obligatorio en cada solicitud de firma
-                    return BadRequest(new { error = "Debe adjuntar su archivo de firma digital (.p12) en cada solicitud de firma. El sistema no guarda certificados en el servidor." });
-                }
-
-                // Extraer metadatos del certificado de firma digital para inyección visual en el PDF
-                string signerName = dbUser.Nombre ?? "Firmante";
-                string signerEntity = "Entidad de Certificación Digital";
-                string signatureDate = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
-
-                if (certificateBytes != null)
-                {
-                    try
-                    {
-                        using var cert2 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificateBytes, finalPassword ?? "");
-                        var parsedName = cert2.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false);
-                        
-                        if (!skipCertificateValidation && !string.IsNullOrWhiteSpace(parsedName) && !string.IsNullOrWhiteSpace(dbUser.Nombre))
-                        {
-                            string normUser = NormalizeName(dbUser.Nombre);
-                            string normCert = NormalizeName(parsedName);
-                            if (!ValidateNameMatch(normUser, normCert))
-                            {
-                                return BadRequest(new { error = $"El certificado digital cargado pertenece a '{parsedName}', pero usted ha iniciado sesión como '{dbUser.Nombre}'. Por seguridad, solo puede firmar documentos usando su propio certificado personal." });
-                            }
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(parsedName))
-                        {
-                            signerName = parsedName;
-                        }
-                        var parsedIssuer = cert2.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, true);
-                        if (!string.IsNullOrWhiteSpace(parsedIssuer))
-                        {
-                            signerEntity = parsedIssuer;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (!skipCertificateValidation)
-                        {
-                            return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
-                        }
-                        logger.LogWarning(ex, "No se pudo extraer metadatos del certificado de firma. Se usará información de perfil.");
-                    }
-                }
-
-                // Cargar firma gráfica del perfil de usuario si está disponible
-                var signatureProfile = await context.InvUserSignaturePerfiles
-                    .FirstOrDefaultAsync(p => p.IdUsuario == dbUser.IdUsuario);
-                string? firmaImagenB64 = signatureProfile?.FirmaImagenB64;
-
-                // 3. Generar el PDF oficial del protocolo de investigación en modo NO Borrador
-                var request = new DocumentRequest
-                {
-                    TemplateCode = "PROTOCOLO_INVESTIGACION",
-                    Data = projectDto,
-                    IsDraftMode = false, // Emisión oficial inmutable
-                    IsBlindMode = false,
-                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA (Firma)",
-                    ProjectUuid = projectDto.Uuid,
-                    EntityUuid = projectDto.Uuid,
-                    ExtraVariables = new System.Collections.Generic.Dictionary<string, object>
-                    {
-                        { "firma_director", new System.Collections.Generic.Dictionary<string, object>
-                            {
-                                { "nombre", signerName },
-                                { "entidad", signerEntity },
-                                { "fecha", signatureDate },
-                                { "imagen", firmaImagenB64 ?? "" }
-                            }
-                        }
-                    }
-                };
-
-                var genResult = await _documentEngine.GenerateAsync(request);
-
-                byte[] signedPdfBytes;
-                if (certificateBytes != null)
-                {
-                    if (!skipCertificateValidation)
-                    {
-                        if (string.IsNullOrWhiteSpace(finalPassword))
-                        {
-                            return BadRequest(new { error = "La contraseña del certificado es requerida." });
-                        }
-
-                        if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
-                        {
-                            return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
-                        }
-
-                        signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
-                            reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
-                            location: "Quito, Ecuador");
-                    }
-                    else
-                    {
-                        logger.LogWarning("[DIITRA CORE] Modo pruebas: firma criptográfica PAdES omitida para proyecto {Uuid}", projectUuid);
-                        signedPdfBytes = genResult.PdfBytes;
-                    }
-                }
-                else if (skipCertificateValidation)
-                {
-                    logger.LogWarning("[DIITRA CORE] Modo pruebas: PDF oficial generado sin certificado para proyecto {Uuid}", projectUuid);
-                    signedPdfBytes = genResult.PdfBytes;
-                }
-                else if (password == "diitra2026")
-                {
-                    signedPdfBytes = genResult.PdfBytes;
-                }
-                else
-                {
-                    return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
-                }
-
-                // MODO PRODUCCIÓN: descomentar para firma PAdES estricta
-                // byte[] signedPdfBytes;
-                // if (certificateBytes != null)
-                // {
-                //     if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
-                //     {
-                //         return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
-                //     }
-                //     signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
-                //         reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
-                //         location: "Quito, Ecuador");
-                // }
-                // else
-                // {
-                //     if (password != "diitra2026")
-                //     {
-                //         return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
-                //     }
-                //     signedPdfBytes = genResult.PdfBytes;
-                // }
-
-                // ── LOPDP: Registrar auditoría de uso de certificado ──
-                var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
-                var userAgent = Request.Headers["User-Agent"].ToString();
-                await lopdpService.AuditoriaAccesoDatosAsync(
-                    dbUser.IdUsuario,
-                    dbUser.IdUsuario,
-                    "inv_usuarios_metadata",
-                    "certificadoDigital",
-                    "ESCRITURA",
-                    $"Uso del certificado digital (upload-on-demand) para firma del proyecto {projectDto.Titulo}",
-                    ip,
-                    userAgent);
-
-
-                // 4. Sello de Trazabilidad e Integridad (SHA-256)
-                string finalHash;
-                using (var sha256 = System.Security.Cryptography.SHA256.Create())
-                {
-                    byte[] hashBytes = sha256.ComputeHash(signedPdfBytes);
-                    finalHash = Convert.ToHexString(hashBytes).ToLower();
-                }
-
-                // 5. Transición de Estado de Workflow Core
-                var workflowService = HttpContext.RequestServices.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
-                bool success = await workflowService.TransicionarEstadoAsync(projectDto.Uuid!, "Enviado", 1, $"Sello Digital e Inmutabilidad Forense - Hash: {finalHash}");
-
-                if (!success)
-                {
-                    logger.LogWarning("[DIITRA CORE] La transición de estado falló durante la firma del proyecto.");
-                }
-
-                // 6. Sellar y Registrar Instancia de Documento (Integración CoWork Read-Only)
-                try
-                {
-                    var instance = await context.DocumentInstances
-                        .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
-
-                    if (instance == null)
-                    {
-                        instance = await _documentInstanceService.CreateAsync(
-                            "PROTOCOLO_INVESTIGACION",
-                            projectDto.Uuid!,
-                            User.Identity?.Name ?? "Sistema DIITRA",
-                            $"Protocolo Oficial: {projectDto.Titulo}",
-                            "Proyecto"
-                        );
-                    }
-
-                    // Pasar a estado firmado e inmutable en CoWork
-                    await _documentInstanceService.FinalizeAsync(
-                        instance.Uuid,
-                        signedPdfBytes,
-                        genResult.FileName,
-                        finalHash,
-                        genResult.TraceabilityCode
-                    );
-                }
-                catch (System.Exception ex)
-                {
-                    logger.LogError(ex, "[DIITRA CORE] No se pudo finalizar la instancia documental.");
-                }
-
-                return File(signedPdfBytes, "application/pdf", genResult.FileName);
+                using var ms = new System.IO.MemoryStream();
+                await certificate.CopyToAsync(ms);
+                certificateBytes = ms.ToArray();
             }
-            catch (System.Exception ex)
+
+            var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+            var userAgent = Request.Headers["User-Agent"].ToString();
+
+            var result = await _projectSigningService.SignDocumentAsync(certificateBytes, password, projectUuid, User, ip, userAgent);
+
+            if (!result.Success)
             {
-                logger.LogError(ex, "[DIITRA CORE] Error crítico durante la firma del documento");
-                return BadRequest(new { error = "Firma fallida: " + ex.Message });
+                return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
             }
+
+            return File(result.PdfBytes!, "application/pdf", result.FileName!);
         }
 
         [HttpPatch("{id}/section")]
@@ -420,7 +123,7 @@ namespace diitra_api.Controllers
                 if (!success) return NotFound("Proyecto no encontrado");
                 return Ok(new { message = $"Proyecto transitado exitosamente a {newState}" });
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
@@ -436,13 +139,7 @@ namespace diitra_api.Controllers
             var history = await workflowEngine.GetTrazabilidadAsync(id);
             return Ok(history);
         }
-        /// <summary>
-        /// Sincroniza los datos del Wizard con la base de datos de investigación.
-        /// NOTA ARQUITECTÓNICA: Este controlador es específico para la entidad 'Proyecto'.
-        /// El NÚCLEO DIITRA Builder es universal; cuando implementemos otros documentos
-        /// (como Informes o Actas), crearemos sus propios controladores, pero todos
-        /// usarán el mismo DocumentEngine para generar los PDFs.
-        /// </summary>
+
         [HttpPost("save-preview-data")]
         public async Task<IActionResult> SavePreviewData([FromBody] ProyectoDto dto)
         {
@@ -464,6 +161,7 @@ namespace diitra_api.Controllers
 
             return Ok(new { success = true, uuid = result.Uuid });
         }
+
         [HttpGet]
         public async Task<IActionResult> List()
         {
@@ -471,10 +169,6 @@ namespace diitra_api.Controllers
             return Ok(projects);
         }
 
-        /// <summary>
-        /// Devuelve los proyectos donde el usuario autenticado participa (docente o estudiante).
-        /// Si el usuario es Administrador del Sistema, devuelve la lista total de proyectos para su revisión.
-        /// </summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMyProjects()
         {
@@ -492,9 +186,6 @@ namespace diitra_api.Controllers
             return Ok(projects);
         }
 
-        /// <summary>
-        /// Devuelve el detalle completo de un proyecto por UUID.
-        /// </summary>
         [HttpGet("{uuid}/detail")]
         public async Task<IActionResult> GetDetail(string uuid)
         {
@@ -510,15 +201,11 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             detail.PuedeSolicitarCambioEquipo = !string.IsNullOrEmpty(userIdRef) &&
                 await _projectOrchestrator.UserCanRequestTeamChangeAsync(uuid, userIdRef);
-            detail.PuedeFirmar = !string.IsNullOrEmpty(userIdRef) && 
+            detail.PuedeFirmar = !string.IsNullOrEmpty(userIdRef) &&
                 await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
             return Ok(detail);
         }
 
-        /// <summary>
-        /// Estadísticas del dashboard para el usuario autenticado.
-        /// Responde con métricas propias si es Investigador, o globales si es Director/Admin.
-        /// </summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
         {
@@ -530,122 +217,28 @@ namespace diitra_api.Controllers
             return Ok(stats);
         }
 
-        /// <summary>
-        /// Exporta la metadata de un proyecto en formato CSV para cumplimiento CACES.
-        /// </summary>
         [HttpGet("{uuid}/export-caces")]
         public async Task<IActionResult> ExportCaces(string uuid)
         {
-            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
-            if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
-
-            var csv = new System.Text.StringBuilder();
-            csv.AppendLine("CAMPO,VALOR");
-            csv.AppendLine($"\"Código Institucional\",\"{project.CodigoInstitucional ?? "N/A"}\"");
-            csv.AppendLine($"\"Título del Proyecto\",\"{project.Titulo?.Replace("\"", "\"\"") ?? "N/A"}\"");
-            csv.AppendLine($"\"Estado Actual\",\"{project.Estado ?? "N/A"}\"");
-            csv.AppendLine($"\"Línea de Investigación\",\"{project.LineaInvestigacion ?? "N/A"}\"");
-            csv.AppendLine($"\"Tiempo de Ejecución\",\"{project.TiempoEjecucion ?? "N/A"}\"");
-            csv.AppendLine($"\"Presupuesto Total Planificado\",\"${project.CostoTotal}\"");
-            csv.AppendLine($"\"TRL Inicial\",\"{project.TrlInicial ?? 1}\"");
-            csv.AppendLine($"\"TRL Actual\",\"{project.TrlActual ?? 1}\"");
-            csv.AppendLine($"\"TRL Meta\",\"{project.TrlMeta ?? 1}\"");
-            csv.AppendLine("");
-            csv.AppendLine("INTEGRANTE,ROL,CEDULA,TELEFONO");
-            if (project.Investigadores != null)
+            var result = await _projectPublishingService.ExportCacesCsvAsync(uuid);
+            if (!result.Success)
             {
-                foreach (var inv in project.Investigadores)
-                {
-                    csv.AppendLine($"\"{inv.Nombre}\",\"{inv.Rol}\",\"{inv.Cedula}\",\"{inv.Telefono}\"");
-                }
+                return NotFound(new { error = result.ErrorMessage });
             }
-
-            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
-            return File(bytes, "text/csv", $"CACES_METADATA_{uuid.Substring(0,8).ToUpper()}.csv");
+            return File(result.CsvBytes!, "text/csv", result.FileName!);
         }
 
-        /// <summary>
-        /// Publica el proyecto de investigación y su PDF oficial en el repositorio institucional DSpace.
-        /// </summary>
         [HttpPost("{uuid}/publish-dspace")]
-        public async Task<IActionResult> PublishDSpace(
-            string uuid,
-            [FromServices] Diitra.Application.Common.Repositories.IRepositoryConnector repositoryConnector,
-            [FromServices] Diitra.Infrastructure.Common.Storage.IFileStorageService fileStorageService)
+        public async Task<IActionResult> PublishDSpace(string uuid)
         {
-            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
-            if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
-
-            byte[] pdfBytes;
-
-            // Intentamos buscar una instancia de documento finalizada
-            var instances = await _documentInstanceService.GetByEntityAsync(uuid);
-            var finalizedInstance = instances.FirstOrDefault(i => !string.IsNullOrEmpty(i.FinalPdfPath) && i.State == Diitra.Domain.Common.Documents.DocumentState.Signed);
-
-            if (finalizedInstance != null)
+            var result = await _projectPublishingService.PublishDSpaceAsync(uuid, User.Identity?.Name);
+            if (!result.Success)
             {
-                try
-                {
-                    pdfBytes = await fileStorageService.GetFileAsync(finalizedInstance.FinalPdfPath!);
-                }
-                catch
-                {
-                    // Fallback: Generar el PDF dinámicamente si el archivo no existe en almacenamiento
-                    var request = new DocumentRequest
-                    {
-                        TemplateCode = "PROTOCOLO_INVESTIGACION",
-                        Data = project,
-                        IsDraftMode = false,
-                        IsBlindMode = false,
-                        RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
-                        ProjectUuid = uuid,
-                        EntityUuid = uuid
-                    };
-                    var genResult = await _documentEngine.GenerateAsync(request);
-                    pdfBytes = genResult.PdfBytes;
-                }
+                return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
             }
-            else
-            {
-                // Generar el PDF dinámicamente
-                var request = new DocumentRequest
-                {
-                    TemplateCode = "PROTOCOLO_INVESTIGACION",
-                    Data = project,
-                    IsDraftMode = false,
-                    IsBlindMode = false,
-                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
-                    ProjectUuid = uuid,
-                    EntityUuid = uuid
-                };
-                var genResult = await _documentEngine.GenerateAsync(request);
-                pdfBytes = genResult.PdfBytes;
-            }
-
-            var dspaceMetadata = new
-            {
-                title = project.Titulo,
-                creator = project.DirectorProyecto ?? "DIITRA Investigador",
-                subject = project.LineaInvestigacion,
-                description = $"Proyecto de investigación institucional: {project.Titulo}. Estado: {project.Estado}.",
-                publisher = "Instituto Superior Tecnológico Traversari",
-                date = System.DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                identifier = project.CodigoInstitucional ?? $"DIITRA-{uuid.Substring(0,8).ToUpper()}"
-            };
-
-            var dspaceUri = await repositoryConnector.PublishAsync(pdfBytes, dspaceMetadata);
-
-            if (dspaceUri.StartsWith("ERROR:"))
-            {
-                return BadRequest(new { error = dspaceUri });
-            }
-
-            return Ok(new { success = true, uri = dspaceUri });
+            return Ok(new { success = true, uri = result.Uri });
         }
 
-        /// <summary>
-        /// Actualiza dinámicamente el equipo de investigadores asignado al proyecto.
-        /// </summary>
         [HttpPatch("{uuid}/team")]
         public async Task<IActionResult> UpdateProjectTeam(
             string uuid,
@@ -701,7 +294,7 @@ namespace diitra_api.Controllers
         }
 
         [HttpPatch("{uuid}/team-change-requests/{requestUuid}/review")]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "DIITRA_ADMIN")]
+        [Authorize(Roles = "DIITRA_ADMIN")]
         public async Task<IActionResult> ReviewTeamChangeRequest(string uuid, string requestUuid, [FromBody] TeamChangeReviewDto review)
         {
             var reviewerSigafiId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -716,9 +309,6 @@ namespace diitra_api.Controllers
             return Ok(new { success = true, message = result.Message });
         }
 
-        /// <summary>
-        /// Transfiere la dirección de un proyecto formalmente a un nuevo docente con justificación.
-        /// </summary>
         [HttpPost("{uuid}/transfer-director")]
         public async Task<IActionResult> TransferDirector(string uuid, [FromBody] TransferDirectorRequest request)
         {
@@ -756,11 +346,6 @@ namespace diitra_api.Controllers
             return Ok(new { success = true });
         }
 
-
-        /// <summary>
-        /// Elimina físicamente un proyecto y todos sus registros relacionados en cascada.
-        /// Solo permitido para borradores de proyectos académicos.
-        /// </summary>
         [HttpDelete("{uuid}")]
         public async Task<IActionResult> DeleteProject(string uuid)
         {
@@ -778,11 +363,6 @@ namespace diitra_api.Controllers
             return Ok(new { success = true });
         }
 
-        /// <summary>
-        /// Feed de actividad reciente de un proyecto: sesiones CoWork, estados de sección
-        /// y transiciones de workflow. Diseñado para el panel lateral del Workspace.
-        /// Desacoplado: nuevos tipos de actividad se agregan en el backend sin cambios en el frontend.
-        /// </summary>
         [HttpGet("{uuid}/activity")]
         public async Task<IActionResult> GetActivity(string uuid, [FromQuery] int maxItems = 20)
         {
@@ -795,6 +375,28 @@ namespace diitra_api.Controllers
             return Ok(actividad);
         }
 
+        [HttpPost("{uuid}/gastos")]
+        public async Task<IActionResult> RegistrarGasto(string uuid, [FromBody] RegistrarGastoRequest request)
+        {
+            var result = await _projectExpensesService.RegistrarGastoAsync(uuid, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpDelete("{uuid}/gastos/{gastoUuid}")]
+        public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
+        {
+            var result = await _projectExpensesService.EliminarGastoAsync(uuid, gastoUuid, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
         private async Task<bool> CanCurrentUserModifyProjectAsync(string uuid)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -803,23 +405,18 @@ namespace diitra_api.Controllers
             var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
             if (project == null) return false;
 
-            // En fases de Prepropuesta, la edición es exclusiva del docente postulante.
-            // Los administradores evalúan, no editan la idea directamente.
             if (project.Estado == "Prepropuesta" || project.Estado == "Prepropuesta Rechazada")
             {
                 return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
             }
 
-            // 1. Administradores del sistema tienen control absoluto en fase de Borrador/Corrección
             if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
-            // 2. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta
             if (project.Estado != "Borrador" && project.Estado != "En Corrección")
             {
                 return false;
             }
 
-            // 3. Comprobar si el usuario pertenece al equipo
             return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
         }
 
@@ -828,10 +425,8 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return false;
 
-            // 1. Si es Administrador del Sistema, tiene control absoluto
             if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
-            // 2. Si es el Director de Proyecto del proyecto y el proyecto está en fases de edición o prepropuesta
             var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
             if (project != null && (project.Estado == "Borrador" || project.Estado == "En Corrección" ||
                                     project.Estado == "Prepropuesta" || project.Estado == "Prepropuesta Rechazada"))
@@ -864,213 +459,5 @@ namespace diitra_api.Controllers
 
             return await _projectOrchestrator.UserCanViewProjectAsync(uuid, userIdRef);
         }
-
-        /// <summary>
-        /// Registra un nuevo gasto asociado a un proyecto en estado En Ejecución.
-        /// </summary>
-        [HttpPost("{uuid}/gastos")]
-        public async Task<IActionResult> RegistrarGasto(string uuid, [FromBody] RegistrarGastoRequest request)
-        {
-            if (request == null) return BadRequest("Petición nula.");
-            if (string.IsNullOrEmpty(request.Descripcion) || request.Monto <= 0)
-            {
-                return BadRequest(new { success = false, message = "La descripción y un monto mayor a cero son obligatorios." });
-            }
-
-            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
-
-            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
-            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
-
-            if (!await CanCurrentUserManageProjectAsync(uuid))
-            {
-                return StatusCode(403, new { message = "No tienes permisos para registrar gastos en este proyecto de investigación." });
-            }
-
-            var project = await _context.InvProyectos
-                .FirstOrDefaultAsync(p => p.Uuid == uuid);
-
-            if (project == null)
-            {
-                return NotFound(new { success = false, message = "Proyecto no encontrado." });
-            }
-
-            var estadosEgresos = await _context.InvConfigWorkflows
-                .Where(w => w.Activo && w.PermiteRegistroEgresos)
-                .Select(w => w.EstadoDestino)
-                .Distinct()
-                .ToListAsync();
-
-            if (estadosEgresos == null || !estadosEgresos.Any())
-            {
-                estadosEgresos = new List<string> { "En Ejecución" };
-            }
-
-            if (!estadosEgresos.Contains(project.Estado))
-            {
-                return BadRequest(new { success = false, message = $"Solo se pueden registrar egresos cuando el proyecto está en un estado activo de ejecución. Estado actual: '{project.Estado}'. Estados permitidos: {string.Join(", ", estadosEgresos)}." });
-            }
-
-            // Buscar o crear la partida presupuestaria correspondientes
-            var item = await _context.InvPresupuestoItems
-                .FirstOrDefaultAsync(i => i.IdProyecto == project.IdProyecto && i.IdPartida == request.Partida);
-
-            if (item == null)
-            {
-                item = new InvPresupuestoItem
-                {
-                    IdProyecto = project.IdProyecto,
-                    Categoria = string.IsNullOrEmpty(request.Categoria) ? "Otros" : request.Categoria,
-                    IdPartida = string.IsNullOrEmpty(request.Partida) ? "GEN-999" : request.Partida,
-                    Detalle = request.Descripcion,
-                    Cantidad = 1,
-                    ValorUnitario = request.Monto,
-                    ValorTotal = request.Monto,
-                    EsGastoCapital = false
-                };
-                _context.InvPresupuestoItems.Add(item);
-                await _context.SaveChangesAsync();
-            }
-
-            DateOnly fechaGasto = DateOnly.FromDateTime(DateTime.UtcNow);
-            if (!string.IsNullOrEmpty(request.Fecha) && DateOnly.TryParse(request.Fecha, out var parsedDate))
-            {
-                fechaGasto = parsedDate;
-            }
-
-            var gasto = new InvGasto
-            {
-                Uuid = Guid.NewGuid(),
-                IdProyecto = project.IdProyecto,
-                IdItem = item.IdItem,
-                Monto = request.Monto,
-                FechaGasto = fechaGasto,
-                NumeroFactura = request.ReferenciaFactura,
-                Descripcion = request.Descripcion
-            };
-
-            _context.InvGastos.Add(gasto);
-
-            // Actualizar acumulado de ValorEjecucion
-            project.ValorEjecucion = (project.ValorEjecucion ?? 0) + request.Monto;
-
-            await _context.SaveChangesAsync();
-
-            // Mapear al DTO para retornar al frontend
-            var dto = new GastoDto
-            {
-                Id = gasto.Uuid.ToString(),
-                Descripcion = gasto.Descripcion,
-                Partida = item.IdPartida,
-                Monto = gasto.Monto,
-                Fecha = gasto.FechaGasto.ToString("yyyy-MM-dd"),
-                ReferenciaFactura = gasto.NumeroFactura,
-                Categoria = item.Categoria
-            };
-
-            return Ok(dto);
-        }
-
-        /// <summary>
-        /// Elimina un registro de gasto asociado a un proyecto en estado En Ejecución.
-        /// </summary>
-        [HttpDelete("{uuid}/gastos/{gastoUuid}")]
-        public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
-        {
-            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
-
-            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
-            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
-
-            if (!isSystemAdmin && !isProjectDirector)
-            {
-                return StatusCode(403, new { message = "No tienes permisos para eliminar gastos de este proyecto de investigación." });
-            }
-
-            var project = await _context.InvProyectos
-                .FirstOrDefaultAsync(p => p.Uuid == uuid);
-
-            if (project == null)
-            {
-                return NotFound(new { success = false, message = "Proyecto no encontrado." });
-            }
-
-            var estadosEgresos = await _context.InvConfigWorkflows
-                .Where(w => w.Activo && w.PermiteRegistroEgresos)
-                .Select(w => w.EstadoDestino)
-                .Distinct()
-                .ToListAsync();
-
-            if (estadosEgresos == null || !estadosEgresos.Any())
-            {
-                estadosEgresos = new List<string> { "En Ejecución" };
-            }
-
-            if (!estadosEgresos.Contains(project.Estado))
-            {
-                return BadRequest(new { success = false, message = $"Solo se pueden modificar egresos cuando el proyecto está en un estado activo de ejecución. Estado actual: '{project.Estado}'. Estados permitidos: {string.Join(", ", estadosEgresos)}." });
-            }
-
-            if (!Guid.TryParse(gastoUuid, out var parsedGastoUuid))
-            {
-                return BadRequest(new { success = false, message = "UUID de gasto inválido." });
-            }
-
-            var gasto = await _context.InvGastos
-                .FirstOrDefaultAsync(g => g.Uuid == parsedGastoUuid && g.IdProyecto == project.IdProyecto);
-
-            if (gasto == null)
-            {
-                return NotFound(new { success = false, message = "Registro de gasto no encontrado." });
-            }
-
-            _context.InvGastos.Remove(gasto);
-
-            // Actualizar acumulado de ValorEjecucion
-            project.ValorEjecucion = Math.Max(0, (project.ValorEjecucion ?? 0) - gasto.Monto);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true });
-        }
-
-        private static string NormalizeName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return "";
-            var normalized = name.ToLowerInvariant().Trim();
-            normalized = normalized.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ñ", "n");
-            return normalized;
-        }
-
-        private static bool ValidateNameMatch(string userNormalized, string certNormalized)
-        {
-            if (string.IsNullOrEmpty(userNormalized) || string.IsNullOrEmpty(certNormalized)) return false;
-            if (userNormalized.Contains(certNormalized) || certNormalized.Contains(userNormalized)) return true;
-
-            var userWords = userNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var certWords = certNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            int matches = 0;
-            foreach (var uWord in userWords)
-            {
-                if (uWord.Length > 2 && certWords.Contains(uWord))
-                {
-                    matches++;
-                }
-            }
-            return matches >= 2;
-        }
-    }
-
-    public class RegistrarGastoRequest
-    {
-        public string Descripcion { get; set; } = string.Empty;
-        public string Partida { get; set; } = string.Empty;
-        public decimal Monto { get; set; }
-        public string ReferenciaFactura { get; set; } = string.Empty;
-        public string Categoria { get; set; } = string.Empty;
-        public string? Fecha { get; set; }
     }
 }
