@@ -21,15 +21,18 @@ namespace diitra_api.Controllers
         private readonly IDocumentInstanceService _instanceService;
         private readonly IDocumentEngine _documentEngine;
         private readonly IDocumentDataOrchestrator _orchestrator;
+        private readonly diitra_infrastructure.data.models.DiitraContext _context;
 
         public DocumentInstancesController(
             IDocumentInstanceService instanceService,
             IDocumentEngine documentEngine,
-            IDocumentDataOrchestrator orchestrator)
+            IDocumentDataOrchestrator orchestrator,
+            diitra_infrastructure.data.models.DiitraContext context)
         {
             _instanceService = instanceService;
             _documentEngine = documentEngine;
             _orchestrator = orchestrator;
+            _context = context;
         }
 
         [HttpPost]
@@ -131,20 +134,60 @@ namespace diitra_api.Controllers
 
             if (code == "RUBRICA_EVALUACION")
             {
+                var rubricaActiva = await _context.InvRubricas
+                    .Include(r => r.InvRubricaCriterios)
+                    .FirstOrDefaultAsync(r => r.Activo == true, ct);
+
+                var schema = new System.Collections.Generic.Dictionary<string, object>();
+                var fieldsList = new System.Collections.Generic.List<object>();
+
+                if (rubricaActiva != null && rubricaActiva.InvRubricaCriterios.Any())
+                {
+                    foreach (var criterio in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
+                    {
+                        string keyName = System.Text.RegularExpressions.Regex.Replace(criterio.Nombre, @"\s+", "");
+                        schema.Add(keyName, 0);
+
+                        fieldsList.Add(new {
+                            name = keyName,
+                            label = $"{criterio.Nombre} (0-{(int)criterio.PesoPorcentaje})",
+                            type = "number",
+                            collaborative = false,
+                            min = (int?)0,
+                            max = (int?)criterio.PesoPorcentaje,
+                            options = (string[]?)null,
+                            placeholder = (string?)null
+                        });
+                    }
+                }
+                else
+                {
+                    schema.Add("Pertinencia", 0);
+                    schema.Add("Metodologia", 0);
+                    schema.Add("Viabilidad", 0);
+                    schema.Add("Impacto", 0);
+
+                    fieldsList.AddRange(new[]
+                    {
+                        new { name = "Pertinencia", label = "Pertinencia Social (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                        new { name = "Metodologia", label = "Metodología Científica (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                        new { name = "Viabilidad", label = "Viabilidad y Presupuesto (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                        new { name = "Impacto", label = "Impacto y Transferencia (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null }
+                    });
+                }
+
+                schema.Add("ComentariosGenerales", "");
+                schema.Add("RecomendacionFinal", "");
+
+                fieldsList.Add(new { name = "ComentariosGenerales", label = "Observaciones y comentarios institucionales", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba un informe cualitativo para fundamentar las puntuaciones..." });
+                fieldsList.Add(new { name = "RecomendacionFinal", label = "Recomendación Final de Comisión", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin modificaciones", "Aprobado con observaciones menores", "Requiere re-estructuración mayor", "Rechazado" }, placeholder = (string?)null });
+
                 return Ok(new
                 {
                     title = "Rúbrica de Evaluación por Pares",
                     subtitle = "Evaluación anónima (Fase 2) — Normativa CACES",
                     signatureType = template.SignatureType,
-                    schema = new Dictionary<string, object>
-                    {
-                        { "Pertinencia", 0 },
-                        { "Metodologia", 0 },
-                        { "Viabilidad", 0 },
-                        { "Impacto", 0 },
-                        { "ComentariosGenerales", "" },
-                        { "RecomendacionFinal", "" }
-                    },
+                    schema = schema,
                     lists = new string[] { },
                     sections = new[]
                     {
@@ -156,15 +199,7 @@ namespace diitra_api.Controllers
                             config = new
                             {
                                 referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
-                                fields = new[]
-                                {
-                                    new { name = "Pertinencia", label = "Pertinencia Social (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                                    new { name = "Metodologia", label = "Metodología Científica (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                                    new { name = "Viabilidad", label = "Viabilidad y Presupuesto (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                                    new { name = "Impacto", label = "Impacto y Transferencia (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                                    new { name = "ComentariosGenerales", label = "Observaciones y comentarios institucionales", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba un informe cualitativo para fundamentar las puntuaciones..." },
-                                    new { name = "RecomendacionFinal", label = "Recomendación Final de Comisión", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin modificaciones", "Aprobado con observaciones menores", "Requiere re-estructuración mayor", "Rechazado" }, placeholder = (string?)null }
-                                }
+                                fields = fieldsList.ToArray()
                             }
                         }
                     }

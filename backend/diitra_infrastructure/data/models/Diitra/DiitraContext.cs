@@ -869,12 +869,14 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.UrlBases).HasColumnName("urlBases").HasMaxLength(512);
             entity.Property(e => e.RequisitosMinimos).HasColumnName("requisitosMinimos").HasColumnType("text");
             entity.Property(e => e.IdTipoConvocatoria).HasColumnName("idTipoConvocatoria");
+            entity.Property(e => e.IdRubrica).HasColumnName("idRubrica");
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
             entity.Property(e => e.Eliminado).HasColumnName("eliminado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.FechaEliminacion).HasColumnName("fechaEliminacion");
             entity.Property(e => e.EliminadoPorUsuarioId).HasColumnName("eliminadoPorUsuarioId");
 
             entity.HasOne(d => d.IdPeriodoNavigation).WithMany().HasForeignKey(d => d.IdPeriodo).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_conv_periodo");
+            entity.HasOne(d => d.IdRubricaNavigation).WithMany().HasForeignKey(d => d.IdRubrica).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_conv_rubrica");
         });
 
         modelBuilder.Entity<InvRubrica>(entity =>

@@ -21,7 +21,9 @@ public partial class InvConvocatoria
     public bool? Eliminado { get; set; }
     public DateTime? FechaEliminacion { get; set; }
     public int? EliminadoPorUsuarioId { get; set; }
+    public int? IdRubrica { get; set; }
 
     public virtual Periodo IdPeriodoNavigation { get; set; } = null!;
+    public virtual InvRubrica? IdRubricaNavigation { get; set; }
     public virtual ICollection<InvProyecto> Proyectos { get; set; } = new List<InvProyecto>();
 }

@@ -207,9 +207,20 @@ public class PeerReviewService : IPeerReviewService
             throw new InvalidOperationException("El proyecto asociado a esta revisión no pudo ser cargado.");
         }
         var conv = proyecto.IdConvocatoriaNavigation;
-        var rubrica = await _context.InvRubricas
-            .Include(r => r.InvRubricaCriterios)
-            .FirstOrDefaultAsync(r => r.Activo == true);
+        InvRubrica? rubrica = null;
+        if (conv != null && conv.IdRubrica.HasValue)
+        {
+            rubrica = await _context.InvRubricas
+                .Include(r => r.InvRubricaCriterios)
+                .FirstOrDefaultAsync(r => r.IdRubrica == conv.IdRubrica.Value);
+        }
+
+        if (rubrica == null)
+        {
+            rubrica = await _context.InvRubricas
+                .Include(r => r.InvRubricaCriterios)
+                .FirstOrDefaultAsync(r => r.Activo == true);
+        }
 
         // Si no hay rúbrica configurada, usar criterios genéricos CACES (fallback)
         List<CriterioRubricaDto> criterios;
@@ -445,22 +456,45 @@ public class PeerReviewService : IPeerReviewService
 
                 if (existingDoc != null && existingDoc.State != Diitra.Domain.Common.Documents.DocumentState.Signed)
                 {
+                    var criteriosRubrica = await ObtenerCriteriosRubricaAsync(project.IdConvocatoria);
+
+                    var criteriosSnapshot = dto.Detalles.Select(d =>
+                    {
+                        var criterioRub = criteriosRubrica.FirstOrDefault(c => c.Nombre == d.Criterio);
+                        decimal peso = criterioRub != default ? criterioRub.Peso : 0m;
+                        return new
+                        {
+                            nombre = d.Criterio,
+                            peso = peso,
+                            puntaje = d.Puntaje,
+                            observaciones = d.Observaciones ?? ""
+                        };
+                    }).ToList();
+
                     decimal pertinencia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Pertinencia"))?.Puntaje ?? 0;
                     decimal metodologia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Metodología") || d.Criterio.Contains("Metodologia"))?.Puntaje ?? 0;
                     decimal viabilidad = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Viabilidad") || d.Criterio.Contains("Presupuesto"))?.Puntaje ?? 0;
                     decimal impacto = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Impacto"))?.Puntaje ?? 0;
+
+                    string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
 
                     var dataSnapshot = new
                     {
                         ProyectoUuid = project.Uuid,
                         RevisionUuid = revision.Uuid,
                         EsExterno = revision.EsExterno,
+                        EvaluadorTipo = tipoEvaluador,
                         Pertinencia = pertinencia,
                         Metodologia = metodologia,
                         Viabilidad = viabilidad,
                         Impacto = impacto,
                         ComentariosGenerales = dto.ObservacionesGral ?? "",
-                        RecomendacionFinal = totalScore >= umbralAprobacion ? "Aprobado sin modificaciones" : "Rechazado"
+                        RecomendacionFinal = totalScore >= umbralAprobacion ? "Aprobado sin modificaciones" : "Rechazado",
+                        PuntajeTotal = totalScore,
+                        CriteriosEvaluados = criteriosSnapshot,
+                        Titulo = project.Titulo,
+                        CodigoInstitucional = project.CodigoInstitucional,
+                        FechaEvaluacion = DateTime.Now.ToString("yyyy-MM-dd")
                     };
 
                     string json = System.Text.Json.JsonSerializer.Serialize(dataSnapshot);
@@ -1512,9 +1546,26 @@ public class PeerReviewService : IPeerReviewService
 
     private async Task<List<(string Nombre, decimal Peso)>> ObtenerCriteriosRubricaAsync(int? idConvocatoria)
     {
-        var rubrica = await _context.InvRubricas
-            .Include(r => r.InvRubricaCriterios)
-            .FirstOrDefaultAsync(r => r.Activo == true);
+        InvRubrica? rubrica = null;
+
+        if (idConvocatoria.HasValue)
+        {
+            var convocatoria = await _context.InvConvocatorias
+                .FirstOrDefaultAsync(c => c.IdConvocatoria == idConvocatoria.Value);
+            if (convocatoria != null && convocatoria.IdRubrica.HasValue)
+            {
+                rubrica = await _context.InvRubricas
+                    .Include(r => r.InvRubricaCriterios)
+                    .FirstOrDefaultAsync(r => r.IdRubrica == convocatoria.IdRubrica.Value);
+            }
+        }
+
+        if (rubrica == null)
+        {
+            rubrica = await _context.InvRubricas
+                .Include(r => r.InvRubricaCriterios)
+                .FirstOrDefaultAsync(r => r.Activo == true);
+        }
 
         if (rubrica?.InvRubricaCriterios.Any() == true)
         {
