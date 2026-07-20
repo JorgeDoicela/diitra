@@ -3,7 +3,7 @@ import {
     Users, Activity, BarChart3,
     Megaphone,
     Fingerprint, FileText, Layers, ExternalLink,
-    RotateCw, HelpCircle
+    RotateCw, HelpCircle, Folder
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -123,11 +123,11 @@ export const AdminDashboard: React.FC = () => {
                             <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
                         </button>
                         <button
-                            onClick={() => navigate('/usuarios')}
+                            onClick={() => navigate('/investigacion')}
                             className="btn-vercel-secondary flex-1 md:flex-none"
                         >
-                            <Users size={14} />
-                            <span>Gestionar Usuarios</span>
+                            <Folder size={14} />
+                            <span>Investigación</span>
                         </button>
                         <button
                             onClick={() => navigate('/convocatorias')}

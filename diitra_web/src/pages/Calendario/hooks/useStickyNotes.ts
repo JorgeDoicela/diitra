@@ -203,6 +203,7 @@ export const useStickyNotes = (setLoading?: (l: boolean) => void) => {
             if (setLoading) setLoading(true);
             await deleteEvento(uuid);
             fetchStickyNotes();
+            window.dispatchEvent(new CustomEvent('diitra:note-created'));
         } catch (err) {
             console.error('Error al eliminar nota adhesiva:', err);
         } finally {

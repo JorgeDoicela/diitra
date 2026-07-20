@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FileText, X, Plus, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
 import './StickyNotesFloatingButton.css';
@@ -26,6 +26,7 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
     pendingCount = 0,
 }) => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [text, setText] = useState('');
     const [detalle, setDetalle] = useState('');
@@ -94,9 +95,23 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                 <div className="sticky-floating-card animate-slide-up">
                     <div className="sticky-floating-header">
                         <h3>Añadir Nota Rápida</h3>
-                        <button type="button" onClick={handleClose} className="sticky-floating-close">
-                            <X size={18} />
-                        </button>
+                        <div className="sticky-floating-header-actions">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    handleClose();
+                                    navigate('/calendario?view=inbox');
+                                }}
+                                className="sticky-floating-inbox-link"
+                                title="Ir a la Bandeja de Notas"
+                            >
+                                <FileText size={13} />
+                                <span>Bandeja de notas</span>
+                            </button>
+                            <button type="button" onClick={handleClose} className="sticky-floating-close">
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Chip de contexto de página */}

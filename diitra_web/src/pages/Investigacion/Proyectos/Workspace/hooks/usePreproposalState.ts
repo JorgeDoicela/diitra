@@ -60,7 +60,6 @@ export const formatCurrency = (val: string) => {
 export function usePreproposalState(
     currentProject: any,
     resolvedProjectUuid: string | null,
-    activeDocument: string | null,
     fetchProject: () => Promise<void>
 ) {
     const { addToast } = useNotifications();

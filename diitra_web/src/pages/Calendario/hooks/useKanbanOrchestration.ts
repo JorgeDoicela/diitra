@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     devolverAInbox,
     updateEvento,
@@ -26,7 +27,18 @@ export const useKanbanOrchestration = ({
     currentDate,
     handleGlobalDragEndFromNotes,
 }: UseKanbanOrchestrationOptions) => {
-    const [viewMode, setViewMode] = useState<CalendarViewMode>('calendar');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const urlViewMode = searchParams.get('view') as CalendarViewMode;
+    const viewMode = (urlViewMode === 'calendar' || urlViewMode === 'kanban' || urlViewMode === 'inbox') ? urlViewMode : 'calendar';
+
+    const setViewMode = (mode: CalendarViewMode) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.set('view', mode);
+            return next;
+        }, { replace: true });
+    };
+
     const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
@@ -190,6 +202,7 @@ export const useKanbanOrchestration = ({
         updateEvento(note.uuid, payload).then(() => {
             fetchStickyNotes();
             fetchEventos(currentDate);
+            window.dispatchEvent(new CustomEvent('diitra:note-created'));
         }).catch(err => {
             console.error('Error al confirmar planificación:', err);
             fetchStickyNotes();
@@ -203,6 +216,7 @@ export const useKanbanOrchestration = ({
             await devolverAInbox(uuid);
             fetchStickyNotes();
             fetchEventos(currentDate);
+            window.dispatchEvent(new CustomEvent('diitra:note-created'));
         } catch (err) {
             console.error('Error al devolver evento a Inbox:', err);
             fetchStickyNotes();

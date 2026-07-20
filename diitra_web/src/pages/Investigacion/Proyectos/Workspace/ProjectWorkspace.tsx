@@ -85,7 +85,6 @@ export const ProjectWorkspace: React.FC = () => {
     const preproposal = usePreproposalState(
         currentProject,
         resolvedProjectUuid,
-        activeDocument,
         fetchProject
     );
 

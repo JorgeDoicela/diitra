@@ -378,6 +378,18 @@ namespace Diitra.Infrastructure.Common.Documents
                     }
                 }
 
+                // Renderizar el CSS asociado a través de Scriban para admitir variables dinámicas (ej: {{portada_base64}})
+                string? renderedCss = null;
+                if (!string.IsNullOrEmpty(template.CustomCss))
+                {
+                    renderedCss = await _scribanEngine.RenderAsync(
+                        template.CustomCss,
+                        renderData ?? new object(),
+                        extraImageVars.Count > 0 ? extraImageVars : null,
+                        request.IsBlindMode
+                    );
+                }
+
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
                 {
                     TraceabilityCode = traceabilityCode,
@@ -385,7 +397,7 @@ namespace Diitra.Infrastructure.Common.Documents
                     StationaryImageData = stationaryImage,
                     VerificationBaseUrl = verificationBaseUrl,
                     IsBlindMode = request.IsBlindMode
-                }, template.CustomCss);
+                }, renderedCss);
 
                 // 6. Sello de Integridad (SHA-256)
                 var fileHash = CalculateHash(pdfBytes);
