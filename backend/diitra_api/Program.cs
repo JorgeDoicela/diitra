@@ -310,32 +310,7 @@ var app = builder.Build();
 
     app.MapGet("/api/ping", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
-    // Inicialización de la base de datos (tabla inv_config_general y semillas iniciales)
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        try
-        {
-            context.Database.ExecuteSqlRaw(@"
-                CREATE TABLE IF NOT EXISTS `inv_config_general` (
-                    `Clave` VARCHAR(100) NOT NULL,
-                    `Valor` LONGTEXT NOT NULL,
-                    `Descripcion` VARCHAR(255) NULL,
-                    PRIMARY KEY (`Clave`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            ");
-            context.Database.ExecuteSqlRaw(@"
-                INSERT IGNORE INTO `inv_config_general` (`Clave`, `Valor`, `Descripcion`) VALUES 
-                ('PeerReview.AutoExtendDeadlines', 'false', 'Indica si se deben extender los plazos de manera automática'),
-                ('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo');
-            ");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al inicializar la base de datos (tabla inv_config_general)");
-        }
-    }
+
 
 app.Run();
 

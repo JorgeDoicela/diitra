@@ -1,5 +1,6 @@
 import type { CoWorkHandle } from '../../../../../core/cowork/types';
-import { useBuilderLayout, BuilderSection } from './useBuilderLayout';
+import { useBuilderLayout } from './useBuilderLayout';
+import type { BuilderSection } from './useBuilderLayout';
 import { useBuilderAutoSave } from './useBuilderAutoSave';
 import { useBuilderPdfAndSign } from './useBuilderPdfAndSign';
 import { useBuilderNetworkMonitor } from './useBuilderNetworkMonitor';

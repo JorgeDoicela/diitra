@@ -619,8 +619,7 @@
     }
 }
 
-/* Declaraciones globales requeridas */
-} /* Cierre de .signature-profile-container temporal para declarar el keyframe global y animaciones */
+
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -637,5 +636,4 @@
     to { transform: translateX(0); }
 }
 
-.signature-profile-container {
-/* Re-apertura para mantener consistencia de cierre */
+

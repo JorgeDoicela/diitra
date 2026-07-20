@@ -2369,7 +2369,12 @@ CREATE INDEX idx_cal_norm_fechas ON inv_calendario_eventos_normativos(fechaInici
 CREATE INDEX idx_cal_norm_tipo   ON inv_calendario_eventos_normativos(tipoEvento, activo);
 CREATE INDEX idx_cal_nota_bandeja ON inv_calendario_eventos_normativos(creadoPor, fechaInicio, ordenBandeja);
 
--- Sincronización automática con Entity Framework Core
+
+
+-- =================================================================================
+-- ATENCIÓN: ESTE BLOQUE DEBE IR SIEMPRE AL FINAL ABSOLUTO DEL SCRIPT SQL.
+-- Registra la migración inicial de EF Core para que no intente recrear las tablas.
+-- =================================================================================
 CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
     `MigrationId` varchar(150) NOT NULL,
     `ProductVersion` varchar(32) NOT NULL,
@@ -2378,4 +2383,6 @@ CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
 
 INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
 VALUES ('20260720202138_InitialCreate', '9.0.0');
+
+
 

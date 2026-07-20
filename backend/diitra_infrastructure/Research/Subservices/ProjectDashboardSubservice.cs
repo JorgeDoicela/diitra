@@ -182,7 +182,7 @@ namespace diitra_infrastructure.Research.Subservices
                 Tipo = "informe",
                 Descripcion = $"Informe #{i.NumeroInforme} — {i.TituloProyecto}",
                 Fecha = i.FechaFirma ?? new DateTime(i.FechaReporte.Year, i.FechaReporte.Month, i.FechaReporte.Day, 0, 0, 0, DateTimeKind.Utc),
-                Uuid = i.ProyectoUuid,
+                Uuid = i.UuidString,
                 Estado = i.Estado
             }).ToList();
 

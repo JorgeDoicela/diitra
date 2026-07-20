@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, FileText, Lock } from 'lucide-react';
-import { BuilderSection } from '../hooks/useBuilderLayout';
+import type { BuilderSection } from '../hooks/useBuilderLayout';
 
 export interface BuilderNavigationSidebarProps {
     sections: BuilderSection[];

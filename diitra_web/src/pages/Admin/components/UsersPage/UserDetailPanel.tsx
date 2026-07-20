@@ -1,6 +1,6 @@
 import React from 'react';
 import { User as UserIcon, ChevronRight, Mail, Hash, Activity, GraduationCap, Globe, Shield, Fingerprint, Settings2 } from 'lucide-react';
-import { ManagedUser } from '../../hooks/useUsersPage';
+import type { ManagedUser } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre } from './utils';
 
 interface UserDetailPanelProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Globe, X, AlertTriangle, FileText, Shield } from 'lucide-react';
-import { ExternalForm } from '../../hooks/useUsersPage';
+import type { ExternalForm } from '../../hooks/useUsersPage';
 
 interface ExternalEvaluatorModalProps {
     showExternalForm: boolean;

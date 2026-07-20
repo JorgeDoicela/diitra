@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
-import { PendingUserDraft, PendingExternalDraft } from '../../hooks/useUsersPage';
+import type { PendingUserDraft, PendingExternalDraft } from '../../hooks/useUsersPage';
 
 interface DraftBannersProps {
     pendingUserDraft: PendingUserDraft | null;

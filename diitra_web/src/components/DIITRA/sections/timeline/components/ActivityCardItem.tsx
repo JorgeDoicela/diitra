@@ -3,8 +3,8 @@ import {
     GripVertical, User, Clock, ChevronUp, ChevronDown, 
     Target, Trash2, Palette, FileCheck 
 } from 'lucide-react';
-import { CoWorkField } from '../../../../core/cowork/components/CoWorkField';
-import type { CoWorkHandle } from '../../../../core/cowork/types';
+import { CoWorkField } from '../../../../../core/cowork/components/CoWorkField';
+import type { CoWorkHandle } from '../../../../../core/cowork/types';
 
 interface ActivityCardItemProps {
     item: any;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../../../api/axios_config';
-import { useNotifications } from '../../../../api/NotificationsContext';
-import { useConfirm } from '../../../../api/ConfirmContext';
+import api from '../../../../../api/axios_config';
+import { useNotifications } from '../../../../../api/NotificationsContext';
+import { useConfirm } from '../../../../../api/ConfirmContext';
 
 export interface ParsedObservations {
     general?: string;

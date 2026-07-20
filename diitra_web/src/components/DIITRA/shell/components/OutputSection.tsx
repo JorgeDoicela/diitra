@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, FileText, Users, Shield, CheckCircle, Clock } from 'lucide-react';
-import { FullscreenLoader } from '../../Common/FullscreenLoader';
-import { SignatureBlock } from '../SignatureBlock';
+import { FullscreenLoader } from '../../../Common/FullscreenLoader';
+import { SignatureBlock } from '../../SignatureBlock';
 
 export interface OutputSectionProps {
     title: string;

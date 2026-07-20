@@ -1,6 +1,6 @@
 import React from 'react';
 import { User as UserIcon, GraduationCap, Settings2 } from 'lucide-react';
-import { ManagedUser, Role } from '../../hooks/useUsersPage';
+import type { ManagedUser, Role } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre, highlightText } from './utils';
 
 interface UsersTableProps {

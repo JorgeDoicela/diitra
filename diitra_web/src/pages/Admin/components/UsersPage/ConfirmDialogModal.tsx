@@ -1,6 +1,6 @@
 import React from 'react';
 import { XCircle, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
-import { ConfirmDialog } from '../../hooks/useUsersPage';
+import type { ConfirmDialog } from '../../hooks/useUsersPage';
 
 interface ConfirmDialogModalProps {
     confirmDialog: ConfirmDialog;

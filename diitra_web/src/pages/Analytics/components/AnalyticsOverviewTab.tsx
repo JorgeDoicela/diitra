@@ -198,7 +198,7 @@ export const AnalyticsOverviewTab: React.FC<AnalyticsOverviewTabProps> = ({
                     <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                         {stats?.actividadReciente && stats.actividadReciente.length > 0 ? (
                             stats.actividadReciente.map((act, i) => (
-                                <div key={act.uuid || i} className="flex items-center gap-3.5 p-3 bg-surface/30 hover:bg-surface/60 border border-border-thin/50 hover:border-border-thin rounded-xl transition-all duration-300 select-none group">
+                                <div key={`${act.tipo}-${act.uuid || i}-${i}`} className="flex items-center gap-3.5 p-3 bg-surface/30 hover:bg-surface/60 border border-border-thin/50 hover:border-border-thin rounded-xl transition-all duration-300 select-none group">
                                     <span className={`p-2 rounded-lg shrink-0 border transition-all duration-300 ${
                                         act.tipo === 'proyecto'
                                             ? 'bg-brand-subtle text-brand border-brand/10 group-hover:border-brand/35'
