@@ -1,91 +1,33 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, ArrowLeft, Lock, Unlock, Sun, Moon } from 'lucide-react';
-import api from '../../api/axios_config';
-import { useNotifications } from '../../api/NotificationsContext';
+import React from 'react';
+import { Lock, Unlock, Shield } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { coworkLog } from '../../core/cowork/utils/log';
-import { SignatureBlock } from './SignatureBlock';
-import { FullscreenLoader } from '../Common/FullscreenLoader';
+import { useDIITRABuilderShell } from './shell/hooks/useDIITRABuilderShell';
+import { BuilderHeader } from './shell/components/BuilderHeader';
+import { BuilderNavigationSidebar } from './shell/components/BuilderNavigationSidebar';
+import { BuilderFloatingTab } from './shell/components/BuilderFloatingTab';
+import { OutputSection } from './shell/components/OutputSection';
+import type { BuilderSection } from './shell/hooks/useBuilderLayout';
 
+export type { BuilderSection };
 
-/**
- * DIITRA BUILDER CORE — SHELL UNIVERSAL DE DOCUMENTACIÓN v2.0
- * -------------------------------------------------------------------------
- * Marco profesional e institucional reutilizable para TODOS los tipos de
- * documentos del sistema DIITRA (Protocolos, Rúbricas, Informes, Actas...).
- *
- * PRINCIPIO DE DISEÑO (v2.0 — Inversión de Dependencia):
- * El Shell ya no instancia useCoWork() internamente. Recibe el CoWorkHandle
- * como prop desde el padre. Esto permite:
- *
- *   1. Usar el Shell con colaboración real:
- *      const cowork = useCoWork({ documentId, user });
- *      <DIITRABuilderShell cowork={cowork} ... />
- *   2. Usar el Shell SIN colaboración (documentos del Director, reportes, etc.):
- *      const cowork = createNoOpCoWork();
- *      <DIITRABuilderShell cowork={cowork} ... />
- *
- * GUÍA DE REUSABILIDAD:
- * Para crear un nuevo documento, NO modifiques este archivo.
- * Registra el esquema en DocumentTemplateRegistry y el componente
- * en DocumentComponentRegistry. El DocumentEditor lo ensambla todo.
- */
-
-interface BuilderSection {
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-}
-
-/** Evita PATCH 400 cuando el proyecto es asociativo pero aún no tiene grupo válido. */
-function getMetadataSaveBlockReason(data: any, templateCode: string): string | null {
-    if (templateCode !== 'PROTOCOLO_INVESTIGACION') return null;
-
-    const isAssociative =
-        data.TieneGrupoInvestigacion === true ||
-        data.GrupoInvestigacionTipo === 'SI' ||
-        data.GrupoInvestigacionTipo === 'si';
-
-    if (!isAssociative) return null;
-
-    const groupRef =
-        data.GrupoInvestigacionUuid ||
-        data.GrupoInvestigacion ||
-        data.GrupoInvestigacionNombre;
-
-    if (!groupRef || String(groupRef).trim() === '') {
-        return 'Para proyectos asociativos debes seleccionar un grupo de investigación aprobado antes de guardar.';
-    }
-
-    return null;
-}
-
-const snapshotForm = (data: any): string => {
-    try {
-        const { Uuid, Titulo, Nombre, ...rest } = data;
-        return JSON.stringify({ Uuid, Titulo, Nombre, ...rest });
-    } catch { return ''; }
-};
-
-interface DIITRABuilderShellProps {
+export interface DIITRABuilderShellProps {
     title: string;
     subtitle: string;
     templateCode: string;
     sections: BuilderSection[];
     formData: any;
     setFormData: React.Dispatch<React.SetStateAction<any>>;
-    localChangeCount?: number;                            // ← Cambios locales (dispara autoguardado)
-    remoteChangeCount?: number;                           // ← Cambios remotos de Yjs (no dispara guardado)
-    cowork: CoWorkHandle;                                // ← Inyectado desde el padre (v2.0)
+    localChangeCount?: number;
+    remoteChangeCount?: number;
+    cowork: CoWorkHandle;
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
-    readOnly?: boolean;                                  // ← Bandera de sólo lectura
+    readOnly?: boolean;
     readOnlyReason?: string;
     projectStatus?: string;
-    entityUuid?: string;                                 // ← UUID real del proyecto
+    entityUuid?: string;
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
     canSign?: boolean;
     onUpdateField?: (name: string, value: any) => void;
@@ -93,893 +35,25 @@ interface DIITRABuilderShellProps {
     documentUuid?: string;
 }
 
-const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
-    title,
-    subtitle,
-    templateCode,
-    sections,
-    formData,
-    localChangeCount = 0,                                // ← Valor por defecto
-    remoteChangeCount = 0,                               // ← Valor por defecto
-    onSave,
-    onClose,
-    cowork,      // ← Recibido como prop
-    readOnly = false, // ← Bandera de sólo lectura
-    readOnlyReason,
-    projectStatus,
-    entityUuid,
-    children,
-    canSign = true,
-    onUpdateField,
-    signatureType = 'DIITRA',
-    documentUuid
-}) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const queryParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
-
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-        return document.documentElement.getAttribute('data-theme') !== 'light';
-    });
-
-    const toggleTheme = () => {
-        const nextMode = !isDarkMode;
-        setIsDarkMode(nextMode);
-        document.documentElement.setAttribute('data-theme', nextMode ? 'dark' : 'light');
-        localStorage.setItem('theme', nextMode ? 'dark' : 'light');
-    };
-
-    const sectionParam = queryParams.get('section');
-    const activeTab = sectionParam || sections[0]?.id || 'general';
-    const activeSection = sections.find(s => s.id === activeTab);
-    const activeSectionLabel = activeSection?.label || 'General';
-    const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
-    const isDirectorOrAdmin = !!canSign;
-    const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
-        const saved = localStorage.getItem('left_sidebar_width');
-        return saved ? parseInt(saved, 10) : 320;
-    });
-
-    const [rightSidebarWidth, setRightSidebarWidth] = useState<number>(() => {
-        const saved = localStorage.getItem('right_sidebar_width');
-        return saved ? parseInt(saved, 10) : 260;
-    });
-
-    const [isLeftSidebarOpen, setIsLeftSidebarOpenState] = useState<boolean>(() => {
-        return localStorage.getItem('left_sidebar_open') !== 'false';
-    });
-
-    const setIsLeftSidebarOpen = useCallback((open: boolean) => {
-        localStorage.setItem('left_sidebar_open', String(open));
-        if (open) {
-            // Al reabrir, siempre restauramos a un ancho cómodo, no al último valor cercano al límite
-            const comfortableWidth = 260;
-            setLeftSidebarWidth(comfortableWidth);
-            localStorage.setItem('left_sidebar_width', String(comfortableWidth));
-            if (leftSidebarRef.current) {
-                leftSidebarRef.current.style.width = `${comfortableWidth}px`;
-            }
-        }
-        setIsLeftSidebarOpenState(open);
-    }, []);
-
-    const [isSidebarOpen, setIsSidebarOpenState] = useState<boolean>(() => {
-        // En móviles/teléfonos (pantallas < 1024px), no iniciamos el chat abierto por defecto
-        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            return false;
-        }
-        return localStorage.getItem('document_sidebar_open') !== 'false';
-    });
-
-    const setIsSidebarOpen = useCallback((open: boolean) => {
-        localStorage.setItem('document_sidebar_open', String(open));
-        if (open) {
-            // Al reabrir, siempre restauramos a un ancho cómodo, no al último valor cercano al límite
-            const comfortableWidth = 260;
-            setRightSidebarWidth(comfortableWidth);
-            localStorage.setItem('right_sidebar_width', String(comfortableWidth));
-            if (rightSidebarRef.current) {
-                rightSidebarRef.current.style.width = `${comfortableWidth}px`;
-            }
-        }
-        setIsSidebarOpenState(open);
-    }, []);
-
-    const setActiveTab = useCallback((tabId: string) => {
-        const searchParams = new URLSearchParams(location.search);
-        searchParams.set('section', tabId);
-        navigate({ search: searchParams.toString() }, { replace: true });
-    }, [location.search, navigate]);
-
-    // Ref para evitar notificar la misma sección múltiples veces
-    const lastNotifiedTabRef = useRef<string | null>(null);
-
-    useEffect(() => {
-        if (cowork && cowork.notifySectionActivity && activeTab && !readOnly) {
-            // Solo notificar cuando la sección realmente cambia (no en cada re-render)
-            if (lastNotifiedTabRef.current !== activeTab) {
-                lastNotifiedTabRef.current = activeTab;
-                cowork.notifySectionActivity(cowork.session.documentId, activeTab, "ha entrado a redactar");
-            }
-        }
-    }, [cowork, activeTab, readOnly]);
-
-    const leftSidebarRef = useRef<HTMLDivElement>(null);
-    const rightSidebarRef = useRef<HTMLDivElement>(null);
-    const isDraggingLeft = useRef(false);
-    const isDraggingRight = useRef(false);
-
-    const [navTopPercent, setNavTopPercent] = useState<number>(12);
-    const [chatTopPercent, setChatTopPercent] = useState<number>(12);
-    const [navXOffset, setNavXOffset] = useState<number>(0);
-    const [chatXOffset, setChatXOffset] = useState<number>(0);
-    const [isDraggingNav, setIsDraggingNav] = useState(false);
-    const [isDraggingChat, setIsDraggingChat] = useState(false);
-    const bodyContainerRef = useRef<HTMLDivElement>(null);
-
-    const navTopPercentRef = useRef(12);
-    const chatTopPercentRef = useRef(12);
-    const navXOffsetRef = useRef(0);
-    const chatXOffsetRef = useRef(0);
-    useEffect(() => { navTopPercentRef.current = navTopPercent; }, [navTopPercent]);
-    useEffect(() => { chatTopPercentRef.current = chatTopPercent; }, [chatTopPercent]);
-    useEffect(() => { navXOffsetRef.current = navXOffset; }, [navXOffset]);
-    useEffect(() => { chatXOffsetRef.current = chatXOffset; }, [chatXOffset]);
-
-    const startDraggingLeft = useCallback((mouseDownEvent: React.MouseEvent) => {
-        mouseDownEvent.preventDefault();
-
-        isDraggingLeft.current = true;
-        document.body.style.userSelect = 'none';
-        document.body.style.cursor = 'col-resize';
-
-        if (leftSidebarRef.current) {
-            leftSidebarRef.current.style.transition = 'none';
-        }
-
-        const startWidth = leftSidebarWidth;
-        const startX = mouseDownEvent.clientX;
-        let maxDelta = 0;
-
-        const doDrag = (mouseMoveEvent: MouseEvent) => {
-            const deltaX = mouseMoveEvent.clientX - startX;
-            maxDelta = Math.max(maxDelta, Math.abs(deltaX));
-
-            const newWidth = Math.max(0, Math.min(500, startWidth + deltaX));
-            if (leftSidebarRef.current) {
-                leftSidebarRef.current.style.width = `${newWidth}px`;
-            }
-        };
-
-        const stopDrag = () => {
-            isDraggingLeft.current = false;
-            document.body.style.removeProperty('user-select');
-            document.body.style.removeProperty('cursor');
-            document.removeEventListener('mousemove', doDrag);
-            document.removeEventListener('mouseup', stopDrag);
-
-            const currentWidth = leftSidebarRef.current
-                ? parseInt(leftSidebarRef.current.style.width, 10)
-                : startWidth;
-
-            const clicked = maxDelta <= 4;
-            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 220;
-            const shouldCollapse = clicked || releasedInCollapseZone;
-
-            if (leftSidebarRef.current) {
-                leftSidebarRef.current.style.transition = 'width 300ms ease-in-out';
-            }
-
-            if (shouldCollapse) {
-                setIsLeftSidebarOpen(false);
-            } else {
-                const finalWidth = Math.max(200, Math.min(500, currentWidth));
-                setLeftSidebarWidth(finalWidth);
-                localStorage.setItem('left_sidebar_width', String(finalWidth));
-                if (leftSidebarRef.current) {
-                    leftSidebarRef.current.style.width = `${finalWidth}px`;
-                }
-            }
-        };
-
-        document.addEventListener('mousemove', doDrag);
-        document.addEventListener('mouseup', stopDrag);
-    }, [leftSidebarWidth, setIsLeftSidebarOpen]);
-
-    const startDraggingRight = useCallback((mouseDownEvent: React.MouseEvent) => {
-        mouseDownEvent.preventDefault();
-
-        isDraggingRight.current = true;
-        document.body.style.userSelect = 'none';
-        document.body.style.cursor = 'col-resize';
-
-        if (rightSidebarRef.current) {
-            rightSidebarRef.current.style.transition = 'none';
-        }
-
-        const startWidth = rightSidebarWidth;
-        const startX = mouseDownEvent.clientX;
-        let maxDelta = 0;
-
-        const doDrag = (mouseMoveEvent: MouseEvent) => {
-            const deltaX = startX - mouseMoveEvent.clientX;
-            maxDelta = Math.max(maxDelta, Math.abs(deltaX));
-
-            const newWidth = Math.max(0, Math.min(600, startWidth + deltaX));
-            if (rightSidebarRef.current) {
-                rightSidebarRef.current.style.width = `${newWidth}px`;
-            }
-        };
-
-        const stopDrag = () => {
-            isDraggingRight.current = false;
-            document.body.style.removeProperty('user-select');
-            document.body.style.removeProperty('cursor');
-            document.removeEventListener('mousemove', doDrag);
-            document.removeEventListener('mouseup', stopDrag);
-
-            const currentWidth = rightSidebarRef.current
-                ? parseInt(rightSidebarRef.current.style.width, 10)
-                : startWidth;
-
-            const clicked = maxDelta <= 4;
-            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 250;
-            const shouldCollapse = clicked || releasedInCollapseZone;
-
-            if (rightSidebarRef.current) {
-                rightSidebarRef.current.style.transition = 'width 300ms ease-in-out';
-            }
-
-            if (shouldCollapse) {
-                setIsSidebarOpen(false);
-            } else {
-                const finalWidth = Math.max(240, Math.min(600, currentWidth));
-                setRightSidebarWidth(finalWidth);
-                localStorage.setItem('right_sidebar_width', String(finalWidth));
-                if (rightSidebarRef.current) {
-                    rightSidebarRef.current.style.width = `${finalWidth}px`;
-                }
-            }
-        };
-
-        document.addEventListener('mousemove', doDrag);
-        document.addEventListener('mouseup', stopDrag);
-    }, [rightSidebarWidth, setIsSidebarOpen]);
-
-    const startDraggingNav = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-        setIsDraggingNav(true);
-
-        const isTouch = 'touches' in e;
-        const startClientY = isTouch ? e.touches[0].clientY : e.clientY;
-        const startClientX = isTouch ? e.touches[0].clientX : e.clientX;
-        const rect = bodyContainerRef.current?.getBoundingClientRect();
-        if (!rect) return;
-
-        const initialTopPx = (navTopPercentRef.current / 100) * rect.height;
-        const initialLeftPx = navXOffsetRef.current;
-        let hasMoved = false;
-
-        const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-            if ('touches' in moveEvent && moveEvent.cancelable) {
-                moveEvent.preventDefault();
-            }
-
-            const currentTouch = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
-            const deltaY = currentTouch.clientY - startClientY;
-            const deltaX = currentTouch.clientX - startClientX;
-
-            if (Math.abs(deltaY) > 5 || Math.abs(deltaX) > 5) {
-                hasMoved = true;
-            }
-
-            const newTopPx = initialTopPx + deltaY;
-            const newPercent = Math.max(10, Math.min(90, (newTopPx / rect.height) * 100));
-            setNavTopPercent(newPercent);
-
-            // Pull to the right (positive offset for Left nav tab)
-            const newX = Math.max(0, Math.min(120, initialLeftPx + deltaX));
-            setNavXOffset(newX);
-        };
-
-        const handleEnd = () => {
-            setIsDraggingNav(false);
-            setNavXOffset(0); // Snap back to edge!
-
-            if (isTouch) {
-                document.removeEventListener('touchmove', handleMove);
-                document.removeEventListener('touchend', handleEnd);
-            } else {
-                document.removeEventListener('mousemove', handleMove);
-                document.removeEventListener('mouseup', handleEnd);
-            }
-
-            if (!hasMoved) {
-                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                    setShowMobileSections(true);
-                } else {
-                    setIsLeftSidebarOpen(true);
-                }
-            }
-        };
-
-        if (isTouch) {
-            document.addEventListener('touchmove', handleMove, { passive: false });
-            document.addEventListener('touchend', handleEnd);
-        } else {
-            document.addEventListener('mousemove', handleMove);
-            document.addEventListener('mouseup', handleEnd);
-        }
-    }, [setIsLeftSidebarOpen]);
-
-    const startDraggingChat = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-        setIsDraggingChat(true);
-
-        const isTouch = 'touches' in e;
-        const startClientY = isTouch ? e.touches[0].clientY : e.clientY;
-        const startClientX = isTouch ? e.touches[0].clientX : e.clientX;
-        const rect = bodyContainerRef.current?.getBoundingClientRect();
-        if (!rect) return;
-
-        const initialTopPx = (chatTopPercentRef.current / 100) * rect.height;
-        const initialRightPx = chatXOffsetRef.current;
-        let hasMoved = false;
-
-        const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-            if ('touches' in moveEvent && moveEvent.cancelable) {
-                moveEvent.preventDefault();
-            }
-
-            const currentTouch = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
-            const deltaY = currentTouch.clientY - startClientY;
-            const deltaX = startClientX - currentTouch.clientX; // Pull to the left (positive X value when dragging left)
-
-            if (Math.abs(deltaY) > 5 || Math.abs(deltaX) > 5) {
-                hasMoved = true;
-            }
-
-            const newTopPx = initialTopPx + deltaY;
-            const newPercent = Math.max(10, Math.min(90, (newTopPx / rect.height) * 100));
-            setChatTopPercent(newPercent);
-
-            const newX = Math.max(0, Math.min(120, initialRightPx + deltaX));
-            setChatXOffset(newX);
-        };
-
-        const handleEnd = () => {
-            setIsDraggingChat(false);
-            setChatXOffset(0); // Snap back to edge!
-
-            if (isTouch) {
-                document.removeEventListener('touchmove', handleMove);
-                document.removeEventListener('touchend', handleEnd);
-            } else {
-                document.removeEventListener('mousemove', handleMove);
-                document.removeEventListener('mouseup', handleEnd);
-            }
-
-            if (!hasMoved) {
-                setIsSidebarOpen(true);
-            }
-        };
-
-        if (isTouch) {
-            document.addEventListener('touchmove', handleMove, { passive: false });
-            document.addEventListener('touchend', handleEnd);
-        } else {
-            document.addEventListener('mousemove', handleMove);
-            document.addEventListener('mouseup', handleEnd);
-        }
-    }, [setIsSidebarOpen]);
-
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<string | null>(null);
-    const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-    const [isDraftMode, setIsDraftMode] = useState(true);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [signaturePassword, setSignaturePassword] = useState('');
-    const [institutionalPassword, setInstitutionalPassword] = useState('');
-    const [signatureCertFile, setSignatureCertFile] = useState<File | null>(null);
-    const [isSigning, setIsSigning] = useState(false);
-    // Estado de logs de auditoria removido de UI por desuso
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [showMobileSections, setShowMobileSections] = useState(false);
-    const [signatureRefreshTrigger, setSignatureRefreshTrigger] = useState(0);
-
-
-
-    // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
-    // IMPORTANTE: revocar la URL ANTERIOR solo después de crear la nueva,
-    // para que el <iframe> nunca apunte a una URL ya revocada (net::ERR_FAILED).
-    useEffect(() => {
-        if (!pdfBlob) { setPdfUrl(null); return; }
-        const url = URL.createObjectURL(pdfBlob);
-        // Guardamos la URL nueva PRIMERO para que el iframe la reciba antes de que limpiemos
-        setPdfUrl(url);
-        // Solo revocamos la URL al reemplazarla o al desmontar el componente
-        return () => {
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        };
-    }, [pdfBlob]);
-
-    // Autocargar PDF firmado desde el storage si el documento ya está emitido/enviado
-    useEffect(() => {
-        const loadSignedPdf = async () => {
-            const uuid = documentUuid || formData.Uuid || formData.uuid;
-            if (!uuid || uuid.startsWith('temp_')) return;
-
-            const isSigned = projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución';
-            if (!isSigned) return;
-
-            setIsGenerating(true);
-            try {
-                const instanceRes = await api.get(`/documents/instances/${uuid}`);
-                const finalPath = instanceRes.data?.finalPdfPath || instanceRes.data?.final_pdf_path || instanceRes.data?.FinalPdfPath;
-                
-                if (finalPath) {
-                    const cleanPath = finalPath.replace(/\\/g, '/');
-                    const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
-                    setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
-                } else {
-                    await handleGeneratePdf(false);
-                }
-            } catch (err) {
-                console.error('[DIITRA] Error al cargar el PDF firmado:', err);
-                await handleGeneratePdf(false);
-            } finally {
-                setIsGenerating(false);
-            }
-        };
-
-        loadSignedPdf();
-    }, [documentUuid, formData.Uuid, formData.uuid, projectStatus]);
-
-    const addAudit = useCallback((msg: string, type: string = 'info') => {
-        console.log(`[Audit:${type.toUpperCase()}] ${msg}`);
-    }, []);
-
-    const handleToggleSectionLock = useCallback((sectionId: string) => {
-        if (onUpdateField) {
-            const currentBlocked = formData?.BlockedSections || {};
-            const isBlocked = !!currentBlocked[sectionId];
-            const newBlocked = { ...currentBlocked, [sectionId]: !isBlocked };
-            onUpdateField('BlockedSections', newBlocked);
-
-            addAudit(
-                isBlocked
-                    ? `Sección '${sectionId.toUpperCase()}' desbloqueada`
-                    : `Sección '${sectionId.toUpperCase()}' bloqueada para participantes`,
-                isBlocked ? 'info' : 'warning'
-            );
-        }
-    }, [formData?.BlockedSections, onUpdateField, addAudit]);
-
-
-    // ── Auto-save inteligente del núcleo (dirty-check + debounce 3s) ──
-    const lastSavedSnapshotRef = useRef<string>(snapshotForm(formData));
-    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const formDataRef = useRef(formData);
-    const onSaveRef = useRef(onSave);
-    const isSavingRef = useRef(false);
-
-    const currentSnapshot = snapshotForm(formData);
-    const isDirty = currentSnapshot !== lastSavedSnapshotRef.current;
-
-    useEffect(() => { formDataRef.current = formData; }, [formData]);
-    useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
-
-    // ── Sincronización de snapshot para colaboradores remotos ──────────────────
-    // Cuando llega un update de Yjs de otro usuario, los datos ya están (o
-    // estarán) persistidos por el autor original. Avanzamos lastSavedSnapshotRef
-    // para que este cliente no quede en estado isDirty de forma indefinida.
-    // Usamos remoteChangeCount como señal explícita en lugar de comparar refs
-    // de counters dentro de un effect con dependencias omitidas (anti-patrón).
-    useEffect(() => {
-        if (remoteChangeCount === 0) return; // Ignorar la inicialización
-
-        // Guardia crítica: si este cliente tiene un autosave pendiente, significa
-        // que hay cambios locales aún no persistidos. Avanzar el snapshot remoto
-        // haría isDirty = false y el autosave cancelaría el guardado → pérdida de datos.
-        // Solo sincronizamos cuando NO hay cambios locales en vuelo.
-        if (saveTimeoutRef.current !== null || isSavingRef.current) return;
-
-        lastSavedSnapshotRef.current = snapshotForm(formDataRef.current);
-        setLastSaved(new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    }, [remoteChangeCount]);
-
-    const saveDirtyData = useCallback(async (isUnmounting = false) => {
-        if (readOnly) {
-            coworkLog("[DIITRA] saveDirtyData: Documento es sólo lectura, omitiendo guardado.");
-            return;
-        }
-        if (isSavingRef.current) {
-            coworkLog("[DIITRA] saveDirtyData: Guardado ya en curso, omitiendo.");
-            return;
-        }
-        const data = formDataRef.current;
-        const saveFn = onSaveRef.current;
-        if (!saveFn) {
-            console.warn("[DIITRA] saveDirtyData: onSave no está definido.");
-            return;
-        }
-
-        const currentSnap = snapshotForm(data);
-        if (currentSnap === lastSavedSnapshotRef.current) {
-            coworkLog("[DIITRA] saveDirtyData: Sin cambios que guardar.");
-            return;
-        }
-        if (!data.Uuid && !data.Titulo && !data.Nombre) {
-            coworkLog("[DIITRA] saveDirtyData: Formulario vacío, omitiendo guardado.");
-            return;
-        }
-
-        const saveBlockReason = getMetadataSaveBlockReason(data, templateCode);
-        if (saveBlockReason) {
-            console.warn(`[DIITRA] saveDirtyData: Guardado omitido — ${saveBlockReason}`);
-            if (!isUnmounting) {
-                addAudit(saveBlockReason, 'warning');
-            }
-            return;
-        }
-
-        isSavingRef.current = true;
-        if (!isUnmounting) {
-            setIsSaving(true);
-        }
-        try {
-            coworkLog(`[DIITRA] saveDirtyData: Iniciando guardado. isUnmounting=${isUnmounting}. Payload:`, data);
-            await saveFn(data);
-            lastSavedSnapshotRef.current = currentSnap;
-            coworkLog("[DIITRA] saveDirtyData: Guardado exitoso.");
-            if (!isUnmounting) {
-                setLastSaved(new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-            }
-        } catch (error) {
-            console.error("[DIITRA] saveDirtyData: Error al guardar en base de datos:", error);
-            if (!isUnmounting) {
-                addAudit('Error al guardar el documento', 'error');
-            }
-        } finally {
-            isSavingRef.current = false;
-            if (!isUnmounting) {
-                setIsSaving(false);
-            }
-        }
-    }, [addAudit, readOnly, templateCode]);
-
-    const handleSave = useCallback(async () => {
-        if (saveTimeoutRef.current) {
-            coworkLog("[DIITRA] handleSave: Cancelando autoguardado programado por guardado manual inmediato.");
-            clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = null;
-        }
-        await saveDirtyData(false);
-    }, [saveDirtyData]);
-
-    useEffect(() => {
-        if (readOnly) return;
-        const currentSnap = snapshotForm(formDataRef.current);
-        if (currentSnap === lastSavedSnapshotRef.current) {
-            coworkLog("[DIITRA] useEffect AutoSave: Formulario sin cambios.");
-            return;
-        }
-        if (!formDataRef.current.Uuid && !formDataRef.current.Titulo && !formDataRef.current.Nombre) {
-            coworkLog("[DIITRA] useEffect AutoSave: Formulario vacío.");
-            return;
-        }
-
-        coworkLog("[DIITRA] useEffect AutoSave: Cambios detectados. Programando autoguardado en 3s...");
-        if (saveTimeoutRef.current) {
-            coworkLog("[DIITRA] useEffect AutoSave: Limpiando timeout anterior.");
-            clearTimeout(saveTimeoutRef.current);
-        }
-        saveTimeoutRef.current = setTimeout(() => {
-            coworkLog("[DIITRA] useEffect AutoSave: Ejecutando autoguardado...");
-            handleSave();
-        }, 3000);
-
-        return () => {
-            if (saveTimeoutRef.current) {
-                coworkLog("[DIITRA] useEffect AutoSave Cleanup: Cancelando autoguardado pendiente.");
-                clearTimeout(saveTimeoutRef.current);
-            }
-        };
-    }, [localChangeCount, handleSave, readOnly]);
-
-    // Guardado al desmontar el componente (cambio de página o transición de React Router)
-    const saveDirtyDataRef = useRef(saveDirtyData);
-    useEffect(() => {
-        saveDirtyDataRef.current = saveDirtyData;
-    }, [saveDirtyData]);
-
-    useEffect(() => {
-        return () => {
-            coworkLog("[DIITRA] DIITRABuilderShell desmontándose (unmount cleanup)...");
-            const data = formDataRef.current;
-            const currentSnap = snapshotForm(data);
-            if (currentSnap !== lastSavedSnapshotRef.current && (data.Uuid || data.Titulo || data.Nombre)) {
-                coworkLog("[DIITRA] Guardado forzado al desmontar (unmount).");
-                saveDirtyDataRef.current(true);
-            } else {
-                coworkLog("[DIITRA] No se requiere guardado al desmontar.");
-            }
-        };
-    }, []);
-
-
-
-    const handleClose = async () => {
-        coworkLog("[DIITRA] handleClose: Iniciando cierre.");
-        if (!readOnly && saveTimeoutRef.current) {
-            coworkLog("[DIITRA] handleClose: Limpiando timeout y forzando handleSave.");
-            clearTimeout(saveTimeoutRef.current);
-            await handleSave();
-        }
-        onClose();
-    };
-
-    // ── Generación de PDF ──
-    const handleGeneratePdf = async (blind = false) => {
-        setIsGenerating(true);
-        addAudit(blind ? 'Generando vista previa sin identidades...' : 'Generando vista previa del documento...');
-        try {
-            const response = await api.post(
-                `/documents/render?templateCode=${templateCode}&isDraft=${isDraftMode}&isBlind=${blind}`,
-                formData,
-                { responseType: 'blob' }
-            );
-            setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
-            addAudit('PDF Generado exitosamente', 'success');
-        } catch (err: any) {
-            let errorMsg = err;
-            if (err?.response?.data instanceof Blob) {
-                try {
-                    const text = await err.response.data.text();
-                    errorMsg = JSON.parse(text);
-                } catch {}
-            }
-            console.error('[DIITRA] PDF render error:', errorMsg);
-            addAudit('Error al generar el documento PDF', 'error');
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    // ── Firma Electrónica PAdES — Upload-on-Demand ──
-    const handleSign = async () => {
-        if (!signatureCertFile) {
-            addAudit('Debe adjuntar su archivo de firma digital (.p12) para continuar.', 'warning');
-            return;
-        }
-
-        setIsSigning(true);
-        addAudit('Iniciando proceso de firma electrónica...');
-        try {
-            const formDataObj = new FormData();
-            formDataObj.append('certificate', signatureCertFile);
-            formDataObj.append('password', signaturePassword || '');
-            formDataObj.append('documentoUuid', documentUuid || formData.Uuid || formData.uuid || '');
-            formDataObj.append('rolFirmante', 'Director de Proyecto');
-
-            await api.post(
-                '/signatures/sign-p12',
-                formDataObj,
-                {
-                    headers: { 'Content-Type': undefined },
-                    transformRequest: [(data, headers) => {
-                        if (data instanceof FormData) {
-                            delete headers['Content-Type'];
-                        }
-                        return data;
-                    }]
-                }
-            );
-
-            // Regenerar vista previa del PDF para reflejar la firma estampada
-            await handleGeneratePdf(false);
-
-            // Limpiar certificado de memoria tras firma exitosa
-            setSignatureCertFile(null);
-            setSignaturePassword('');
-            addAudit('Firma digital avanzada (.p12) aplicada exitosamente.', 'success');
-
-            // Forzar recarga de firmas locales y notificar cambios al espacio de trabajo sin recargar la página entera
-            setSignatureRefreshTrigger(prev => prev + 1);
-            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-        } catch (err: any) {
-            console.error('[DIITRA] Error signing document:', err);
-
-            let serverMessage = '';
-            try {
-                if (err?.response?.data?.error) {
-                    serverMessage = err.response.data.error;
-                } else if (typeof err?.response?.data === 'string') {
-                    serverMessage = err.response.data;
-                } else if (err?.response?.data?.message) {
-                    serverMessage = err.response.data.message;
-                }
-            } catch {
-                // silenciar errores de parseo
-            }
-
-            const isLopdpGate = serverMessage.toLowerCase().includes('términos') ||
-                serverMessage.toLowerCase().includes('lopdp') ||
-                serverMessage.toLowerCase().includes('consentimiento');
-
-            let finalMsg = '';
-            if (isLopdpGate) {
-                finalMsg = 'Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma';
-                addAudit(finalMsg, 'warning');
-                addToast('Firma Bloqueada', finalMsg, 'warning');
-            } else if (serverMessage) {
-                finalMsg = serverMessage;
-                addAudit(`Error de firma: ${serverMessage}`, 'error');
-                addToast('Error de Firma', finalMsg, 'error');
-            } else {
-                finalMsg = 'Clave o certificado inválido';
-                addAudit('Error de firma: Clave o certificado inválido', 'error');
-                addToast('Error de Firma', finalMsg, 'error');
-            }
-        } finally {
-            setIsSigning(false);
-        }
-    };
-
-    const handleSignDiitra = async () => {
-        if (!institutionalPassword.trim()) {
-            addAudit('Debe ingresar su contraseña institucional para firmar.', 'warning');
-            return;
-        }
-
-        setIsSigning(true);
-        addAudit('Iniciando proceso de firma institucional DIITRA...');
-        try {
-            const dto = {
-                documento_uuid: documentUuid || formData.Uuid || formData.uuid || '',
-                rol_firmante: 'Director de Proyecto',
-                password: institutionalPassword
-            };
-
-            await api.post('/signatures/sign', dto);
-            
-            // Regenerar vista previa del PDF para reflejar la firma estampada
-            await handleGeneratePdf(false);
-            
-            setInstitutionalPassword('');
-            addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
-
-            // Forzar recarga de firmas locales y notificar cambios al espacio de trabajo sin recargar la página entera
-            setSignatureRefreshTrigger(prev => prev + 1);
-            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-        } catch (err: any) {
-            console.error('[DIITRA] Error al aplicar firma institucional:', err);
-            console.log('Cuerpo de respuesta del servidor (data):', JSON.stringify(err?.response?.data));
-            let serverMessage = '';
-            try {
-                if (err?.response?.data instanceof Blob) {
-                    const text = await err.response.data.text();
-                    const parsed = JSON.parse(text);
-                    serverMessage = parsed?.error || parsed?.message || '';
-                } else if (err?.response?.data?.error) {
-                    serverMessage = err.response.data.error;
-                } else if (err?.response?.data?.message) {
-                    serverMessage = err.response.data.message;
-                } else if (typeof err?.response?.data === 'string') {
-                    serverMessage = err.response.data;
-                }
-            } catch {}
-            console.log('Mensaje de error extraído:', serverMessage);
-            
-            const finalMsg = serverMessage || 'Contraseña incorrecta o error de red';
-            addAudit(`Error de firma: ${finalMsg}`, 'error');
-            addToast('Error de Firma', finalMsg, 'error');
-        } finally {
-            setIsSigning(false);
-        }
-    };
-
-    // ── Indicadores de estado del CoWork (memoizados para evitar re-renders) ──
-    const isOnline = cowork.session.isConnected;
-    const isSyncing = isSaving || cowork.session.isSyncing;
-    const users = cowork.session.connectedUsers;
-
-    const [isSlowConnection, setIsSlowConnection] = useState(false);
-    const { addToast } = useNotifications();
-    const prevIsOnlineRef = useRef(isOnline);
-    const offlineTimeoutRef = useRef<any>(null);
-    const hasShownOfflineRef = useRef(false);
-
-    // ── Monitoreo de Micro-cortes (Anti-Flicker de alertas) ──
-    useEffect(() => {
-        if (!isOnline && prevIsOnlineRef.current) {
-            // Conexión perdida: iniciamos un temporizador de 1.5s antes de alertar
-            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-
-            offlineTimeoutRef.current = setTimeout(() => {
-                addToast(
-                    'Conexión inestable',
-                    'Tu señal de internet es débil o inestable. Puedes seguir editando; tus cambios se sincronizarán automáticamente al reconectar.',
-                    'warning'
-                );
-                hasShownOfflineRef.current = true;
-            }, 1500); // 1.5s de gracia para evitar spam por microcortes
-        } else if (isOnline && !prevIsOnlineRef.current) {
-            // Conexión recuperada: cancelamos el temporizador si estaba corriendo
-            if (offlineTimeoutRef.current) {
-                clearTimeout(offlineTimeoutRef.current);
-                offlineTimeoutRef.current = null;
-            }
-            setIsSlowConnection(false);
-
-            // Solo mostramos el toast de éxito si llegamos a mostrar el toast de advertencia
-            if (hasShownOfflineRef.current) {
-                addToast(
-                    'Conexión restablecida',
-                    'El editor se ha sincronizado con el servidor correctamente.',
-                    'success'
-                );
-                hasShownOfflineRef.current = false;
-            }
-        }
-
-        prevIsOnlineRef.current = isOnline;
-
-        return () => {
-            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-        };
-    }, [isOnline, addToast]);
-
-    // ── Monitoreo de calidad/velocidad de red (Poco Internet) ──
-    useEffect(() => {
-        if (!isOnline) {
-            setIsSlowConnection(false);
-            return;
-        }
-
-        let intervalId: any;
-        let lastAlertTime = 0;
-
-        const checkLatency = async () => {
-            try {
-                const start = Date.now();
-                await api.get('/ping', { timeout: 3500 });
-                const rtt = Date.now() - start;
-
-                // Si la latencia supera 1.5 segundos y no hemos alertado en los últimos 60s
-                if (rtt > 1500) {
-                    setIsSlowConnection(true);
-                    const now = Date.now();
-                    if (now - lastAlertTime > 60000) {
-                        addToast(
-                            'Señal de internet débil',
-                            `Hemos detectado que tu conexión es lenta (latencia de ${rtt}ms). La sincronización colaborativa podría experimentar retrasos.`,
-                            'warning'
-                        );
-                        lastAlertTime = now;
-                    }
-                } else {
-                    setIsSlowConnection(false);
-                }
-            } catch (err: any) {
-                if (isOnline) {
-                    setIsSlowConnection(true);
-                }
-                // Silenciar errores normales de desconexión completa (ya manejados por el otro hook)
-                if (err?.code !== 'ECONNABORTED' && isOnline) {
-                    console.warn('[Network Quality] Error al medir latencia:', err);
-                }
-            }
-        };
-
-        // Ejecutar inmediatamente
-        checkLatency();
-
-        // Monitorear cada 4 segundos
-        intervalId = setInterval(checkLatency, 4000);
-
-        return () => {
-            if (intervalId) clearInterval(intervalId);
-        };
-    }, [isOnline, addToast]);
+const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
+    const {
+        title,
+        subtitle,
+        sections,
+        formData,
+        cowork,
+        readOnly = false,
+        readOnlyReason,
+        projectStatus,
+        entityUuid,
+        children,
+        canSign = true,
+        onUpdateField,
+        signatureType = 'DIITRA',
+        documentUuid
+    } = props;
+
+    const { layout, autoSave, pdfAndSign, network } = useDIITRABuilderShell(props);
 
     return (
         <DocumentDataContext.Provider value={formData}>
@@ -987,267 +61,99 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 <SectionLockContext.Provider value={{
                     formData,
                     readOnly,
-                    isDirectorOrAdmin,
+                    isDirectorOrAdmin: layout.isDirectorOrAdmin,
                     onUpdateField
                 }}>
                     <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
                         <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
                             {/* ── Header Universal ── */}
-                            <div className="px-4 md:px-8 py-3 border-b border-border-thin bg-bg-deep/75 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-[50]">
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                                    <div className="flex items-center gap-3">
-                                        {/* Botón Volver/Cerrar */}
-                                        <button
-                                            onClick={handleClose}
-                                            className="flex items-center gap-2 py-1.5 text-text-dim hover:text-text-main transition-all duration-200 group cursor-pointer text-[10px] md:text-xs font-bold uppercase tracking-wider bg-transparent border-0 active:scale-95"
-                                            title="Salir del documento y guardar cambios"
-                                            aria-label="Salir del documento"
-                                        >
-                                            <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
-                                            <span>Volver</span>
-                                        </button>
+                            <BuilderHeader
+                                title={title}
+                                subtitle={subtitle}
+                                readOnly={readOnly}
+                                isSyncing={network.isSyncing}
+                                isDirty={autoSave.isDirty}
+                                lastSaved={autoSave.lastSaved}
+                                isOnline={network.isOnline}
+                                isSlowConnection={network.isSlowConnection}
+                                users={network.users}
+                                isDarkMode={layout.isDarkMode}
+                                onClose={autoSave.handleClose}
+                                onSave={autoSave.handleSave}
+                                toggleTheme={layout.toggleTheme}
+                            />
 
-                                        {/* Divisor Vertical */}
-                                        <div className="h-5 w-[1px] bg-border-thin mx-1" />
-
-                                        {/* Identidad */}
-                                        <div className="min-w-0">
-                                            <h2 className="text-xs md:text-sm font-black text-text-main tracking-tighter uppercase leading-none truncate max-w-[150px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[500px]" title={title}>
-                                                {title}
-                                            </h2>
-                                            {subtitle && (
-                                                <p className="text-[8px] text-text-dim font-bold uppercase tracking-widest mt-0.5 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[500px]" title={subtitle}>
-                                                    {subtitle}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 md:gap-4 flex-wrap md:flex-nowrap">
-                                    {/* 1. Único Indicador de Persistencia Inteligente */}
-                                    <div className="flex items-center">
-                                        {readOnly ? (
-                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-warning cursor-default select-none flex items-center gap-1.5 animate-fade-in pr-1">
-                                                <Shield size={10} /> Solo lectura
-                                            </span>
-                                        ) : isSyncing ? (
-                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-1.5 select-none animate-fade-in pr-1">
-                                                <Clock size={10} className="animate-spin text-text-dim" /> Guardando...
-                                            </span>
-                                        ) : isDirty ? (
-                                            <button
-                                                onClick={handleSave}
-                                                className="px-3 py-1.5 bg-transparent hover:bg-surface border border-border-thin hover:border-text-dim/30 rounded-md text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-text-main transition-all flex items-center justify-center gap-1.5 active:scale-95 animate-fade-in cursor-pointer"
-                                                title="Persistir cambios inmediatamente en base de datos"
-                                            >
-                                                <Save size={10} /> <span>Guardar cambios</span>
-                                            </button>
-                                        ) : (
-                                            <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-success flex items-center gap-1.5 select-none animate-fade-in pr-1" title="Todos los cambios están persistidos y sincronizados">
-                                                <CheckCircle size={10} /> {lastSaved ? `Guardado ${lastSaved}` : 'Guardado'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* 2. Estado de conexión */}
-                                    <div className="flex items-center gap-1.5">
-                                        {!isOnline ? (
-                                            <>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                                <span className="text-[7px] md:text-[8px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
-                                            </>
-                                        ) : isSlowConnection ? (
-                                            <>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                                                <span className="text-[7px] md:text-[8px] font-black text-amber-500 uppercase tracking-widest">Señal débil</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                <span className="text-[7px] md:text-[8px] font-black text-green-500 uppercase tracking-widest">En línea</span>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    {/* 3. Avatares de colaboradores conectados */}
-                                    {users.length > 0 ? (
-                                        <div className="flex -space-x-1.5 items-center">
-                                            {users.map((u, i) => (
-                                                <div
-                                                    key={`${u.id}-${i}`}
-                                                    className="w-5 h-5 rounded-full border border-surface flex items-center justify-center text-[8px] font-black text-white shadow-md cursor-help transition-transform hover:-translate-y-0.5"
-                                                    style={{ backgroundColor: u.color }}
-                                                    title={`${u.name} (${u.role})`}
-                                                >
-                                                    {u.initials}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <span className="text-[7px] md:text-[8px] font-bold text-text-dim uppercase tracking-widest select-none">Solo tú</span>
-                                    )}
-
-                                    {/* 4. Botón de cambio de tema */}
-                                    <button
-                                        onClick={toggleTheme}
-                                        className="p-1.5 text-text-dim hover:text-text-main transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-90 bg-transparent border-0"
-                                        title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
-                                        aria-label="Cambiar tema claro/oscuro"
-                                    >
-                                        {isDarkMode ? <Sun size={14} className="text-warning animate-pulse" /> : <Moon size={14} className="text-indigo-400" />}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-1 overflow-hidden relative" ref={bodyContainerRef}>
-                                {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
-                                {(!isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !showMobileSections)) && (
-                                    <button
-                                        onMouseDown={startDraggingNav}
-                                        onTouchStart={startDraggingNav}
-                                        style={{
-                                            top: `${navTopPercent}%`,
-                                            transform: `translateY(-50%) translateX(${navXOffset}px)`,
-                                            transition: isDraggingNav ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                        }}
-                                        className={`absolute left-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${isDraggingNav || navXOffset > 5
-                                                ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
-                                                : 'rounded-r-xl border-l-0'
-                                            }`}
-                                        title="Mostrar navegación del documento"
-                                    >
-                                        <FileText size={15} />
-                                        <span className="[writing-mode:vertical-lr] rotate-180 text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Nav</span>
-                                    </button>
+                            <div className="flex flex-1 overflow-hidden relative" ref={layout.bodyContainerRef}>
+                                {/* Pestaña de reabrir Navegación (Izquierda) */}
+                                {(!layout.isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !layout.showMobileSections)) && (
+                                    <BuilderFloatingTab
+                                        position="left"
+                                        topPercent={layout.navTopPercent}
+                                        xOffset={layout.navXOffset}
+                                        isDragging={layout.isDraggingNav}
+                                        onMouseDown={layout.startDraggingNav}
+                                        onTouchStart={layout.startDraggingNav}
+                                    />
                                 )}
 
-                                {/* Pestaña de reabrir Actividad — pegada al borde derecho */}
-                                {!isSidebarOpen && (
-                                    <button
-                                        onMouseDown={startDraggingChat}
-                                        onTouchStart={startDraggingChat}
-                                        style={{
-                                            top: `${chatTopPercent}%`,
-                                            transform: `translateY(-50%) translateX(-${chatXOffset}px)`,
-                                            transition: isDraggingChat ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                                        }}
-                                        className={`absolute right-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${isDraggingChat || chatXOffset > 5
-                                                ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
-                                                : 'rounded-l-xl border-r-0'
-                                            }`}
-                                        title="Mostrar actividad del equipo"
-                                    >
-                                        <MessageSquare size={15} className={isOnline ? 'animate-pulse' : ''} />
-                                        <span className="[writing-mode:vertical-lr] text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Chat</span>
-                                    </button>
+                                {/* Pestaña de reabrir Actividad (Derecha) */}
+                                {!layout.isSidebarOpen && (
+                                    <BuilderFloatingTab
+                                        position="right"
+                                        topPercent={layout.chatTopPercent}
+                                        xOffset={layout.chatXOffset}
+                                        isDragging={layout.isDraggingChat}
+                                        isOnline={network.isOnline}
+                                        onMouseDown={layout.startDraggingChat}
+                                        onTouchStart={layout.startDraggingChat}
+                                    />
                                 )}
-                                {/* ── Sidebar de Navegación ── */}
-                                <div
-                                    ref={leftSidebarRef}
-                                    style={{
-                                        width: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? undefined
-                                            : (isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px'),
-                                        transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (showMobileSections ? 'translateX(0)' : 'translateX(-100%)')
-                                            : undefined,
-                                        transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
-                                            : 'width 300ms ease-in-out',
-                                        visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (showMobileSections ? 'visible' : 'hidden')
-                                            : 'visible'
-                                    }}
-                                    className={`
-                                overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
-                                ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                            ? 'fixed inset-y-0 left-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-r border-border-thin !w-[85vw] sm:!w-[320px]'
-                                            : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
-                                        }
-                            `}
-                                >
-                                    <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
-                                        <div className="flex lg:hidden justify-between items-center mb-4">
-                                            <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
-                                            <button
-                                                onClick={() => setShowMobileSections(false)}
-                                                className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                                                aria-label="Cerrar menú"
-                                            >
-                                                <ChevronLeft size={20} />
-                                            </button>
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between items-center mb-4 lg:ml-2">
-                                                <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
-                                                <button
-                                                    onClick={() => setIsLeftSidebarOpen(false)}
-                                                    className="hidden lg:flex p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                                                    title="Contraer navegación"
-                                                >
-                                                    <ChevronLeft size={16} />
-                                                </button>
-                                            </div>
-                                            <div className="space-y-1">
-                                                {sections.map(section => (
-                                                    <button
-                                                        key={section.id}
-                                                        onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                                        className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
-                                                    >
-                                                        <span className="flex items-center gap-4">
-                                                            {section.icon} {section.label}
-                                                        </span>
-                                                        {formData?.BlockedSections?.[section.id] && (
-                                                            <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
-                                                        )}
-                                                    </button>
-                                                ))}
-                                                <button
-                                                    onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
-                                                >
-                                                    <FileText size={18} /> Finalizar y Firmar
-                                                </button>
-                                            </div>
-                                        </div>
 
-                                        {/* Auditoría de sesión removida para simplificar navegación */}
-                                    </div>
-                                </div>
+                                {/* ── Sidebar de Navegación (Izquierda) ── */}
+                                <BuilderNavigationSidebar
+                                    sections={sections}
+                                    activeTab={layout.activeTab}
+                                    formData={formData}
+                                    isLeftSidebarOpen={layout.isLeftSidebarOpen}
+                                    leftSidebarWidth={layout.leftSidebarWidth}
+                                    showMobileSections={layout.showMobileSections}
+                                    leftSidebarRef={layout.leftSidebarRef}
+                                    setActiveTab={layout.setActiveTab}
+                                    setIsLeftSidebarOpen={layout.setIsLeftSidebarOpen}
+                                    setShowMobileSections={layout.setShowMobileSections}
+                                />
 
                                 {/* Drag Handle Left */}
-                                {isLeftSidebarOpen && !showMobileSections && (
+                                {layout.isLeftSidebarOpen && !layout.showMobileSections && (
                                     <div
-                                        onMouseDown={startDraggingLeft}
+                                        onMouseDown={layout.startDraggingLeft}
                                         className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
                                     />
                                 )}
 
                                 {/* ── Área Principal: Editor & Visor PDF ── */}
                                 <div className="flex-1 bg-bg-deep overflow-hidden flex">
-                                    {activeTab !== 'output' ? (
+                                    {layout.activeTab !== 'output' ? (
                                         <div className="flex-1 pt-4 pb-8 px-3 sm:pt-6 sm:pb-12 sm:px-6 md:pt-8 md:pb-16 md:px-12 overflow-y-auto custom-scrollbar">
                                             <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
                                                 <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                     <div>
-                                                        <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{activeSectionLabel}</h3>
+                                                        <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{layout.activeSectionLabel}</h3>
                                                         <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-2 md:mt-3 rounded-full" />
                                                     </div>
 
                                                     {/* Compact Section Lock Control */}
-                                                    {!readOnly && activeTab !== 'output' && (
+                                                    {!readOnly && layout.activeTab !== 'output' && (
                                                         <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
-                                                            {isSectionBlocked ? (
+                                                            {layout.isSectionBlocked ? (
                                                                 <>
                                                                     <div className="flex items-center gap-1.5">
                                                                         <Lock size={12} className="text-amber-500 animate-pulse" />
                                                                         <span className="text-amber-500">Sección Bloqueada</span>
                                                                     </div>
-                                                                    {isDirectorOrAdmin && (
+                                                                    {layout.isDirectorOrAdmin && (
                                                                         <button
-                                                                            onClick={() => handleToggleSectionLock(activeTab)}
+                                                                            onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
                                                                             className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
                                                                         >
                                                                             Desbloquear
@@ -1260,9 +166,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                                         <Unlock size={12} className="text-text-dim" />
                                                                         <span className="text-text-dim">Edición Abierta</span>
                                                                     </div>
-                                                                    {isDirectorOrAdmin && (
+                                                                    {layout.isDirectorOrAdmin && (
                                                                         <button
-                                                                            onClick={() => handleToggleSectionLock(activeTab)}
+                                                                            onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
                                                                             className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
                                                                         >
                                                                             Bloquear
@@ -1292,269 +198,81 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                     </div>
                                                 )}
 
-
-                                                {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
-                                                {children(activeTab, cowork)}
+                                                {/* Render de los componentes hijos del documento con el cowork handle */}
+                                                {children(layout.activeTab, cowork)}
                                             </div>
                                         </div>
                                     ) : (
                                         /* ── Panel de Finalización y Firma ── */
-                                        <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
-                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-y-auto lg:overflow-hidden p-1">
-                                                {/* Panel de Controles Unificado */}
-                                                <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
-                                                    {/* Sección 1: Emisión */}
-                                                    <div className="p-5 flex flex-col gap-4 shrink-0">
-                                                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
-                                                            <Settings size={16} className="text-text-dim" /> Emisión
-                                                        </h4>
-                                                        <div className="space-y-4">
-                                                            {/* Switch sin tarjeta contenedora - Vercel Style */}
-                                                            <div className="flex items-center justify-between py-1">
-                                                                <div>
-                                                                    <p className="text-sm font-semibold text-text-main">Modo borrador</p>
-                                                                    <p className="text-xs text-text-dim">Marca de agua de seguridad</p>
-                                                                </div>
-                                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                                    <input type="checkbox" checked={isDraftMode} onChange={(e) => setIsDraftMode(e.target.checked)} className="sr-only peer" />
-                                                                    <div className="w-11 h-6 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-text-main after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                                                </label>
-                                                            </div>
-                                                            <div className="grid grid-cols-1 gap-2.5">
-                                                                <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
-                                                                    <FileText size={15} /> Generar vista previa
-                                                                </button>
-                                                                <button onClick={() => handleGeneratePdf(true)} className="w-full border border-border-thin bg-transparent hover:bg-surface text-text-main/80 hover:text-text-main px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-                                                                    <Users size={15} /> Vista sin identidades
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="border-t border-border-thin shrink-0" />
-                                                    {/* Sección 2: Firma Electrónica */}
-                                                    <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar relative">
-                                                        {isSigning ? (
-                                                            <FullscreenLoader 
-                                                                fullscreen={false} 
-                                                                message={[
-                                                                    "Verificando credenciales...",
-                                                                    "Aplicando firma electrónica...",
-                                                                    "Estampando sello institucional...",
-                                                                    "Regenerando documento PDF..."
-                                                                ]} 
-                                                            />
-                                                        ) : (
-                                                            <div className="flex flex-col gap-4">
-                                                            {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
-                                                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
-                                                                    <div className="flex justify-center">
-                                                                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                                                            <CheckCircle size={20} />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        <p className="text-sm font-semibold text-text-main">Documento Firmado</p>
-                                                                        <p className="text-xs text-text-dim leading-relaxed">
-                                                                            Este documento ya ha sido firmado y emitido oficialmente en estado <span className="text-green-500 font-bold">"{projectStatus}"</span>.
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            ) : !canSign ? (
-                                                                <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
-                                                                    <div className="flex justify-center">
-                                                                        <div className="icon-circle icon-circle-warning !p-2">
-                                                                            <Shield size={16} />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        <p className="text-sm font-semibold text-text-main">Firma restringida</p>
-                                                                        <p className="text-xs text-text-dim leading-relaxed">
-                                                                            Solo el Director de Proyecto está autorizado para firmar digitalmente este protocolo.
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex flex-col gap-5">
-                                                                    {(signatureType === 'DIITRA' || signatureType === 'HIBRIDO') && (
-                                                                        /* Firma Institucional DIITRA (Sello + Trazo) */
-                                                                        <div className="flex flex-col gap-3 p-4 border border-border-thin rounded-2xl bg-surface/30">
-                                                                            <div className="flex items-center gap-2 mb-1">
-                                                                                <Shield size={16} className="text-text-main" />
-                                                                                <h4 className="text-xs font-black uppercase tracking-wider text-text-main">Firma Institucional DIITRA</h4>
-                                                                            </div>
-                                                                            <div className="space-y-1">
-                                                                                <label className="text-[10px] font-bold text-text-dim block">Contraseña Institucional</label>
-                                                                                <p className="text-[9px] text-text-dim">Por seguridad, confirme su contraseña de cuenta para firmar.</p>
-                                                                                <input
-                                                                                    type="password"
-                                                                                    placeholder="Contraseña de tu cuenta"
-                                                                                    value={institutionalPassword}
-                                                                                    onChange={(e) => setInstitutionalPassword(e.target.value)}
-                                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 text-xs focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
-                                                                                />
-                                                                            </div>
-
-                                                                            <button
-                                                                                onClick={handleSignDiitra}
-                                                                                disabled={isSigning || !institutionalPassword}
-                                                                                className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${(!institutionalPassword)
-                                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
-                                                                                    }`}
-                                                                            >
-                                                                                {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma DIITRA</>}
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {(signatureType === 'ECUADOR_P12' || signatureType === 'HIBRIDO') && (
-                                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
-                                                                        <div className="flex flex-col gap-3 p-4 border border-border-thin rounded-2xl bg-surface/30">
-                                                                            <div className="flex items-center gap-2 mb-1">
-                                                                                <FileText size={16} className="text-text-main" />
-                                                                                <h4 className="text-xs font-black uppercase tracking-wider text-text-main">Firma Digital (.p12 / .pfx)</h4>
-                                                                            </div>
-                                                                            {/* Dropzone certificado .p12 */}
-                                                                            <div className="space-y-1">
-                                                                                <label className="text-[10px] font-bold text-text-dim block">Certificado .p12</label>
-                                                                                <label
-                                                                                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-all gap-1.5 ${signatureCertFile
-                                                                                            ? 'border-green-500/40 bg-green-500/5'
-                                                                                            : 'border-border-thin hover:border-text-main/30 bg-surface'
-                                                                                        }`}
-                                                                                >
-                                                                                    <input
-                                                                                        type="file"
-                                                                                        accept=".p12,.pfx"
-                                                                                        className="sr-only"
-                                                                                        onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
-                                                                                    />
-                                                                                    {signatureCertFile ? (
-                                                                                        <>
-                                                                                            <CheckCircle size={16} className="text-green-500" />
-                                                                                            <span className="text-[10px] font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
-                                                                                            <span className="text-[9px] text-text-dim">Clic para cambiar</span>
-                                                                                        </>
-                                                                                    ) : (
-                                                                                        <>
-                                                                                            <Shield size={16} className="text-text-dim" />
-                                                                                            <span className="text-[10px] font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
-                                                                                            <span className="text-[9px] text-text-dim">No se guarda en el servidor</span>
-                                                                                        </>
-                                                                                    )}
-                                                                                </label>
-                                                                            </div>
-
-                                                                            {/* Contraseña */}
-                                                                            <div className="space-y-1">
-                                                                                <label className="text-[10px] font-bold text-text-dim block">Contraseña del certificado</label>
-                                                                                <input
-                                                                                    type="password"
-                                                                                    placeholder="Contraseña del .p12"
-                                                                                    value={signaturePassword}
-                                                                                    onChange={(e) => setSignaturePassword(e.target.value)}
-                                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 text-xs focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
-                                                                                />
-                                                                            </div>
-
-                                                                            <button
-                                                                                onClick={handleSign}
-                                                                                disabled={isSigning || !signatureCertFile}
-                                                                                className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${(!signatureCertFile || isSigning)
-                                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
-                                                                                    }`}
-                                                                            >
-                                                                                {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma electrónica</>}
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            <div className="mt-4 border-t border-border-thin pt-4">
-                                                                <SignatureBlock 
-                                                                    documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''} 
-                                                                    refreshTrigger={signatureRefreshTrigger} 
-                                                                />
-                                                            </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Visor de PDF */}
-                                                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
-                                                    {isGenerating ? (
-                                                        <FullscreenLoader 
-                                                            fullscreen={false} 
-                                                            message={[
-                                                                "Generando documento...",
-                                                                "Preparando vista previa...",
-                                                                "Compilando plantilla PDF...",
-                                                                "Cargando firmas registradas..."
-                                                            ]} 
-                                                        />
-                                                    ) : pdfUrl ? (
-                                                        <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
-                                                    ) : (
-                                                        <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
-                                                            <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
-                                                            <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
-                                                            <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden">
-                                                                Generar PDF
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <OutputSection
+                                            title={title}
+                                            projectStatus={projectStatus}
+                                            canSign={canSign}
+                                            signatureType={signatureType}
+                                            documentUuid={documentUuid}
+                                            formData={formData}
+                                            pdfUrl={pdfAndSign.pdfUrl}
+                                            isGenerating={pdfAndSign.isGenerating}
+                                            isDraftMode={pdfAndSign.isDraftMode}
+                                            setIsDraftMode={pdfAndSign.setIsDraftMode}
+                                            handleGeneratePdf={pdfAndSign.handleGeneratePdf}
+                                            isSigning={pdfAndSign.isSigning}
+                                            institutionalPassword={pdfAndSign.institutionalPassword}
+                                            setInstitutionalPassword={pdfAndSign.setInstitutionalPassword}
+                                            handleSignDiitra={pdfAndSign.handleSignDiitra}
+                                            signatureCertFile={pdfAndSign.signatureCertFile}
+                                            setSignatureCertFile={pdfAndSign.setSignatureCertFile}
+                                            signaturePassword={pdfAndSign.signaturePassword}
+                                            setSignaturePassword={pdfAndSign.setSignaturePassword}
+                                            handleSign={pdfAndSign.handleSign}
+                                            signatureRefreshTrigger={pdfAndSign.signatureRefreshTrigger}
+                                        />
                                     )}
                                 </div>
 
                                 {/* Drag Handle Right */}
-                                {isSidebarOpen && (
+                                {layout.isSidebarOpen && (
                                     <div
-                                        onMouseDown={startDraggingRight}
+                                        onMouseDown={layout.startDraggingRight}
                                         className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
                                     />
                                 )}
 
                                 {/* ── Collaboration Sidebar (Derecha) ── */}
                                 <div
-                                    ref={rightSidebarRef}
+                                    ref={layout.rightSidebarRef}
                                     style={{
-                                        '--right-sidebar-width': `${rightSidebarWidth}px`,
+                                        '--right-sidebar-width': `${layout.rightSidebarWidth}px`,
                                         width: (typeof window !== 'undefined' && window.innerWidth < 1024)
                                             ? undefined
-                                            : (isSidebarOpen ? `${rightSidebarWidth}px` : '0px'),
+                                            : (layout.isSidebarOpen ? `${layout.rightSidebarWidth}px` : '0px'),
                                         transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
+                                            ? (layout.isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
                                             : undefined,
                                         transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
                                             ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
                                             : 'width 300ms ease-in-out',
                                         visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (isSidebarOpen ? 'visible' : 'hidden')
+                                            ? (layout.isSidebarOpen ? 'visible' : 'hidden')
                                             : 'visible'
                                     } as React.CSSProperties}
                                     className={`
-                                overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
-                                ${typeof window !== 'undefined' && window.innerWidth < 1024
+                                        overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
+                                        ${typeof window !== 'undefined' && window.innerWidth < 1024
                                             ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
-                                            : (isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
+                                            : (layout.isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
                                         }
-                            `}
+                                    `}
                                 >
                                     <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
                                         <CollaborationSidebar
                                             instanceUuid={cowork.session.documentId}
-                                            sectionName={activeTab}
+                                            sectionName={layout.activeTab}
                                             cowork={cowork}
                                             allSections={sections.map(s => s.id)}
                                             entityUuid={entityUuid}
                                             projectStatus={projectStatus}
-                                            onClose={() => setIsSidebarOpen(false)}
+                                            onClose={() => layout.setIsSidebarOpen(false)}
                                         />
                                     </div>
                                 </div>
