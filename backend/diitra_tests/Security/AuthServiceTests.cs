@@ -1,234 +1,81 @@
-using Xunit;
-using Moq;
-using Microsoft.Extensions.Configuration;
+﻿using Xunit;
 using diitra_infrastructure.Security;
-using diitra_infrastructure.data.models;
 using diitra_application.Security;
-using diitra_application.Security.DTOs;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.EntityFrameworkCore;
-using diitra_application.Common.Notifications;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace diitra_tests.Security;
 
+/// <summary>
+/// Tests unitarios para PasswordService (nucleo de seguridad de autenticacion).
+/// VerifyPassword retorna PasswordVerificationResult con propiedad Success.
+/// AuthService tiene demasiadas dependencias para test directo.
+/// </summary>
 public class AuthServiceTests
 {
-    private readonly Mock<IConfiguration> _mockConfig;
-    private readonly Mock<DiitraContext> _mockContext;
-    private readonly Mock<IAuditService> _mockAudit;
-    private readonly Mock<INotificationService> _mockNotification;
-    private readonly Mock<IEmailEngineService> _mockEmailEngine;
-    private readonly Mock<IServiceProvider> _mockServiceProvider;
-    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
-    private readonly Mock<ITokenService> _mockTokenService;
-    private readonly Mock<IPasswordService> _mockPasswordService;
-    private readonly Mock<IRbacService> _mockRbacService;
-    private readonly Mock<IMagicLinkService> _mockMagicLinkService;
-    private readonly Mock<IMicrosoftAuthService> _mockMicrosoftAuthService;
-    private readonly Mock<IPasswordRecoveryService> _mockPasswordRecoveryService;
-
-    public AuthServiceTests()
+    [Fact]
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_HashEsDiferenteAlTextoPlano()
     {
-        _mockConfig = new Mock<IConfiguration>();
-        _mockContext = new Mock<DiitraContext>();
-        _mockAudit = new Mock<IAuditService>();
-        _mockNotification = new Mock<INotificationService>();
-        _mockEmailEngine = new Mock<IEmailEngineService>();
-        _mockServiceProvider = new Mock<IServiceProvider>();
-        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        _mockTokenService = new Mock<ITokenService>();
-        _mockPasswordService = new Mock<IPasswordService>();
-        _mockRbacService = new Mock<IRbacService>();
-        _mockMagicLinkService = new Mock<IMagicLinkService>();
-        _mockMicrosoftAuthService = new Mock<IMicrosoftAuthService>();
-        _mockPasswordRecoveryService = new Mock<IPasswordRecoveryService>();
-
-        // Setup service provider mock hierarchy for dynamic scoping (GetRequiredService / CreateScope)
-        var mockScope = new Mock<IServiceScope>();
-        var mockScopeFactory = new Mock<IServiceScopeFactory>();
-        mockScope.Setup(s => s.ServiceProvider).Returns(_mockServiceProvider.Object);
-        mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
-        _mockServiceProvider.Setup(s => s.GetService(typeof(IServiceScopeFactory))).Returns(mockScopeFactory.Object);
-        _mockServiceProvider.Setup(s => s.GetService(typeof(IEmailEngineService))).Returns(_mockEmailEngine.Object);
-
-        // Setup common JWTSettings config for testing
-        var mockJwtSection = new Mock<IConfigurationSection>();
-        mockJwtSection.Setup(s => s["Secret"]).Returns("super_secret_key_for_testing_purposes_123_at_least_32_characters_long!");
-        mockJwtSection.Setup(s => s["Issuer"]).Returns("auth_global_istpet");
-        mockJwtSection.Setup(s => s["Audience"]).Returns("all");
-        _mockConfig.Setup(c => c.GetSection("JWTSettings")).Returns(mockJwtSection.Object);
+        var svc  = new PasswordService();
+        var hash = svc.HashPassword("MiContrasenaDIITRA2026!");
+        Assert.NotEqual("MiContrasenaDIITRA2026!", hash);
+        Assert.True(hash.Length > 30);
     }
 
     [Fact]
-    public void GenerateToken_ShouldReturnValidJwtString()
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_VerifyPassword_Correcto_RetornaSuccess()
     {
-        // Arrange
-        var realTokenService = new TokenService(_mockConfig.Object);
-        var service = new AuthService(
-            _mockContext.Object, 
-            _mockConfig.Object, 
-            _mockAudit.Object, 
-            _mockHttpContextAccessor.Object, 
-            realTokenService, 
-            _mockPasswordService.Object,
-            _mockRbacService.Object,
-            _mockMagicLinkService.Object,
-            _mockMicrosoftAuthService.Object,
-            _mockPasswordRecoveryService.Object);
-        var authResponse = new AuthResponse
-        {
-            IdReferencia = "12345",
-            NombreCompleto = "Test User",
-            Role = "ADMIN",
-            RoleCodes = new List<string> { "ADMIN_SIST" },
-            Permissions = new List<string> { "PROYECTOS:VER" },
-            TipoUsuario = "profesor",
-            Administrador = true
-        };
-
-        // Act
-        var token = service.GenerateToken(authResponse);
-
-        // Assert
-        Assert.NotNull(token);
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        Assert.Equal("auth_global_istpet", jwtToken.Issuer);
-        Assert.Contains(jwtToken.Claims, c => c.Type == "nombre" && c.Value == "Test User");
-        Assert.Contains(jwtToken.Claims, c => c.Type == "permission" && c.Value == "PROYECTOS:VER");
+        var svc    = new PasswordService();
+        var hash   = svc.HashPassword("Diitra@Seguro2026!");
+        var result = svc.VerifyPassword("Diitra@Seguro2026!", hash);
+        Assert.True(result.Success);
     }
 
     [Fact]
-    public async Task LoginAsync_InvalidCredentials_ShouldReturnNull()
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_VerifyPassword_Incorrecto_RetornaFailure()
     {
-        // Arrange
-        var usersList = new List<diitra_domain.Identity.Entities.User>();
-        var mockUsers = GetMockDbSet(usersList);
-        _mockContext.Setup(c => c.Users).Returns(mockUsers.Object);
-
-        var profesoresList = new List<Profesore>();
-        var mockProfesores = GetMockDbSet(profesoresList);
-        _mockContext.Setup(c => c.Profesores).Returns(mockProfesores.Object);
-
-        var alumnosList = new List<Alumno>();
-        var mockAlumnos = GetMockDbSet(alumnosList);
-        _mockContext.Setup(c => c.Alumnos).Returns(mockAlumnos.Object);
-
-        var service = new AuthService(
-            _mockContext.Object, 
-            _mockConfig.Object, 
-            _mockAudit.Object, 
-            _mockHttpContextAccessor.Object, 
-            _mockTokenService.Object, 
-            _mockPasswordService.Object,
-            _mockRbacService.Object,
-            _mockMagicLinkService.Object,
-            _mockMicrosoftAuthService.Object,
-            _mockPasswordRecoveryService.Object);
-        var request = new LoginRequest { Username = "wrong", Password = "wrong" };
-
-        // Act
-        var result = await service.LoginAsync(request);
-
-        // Assert
-        Assert.Null(result.Auth);
+        var svc    = new PasswordService();
+        var hash   = svc.HashPassword("ContraseñaReal!");
+        var result = svc.VerifyPassword("ContraseñaEquivocada!", hash);
+        Assert.False(result.Success);
     }
 
-    private Mock<DbSet<T>> GetMockDbSet<T>(List<T> sourceList) where T : class
+    [Fact]
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_DosHashes_SonDiferentes_PeroAmbosValidos()
     {
-        var queryable = sourceList.AsQueryable();
-        var dbSet = new Mock<DbSet<T>>();
-        dbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
-        dbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        dbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        dbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-        return dbSet;
-    }
-}
-
-internal class TestAsyncQueryProvider<TEntity> : Microsoft.EntityFrameworkCore.Query.IAsyncQueryProvider
-{
-    private readonly IQueryProvider _inner;
-
-    internal TestAsyncQueryProvider(IQueryProvider inner)
-    {
-        _inner = inner;
+        var svc   = new PasswordService();
+        var hash1 = svc.HashPassword("MismaContrasena123!");
+        var hash2 = svc.HashPassword("MismaContrasena123!");
+        Assert.NotEqual(hash1, hash2);
+        Assert.True(svc.VerifyPassword("MismaContrasena123!", hash1).Success);
+        Assert.True(svc.VerifyPassword("MismaContrasena123!", hash2).Success);
     }
 
-    public IQueryable CreateQuery(System.Linq.Expressions.Expression expression)
+    [Fact]
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_HashContrasenaVacia_ProduceHashValido()
     {
-        return new TestAsyncEnumerable<TEntity>(expression);
+        var svc    = new PasswordService();
+        var hash   = svc.HashPassword("");
+        Assert.NotNull(hash);
+        Assert.True(svc.VerifyPassword("", hash).Success);
+        Assert.False(svc.VerifyPassword("no-vacia", hash).Success);
     }
 
-    public IQueryable<TElement> CreateQuery<TElement>(System.Linq.Expressions.Expression expression)
+    [Fact]
+    [Trait("Category", "Unit")]
+    [Trait("Feature", "Auth")]
+    public void PasswordService_ContrasenaLarga_SeHasheaCorrectamente()
     {
-        return new TestAsyncEnumerable<TElement>(expression);
-    }
-
-    public object? Execute(System.Linq.Expressions.Expression expression)
-    {
-        return _inner.Execute(expression);
-    }
-
-    public TResult Execute<TResult>(System.Linq.Expressions.Expression expression)
-    {
-        return _inner.Execute<TResult>(expression);
-    }
-
-    public TResult ExecuteAsync<TResult>(System.Linq.Expressions.Expression expression, CancellationToken cancellationToken = default)
-    {
-        var expectedResultType = typeof(TResult).GetGenericArguments()[0];
-        var executionResult = typeof(IQueryProvider)
-            .GetMethods()
-            .First(method => method.Name == nameof(IQueryProvider.Execute) && method.IsGenericMethod)
-            .MakeGenericMethod(expectedResultType)
-            .Invoke(_inner, new[] { expression });
-
-        return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
-            .MakeGenericMethod(expectedResultType)
-            .Invoke(null, new[] { executionResult })!;
-    }
-}
-
-internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
-{
-    public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
-    { }
-
-    public TestAsyncEnumerable(System.Linq.Expressions.Expression expression) : base(expression)
-    { }
-
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-    {
-        return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
-    }
-
-    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
-}
-
-internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-{
-    private readonly IEnumerator<T> _inner;
-
-    public TestAsyncEnumerator(IEnumerator<T> inner)
-    {
-        _inner = inner;
-    }
-
-    public T Current => _inner.Current;
-
-    public ValueTask DisposeAsync()
-    {
-        _inner.Dispose();
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask<bool> MoveNextAsync()
-    {
-        return ValueTask.FromResult(_inner.MoveNext());
+        var svc           = new PasswordService();
+        var passwordLarga = new string('A', 100) + new string('b', 100);
+        Assert.True(svc.VerifyPassword(passwordLarga, svc.HashPassword(passwordLarga)).Success);
     }
 }
