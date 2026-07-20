@@ -183,6 +183,9 @@ builder.Services.AddScoped<Diitra.Application.Research.IProjectWizardService, Pr
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamChangeService, diitra_infrastructure.Research.ProjectTeamChangeService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamSyncService, diitra_infrastructure.Research.ProjectTeamSyncService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamService, ProjectTeamService>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectWizardCoreSubservice, diitra_infrastructure.Research.Subservices.ProjectWizardCoreSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectWizardClassificationSubservice, diitra_infrastructure.Research.Subservices.ProjectWizardClassificationSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectWizardComponentsSubservice, diitra_infrastructure.Research.Subservices.ProjectWizardComponentsSubservice>();
 builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectLookupSubservice, diitra_infrastructure.Research.Subservices.ProjectLookupSubservice>();
 builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDetailSubservice, diitra_infrastructure.Research.Subservices.ProjectDetailSubservice>();
 builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDashboardSubservice, diitra_infrastructure.Research.Subservices.ProjectDashboardSubservice>();
@@ -203,6 +206,9 @@ builder.Services.AddScoped<diitra_application.Common.Notifications.INotification
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.EmailDriver>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.PushDriver>();
 
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IPeerReviewQuerySubservice, diitra_infrastructure.Research.Subservices.PeerReviewQuerySubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IPeerReviewerManagementSubservice, diitra_infrastructure.Research.Subservices.PeerReviewerManagementSubservice>();
+builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IPeerReviewAssignmentSubservice, diitra_infrastructure.Research.Subservices.PeerReviewAssignmentSubservice>();
 builder.Services.AddScoped<diitra_application.Research.IPeerReviewPortalService, PeerReviewPortalService>();
 builder.Services.AddScoped<diitra_application.Research.IPeerReviewAdminService, PeerReviewAdminService>();
 builder.Services.AddScoped<diitra_application.Research.IPeerReviewWorkflowService, PeerReviewWorkflowService>();
