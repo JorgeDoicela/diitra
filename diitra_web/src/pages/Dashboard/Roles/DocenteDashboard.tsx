@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     TrendingUp, Briefcase, ClipboardList,
     Fingerprint, FileText, Layers, ExternalLink,
@@ -40,6 +40,8 @@ export const DocenteDashboard: React.FC = () => {
     const [animate, setAnimate] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    const lastFetchRef = useRef<number>(0);
+
     const fetchStats = async (silent = false) => {
         const startTime = Date.now();
         if (!silent) {
@@ -48,6 +50,7 @@ export const DocenteDashboard: React.FC = () => {
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
+            lastFetchRef.current = Date.now();
         } catch (e) {
             console.error('[DIITRA] Error al cargar stats:', e);
         } finally {
@@ -67,11 +70,15 @@ export const DocenteDashboard: React.FC = () => {
         fetchStats(false);
 
         const interval = setInterval(() => {
-            fetchStats(true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchStats(true);
+            }
         }, 60000);
 
         const handleFocus = () => {
-            fetchStats(true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchStats(true);
+            }
         };
         window.addEventListener('focus', handleFocus);
 

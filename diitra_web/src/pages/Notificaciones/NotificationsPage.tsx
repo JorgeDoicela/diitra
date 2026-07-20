@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
     CheckCheck, Filter, Search, Inbox
@@ -34,13 +34,17 @@ const NotificationsPage = () => {
     const [search, setSearch] = useState('');
     const [loadingAll, setLoadingAll] = useState(false);
 
+    const lastFetchRef = useRef<number>(0);
+
     useEffect(() => {
         document.title = "Centro de Notificaciones | DIITRA";
     }, []);
 
     useEffect(() => {
         const handleFocus = () => {
-            handleRefresh();
+            if (Date.now() - lastFetchRef.current > 30000) {
+                handleRefresh();
+            }
         };
         window.addEventListener('focus', handleFocus);
         return () => {
@@ -54,6 +58,7 @@ const NotificationsPage = () => {
             try {
                 const res = await api.get('/Admin/notifications/my?limit=0');
                 setAllNotifications(res.data);
+                lastFetchRef.current = Date.now();
             } catch {
                 setAllNotifications(notifications as unknown as NotificationItem[]);
             } finally {
@@ -96,6 +101,7 @@ const NotificationsPage = () => {
         try {
             const res = await api.get('/Admin/notifications/my?limit=0');
             setAllNotifications(res.data);
+            lastFetchRef.current = Date.now();
         } catch { /* fallback to context data */ }
     };
 

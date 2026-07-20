@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Users, Activity, BarChart3,
     Megaphone,
@@ -48,6 +48,8 @@ export const AdminDashboard: React.FC = () => {
     const [animate, setAnimate] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    const lastFetchRef = useRef<number>(0);
+
     const fetchData = async (silent = false) => {
         const startTime = Date.now();
         if (!silent) {
@@ -57,6 +59,7 @@ export const AdminDashboard: React.FC = () => {
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
+            lastFetchRef.current = Date.now();
         } catch (e) {
             console.error('[DIITRA] Error al cargar datos:', e);
             if (!silent) {
@@ -79,11 +82,15 @@ export const AdminDashboard: React.FC = () => {
         fetchData(false);
 
         const interval = setInterval(() => {
-            fetchData(true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchData(true);
+            }
         }, 60000);
 
         const handleFocus = () => {
-            fetchData(true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchData(true);
+            }
         };
         window.addEventListener('focus', handleFocus);
 

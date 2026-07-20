@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
     ClipboardList, Plus, FileCheck, ArrowRight, Calendar, AlertCircle,
@@ -66,16 +66,26 @@ const ResearchProjectsPage = () => {
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-    const loadProjects = async (isManual = false) => {
-        if (isManual) setRefreshing(true);
-        else setLoading(true);
+    const lastFetchRef = useRef<number>(0);
+
+    const loadProjects = async (isManual = false, isBackground = false) => {
+        if (isBackground) {
+            // Recarga silenciosa en segundo plano
+        } else if (isManual) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         setError(null);
         try {
             const res = await api.get('/projects');
             setProyectos(res.data || []);
+            lastFetchRef.current = Date.now();
         } catch (err: any) {
             console.error('[DIITRA Admin] Error al cargar proyectos:', err);
-            setError('No se pudieron obtener los proyectos registrados de la base de datos.');
+            if (!isBackground) {
+                setError('No se pudieron obtener los proyectos registrados de la base de datos.');
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -88,10 +98,12 @@ const ResearchProjectsPage = () => {
 
     useEffect(() => {
         const handleFocus = () => {
-            loadProjects(true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                loadProjects(false, true);
+            }
         };
         const handleProjectsChanged = () => {
-            loadProjects(true);
+            loadProjects(false, true);
         };
 
         window.addEventListener('focus', handleFocus);
@@ -106,8 +118,8 @@ const ResearchProjectsPage = () => {
     // Sondeo periódico (polling) de respaldo de 60 segundos si la pestaña está visible
     useEffect(() => {
         const interval = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                loadProjects(true);
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 30000) {
+                loadProjects(false, true);
             }
         }, 60000);
         return () => clearInterval(interval);

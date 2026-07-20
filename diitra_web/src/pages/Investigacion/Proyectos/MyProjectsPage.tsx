@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
@@ -103,8 +103,12 @@ const MyProjectsPage: React.FC = () => {
         }
     };
 
-    const loadProjects = async (isSilent = false) => {
-        if (isSilent) {
+    const lastFetchRef = useRef<number>(0);
+
+    const loadProjects = async (isSilent = false, isBackground = false) => {
+        if (isBackground) {
+            // Recarga silenciosa en segundo plano
+        } else if (isSilent) {
             setRefreshing(true);
         } else {
             setLoading(true);
@@ -113,8 +117,11 @@ const MyProjectsPage: React.FC = () => {
         try {
             const res = await api.get('/projects/my');
             setProyectos(res.data || []);
+            lastFetchRef.current = Date.now();
         } catch (e: any) {
-            setError('No se pudieron cargar tus proyectos. Verifica la conexión con el servidor.');
+            if (!isBackground) {
+                setError('No se pudieron cargar tus proyectos. Verifica la conexión con el servidor.');
+            }
             console.error('[DIITRA] Error al cargar proyectos:', e);
         } finally {
             setLoading(false);
@@ -163,11 +170,13 @@ const MyProjectsPage: React.FC = () => {
 
     useEffect(() => {
         const handleFocus = () => {
-            loadProjects(true);
-            checkPendingDraft();
+            if (Date.now() - lastFetchRef.current > 30000) {
+                loadProjects(false, true);
+                checkPendingDraft();
+            }
         };
         const handleProjectsChanged = () => {
-            loadProjects(true);
+            loadProjects(false, true);
             checkPendingDraft();
         };
 
@@ -183,8 +192,8 @@ const MyProjectsPage: React.FC = () => {
     // Sondeo periódico (polling) de respaldo de 60 segundos si la pestaña está visible
     useEffect(() => {
         const interval = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                loadProjects(true);
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 30000) {
+                loadProjects(false, true);
                 checkPendingDraft();
             }
         }, 60000);

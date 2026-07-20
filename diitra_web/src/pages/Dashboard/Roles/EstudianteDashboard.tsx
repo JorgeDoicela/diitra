@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, RotateCw } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
@@ -26,6 +26,8 @@ export const EstudianteDashboard: React.FC = () => {
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Estudiante';
 
+    const lastFetchRef = useRef<number>(0);
+
     const fetchData = async (isInitial = false, silent = false) => {
         const startTime = Date.now();
         if (isInitial) {
@@ -40,6 +42,7 @@ export const EstudianteDashboard: React.FC = () => {
             ]);
             setColaboraciones(myRes.data);
             setStats(statsRes.data);
+            lastFetchRef.current = Date.now();
         } catch (e) {
             console.error('[DIITRA] Error al cargar datos del estudiante:', e);
         } finally {
@@ -59,11 +62,15 @@ export const EstudianteDashboard: React.FC = () => {
         fetchData(true, false);
 
         const interval = setInterval(() => {
-            fetchData(false, true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchData(false, true);
+            }
         }, 60000);
 
         const handleFocus = () => {
-            fetchData(false, true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchData(false, true);
+            }
         };
         window.addEventListener('focus', handleFocus);
 

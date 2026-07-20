@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch, RotateCw } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
@@ -20,6 +20,8 @@ export const RevisorDashboard: React.FC = () => {
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Evaluador';
 
+    const lastFetchRef = useRef<number>(0);
+
     const fetchReviews = async (isInitial = false, silent = false) => {
         const startTime = Date.now();
         if (isInitial) {
@@ -30,6 +32,7 @@ export const RevisorDashboard: React.FC = () => {
         try {
             const data = await getMyReviews();
             setReviews(data);
+            lastFetchRef.current = Date.now();
         } catch (err) {
             console.error('[DIITRA] Error al cargar revisiones:', err);
             if (!silent) {
@@ -52,11 +55,15 @@ export const RevisorDashboard: React.FC = () => {
         fetchReviews(true, false);
 
         const interval = setInterval(() => {
-            fetchReviews(false, true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchReviews(false, true);
+            }
         }, 60000);
 
         const handleFocus = () => {
-            fetchReviews(false, true);
+            if (Date.now() - lastFetchRef.current > 30000) {
+                fetchReviews(false, true);
+            }
         };
         window.addEventListener('focus', handleFocus);
 
