@@ -1,18 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
 using diitra_domain.Identity.Entities;
 using diitra_infrastructure.data.models;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
-using Microsoft.AspNetCore.Http;
-using diitra_application.Common.Notifications;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace diitra_infrastructure.Security;
 
@@ -21,57 +13,68 @@ public class AuthService : IAuthService
     private readonly DiitraContext _context;
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
-    private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ITokenService _tokenService;
+    private readonly IPasswordService _passwordService;
+    private readonly IRbacService _rbacService;
+    private readonly IMagicLinkService _magicLinkService;
+    private readonly IMicrosoftAuthService _microsoftAuthService;
+    private readonly IPasswordRecoveryService _passwordRecoveryService;
     private readonly string _masterAdminId;
-    private static bool _rbacSeeded = false;
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
+
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime? LockedUntil)> _userLockouts = new();
 
     public AuthService(
         DiitraContext context, 
         IConfiguration configuration, 
         IAuditService auditService, 
-        diitra_application.Common.Notifications.INotificationService notificationService,
-        IServiceProvider serviceProvider,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ITokenService tokenService,
+        IPasswordService passwordService,
+        IRbacService rbacService,
+        IMagicLinkService magicLinkService,
+        IMicrosoftAuthService microsoftAuthService,
+        IPasswordRecoveryService passwordRecoveryService)
     {
         _context = context;
         _configuration = configuration;
         _auditService = auditService;
-        _notificationService = notificationService;
-        _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
+        _tokenService = tokenService;
+        _passwordService = passwordService;
+        _rbacService = rbacService;
+        _magicLinkService = magicLinkService;
+        _microsoftAuthService = microsoftAuthService;
+        _passwordRecoveryService = passwordRecoveryService;
         _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
     }
 
     private string GetFrontendUrl()
     {
         var configuredUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
-        
         var httpContext = _httpContextAccessor?.HttpContext;
         if (httpContext != null)
         {
             var request = httpContext.Request;
-            var host = request.Host.Value; // e.g. "localhost:5175" or "192.168.7.237"
-            
-            // Si el host del request contiene localhost o 127.0.0.1, y en la configuración dice localhost:3000 o localhost:5173,
-            // asumimos que estamos en desarrollo y usamos la URL configurada.
+            var host = request.Host.Value;
             if ((host.Contains("localhost") || host.Contains("127.0.0.1")) && 
                 (configuredUrl.Contains("localhost:3000") || configuredUrl.Contains("localhost:5173")))
             {
                 return configuredUrl;
             }
-            
-            // En producción/despliegue en IIS, el host del request (ej. 192.168.7.237 o 26.184.156.40)
-            // es el mismo para la API (/apiDiitra) y la app web (/diitra).
             var scheme = request.Scheme;
             return $"{scheme}://{host}/diitra";
         }
-
         return configuredUrl;
     }
+
+    private static int GetLockoutMinutes(int intentos) => intentos switch
+    {
+        >= 12 => 60,
+        >= 9  => 30,
+        >= 6  => 15,
+        _     => 5
+    };
 
     public async Task<(AuthResponse? Auth, LoginBlockedResponse? Blocked)> LoginAsync(LoginRequest request)
     {
@@ -116,7 +119,7 @@ public class AuthService : IAuthService
                 >= 9  => DateTime.Now.AddMinutes(30),
                 >= 6  => DateTime.Now.AddMinutes(15),
                 >= 3  => DateTime.Now.AddMinutes(5),
-                _     => null  // < 3 intentos: aún no se bloquea
+                _     => null
             };
 
             _userLockouts.AddOrUpdate(userKey, 
@@ -126,7 +129,6 @@ public class AuthService : IAuthService
             await _auditService.LogActionAsync(user.IdUsuario, "LOGIN_FAILED",
                 $"Intento fallido #{newAttempts}{(lockedUntil.HasValue ? $" — cuenta bloqueada hasta {lockedUntil:u}" : "")}", "SEGURIDAD");
 
-            // Si acaba de superar un umbral, devolver bloqueo
             if (lockedUntil.HasValue)
             {
                 var remaining = (int)(lockedUntil.Value - DateTime.Now).TotalSeconds;
@@ -138,7 +140,6 @@ public class AuthService : IAuthService
                 });
             }
 
-            // Intentos 1 y 2: credenciales incorrectas sin bloqueo
             return (null, null);
         }
 
@@ -148,7 +149,8 @@ public class AuthService : IAuthService
 
         if (profesor != null)
         {
-            if (profesor.Clave == password || (profesor.Clave != null && BCrypt.Net.BCrypt.Verify(password, profesor.Clave)))
+            var verification = _passwordService.VerifyPassword(password, profesor.Clave ?? "");
+            if (verification.Success)
             {
                 string fullNombre = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
                 user = await ProvisionUserAsync(profesor.IdProfesor, fullNombre, password, "profesor", profesor.IdProfesor);
@@ -174,29 +176,17 @@ public class AuthService : IAuthService
         return (null, null);
     }
 
-    private static int GetLockoutMinutes(int intentos) => intentos switch
-    {
-        >= 12 => 60,
-        >= 9  => 30,
-        >= 6  => 15,
-        _     => 5
-    };
+    public string GenerateToken(AuthResponse user)
+        => _tokenService.GenerateToken(user);
 
-    private static int GetIpLockoutMinutes(int attempts) => attempts switch
-    {
-        >= 12 => 60,
-        >= 9  => 30,
-        >= 6  => 15,
-        _     => 5
-    };
+    public string GenerateRefreshToken(string username)
+        => _tokenService.GenerateRefreshToken(username);
 
     public async Task<User?> GetOrProvisionUserByCedulaAsync(string cedula)
     {
-        // 1. Buscar en DIITRA
         var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == cedula);
         if (user != null) return user;
 
-        // 2. Buscar en Profesores
         var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == cedula);
         if (p != null)
         {
@@ -205,7 +195,6 @@ public class AuthService : IAuthService
             return await ProvisionUserAsync(cedula, fullNombre, pwd, "profesor", cedula);
         }
 
-        // 3. Buscar en Alumnos
         var a = await _context.Alumnos.FirstOrDefaultAsync(alum => alum.IdAlumno == cedula);
         if (a != null)
         {
@@ -218,34 +207,26 @@ public class AuthService : IAuthService
     }
 
     private bool IsBCryptHash(string password)
-    {
-        if (string.IsNullOrEmpty(password)) return false;
-        return password.Length == 60 && (password.StartsWith("$2a$") || password.StartsWith("$2b$") || password.StartsWith("$2y$"));
-    }
+        => _passwordService.IsBCryptHash(password);
 
     private bool VerifyPassword(User user, string password)
     {
-        try
+        var verification = _passwordService.VerifyPassword(password, user.Contrasenia);
+        if (verification.Success)
         {
-            if (BCrypt.Net.BCrypt.Verify(password, user.Contrasenia)) return true;
-        }
-        catch
-        {
-            // Fallback para claves en texto plano durante transición
-            if (user.Contrasenia == password)
+            if (verification.NeedsRehash)
             {
-                // Actualizar a Hash automáticamente
-                user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(password, 11);
+                user.Contrasenia = _passwordService.HashPassword(password);
                 _context.SaveChanges();
-                return true;
             }
+            return true;
         }
         return false;
     }
 
     public async Task<User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId)
     {
-        string contraseniaHash = IsBCryptHash(password) ? password : BCrypt.Net.BCrypt.HashPassword(password, 11);
+        string contraseniaHash = IsBCryptHash(password) ? password : _passwordService.HashPassword(password);
         string? email = null;
         if (table == "profesor")
         {
@@ -272,7 +253,6 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // Metadata inicial
         _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata
         {
             IdUsuario = user.IdUsuario,
@@ -284,15 +264,11 @@ public class AuthService : IAuthService
         return user;
     }
 
-    private async Task<AuthResponse> GetAuthResponseAsync(User user)
+    public async Task<AuthResponse> GetAuthResponseAsync(User user)
     {
-        // 0. Asegurar Estructura RBAC (Sistemas, Módulos, Operaciones)
-        await SeedRbacStructureAsync();
+        await _rbacService.SeedRbacStructureAsync();
+        await _rbacService.SynchronizeUserRolesAsync(user);
 
-        // 1. Sincronizar Roles por defecto (Mecánica Profesional de Roles Automáticos)
-        await SynchronizeUserRolesAsync(user);
-
-        // 2. Cargar Roles y Permisos Modulares
         var userRoles = await _context.UserRoles
             .AsSplitQuery()
             .Include(ur => ur.Role)
@@ -357,287 +333,9 @@ public class AuthService : IAuthService
             AceptoLopdp = hasAcceptedLopdp
         };
 
-        response.Token = GenerateToken(response);
-        response.RefreshToken = GenerateRefreshToken(response.IdReferencia);
+        response.Token = _tokenService.GenerateToken(response);
+        response.RefreshToken = _tokenService.GenerateRefreshToken(response.IdReferencia);
         return response;
-    }
-
-    private async Task SynchronizeUserRolesAsync(User user)
-    {
-        var currentRoles = await _context.UserRoles
-            .Include(ur => ur.Role)
-            .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
-            .ToListAsync();
-
-        var requiredRoleCodes = new List<string>();
-
-        // Reglas de negocio para roles automáticos
-        if (user.IdSigafi == _masterAdminId || user.Administrador)
-        {
-            requiredRoleCodes.Add("DIITRA_ADMIN");
-        }
-        else if (user.TablaSigafi == "profesor") requiredRoleCodes.Add("DIITRA_DOCENTE");
-        else if (user.TablaSigafi == "alumno") requiredRoleCodes.Add("DIITRA_ESTUDIANTE");
-        else if (user.TablaSigafi == "otros") requiredRoleCodes.Add("DIITRA_REVISOR_EXTERNO");
-
-        foreach (var requiredRoleCode in requiredRoleCodes)
-        {
-            if (!currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
-            {
-                var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == requiredRoleCode);
-
-                // Si el ROL no existe en la base de datos (tabla rbac_rol), lo CREAMOS automáticamente
-                if (role == null)
-                {
-                    role = new Role
-                    {
-                        CodigoRol = requiredRoleCode,
-                        Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
-                                 requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
-                                 requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" :
-                                 requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
-                        EsActivo = true
-                    };
-                    _context.Roles.Add(role);
-                    await _context.SaveChangesAsync();
-
-                    // Asignar permisos por defecto al nuevo rol (AISLAMIENTO DE SISTEMA)
-                    await AssignDefaultPermissionsToRoleAsync(role);
-                }
-
-                // Ahora que el rol existe, lo asignamos al usuario
-                _context.UserRoles.Add(new UserRole
-                {
-                    IdUsuario = user.IdUsuario,
-                    IdRol = role.IdRol,
-                    EsActivo = true,
-                    FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
-                });
-                await _context.SaveChangesAsync();
-            }
-        }
-    }
-
-    public string GenerateToken(AuthResponse user)
-    {
-        var jwtSettings = _configuration.GetSection("JWTSettings");
-        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
-        var key = Encoding.UTF8.GetBytes(secret);
-
-        var systemsClaim = user.Sistemas ?? string.Empty;
-
-        var claims = new List<Claim>
-        {
-            new Claim("sub", user.IdReferencia ?? ""),
-            new Claim(ClaimTypes.NameIdentifier, user.IdReferencia ?? ""),
-            new Claim("nombre", user.NombreCompleto ?? ""),
-            new Claim(ClaimTypes.Name, user.NombreCompleto ?? ""),
-            new Claim("email", user.Email ?? ""),
-            new Claim("tipo_usuario", user.Administrador ? "ADMIN" : "USUARIO"),
-            new Claim("sistemas", systemsClaim ?? ""),
-            new Claim("id_usuario", user.IdUsuario.ToString()),
-            new Claim("user_uuid", user.UserUuid ?? ""),
-            new Claim("es_admin", user.Administrador.ToString().ToLower())
-        };
-
-        foreach (var roleCode in user.RoleCodes)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, roleCode));
-            claims.Add(new Claim("roles", roleCode));
-        }
-        foreach (var permission in user.Permissions)
-        {
-            claims.Add(new Claim("permission", permission));
-        }
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(8), // Vigencia de 8 horas para el acceso
-            Issuer = jwtSettings["Issuer"] ?? "auth_global_istpet",
-            Audience = jwtSettings["Audience"] ?? "all",
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    public string GenerateRefreshToken(string username)
-    {
-        var jwtSettings = _configuration.GetSection("JWTSettings");
-        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
-        var key = Encoding.UTF8.GetBytes(secret);
-
-        var claims = new List<Claim>
-        {
-            new Claim("sub", username),
-            new Claim("token_type", "refresh")
-        };
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(7), // Válido por 7 días
-            Issuer = jwtSettings["Issuer"] ?? "auth_global_istpet",
-            Audience = jwtSettings["Audience"] ?? "all",
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private async Task SeedRbacStructureAsync()
-    {
-        if (_rbacSeeded) return;
-
-        // 1. Asegurar Sistema
-        var system = await _context.Systems.FirstOrDefaultAsync(s => s.Codigo == "DIITRA");
-        if (system == null)
-        {
-            system = new SystemEntity { Codigo = "DIITRA", Detalle = "Dpto. Investigación e Innovación Traversari" };
-            _context.Systems.Add(system);
-            await _context.SaveChangesAsync();
-        }
-
-        // 2. Extraer todos los Módulos y Operaciones definidos en el Enum de Permisos
-        var permissions = typeof(diitra_domain.Identity.Enums.Permissions)
-            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy)
-            .Where(f => f.IsLiteral && !f.IsInitOnly)
-            .Select(f => f.GetValue(null)?.ToString() ?? "")
-            .Where(p => p.Contains(":"))
-            .Select(p => {
-                var parts = p.Split(':');
-                return new { Modulo = parts[0], Operacion = parts[1] };
-            })
-            .Distinct()
-            .ToList();
-
-        if (!permissions.Any())
-        {
-            _rbacSeeded = true;
-            return;
-        }
-
-        // 3. Traer todos los módulos, operaciones y relaciones de DIITRA a memoria en una sola tanda
-        var existingModules = await _context.Modules
-            .Where(m => m.IdSistema == system.IdSistema)
-            .ToDictionaryAsync(m => m.Nombre, m => m);
-
-        var existingOperations = await _context.Operations
-            .ToDictionaryAsync(o => o.NombreOperacion, o => o);
-
-        var existingRelations = await _context.ModuleOperations
-            .Where(mo => mo.Module.IdSistema == system.IdSistema)
-            .Select(mo => new { mo.IdModulos, mo.IdOperaciones })
-            .ToListAsync();
-
-        var relationSet = new HashSet<(int, int)>(
-            existingRelations.Select(r => (r.IdModulos, r.IdOperaciones))
-        );
-
-        bool changesMade = false;
-
-        foreach (var p in permissions)
-        {
-            // Asegurar Módulo en memoria / DB
-            if (!existingModules.TryGetValue(p.Modulo, out var module))
-            {
-                module = new IdentityModule { Nombre = p.Modulo, IdSistema = system.IdSistema, EsActivo = true };
-                _context.Modules.Add(module);
-                changesMade = true;
-                // Guardamos cambios temporalmente para obtener el ID generado por la base de datos
-                await _context.SaveChangesAsync();
-                existingModules[p.Modulo] = module;
-            }
-
-            // Asegurar Operación en memoria / DB
-            if (!existingOperations.TryGetValue(p.Operacion, out var operation))
-            {
-                operation = new IdentityOperation { NombreOperacion = p.Operacion };
-                _context.Operations.Add(operation);
-                changesMade = true;
-                await _context.SaveChangesAsync();
-                existingOperations[p.Operacion] = operation;
-            }
-
-            // Asegurar Relación Módulo-Operación
-            var relKey = (module.IdModulos, operation.IdOperaciones);
-            if (!relationSet.Contains(relKey))
-            {
-                _context.ModuleOperations.Add(new ModuleOperation
-                {
-                    IdModulos = module.IdModulos,
-                    IdOperaciones = operation.IdOperaciones,
-                    EsActivo = true,
-                    FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
-                });
-                changesMade = true;
-                relationSet.Add(relKey);
-            }
-        }
-
-        if (changesMade)
-        {
-            await _context.SaveChangesAsync();
-        }
-
-        _rbacSeeded = true;
-    }
-
-    private async Task AssignDefaultPermissionsToRoleAsync(Role role)
-    {
-        // Obtener el IdSistema de DIITRA primero (no se puede usar await dentro de Where lambda)
-        var diitraSistemaId = await _context.Systems
-            .Where(s => s.Codigo == "DIITRA")
-            .Select(s => s.IdSistema)
-            .FirstOrDefaultAsync();
-
-        // Obtener todas las operaciones de DIITRA
-        var diitraOps = await _context.ModuleOperations
-            .Include(mo => mo.Module)
-            .Include(mo => mo.Operation)
-            .Where(mo => mo.Module.IdSistema == diitraSistemaId)
-            .ToListAsync();
-
-        foreach (var op in diitraOps)
-        {
-            bool shouldAssign = false;
-            var perm = $"{op.Module.Nombre}:{op.Operation.NombreOperacion}".ToUpper();
-
-            if (role.CodigoRol == "DIITRA_ADMIN") shouldAssign = true; // Admin tiene TODO de DIITRA
-            else if (role.CodigoRol == "DIITRA_DOCENTE")
-            {
-                // Docentes: Gestión de proyectos y bitácora, pero no administración de sistema
-                if (perm.StartsWith("PROYECTOS") || perm.StartsWith("BITACORA") || perm.StartsWith("SOLICITUDES")) shouldAssign = true;
-                if (perm == "CONFIGURACION:VER") shouldAssign = true;
-            }
-            else if (role.CodigoRol == "DIITRA_ESTUDIANTE")
-            {
-                // Estudiantes: Solo ver y postular
-                if (perm == "PROYECTOS:VER" || perm == "PROYECTOS:POSTULAR") shouldAssign = true;
-            }
-            else if (role.CodigoRol == "DIITRA_REVISOR_EXTERNO")
-            {
-                // Revisores Externos: Solo ver proyectos asignados y realizar revisiones
-                if (perm == "PROYECTOS:VER" || perm.StartsWith("REVISIONES")) shouldAssign = true;
-            }
-
-            if (shouldAssign)
-            {
-                _context.RoleModuleOperations.Add(new RoleModuleOperation
-                {
-                    IdRol = role.IdRol,
-                    IdModulosOperaciones = op.IdModulosOperaciones,
-                    EsActivo = true,
-                    FechaAsignacion = DateOnly.FromDateTime(DateTime.Now)
-                });
-            }
-        }
-        await _context.SaveChangesAsync();
     }
 
     public async Task<AuthResponse?> RefreshAuthResponseAsync(string username)
@@ -654,868 +352,35 @@ public class AuthService : IAuthService
         return await GetAuthResponseAsync(user);
     }
 
-    public async Task<MagicLoginResponseDto?> ValidateAndConsumeMagicLinkAsync(string tokenHash, string? ipAddress, string? userAgent)
-    {
-        // El magic link es MULTI-USO hasta FechaExpiracion (fecha límite del arbitraje).
-        // No se marca como "utilizado" en cada acceso — solo puede ser invalidado
-        // administrativamente (Utilizado = true) o cuando vence la fecha del arbitraje.
-        // Esto permite al revisor volver al enlace del correo en cualquier momento durante el período.
-        var magicLink = await _context.Set<InvMagicLink>()
-            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash && !l.Utilizado && l.FechaExpiracion > DateTime.Now);
+    // ── DELEGACIÓN DE SUBSERVICIOS (FACHADA) ───────────────────────────────────
 
-        if (magicLink == null) return null;
+    public Task<MagicLoginResponseDto?> ValidateAndConsumeMagicLinkAsync(string tokenHash, string? ipAddress, string? userAgent)
+        => _magicLinkService.ValidateAndConsumeMagicLinkAsync(tokenHash, ipAddress, userAgent);
 
-        // Auditoría del último acceso (sin marcar como utilizado definitivamente)
-        magicLink.FechaUtilizado = DateTime.Now;
-        magicLink.IpUtilizacion = ipAddress;
-        magicLink.UserAgent = userAgent;
+    public Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress)
+        => _magicLinkService.ValidateAndConsumeHandoffPinAsync(pin, ipAddress);
 
-        // Generar un PIN nuevo en cada uso — de 5 caracteres
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusiones
-        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
-        var bytes = new byte[5];
-        rng.GetBytes(bytes);
-        var pin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
-        magicLink.CodigoPinHandoff = pin;
-        magicLink.FechaExpiracionPin = DateTime.Now.AddMinutes(30);
+    public Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate)
+        => _magicLinkService.CreateMagicLinkAsync(idUsuario, expirationDate);
 
-        await _context.SaveChangesAsync();
+    public Task<bool> ResendMagicLinkAsync(string email)
+        => _magicLinkService.ResendMagicLinkAsync(email);
 
-        var authResponse = await GetAuthResponseForUserByIdAsync(magicLink.IdUsuario);
-        if (authResponse == null) return null;
+    public Task<AuthResponse?> LoginWithMicrosoftAsync(MicrosoftLoginRequest request)
+        => _microsoftAuthService.LoginWithMicrosoftAsync(request);
 
-        return new MagicLoginResponseDto
-        {
-            Auth = authResponse,
-            Pin = pin
-        };
-    }
+    public Task<PasswordRecoveryRequestResult> RequestPasswordRecoveryAsync(string identificador, string? cedula, string? ipAddress)
+        => _passwordRecoveryService.RequestPasswordRecoveryAsync(identificador, cedula, ipAddress);
 
-    public async Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress)
-    {
-        // ── 1. Verificar bloqueo por IP ──────────────────────────────────────────
-        if (!string.IsNullOrEmpty(ipAddress))
-        {
-            if (_ipLockouts.TryGetValue(ipAddress, out var lockout))
-            {
-                if (lockout.LockedUntil > DateTime.Now)
-                {
-                    var secondsLeft = (int)(lockout.LockedUntil - DateTime.Now).TotalSeconds;
-                    throw new IpLockoutException($"Demasiados intentos fallidos. Esta dirección IP está bloqueada por {GetIpLockoutMinutes(lockout.Attempts)} minutos.", secondsLeft);
-                }
-            }
-        }
+    public Task<PasswordRecoveryValidationResult> ValidatePasswordRecoveryTokenAsync(string plainToken, string? ipAddress)
+        => _passwordRecoveryService.ValidatePasswordRecoveryTokenAsync(plainToken, ipAddress);
 
-        var magicLink = await _context.Set<InvMagicLink>()
-            .FirstOrDefaultAsync(l => l.CodigoPinHandoff == pin && l.FechaExpiracionPin > DateTime.Now);
+    public Task<bool> ChangePasswordAsync(int idUsuario, string currentPassword, string newPassword)
+        => _passwordRecoveryService.ChangePasswordAsync(idUsuario, currentPassword, newPassword);
 
-        if (magicLink == null)
-        {
-            // Incrementar contador de fallos por IP
-            if (!string.IsNullOrEmpty(ipAddress))
-            {
-                _ipLockouts.AddOrUpdate(ipAddress,
-                    (Attempts: 1, LockedUntil: DateTime.MinValue),
-                    (key, old) =>
-                    {
-                        var newAttempts = old.Attempts + 1;
-                        DateTime lockedUntil = DateTime.MinValue;
-                        if (newAttempts >= 3)
-                        {
-                            int minutes = GetIpLockoutMinutes(newAttempts);
-                            lockedUntil = DateTime.Now.AddMinutes(minutes);
-                        }
-                        return (newAttempts, lockedUntil);
-                    });
+    public Task<bool> RevertSuspiciousPasswordChangeAsync(string plainToken, string newPassword, string? ipAddress)
+        => _passwordRecoveryService.RevertSuspiciousPasswordChangeAsync(plainToken, newPassword, ipAddress);
 
-                if (_ipLockouts.TryGetValue(ipAddress, out var updatedLockout) && updatedLockout.LockedUntil > DateTime.Now)
-                {
-                    var secondsLeft = (int)(updatedLockout.LockedUntil - DateTime.Now).TotalSeconds;
-                    throw new IpLockoutException($"Demasiados intentos fallidos de PIN. Esta dirección IP ha sido bloqueada por {GetIpLockoutMinutes(updatedLockout.Attempts)} minutos.", secondsLeft);
-                }
-            }
-            return null;
-        }
-
-        // ── 2. Limpiar bloqueo e intentos en caso de éxito ─────────────────────────
-        if (!string.IsNullOrEmpty(ipAddress))
-        {
-            _ipLockouts.TryRemove(ipAddress, out _);
-        }
-
-        // Clear pin to make it one-time use
-        magicLink.CodigoPinHandoff = null;
-        magicLink.FechaExpiracionPin = null;
-
-        // Audit/log IP
-        magicLink.IpUtilizacion = ipAddress;
-
-        await _context.SaveChangesAsync();
-
-        return await GetAuthResponseForUserByIdAsync(magicLink.IdUsuario);
-    }
-
-    public async Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate)
-    {
-        // Generar token aleatorio criptográficamente seguro
-        var tokenBytes = new byte[32];
-        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(tokenBytes);
-        }
-        var plainToken = Convert.ToHexString(tokenBytes);
-
-        // Calcular Hash SHA-256
-        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-        var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-        // Guardar en inv_magic_links
-        var magicLink = new InvMagicLink
-        {
-            IdUsuario = idUsuario,
-            TokenHash = tokenHash,
-            FechaCreacion = DateTime.Now,
-            FechaExpiracion = expirationDate,
-            Utilizado = false
-        };
-
-        _context.Set<InvMagicLink>().Add(magicLink);
-        await _context.SaveChangesAsync();
-
-        return plainToken;
-    }
-
-    public async Task<bool> ResendMagicLinkAsync(string email)
-    {
-        email = email.Trim().ToLower();
-
-        // 1. Buscar alguna revisión/arbitraje pendiente activa cuyo revisor coincida con el email.
-        // Se permite incluso si la fecha límite ya pasó, de modo que el revisor pueda
-        // ingresar a completar evaluaciones retrasadas.
-        var pendingReview = await _context.Set<InvRevisionesPares>()
-            .Include(r => r.Revisor)
-            .Include(r => r.Proyecto)
-            .Where(r => r.Estado == "Pendiente" &&
-                        r.Revisor != null &&
-                        r.Revisor.Activo &&
-                        ((r.Revisor.EmailInstitucional != null && r.Revisor.EmailInstitucional.ToLower() == email) ||
-                         (r.Revisor.IdSigafi != null && r.Revisor.IdSigafi.ToLower() == email)))
-            .OrderByDescending(r => r.FechaLimite)
-            .FirstOrDefaultAsync();
-
-        if (pendingReview == null) return false;
-
-        // Validar si el plazo de la revisión ya venció
-        if (pendingReview.FechaLimite < DateTime.Now)
-        {
-            var autoExtend = pendingReview.Proyecto != null && pendingReview.Proyecto.AutoExtendDeadlines;
-            if (autoExtend)
-            {
-                var extensionDays = pendingReview.Proyecto != null ? pendingReview.Proyecto.AutoExtendDays : 7;
-                if (extensionDays <= 0) extensionDays = 7;
-
-                pendingReview.FechaLimite = DateTime.Now.AddDays(extensionDays);
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                throw new InvalidOperationException("El plazo de evaluación para este arbitraje ha vencido. Póngase en contacto con el administrador para solicitar una prórroga.");
-            }
-        }
-
-        var user = pendingReview.Revisor!;
-
-        // 2. Buscar si tiene un enlace mágico activo. Si lo tiene, lo invalidamos para generar uno nuevo.
-        var activeLink = await _context.Set<InvMagicLink>()
-            .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.Now)
-            .OrderByDescending(l => l.FechaExpiracion)
-            .FirstOrDefaultAsync();
-
-        DateTime expirationDate = pendingReview.FechaLimite;
-        if (activeLink != null)
-        {
-            activeLink.Utilizado = true;
-            expirationDate = activeLink.FechaExpiracion;
-        }
-
-        // Si la fecha del enlace activo es menor a la fecha límite del arbitraje (por ejemplo, después de extender),
-        // usamos el plazo extendido como expiración.
-        if (expirationDate < pendingReview.FechaLimite)
-        {
-            expirationDate = pendingReview.FechaLimite;
-        }
-
-        // 3. Crear un enlace nuevo con la fecha de expiración correspondiente
-        var plainToken = await CreateMagicLinkAsync(user.IdUsuario, expirationDate);
-
-        // 4. Enviar por correo
-        var baseUrl = GetFrontendUrl();
-        var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
-
-        var emailTitle = "Acceso de Arbitraje Científico - DIITRA (Reenvío)";
-        string emailBody;
-
-        var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "MagicLinkResend.html");
-        if (File.Exists(templatePath))
-        {
-            // Comprobar si la contraseña actual en la BD coincide con la temporal por defecto
-            bool mostrarCredenciales = BCrypt.Net.BCrypt.Verify("Diitra2026*", user.Contrasenia);
-
-            var templateHtml = await File.ReadAllTextAsync(templatePath);
-            var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
-            emailBody = template(new
-            {
-                fecha_limite = expirationDate.ToString("dd/MM/yyyy"),
-                username = user.IdSigafi,
-                mostrar_credenciales = mostrarCredenciales
-            });
-        }
-        else
-        {
-            emailBody = $"<p>Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.</p>" +
-                        $"<p>Acceso válido hasta: {expirationDate:dd/MM/yyyy}</p>";
-        }
-
-        await _notificationService.NotifyUserAsync(
-            user.IdUsuario,
-            emailTitle,
-            emailBody,
-            "PEER_REVIEW",
-            magicLinkUrl
-        );
-
-        return true;
-    }
-
-    public async Task<AuthResponse?> LoginWithMicrosoftAsync(MicrosoftLoginRequest request)
-    {
-        if (string.IsNullOrEmpty(request.IdToken))
-            return null;
-
-        string email;
-        string fullName;
-
-        // ── DESARROLLO: Simulación de Microsoft SSO para pruebas sin Azure AD ──
-        if (request.IdToken.StartsWith("mock-email:", StringComparison.OrdinalIgnoreCase))
-        {
-            var parts = request.IdToken.Split(':');
-            email = parts.Length > 1 ? parts[1] : "docente.test@istpet.edu.ec";
-            fullName = parts.Length > 2 ? parts[2] : "Docente Pruebas Microsoft";
-        }
-        else
-        {
-            try
-            {
-                var validated = await ValidateMicrosoftTokenAsync(request.IdToken);
-                if (validated == null)
-                {
-                    return null;
-                }
-                email = validated.Value.Email;
-                fullName = validated.Value.Name;
-            }
-            catch (Exception ex)
-            {
-                await _auditService.LogActionAsync(0, "LOGIN_FAILED", $"Fallo en validación de token Microsoft: {ex.Message}", "SEGURIDAD");
-                return null;
-            }
-        }
-
-        if (string.IsNullOrEmpty(email))
-            return null;
-
-        var emailPrefix = email.Contains('@') ? email.Split('@')[0] : email;
-
-        // 1. Buscar en usuarios de DIITRA
-        var user = await _context.Users.FirstOrDefaultAsync(u =>
-            u.Activo &&
-            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) ||
-             u.IdSigafi.ToLower() == email ||
-             u.IdSigafi.ToLower() == emailPrefix));
-
-        if (user == null)
-        {
-            // 2. Intentar buscar en Profesores para JIT Provisioning
-            var profesor = await _context.Profesores.FirstOrDefaultAsync(p =>
-                (p.Activo == 1 || p.Activo == null) &&
-                ((p.EmailInstitucional != null && p.EmailInstitucional.ToLower() == email) ||
-                 (p.Email != null && p.Email.ToLower() == email) ||
-                 p.IdProfesor.Trim() == emailPrefix));
-
-            if (profesor != null)
-            {
-                string name = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
-                if (string.IsNullOrEmpty(name)) name = fullName;
-
-                user = await ProvisionUserAsync(emailPrefix, name, Guid.NewGuid().ToString("N"), "profesor", profesor.IdProfesor.Trim());
-                await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor vía Microsoft SSO)", "SEGURIDAD");
-            }
-            else
-            {
-                // 3. Intentar buscar en Alumnos para JIT Provisioning
-                var alumno = await _context.Alumnos.FirstOrDefaultAsync(a =>
-                    ((a.EmailInstitucional != null && a.EmailInstitucional.ToLower() == email) ||
-                     (a.Email != null && a.Email.ToLower() == email) ||
-                     a.IdAlumno.Trim() == emailPrefix ||
-                     (a.UserAlumno != null && a.UserAlumno.Trim() == emailPrefix)));
-
-                if (alumno != null)
-                {
-                    string name = $"{alumno.PrimerNombre} {alumno.SegundoNombre} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Replace("  ", " ").Trim();
-                    if (string.IsNullOrEmpty(name)) name = fullName;
-
-                    user = await ProvisionUserAsync(emailPrefix, name, Guid.NewGuid().ToString("N"), "alumno", alumno.IdAlumno.Trim());
-                    await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Alumno vía Microsoft SSO)", "SEGURIDAD");
-                }
-            }
-        }
-        else
-        {
-            // Si el usuario existe, registrar auditoría de login
-            await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (Usuario DIITRA vía Microsoft SSO)", "SEGURIDAD");
-        }
-
-        // Si no se encuentra/provisiona el usuario, se bloquea el acceso retornando null
-        if (user == null)
-        {
-            return null;
-        }
-
-        return await GetAuthResponseAsync(user);
-    }
-
-    private async Task<(string Email, string Name)?> ValidateMicrosoftTokenAsync(string idToken)
-    {
-        var clientId = _configuration["Authentication:Microsoft:ClientId"];
-        var tenantId = _configuration["Authentication:Microsoft:TenantId"] ?? "common";
-
-        if (string.IsNullOrEmpty(clientId))
-        {
-            throw new InvalidOperationException("La autenticación con Microsoft no está configurada en el servidor (falta ClientId).");
-        }
-
-        var stsDiscoveryEndpoint = $"https://login.microsoftonline.com/{tenantId}/v2.0/.well-known/openid-configuration";
-
-        var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-            stsDiscoveryEndpoint,
-            new OpenIdConnectConfigurationRetriever(),
-            new HttpDocumentRetriever { RequireHttps = true }
-        );
-
-        var config = await configurationManager.GetConfigurationAsync(CancellationToken.None);
-
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateAudience = true,
-            ValidAudience = clientId,
-            ValidateIssuer = !tenantId.Equals("common", StringComparison.OrdinalIgnoreCase),
-            ValidIssuers = new[]
-            {
-                $"https://login.microsoftonline.com/{tenantId}/v2.0",
-                $"https://sts.windows.net/{tenantId}/"
-            },
-            IssuerSigningKeys = config.SigningKeys,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(5)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        try
-        {
-            var principal = tokenHandler.ValidateToken(idToken, validationParameters, out SecurityToken validatedToken);
-
-            var email = principal.FindFirst("preferred_username")?.Value
-                     ?? principal.FindFirst(ClaimTypes.Email)?.Value
-                     ?? principal.FindFirst(ClaimTypes.Name)?.Value;
-
-            var name = principal.FindFirst("name")?.Value
-                    ?? $"{principal.FindFirst(ClaimTypes.GivenName)?.Value} {principal.FindFirst(ClaimTypes.Surname)?.Value}";
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return null;
-            }
-
-            return (email.Trim().ToLower(), name ?? "");
-        }
-        catch (Exception ex)
-        {
-            throw new SecurityTokenException("El token de Microsoft no es válido o ha expirado.", ex);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  RECUPERACIÓN DE CONTRASEÑA
-    //  Flujo: Solicitud → Token en inv_magic_links (proposito=PASSWORD_RECOVERY)
-    //         → Enlace por email → Validación → Contraseña SIGAFI en pantalla
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Genera un token seguro de recuperación de contraseña y envía el enlace al correo
-    /// institucional del usuario. SIEMPRE retorna true para evitar enumeración de cuentas.
-    /// Rate limit: máximo 3 tokens activos por usuario en los últimos 15 minutos.
-    /// </summary>
-    public async Task<PasswordRecoveryRequestResult> RequestPasswordRecoveryAsync(string identificador, string? cedula, string? ipAddress)
-    {
-        var result = new PasswordRecoveryRequestResult { Exito = false };
-
-        if (string.IsNullOrWhiteSpace(identificador))
-        {
-            result.Exito = true;
-            return result;
-        }
-
-        identificador = identificador.Trim().ToLower();
-
-        // 1. Buscar coincidencias por correo o identificación
-        var userList = await _context.Users
-            .Where(u => u.Activo &&
-                (u.IdSigafi.ToLower() == identificador || (u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == identificador)))
-            .ToListAsync();
-
-        if (!userList.Any())
-        {
-            // Retornamos exito por seguridad contra enumeración de cuentas
-            result.Exito = true;
-            return result;
-        }
-
-        diitra_domain.Identity.Entities.User? user = null;
-
-        // Si hay múltiples cuentas activas vinculadas a la misma identificación/correo
-        if (userList.Count > 1)
-        {
-            if (string.IsNullOrWhiteSpace(cedula))
-            {
-                result.RequiereDesambiguacion = true;
-                result.Message = "Hemos detectado múltiples cuentas vinculadas a esta dirección de correo. Por favor, introduce tu número de cédula o identificación para confirmar a cuál de ellas deseas acceder.";
-                return result;
-            }
-
-            var cleanCedula = cedula.Trim().ToLower();
-            user = userList.FirstOrDefault(u => u.IdSigafi.ToLower() == cleanCedula);
-
-            if (user == null)
-            {
-                result.RequiereDesambiguacion = true;
-                result.Message = "El número de cédula o identificación provisto no coincide con ninguna de las cuentas vinculadas a este correo.";
-                return result;
-            }
-        }
-        else
-        {
-            user = userList.First();
-        }
-
-        // Verificar que tiene email
-        var emailDestino = user.EmailInstitucional;
-        if (string.IsNullOrEmpty(emailDestino))
-        {
-            result.Exito = true;
-            return result;
-        }
-
-        // 2. Rate limiting: máximo 3 tokens de recuperación activos en 15 min
-        var ventana = DateTime.Now.AddMinutes(-15);
-        var tokensRecientes = await _context.Set<InvMagicLink>()
-            .CountAsync(l => l.IdUsuario == user.IdUsuario
-                          && l.Proposito == "PASSWORD_RECOVERY"
-                          && l.FechaCreacion >= ventana
-                          && !l.Utilizado);
-
-        if (tokensRecientes >= 3)
-        {
-            await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_RATE_LIMIT",
-                $"Rate limit alcanzado para recuperación de contraseña desde IP {ipAddress}", "SEGURIDAD");
-            result.Exito = true;
-            return result; // Sin revelar el rate limit externamente
-        }
-
-        // 3. Invalidar tokens anteriores de recuperación activos para este usuario
-        var tokensAnteriores = await _context.Set<InvMagicLink>()
-            .Where(l => l.IdUsuario == user.IdUsuario && l.Proposito == "PASSWORD_RECOVERY" && !l.Utilizado)
-            .ToListAsync();
-
-        foreach (var t in tokensAnteriores)
-        {
-            t.Utilizado = true;
-            t.FechaUtilizado = DateTime.Now;
-        }
-
-        // 4. Generar token criptográfico seguro (32 bytes → hex → SHA-256 en BD)
-        var tokenBytes = new byte[32];
-        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(tokenBytes);
-        }
-        var plainToken = Convert.ToHexString(tokenBytes);
-        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-        var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-        // 5. Guardar en inv_magic_links con proposito=PASSWORD_RECOVERY
-        var recoveryLink = new InvMagicLink
-        {
-            IdUsuario = user.IdUsuario,
-            TokenHash = tokenHash,
-            FechaCreacion = DateTime.Now,
-            FechaExpiracion = DateTime.Now.AddMinutes(30),
-            Utilizado = false,
-            IpCreacion = ipAddress,
-            Proposito = "PASSWORD_RECOVERY"
-        };
-
-        _context.Set<InvMagicLink>().Add(recoveryLink);
-        await _context.SaveChangesAsync();
-
-        // 6. Construir enlace y enviar email usando el MasterLayout institucional
-        var baseUrl = GetFrontendUrl();
-        var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/ver-contrasenia?token={plainToken}";
-
-        // El body se inyecta dentro del MasterLayout — sin repetir cabecera ni pie
-        var emailBody =
-            $"<p>Has solicitado recuperar tu contraseña de acceso a <strong>DIITRA</strong>.</p>" +
-            $"<p>Haz clic en el botón a continuación para ver tu contraseña de forma segura. " +
-            $"<strong>Este enlace expira en 30 minutos y es de un solo uso.</strong></p>" +
-            $"<p style=\"color:#888888; font-size:12px;\">Si no realizaste esta solicitud, ignora este correo. " +
-            $"Tu contraseña no será revelada sin que hagas clic en el enlace.</p>";
-
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            var emailEngine = scope.ServiceProvider.GetRequiredService<diitra_application.Common.Notifications.IEmailEngineService>();
-            await emailEngine.SendTemplatedEmailAsync(new EmailSendRequest
-            {
-                DestinatariosUserIds = new List<int> { user.IdUsuario },
-                CustomSubject = "Recuperación de Contraseña — DIITRA",
-                CustomBody = emailBody,
-                TemplateData = new Dictionary<string, string>
-                {
-                    { "[[action_url]]", recoveryUrl }
-                }
-            });
-        }
-
-        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_REQUESTED",
-            $"Enlace de recuperación de contraseña generado y enviado a {emailDestino} desde IP {ipAddress}", "SEGURIDAD");
-
-        result.Exito = true;
-        return result;
-    }
-
-    /// <summary>
-    /// Valida el token de recuperación (un solo uso, 30 min) y retorna la contraseña
-    /// original de SIGAFI si está en texto plano. Consume el token al validarlo.
-    /// </summary>
-    public async Task<PasswordRecoveryValidationResult> ValidatePasswordRecoveryTokenAsync(string plainToken, string? ipAddress)
-    {
-        var invalido = new PasswordRecoveryValidationResult { Valido = false };
-
-        if (string.IsNullOrWhiteSpace(plainToken))
-            return invalido;
-
-        // 1. Hash del token recibido
-        byte[] tokenHashBytes;
-        try
-        {
-            tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-        }
-        catch { return invalido; }
-
-        var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-        // 2. Buscar token válido (no utilizado, no expirado, propósito correcto)
-        var link = await _context.Set<InvMagicLink>()
-            .Include(l => l.Usuario)
-            .FirstOrDefaultAsync(l =>
-                l.TokenHash == tokenHash &&
-                l.Proposito == "PASSWORD_RECOVERY" &&
-                !l.Utilizado &&
-                l.FechaExpiracion > DateTime.Now);
-
-        if (link == null) return invalido;
-
-        var user = link.Usuario;
-
-        // 3. Consumir token (un solo uso) si NO es revisor externo (los institucionales se consumen en la lectura)
-        if (user.TablaSigafi != "otros")
-        {
-            link.Utilizado = true;
-            link.FechaUtilizado = DateTime.Now;
-            link.IpUtilizacion = ipAddress;
-            await _context.SaveChangesAsync();
-        }
-
-        // 4. Obtener contraseña original de SIGAFI según la tabla fuente
-        string? passwordOriginal = null;
-        bool esHashInaccesible = false;
-
-        if (user.TablaSigafi == "profesor")
-        {
-            var profesor = await _context.Profesores
-                .FirstOrDefaultAsync(p => p.IdProfesor == user.IdSigafi);
-
-            if (profesor?.Clave != null)
-            {
-                if (IsBCryptHash(profesor.Clave))
-                    esHashInaccesible = true;
-                else
-                    passwordOriginal = profesor.Clave;
-            }
-        }
-        else if (user.TablaSigafi == "alumno")
-        {
-            var alumno = await _context.Alumnos
-                .FirstOrDefaultAsync(a => a.IdAlumno == user.IdSigafi);
-
-            if (!string.IsNullOrEmpty(alumno?.Password))
-                passwordOriginal = alumno.Password;
-        }
-
-        // Si no se encontró contraseña en la fuente, indicar que debe contactar admin
-        if (passwordOriginal == null && !esHashInaccesible)
-            esHashInaccesible = true;
-
-        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_VIEWED",
-            $"Contraseña consultada mediante token de recuperación desde IP {ipAddress}. " +
-            (esHashInaccesible ? "Hash inaccesible." : "Contraseña entregada."), "SEGURIDAD");
-
-        return new PasswordRecoveryValidationResult
-        {
-            Valido = true,
-            Password = passwordOriginal,
-            NombreUsuario = user.Nombre,
-            EsHashInaccesible = esHashInaccesible,
-            EsRevisorExterno = (user.TablaSigafi == "otros")
-        };
-    }
-
-    public async Task<bool> ChangePasswordAsync(int idUsuario, string currentPassword, string newPassword)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario && u.Activo);
-        if (user == null)
-        {
-            throw new InvalidOperationException("El usuario no existe o está inactivo.");
-        }
-
-        if (user.TablaSigafi != "otros")
-        {
-            throw new InvalidOperationException("Las cuentas institucionales deben cambiar su contraseña a través del portal de autogestión de la institución (SIGAFI).");
-        }
-
-        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
-        {
-            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
-        }
-
-        if (!VerifyPassword(user, currentPassword))
-        {
-            throw new InvalidOperationException("La contraseña actual ingresada es incorrecta.");
-        }
-
-        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
-        await _context.SaveChangesAsync();
-
-        // Enviar notificación de seguridad por correo electrónico
-        string? emailDestino = user.EmailInstitucional;
-        if (!string.IsNullOrEmpty(emailDestino))
-        {
-            try
-            {
-                // Invalidar tokens anteriores de recuperación activos para este usuario
-                var tokensAnteriores = await _context.Set<InvMagicLink>()
-                    .Where(l => l.IdUsuario == user.IdUsuario && l.Proposito == "PASSWORD_RECOVERY" && !l.Utilizado)
-                    .ToListAsync();
-
-                foreach (var t in tokensAnteriores)
-                {
-                    t.Utilizado = true;
-                    t.FechaUtilizado = DateTime.Now;
-                }
-
-                // Generar token criptográfico seguro (32 bytes -> hex -> SHA-256 en BD)
-                var tokenBytes = new byte[32];
-                using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(tokenBytes);
-                }
-                var plainToken = Convert.ToHexString(tokenBytes);
-                var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-                var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-                // Guardar el enlace de recuperación en inv_magic_links
-                var recoveryLink = new InvMagicLink
-                {
-                    IdUsuario = user.IdUsuario,
-                    TokenHash = tokenHash,
-                    FechaCreacion = DateTime.Now,
-                    FechaExpiracion = DateTime.Now.AddDays(7), // Válido por 7 días
-                    Utilizado = false,
-                    Proposito = "PASSWORD_SECURITY_ALERT"
-                };
-
-                _context.Set<InvMagicLink>().Add(recoveryLink);
-                await _context.SaveChangesAsync();
-
-                // Construir enlace de recuperación de emergencia
-                var baseUrl = GetFrontendUrl();
-                var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/reestablecer-alerta?token={plainToken}";
-
-                // Cuerpo del correo
-                var emailBody =
-                    $"<p>Hola, <strong>{user.Nombre}</strong>.</p>" +
-                    $"<p>Te informamos que la contraseña de tu cuenta de acceso a <strong>DIITRA</strong> ha sido cambiada recientemente.</p>" +
-                    $"<p>Si realizaste este cambio, no necesitas hacer nada.</p>" +
-                    $"<p><strong>¿No fuiste tú?</strong> Si no realizaste esta acción o consideras que se trata de un acceso no autorizado, por favor restablece tu contraseña inmediatamente haciendo clic en el siguiente enlace para expulsar cualquier sesión sospechosa:</p>" +
-                    $"<p><a href=\"{recoveryUrl}\" style=\"color:#0070f3; text-decoration:none; font-weight:600;\">Restablecer mi contraseña de seguridad</a></p>" +
-                    $"<p style=\"color:#888888; font-size:12px; margin-top: 15px;\">Por motivos de seguridad, este enlace es de un solo uso y es válido durante 7 días.</p>";
-
-                var emailRequest = new EmailSendRequest
-                {
-                    DestinatariosUserIds = new List<int> { user.IdUsuario },
-                    CustomSubject = "Notificación de seguridad: cambio de contraseña — DIITRA",
-                    CustomBody = emailBody
-                };
-
-                // Enviar el email en segundo plano (Fire-and-Forget) para no retrasar la respuesta de la API al cliente
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
-                        {
-                            var emailEngine = scope.ServiceProvider.GetRequiredService<diitra_application.Common.Notifications.IEmailEngineService>();
-                            await emailEngine.SendTemplatedEmailAsync(emailRequest);
-
-                            var audit = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                            await audit.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_SENT",
-                                $"Correo exclusivo de cambio de contraseña enviado a {emailDestino} con token de seguridad.", "SEGURIDAD");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Registramos el error de forma segura en caso de que ocurra en el hilo de segundo plano
-                        try
-                        {
-                            using (var scope = _serviceProvider.CreateScope())
-                            {
-                                var audit = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                                await audit.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_FAILED",
-                                    $"Error al enviar notificación de cambio de contraseña en segundo plano: {ex.Message}", "SEGURIDAD");
-                            }
-                        }
-                        catch { /* Evitar caídas del hilo */ }
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                // Capturar el error pero no fallar el cambio de contraseña si falla la inicialización del segundo plano
-                await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_CHANGED_NOTIFICATION_FAILED",
-                    $"Error al programar notificación de cambio de contraseña: {ex.Message}", "SEGURIDAD");
-            }
-        }
-
-        return true;
-    }
-
-    public async Task<bool> RevertSuspiciousPasswordChangeAsync(string plainToken, string newPassword, string? ipAddress)
-    {
-        if (string.IsNullOrWhiteSpace(plainToken))
-        {
-            throw new InvalidOperationException("El token es obligatorio.");
-        }
-
-        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-        var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-        var magicLink = await _context.Set<InvMagicLink>()
-            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash 
-                                   && l.Proposito == "PASSWORD_SECURITY_ALERT" 
-                                   && !l.Utilizado 
-                                   && l.FechaExpiracion > DateTime.Now);
-
-        if (magicLink == null)
-        {
-            throw new InvalidOperationException("El enlace de alerta de seguridad ha expirado, ya fue utilizado o es inválido.");
-        }
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == magicLink.IdUsuario && u.Activo);
-        if (user == null)
-        {
-            throw new InvalidOperationException("El usuario asociado no existe o está inactivo.");
-        }
-
-        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
-        {
-            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
-        }
-
-        // Revertir y cambiar la contraseña de inmediato
-        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
-        
-        // Consumir el token de seguridad
-        magicLink.Utilizado = true;
-        magicLink.FechaUtilizado = DateTime.Now;
-        magicLink.IpUtilizacion = ipAddress;
-
-        await _context.SaveChangesAsync();
-
-        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_REVERTED_ALERT",
-            $"Contraseña restablecida de emergencia tras reporte de actividad sospechosa desde IP {ipAddress}.", "SEGURIDAD");
-
-        return true;
-    }
-
-    public async Task<bool> ResetPasswordWithRecoveryTokenAsync(string plainToken, string newPassword, string? ipAddress)
-    {
-        if (string.IsNullOrWhiteSpace(plainToken))
-        {
-            throw new InvalidOperationException("El token es obligatorio.");
-        }
-
-        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-        var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-        var magicLink = await _context.Set<InvMagicLink>()
-            .Include(l => l.Usuario)
-            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash 
-                                   && l.Proposito == "PASSWORD_RECOVERY" 
-                                   && !l.Utilizado 
-                                   && l.FechaExpiracion > DateTime.Now);
-
-        if (magicLink == null)
-        {
-            throw new InvalidOperationException("El enlace de recuperación ha expirado, ya fue utilizado o es inválido.");
-        }
-
-        var user = magicLink.Usuario;
-        if (user == null || !user.Activo)
-        {
-            throw new InvalidOperationException("El usuario asociado no existe o está inactivo.");
-        }
-
-        if (user.TablaSigafi != "otros")
-        {
-            throw new InvalidOperationException("Solo los evaluadores externos pueden restablecer su contraseña local.");
-        }
-
-        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
-        {
-            throw new InvalidOperationException("La nueva contraseña debe tener al menos 8 caracteres.");
-        }
-
-        // Modificar contraseña
-        user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(newPassword, 11);
-        
-        // Consumir el token de recuperación
-        magicLink.Utilizado = true;
-        magicLink.FechaUtilizado = DateTime.Now;
-        magicLink.IpUtilizacion = ipAddress;
-
-        await _context.SaveChangesAsync();
-
-        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RESET_RECOVERY",
-            $"Contraseña restablecida de forma exitosa mediante flujo de recuperación desde IP {ipAddress}.", "SEGURIDAD");
-
-        return true;
-    }
+    public Task<bool> ResetPasswordWithRecoveryTokenAsync(string plainToken, string newPassword, string? ipAddress)
+        => _passwordRecoveryService.ResetPasswordWithRecoveryTokenAsync(plainToken, newPassword, ipAddress);
 }

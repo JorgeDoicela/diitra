@@ -109,6 +109,9 @@ builder.Services.AddControllers()
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<diitra_application.Security.Validators.LoginRequestValidator>();
 
+// Registrar MediatR para manejar Commands y Queries en diitra_application
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(diitra_application.Security.IAuthService).Assembly));
+
 // 3. Agregar SignalR con límites ampliados para soportar transporte de imágenes Base64 en CoWork
 builder.Services.AddSignalR(options =>
 {
@@ -161,11 +164,19 @@ builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageS
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Application Services (Modular Monolith)
+builder.Services.AddScoped<diitra_application.Security.ITokenService, diitra_infrastructure.Security.TokenService>();
+builder.Services.AddScoped<diitra_application.Security.IPasswordService, diitra_infrastructure.Security.PasswordService>();
+builder.Services.AddScoped<diitra_application.Security.IRbacService, diitra_infrastructure.Security.RbacService>();
+builder.Services.AddScoped<diitra_application.Security.IMagicLinkService, diitra_infrastructure.Security.MagicLinkService>();
+builder.Services.AddScoped<diitra_application.Security.IMicrosoftAuthService, diitra_infrastructure.Security.MicrosoftAuthService>();
+builder.Services.AddScoped<diitra_application.Security.IPasswordRecoveryService, diitra_infrastructure.Security.PasswordRecoveryService>();
 builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();
 builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_infrastructure.Security.AdminService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectSecurityService, ProjectSecurityService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectWizardService, ProjectWizardService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamChangeService, diitra_infrastructure.Research.ProjectTeamChangeService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamSyncService, diitra_infrastructure.Research.ProjectTeamSyncService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamService, ProjectTeamService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectQueryService, ProjectQueryService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();

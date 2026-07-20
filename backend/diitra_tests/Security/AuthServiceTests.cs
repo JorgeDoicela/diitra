@@ -23,6 +23,12 @@ public class AuthServiceTests
     private readonly Mock<IEmailEngineService> _mockEmailEngine;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
+    private readonly Mock<ITokenService> _mockTokenService;
+    private readonly Mock<IPasswordService> _mockPasswordService;
+    private readonly Mock<IRbacService> _mockRbacService;
+    private readonly Mock<IMagicLinkService> _mockMagicLinkService;
+    private readonly Mock<IMicrosoftAuthService> _mockMicrosoftAuthService;
+    private readonly Mock<IPasswordRecoveryService> _mockPasswordRecoveryService;
 
     public AuthServiceTests()
     {
@@ -33,6 +39,12 @@ public class AuthServiceTests
         _mockEmailEngine = new Mock<IEmailEngineService>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        _mockTokenService = new Mock<ITokenService>();
+        _mockPasswordService = new Mock<IPasswordService>();
+        _mockRbacService = new Mock<IRbacService>();
+        _mockMagicLinkService = new Mock<IMagicLinkService>();
+        _mockMicrosoftAuthService = new Mock<IMicrosoftAuthService>();
+        _mockPasswordRecoveryService = new Mock<IPasswordRecoveryService>();
 
         // Setup service provider mock hierarchy for dynamic scoping (GetRequiredService / CreateScope)
         var mockScope = new Mock<IServiceScope>();
@@ -54,7 +66,18 @@ public class AuthServiceTests
     public void GenerateToken_ShouldReturnValidJwtString()
     {
         // Arrange
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object, _mockServiceProvider.Object, _mockHttpContextAccessor.Object);
+        var realTokenService = new TokenService(_mockConfig.Object);
+        var service = new AuthService(
+            _mockContext.Object, 
+            _mockConfig.Object, 
+            _mockAudit.Object, 
+            _mockHttpContextAccessor.Object, 
+            realTokenService, 
+            _mockPasswordService.Object,
+            _mockRbacService.Object,
+            _mockMagicLinkService.Object,
+            _mockMicrosoftAuthService.Object,
+            _mockPasswordRecoveryService.Object);
         var authResponse = new AuthResponse
         {
             IdReferencia = "12345",
@@ -95,7 +118,17 @@ public class AuthServiceTests
         var mockAlumnos = GetMockDbSet(alumnosList);
         _mockContext.Setup(c => c.Alumnos).Returns(mockAlumnos.Object);
 
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object, _mockServiceProvider.Object, _mockHttpContextAccessor.Object);
+        var service = new AuthService(
+            _mockContext.Object, 
+            _mockConfig.Object, 
+            _mockAudit.Object, 
+            _mockHttpContextAccessor.Object, 
+            _mockTokenService.Object, 
+            _mockPasswordService.Object,
+            _mockRbacService.Object,
+            _mockMagicLinkService.Object,
+            _mockMicrosoftAuthService.Object,
+            _mockPasswordRecoveryService.Object);
         var request = new LoginRequest { Username = "wrong", Password = "wrong" };
 
         // Act

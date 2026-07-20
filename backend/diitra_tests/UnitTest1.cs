@@ -81,7 +81,9 @@ public class UnitTest1
             .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
         var queryService = new ProjectQueryService(context);
         var securityService = new ProjectSecurityService(context, queryService);
-        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, queryService, securityService, new Mock<ILogger<ProjectTeamService>>().Object);
+        var mockTeamChange = new Mock<IProjectTeamChangeService>();
+        var mockTeamSync = new Mock<IProjectTeamSyncService>();
+        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, mockTeamChange.Object, mockTeamSync.Object, new Mock<ILogger<ProjectTeamService>>().Object);
         var wizardService = new ProjectWizardService(context, mockAuth.Object, mockAudit.Object, queryService, teamService, new Mock<ILogger<ProjectWizardService>>().Object);
         
         var orchestrator = new ProjectOrchestrator(
@@ -305,7 +307,9 @@ public class UnitTest1
             .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
         var queryService = new ProjectQueryService(context);
         var securityService = new ProjectSecurityService(context, queryService);
-        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, queryService, securityService, new Mock<ILogger<ProjectTeamService>>().Object);
+        var mockTeamChange = new Mock<IProjectTeamChangeService>();
+        var mockTeamSync = new Mock<IProjectTeamSyncService>();
+        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, mockTeamChange.Object, mockTeamSync.Object, new Mock<ILogger<ProjectTeamService>>().Object);
         var wizardService = new ProjectWizardService(context, mockAuth.Object, mockAudit.Object, queryService, teamService, new Mock<ILogger<ProjectWizardService>>().Object);
         
         var orchestrator = new ProjectOrchestrator(

@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../api/ConfirmContext';
 import {
     X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2,
-    CheckCircle, Info, Bell, RotateCcw, Clock, ChevronRight, Layers, FileText, Search,
+    CheckCircle, Info, Bell, RotateCcw, Clock, Layers, FileText, Search,
     Folder, BarChart3, BookOpen, TrendingUp
 } from 'lucide-react';
 import {
@@ -23,6 +23,7 @@ import {
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import './CalendarioPage.css';
+import { CalendarioSidebar } from './components/CalendarioSidebar';
 
 const locales = { 'es': es };
 
@@ -986,154 +987,23 @@ export const CalendarioPage: React.FC = () => {
 
     return (
         <div className="calendario-page-container">
-            <div className="calendario-sidebar">
-                {/* Filtros */}
-                <div className="sidebar-section">
-                    <h3>Filtros de Agenda</h3>
-                    <div className="filtros-lista">
-                        {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
-                            <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
-                                <input
-                                    type="checkbox"
-                                    checked={categoriasVisibles[key]}
-                                    onChange={() => toggleCategoria(key)}
-                                />
-                                <span className="color-dot" />
-                                <span>{label}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Notas Rápidas (Inbox) */}
-                <div className="sidebar-section sticky-notes-section">
-                    <h3>Notas Rápidas</h3>
-                    <p className="ical-help-text mb-3">Arrastra las notas al tablero <strong>Kanban</strong> para planificarlas.</p>
-
-                    <div className="sticky-notes-grid">
-                        {stickyNotes.length === 0 ? (
-                            <p className="proximos-empty">Bandeja vacía</p>
-                        ) : (
-                            stickyNotes.map(note => {
-                                // Derivar chip de contexto desde url_accion
-                                const contextoChip = (() => {
-                                    const url = note.url_accion || '';
-                                    if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
-                                    if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
-                                    if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
-                                    if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
-                                    if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
-                                    if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
-                                    return null;
-                                })();
-
-                                return (
-                                    <div
-                                        key={note.uuid}
-                                        draggable
-                                        onDragStart={(e) => handleNoteDragStart(e, note)}
-                                        onDragEnd={handleGlobalDragEnd}
-                                        className={`sticky-note-card ${draggingUuid === note.uuid ? 'dragging' : ''}`}
-                                        style={{ '--note-color': note.color_hex || '#F59E0B' } as React.CSSProperties}
-                                    >
-                                        <div className="sticky-note-content">
-                                            <p className="sticky-note-text">{note.titulo}</p>
-                                            {note.nota_detalle && (
-                                                <p className="sticky-note-detalle">{note.nota_detalle}</p>
-                                            )}
-                                            {contextoChip && (
-                                                <div className="sticky-note-ctx-chip">
-                                                    <contextoChip.icon size={10} className="opacity-70" />
-                                                    <span>{contextoChip.label}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="sticky-note-actions" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                type="button"
-                                                className="sticky-note-action-btn"
-                                                onClick={() => handleEditEventClick(note)}
-                                                title="Editar nota"
-                                            >
-                                                <Edit2 size={11} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="sticky-note-action-btn delete"
-                                                onClick={() => handleDeleteStickyNote(note.uuid)}
-                                                title="Eliminar nota"
-                                            >
-                                                <Trash2 size={11} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-
-                {/* Próximos Eventos */}
-                <div className="sidebar-section proximos-section">
-                    <h3>Próximos Eventos</h3>
-                    {proximosEventos.length === 0 ? (
-                        <p className="proximos-empty">Sin eventos próximos</p>
-                    ) : (
-                        <div className="proximos-lista">
-                            {proximosEventos.map(ev => {
-                                const r = ev.resource;
-                                const esMismo = format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd');
-                                return (
-                                    <button
-                                        key={r.uuid}
-                                        className="proximo-item"
-                                        style={{ '--ev-color': r.color_hex || '#6B7280' } as React.CSSProperties}
-                                        onClick={() => setSelectedEvent(r)}
-                                    >
-                                        <span className="proximo-dot" />
-                                        <div className="proximo-info">
-                                            <span className="proximo-titulo">{r.titulo}</span>
-                                            <span className="proximo-fecha">
-                                                {esMismo ? 'Hoy' : format(ev.start as Date, 'd MMM', { locale: es })}
-                                            </span>
-                                        </div>
-                                        <ChevronRight size={12} className="proximo-arrow" />
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* iCal */}
-                <div className="sidebar-section ical-section">
-                    <h3>Sincronización de Agenda</h3>
-                    <p className="ical-help-text">Integra tus hitos en Google Calendar, Outlook o Apple Calendar.</p>
-                    {icalUrl ? (
-                        <div className="ical-container">
-                            <input
-                                type="text"
-                                readOnly
-                                value={icalUrl}
-                                className="ical-input"
-                                onClick={(e) => (e.target as HTMLInputElement).select()}
-                            />
-                            <div className="ical-buttons">
-                                <button onClick={handleCopyIcal} className="ical-btn primary">
-                                    {copied ? '¡Copiado!' : 'Copiar'}
-                                </button>
-                                <button onClick={handleGenerarToken} className="ical-btn secondary" disabled={generatingToken}>
-                                    {generatingToken ? '...' : 'Regenerar'}
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <button onClick={handleGenerarToken} className="ical-btn generate" disabled={generatingToken}>
-                            {generatingToken ? 'Generando...' : 'Obtener Enlace iCal'}
-                        </button>
-                    )}
-                </div>
-            </div>
+            <CalendarioSidebar
+                categoriasVisibles={categoriasVisibles}
+                toggleCategoria={toggleCategoria}
+                stickyNotes={stickyNotes}
+                draggingUuid={draggingUuid}
+                handleNoteDragStart={handleNoteDragStart}
+                handleGlobalDragEnd={handleGlobalDragEnd}
+                handleEditEventClick={handleEditEventClick}
+                handleDeleteStickyNote={handleDeleteStickyNote}
+                proximosEventos={proximosEventos}
+                setSelectedEvent={setSelectedEvent}
+                icalUrl={icalUrl}
+                copied={copied}
+                generatingToken={generatingToken}
+                handleCopyIcal={handleCopyIcal}
+                handleGenerarToken={handleGenerarToken}
+            />
 
             <div className={`calendario-main ${loading ? 'calendario-loading' : ''}`}>
 
