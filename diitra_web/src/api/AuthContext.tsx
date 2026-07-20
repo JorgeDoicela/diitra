@@ -7,7 +7,7 @@ interface User {
     role: string;
     tipo_usuario: string;
     permissions: string[];
-    administrador: boolean; 
+    administrador: boolean;
     roles: string[];
     usuario?: string;
     id_usuario?: number;
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
         const data = response.data;
-        
+
         // Normalizar los roles para usar los códigos de roles (role_codes) en lugar de los nombres descriptivos.
         // Esto mantiene la coherencia entre el estado posterior al login y el obtenido al refrescar la página.
         const normalizedUser: User = {
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: data.role_codes?.[0] || data.role,
             acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
         };
-        
+
         setUser(normalizedUser);
         localStorage.setItem('diitra_logged_in', 'true');
         return normalizedUser;
@@ -105,14 +105,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const magicLogin = async (token: string) => {
         const response = await api.post('/auth/magic-login', { token });
         const { auth, pin } = response.data;
-        
+
         const normalizedUser: User = {
             ...auth,
             roles: auth.role_codes || auth.roles || [],
             role: auth.role_codes?.[0] || auth.role,
             acepto_lopdp: auth.acepto_lopdp !== undefined ? auth.acepto_lopdp : auth.aceptoLopdp
         };
-        
+
         // Retornamos sin iniciar la sesión en este dispositivo de forma automática.
         // La sesión se establecerá explícitamente cuando el usuario confirme el acceso.
         return { user: normalizedUser, pin: pin || null, token: auth.token };
@@ -127,14 +127,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handoffLogin = async (pin: string) => {
         const response = await api.post('/auth/magic-handoff', { pin });
         const data = response.data;
-        
+
         const normalizedUser: User = {
             ...data,
             roles: data.role_codes || data.roles || [],
             role: data.role_codes?.[0] || data.role,
             acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
         };
-        
+
         setUser(normalizedUser);
         localStorage.setItem('diitra_logged_in', 'true');
         return normalizedUser;
@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 // Cierre de sesión en el backend
-                logoutTasks.push(api.post('/auth/logout').catch(() => {}));
+                logoutTasks.push(api.post('/auth/logout').catch(() => { }));
 
                 await Promise.all(logoutTasks);
             } catch (err) {
@@ -218,16 +218,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [isAdmin, isDocente, isEstudiante, isRevisor]);
 
     return (
-        <AuthContext.Provider value={{ 
-            user, 
-            isAuthenticated: !!user, 
-            isLoading, 
-            login, 
+        <AuthContext.Provider value={{
+            user,
+            isAuthenticated: !!user,
+            isLoading,
+            login,
             loginWithMicrosoft,
             magicLogin,
             confirmMagicLogin,
             handoffLogin,
-            logout, 
+            logout,
             refreshUser,
             hasPermission,
             roles,

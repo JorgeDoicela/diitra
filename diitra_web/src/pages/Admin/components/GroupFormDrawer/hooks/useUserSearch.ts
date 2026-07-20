@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../../../../api/axios_config';
+import api from '../../../../../api/axios_config';
 
 export function useUserSearch() {
     // Coordinador

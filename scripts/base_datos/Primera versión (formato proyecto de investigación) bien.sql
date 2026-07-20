@@ -319,9 +319,11 @@ CREATE TABLE inv_convocatorias (
     eliminado             TINYINT(1)    DEFAULT 0,
     fechaEliminacion      TIMESTAMP     NULL,
     eliminadoPorUsuarioId INT(11)       NULL,
+    idRubrica          INT           NULL,
     FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo),
     FOREIGN KEY (idTipoConvocatoria) REFERENCES inv_tipos_convocatoria(idTipoConvocatoria),
-    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################

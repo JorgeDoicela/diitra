@@ -45,7 +45,9 @@ public class UnitTest1
             "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDeadlines TINYINT(1) DEFAULT 0;",
             "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDays INT DEFAULT 7;",
             "ALTER TABLE inv_cronograma ADD COLUMN responsable VARCHAR(255) NULL;",
-            "ALTER TABLE inv_cronograma ADD COLUMN entregable TEXT NULL;"
+            "ALTER TABLE inv_cronograma ADD COLUMN entregable TEXT NULL;",
+            "ALTER TABLE inv_convocatorias ADD COLUMN idRubrica INT NULL;",
+            "ALTER TABLE inv_convocatorias ADD CONSTRAINT fk_conv_rubrica FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica) ON DELETE SET NULL;"
         };
 
         foreach (var sql in statements)
@@ -491,4 +493,6 @@ public class UnitTest1
             await context.SaveChangesAsync();
         }
     }
+
 }
+
