@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award } from 'lucide-react';
-import { useAuth } from '../../../api/AuthContext';
-import { useNotifications } from '../../../api/NotificationsContext';
-import api from '../../../api/axios_config';
+import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, ListChecks, Gavel } from 'lucide-react';
+import { useAuth } from '../../../../api/AuthContext';
+import { useNotifications } from '../../../../api/NotificationsContext';
+import api from '../../../../api/axios_config';
 import type { MenuItem, SidebarProject, NotificationItem } from '../types';
 
 const NOTIF_PANEL_WIDTH = 380;
@@ -226,25 +226,17 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 1 },
         { name: 'Calendario', icon: Calendar, path: '/calendario', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
-        { name: 'Mis Proyectos', icon: ListChecksIcon(), path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
+        { name: 'Mis Proyectos', icon: ListChecks || ShieldCheck, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 2 },
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 2 },
-        { name: 'Evaluación', icon: GavelIcon(), path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], group: 2 },
+        { name: 'Evaluación', icon: Gavel || ShieldCheck, path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], group: 2 },
         { name: 'Verificación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], group: 2 },
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN'], group: 2, hasChevron: true },
-        { name: 'Usuarios', icon: Users, permission: 'USUARIOS:VER', group: 3, hasChevron: true },
+        { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
     ];
-
-    function ListChecksIcon() {
-        return require('lucide-react').ListChecks || ShieldCheck;
-    }
-
-    function GavelIcon() {
-        return require('lucide-react').Gavel || ShieldCheck;
-    }
 
     const menuItems = allMenuItems.filter(item => {
         if (item.path === '/investigacion/mis-proyectos' && isAdmin) return false;

@@ -74,6 +74,8 @@ export const CalendarioPage: React.FC = () => {
         setFormDescripcion,
         formTipo,
         setFormTipo,
+        formColorHex,
+        setFormColorHex,
         formFechaInicio,
         setFormFechaInicio,
         formFechaFin,

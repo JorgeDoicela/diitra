@@ -39,7 +39,7 @@ namespace diitra_infrastructure.Research
         /// <summary>
         /// Constructor de retrocompatibilidad para pruebas unitarias e instancias directas.
         /// </summary>
-        public ProjectWizardService(
+        internal ProjectWizardService(
             DiitraContext context,
             IAuthService authService,
             IAuditService auditService,

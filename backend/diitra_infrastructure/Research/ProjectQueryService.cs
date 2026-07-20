@@ -36,7 +36,7 @@ namespace diitra_infrastructure.Research
         /// <summary>
         /// Constructor de compatibilidad para instanciación directa (ej. pruebas unitarias).
         /// </summary>
-        public ProjectQueryService(DiitraContext context)
+        internal ProjectQueryService(DiitraContext context)
         {
             var lookup = new ProjectLookupSubservice(context);
             _lookupSubservice = lookup;

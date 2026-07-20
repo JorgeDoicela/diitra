@@ -28,7 +28,7 @@ namespace diitra_infrastructure.Research
             _assignmentSubservice = assignmentSubservice;
         }
 
-        public PeerReviewAdminService(
+        internal PeerReviewAdminService(
             DiitraContext context,
             IAuthService authService,
             IAuditService auditService,

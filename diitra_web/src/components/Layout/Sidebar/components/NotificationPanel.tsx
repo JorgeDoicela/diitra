@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { ExternalLink, Info, AlertTriangle, Mail, Bell } from 'lucide-react';
-import { stripHtmlToText } from '../../../utils/notificationText';
+import { stripHtmlToText } from '../../../../utils/notificationText';
 import type { NotificationItem } from '../types';
 
 interface NotificationPanelProps {
