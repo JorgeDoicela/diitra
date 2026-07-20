@@ -1,18 +1,37 @@
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using diitra_application.Research;
 using Diitra.Application.Research;
 using diitra_application.Research.Dtos;
 using diitra_infrastructure.data.models;
-using Microsoft.Extensions.Logging;
+using diitra_application.Security;
+using diitra_application.Common.Notifications;
 
 namespace diitra_infrastructure.Research
 {
-    public partial class PeerReviewService : IPeerReviewService
+    public class PeerReviewPortalService : IPeerReviewPortalService
     {
+        private readonly DiitraContext _context;
+        private readonly IAuditService _auditService;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<PeerReviewPortalService> _logger;
+
+        public PeerReviewPortalService(
+            DiitraContext context,
+            IAuditService auditService,
+            INotificationService notificationService,
+            ILogger<PeerReviewPortalService> logger)
+        {
+            _context = context;
+            _auditService = auditService;
+            _notificationService = notificationService;
+            _logger = logger;
+        }
+
         public async Task<IEnumerable<PeerReviewDto>> GetPendingReviewsAsync(int revisorId)
         {
             var revisiones = await _context.Set<InvRevisionesPares>()
@@ -28,7 +47,7 @@ namespace diitra_infrastructure.Research
                     ? await _context.Users.FindAsync(r.IdRevisor.Value)
                     : null;
                 var nombreRevisor = user?.Nombre ?? "Revisor";
-                result.Add(MapToDto(r, nombreRevisor));
+                result.Add(PeerReviewHelper.MapToDto(r, nombreRevisor));
             }
 
             return result;
@@ -49,7 +68,7 @@ namespace diitra_infrastructure.Research
                     ? await _context.Users.FindAsync(r.IdRevisor.Value)
                     : null;
                 var nombreRevisor = user?.Nombre ?? "Revisor";
-                result.Add(MapToDto(r, nombreRevisor));
+                result.Add(PeerReviewHelper.MapToDto(r, nombreRevisor));
             }
 
             return result;
@@ -339,7 +358,7 @@ namespace diitra_infrastructure.Research
 
                     if (existingDoc != null && existingDoc.State != Diitra.Domain.Common.Documents.DocumentState.Signed)
                     {
-                        var criteriosRubrica = await ObtenerCriteriosRubricaAsync(project.IdConvocatoria);
+                        var criteriosRubrica = await PeerReviewHelper.ObtenerCriteriosRubricaAsync(_context, project.IdConvocatoria);
 
                         var criteriosSnapshot = dto.Detalles.Select(d =>
                         {
@@ -426,7 +445,7 @@ namespace diitra_infrastructure.Research
                         .Where(r => r.IdProyecto == project.IdProyecto)
                         .ToListAsync();
                     
-                    string currentEstadoArbitraje = DeterminarEstadoArbitraje(allProjectRevisions, umbralAprobacion);
+                    string currentEstadoArbitraje = PeerReviewHelper.DeterminarEstadoArbitraje(allProjectRevisions, umbralAprobacion);
                     if (currentEstadoArbitraje == "Desempate")
                     {
                         await _notificationService.NotifyByRoleCodesAsync(

@@ -79,13 +79,16 @@ public class UnitTest1
         
         mockAuth.Setup(a => a.GetOrProvisionUserByCedulaAsync(It.IsAny<string>()))
             .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
-            
+        var queryService = new ProjectQueryService(context);
+        var securityService = new ProjectSecurityService(context, queryService);
+        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, queryService, securityService, new Mock<ILogger<ProjectTeamService>>().Object);
+        var wizardService = new ProjectWizardService(context, mockAuth.Object, mockAudit.Object, queryService, teamService, new Mock<ILogger<ProjectWizardService>>().Object);
+        
         var orchestrator = new ProjectOrchestrator(
-            context,
-            mockAuth.Object,
-            mockAudit.Object,
-            mockNotification.Object,
-            mockLogger.Object
+            securityService,
+            wizardService,
+            teamService,
+            queryService
         );
         
         string json = "{\"Titulo\":\"\",\"IdCarrera\":0,\"IdConvocatoria\":0,\"Periodo\":\"\",\"TiempoEjecucion\":\"\",\"Programa\":\"\",\"GrupoInvestigacionTipo\":\"NO\",\"GrupoInvestigacionNombre\":\"\",\"Dominio\":\"\",\"LineaInvestigacion\":\"\",\"SublineaInvestigacion\":\"\",\"TipoInvestigacion\":\"APLICADA\",\"CampoAmplio\":\"\",\"CampoEspecifico\":\"\",\"CampoDetallado\":\"\",\"DirectorProyecto\":\"\",\"FechaPresentacion\":\"\",\"FechaInicio\":\"\",\"FechaFin\":\"\",\"Investigadores\":[],\"Antecedentes\":\"\",\"DescripcionProyecto\":\"\",\"Justificacion\":\"\",\"ObjetivoGeneral\":\"\",\"ObjetivosEspecificos\":\"\",\"ObjetivosDesarrolloSostenible\":\"\",\"MarcoTeorico\":\"\",\"Metodologia\":\"\",\"Evaluacion\":\"\",\"RecursosDisponibles\":[],\"RecursosNecesarios\":[],\"CostoTotal\":0,\"FinanciamientoIstpet\":false,\"FinanciamientoOtrasFuentes\":false,\"NombresOtrasFuentes\":\"\",\"ProductosEsperados\":[],\"Impacto\":{\"social\":\"\",\"cientifico\":\"\",\"economico\":\"\",\"politico\":\"\",\"ambiental\":\"\",\"otro\":\"\"},\"Cronograma\":[{\"Actividad\":\"Actividad\",\"Numero\":0,\"RecursosNecesarios\":\"Actividad\",\"id\":\"rand_j5nicbi\"},{\"Actividad\":\"\",\"Numero\":1,\"RecursosNecesarios\":\"\",\"id\":\"rand_q2gywrb\"}],\"Bibliografia\":\"\",\"FirmasResponsabilidad\":{\"DirectorNombre\":\"\",\"DirectorCargo\":\"Director del Proyecto\",\"CoordinadorNombre\":\"\",\"CoordinadorCargo\":\"Coordinador de Carrera\"},\"Uuid\":\"7921b3de-9682-4595-81ff-b974bcb0149c\",\"EntityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\",\"entityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\"}";
@@ -166,16 +169,14 @@ public class UnitTest1
         var mockLogger = new Mock<ILogger<PeerReviewService>>();
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
 
+        var portalService = new PeerReviewPortalService(context, mockAudit.Object, mockNotification.Object, new Mock<ILogger<PeerReviewPortalService>>().Object);
+        var adminService = new PeerReviewAdminService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, mockConfig.Object, mockHttpContextAccessor.Object);
+        var workflowService = new PeerReviewWorkflowService(context, mockAudit.Object, mockDocEngine.Object, mockNotification.Object, mockWorkflow.Object, new Mock<ILogger<PeerReviewWorkflowService>>().Object);
+
         var service = new PeerReviewService(
-            context,
-            mockAudit.Object,
-            mockDocEngine.Object,
-            mockNotification.Object,
-            mockConfig.Object,
-            mockAuth.Object,
-            mockWorkflow.Object,
-            mockLogger.Object,
-            mockHttpContextAccessor.Object
+            portalService,
+            adminService,
+            workflowService
         );
 
         var uniqueProjUuid = Guid.NewGuid().ToString();
@@ -302,13 +303,16 @@ public class UnitTest1
         
         mockAuth.Setup(a => a.GetOrProvisionUserByCedulaAsync(It.IsAny<string>()))
             .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
-            
+        var queryService = new ProjectQueryService(context);
+        var securityService = new ProjectSecurityService(context, queryService);
+        var teamService = new ProjectTeamService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, queryService, securityService, new Mock<ILogger<ProjectTeamService>>().Object);
+        var wizardService = new ProjectWizardService(context, mockAuth.Object, mockAudit.Object, queryService, teamService, new Mock<ILogger<ProjectWizardService>>().Object);
+        
         var orchestrator = new ProjectOrchestrator(
-            context,
-            mockAuth.Object,
-            mockAudit.Object,
-            mockNotification.Object,
-            mockLoggerOrch.Object
+            securityService,
+            wizardService,
+            teamService,
+            queryService
         );
         
         var mockStorage = new Mock<IFileStorageService>();
@@ -320,7 +324,7 @@ public class UnitTest1
         
         var mockEngine = new Mock<IDocumentEngine>();
         var mockDocOrch = new Mock<IDocumentDataOrchestrator>();
-        var controller = new DocumentInstancesController(instanceService, mockEngine.Object, mockDocOrch.Object);
+        var controller = new DocumentInstancesController(instanceService, mockEngine.Object, mockDocOrch.Object, context);
         
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "0302144159") };
         var identity = new ClaimsIdentity(claims, "TestAuth");

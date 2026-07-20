@@ -1,76 +1,88 @@
-using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using diitra_application.Research;
-using Diitra.Application.Research;
 using diitra_application.Research.Dtos;
-using diitra_application.Security;
-using diitra_domain.Identity.Entities;
-using diitra_infrastructure.data.models;
-using Diitra.Application.Common.Documents;
-using Diitra.Application.Common;
-using diitra_application.Common.Notifications;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http;
 
 namespace diitra_infrastructure.Research
 {
-    public partial class PeerReviewService : IPeerReviewService
+    public class PeerReviewService : IPeerReviewService
     {
-        private readonly DiitraContext _context;
-        private readonly IAuditService _auditService;
-        private readonly IDocumentEngine _documentEngine;
-        private readonly INotificationService _notificationService;
-        private readonly IConfiguration _configuration;
-        private readonly IAuthService _authService;
-        private readonly IWorkflowEngineService _workflowEngineService;
-        private readonly ILogger<PeerReviewService> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IPeerReviewPortalService _portalService;
+        private readonly IPeerReviewAdminService _adminService;
+        private readonly IPeerReviewWorkflowService _workflowService;
 
         public PeerReviewService(
-            DiitraContext context, 
-            IAuditService auditService, 
-            IDocumentEngine documentEngine, 
-            INotificationService notificationService, 
-            IConfiguration configuration, 
-            IAuthService authService, 
-            IWorkflowEngineService workflowEngineService,
-            ILogger<PeerReviewService> logger,
-            IHttpContextAccessor httpContextAccessor)
+            IPeerReviewPortalService portalService,
+            IPeerReviewAdminService adminService,
+            IPeerReviewWorkflowService workflowService)
         {
-            _context = context;
-            _auditService = auditService;
-            _documentEngine = documentEngine;
-            _notificationService = notificationService;
-            _configuration = configuration;
-            _authService = authService;
-            _workflowEngineService = workflowEngineService;
-            _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+            _portalService = portalService;
+            _adminService = adminService;
+            _workflowService = workflowService;
         }
 
-        private string GetFrontendUrl()
-        {
-            var configuredUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
-            
-            var httpContext = _httpContextAccessor?.HttpContext;
-            if (httpContext != null)
-            {
-                var request = httpContext.Request;
-                var host = request.Host.Value;
-                
-                if ((host.Contains("localhost") || host.Contains("127.0.0.1")) && 
-                    (configuredUrl.Contains("localhost:3000") || configuredUrl.Contains("localhost:5173")))
-                {
-                    return configuredUrl;
-                }
-                
-                var scheme = request.Scheme;
-                return $"{scheme}://{host}/diitra";
-            }
+        // ── Vista del Revisor ──────────────────────────────────────
+        public Task<IEnumerable<PeerReviewDto>> GetPendingReviewsAsync(int revisorId)
+            => _portalService.GetPendingReviewsAsync(revisorId);
 
-            return configuredUrl;
-        }
+        public Task<IEnumerable<PeerReviewDto>> GetMyReviewsAsync(int revisorId)
+            => _portalService.GetMyReviewsAsync(revisorId);
+
+        public Task<RubricaDinamicaDto?> GetRubricaForRevisionAsync(string revisionUuid)
+            => _portalService.GetRubricaForRevisionAsync(revisionUuid);
+
+        public Task<bool> SubmitEvaluationAsync(EvaluationDto dto)
+            => _portalService.SubmitEvaluationAsync(dto);
+
+        // ── Vista del Director / Admin ─────────────────────────────
+        public Task<IEnumerable<ArbitrajeProyectoDto>> GetArbitrajesActivosAsync()
+            => _adminService.GetArbitrajesActivosAsync();
+
+        public Task<ArbitrajeStatsDto> GetArbitrajeStatsAsync()
+            => _adminService.GetArbitrajeStatsAsync();
+
+        public Task<ArbitrajeProyectoDto?> GetArbitrajeByProjectAsync(string projectUuid)
+            => _adminService.GetArbitrajeByProjectAsync(projectUuid);
+
+        // ── Gestión de Árbitros ────────────────────────────────────
+        public Task<IEnumerable<RevisorDisponibleDto>> SearchRevisoresAsync(string query, bool soloExternos, string? projectUuid)
+            => _adminService.SearchRevisoresAsync(query, soloExternos, projectUuid);
+
+        public Task<string> AsignarArbitroAsync(AsignarArbitroDto dto, int directorId)
+            => _adminService.AsignarArbitroAsync(dto, directorId);
+
+        public Task<bool> RevocarAsignacionAsync(string revisionUuid, int directorId)
+            => _adminService.RevocarAsignacionAsync(revisionUuid, directorId);
+
+        public Task<bool> ExtenderFechaLimiteAsync(string revisionUuid, DateTime nuevaFecha, int directorId)
+            => _adminService.ExtenderFechaLimiteAsync(revisionUuid, nuevaFecha, directorId);
+
+        public Task<bool> UpdateProjectSettingsAsync(string projectUuid, PeerReviewSettingsDto dto)
+            => _adminService.UpdateProjectSettingsAsync(projectUuid, dto);
+
+        // ── Revisores Externos (sin cuenta institucional) ──────────
+        public Task<string> RegisterRevisorExternoAsync(RegistrarRevisorExternoDto dto, int directorId)
+            => _adminService.RegisterRevisorExternoAsync(dto, directorId);
+
+        public Task<IEnumerable<RevisorDisponibleDto>> GetRevisoresExternosAsync()
+            => _adminService.GetRevisoresExternosAsync();
+
+        // ── Cierre y Resolución ────────────────────────────────────
+        public Task<DictamenDto> CerrarArbitrajeAsync(string projectUuid, int directorId)
+            => _workflowService.CerrarArbitrajeAsync(projectUuid, directorId);
+
+        public Task<byte[]> GenerateDictamenPdfAsync(string projectUuid, int directorId)
+            => _workflowService.GenerateDictamenPdfAsync(projectUuid, directorId);
+
+        public Task<bool> IniciarEjecucionAsync(string projectUuid, int directorId)
+            => _workflowService.IniciarEjecucionAsync(projectUuid, directorId);
+
+        // ── Compatibilidad legado ──────────────────────────────────
+        public Task<string> AssignReviewerAsync(CreatePeerReviewDto dto)
+            => _adminService.AssignReviewerAsync(dto);
+
+        public Task<IEnumerable<PeerReviewDto>> GetProjectReviewsAsync(int projectId)
+            => _adminService.GetProjectReviewsAsync(projectId);
     }
 }

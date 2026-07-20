@@ -164,6 +164,10 @@ builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageS
 builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();
 builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_infrastructure.Security.AdminService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectSecurityService, ProjectSecurityService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectWizardService, ProjectWizardService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectTeamService, ProjectTeamService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectQueryService, ProjectQueryService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationService, diitra_infrastructure.Common.Notifications.NotificationService>();
 builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.EmailMasterLayoutRenderer>();
@@ -173,9 +177,14 @@ builder.Services.AddScoped<diitra_application.Common.Notifications.INotification
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.EmailDriver>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.PushDriver>();
 
+builder.Services.AddScoped<diitra_application.Research.IPeerReviewPortalService, PeerReviewPortalService>();
+builder.Services.AddScoped<diitra_application.Research.IPeerReviewAdminService, PeerReviewAdminService>();
+builder.Services.AddScoped<diitra_application.Research.IPeerReviewWorkflowService, PeerReviewWorkflowService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<diitra_application.Research.IInformeAvanceService, diitra_infrastructure.Research.InformeAvanceService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
+builder.Services.AddScoped<diitra_application.Research.IGroupsQueryService, GroupsQueryService>();
+builder.Services.AddScoped<diitra_application.Research.IGroupsWorkflowService, GroupsWorkflowService>();
 builder.Services.AddScoped<IGroupsService, GroupsService>();
 builder.Services.AddScoped<ICalendarioService, diitra_infrastructure.Research.CalendarioService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
