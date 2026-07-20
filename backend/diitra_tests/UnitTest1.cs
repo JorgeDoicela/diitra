@@ -494,5 +494,77 @@ public class UnitTest1
         }
     }
 
+    [Fact]
+    public async Task TestTemplateFileLoader_LoadCssAsync()
+    {
+        // Arrange
+        var mockEnv = new Mock<Microsoft.Extensions.Hosting.IHostEnvironment>();
+        mockEnv.Setup(e => e.EnvironmentName).Returns("Development");
+        
+        var loader = new Diitra.Infrastructure.Common.Documents.Engine.TemplateFileLoader(mockEnv.Object);
+        
+        // Act
+        var result = await loader.LoadCssAsync("TEMPLATE_INEXISTENTE_TEST");
+        
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task TestDocumentEngine_TemplateCssSync()
+    {
+        if (_skipTests) return;
+
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        
+        var mockTemplateRepo = new Mock<IDocumentTemplateRepository>();
+        var mockAuditRepo = new Mock<IDocumentAuditRepository>();
+        var mockLogger = new Mock<ILogger<DocumentEngine>>();
+        var mockConfig = new Mock<IConfiguration>();
+        var mockEnv = new Mock<Microsoft.Extensions.Hosting.IHostEnvironment>();
+        mockEnv.Setup(e => e.EnvironmentName).Returns("Development");
+
+        var testTemplate = Diitra.Domain.Common.Documents.DocumentTemplate.Create(
+            "PROTOCOLO_INVESTIGACION",
+            "Proyecto de Investigación Test",
+            "<html><body>{{titulo}}</body></html>",
+            Diitra.Domain.Common.Documents.DocumentCategory.Protocolo,
+            requiresLopdp: false
+        );
+
+        mockTemplateRepo.Setup(r => r.FindByCodeAsync("PROTOCOLO_INVESTIGACION", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testTemplate);
+
+        var engine = new DocumentEngine(
+            mockTemplateRepo.Object,
+            mockAuditRepo.Object,
+            mockLogger.Object,
+            mockConfig.Object,
+            mockEnv.Object,
+            context
+        );
+
+        var request = new DocumentRequest
+        {
+            TemplateCode = "PROTOCOLO_INVESTIGACION",
+            Data = new { titulo = "Proyecto Desacoplado Test" },
+            IsDraftMode = true,
+            IsBlindMode = false,
+            RequestedBy = "Test Suite"
+        };
+
+        // Act
+        var result = await engine.GenerateAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.PdfBytes);
+        Assert.NotNull(testTemplate.CustomCss);
+        Assert.Contains(".cover-page", testTemplate.CustomCss);
+    }
 }
 

@@ -117,6 +117,13 @@ namespace Diitra.Domain.Common.Documents
             UpdatedBy = "PHYSICAL_FILE_SYNC";
         }
 
+        public void UpdateCustomCssOnly(string? newCustomCss)
+        {
+            CustomCss = newCustomCss;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = "PHYSICAL_FILE_SYNC";
+        }
+
         public void SyncWithSeed(DocumentTemplate seed)
         {
             if (seed.HtmlContent != null && 

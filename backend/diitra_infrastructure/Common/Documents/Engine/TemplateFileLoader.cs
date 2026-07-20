@@ -62,6 +62,24 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         }
 
         /// <summary>
+        /// Carga el CSS de una plantilla dado su código (ej: "PROTOCOLO_INVESTIGACION").
+        /// Devuelve null si el archivo .css hermano no existe.
+        /// </summary>
+        public async Task<string?> LoadCssAsync(string templateCode)
+        {
+            var htmlPath = ResolveFilePath(templateCode);
+            var cssPath = Path.ChangeExtension(htmlPath, ".css");
+
+            if (!File.Exists(cssPath))
+            {
+                return null;
+            }
+
+            _logger?.LogDebug("TemplateFileLoader: Cargando CSS asociado '{Code}' desde '{Path}'.", templateCode, cssPath);
+            return await File.ReadAllTextAsync(cssPath);
+        }
+
+        /// <summary>
         /// Resuelve la ruta física del archivo .html para un código de plantilla dado.
         /// Convención de nombres: PROTOCOLO_INVESTIGACION → ProyectoInvestigacion.html
         /// Mapa explícito de código → nombre de archivo.

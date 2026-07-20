@@ -208,6 +208,21 @@ namespace Diitra.Infrastructure.Common.Documents
                     }
                 }
 
+                // 3b. Cargar CSS asociado desde archivo físico si existe
+                var fileCss = await _templateFileLoader.LoadCssAsync(template.Code);
+                if (fileCss != null)
+                {
+                    _logger.LogDebug("DIITRA DocumentEngine: Usando CSS desde archivo físico para '{Code}'.", template.Code);
+
+                    // Sincronización inteligente del CSS hacia la Base de Datos:
+                    if (fileCss != template.CustomCss)
+                    {
+                        _logger.LogInformation("DIITRA DocumentEngine: Detectado cambio en el archivo CSS físico de '{Code}'. Sincronizando en BD...", template.Code);
+                        template.UpdateCustomCssOnly(fileCss);
+                        await _templateRepository.SaveAsync(template, cancellationToken);
+                    }
+                }
+
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
                 var extraImageVars = new Dictionary<string, object?>();

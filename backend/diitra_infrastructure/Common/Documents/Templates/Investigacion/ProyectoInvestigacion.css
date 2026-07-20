@@ -1,0 +1,295 @@
+/* RESET & CORE */
+* {
+    box-sizing: border-box;
+}
+
+.page-break {
+    page-break-after: always;
+}
+
+@page {
+    margin-top: 3cm;
+    margin-bottom: 2cm;
+    margin-left: 2cm;
+    margin-right: 2cm;
+}
+
+@page:first {
+    margin: 0;
+}
+
+@page landscape-page {
+    size: A4 landscape;
+    margin-top: 1.8cm;
+    margin-bottom: 1.5cm;
+    margin-left: 1.2cm;
+    margin-right: 1.2cm;
+}
+
+.landscape-section {
+    page: landscape-page;
+    page-break-before: always;
+    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
+}
+
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.page {
+    page-break-after: always;
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+}
+
+/* PORTADA (COVER PAGE) FULL BLEED - Breaking out of the page margins to span 100% A4 */
+.cover-page {
+    font-family: 'Century Gothic', 'Inter', Arial, sans-serif;
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    color: #222c57;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.cover-overlay {
+    position: absolute;
+    top: 0;
+    left: 8.8cm;
+    /* Iniciamos exactamente donde termina la zona de triángulos */
+    right: 1.2cm;
+    bottom: 0;
+    padding: 2cm 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.main-label {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 28pt;
+    font-weight: bold;
+    color: #c4a857;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 8.2cm;
+    width: 100%;
+}
+
+.project-theme {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 18pt;
+    font-weight: bold;
+    color: #222c57;
+    text-transform: uppercase;
+    margin-top: 2.8cm;
+    margin-bottom: 2.8cm;
+    line-height: 1.2;
+    width: 100%;
+    word-wrap: break-word;
+}
+
+.career-container {
+    margin-top: 0;
+    margin-bottom: 2.5cm;
+    width: 100%;
+}
+
+.career-label {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 14pt;
+    font-weight: bold;
+    color: #222c57;
+    text-transform: uppercase;
+}
+
+.career-value {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 14pt;
+    font-weight: normal;
+    color: #222c57;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+
+.period-container {
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 1cm;
+}
+
+.period-label {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.period-value {
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 12pt;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+/* CUERPO DEL DOCUMENTO (PAGE 2+) */
+.doc-container {
+    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
+    color: #222c57;
+    line-height: 1.4;
+    padding: 0;
+    background: transparent;
+}
+
+.section-title {
+    color: #222c57;
+    padding: 4px 0;
+    font-weight: 800;
+    font-size: 10pt;
+    margin: 10px 0 4px 0;
+    text-transform: uppercase;
+}
+
+.info-table,
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 9pt;
+    background: #fff;
+}
+
+.info-table td {
+    border: 1px solid #000000;
+    padding: 0 8px;
+    height: 0.6cm;
+    vertical-align: middle;
+}
+
+.info-table .label {
+    font-weight: bold;
+    background: #222c57;
+    width: 35%;
+    text-transform: uppercase;
+    font-size: 8.5pt;
+    color: #ffffff;
+}
+
+.data-table th {
+    background: #222c57;
+    border: 1px solid #000000;
+    padding: 0 8px;
+    height: 0.6cm;
+    font-size: 8.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-align: center;
+}
+
+.data-table td {
+    border: 1px solid #000000;
+    padding: 0 8px;
+    height: 0.6cm;
+    background: #ffffff;
+    color: #000000;
+    vertical-align: middle;
+}
+
+.firma-box {
+    border: 1px solid #000000;
+    padding: 15px;
+    height: 100px;
+    vertical-align: bottom;
+    background: #fff;
+}
+
+.identificacion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.2;
+    background: #fff;
+}
+
+.identificacion-table td {
+    border: 1px solid #000000;
+    padding: 0 8px;
+    height: 0.6cm;
+    vertical-align: middle;
+    color: #000000;
+    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.2;
+}
+
+.identificacion-table .label {
+    font-weight: bold;
+    background: #222c57;
+    width: 35%;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-align: left;
+}
+
+.identificacion-table .label-white {
+    font-weight: bold;
+    background: #ffffff;
+    color: #000000;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.identificacion-table .date-header {
+    font-weight: bold;
+    background: #c4a857;
+    color: #000000;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 9pt;
+    padding: 0 8px;
+    height: 0.6cm;
+    border: 1px solid #000000;
+}
+
+.bg-gantt-0 {
+    background-color: #9ad3de !important;
+}
+
+.bg-gantt-1 {
+    background-color: #f9cb9c !important;
+}
+
+.bg-gantt-2 {
+    background-color: #ea9999 !important;
+}
+
+.bg-gantt-3 {
+    background-color: #4f81bd !important;
+}
+
+.bg-gantt-4 {
+    background-color: #0f243e !important;
+}
+
+.bg-gantt-5 {
+    background-color: #595959 !important;
+}
+
+.bg-gantt-6 {
+    background-color: #ffc000 !important;
+}
+
+.bg-gantt-7 {
+    background-color: #7030a0 !important;
+}
