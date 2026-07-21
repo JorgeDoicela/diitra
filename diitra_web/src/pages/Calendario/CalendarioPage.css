@@ -7,6 +7,12 @@ de estilo modularizadas de cada vista y componente para evitar archivos extensos
 =================================================================================
 */
 
+@import "./components/CalendarioSidebar.css";
+@import "./components/CalendarView.css";
+@import "./components/KanbanView.css";
+@import "./components/InboxView.css";
+@import "./components/EventoDrawers.css";
+
 /* ─── Layout principal y estructura base ─────────────────────────── */
 .calendario-page-container {
     display: flex;
@@ -104,10 +110,3 @@ de estilo modularizadas de cada vista y componente para evitar archivos extensos
     from { opacity: 0; }
     to   { opacity: 1; }
 }
-
-/* ─── Carga de submódulos CSS desacoplados ────────────────────────── */
-@import "./components/CalendarioSidebar.css";
-@import "./components/CalendarView.css";
-@import "./components/KanbanView.css";
-@import "./components/InboxView.css";
-@import "./components/EventoDrawers.css";

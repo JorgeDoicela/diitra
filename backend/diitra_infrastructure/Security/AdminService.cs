@@ -329,7 +329,7 @@ public class AdminService : IAdminService
             var assignedHoursList = await _context.InvProyectoParticipantes
                 .Include(pp => pp.IdProyectoNavigation)
                 .Where(pp => pp.TipoParticipante == "Docente" && linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
-                             estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
+                             pp.IdProyectoNavigation != null && estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                 .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
                 .ToListAsync();
 

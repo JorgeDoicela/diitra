@@ -102,11 +102,11 @@ namespace diitra_infrastructure.Research.Subservices
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
                     DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
-                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                         .FirstOrDefault()
                         ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
-                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
@@ -179,11 +179,11 @@ namespace diitra_infrastructure.Research.Subservices
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
                     DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
-                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                         .FirstOrDefault()
                         ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
-                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                         .FirstOrDefault()
                 })
                 .ToListAsync();

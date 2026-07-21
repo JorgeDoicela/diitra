@@ -1134,19 +1134,14 @@ INSERT INTO inv_lineas_investigacion (idLinea, uuid, codigoLinea, nombreLinea, d
 
 -- 4. Rúbricas de Evaluación (Base)
 INSERT INTO inv_rubricas (idRubrica, nombre, descripcion, version, activo) VALUES
-(1, 'Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
-(2, 'Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
+(1, 'Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1);
 
 -- 4.1 Criterios de Rúbricas
 INSERT INTO inv_rubrica_criterios (idRubrica, nombre, descripcion, pesoPorcentaje, orden) VALUES
 (1, 'Pertinencia Científica y Social', 'Vinculación con las líneas del IST Traversari y necesidades de desarrollo local en Quito.', 25.00, 1),
 (1, 'Metodología y Rigor Científico', 'Claridad metodológica, hipótesis, y coherencia en el diseño de experimentación.', 25.00, 2),
 (1, 'Viabilidad y Presupuesto', 'Coherencia de costos y recursos financieros y cronograma Gantt factible.', 25.00, 3),
-(1, 'Impacto Social y Tecnológico', 'Potencial de transferencia tecnológica, fomento de semilleros y aportes a indicadores CACES.', 25.00, 4),
-(2, 'Impacto Comunitario y Social', 'Beneficio directo a la población vulnerable del Distrito Metropolitano de Quito.', 30.00, 1),
-(2, 'Metodología de Intervención', 'Diseño de la participación estudiantil y talleres de vinculación con la comunidad.', 25.00, 2),
-(2, 'Sustentabilidad y Alianzas', 'Permanencia de la transferencia tecnológica y convenios firmados con aliados externos.', 25.00, 3),
-(2, 'Presupuesto y Eficiencia de Recursos', 'Distribución idónea del presupuesto operativo para impacto social.', 20.00, 4);
+(1, 'Impacto Social y Tecnológico', 'Potencial de transferencia tecnológica, fomento de semilleros y aportes a indicadores CACES.', 25.00, 4);
 
 -- 5. Tipos de Investigación (Se conservan los definidos al inicio del script para alineación con el Frontend: Básica, Aplicada, Desarrollo Experimental)
 -- 6. ODS (Se conservan los 17 ODS de la ONU y sus 5 ejes definidos al inicio del script)

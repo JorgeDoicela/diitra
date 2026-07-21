@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Users, Activity, BarChart3,
+    Activity, BarChart3,
     Megaphone,
     Fingerprint, FileText, Layers, ExternalLink,
     RotateCw, HelpCircle, Folder

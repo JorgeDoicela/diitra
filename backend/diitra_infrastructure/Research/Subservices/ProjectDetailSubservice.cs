@@ -392,11 +392,11 @@ namespace diitra_infrastructure.Research.Subservices
 
             dto.DirectorProyecto = p.InvProyectoParticipantes
                 .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null && pp.TipoParticipante == "Docente")
-                .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                 .FirstOrDefault()
                 ?? p.InvProyectoParticipantes
                 .Where(pp => pp.IdUsuarioNavigation != null && pp.TipoParticipante == "Docente")
-                .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                .Select(pp => pp.IdUsuarioNavigation!.Nombre)
                 .FirstOrDefault()
                 ?? dto.DirectorProyecto;
             if (p.IdGrupoNavigation != null)

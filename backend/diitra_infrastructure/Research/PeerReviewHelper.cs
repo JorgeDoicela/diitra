@@ -56,19 +56,7 @@ namespace diitra_infrastructure.Research
             if (string.IsNullOrWhiteSpace(criterioDetalle) || string.IsNullOrWhiteSpace(nombreCriterio))
                 return false;
 
-            if (criterioDetalle.Contains(nombreCriterio, StringComparison.OrdinalIgnoreCase)
-                || nombreCriterio.Contains(criterioDetalle, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            string[] keywords = ["pertinencia", "metodolog", "viabilidad", "presupuesto", "impacto"];
-            foreach (var kw in keywords)
-            {
-                if (criterioDetalle.Contains(kw, StringComparison.OrdinalIgnoreCase)
-                    && nombreCriterio.Contains(kw, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
+            return criterioDetalle.Trim().Equals(nombreCriterio.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         public static decimal CalcularPromedioPonderado(
@@ -129,6 +117,13 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync(r => r.Activo == true);
             }
 
+            if (rubrica == null)
+            {
+                rubrica = await context.InvRubricas
+                    .Include(r => r.InvRubricaCriterios)
+                    .FirstOrDefaultAsync();
+            }
+
             if (rubrica?.InvRubricaCriterios.Any() == true)
             {
                 return rubrica.InvRubricaCriterios
@@ -137,13 +132,7 @@ namespace diitra_infrastructure.Research
                     .ToList();
             }
 
-            return new List<(string, decimal)>
-            {
-                ("Pertinencia Científica y Social", 25m),
-                ("Metodología y Rigor Científico", 30m),
-                ("Impacto Social y Tecnológico", 25m),
-                ("Viabilidad y Presupuesto", 20m)
-            };
+            throw new InvalidOperationException("No se ha configurado ninguna rúbrica de evaluación con criterios en la base de datos.");
         }
     }
 }

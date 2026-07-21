@@ -138,41 +138,35 @@ namespace diitra_api.Controllers
                     .Include(r => r.InvRubricaCriterios)
                     .FirstOrDefaultAsync(r => r.Activo == true, ct);
 
+                if (rubricaActiva == null)
+                {
+                    rubricaActiva = await _context.InvRubricas
+                        .Include(r => r.InvRubricaCriterios)
+                        .FirstOrDefaultAsync(ct);
+                }
+
+                if (rubricaActiva == null || !rubricaActiva.InvRubricaCriterios.Any())
+                {
+                    return BadRequest(new { message = "No se ha configurado ninguna rúbrica de evaluación con criterios en la base de datos." });
+                }
+
                 var schema = new System.Collections.Generic.Dictionary<string, object>();
                 var fieldsList = new System.Collections.Generic.List<object>();
 
-                if (rubricaActiva != null && rubricaActiva.InvRubricaCriterios.Any())
+                foreach (var criterio in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
                 {
-                    foreach (var criterio in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
-                    {
-                        string keyName = System.Text.RegularExpressions.Regex.Replace(criterio.Nombre, @"\s+", "");
-                        schema.Add(keyName, 0);
+                    string keyName = $"Criterio_{criterio.IdCriterio}";
+                    schema.Add(keyName, 0);
 
-                        fieldsList.Add(new {
-                            name = keyName,
-                            label = $"{criterio.Nombre} (0-{(int)criterio.PesoPorcentaje})",
-                            type = "number",
-                            collaborative = false,
-                            min = (int?)0,
-                            max = (int?)criterio.PesoPorcentaje,
-                            options = (string[]?)null,
-                            placeholder = (string?)null
-                        });
-                    }
-                }
-                else
-                {
-                    schema.Add("Pertinencia", 0);
-                    schema.Add("Metodologia", 0);
-                    schema.Add("Viabilidad", 0);
-                    schema.Add("Impacto", 0);
-
-                    fieldsList.AddRange(new[]
-                    {
-                        new { name = "Pertinencia", label = "Pertinencia Social (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                        new { name = "Metodologia", label = "Metodología Científica (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                        new { name = "Viabilidad", label = "Viabilidad y Presupuesto (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
-                        new { name = "Impacto", label = "Impacto y Transferencia (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null }
+                    fieldsList.Add(new {
+                        name = keyName,
+                        label = $"{criterio.Nombre} (0-{(int)criterio.PesoPorcentaje})",
+                        type = "number",
+                        collaborative = false,
+                        min = (int?)0,
+                        max = (int?)criterio.PesoPorcentaje,
+                        options = (string[]?)null,
+                        placeholder = (string?)null
                     });
                 }
 

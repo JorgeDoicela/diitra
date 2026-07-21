@@ -139,40 +139,32 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync(r => r.Activo == true);
             }
 
-            List<CriterioRubricaDto> criterios;
-            string nombreRubrica;
-            int idRubrica;
-            decimal puntajeMinimo;
+            if (rubrica == null)
+            {
+                rubrica = await _context.InvRubricas
+                    .Include(r => r.InvRubricaCriterios)
+                    .FirstOrDefaultAsync();
+            }
 
-            if (rubrica != null && rubrica.InvRubricaCriterios.Any())
+            if (rubrica == null || !rubrica.InvRubricaCriterios.Any())
             {
-                criterios = rubrica.InvRubricaCriterios
-                    .OrderBy(c => c.Orden ?? 99)
-                    .Select(c => new CriterioRubricaDto
-                    {
-                        IdCriterio = c.IdCriterio,
-                        Nombre = c.Nombre,
-                        Descripcion = c.Descripcion,
-                        PesoPorcentaje = c.PesoPorcentaje,
-                        Orden = c.Orden ?? 0
-                    }).ToList();
-                nombreRubrica = rubrica.Nombre;
-                idRubrica = rubrica.IdRubrica;
-                puntajeMinimo = 70m;
+                throw new InvalidOperationException("No se encontró ninguna rúbrica de evaluación con criterios configurada en la base de datos.");
             }
-            else
-            {
-                criterios = new List<CriterioRubricaDto>
+
+            List<CriterioRubricaDto> criterios = rubrica.InvRubricaCriterios
+                .OrderBy(c => c.Orden ?? 99)
+                .Select(c => new CriterioRubricaDto
                 {
-                    new() { IdCriterio = -1, Nombre = "Pertinencia Científica y Social", Descripcion = "Relevancia del problema abordado en el contexto ecuatoriano y alineación con las líneas de investigación institucionales.", PesoPorcentaje = 25m, Orden = 1 },
-                    new() { IdCriterio = -2, Nombre = "Metodología y Rigor Científico", Descripcion = "Coherencia del enfoque metodológico, técnicas de recolección y análisis de datos propuestos.", PesoPorcentaje = 30m, Orden = 2 },
-                    new() { IdCriterio = -3, Nombre = "Impacto Social y Tecnológico", Descripcion = "Potencial de los resultados para generar transferencia tecnológica, publicaciones indexadas o beneficio comunitario.", PesoPorcentaje = 25m, Orden = 3 },
-                    new() { IdCriterio = -4, Nombre = "Viabilidad y Presupuesto", Descripcion = "Factibilidad de ejecución en el tiempo propuesto y coherencia entre objetivos, recursos y presupuesto.", PesoPorcentaje = 20m, Orden = 4 }
-                };
-                nombreRubrica = "Rúbrica Genérica CACES — IST";
-                idRubrica = 0;
-                puntajeMinimo = 70m;
-            }
+                    IdCriterio = c.IdCriterio,
+                    Nombre = c.Nombre,
+                    Descripcion = c.Descripcion,
+                    PesoPorcentaje = c.PesoPorcentaje,
+                    Orden = c.Orden ?? 0
+                }).ToList();
+
+            string nombreRubrica = rubrica.Nombre;
+            int idRubrica = rubrica.IdRubrica;
+            decimal puntajeMinimo = 70m;
 
             string tituloParaRevisor = proyecto.Titulo;
 
@@ -373,11 +365,6 @@ namespace diitra_infrastructure.Research
                             };
                         }).ToList();
 
-                        decimal pertinencia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Pertinencia"))?.Puntaje ?? 0;
-                        decimal metodologia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Metodología") || d.Criterio.Contains("Metodologia"))?.Puntaje ?? 0;
-                        decimal viabilidad = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Viabilidad") || d.Criterio.Contains("Presupuesto"))?.Puntaje ?? 0;
-                        decimal impacto = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Impacto"))?.Puntaje ?? 0;
-
                         string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
 
                         var dataSnapshot = new
@@ -386,10 +373,6 @@ namespace diitra_infrastructure.Research
                             RevisionUuid = revision.Uuid,
                             EsExterno = revision.EsExterno,
                             EvaluadorTipo = tipoEvaluador,
-                            Pertinencia = pertinencia,
-                            Metodologia = metodologia,
-                            Viabilidad = viabilidad,
-                            Impacto = impacto,
                             ComentariosGenerales = dto.ObservacionesGral ?? "",
                             RecomendacionFinal = totalScore >= umbralAprobacion ? "Aprobado sin modificaciones" : "Rechazado",
                             PuntajeTotal = totalScore,
