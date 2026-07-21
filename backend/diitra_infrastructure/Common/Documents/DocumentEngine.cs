@@ -467,13 +467,13 @@ namespace Diitra.Infrastructure.Common.Documents
 
         public async Task UpdateTemplateAsync(
             string templateCode, string newHtmlContent,
-            string? customCss, string updatedBy,
+            string? customCss, string? collaborativeFieldsJson, string updatedBy,
             CancellationToken cancellationToken = default)
         {
             var template = await _templateRepository.FindByCodeAsync(templateCode, cancellationToken)
                 ?? throw new KeyNotFoundException($"Plantilla '{templateCode}' no encontrada.");
 
-            template.UpdateContent(newHtmlContent, customCss, updatedBy);
+            template.UpdateContent(newHtmlContent, customCss, collaborativeFieldsJson, updatedBy);
             await _templateRepository.SaveAsync(template, cancellationToken);
 
             _logger.LogInformation(

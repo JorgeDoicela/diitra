@@ -135,6 +135,22 @@ select:focus-visible {
     text-wrap: balance;
 }
 
+/* Animación: Fade In Up (Dropdown Paleta de Bloques, Modales, etc.) */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .text-pretty {
     text-wrap: pretty;
 }
@@ -147,3 +163,70 @@ tr:hover:has(.action-btn-exclude:hover) h4 {
 tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
     color: var(--text-dim) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TIPTAP RICH TEXT EDITOR STYLES
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Placeholder */
+.tiptap-editor p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--text-dim);
+    opacity: 0.5;
+    pointer-events: none;
+    height: 0;
+    font-size: 0.75rem;
+}
+
+/* Paragraphs and lists */
+.tiptap-editor p { margin: 4px 0; }
+.tiptap-editor ul,
+.tiptap-editor ol { padding-left: 1.25rem; margin: 4px 0; }
+.tiptap-editor li { margin: 2px 0; }
+.tiptap-editor strong { font-weight: 700; }
+.tiptap-editor em { font-style: italic; }
+.tiptap-editor u { text-decoration: underline; }
+
+/* Tables inside rich text */
+.tiptap-editor table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0;
+    table-layout: fixed;
+    overflow: hidden;
+}
+.tiptap-editor td,
+.tiptap-editor th {
+    min-width: 1em;
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    vertical-align: top;
+    box-sizing: border-box;
+    position: relative;
+    font-size: 0.72rem;
+}
+.tiptap-editor th {
+    font-weight: 700;
+    background: var(--surface-hover);
+    text-align: left;
+}
+.tiptap-editor .selectedCell:after {
+    z-index: 2;
+    position: absolute;
+    content: "";
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: color-mix(in srgb, var(--brand) 15%, transparent);
+    pointer-events: none;
+}
+.tiptap-editor .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0; bottom: 0;
+    width: 4px;
+    background: var(--brand);
+    pointer-events: none;
+}
+
+/* rich-text-editor-area cursor */
+.rich-text-editor-area .tiptap-editor { min-height: 120px; }

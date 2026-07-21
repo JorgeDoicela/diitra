@@ -45,6 +45,7 @@ const CalendarioPage         = lazy(() => import('./pages/Calendario/CalendarioP
 const RecycleBinPage         = lazy(() => import('./pages/RecycleBin/RecycleBinPage'));
 const ResetAlertPage         = lazy(() => import('./pages/Auth/ResetAlertPage'));
 const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMaintenancePage'));
+const DocumentTemplatesPage   = lazy(() => import('./pages/Admin/Templates/DocumentTemplatesPage'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -265,6 +266,8 @@ function App() {
                             <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                              <Route path="/admin/documentos" element={<AdminRoute><DocumentMaintenancePage /></AdminRoute>} />
+                             <Route path="/admin/plantillas" element={<AdminRoute><DocumentTemplatesPage /></AdminRoute>} />
+                             <Route path="/templates" element={<Navigate to="/admin/plantillas" replace />} />
                              <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                              <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
                              <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />

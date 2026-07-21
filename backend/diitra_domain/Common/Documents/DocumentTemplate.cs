@@ -92,13 +92,22 @@ namespace Diitra.Domain.Common.Documents
             };
         }
 
-        public void UpdateContent(string newHtmlContent, string? customCss, string updatedBy)
+        public void UpdateContent(string newHtmlContent, string? customCss, string? collaborativeFieldsJson, string updatedBy)
         {
             HtmlContent = newHtmlContent;
             CustomCss = customCss;
+            if (collaborativeFieldsJson != null)
+            {
+                CollaborativeFieldsJson = collaborativeFieldsJson;
+            }
             Version++;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = updatedBy;
+        }
+
+        public void UpdateContent(string newHtmlContent, string? customCss, string updatedBy)
+        {
+            UpdateContent(newHtmlContent, customCss, null, updatedBy);
         }
 
         public void UpdateSignatureConfig(bool requiresSignature, string signatureType, string updatedBy)

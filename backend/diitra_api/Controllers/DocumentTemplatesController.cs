@@ -86,7 +86,7 @@ namespace diitra_api.Controllers
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
-                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, updatedBy, ct);
+                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, updatedBy, ct);
                 return Ok(new { message = $"Plantilla '{code}' actualizada correctamente." });
             }
             catch (KeyNotFoundException)
@@ -147,6 +147,6 @@ namespace diitra_api.Controllers
         }
     }
 
-    public record UpdateTemplateRequest(string HtmlContent, string? CustomCss = null);
+    public record UpdateTemplateRequest(string HtmlContent, string? CustomCss = null, string? CollaborativeFieldsJson = null);
     public record UpdateSignatureConfigRequest(bool RequiresSignature, string SignatureType);
 }
