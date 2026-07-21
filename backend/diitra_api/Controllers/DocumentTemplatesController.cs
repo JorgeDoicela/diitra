@@ -2,6 +2,7 @@ using Diitra.Application.Common.Documents;
 using Diitra.Infrastructure.Common.Documents;
 using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 namespace diitra_api.Controllers
 {
@@ -72,6 +73,8 @@ namespace diitra_api.Controllers
                 RequiresElectronicSignature = template.RequiresElectronicSignature,
                 SignatureType = template.SignatureType,
                 template.CollaborativeFieldsJson,
+                HtmlContent = template.HtmlContent,
+                CustomCss = template.CustomCss,
                 template.UpdatedAt
             });
         }
@@ -147,6 +150,24 @@ namespace diitra_api.Controllers
         }
     }
 
-    public record UpdateTemplateRequest(string HtmlContent, string? CustomCss = null, string? CollaborativeFieldsJson = null);
-    public record UpdateSignatureConfigRequest(bool RequiresSignature, string SignatureType);
+    public class UpdateTemplateRequest
+    {
+        [JsonPropertyName("htmlContent")]
+        public string HtmlContent { get; set; } = string.Empty;
+
+        [JsonPropertyName("customCss")]
+        public string? CustomCss { get; set; }
+
+        [JsonPropertyName("collaborativeFieldsJson")]
+        public string? CollaborativeFieldsJson { get; set; }
+    }
+
+    public class UpdateSignatureConfigRequest
+    {
+        [JsonPropertyName("requiresSignature")]
+        public bool RequiresSignature { get; set; }
+
+        [JsonPropertyName("signatureType")]
+        public string SignatureType { get; set; } = string.Empty;
+    }
 }

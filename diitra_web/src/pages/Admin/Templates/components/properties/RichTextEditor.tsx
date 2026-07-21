@@ -43,17 +43,18 @@ const ToolbarButton: React.FC<{
 );
 
 export const RichTextEditor: React.FC<Props> = ({ block, fieldKey, placeholder, onUpdateConfig }) => {
+    const extensions = React.useMemo(() => [
+        StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Placeholder.configure({ placeholder: placeholder ?? 'Escribe el contenido aquí. Usa las herramientas para dar formato.' }),
+    ], [placeholder]);
+
     const editor = useEditor({
-        extensions: [
-            StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
-            Underline,
-            Table.configure({ resizable: true }),
-            TableRow,
-            TableHeader,
-            TableCell,
-            Placeholder.configure({ placeholder: placeholder ?? 'Escribe el contenido aquí. Usa las herramientas para dar formato.' }),
-        ],
+        extensions,
         content: block.config[fieldKey] || '',
         onUpdate({ editor }) {
             onUpdateConfig(block.id, fieldKey, editor.getHTML());

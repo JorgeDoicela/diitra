@@ -14,6 +14,7 @@ interface GeneralSectionProps {
     sublineas?: any[];
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
     isAdmin?: boolean;
+    config?: any;
 }
 
 const isPastDeadline = (fechaCierre: string) => {
@@ -39,7 +40,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     lineas = [],
     sublineas = [],
     onUpdate,
-    isAdmin = false
+    isAdmin = false,
+    config
 }) => {
     const [misCarreras, setMisCarreras] = React.useState<any[]>([]);
     React.useEffect(() => {
@@ -49,6 +51,17 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 .catch(err => console.error("Error al cargar carreras del docente:", err));
         }
     }, [isAdmin]);
+
+    const showTitulo = config?.showTitulo !== false;
+    const showPrograma = config?.showPrograma !== false;
+    const showGrupo = config?.showGrupo !== false;
+    const showLinea = config?.showLinea !== false;
+    const showTipo = config?.showTipo !== false;
+    const showCaces = config?.showCaces !== false;
+    const showCarrera = config?.showCarrera !== false;
+    const showConvocatoria = config?.showConvocatoria !== false;
+    const showFechas = config?.showFechas !== false;
+    const showDirector = config?.showDirector !== false;
 
     const filteredCarreras = React.useMemo(() => {
         if (isAdmin) return carreras;
@@ -227,13 +240,11 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         onUpdate('GrupoInvestigacionNombre', groupName, meta);
         onUpdate('GrupoInvestigacion', groupName, { source: 'system' });
         
-        // Only run auto-population for local user interactions
         if (meta?.source !== 'local') return;
 
         if (!groupName) {
             onUpdate('GrupoInvestigacionUuid', '', { source: 'system' });
             onUpdate('GrupoInvestigacion', '', { source: 'system' });
-            // Clear auto-populated fields
             onUpdate('Dominio', '', { source: 'system' });
             onUpdate('LineaInvestigacion', '', { source: 'system' });
             onUpdate('SublineaInvestigacion', '', { source: 'system' });
@@ -244,7 +255,6 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         if (group) {
             onUpdate('GrupoInvestigacionUuid', group.uuid, { source: 'system' });
 
-            // Auto-populate academic domain
             const domId = group.id_dominio ?? group.idDominio;
             if (domId && dominios.length > 0) {
                 const dom = dominios.find((d: any) => (d.id_dominio ?? d.idDominio) === domId);
@@ -253,7 +263,6 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 }
             }
 
-            // Auto-populate lines of investigation
             const groupLineIds = group.lineas_ids || group.lineasIds || [];
             if (groupLineIds.length === 1 && lineas.length > 0) {
                 const matchedLine = lineas.find((l: any) => (l.id ?? l.idLinea) === groupLineIds[0]);
@@ -261,7 +270,6 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     const lineName = matchedLine.nombre ?? matchedLine.nombreLinea;
                     onUpdate('LineaInvestigacion', lineName, { source: 'system' });
 
-                    // Auto-populate subline
                     const subId = matchedLine.id ?? matchedLine.idLinea;
                     const matchedSublines = sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === subId);
                     if (matchedSublines.length === 1) {
@@ -303,349 +311,374 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     return (
         <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
             {/* Título del Proyecto */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="Titulo" 
-                    cowork={cowork} 
-                    label="TEMA / NOMBRE DEL PROYECTO (ESCRIBIR EN MAYÚSCULAS)" 
-                    onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
-                    uppercase={true}
-                />
-            </div>
+            {showTitulo && (
+                <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    <CoWorkField 
+                        name="Titulo" 
+                        cowork={cowork} 
+                        label="TEMA / NOMBRE DEL PROYECTO (ESCRIBIR EN MAYÚSCULAS)" 
+                        onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
+                        uppercase={true}
+                    />
+                </div>
+            )}
 
             {/* Fila 1: Programa */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="Programa" 
-                    cowork={cowork} 
-                    label="Programa" 
-                    onValueChange={(v, meta) => onUpdate('Programa', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-            </div>
+            {showPrograma && (
+                <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    <CoWorkField 
+                        name="Programa" 
+                        cowork={cowork} 
+                        label="Programa" 
+                        onValueChange={(v, meta) => onUpdate('Programa', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                    />
+                </div>
+            )}
 
             {/* Fila 2: Grupo de Investigación */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
-                <div className="md:col-span-4 space-y-1.5 sm:space-y-3">
-                    <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">¿Grupo de Investigación?</label>
-                    <select 
-                        disabled={true}
-                        value={formData.GrupoInvestigacionTipo || 'NO'}
-                        className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none animate-fade-in"
-                    >
-                        <option value="NO">NO</option>
-                        <option value="SI">SI</option>
-                    </select>
+            {showGrupo && (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+                    <div className="md:col-span-4 space-y-1.5 sm:space-y-3">
+                        <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">¿Grupo de Investigación?</label>
+                        <select 
+                            disabled={true}
+                            value={formData.GrupoInvestigacionTipo || 'NO'}
+                            className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none animate-fade-in"
+                        >
+                            <option value="NO">NO</option>
+                            <option value="SI">SI</option>
+                        </select>
+                    </div>
+                    {formData.GrupoInvestigacionTipo === 'SI' && (
+                        <div className="md:col-span-8 animate-fade-in">
+                            <CoWorkField 
+                                name="GrupoInvestigacionNombre" 
+                                cowork={cowork} 
+                                type="select"
+                                label="Nombre del Grupo de Investigación" 
+                                onValueChange={handleGroupChange}
+                                readOnly={true}
+                                className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none transition-all" 
+                            >
+                                <option value="">-- Seleccione un Grupo Aprobado --</option>
+                                {approvedGroups.map((g: any) => (
+                                    <option key={g.uuid} value={g.nombre}>
+                                        {g.nombre} ({g.siglas})
+                                    </option>
+                                ))}
+                            </CoWorkField>
+                        </div>
+                    )}
                 </div>
-                {formData.GrupoInvestigacionTipo === 'SI' && (
-                    <div className="md:col-span-8 animate-fade-in">
+            )}
+
+            {/* Fila 3: Dominio, Línea y Sublínea */}
+            {showLinea && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
+                    <div>
+                        {formData.GrupoInvestigacionTipo === 'SI' ? (
+                            <CoWorkField 
+                                name="Dominio" 
+                                cowork={cowork} 
+                                label="Dominio Académico" 
+                                readOnly={true}
+                                className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-dim cursor-not-allowed outline-none" 
+                            />
+                        ) : (
+                            <CoWorkField 
+                                name="Dominio" 
+                                cowork={cowork} 
+                                type="select"
+                                label="Dominio Académico" 
+                                onValueChange={(v, meta) => onUpdate('Dominio', v, meta)}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                            >
+                                <option value="">Seleccione Dominio...</option>
+                                {dominios.map((d: any) => (
+                                    <option key={d.id_dominio ?? d.idDominio} value={d.nombre}>{d.nombre}</option>
+                                ))}
+                            </CoWorkField>
+                        )}
+                    </div>
+                    
+                    <div>
                         <CoWorkField 
-                            name="GrupoInvestigacionNombre" 
+                            name="LineaInvestigacion" 
                             cowork={cowork} 
                             type="select"
-                            label="Nombre del Grupo de Investigación" 
-                            onValueChange={handleGroupChange}
-                            readOnly={true}
-                            className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none transition-all" 
+                            label="Línea de Investigación" 
+                            onValueChange={handleLineChange}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                         >
-                            <option value="">-- Seleccione un Grupo Aprobado --</option>
-                            {approvedGroups.map((g: any) => (
-                                <option key={g.uuid} value={g.nombre}>
-                                    {g.nombre} ({g.siglas})
+                            <option value="">Seleccione Línea...</option>
+                            {availableLines.map((l: any) => {
+                                const lineName = l.nombre ?? l.nombreLinea;
+                                return (
+                                    <option key={l.id ?? l.idLinea} value={lineName}>
+                                        {lineName}
+                                    </option>
+                                );
+                            })}
+                        </CoWorkField>
+                    </div>
+                    
+                    <div>
+                        <CoWorkField 
+                            name="SublineaInvestigacion" 
+                            cowork={cowork} 
+                            type="select"
+                            label="Sublínea de Investigación" 
+                            onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                        >
+                            <option value="">Seleccione Sublínea...</option>
+                            {availableSublines.map((s: any) => (
+                                <option key={s.idSublinea ?? s.id_sublinea} value={s.nombre}>
+                                    {s.nombre}
                                 </option>
                             ))}
                         </CoWorkField>
                     </div>
-                )}
-            </div>
-
-            {/* Fila 3: Dominio, Línea y Sublínea */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
-                <div>
-                    {formData.GrupoInvestigacionTipo === 'SI' ? (
-                        <CoWorkField 
-                            name="Dominio" 
-                            cowork={cowork} 
-                            label="Dominio Académico" 
-                            readOnly={true}
-                            className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-dim cursor-not-allowed outline-none" 
-                        />
-                    ) : (
-                        <CoWorkField 
-                            name="Dominio" 
-                            cowork={cowork} 
-                            type="select"
-                            label="Dominio Académico" 
-                            onValueChange={(v, meta) => onUpdate('Dominio', v, meta)}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                        >
-                            <option value="">Seleccione Dominio...</option>
-                            {dominios.map((d: any) => (
-                                <option key={d.id_dominio ?? d.idDominio} value={d.nombre}>{d.nombre}</option>
-                            ))}
-                        </CoWorkField>
-                    )}
                 </div>
-                
-                <div>
-                    <CoWorkField 
-                        name="LineaInvestigacion" 
-                        cowork={cowork} 
-                        type="select"
-                        label="Línea de Investigación" 
-                        onValueChange={handleLineChange}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                    >
-                        <option value="">Seleccione Línea...</option>
-                        {availableLines.map((l: any) => {
-                            const lineName = l.nombre ?? l.nombreLinea;
-                            return (
-                                <option key={l.id ?? l.idLinea} value={lineName}>
-                                    {lineName}
-                                </option>
-                            );
-                        })}
-                    </CoWorkField>
-                </div>
-                
-                <div>
-                    <CoWorkField 
-                        name="SublineaInvestigacion" 
-                        cowork={cowork} 
-                        type="select"
-                        label="Sublínea de Investigación" 
-                        onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                    >
-                        <option value="">Seleccione Sublínea...</option>
-                        {availableSublines.map((s: any) => (
-                            <option key={s.idSublinea ?? s.id_sublinea} value={s.nombre}>
-                                {s.nombre}
-                            </option>
-                        ))}
-                    </CoWorkField>
-                </div>
-            </div>
+            )}
 
             {/* Fila 4: Tipo de Investigación */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-                <div className="md:col-span-2 space-y-1.5 sm:space-y-3">
-                    <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Tipo de Investigación</label>
-                    <select 
-                        value={(() => {
-                            const raw = formData.TipoInvestigacion || 'APLICADA';
-                            const upper = raw.trim().toUpperCase();
-                            if (upper === 'BÁSICA' || upper === 'BASICA') return 'BASICA';
-                            if (upper === 'APLICADA') return 'APLICADA';
-                            return 'DESARROLLO EXPERIMENTAL';
-                        })()}
-                        onChange={(e) => onUpdate('TipoInvestigacion', e.target.value)}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
-                    >
-                        <option value="BASICA">BÁSICA</option>
-                        <option value="APLICADA">APLICADA</option>
-                        <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
-                    </select>
+            {showTipo && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="md:col-span-2 space-y-1.5 sm:space-y-3">
+                        <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Tipo de Investigación</label>
+                        <select 
+                            value={(() => {
+                                const raw = formData.TipoInvestigacion || 'APLICADA';
+                                const upper = raw.trim().toUpperCase();
+                                if (upper === 'BÁSICA' || upper === 'BASICA') return 'BASICA';
+                                if (upper === 'APLICADA') return 'APLICADA';
+                                return 'DESARROLLO EXPERIMENTAL';
+                            })()}
+                            onChange={(e) => onUpdate('TipoInvestigacion', e.target.value)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
+                        >
+                            <option value="BASICA">BÁSICA</option>
+                            <option value="APLICADA">APLICADA</option>
+                            <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
+                        </select>
+                    </div>
+                    <div className="md:col-span-2">
+                        <CoWorkField 
+                            name="CampoAmplio" 
+                            cowork={cowork} 
+                            label="Campo Amplio" 
+                            onValueChange={(v, meta) => onUpdate('CampoAmplio', v, meta)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                        />
+                    </div>
                 </div>
-                <div className="md:col-span-2">
+            )}
+
+            {/* Fila 5: Campo Específico y Detallado */}
+            {showCaces && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <CoWorkField 
-                        name="CampoAmplio" 
+                        name="CampoEspecifico" 
                         cowork={cowork} 
-                        label="Campo Amplio" 
-                        onValueChange={(v, meta) => onUpdate('CampoAmplio', v, meta)}
+                        label="Campo Específico" 
+                        onValueChange={(v, meta) => onUpdate('CampoEspecifico', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                    />
+                    <CoWorkField 
+                        name="CampoDetallado" 
+                        cowork={cowork} 
+                        label="Campo Detallado" 
+                        onValueChange={(v, meta) => onUpdate('CampoDetallado', v, meta)}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                     />
                 </div>
-            </div>
+            )}
 
-            {/* Fila 5: Campo Específico y Detallado */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="CampoEspecifico" 
-                    cowork={cowork} 
-                    label="Campo Específico" 
-                    onValueChange={(v, meta) => onUpdate('CampoEspecifico', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-                <CoWorkField 
-                    name="CampoDetallado" 
-                    cowork={cowork} 
-                    label="Campo Detallado" 
-                    onValueChange={(v, meta) => onUpdate('CampoDetallado', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-            </div>
+            {/* Fila 6: Carrera y Convocatoria */}
+            {(showCarrera || showConvocatoria) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    {showCarrera && (
+                        <div className="space-y-1.5 sm:space-y-3">
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Carrera / Unidad</label>
+                            <select 
+                                value={Number(formData.IdCarrera) || 0}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    onUpdate('IdCarrera', val);
+                                    const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === val);
+                                    if (selectedCarrera) {
+                                        const cname = selectedCarrera.nombre_carrera ?? selectedCarrera.carrera1 ?? selectedCarrera.carrera ?? '';
+                                        onUpdate('Carrera', cname, { source: 'system' });
+                                    } else {
+                                        onUpdate('Carrera', '', { source: 'system' });
+                                    }
+                                }}
+                                disabled={!isAdmin && filteredCarreras.length <= 1}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <option value={0}>Seleccione una carrera...</option>
+                                {filteredCarreras.map(c => {
+                                    const cid = c.id_carrera ?? c.idCarrera ?? 0;
+                                    const cname = c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? 'Sin Nombre';
+                                    return (
+                                        <option key={cid} value={cid}>{cname}</option>
+                                    );
+                                })}
+                            </select>
 
-            {/* Fila 6: Carrera, Convocatoria, Periodo, Tiempo de Ejecución */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <div className="space-y-1.5 sm:space-y-3">
-                    <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Carrera / Unidad</label>
-                    <select 
-                        value={Number(formData.IdCarrera) || 0}
-                        onChange={(e) => {
-                            const val = Number(e.target.value);
-                            onUpdate('IdCarrera', val);
-                            const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === val);
-                            if (selectedCarrera) {
-                                const cname = selectedCarrera.nombre_carrera ?? selectedCarrera.carrera1 ?? selectedCarrera.carrera ?? '';
-                                onUpdate('Carrera', cname, { source: 'system' });
-                            } else {
-                                onUpdate('Carrera', '', { source: 'system' });
-                            }
-                        }}
-                        disabled={!isAdmin && filteredCarreras.length <= 1}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <option value={0}>Seleccione una carrera...</option>
-                        {filteredCarreras.map(c => {
-                            const cid = c.id_carrera ?? c.idCarrera ?? 0;
-                            const cname = c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? 'Sin Nombre';
-                            return (
-                                <option key={cid} value={cid}>{cname}</option>
-                            );
-                        })}
-                    </select>
+                            {!isAdmin && misCarreras.length > 1 && (
+                                <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold flex items-center gap-1.5 animate-fade-in">
+                                    <span>⚠️</span>
+                                    <span>Perteneces a múltiples carreras. Por favor, selecciona una carrera principal para esta propuesta.</span>
+                                </div>
+                            )}
 
-                    {!isAdmin && misCarreras.length > 1 && (
-                        <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold flex items-center gap-1.5 animate-fade-in">
-                            <span>⚠️</span>
-                            <span>Perteneces a múltiples carreras. Por favor, selecciona una carrera principal para esta propuesta.</span>
-                        </div>
-                    )}
-
-                    {formData.GrupoInvestigacionTipo === 'SI' && coejecutoras.length > 0 && (
-                        <div className="mt-2.5 ml-2 animate-fade-in">
-                            <span className="text-[9px] font-black text-warning uppercase tracking-widest block mb-1.5">
-                                Carreras Co-ejecutoras (Asociativas)
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                                {coejecutoras.map((name, i) => (
-                                    <span key={i} className="px-2.5 py-1 text-[9px] font-extrabold bg-warning/10 border border-warning/20 text-warning uppercase rounded-md tracking-wider">
-                                        {name}
+                            {formData.GrupoInvestigacionTipo === 'SI' && coejecutoras.length > 0 && (
+                                <div className="mt-2.5 ml-2 animate-fade-in">
+                                    <span className="text-[9px] font-black text-warning uppercase tracking-widest block mb-1.5">
+                                        Carreras Co-ejecutoras (Asociativas)
                                     </span>
-                                ))}
-                            </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {coejecutoras.map((name, i) => (
+                                            <span key={i} className="px-2.5 py-1 text-[9px] font-extrabold bg-warning/10 border border-warning/20 text-warning uppercase rounded-md tracking-wider">
+                                                {name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {showConvocatoria && (
+                        <div className="space-y-1.5 sm:space-y-3">
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Convocatoria Activa</label>
+                            <select 
+                                value={formData.IdConvocatoria || 0}
+                                onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
+                                disabled={!!formData.IdConvocatoria}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <option value={0}>Seleccione una convocatoria...</option>
+                                {convocatorias.map(c => {
+                                    const isExpired = isPastDeadline(c.fecha_cierre || c.fechaCierre);
+                                    const isCurrent = Number(c.id_convocatoria ?? c.idConvocatoria) === Number(formData.IdConvocatoria);
+                                    if (isExpired && !isCurrent) {
+                                        return null;
+                                    }
+                                    return (
+                                        <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
+                                            {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
+                                        </option>
+                                    );
+                                })}
+                            </select>
                         </div>
                     )}
                 </div>
+            )}
 
-                <div className="space-y-1.5 sm:space-y-3">
-                    <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Convocatoria Activa</label>
-                    <select 
-                        value={formData.IdConvocatoria || 0}
-                        onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
-                        disabled={!!formData.IdConvocatoria}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <option value={0}>Seleccione una convocatoria...</option>
-                        {convocatorias.map(c => {
-                            const isExpired = isPastDeadline(c.fecha_cierre || c.fechaCierre);
-                            const isCurrent = Number(c.id_convocatoria ?? c.idConvocatoria) === Number(formData.IdConvocatoria);
-                            if (isExpired && !isCurrent) {
-                                return null;
-                            }
-                            return (
-                                <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
-                                    {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
-                                </option>
-                            );
-                        })}
-                    </select>
+            {/* Fila 7: Periodo y Tiempo de Ejecución */}
+            {showFechas && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <CoWorkField 
+                        name="Periodo" 
+                        cowork={cowork} 
+                        label="Periodo Académico (Ej: MARZO 2025 - SEPTIEMBRE 2025)" 
+                        onValueChange={(v, meta) => onUpdate('Periodo', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
+                    />
+                    <CoWorkField 
+                        name="TiempoEjecucion" 
+                        cowork={cowork} 
+                        label="Tiempo Estimado de Ejecución (Meses / Semanas)" 
+                        onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
+                    />
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="Periodo" 
-                    cowork={cowork} 
-                    label="Periodo Académico (Ej: MARZO 2025 - SEPTIEMBRE 2025)" 
-                    onValueChange={(v, meta) => onUpdate('Periodo', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                />
-                <CoWorkField 
-                    name="TiempoEjecucion" 
-                    cowork={cowork} 
-                    label="Tiempo Estimado de Ejecución (Meses / Semanas)" 
-                    onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                />
-            </div>
+            )}
 
             {/* Fila 7.5: Director del Proyecto */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="DirectorProyecto" 
-                    cowork={cowork} 
-                    label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
-                    onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-            </div>
+            {showDirector && (
+                <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    <CoWorkField 
+                        name="DirectorProyecto" 
+                        cowork={cowork} 
+                        label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
+                        onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                    />
+                </div>
+            )}
 
-            {/* Fila 7: Fechas Previstas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <div>
-                    <CoWorkField 
-                        name="FechaPresentacion" 
-                        cowork={cowork} 
-                        label="Fecha Presentación (día/mes/año)" 
-                        onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
-                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
-                            dateErrors.FechaPresentacion 
-                                ? 'border-red-500/60 focus:border-red-500' 
-                                : 'border-border-thin'
-                        }`} 
-                        placeholder="dd/mm/aaaa"
-                        mask="date"
-                    />
-                    {dateErrors.FechaPresentacion && (
-                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
-                            {dateErrors.FechaPresentacion}
-                        </p>
-                    )}
+            {/* Fila 8: Fechas Previstas */}
+            {showFechas && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div>
+                        <CoWorkField 
+                            name="FechaPresentacion" 
+                            cowork={cowork} 
+                            label="Fecha Presentación (día/mes/año)" 
+                            onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
+                            className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                                dateErrors.FechaPresentacion 
+                                    ? 'border-red-500/60 focus:border-red-500' 
+                                    : 'border-border-thin'
+                            }`} 
+                            placeholder="dd/mm/aaaa"
+                            mask="date"
+                        />
+                        {dateErrors.FechaPresentacion && (
+                            <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                                {dateErrors.FechaPresentacion}
+                            </p>
+                        )}
+                    </div>
+                    <div>
+                        <CoWorkField 
+                            name="FechaInicio" 
+                            cowork={cowork} 
+                            label="Fecha Prevista Inicio (día/mes/año)" 
+                            onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
+                            className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                                dateErrors.FechaInicio 
+                                    ? 'border-red-500/60 focus:border-red-500' 
+                                    : 'border-border-thin'
+                            }`} 
+                            placeholder="dd/mm/aaaa"
+                            mask="date"
+                        />
+                        {dateErrors.FechaInicio && (
+                            <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                                {dateErrors.FechaInicio}
+                            </p>
+                        )}
+                    </div>
+                    <div>
+                        <CoWorkField 
+                            name="FechaFin" 
+                            cowork={cowork} 
+                            label="Fecha Prevista Fin (día/mes/año)" 
+                            onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
+                            className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                                dateErrors.FechaFin 
+                                    ? 'border-red-500/60 focus:border-red-500' 
+                                    : 'border-border-thin'
+                            }`} 
+                            placeholder="dd/mm/aaaa"
+                            mask="date"
+                        />
+                        {dateErrors.FechaFin && (
+                            <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                                {dateErrors.FechaFin}
+                            </p>
+                        )}
+                    </div>
                 </div>
-                <div>
-                    <CoWorkField 
-                        name="FechaInicio" 
-                        cowork={cowork} 
-                        label="Fecha Prevista Inicio (día/mes/año)" 
-                        onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
-                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
-                            dateErrors.FechaInicio 
-                                ? 'border-red-500/60 focus:border-red-500' 
-                                : 'border-border-thin'
-                        }`} 
-                        placeholder="dd/mm/aaaa"
-                        mask="date"
-                    />
-                    {dateErrors.FechaInicio && (
-                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
-                            {dateErrors.FechaInicio}
-                        </p>
-                    )}
-                </div>
-                <div>
-                    <CoWorkField 
-                        name="FechaFin" 
-                        cowork={cowork} 
-                        label="Fecha Prevista Fin (día/mes/año)" 
-                        onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
-                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
-                            dateErrors.FechaFin 
-                                ? 'border-red-500/60 focus:border-red-500' 
-                                : 'border-border-thin'
-                        }`} 
-                        placeholder="dd/mm/aaaa"
-                        mask="date"
-                    />
-                    {dateErrors.FechaFin && (
-                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
-                            {dateErrors.FechaFin}
-                        </p>
-                    )}
-                </div>
-            </div>
+            )}
         </div>
     );
 };

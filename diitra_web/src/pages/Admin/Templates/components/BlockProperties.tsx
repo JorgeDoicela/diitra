@@ -1,6 +1,6 @@
 import React from 'react';
 import { Settings, Palette, Plus, Trash2 } from 'lucide-react';
-import type { DocumentBlock, ColumnCount } from '../types';
+import type { DocumentBlock } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
@@ -340,6 +340,40 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                 {/* ── FIRMAS ──────────────────────────────────────────────────── */}
                 {activeBlock.type === 'signatures' && (
                     <SignaturesProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                )}
+
+                {/* ── FICHA DE IDENTIFICACIÓN ─────────────────────────────────── */}
+                {activeBlock.type === 'project_general_section' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Activa o desactiva qué secciones de metadatos del proyecto se mostrarán al docente:
+                        </p>
+                        {[
+                            { key: 'showTitulo', label: 'Mostrar Nombre de Proyecto', desc: 'Campo de texto en mayúsculas para el tema.' },
+                            { key: 'showPrograma', label: 'Mostrar Programa', desc: 'Campo de texto para clasificar el programa.' },
+                            { key: 'showGrupo', label: 'Mostrar Grupo de Investigación', desc: 'Selectores de grupos aprobados en la universidad.' },
+                            { key: 'showLinea', label: 'Mostrar Dominios y Líneas', desc: 'Dominios científicos, líneas y sublíneas.' },
+                            { key: 'showTipo', label: 'Mostrar Tipo de Investigación', desc: 'Investigación básica, aplicada o experimental.' },
+                            { key: 'showCaces', label: 'Mostrar Campos CACES', desc: 'Clasificación de campo amplio, específico y detallado.' },
+                            { key: 'showCarrera', label: 'Mostrar Carrera / Unidad', desc: 'Selector de la carrera vinculada del docente.' },
+                            { key: 'showConvocatoria', label: 'Mostrar Convocatoria Activa', desc: 'Selector de los plazos y convocatorias vigentes.' },
+                            { key: 'showDirector', label: 'Mostrar Director del Proyecto', desc: 'Campo para ingresar el nombre del director.' },
+                            { key: 'showFechas', label: 'Mostrar Fechas y Plazos', desc: 'Campos de fechas de presentación, inicio y fin.' },
+                        ].map(({ key, label, desc }) => (
+                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={(activeBlock.config as any)[key] !== false}
+                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                />
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>

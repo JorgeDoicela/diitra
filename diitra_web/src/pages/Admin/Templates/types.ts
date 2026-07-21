@@ -35,7 +35,8 @@ export type BlockType =
     | 'gantt'
     | 'researchers_table'
     | 'rubric_table'
-    | 'signatures';
+    | 'signatures'
+    | 'project_general_section';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos

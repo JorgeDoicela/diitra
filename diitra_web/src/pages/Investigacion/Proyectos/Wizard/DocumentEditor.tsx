@@ -14,7 +14,7 @@ import { FullscreenLoader } from '../../../../components/Common/FullscreenLoader
 // ── DIITRA Documents ─────────────────────────────────────────────
 import { useDIITRADocument } from '../../../../core/documents/hooks/useDIITRADocument';
 import { DocumentTemplateRegistry } from '../../../../core/documents/registry/DocumentTemplateRegistry';
-import { getDocumentSection } from '../../../../core/documents/registry/DocumentComponentRegistry';
+import { getDocumentSection, COMPONENT_MAP } from '../../../../core/documents/registry/DocumentComponentRegistry';
 
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../core/documents/templateUrl';
@@ -317,14 +317,15 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     // ── 4. Resolver campos de texto enriquecido (Rich-Text) para evitar colisión de constructores Yjs ──
     const richTexts = React.useMemo(() => {
         const list: string[] = [];
-        if (templateCode === 'PROTOCOLO_INVESTIGACION') {
+        const hasTechnicalSection = templateConfig?.sections?.some((s: any) => s.componentName === "TechnicalSection" || s.component_name === "TechnicalSection");
+        if (templateCode === 'PROTOCOLO_INVESTIGACION' && hasTechnicalSection) {
             return [
                 'Antecedentes', 'DescripcionProyecto', 'Justificacion',
                 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico',
                 'Metodologia', 'Evaluacion', 'Bibliografia'
             ];
         }
-        if (templateCode === 'INFORME_AVANCE') {
+        if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some(s => s.id === "edicion_colaborativa")) {
             return ['ConclusionesParciales'];
         }
         if (templateConfig?.sections) {
@@ -338,6 +339,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     });
                 }
             });
+        }
+        // Asegurar que 'Bibliografia' se registre como rich-text para evitar colisión de constructores Yjs
+        const hasBibliographySection = templateConfig?.sections?.some((s: any) => s.id === "bibliografia");
+        if (hasBibliographySection && !list.includes('Bibliografia')) {
+            list.push('Bibliografia');
         }
         return list;
     }, [templateConfig, templateCode]);
@@ -382,9 +388,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         }
     );
 
-    // ── 6. Cálculos derivados específicos del Protocolo de Investigación ──
+    // ── 6. Cálculos derivados específicos de la sección de Recursos ──
     useEffect(() => {
-        if (templateCode === 'PROTOCOLO_INVESTIGACION' && formData?.RecursosNecesarios) {
+        const hasRecursosSection = templateConfig?.sections?.some((s: any) => s.id === "recursos");
+        if (hasRecursosSection && formData?.RecursosNecesarios) {
             const total = (formData.RecursosNecesarios as any[]).reduce(
                 (acc: number, curr: any) => acc + (Number(curr.CostoTotal) || 0),
                 0
@@ -393,7 +400,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 updateField('CostoTotal', total, { source: 'system' });
             }
         }
-    }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
+    }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateConfig]);
 
     // ── 7. Persistencia en el backend ──
     const cleanDocumentData = (data: any) => {
@@ -490,8 +497,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             const IconComponent = sec.icon || ICON_MAP[sec.iconName] || FileText;
             // Config de campos: normalizado en una sola forma
             const normalizedConfig = sec.config || (sec.fields ? { fields: sec.fields } : undefined);
-            // Componente de sección: Registry > Agnostic fallback
-            const SectionComponent = getDocumentSection(sec.id, sec.component);
+            // Componente de sección: resuelto dinámicamente por nombre o ID
+            const componentName = sec.componentName || sec.component;
+            const SectionComponent = COMPONENT_MAP[componentName] || getDocumentSection(sec.id, sec.component);
 
             return {
                 ...sec,

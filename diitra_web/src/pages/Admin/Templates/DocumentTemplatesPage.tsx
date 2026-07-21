@@ -16,7 +16,8 @@ import {
     Columns2,
     LayoutTemplate,
     Minus,
-    BarChart2
+    BarChart2,
+    BookOpen
 } from 'lucide-react';
 import {
     DndContext,
@@ -243,23 +244,11 @@ const DocumentTemplatesPage: React.FC = () => {
                         baseSignatures
                     ];
                 } else {
-                    // PROTOCOLO_INVESTIGACION, INFORME_FINAL_INVESTIGACION, INFORME_AVANCE
+                    // PROTOCOLO_INVESTIGACION, INFORME_FINAL_INVESTIGACION, INFORME_AVANCE (CUALQUIERA OTRAS GENÉRICAS)
                     loadedBlocks = [
                         baseCover,
                         {
                             id: "block-2",
-                            type: "title",
-                            title: "Título de Sección",
-                            isActive: true,
-                            config: {
-                                text: "1. IDENTIFICACIÓN DEL PROYECTO",
-                                fontSize: "H2",
-                                color: "#1e2a4a",
-                                alignment: "left"
-                            }
-                        },
-                        {
-                            id: "block-3",
                             type: "advanced_table",
                             title: "Tabla de Identificación",
                             isActive: true,
@@ -276,18 +265,6 @@ const DocumentTemplatesPage: React.FC = () => {
                         },
                         {
                             id: "block-4",
-                            type: "title",
-                            title: "Título de Sección",
-                            isActive: true,
-                            config: {
-                                text: "2. EQUIPO DE INVESTIGADORES",
-                                fontSize: "H2",
-                                color: "#1e2a4a",
-                                alignment: "left"
-                            }
-                        },
-                        {
-                            id: "block-5",
                             type: "researchers_table",
                             title: "Tabla de Participantes",
                             isActive: true,
@@ -390,6 +367,9 @@ const DocumentTemplatesPage: React.FC = () => {
                         ],
                         textoPieFirma: 'Comisión de Acreditación e Investigación IST Traversari'
                     } };
+                break;
+            case 'project_general_section':
+                newBlock = { id: newId, type, title: 'Ficha de Identificación del Proyecto', isActive: true, config: {} };
                 break;
             default:
                 return;
@@ -626,6 +606,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                     <div className="border-t border-border-thin/40 mt-1 pt-1">
                                         <p className="text-[9px] font-black text-text-dim uppercase tracking-widest px-2 py-1.5">Bloques Dinámicos (BD)</p>
                                         {([
+                                            { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos del proyecto (carreras, sublíneas y plazos).', color: 'text-text-main', bg: 'hover:bg-surface-hover' },
                                             { type: 'researchers_table' as const, icon: Users,   label: 'Equipo de Investigadores', desc: 'Tabla dinámica de participantes desde BD.',        color: 'text-text-main',   bg: 'hover:bg-surface-hover'   },
                                             { type: 'rubric_table' as const,      icon: Award,   label: 'Rúbrica de Calificación',  desc: 'Criterios y pesos desde BD. Se genera en PDF.',  color: 'text-text-main', bg: 'hover:bg-surface-hover' },
                                             { type: 'signatures' as const,        icon: PenLine, label: 'Bloque de Firmas',         desc: 'N firmantes configurables con cargo e institución.',color: 'text-text-main',  bg: 'hover:bg-surface-hover'  },

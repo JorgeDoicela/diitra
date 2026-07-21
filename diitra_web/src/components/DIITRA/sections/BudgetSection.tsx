@@ -18,6 +18,7 @@ interface BudgetSectionProps {
     onUpdate: (field: string, value: any) => void;
     convocatorias?: any[];
     readOnly?: boolean;
+    config?: any; // Configuración dinámica del backend
 }
 
 export const BudgetSection: React.FC<BudgetSectionProps> = ({
@@ -34,7 +35,8 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
     formData,
     onUpdate,
     convocatorias = [],
-    readOnly = false
+    readOnly = false,
+    config
 }) => {
     const limit = React.useMemo(() => {
         if (!formData?.IdConvocatoria || !convocatorias) return null;
@@ -59,13 +61,13 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
         <div className="space-y-8">
             <div className="space-y-6">
                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2">
-                    <DollarSign size={18} /> 4. Recursos y Presupuesto
+                    <DollarSign size={18} /> {config?.title || "4. Recursos y Presupuesto"}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Recursos Disponibles */}
                     <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <p className="text-[10px] font-black uppercase text-text-dim">4.1 Recursos Disponibles</p>
+                            <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion1Label || "4.1 Recursos Disponibles"}</p>
                             {!readOnly && (
                                 <button
                                     onClick={onAddDisponible}
@@ -122,7 +124,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                     {/* Recursos Necesarios */}
                     <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <p className="text-[10px] font-black uppercase text-text-dim">4.2 Recursos Necesarios (Gasto)</p>
+                            <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion2Label || "4.2 Recursos Necesarios (Gasto)"}</p>
                             {!readOnly && (
                                 <button
                                     onClick={onAddNecesario}
@@ -222,47 +224,49 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                 </div>
             </div>
 
-            {/* 4.3 Financiamiento (X) */}
-            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-4 shadow-sm">
-                <p className="text-[10px] font-black uppercase text-text-dim">4.3 Fuentes de Financiamiento</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                    <label className={`flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl transition-colors ${readOnly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-surface-hover'}`}>
-                        <input
-                            type="checkbox"
-                            checked={formData.FinanciamientoIstpet || false}
-                            onChange={(e) => onUpdate('FinanciamientoIstpet', e.target.checked)}
-                            disabled={readOnly}
-                            className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                        <span className="text-xs font-black uppercase text-text-main">ISTPET</span>
-                    </label>
-
-                    <label className={`flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl transition-colors ${readOnly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-surface-hover'}`}>
-                        <input
-                            type="checkbox"
-                            checked={formData.FinanciamientoOtrasFuentes || false}
-                            onChange={(e) => onUpdate('FinanciamientoOtrasFuentes', e.target.checked)}
-                            disabled={readOnly}
-                            className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                        <span className="text-xs font-black uppercase text-text-main">OTRAS FUENTES</span>
-                    </label>
-
-                    {formData.FinanciamientoOtrasFuentes && (
-                        <div className="space-y-2">
-                            <CoWorkField
-                                name="NombresOtrasFuentes"
-                                cowork={cowork}
-                                label="Nombre de las Fuentes Externas"
-                                onValueChange={(v) => onUpdate('NombresOtrasFuentes', v)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
-                                placeholder="Especifique nombres..."
-                                readOnly={readOnly}
+            {/* 4.3 Financiamiento (Oculto en bloques dinámicos si no lo requiere) */}
+            {!config && (
+                <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-4 shadow-sm">
+                    <p className="text-[10px] font-black uppercase text-text-dim">4.3 Fuentes de Financiamiento</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                        <label className={`flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl transition-colors ${readOnly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-surface-hover'}`}>
+                            <input
+                                type="checkbox"
+                                checked={formData.FinanciamientoIstpet || false}
+                                onChange={(e) => onUpdate('FinanciamientoIstpet', e.target.checked)}
+                                disabled={readOnly}
+                                className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main disabled:opacity-50 disabled:cursor-not-allowed"
                             />
-                        </div>
-                    )}
+                            <span className="text-xs font-black uppercase text-text-main">ISTPET</span>
+                        </label>
+
+                        <label className={`flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl transition-colors ${readOnly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-surface-hover'}`}>
+                            <input
+                                type="checkbox"
+                                checked={formData.FinanciamientoOtrasFuentes || false}
+                                onChange={(e) => onUpdate('FinanciamientoOtrasFuentes', e.target.checked)}
+                                disabled={readOnly}
+                                className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <span className="text-xs font-black uppercase text-text-main">OTRAS FUENTES</span>
+                        </label>
+
+                        {formData.FinanciamientoOtrasFuentes && (
+                            <div className="space-y-2">
+                                <CoWorkField
+                                    name="NombresOtrasFuentes"
+                                    cowork={cowork}
+                                    label="Nombre de las Fuentes Externas"
+                                    onValueChange={(v) => onUpdate('NombresOtrasFuentes', v)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    placeholder="Especifique nombres..."
+                                    readOnly={readOnly}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

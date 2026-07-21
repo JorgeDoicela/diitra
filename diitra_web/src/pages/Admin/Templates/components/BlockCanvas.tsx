@@ -26,12 +26,6 @@ const COLORS = {
     lightBlue: '#f0f3f9',
 };
 
-const headerBg = (style?: 'blue' | 'gold' | 'gray' | 'none') => {
-    if (style === 'blue') return `background-color: ${COLORS.blue}; color: white;`;
-    if (style === 'gold') return `background-color: ${COLORS.gold}; color: white;`;
-    if (style === 'gray') return `background-color: ${COLORS.gray}; color: white;`;
-    return 'border-bottom: 1px solid #cbd5e1;';
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-renderizadores estáticos de alta fidelidad para el lienzo A4
@@ -193,9 +187,6 @@ const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) => {
 };
 
 const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
-    const lStyle = headerBg(config.leftHeaderStyle);
-    const rStyle = headerBg(config.rightHeaderStyle);
-
     return (
         <div className="grid grid-cols-2 gap-3 my-2 border border-slate-200 rounded-lg overflow-hidden bg-white">
             <div className="flex flex-col border-r border-slate-200">
@@ -426,6 +417,38 @@ const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
     );
 };
 
+const RenderProjectGeneralSection: React.FC<{ config: any }> = () => {
+    return (
+        <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
+                <span>Ficha de Identificación del Proyecto (Metadatos Científicos)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-[10px] text-slate-700 leading-relaxed">
+                <div className="col-span-2">
+                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Título del Proyecto:</span>
+                    <span className="font-bold text-slate-800">[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]</span>
+                </div>
+                <div>
+                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Carrera / Unidad Académica:</span>
+                    <span className="font-semibold text-slate-600">[Carrera del Docente]</span>
+                </div>
+                <div>
+                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Convocatoria:</span>
+                    <span className="font-semibold text-slate-600">[Convocatoria Activa IST Traversari]</span>
+                </div>
+                <div>
+                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Línea de Investigación:</span>
+                    <span className="font-semibold text-slate-600">[Dominio, Línea y Sublínea Científica]</span>
+                </div>
+                <div>
+                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Campo Detallado CACES:</span>
+                    <span className="font-semibold text-slate-600">[Clasificación CACES de la Carrera]</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ─── Item arrastrable individual A4 ─────────────────────────────────────────────
 interface SortableBlockItemProps {
     block: DocumentBlock;
@@ -468,7 +491,6 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'cover':               return <RenderCover config={block.config} />;
             case 'title':               return <RenderTitle config={block.config} />;
             case 'rich_text':           return <RenderRichText config={block.config} />;
-            case 'table':
             case 'advanced_table':      return <RenderAdvancedTable config={block.config} />;
             case 'multi_section_table': return <RenderMultiSectionTable config={block.config} />;
             case 'two_column':          return <RenderTwoColumn config={block.config} />;
@@ -476,6 +498,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'researchers_table':   return <RenderResearchersTable config={block.config} />;
             case 'rubric_table':        return <RenderRubricTable config={block.config} />;
             case 'signatures':          return <RenderSignatures config={block.config} />;
+            case 'project_general_section': return <RenderProjectGeneralSection config={block.config} />;
             case 'page_break':          return null;
             default:
                 return <div className="p-4 border bg-red-50 text-red-500 text-xs">Bloque no renderizado: {block.type}</div>;

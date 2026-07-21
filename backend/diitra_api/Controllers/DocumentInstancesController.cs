@@ -22,17 +22,20 @@ namespace diitra_api.Controllers
         private readonly IDocumentEngine _documentEngine;
         private readonly IDocumentDataOrchestrator _orchestrator;
         private readonly diitra_infrastructure.data.models.DiitraContext _context;
+        private readonly IEnumerable<IDocumentBlockProvider> _blockProviders;
 
         public DocumentInstancesController(
             IDocumentInstanceService instanceService,
             IDocumentEngine documentEngine,
             IDocumentDataOrchestrator orchestrator,
-            diitra_infrastructure.data.models.DiitraContext context)
+            diitra_infrastructure.data.models.DiitraContext context,
+            IEnumerable<IDocumentBlockProvider> blockProviders)
         {
             _instanceService = instanceService;
             _documentEngine = documentEngine;
             _orchestrator = orchestrator;
             _context = context;
+            _blockProviders = blockProviders;
         }
 
         [HttpPost]
@@ -67,7 +70,238 @@ namespace diitra_api.Controllers
                 return NotFound(new { message = $"La plantilla '{code}' no está activa o no existe en la base de datos." });
             }
 
-            // 1. Esquema Premium Pre-Mapeado (Caso de Plantillas Oficiales)
+            // 1. Intentar reconstruir las secciones y esquemas de forma 100% rica y dinámica basada en los bloques de la Base de Datos (Base64)
+            var blocksJson = "";
+            if (!string.IsNullOrEmpty(template.HtmlContent))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    try
+                    {
+                        var base64 = match.Groups[1].Value;
+                        var bytes = System.Convert.FromBase64String(base64);
+                        blocksJson = System.Text.Encoding.UTF8.GetString(bytes);
+                    }
+                    catch { }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(blocksJson))
+            {
+                try
+                {
+                    var blocks = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(blocksJson);
+                    if (blocks == null)
+                        throw new InvalidOperationException("Los bloques estructurales no pudieron ser deserializados.");
+
+                    var sectionsList = new List<UiSectionDto>();
+                    var schemaDict = new Dictionary<string, object>();
+                    var listsList = new List<string>();
+                    var richTextFields = new List<object>();
+                    int premiumFieldsCount = 0;
+
+                    foreach (var block in blocks)
+                    {
+                        if (block.TryGetProperty("isActive", out var activeProp) && !activeProp.GetBoolean())
+                            continue;
+
+                        string type = "";
+                        string title = "";
+
+                        if (block.TryGetProperty("type", out var typeProp)) type = typeProp.GetString() ?? "";
+                        if (block.TryGetProperty("title", out var titleProp)) title = titleProp.GetString() ?? "";
+
+                        if (string.IsNullOrEmpty(type))
+                            continue;
+
+                        var provider = _blockProviders.FirstOrDefault(p => p.BlockType == type);
+                        if (provider != null)
+                        {
+                            provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
+                            await provider.MapToUiSectionAsync(block, title, sectionsList, _context, template.Code, ct);
+                        }
+                    }
+
+                    var orderedSections = sectionsList.ToArray();
+
+                    return Ok(new
+                    {
+                        title = template.Name,
+                        subtitle = template.Description ?? "Formulario de Colaboración Dinámico",
+                        signatureType = template.SignatureType,
+                        schema = schemaDict,
+                        lists = listsList.ToArray(),
+                        sections = orderedSections
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Console.WriteLine($"[DIITRA ERROR] Error al procesar bloques dinámicos en ui-config: {ex.Message}\n{ex.StackTrace}");
+                }
+            }
+
+            /*
+            // =========================================================================
+            // VERSIÓN HÍBRIDA RESPALDO: MAPEO DE BASE64 A SECCIONES TRADICIONALES
+            // =========================================================================
+            /*
+            if (!string.IsNullOrEmpty(blocksJson))
+            {
+                try
+                {
+                    var blocks = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(blocksJson);
+                    var sectionsList = new List<object>();
+                    var schemaDict = new Dictionary<string, object>();
+                    var listsList = new List<string>();
+                    var richTextFields = new List<object>();
+
+                    foreach (var block in blocks)
+                    {
+                        if (block.TryGetProperty("isActive", out var activeProp) && !activeProp.GetBoolean())
+                            continue;
+
+                        var type = block.GetProperty("type").GetString();
+                        var id = block.GetProperty("id").GetString();
+                        var title = block.GetProperty("title").GetString();
+
+                        if (type == "advanced_table")
+                        {
+                            sectionsList.Add(new {
+                                id = "identificacion",
+                                label = "Identificación",
+                                iconName = "BookOpen"
+                            });
+
+                            schemaDict["Titulo"] = "";
+                            schemaDict["IdCarrera"] = 0;
+                            schemaDict["IdConvocatoria"] = 0;
+                            schemaDict["Periodo"] = "";
+                            schemaDict["TiempoEjecucion"] = "";
+                            schemaDict["Programa"] = "";
+                            schemaDict["GrupoInvestigacionTipo"] = "NO";
+                            schemaDict["GrupoInvestigacionNombre"] = "";
+                            schemaDict["Dominio"] = "";
+                            schemaDict["LineaInvestigacion"] = "";
+                            schemaDict["SublineaInvestigacion"] = "";
+                            schemaDict["TipoInvestigacion"] = "APLICADA";
+                            schemaDict["CampoAmplio"] = "";
+                            schemaDict["CampoEspecifico"] = "";
+                            schemaDict["CampoDetallado"] = "";
+                            schemaDict["DirectorProyecto"] = "";
+                            schemaDict["FechaPresentacion"] = "";
+                            schemaDict["FechaInicio"] = "";
+                            schemaDict["FechaFin"] = "";
+                        }
+                        else if (type == "researchers_table")
+                        {
+                            sectionsList.Add(new {
+                                id = "equipo",
+                                label = "Equipo Humano",
+                                iconName = "Users"
+                            });
+
+                            schemaDict["Investigadores"] = new object[] { };
+                            listsList.Add("Investigadores");
+                        }
+                        else if (type == "gantt")
+                        {
+                            sectionsList.Add(new {
+                                id = "cronograma",
+                                label = "Cronograma (Gantt)",
+                                iconName = "Calendar"
+                            });
+
+                            schemaDict["Cronograma"] = new object[] { };
+                            listsList.Add("Cronograma");
+                        }
+                        else if (type == "signatures")
+                        {
+                            schemaDict["FirmasResponsabilidad"] = new Dictionary<string, string> {
+                                { "DirectorNombre", "" },
+                                { "DirectorCargo", "Director del Proyecto" },
+                                { "CoordinadorNombre", "" },
+                                { "CoordinadorCargo", "Coordinador de Carrera" }
+                            };
+                        }
+                        else if (type == "rich_text")
+                        {
+                            var varName = id.Replace("block-", "");
+                            varName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(varName.ToLower());
+                            if (varName == "Marcoteorico" || varName == "Marco_teorico" || varName == "Marco") varName = "MarcoTeorico";
+                            if (varName == "Descripcionproyecto" || varName == "Descripcion_proyecto" || varName == "Descripcion") varName = "DescripcionProyecto";
+                            if (varName == "Objetivogeneral") varName = "ObjectiveGeneral";
+                            if (varName == "Objetivosespecificos") varName = "ObjetivosEspecificos";
+                            if (varName == "Objetivosdesarrollosostenible") varName = "ObjetivosDesarrolloSostenible";
+
+                            schemaDict[varName] = "";
+
+                            richTextFields.Add(new {
+                                name = varName,
+                                label = title,
+                                type = "rich-text",
+                                collaborative = true,
+                                placeholder = $"Redacte la sección {title}..."
+                            });
+                        }
+                    }
+
+                    if (richTextFields.Count > 0)
+                    {
+                        sectionsList.Add(new {
+                            id = "tecnico",
+                            label = "Plan Técnico",
+                            iconName = "FileText",
+                            config = new {
+                                fields = richTextFields.ToArray()
+                            }
+                        });
+                    }
+
+                    if (sectionsList.Any(s => ((dynamic)s).id == "tecnico"))
+                    {
+                        sectionsList.Add(new { id = "recursos", label = "Recursos & Financiamiento", iconName = "DollarSign" });
+                        sectionsList.Add(new { id = "impactos", label = "Impacto & Productos", iconName = "Target" });
+                        sectionsList.Add(new { id = "bibliografia", label = "Bibliografía & Firmas", iconName = "Library" });
+
+                        schemaDict["RecursosDisponibles"] = new object[] { };
+                        schemaDict["RecursosNecesarios"] = new object[] { };
+                        schemaDict["CostoTotal"] = 0;
+                        schemaDict["FinanciamientoIstpet"] = false;
+                        schemaDict["FinanciamientoOtrasFuentes"] = false;
+                        schemaDict["NombresOtrasFuentes"] = "";
+                        schemaDict["ProductosEsperados"] = new object[] { };
+                        schemaDict["Impacto"] = new Dictionary<string, string> { { "social", "" }, { "cientifico", "" }, { "economico", "" }, { "politico", "" }, { "ambiental", "" }, { "otro", "" } };
+                        schemaDict["Bibliografia"] = "";
+
+                        listsList.AddRange(new[] { "RecursosDisponibles", "RecursosNecesarios", "ProductosEsperados" });
+                    }
+
+                    var orderMap = new Dictionary<string, int> {
+                        { "identificacion", 1 },
+                        { "equipo", 2 },
+                        { "tecnico", 3 },
+                        { "recursos", 4 },
+                        { "impactos", 5 },
+                        { "cronograma", 6 },
+                        { "bibliografia", 7 }
+                    };
+
+                    var orderedSections = sectionsList
+                        .OrderBy(s => orderMap.ContainsKey(((dynamic)s).id) ? orderMap[((dynamic)s).id] : 99)
+                        .ToArray();
+                }
+                catch {}
+            }
+            */
+            // =========================================================================
+
+            /*
+            // =========================================================================
+            // RESPALDO HISTÓRICO: ESQUEMAS PREMIUM PRE-MAPEADOS CABLEADOS EN CÓDIGO
+            // =========================================================================
+
+#if FALSE
             if (code == "PROTOCOLO_INVESTIGACION")
             {
                 return Ok(new
@@ -100,7 +334,7 @@ namespace diitra_api.Controllers
                         { "Antecedentes", "" },
                         { "DescripcionProyecto", "" },
                         { "Justificacion", "" },
-                        { "ObjetivoGeneral", "" },
+                        { "ObjectiveGeneral", "" },
                         { "ObjetivosEspecificos", "" },
                         { "ObjetivosDesarrolloSostenible", "" },
                         { "MarcoTeorico", "" },
@@ -131,74 +365,7 @@ namespace diitra_api.Controllers
                     }
                 });
             }
-
-            if (code == "RUBRICA_EVALUACION")
-            {
-                var rubricaActiva = await _context.InvRubricas
-                    .Include(r => r.InvRubricaCriterios)
-                    .FirstOrDefaultAsync(r => r.Activo == true, ct);
-
-                if (rubricaActiva == null)
-                {
-                    rubricaActiva = await _context.InvRubricas
-                        .Include(r => r.InvRubricaCriterios)
-                        .FirstOrDefaultAsync(ct);
-                }
-
-                if (rubricaActiva == null || !rubricaActiva.InvRubricaCriterios.Any())
-                {
-                    return BadRequest(new { message = "No se ha configurado ninguna rúbrica de evaluación con criterios en la base de datos." });
-                }
-
-                var schema = new System.Collections.Generic.Dictionary<string, object>();
-                var fieldsList = new System.Collections.Generic.List<object>();
-
-                foreach (var criterio in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
-                {
-                    string keyName = $"Criterio_{criterio.IdCriterio}";
-                    schema.Add(keyName, 0);
-
-                    fieldsList.Add(new {
-                        name = keyName,
-                        label = $"{criterio.Nombre} (0-{(int)criterio.PesoPorcentaje})",
-                        type = "number",
-                        collaborative = false,
-                        min = (int?)0,
-                        max = (int?)criterio.PesoPorcentaje,
-                        options = (string[]?)null,
-                        placeholder = (string?)null
-                    });
-                }
-
-                schema.Add("ComentariosGenerales", "");
-                schema.Add("RecomendacionFinal", "");
-
-                fieldsList.Add(new { name = "ComentariosGenerales", label = "Observaciones y comentarios institucionales", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba un informe cualitativo para fundamentar las puntuaciones..." });
-                fieldsList.Add(new { name = "RecomendacionFinal", label = "Recomendación Final de Comisión", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin modificaciones", "Aprobado con observaciones menores", "Requiere re-estructuración mayor", "Rechazado" }, placeholder = (string?)null });
-
-                return Ok(new
-                {
-                    title = "Rúbrica de Evaluación por Pares",
-                    subtitle = "Evaluación anónima (Fase 2) — Normativa CACES",
-                    signatureType = template.SignatureType,
-                    schema = schema,
-                    lists = new string[] { },
-                    sections = new[]
-                    {
-                        new
-                        {
-                            id = "evaluacion",
-                            label = "Evaluación Técnica",
-                            iconName = "CheckSquare",
-                            config = new
-                            {
-                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
-                                fields = fieldsList.ToArray()
-                            }
-                        }
-                    }
-                });
-            }
+#endif
 
             if (code == "INFORME_AVANCE")
             {
@@ -227,47 +394,6 @@ namespace diitra_api.Controllers
                                 fields = new[]
                                 {
                                     new { name = "ConclusionesParciales", label = "Bitácora Científica & Conclusiones Parciales", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Documenta el progreso experimental, hallazgos y avances teórico-prácticos del período..." }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            if (code == "ACTA_COMITE_ETICA")
-            {
-                return Ok(new
-                {
-                    title = "Acta del Comité de Ética de Investigación",
-                    subtitle = "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
-                    signatureType = template.SignatureType,
-                    schema = new Dictionary<string, object>
-                    {
-                        { "JustificacionEtica", "" },
-                        { "RiesgosIdentificados", "" },
-                        { "MetodoConsentimiento", "" },
-                        { "DictamenComite", "Aprobado sin observaciones" },
-                        { "ObservacionesEspecificas", "" },
-                        { "MiembrosFirmantes", new object[] { } }
-                    },
-                    lists = new[] { "MiembrosFirmantes" },
-                    sections = new[]
-                    {
-                        new
-                        {
-                            id = "evaluacion_comite",
-                            label = "Evaluación de Ética",
-                            iconName = "CheckSquare",
-                            config = new
-                            {
-                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
-                                fields = new[]
-                                {
-                                    new { name = "JustificacionEtica", label = "Justificación Ética de la Investigación", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Describa el impacto ético sobre seres humanos, datos sensibles o animales..." },
-                                    new { name = "RiesgosIdentificados", label = "Identificación y Mitigación de Riesgos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Especifique cualquier riesgo biológico, digital o social y cómo se resolverá..." },
-                                    new { name = "MetodoConsentimiento", label = "Mecanismo de Consentimiento Informado", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Detalle cómo se obtendrá el consentimiento firmado de los participantes..." },
-                                    new { name = "DictamenComite", label = "Dictamen Final de Comisión de Ética", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin observaciones", "Aprobado con sugerencias", "Rechazado" }, placeholder = (string?)null },
-                                    new { name = "ObservacionesEspecificas", label = "Observaciones y Requerimientos de Enmienda", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar..." }
                                 }
                             }
                         }
@@ -345,8 +471,122 @@ namespace diitra_api.Controllers
                     }
                 });
             }
+            */
 
-            // 2. Generación Dinámica en Caliente (Para plantillas custom creadas por DB)
+            if (code == "RUBRICA_EVALUACION")
+            {
+                var rubricaActiva = await _context.InvRubricas
+                    .Include(r => r.InvRubricaCriterios)
+                    .FirstOrDefaultAsync(r => r.Activo == true, ct);
+
+                if (rubricaActiva == null)
+                {
+                    rubricaActiva = await _context.InvRubricas
+                        .Include(r => r.InvRubricaCriterios)
+                        .FirstOrDefaultAsync(ct);
+                }
+
+                if (rubricaActiva == null || !rubricaActiva.InvRubricaCriterios.Any())
+                {
+                    return BadRequest(new { message = "No se ha configurado ninguna rúbrica de evaluación con criterios en la base de datos." });
+                }
+
+                var schema = new System.Collections.Generic.Dictionary<string, object>();
+                var fieldsList = new System.Collections.Generic.List<object>();
+
+                foreach (var criterio in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
+                {
+                    string keyName = $"Criterio_{criterio.IdCriterio}";
+                    schema.Add(keyName, 0);
+
+                    fieldsList.Add(new {
+                        name = keyName,
+                        label = $"{criterio.Nombre} (0-{(int)criterio.PesoPorcentaje})",
+                        type = "number",
+                        collaborative = false,
+                        min = (int?)0,
+                        max = (int?)criterio.PesoPorcentaje,
+                        options = (string[]?)null,
+                        placeholder = (string?)null
+                    });
+                }
+
+                schema.Add("ComentariosGenerales", "");
+                schema.Add("RecomendacionFinal", "");
+
+                fieldsList.Add(new { name = "ComentariosGenerales", label = "Observaciones y comentarios institucionales", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba un informe cualitativo para fundamentar las puntuaciones..." });
+                fieldsList.Add(new { name = "RecomendacionFinal", label = "Recomendación Final de Comisión", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin modificaciones", "Aprobado con observaciones menores", "Requiere re-estructuración mayor", "Rechazado" }, placeholder = (string?)null });
+
+                return Ok(new
+                {
+                    title = "Rúbrica de Evaluación por Pares",
+                    subtitle = "Evaluación anónima (Fase 2) — Normativa CACES",
+                    signatureType = template.SignatureType,
+                    schema = schema,
+                    lists = new string[] { },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "evaluacion",
+                            label = "Evaluación Técnica",
+                            iconName = "CheckSquare",
+                            config = new
+                            {
+                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
+                                fields = fieldsList.ToArray()
+                            }
+                        }
+                    }
+                });
+            }
+
+
+
+            if (code == "ACTA_COMITE_ETICA")
+            {
+                return Ok(new
+                {
+                    title = "Acta del Comité de Ética de Investigación",
+                    subtitle = "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
+                    signatureType = template.SignatureType,
+                    schema = new Dictionary<string, object>
+                    {
+                        { "JustificacionEtica", "" },
+                        { "RiesgosIdentificados", "" },
+                        { "MetodoConsentimiento", "" },
+                        { "DictamenComite", "Aprobado sin observaciones" },
+                        { "ObservacionesEspecificas", "" },
+                        { "MiembrosFirmantes", new object[] { } }
+                    },
+                    lists = new[] { "MiembrosFirmantes" },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "evaluacion_comite",
+                            label = "Evaluación de Ética",
+                            iconName = "CheckSquare",
+                            config = new
+                            {
+                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
+                                fields = new[]
+                                {
+                                    new { name = "JustificacionEtica", label = "Justificación Ética de la Investigación", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Describa el impacto ético sobre seres humanos, datos sensibles o animales..." },
+                                    new { name = "RiesgosIdentificados", label = "Identificación y Mitigación de Riesgos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Especifique cualquier riesgo biológico, digital o social y cómo se resolverá..." },
+                                    new { name = "MetodoConsentimiento", label = "Mecanismo de Consentimiento Informado", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Detalle cómo se obtendrá el consentimiento firmado de los participantes..." },
+                                    new { name = "DictamenComite", label = "Dictamen Final de Comisión de Ética", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin observaciones", "Aprobado con sugerencias", "Rechazado" }, placeholder = (string?)null },
+                                    new { name = "ObservacionesEspecificas", label = "Observaciones y Requerimientos de Enmienda", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar..." }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+
+            // 3. Generación Dinámica Genérica Simplificada (Cae aquí si no hay Base64 y no es una oficial)
             var colFields = new List<string>();
             if (!string.IsNullOrEmpty(template.CollaborativeFieldsJson))
             {
@@ -579,8 +819,8 @@ namespace diitra_api.Controllers
                                                 }
                                             }
                                         }
-                                        string participantes = participantsList.Count > 0 
-                                            ? string.Join(", ", participantsList) 
+                                        string participantes = participantsList.Count > 0
+                                            ? string.Join(", ", participantsList)
                                             : "un docente";
 
                                         try
@@ -681,4 +921,13 @@ namespace diitra_api.Controllers
         [property: JsonPropertyName("pdfBase64")] string? PdfBase64,
         [property: JsonPropertyName("hash")] string Hash,
         [property: JsonPropertyName("traceabilityCode")] string TraceabilityCode);
+
+    public class UiSectionDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string IconName { get; set; } = string.Empty;
+        public string? ComponentName { get; set; }
+        public object? Config { get; set; }
+    }
 }

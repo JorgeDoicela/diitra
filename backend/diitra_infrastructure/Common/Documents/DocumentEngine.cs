@@ -187,37 +187,42 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
-                // 3. Cargar HTML desde archivo físico (hot-reload en desarrollo)
-                //    Si el archivo .html existe en disco, su contenido tiene prioridad sobre el de la BD.
-                //    Esto permite editar el diseño sin recompilar ni reiniciar la API.
+                // 3. Cargar HTML desde la Base de Datos prioritariamente (Gobernanza de Plantillas /admin/plantillas).
+                //    Si está vacío en BD, intentamos cargar desde el archivo físico (hot-reload / seed) e inicializar la BD.
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
-                var htmlToRender = fileHtml ?? template.HtmlContent;
+                var htmlToRender = template.HtmlContent;
 
-                if (fileHtml != null)
+                if (string.IsNullOrEmpty(htmlToRender))
                 {
-                    _logger.LogDebug("DIITRA DocumentEngine: Usando HTML desde archivo físico para '{Code}'.", template.Code);
-
-                    // Sincronización inteligente hacia la Base de Datos:
-                    // Si el contenido del archivo físico cambió respecto a lo que hay en BD,
-                    // lo actualizamos en la BD para que el fallback siempre esté al día.
-                    if (fileHtml != template.HtmlContent)
+                    htmlToRender = fileHtml;
+                    if (fileHtml != null)
                     {
-                        _logger.LogInformation("DIITRA DocumentEngine: Detectado cambio en el archivo físico de '{Code}'. Sincronizando en BD para consistencia de Fallback...", template.Code);
+                        _logger.LogInformation("DIITRA DocumentEngine: Inicializando plantilla '{Code}' en BD desde archivo físico...", template.Code);
                         template.UpdateHtmlContentOnly(fileHtml);
                         await _templateRepository.SaveAsync(template, cancellationToken);
                     }
                 }
-
-                // 3b. Cargar CSS asociado desde archivo físico si existe
-                var fileCss = await _templateFileLoader.LoadCssAsync(template.Code);
-                if (fileCss != null)
+                else if (fileHtml != null && !htmlToRender.Contains("DIITRA_SECTIONS_JSON"))
                 {
-                    _logger.LogDebug("DIITRA DocumentEngine: Usando CSS desde archivo físico para '{Code}'.", template.Code);
-
-                    // Sincronización inteligente del CSS hacia la Base de Datos:
-                    if (fileCss != template.CustomCss)
+                    // Fallback resiliente: Si el archivo físico tiene metadatos de bloques pero la BD no,
+                    // sincronizamos para no perder el estado inicial.
+                    if (fileHtml.Contains("DIITRA_SECTIONS_JSON"))
                     {
-                        _logger.LogInformation("DIITRA DocumentEngine: Detectado cambio en el archivo CSS físico de '{Code}'. Sincronizando en BD...", template.Code);
+                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando metadatos iniciales del archivo físico '{Code}' hacia la BD...", template.Code);
+                        template.UpdateHtmlContentOnly(fileHtml);
+                        await _templateRepository.SaveAsync(template, cancellationToken);
+                        htmlToRender = fileHtml;
+                    }
+                }
+
+                // 3b. Cargar CSS asociado
+                var fileCss = await _templateFileLoader.LoadCssAsync(template.Code);
+                var cssToUse = template.CustomCss;
+                if (string.IsNullOrEmpty(cssToUse))
+                {
+                    cssToUse = fileCss;
+                    if (fileCss != null)
+                    {
                         template.UpdateCustomCssOnly(fileCss);
                         await _templateRepository.SaveAsync(template, cancellationToken);
                     }
@@ -380,10 +385,10 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 // Renderizar el CSS asociado a través de Scriban para admitir variables dinámicas (ej: {{portada_base64}})
                 string? renderedCss = null;
-                if (!string.IsNullOrEmpty(template.CustomCss))
+                if (!string.IsNullOrEmpty(cssToUse))
                 {
                     renderedCss = await _scribanEngine.RenderAsync(
-                        template.CustomCss,
+                        cssToUse,
                         renderData ?? new object(),
                         extraImageVars.Count > 0 ? extraImageVars : null,
                         request.IsBlindMode

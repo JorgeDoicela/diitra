@@ -33,6 +33,21 @@ import { ProgressReportSection }  from '../../../components/DIITRA/sections/Prog
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
 
 /**
+ * Mapa de nombre string de componente → Componente React real
+ */
+export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
+    'GeneralSection': GeneralSection,
+    'TeamSection': TeamSection,
+    'TechnicalSection': TechnicalSection,
+    'BudgetSection': BudgetSection,
+    'ImpactSection': ImpactSection,
+    'TimelineSection': TimelineSection,
+    'BibliographySection': BibliographySection,
+    'ProgressReportSection': ProgressReportSection,
+    'AgnosticSection': AgnosticSection
+};
+
+/**
  * Mapa de ID de sección → componente React específico.
  * Clave: ID de sección tal como se define en DocumentTemplateRegistry.ts
  * Valor: Componente React de sección
@@ -49,10 +64,6 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
 
     // ── INFORME DE AVANCE ─────────────────────────────────────────
     'ejecucion':      ProgressReportSection,
-
-    // ── SECCIONES AGNÓSTICAS (documentos dinámicos del backend) ───
-    // 'evaluacion', 'resumen', 'resultados', 'impacto' etc. →
-    // Usarán AgnosticSection por defecto (ver getDocumentSection)
 };
 
 /**
@@ -68,7 +79,9 @@ export function getDocumentSection(
 ): React.ComponentType<any> {
     // Prioridad 1: Componente explícito en la config de la sección (retrocompatibilidad)
     if (overrideComponent) return overrideComponent;
-    // Prioridad 2: Registro explícito
+    // Prioridad 2: Resolución por nombre de componente
+    if (COMPONENT_MAP[sectionId]) return COMPONENT_MAP[sectionId];
+    // Prioridad 3: Registro explícito por ID
     if (DocumentComponentRegistry[sectionId]) return DocumentComponentRegistry[sectionId];
     // Fallback: AgnosticSection para secciones dinámicas del backend
     return AgnosticSection;

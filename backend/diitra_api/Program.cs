@@ -4,6 +4,7 @@ using diitra_infrastructure.Security;
 using diitra_application.Research;
 using diitra_infrastructure.Research;
 using diitra_application.Common;
+using diitra_api.Controllers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -158,6 +159,22 @@ builder.Services.AddAuthorization(options =>
 // ── DIITRA Document Engine ──────────────────────────────────────
 // Motor principal: genera, combina y audita todos los documentos institucionales
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
+
+// Proveedores de Bloques Dinámicos (Arquitectura de Plugins)
+builder.Services.AddTransient<IDocumentBlockProvider, CoverBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, TitleBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, PageBreakBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, TwoColumnBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, RichTextBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, AdvancedTableBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, ResearchersTableBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, GanttBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, MultiSectionTableBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, SignaturesBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, RubricTableBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, ImpactsBlockProvider>();
+builder.Services.AddTransient<IDocumentBlockProvider, ProjectGeneralSectionBlockProvider>();
+
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
 builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstanceService, Diitra.Infrastructure.Common.Documents.DocumentInstanceService>();
