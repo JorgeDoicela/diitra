@@ -282,7 +282,9 @@ namespace diitra_infrastructure.Collaboration
             var deltaCount = await _db.InvCoworkUpdates.CountAsync(u => u.DocumentoUuid == documentId);
             if (deltaCount > 150)
             {
-                await Clients.Caller.SendAsync("TriggerCompaction");
+                // Notificar a todo el grupo (todos los clientes de esta sala) en lugar de solo al caller.
+                // Esto garantiza que si el caller se desconecta o tiene un bug, algún otro cliente activo enviará la compactación.
+                await Clients.Group(documentId).SendAsync("TriggerCompaction");
             }
         }
 

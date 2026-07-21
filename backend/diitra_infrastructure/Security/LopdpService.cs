@@ -130,7 +130,9 @@ public class LopdpService : ILopdpService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error registrando auditoría LOPDP de datos sensibles para Actor={Actor}, Afectado={Afectado}", idUsuarioActor, idUsuarioAfectado);
+            _logger.LogCritical(ex, "CONTINGENCIA_LOPDP: Fallo en base de datos al registrar auditoría de datos sensibles. " +
+                "Actor={Actor}, Afectado={Afectado}, Tabla={Tabla}, Columna={Columna}, Operacion={Operacion}, Motivo={Motivo}, IP={IP}, UserAgent={UA}, Timestamp={Timestamp}",
+                idUsuarioActor, idUsuarioAfectado, tablaAfectada, columnaAfectada, operacion, motivo, ip, userAgent, DateTime.UtcNow.ToString("O"));
             // No propagamos la excepción en auditoría para evitar interrumpir la operación principal
         }
     }

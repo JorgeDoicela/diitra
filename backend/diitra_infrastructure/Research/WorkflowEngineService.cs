@@ -202,9 +202,10 @@ namespace Diitra.Infrastructure.Research
  
                     decimal proposedHours = prof.HorasSemanales ?? 0;
                     
-                    // NOTA DE NOMENCLATURA & SISTEMA: Se aplica Trim() en los IDs de profesores para evitar desajustes por espacios en la persistencia.
+                    // NOTA DE NOMENCLATURA & SISTEMA: Se normaliza con Trim() en memoria antes de la consulta SQL para evitar Table Scan en MariaDB.
+                    var sigafiIdNormalizado = (persona.IdSigafi ?? "").Trim();
                     var availableHours = await _context.ProfesoresActividades
-                        .Where(pa => pa.IdProfesor.Trim() == persona.IdSigafi.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Where(pa => pa.IdProfesor == sigafiIdNormalizado && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .Select(pa => pa.HorasSemana)
                         .FirstOrDefaultAsync() ?? 0;
  

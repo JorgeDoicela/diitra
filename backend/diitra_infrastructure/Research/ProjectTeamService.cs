@@ -141,8 +141,9 @@ namespace diitra_infrastructure.Research
 
                 decimal proposedHours = inv.HorasSemanales ?? 0;
 
+                var sigafiIdNormalizado = (persona.IdSigafi ?? "").Trim();
                 var availableHours = await _context.ProfesoresActividades
-                    .Where(pa => pa.IdProfesor.Trim() == persona.IdSigafi.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                    .Where(pa => pa.IdProfesor == sigafiIdNormalizado && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                     .Select(pa => pa.HorasSemana)
                     .FirstOrDefaultAsync() ?? 0;
 

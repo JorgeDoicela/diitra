@@ -117,7 +117,7 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(diitr
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
-    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 Megabytes
+    options.MaximumReceiveMessageSize = 2 * 1024 * 1024; // 2 Megabytes (Seguridad DoS)
 });
 
 // Infrastructure Services
@@ -181,7 +181,10 @@ builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstance
 builder.Services.AddScoped<IDocumentDataOrchestrator, DocumentDataOrchestrator>();
 builder.Services.AddScoped<IDocumentDataProvider, ProjectDocumentDataProvider>();
 builder.Services.AddScoped<IDocumentDataProvider, FinalReportDataProvider>();
-builder.Services.AddHttpClient<IRepositoryConnector, DSpaceRepositoryConnector>();
+builder.Services.AddHttpClient<IRepositoryConnector, DSpaceRepositoryConnector>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5); // Resiliencia: Timeout estricto de 5s para evitar congelación de hebras
+});
 builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageService, Diitra.Infrastructure.Common.Storage.LocalFileStorageService>();
 // ─────────────────────────────────────────────────────────────────────────────
 

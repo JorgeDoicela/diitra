@@ -350,7 +350,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 // 5. Inyectar datos + imágenes con Handlebars
-                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
+                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender ?? string.Empty, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
                 
                 // 5. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
                 var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
