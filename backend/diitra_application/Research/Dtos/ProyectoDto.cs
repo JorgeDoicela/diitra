@@ -5,6 +5,13 @@ namespace Diitra.Application.Research.Dtos
 {
     public class ProyectoDto
     {
+        public static readonly System.Text.Json.JsonSerializerOptions DefaultDeserializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+            Converters = { new StringOrNumberConverter() }
+        };
+
         // ── Identificación básica ──
         public string? Uuid { get; set; }
         public string? Estado { get; set; }

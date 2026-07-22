@@ -19,28 +19,6 @@ namespace diitra_api.Controllers
             ref int premiumFieldsCount,
             string templateCode)
         {
-            if (templateCode == "PROTOCOLO_INVESTIGACION")
-            {
-                schemaDict["Titulo"] = "";
-                schemaDict["IdCarrera"] = 0;
-                schemaDict["IdConvocatoria"] = 0;
-                schemaDict["Periodo"] = "";
-                schemaDict["TiempoEjecucion"] = "";
-                schemaDict["Programa"] = "";
-                schemaDict["GrupoInvestigacionTipo"] = "NO";
-                schemaDict["GrupoInvestigacionNombre"] = "";
-                schemaDict["Dominio"] = "";
-                schemaDict["LineaInvestigacion"] = "";
-                schemaDict["SublineaInvestigacion"] = "";
-                schemaDict["TipoInvestigacion"] = "APLICADA";
-                schemaDict["CampoAmplio"] = "";
-                schemaDict["CampoEspecifico"] = "";
-                schemaDict["CampoDetallado"] = "";
-                schemaDict["DirectorProyecto"] = "";
-                schemaDict["FechaPresentacion"] = "";
-                schemaDict["FechaInicio"] = "";
-                schemaDict["FechaFin"] = "";
-            }
         }
 
         public Task MapToUiSectionAsync(
@@ -51,16 +29,6 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            if (templateCode == "PROTOCOLO_INVESTIGACION" && !sectionsList.Any(s => s.Id == "identificacion"))
-            {
-                sectionsList.Add(new UiSectionDto {
-                    Id = "identificacion",
-                    Label = "Identificación",
-                    IconName = "BookOpen",
-                    ComponentName = "GeneralSection",
-                    Config = null
-                });
-            }
             return Task.CompletedTask;
         }
     }

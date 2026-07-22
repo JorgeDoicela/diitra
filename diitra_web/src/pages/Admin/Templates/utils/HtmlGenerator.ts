@@ -107,8 +107,8 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
     <h1 class="cover-title" style="color: ${c.colorTema || COLORS.blue};">${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}</h1>
     <div class="cover-line"></div>
     <div class="cover-subtitle">{{titulo}}</div>
-    <div class="cover-career">${c.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}</div>
-    <div class="cover-period">${c.periodoPorDefecto || 'PERIODO ACADÉMICO 2026'}</div>
+    <div class="cover-career">{{default carrera "${c.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}</div>
+    <div class="cover-period">{{default periodo "${c.periodoPorDefecto || 'PERIODO ACADÉMICO 2026'}"}}</div>
   </div>`;
                 break;
 
@@ -345,6 +345,313 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
   <div class="sig-footer">${c.textoPieFirma || 'IST Traversari'}</div>`;
                 break;
             }
+
+            // ── FICHA DE IDENTIFICACIÓN ──────────────────────────────────────
+            case 'project_general_section':
+                html += `
+  <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">Ficha de Identificación del Proyecto (Metadatos Científicos)</p>
+  <table class="info-table">
+    <tbody>
+      <tr>
+        <td class="label-cell">Título del Proyecto</td>
+        <td style="font-weight: bold;">{{default titulo "[TEMA / NOMBRE DEL PROYECTO]"}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Carrera / Unidad Académica</td>
+        <td>{{default carrera "No especificada"}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Convocatoria</td>
+        <td>{{default convocatoria "No especificada"}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Línea de Investigación</td>
+        <td>
+          <div><strong>Línea:</strong> {{default linea_investigacion "No especificada"}}</div>
+          <div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">Campo Detallado CACES</td>
+        <td>{{default campo_detallado "No especificado"}}</td>
+      </tr>
+    </tbody>
+  </table>`;
+                break;
+
+            case 'project_technical_section':
+                html += `
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (8 SECCIONES) -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 10px; border-bottom: 1.5px solid ${COLORS.blue}; padding-bottom: 4px;">3. Plan Técnico del Proyecto</p>
+    
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default antecedentes "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default descripcion_proyecto "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default justificacion "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b; margin-bottom: 8px;">
+        <strong>Objetivo General:</strong>
+        <div style="margin-top: 4px;">{{default objetivo_general "No redactado."}}</div>
+      </div>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">
+        <strong>Objetivos Específicos:</strong>
+        <div style="margin-top: 4px;">{{default objetivos_especificos "No redactado."}}</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default marco_teorico "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default metodologia "No redactado."}}</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default evaluacion "No redactado."}}</div>
+    </div>
+  </div>`;
+                break;
+
+            case 'project_progress_report':
+                html += `
+  <!-- BLOQUE: AVANCE DE EJECUCIÓN -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">Avance de Ejecución y Monitoreo del Proyecto</p>
+    
+    <div style="margin-bottom: 15px;">
+      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 4px;">Bitácora Científica & Conclusiones Parciales:</strong>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default conclusiones_parciales "Sin registros de bitácora."}}</div>
+    </div>
+
+    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">Hitos & Entregables Completados</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Actividad / Hito</th>
+          <th style="${headerBg('blue')} width: 80px; text-align: center;">% Avance</th>
+          <th style="${headerBg('blue')} width: 90px; text-align: center;">Completado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each hitos_completados}}
+        <tr>
+          <td>{{this.actividad}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.avance}} %</td>
+          <td style="text-align: center; font-weight: bold; color: #10b981;">{{#if this.hito_completado}}SÍ{{else}}NO{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">Presupuesto de Gasto Ejecutado</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Partida / Gasto</th>
+          <th style="${headerBg('blue')} width: 120px; text-align: right;">Monto Gastado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each presupuesto_ejecutado}}
+        <tr>
+          <td>{{this.partida}}</td>
+          <td style="text-align: right; font-weight: bold;">$ {{this.monto_gastado}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+                break;
+
+            case 'project_ethics_report':
+                html += `
+  <!-- BLOQUE: EVALUACIÓN DE ÉTICA -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px; border-bottom: 1.5px solid ${COLORS.blue}; padding-bottom: 4px;">Dictamen de Pertinencia Ética y Bioética</p>
+    
+    <div style="margin-bottom: 12px;">
+      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Justificación Ética de la Propuesta:</strong>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default justificacion_etica "No registrada."}}</div>
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Riesgos Identificados & Medidas de Mitigación:</strong>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default riesgos_identificados "No registrada."}}</div>
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Procedimiento de Consentimiento Informado:</strong>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default metodo_consentimiento "No registrada."}}</div>
+    </div>
+
+    <div style="margin-top: 15px; padding: 10px; bg-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <tbody>
+          <tr>
+            <td style="width: 50%;">
+              <strong>Dictamen Final del Comité:</strong><br/>
+              <span style="font-size: 10.5pt; font-weight: bold; color: ${COLORS.blue}; text-transform: uppercase;">{{default dictamen_comite "Pendiente"}}</span>
+            </td>
+            <td>
+              <strong>Observaciones / Sugerencias de Enmienda:</strong><br/>
+              <span style="color: #475569;">{{default observaciones_especificas "Ninguna."}}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+                break;
+
+            // ── RECURSOS Y PRESUPUESTO ───────────────────────────────────────
+            case 'project_budget_section':
+                html += `
+  <!-- BLOQUE: RECURSOS Y PRESUPUESTO -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">4. Recursos y Presupuesto Detallado</p>
+    
+    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 10px 0 4px;">4.1 Recursos Disponibles (Equipos, Licencias, Espacios)</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Descripción del Recurso</th>
+          <th style="${headerBg('blue')} width: 60px; text-align: center;">Cantidad</th>
+          <th style="${headerBg('blue')} width: 150px;">Fuente</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each recursos_disponibles}}
+        <tr>
+          <td>{{this.descripcion}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+          <td>{{this.fuente}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">4.2 Recursos Necesarios (Presupuesto de Gasto)</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Partida / Rubro</th>
+          <th style="${headerBg('blue')} width: 60px; text-align: center;">Cantidad</th>
+          <th style="${headerBg('blue')} width: 90px; text-align: right;">P. Unitario</th>
+          <th style="${headerBg('blue')} width: 90px; text-align: right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each recursos_necesarios}}
+        <tr>
+          <td>{{this.descripcion}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+          <td style="text-align: right;">$ {{this.costo_unitario}}</td>
+          <td style="text-align: right; font-weight: bold;">$ {{this.costo_total}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <tbody>
+          <tr>
+            <td style="width: 65%;">
+              <div style="margin-bottom: 4px;">
+                <strong>Financiamiento Solicitado al ISTPET:</strong> {{#if financiamiento_istpet}}SÍ{{else}}NO{{/if}}
+              </div>
+              <div>
+                <strong>Financiamiento Otras Fuentes:</strong> {{#if financiamiento_otras_fuentes}}SÍ ({{default nombres_otras_fuentes "No especificadas"}}){{else}}NO{{/if}}
+              </div>
+            </td>
+            <td style="text-align: right; vertical-align: bottom;">
+              <span style="font-size: 8pt; text-transform: uppercase; color: #64748b; font-weight: bold; display: block;">Costo Total Estimado:</span>
+              <span style="font-size: 13pt; font-weight: bold; color: ${COLORS.blue};">$ {{default costo_total "0.00"}}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+                break;
+
+            // ── MATRIZ DE IMPACTOS ───────────────────────────────────────────
+            case 'impacts':
+                html += `
+  <!-- BLOQUE: MATRIZ DE IMPACTOS Y PRODUCTOS -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">5. Productos Esperados</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Tipo de Producto</th>
+          <th style="${headerBg('blue')} width: 100px; text-align: center;">Cantidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each productos_esperados}}
+        <tr>
+          <td>{{this.tipo}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 25px 0 6px;">6. Matriz de Impacto</p>
+    <table class="info-table">
+      <tbody>
+        <tr>
+          <td class="label-cell" style="width: 25%;">Impacto Social</td>
+          <td>{{default impacto.social "Sin descripción."}}</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Impacto Científico</td>
+          <td>{{default impacto.cientifico "Sin descripción."}}</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Impacto Económico</td>
+          <td>{{default impacto.economico "Sin descripción."}}</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Impacto Político</td>
+          <td>{{default impacto.politico "Sin descripción."}}</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Impacto Ambiental</td>
+          <td>{{default impacto.ambiental "Sin descripción."}}</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Otro Impacto</td>
+          <td>{{default impacto.otro "Sin descripción."}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+                break;
         }
     }
 

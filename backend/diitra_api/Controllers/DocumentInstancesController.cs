@@ -137,7 +137,8 @@ namespace diitra_api.Controllers
                 }
                 catch (Exception ex)
                 {
-                    System.Console.WriteLine($"[DIITRA ERROR] Error al procesar bloques dinámicos en ui-config: {ex.Message}\n{ex.StackTrace}");
+                    System.Console.WriteLine($"[DIITRA WARNING] Error al procesar bloques dinámicos en ui-config para '{code}': {ex.Message}\n{ex.StackTrace}");
+                    return NotFound(new { message = $"La estructura de bloques de la plantilla '{code}' está corrupta. Cayendo en fallback local del frontend.", error = ex.Message });
                 }
             }
 
@@ -751,15 +752,14 @@ namespace diitra_api.Controllers
                 string metadataJson = metadata.GetRawText();
                 var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
 
-                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" || instance.EntityType == "Proyecto")
                 {
                     try
                     {
                         string jsonToDeserialize = instance.DataSnapshotJson ?? metadataJson;
                         jsonToDeserialize = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(jsonToDeserialize);
 
-                        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(jsonToDeserialize, options);
+                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(jsonToDeserialize, ProyectoDto.DefaultDeserializerOptions);
                         if (dto != null)
                         {
                             // Si el EntityUuid es "GLOBAL", significa que es una nueva postulación y no un proyecto existente.

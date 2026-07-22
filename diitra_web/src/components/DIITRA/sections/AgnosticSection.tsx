@@ -140,6 +140,41 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                 );
             }
 
+            if (type === 'checkbox') {
+                return (
+                    <div key={name} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex items-center gap-3 relative group hover:border-text-main/10 transition-all">
+                        <CoWorkField
+                            name={name}
+                            cowork={cowork}
+                            type="checkbox"
+                            label={`${label} • Colaborativo`}
+                            onValueChange={(val) => onUpdate(name, val === 'true' || val === true)}
+                        />
+                    </div>
+                );
+            }
+
+            if (type === 'select') {
+                return (
+                    <div key={name} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex flex-col gap-1.5 relative group hover:border-text-main/10 transition-all">
+                        <CoWorkField
+                            name={name}
+                            cowork={cowork}
+                            type="select"
+                            label={`${label} • Colaborativo`}
+                            placeholder={placeholder}
+                            onValueChange={(val) => onUpdate(name, val)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-xs text-text-main outline-none"
+                        >
+                            <option value="">Seleccione opción...</option>
+                            {options.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </CoWorkField>
+                    </div>
+                );
+            }
+
             return (
                 <div key={name} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex flex-col gap-1.5 relative group hover:border-text-main/10 transition-all">
                     <CoWorkField

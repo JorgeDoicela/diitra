@@ -36,7 +36,12 @@ export type BlockType =
     | 'researchers_table'
     | 'rubric_table'
     | 'signatures'
-    | 'project_general_section';
+    | 'project_general_section'
+    | 'project_technical_section'
+    | 'project_budget_section'
+    | 'project_progress_report'
+    | 'project_ethics_report'
+    | 'impacts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos

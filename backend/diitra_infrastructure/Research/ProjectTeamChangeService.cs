@@ -517,7 +517,7 @@ namespace diitra_infrastructure.Research
             try
             {
                 var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(metadataJson);
-                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
+                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, ProyectoDto.DefaultDeserializerOptions) ?? new ProyectoDto();
             }
             catch
             {

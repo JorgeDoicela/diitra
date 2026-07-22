@@ -160,20 +160,15 @@ builder.Services.AddAuthorization(options =>
 // Motor principal: genera, combina y audita todos los documentos institucionales
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 
-// Proveedores de Bloques Dinámicos (Arquitectura de Plugins)
-builder.Services.AddTransient<IDocumentBlockProvider, CoverBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, TitleBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, PageBreakBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, TwoColumnBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, RichTextBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, AdvancedTableBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, ResearchersTableBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, GanttBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, MultiSectionTableBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, SignaturesBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, RubricTableBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, ImpactsBlockProvider>();
-builder.Services.AddTransient<IDocumentBlockProvider, ProjectGeneralSectionBlockProvider>();
+// Proveedores de Bloques Dinámicos (Arquitectura de Plugins - Escaneo Automático)
+var providerInterfaceType = typeof(IDocumentBlockProvider);
+var providerTypes = typeof(Program).Assembly.GetTypes()
+    .Where(t => providerInterfaceType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+foreach (var type in providerTypes)
+{
+    builder.Services.AddTransient(typeof(IDocumentBlockProvider), type);
+}
 
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();

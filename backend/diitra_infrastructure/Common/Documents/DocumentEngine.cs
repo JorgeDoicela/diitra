@@ -282,19 +282,12 @@ namespace Diitra.Infrastructure.Common.Documents
                                  doc.RootElement.TryGetProperty("data", out dataProp)))
                             {
                                 var nestedRaw = dataProp.GetRawText();
-                                nestedRaw = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(nestedRaw);
-                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(nestedRaw, new System.Text.Json.JsonSerializerOptions 
-                                { 
-                                    PropertyNameCaseInsensitive = true 
-                                });
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(nestedRaw, ProyectoDto.DefaultDeserializerOptions);
                             }
                             else
                             {
                                 var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(rawText);
-                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedRaw, new System.Text.Json.JsonSerializerOptions 
-                                { 
-                                    PropertyNameCaseInsensitive = true 
-                                });
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedRaw, ProyectoDto.DefaultDeserializerOptions);
                             }
                         }
                         catch (Exception ex)

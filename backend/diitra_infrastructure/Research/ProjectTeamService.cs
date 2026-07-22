@@ -176,7 +176,7 @@ namespace diitra_infrastructure.Research
                     try
                     {
                         var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(project.MetadataCacesJson);
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, ProyectoDto.DefaultDeserializerOptions);
                     }
                     catch { }
                 }
@@ -416,7 +416,7 @@ namespace diitra_infrastructure.Research
                     try
                     {
                         var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(project.MetadataCacesJson);
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, ProyectoDto.DefaultDeserializerOptions);
                     }
                     catch { }
                 }
