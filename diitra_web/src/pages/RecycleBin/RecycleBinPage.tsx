@@ -113,7 +113,7 @@ const RecycleBinPage: React.FC = () => {
     ].filter(tab => tab.roles.includes('DIITRA_ADMIN') || !tab.roles.includes('DIITRA_ADMIN') || (tab.roles.includes('DIITRA_DOCENTE') && !isAdmin));
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/5 dark:border-white/5 pb-5">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
@@ -230,7 +230,7 @@ const RecycleBinPage: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </main>
     );
 };
 

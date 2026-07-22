@@ -545,13 +545,13 @@ const DocumentTemplatesPage: React.FC = () => {
     const activeBlock = blocks.find(b => b.id === activeBlockId);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-112px)] overflow-hidden font-sans">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 flex flex-col h-[calc(100vh-112px)] overflow-hidden font-sans">
             {/* Cabecera Principal */}
             <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-border-thin/40 shrink-0">
                 <div>
                     <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
                         <FileCode2 className="w-5 h-5 text-text-main" />
-                        Gobernanza de Plantillas
+                        Editor de Plantillas
                     </h1>
                     <p className="text-xs text-text-dim mt-0.5">
                         Creador visual de documentos. Arrastra bloques, añade tablas y define la maquetación del PDF oficial.
@@ -668,7 +668,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     ))}
                 </div>
             )}
-
+ 
             {loading && templates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center flex-1">
                     <RefreshCw className="w-8 h-8 text-brand animate-spin mb-2" />
@@ -676,7 +676,7 @@ const DocumentTemplatesPage: React.FC = () => {
                 </div>
             ) : (
                 <div className="flex flex-1 overflow-hidden min-h-0 mt-4 gap-3 flex-col xl:flex-row">
-
+ 
                     {/* ── CATÁLOGO ── */}
                     <div className={`w-full xl:w-60 shrink-0 flex flex-col min-h-0 ${
                         selectedTemplate && activeMobileTab !== 'catalog' ? 'hidden xl:flex' : 'flex'
@@ -687,7 +687,7 @@ const DocumentTemplatesPage: React.FC = () => {
                             onSelectTemplate={handleSelectTemplate}
                         />
                     </div>
-
+ 
                     {selectedTemplate ? (
                         <DndContext
                             sensors={sensors}
@@ -708,9 +708,9 @@ const DocumentTemplatesPage: React.FC = () => {
                                     onToggleActive={handleToggleActive}
                                     onDeleteBlock={handleDeleteBlock}
                                     onDuplicateBlock={handleDuplicateBlock}
-                                />
+                                    />
                             </div>
-
+ 
                             {/* ── PROPIEDADES ── */}
                             <div className={`xl:w-96 shrink-0 flex flex-col min-h-0 ${
                                 activeMobileTab === 'properties' ? 'flex w-full' : 'hidden xl:flex'
@@ -739,7 +739,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     )}
                 </div>
             )}
-        </div>
+        </main>
     );
 };
 
