@@ -84,3 +84,20 @@
     position: relative;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
 }
+
+/* Botón de eliminar notificaciones en hover de la tarjeta */
+.bento-card .notification-delete-btn {
+    opacity: 0;
+    pointer-events: auto;
+    transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.bento-card:hover .notification-delete-btn {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .bento-card .notification-delete-btn {
+        opacity: 0.7;
+    }
+}

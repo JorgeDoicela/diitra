@@ -252,6 +252,7 @@ public class BackupBackgroundService : BackgroundService
             _logger.LogError(ex, "Error al respaldar la base de datos.");
             log.Estado = "Fallido";
             log.ErrorMensaje = ex.Message;
+            await NotificarFalloAdminAsync(context, "Fallo en Respaldo de Base de Datos", ex.Message, cancellationToken);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -301,9 +302,42 @@ public class BackupBackgroundService : BackgroundService
             _logger.LogError(ex, "Error al respaldar archivos físicos.");
             log.Estado = "Fallido";
             log.ErrorMensaje = ex.Message;
+            await NotificarFalloAdminAsync(context, "Fallo en Respaldo de Archivos Uploads", ex.Message, cancellationToken);
         }
 
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task NotificarFalloAdminAsync(DiitraContext context, string titulo, string errorMsg, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var adminUserIds = await context.Users
+                .Where(u => u.UserRoles.Any(r => r.Role.CodigoRol == "DIITRA_ADMIN"))
+                .Select(u => u.IdUsuario)
+                .ToListAsync(cancellationToken);
+
+            foreach (var userId in adminUserIds)
+            {
+                context.InvNotificaciones.Add(new InvNotificacion
+                {
+                    Uuid = Guid.NewGuid(),
+                    Destinatario = userId,
+                    TipoDestinatario = "Usuario",
+                    Categoria = "ALMACENAMIENTO",
+                    Prioridad = "URGENTE",
+                    Titulo = titulo,
+                    Mensaje = $"El proceso automatizado de copia de seguridad reportó un fallo: {errorMsg}",
+                    UrlAccion = "/configuracion?mainTab=almacenamiento&tab=almacenamiento",
+                    Leido = false,
+                    FechaEnvio = DateTime.UtcNow
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo registrar la notificación de fallo de respaldo.");
+        }
     }
 
     private async Task AplicarRetencionAsync(DiitraContext context, string destAbsPath, int retentionDays)
@@ -326,8 +360,8 @@ public class BackupBackgroundService : BackgroundService
                     _logger.LogInformation("Archivo de respaldo antiguo eliminado por retención: {File}", log.NombreArchivo);
                 }
 
-                // Actualizamos el estado del log para indicar que fue purgado físicamente
-                log.Estado = "Fallido";
+                // Actualizamos el estado del log para indicar que fue purgado físicamente por retención
+                log.Estado = "Purgado";
                 log.ErrorMensaje = $"Archivo eliminado automáticamente por política de retención ({retentionDays} días).";
             }
 

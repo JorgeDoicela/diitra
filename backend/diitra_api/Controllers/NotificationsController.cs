@@ -58,6 +58,27 @@ namespace diitra_api.Controllers
             return Ok();
         }
 
+        [HttpDelete("{uuid}")]
+        public async Task<IActionResult> Delete(string uuid)
+        {
+            var result = await _notificationService.DeleteNotificationAsync(uuid);
+            if (result) return Ok();
+            return NotFound();
+        }
+
+        [HttpDelete("clear-read")]
+        public async Task<IActionResult> ClearRead()
+        {
+            var userIdStr = User.FindFirst("id_usuario")?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            await _notificationService.ClearReadNotificationsAsync(userId);
+            return Ok();
+        }
+
         [HttpPost("test-push")]
         public async Task<IActionResult> TestPush([FromQuery] string title = "Prueba Profesional DIITRA", [FromQuery] string body = "¡Éxito! Esta es una notificación Web Push real en segundo plano.")
         {

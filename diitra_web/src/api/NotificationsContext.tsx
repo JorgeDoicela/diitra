@@ -30,6 +30,8 @@ interface NotificationsContextType {
     fetchNotifications: () => Promise<void>;
     markAsRead: (uuid: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
+    deleteNotification: (uuid: string) => Promise<void>;
+    clearReadNotifications: () => Promise<void>;
     isLoading: boolean;
     isConnected: boolean;
     addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
@@ -145,12 +147,97 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                         e.stopPropagation();
                         onDismiss(toast.id);
                     }}
+                    title="Cerrar notificación"
                 >
-                    <X size={12} />
+                    <X size={15} />
                 </button>
             </div>
         </div>
     );
+};
+
+const playNotificationSound = (type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default') => {
+    try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const audioCtx = new AudioContextClass();
+
+        // Función para reproducir un tono premium con armónicos y filtro de calidez
+        const playPremiumTone = (freqs: number[], duration: number, toneType: 'success' | 'error' | 'info') => {
+            if (audioCtx.state === 'suspended') return;
+
+            const now = audioCtx.currentTime;
+
+            // Filtro paso bajo para cortar agudos ásperos y dar un timbre cálido (estilo macOS)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(toneType === 'error' ? 700 : 1600, now);
+            filter.connect(audioCtx.destination);
+
+            // Control de volumen principal con curva de decaimiento suave (Fade In de 8ms para evitar clicks)
+            const mainGain = audioCtx.createGain();
+            mainGain.gain.setValueAtTime(0, now);
+            mainGain.gain.linearRampToValueAtTime(0.08, now + 0.008);
+            mainGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            mainGain.connect(filter);
+
+            // Generar osciladores para fundamental y armónicos secundarios
+            freqs.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+
+                const oscGain = audioCtx.createGain();
+                // Fundamental fuerte, armónicos atenuados
+                const vol = idx === 0 ? 0.8 : 0.35;
+                oscGain.gain.setValueAtTime(vol, now);
+
+                osc.connect(oscGain);
+                oscGain.connect(mainGain);
+
+                osc.start(now);
+                osc.stop(now + duration);
+            });
+        };
+
+        const playSynthesizedFallback = () => {
+            if (type === 'success') {
+                // Cascacada de campanillas brillantes en acorde mayor (Do, Mi, Sol)
+                playPremiumTone([523.25, 1046.50], 0.25, 'success');
+                setTimeout(() => {
+                    playPremiumTone([659.25, 1318.51], 0.28, 'success');
+                }, 75);
+                setTimeout(() => {
+                    playPremiumTone([783.99, 1567.98], 0.35, 'success');
+                }, 150);
+            } else if (type === 'error' || type === 'warning') {
+                // Vibración grave, disonante pero suave (200Hz + 204Hz) que alerta sin asustar
+                playPremiumTone([200, 204], 0.35, 'error');
+            } else {
+                // Repique clásico doble ("ping-pong")
+                playPremiumTone([880, 1760], 0.2, 'info');
+                setTimeout(() => {
+                    playPremiumTone([1046.50, 2093.00], 0.3, 'info');
+                }, 90);
+            }
+        };
+
+        // Si es una notificación estándar (default o info), intentar reproducir el mp3 personalizado
+        if (type === 'default' || type === 'info') {
+            const audio = new Audio('/notification.mp3');
+            audio.volume = 0.5; // volumen moderado agradable
+            audio.play().catch((err) => {
+                console.warn('Fallo al reproducir audio personalizado, usando fallback sintetizado:', err);
+                playSynthesizedFallback();
+            });
+        } else {
+            // Para feedback de interacción (success, error, warning), usar el sintetizador directamente
+            playSynthesizedFallback();
+        }
+    } catch (e) {
+        console.warn('Web Audio API notification sound failed to play:', e);
+    }
 };
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -181,6 +268,17 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         
         setToasts(prev => [...prev, { id, title, body: cleanBody, type, url, onUndo }]);
         
+        // ==========================================
+        // CONTROL DE REPRODUCCIÓN SONORA (EVITAR DOBLE SONIDO)
+        // ==========================================
+        // 1. Si es feedback de interacción ('success', 'error', 'warning'), siempre se reproduce el sonido sintetizado.
+        // 2. Si es una notificación en tiempo real ('default', 'info'), SOLO reproducimos el sonido en la pestaña web
+        //    si el usuario la tiene enfocada. Si está en segundo plano, el sonido lo emitirá el Sistema Operativo
+        //    al lanzar el popup nativo de escritorio (evitando que se superpongan o suenen duplicados).
+        if (type === 'success' || type === 'error' || type === 'warning' || document.hasFocus()) {
+            playNotificationSound(type);
+        }
+
         const duration = onUndo ? 8000 : 5000;
         
         // Auto-remove after duration
@@ -191,12 +289,25 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         // Evitar duplicar la notificación nativa si Web Push está activo y sincronizado en este navegador
         const isWebPushActive = localStorage.getItem('web_push_active') === 'true';
 
-        // Solo lanzamos la notificación nativa si Web Push no está activo y tenemos permisos
-        if (!isWebPushActive && 'Notification' in window && Notification.permission === 'granted') {
+        // ==========================================
+        // CONTROL DE POPUPS DE ESCRITORIO (EVITAR SPAM Y SUPERPOSICIÓN DE UI)
+        // ==========================================
+        // IMPORTANTE:
+        // - Solo lanzamos la notificación nativa si la pestaña NO está enfocada (!document.hasFocus()). Si está enfocado,
+        //   el usuario ya ve el Toast React en pantalla y el popup nativo del SO encima sería redundante e invasivo.
+        // - Limitamos los popups de escritorio a notificaciones reales del servidor ('default', 'info'), nunca para
+        //   acciones simples como "Cambios guardados con éxito" o errores de formulario de la UI local.
+        const shouldShowNative = !isWebPushActive && 
+                                 (type === 'default' || type === 'info') && 
+                                 !document.hasFocus() && 
+                                 'Notification' in window && 
+                                 Notification.permission === 'granted';
+
+        if (shouldShowNative) {
             try {
                 const n = new window.Notification(title, {
                     body: cleanBody,
-                    icon: '/favicon.ico'
+                    icon: '/logo_fondo_negro.png'
                 });
                 
                 n.onclick = () => {
@@ -240,6 +351,24 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             setNotifications(prev => prev.map(n => ({ ...n, leido: true })));
         } catch (error) {
             console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    const deleteNotification = async (uuid: string) => {
+        try {
+            await api.delete(`/Admin/notifications/${uuid}`);
+            setNotifications(prev => prev.filter(n => n.uuid !== uuid));
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+        }
+    };
+
+    const clearReadNotifications = async () => {
+        try {
+            await api.delete('/Admin/notifications/clear-read');
+            setNotifications(prev => prev.filter(n => !n.leido));
+        } catch (error) {
+            console.error('Error clearing read notifications:', error);
         }
     };
 
@@ -326,6 +455,38 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const unreadCount = notifications.filter(n => !n.leido).length;
 
+    // Sincronizar contador de no leídos en el título de la pestaña (Tab Title Badge)
+    useEffect(() => {
+        const updateTitle = () => {
+            let currentTitle = document.title;
+            // Limpiar cualquier badge previo ej. (3) o (99+)
+            currentTitle = currentTitle.replace(/^\(\d+\+?\)\s*/, '');
+            if (unreadCount > 0) {
+                document.title = `(${unreadCount}) ${currentTitle}`;
+            } else {
+                document.title = currentTitle;
+            }
+        };
+
+        updateTitle();
+
+        // MutationObserver para capturar cambios en el título por navegación u otras páginas
+        const titleElement = document.querySelector('title');
+        if (!titleElement) return;
+
+        const observer = new MutationObserver(() => {
+            observer.disconnect();
+            updateTitle();
+            observer.observe(titleElement, { childList: true });
+        });
+
+        observer.observe(titleElement, { childList: true });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [unreadCount]);
+
     return (
         <NotificationsContext.Provider value={{ 
             notifications, 
@@ -333,6 +494,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             fetchNotifications, 
             markAsRead,
             markAllAsRead,
+            deleteNotification,
+            clearReadNotifications,
             isLoading,
             isConnected,
             addToast

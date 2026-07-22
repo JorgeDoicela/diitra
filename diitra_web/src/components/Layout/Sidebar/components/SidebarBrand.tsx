@@ -5,9 +5,10 @@ import { X } from 'lucide-react';
 interface SidebarBrandProps {
     currentTheme: 'dark' | 'light';
     onClose?: () => void;
+    onBrandClick?: () => void;
 }
 
-export const SidebarBrand: React.FC<SidebarBrandProps> = ({ currentTheme, onClose }) => {
+export const SidebarBrand: React.FC<SidebarBrandProps> = ({ currentTheme, onClose, onBrandClick }) => {
     return (
         <>
             {/* Mobile Close Button */}
@@ -23,6 +24,7 @@ export const SidebarBrand: React.FC<SidebarBrandProps> = ({ currentTheme, onClos
                 to="/dashboard"
                 onClick={() => {
                     if (onClose) onClose();
+                    if (onBrandClick) onBrandClick();
                 }}
                 className="px-4 mb-4 flex items-center gap-2 cursor-pointer select-none no-underline"
             >

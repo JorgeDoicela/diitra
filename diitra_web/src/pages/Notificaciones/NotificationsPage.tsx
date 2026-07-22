@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
-    CheckCheck, Filter, Search, Inbox
+    CheckCheck, Filter, Search, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
@@ -28,7 +28,7 @@ const getCategoryConfig = (cat: string) => categoryConfig[cat] || { icon: Mail, 
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
-    const { notifications, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, fetchNotifications, deleteNotification, clearReadNotifications, addToast } = useNotifications();
     const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread' | 'investigacion' | 'sistema' | 'urgente'>('all');
     const [search, setSearch] = useState('');
@@ -91,6 +91,74 @@ const NotificationsPage = () => {
         }
     };
 
+    const handleDelete = async (e: React.MouseEvent, n: NotificationItem) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const originalNotifications = [...allNotifications];
+        
+        // Actualización optimista
+        setAllNotifications(prev => prev.filter(x => x.uuid !== n.uuid));
+
+        let undone = false;
+
+        addToast(
+            "Notificación eliminada",
+            `Se ha eliminado "${stripHtmlToText(n.titulo)}"`,
+            "info",
+            undefined,
+            () => {
+                undone = true;
+                setAllNotifications(originalNotifications);
+            }
+        );
+
+        setTimeout(async () => {
+            if (!undone) {
+                try {
+                    await deleteNotification(n.uuid);
+                } catch (err) {
+                    console.error("Error al eliminar la notificación:", err);
+                    setAllNotifications(originalNotifications);
+                }
+            }
+        }, 8000);
+    };
+
+    const handleClearRead = async () => {
+        const originalNotifications = [...allNotifications];
+        const readNotifications = allNotifications.filter(n => n.leido);
+        
+        if (readNotifications.length === 0) return;
+
+        // Actualización optimista: remover leídas localmente
+        setAllNotifications(prev => prev.filter(n => !n.leido));
+
+        let undone = false;
+
+        addToast(
+            "Historial limpio",
+            `Se han eliminado ${readNotifications.length} notificaciones leídas`,
+            "info",
+            undefined,
+            () => {
+                undone = true;
+                setAllNotifications(originalNotifications);
+            }
+        );
+
+        setTimeout(async () => {
+            if (!undone) {
+                try {
+                    await clearReadNotifications();
+                } catch (err) {
+                    console.error("Error al limpiar las notificaciones leídas:", err);
+                    setAllNotifications(originalNotifications);
+                }
+            }
+        }, 8000);
+    };
+
     const handleMarkAllRead = async () => {
         await markAllAsRead();
         setAllNotifications(prev => prev.map(x => ({ ...x, leido: true })));
@@ -125,6 +193,7 @@ const NotificationsPage = () => {
     }, [allNotifications, filter, search]);
 
     const unreadCount = allNotifications.filter(n => !n.leido).length;
+    const hasReadNotifications = useMemo(() => allNotifications.some(n => n.leido), [allNotifications]);
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -244,6 +313,17 @@ const NotificationsPage = () => {
                                 className="input-vercel !pl-8 w-full"
                             />
                         </div>
+
+                        {hasReadNotifications && (
+                            <button
+                                onClick={handleClearRead}
+                                className="btn-vercel-secondary flex items-center gap-2 h-9 text-text-dim hover:text-error hover:border-error/30 shrink-0 w-full md:w-auto justify-center"
+                                title="Eliminar todas las notificaciones leídas"
+                            >
+                                <Trash2 size={13} />
+                                <span className="text-[11px] font-semibold">Limpiar leídas</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Contenido */}
@@ -297,6 +377,13 @@ const NotificationsPage = () => {
                                                                     <span className="text-[9px] font-mono text-text-dim">
                                                                         {formatDate(n.fecha_envio)}
                                                                     </span>
+                                                                    <button
+                                                                        onClick={(e) => handleDelete(e, n)}
+                                                                        className="notification-delete-btn text-text-dim hover:text-error p-1 rounded hover:bg-surface-hover transition-colors cursor-pointer"
+                                                                        title="Eliminar notificación"
+                                                                    >
+                                                                        <Trash2 size={12} />
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                             <p className="text-[11px] text-text-dim leading-relaxed line-clamp-2 break-words">

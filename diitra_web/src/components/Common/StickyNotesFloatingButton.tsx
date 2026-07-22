@@ -91,23 +91,11 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
 
     return (
         <div className="sticky-floating-container">
-            {isOpen ? (
+            {isOpen && (
                 <div className="sticky-floating-card animate-slide-up">
                     <div className="sticky-floating-header">
                         <h3>Añadir Nota Rápida</h3>
                         <div className="sticky-floating-header-actions">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    handleClose();
-                                    navigate('/calendario?view=inbox');
-                                }}
-                                className="sticky-floating-inbox-link"
-                                title="Ir a la Bandeja de Notas"
-                            >
-                                <FileText size={13} />
-                                <span>Bandeja de notas</span>
-                            </button>
                             <button type="button" onClick={handleClose} className="sticky-floating-close">
                                 <X size={18} />
                             </button>
@@ -170,10 +158,14 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                             <div className="sticky-floating-buttons">
                                 <button
                                     type="button"
-                                    onClick={handleClose}
+                                    onClick={() => {
+                                        handleClose();
+                                        navigate('/calendario?view=inbox');
+                                    }}
                                     className="btn-vercel-secondary text-xs py-1 px-3 rounded"
+                                    title="Ir a la Bandeja de Notas"
                                 >
-                                    Cancelar
+                                    BANDEJA
                                 </button>
                                 <button
                                     type="submit"
@@ -186,40 +178,40 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                         </div>
                     </form>
                 </div>
-            ) : (
-                <div className="sticky-floating-triggers-wrapper">
-                    {onOpenHelp && (
-                        <button
-                            type="button"
-                            onClick={onOpenHelp}
-                            className="sticky-floating-help-btn"
-                            title="Guía Interactiva de la página"
-                        >
-                            <HelpCircle size={15} />
-                        </button>
-                    )}
+            )}
 
+            <div className="sticky-floating-triggers-wrapper">
+                {onOpenHelp && (
                     <button
                         type="button"
-                        onClick={() => setIsOpen(true)}
-                        className="sticky-floating-trigger-btn"
-                        title="Nueva Nota Rápida (Inbox)"
+                        onClick={onOpenHelp}
+                        className="sticky-floating-help-btn"
+                        title="Guía Interactiva de la página"
                     >
-                        <FileText size={18} />
-                        <span className="sticky-floating-badge-plus">
-                            <Plus size={8} />
-                        </span>
-                        {pendingCount > 0 && (
-                            <span
-                                className="sticky-floating-badge-count"
-                                title={`${pendingCount} nota${pendingCount > 1 ? 's' : ''} sin planificar`}
-                            >
-                                {pendingCount > 9 ? '9+' : pendingCount}
-                            </span>
-                        )}
+                        <HelpCircle size={15} />
                     </button>
-                </div>
-            )}
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => isOpen ? handleClose() : setIsOpen(true)}
+                    className="sticky-floating-trigger-btn"
+                    title={isOpen ? "Cerrar Nota Rápida" : "Nueva Nota Rápida (Inbox)"}
+                >
+                    <FileText size={18} />
+                    <span className="sticky-floating-badge-plus">
+                        <Plus size={8} />
+                    </span>
+                    {pendingCount > 0 && (
+                        <span
+                            className="sticky-floating-badge-count"
+                            title={`${pendingCount} nota${pendingCount > 1 ? 's' : ''} sin planificar`}
+                        >
+                            {pendingCount > 9 ? '9+' : pendingCount}
+                        </span>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };

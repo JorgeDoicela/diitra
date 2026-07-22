@@ -61,7 +61,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                             placeholder="Buscar parámetro..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="input-vercel pl-9 w-full"
+                            className="input-vercel !pl-9 w-full"
                         />
                     </div>
                     {activeTab === 'lineas' && (

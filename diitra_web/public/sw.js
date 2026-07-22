@@ -28,8 +28,8 @@ self.addEventListener('push', function(event) {
     event.waitUntil(
       self.registration.showNotification('DIITRA - Nueva Notificación', {
         body: 'Tienes una nueva notificación. Abre la aplicación para verla.',
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/logo_fondo_negro.png',
+        badge: '/logo_fondo_negro.png',
         tag: 'diitra-notificacion-fallback',
         data: { url: '/notificaciones' }
       })
@@ -65,8 +65,8 @@ self.addEventListener('push', function(event) {
         body = cleanBody;
         options = {
           body: body,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
+          icon: '/logo_fondo_negro.png',
+          badge: '/logo_fondo_negro.png',
           data: { url: targetUrl },
           vibrate: [100, 50, 100],
           tag: 'diitra-notificacion',
@@ -85,8 +85,8 @@ self.addEventListener('push', function(event) {
         body = 'Tienes una nueva notificación. Inicia sesión para ver los detalles.';
         options = {
           body: body,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
+          icon: '/logo_fondo_negro.png',
+          badge: '/logo_fondo_negro.png',
           data: { url: targetUrl },
           vibrate: [150, 75, 150],
           tag: 'diitra-notificacion',

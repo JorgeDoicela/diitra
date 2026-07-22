@@ -71,7 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         isInvestigacionOpen,
         setIsInvestigacionOpen,
         isMisProyectosOpen,
-        setIsMisProyectosOpen
+        setIsMisProyectosOpen,
+        collapseAllMenus
     } = useSidebar({ isCollapsed, onCollapse, onExpand });
 
     return (
@@ -109,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             : undefined
                     }}
                 >
-                    <SidebarBrand currentTheme={currentTheme} onClose={onClose} />
+                    <SidebarBrand currentTheme={currentTheme} onClose={onClose} onBrandClick={collapseAllMenus} />
 
                     <SidebarSearch triggerCommandPalette={triggerCommandPalette} searchShortcut={searchShortcut} />
 
@@ -135,7 +136,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                         navigate={navigate}
                         location={location}
                         onClose={onClose}
-                        isAdmin={isAdmin}
                     />
 
                     <SidebarFooter
@@ -173,17 +173,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                     />
                 )}
 
-                {/* Drag Resizer Handle */}
-                {!isCollapsed && (
-                    <div
-                        onMouseDown={startResizing}
-                        className="hidden lg:block absolute top-0 -right-2 bottom-0 w-4 cursor-col-resize z-[80] outline-none group"
-                        title="Derecha ensancha · izquierda compacta (se queda) · más allá se oculta · clic oculta"
-                    >
-                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border-thin/60 group-hover:bg-text-dim/50 group-active:bg-text-dim/70 transition-colors" />
-                    </div>
-                )}
             </aside>
+
+            {/* Drag Resizer Handle - Colocado fuera de aside para evitar overflow-hidden y no tapar el scrollbar */}
+            {!isCollapsed && isDesktop && (
+                <div
+                    onMouseDown={startResizing}
+                    style={{
+                        left: desktopWidth - 2,
+                    }}
+                    className="hidden lg:block fixed top-0 bottom-0 w-4 cursor-col-resize z-[80] outline-none group"
+                    title="Derecha ensancha · izquierda compacta (se queda) · más allá se oculta · clic oculta"
+                >
+                    <div className="absolute inset-y-0 left-[2px] w-px bg-border-thin/60 group-hover:bg-text-dim/50 group-active:bg-text-dim/70 transition-colors" />
+                </div>
+            )}
 
             <NotificationPanel
                 isNotificationsOpen={isNotificationsOpen}

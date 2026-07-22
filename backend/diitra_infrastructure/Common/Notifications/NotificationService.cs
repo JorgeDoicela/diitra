@@ -338,6 +338,31 @@ namespace diitra_infrastructure.Common.Notifications
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> DeleteNotificationAsync(string uuid)
+        {
+            if (!Guid.TryParse(uuid, out var guid)) return false;
+
+            var notif = await _context.InvNotificaciones.FirstOrDefaultAsync(n => n.Uuid == guid);
+            if (notif == null) return false;
+
+            _context.InvNotificaciones.Remove(notif);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task ClearReadNotificationsAsync(int userId)
+        {
+            var readNotifs = await _context.InvNotificaciones
+                .Where(n => n.Destinatario == userId && n.Leido)
+                .ToListAsync();
+
+            if (readNotifs.Any())
+            {
+                _context.InvNotificaciones.RemoveRange(readNotifs);
+                await _context.SaveChangesAsync();
+            }
+        }
         
         public async Task SubscribeUserAsync(int userId, string deviceToken, string plataforma)
         {

@@ -73,7 +73,6 @@ interface SidebarNavProps {
     navigate: (path: string) => void;
     location: { pathname: string; search: string };
     onClose?: () => void;
-    isAdmin: boolean;
 }
 
 const NAV_SCROLL_SPACER = 'h-24';
@@ -99,8 +98,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setShowAllProjects,
     navigate,
     location,
-    onClose,
-    isAdmin
+    onClose
 }) => {
     const renderMenuItem = (item: MenuItem) => {
         const isActive = item === activeItem;
@@ -143,6 +141,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                         navigate('/investigacion/mis-proyectos');
                                     }
                                 }
+                                if (onClose) onClose();
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
@@ -285,6 +284,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 if (!location.pathname.startsWith('/analiticas')) {
                                     navigate('/analiticas');
                                 }
+                                if (onClose) onClose();
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
@@ -376,6 +376,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 if (!location.pathname.startsWith('/usuarios')) {
                                     navigate('/usuarios');
                                 }
+                                if (onClose) onClose();
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
@@ -467,6 +468,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 if (!location.pathname.startsWith('/parametros-normativos')) {
                                     navigate('/parametros-normativos');
                                 }
+                                if (onClose) onClose();
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >

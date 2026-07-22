@@ -162,24 +162,23 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         };
     }, [fetchSidebarProjects]);
 
+    const collapseAllMenus = useCallback(() => {
+        setIsAnalyticsOpen(false);
+        setIsUsersOpen(false);
+        setIsParametrosOpen(false);
+        setIsInvestigacionOpen(false);
+        setIsMisProyectosOpen(false);
+    }, []);
+
     useEffect(() => {
-        if (location.pathname.startsWith('/analiticas')) {
-            setIsAnalyticsOpen(true);
-        }
-        if (location.pathname.startsWith('/usuarios')) {
-            setIsUsersOpen(true);
-        }
-        if (location.pathname.startsWith('/parametros-normativos')) {
-            setIsParametrosOpen(true);
-        }
-        if (location.pathname.startsWith('/investigacion/mis-proyectos')) {
-            setIsMisProyectosOpen(true);
-        } else if (
-            (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion')) ||
+        setIsAnalyticsOpen(location.pathname.startsWith('/analiticas'));
+        setIsUsersOpen(location.pathname.startsWith('/usuarios'));
+        setIsParametrosOpen(location.pathname.startsWith('/parametros-normativos'));
+        setIsMisProyectosOpen(location.pathname.startsWith('/investigacion/mis-proyectos'));
+        setIsInvestigacionOpen(
+            (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion') && !location.pathname.startsWith('/investigacion/mis-proyectos')) ||
             (location.pathname.includes('/workspace/') && !location.pathname.includes('/mis-proyectos/'))
-        ) {
-            setIsInvestigacionOpen(true);
-        }
+        );
     }, [location.pathname]);
 
     let notifications: NotificationItem[] = [];
@@ -517,6 +516,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         userInitials,
         username,
         updateNotifPanelPos,
-        expandedWidth
+        expandedWidth,
+        collapseAllMenus
     };
 };
