@@ -21,12 +21,12 @@ namespace diitra_api.Controllers
         {
             schemaDict["ProductosEsperados"] = new object[] { };
             schemaDict["Impacto"] = new Dictionary<string, string> { 
-                { "social", "" }, 
-                { "cientifico", "" }, 
-                { "economico", "" }, 
-                { "politico", "" }, 
-                { "ambiental", "" }, 
-                { "otro", "" } 
+                { "Social", "" }, 
+                { "Cientifico", "" }, 
+                { "Economico", "" }, 
+                { "Politico", "" }, 
+                { "Ambiental", "" }, 
+                { "Otro", "" } 
             };
 
             if (!listsList.Contains("ProductosEsperados")) listsList.Add("ProductosEsperados");

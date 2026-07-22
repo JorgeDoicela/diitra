@@ -25,6 +25,8 @@ namespace diitra_api.Controllers
             schemaDict["FinanciamientoIstpet"] = false;
             schemaDict["FinanciamientoOtrasFuentes"] = false;
             schemaDict["NombresOtrasFuentes"] = "";
+            schemaDict["FuenteFinanciamiento"] = "";
+            schemaDict["NombreOtraFuente"] = "";
 
             if (!listsList.Contains("RecursosDisponibles"))
                 listsList.Add("RecursosDisponibles");
