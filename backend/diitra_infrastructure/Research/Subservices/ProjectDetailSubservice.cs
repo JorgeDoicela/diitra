@@ -237,17 +237,52 @@ namespace diitra_infrastructure.Research.Subservices
                     .ToListAsync();
             }
 
+            // Carga en lote de Profesores y Alumnos para evitar consultas N+1 por cada participante
+            var profesoresDict = new Dictionary<string, Profesore>();
+            if (profCedulas.Any())
+            {
+                var profCedulaLts = profCedulas.Select(c => c.Trim()).ToList();
+                var profs = await _context.Profesores
+                    .Where(prof => profCedulaLts.Contains(prof.IdProfesor))
+                    .ToListAsync();
+                profesoresDict = profs
+                    .GroupBy(prof => prof.IdProfesor.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            }
+
+            var alumnosDict = new Dictionary<string, Alumno>();
+            if (studentCedulas.Any())
+            {
+                var studentCedulaLts = studentCedulas.Select(c => c.Trim()).ToList();
+                var alums = await _context.Alumnos
+                    .Where(alum => studentCedulaLts.Contains(alum.IdAlumno))
+                    .ToListAsync();
+                alumnosDict = alums
+                    .GroupBy(alum => alum.IdAlumno.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            }
+
             var investigadoresList = new List<InvestigadorDto>();
 
             foreach (var pp in p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Docente"))
             {
-                var phone = await ProjectHelper.GetUserPhoneFromCatalogAsync(_context, pp.IdUsuarioNavigation?.IdSigafi, pp.IdUsuarioNavigation?.TablaSigafi);
-                if (string.IsNullOrEmpty(phone)) phone = pp.Telefono ?? string.Empty;
+                var phone = pp.Telefono ?? string.Empty;
+                var email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "";
+                var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
 
-                var email = await ProjectHelper.GetUserEmailFromCatalogAsync(_context, pp.IdUsuarioNavigation?.IdSigafi, pp.IdUsuarioNavigation?.TablaSigafi);
+                if (pp.IdUsuarioNavigation?.TablaSigafi == "profesor" && profesoresDict.TryGetValue(cedula, out var prof))
+                {
+                    if (string.IsNullOrEmpty(phone)) phone = prof.Celular ?? prof.Telefono ?? string.Empty;
+                    email = prof.EmailInstitucional ?? prof.Email ?? email;
+                }
+                else if (pp.IdUsuarioNavigation?.TablaSigafi == "alumno" && alumnosDict.TryGetValue(cedula, out var alum))
+                {
+                    if (string.IsNullOrEmpty(phone)) phone = alum.Celular ?? alum.Telefono ?? string.Empty;
+                    email = alum.EmailInstitucional ?? alum.Email ?? email;
+                }
+
                 if (string.IsNullOrEmpty(email)) email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "";
 
-                var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
                 var linkedCareers = profCareers
                     .Where(pc => pc.IdProfesor.Trim() == cedula && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
@@ -292,13 +327,23 @@ namespace diitra_infrastructure.Research.Subservices
 
             foreach (var pa in p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Alumno"))
             {
-                var phone = await ProjectHelper.GetUserPhoneFromCatalogAsync(_context, pa.IdUsuarioNavigation?.IdSigafi, pa.IdUsuarioNavigation?.TablaSigafi);
-                if (string.IsNullOrEmpty(phone)) phone = pa.Telefono ?? string.Empty;
+                var phone = pa.Telefono ?? string.Empty;
+                var email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "";
+                var cedula = pa.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
 
-                var email = await ProjectHelper.GetUserEmailFromCatalogAsync(_context, pa.IdUsuarioNavigation?.IdSigafi, pa.IdUsuarioNavigation?.TablaSigafi);
+                if (pa.IdUsuarioNavigation?.TablaSigafi == "profesor" && profesoresDict.TryGetValue(cedula, out var prof))
+                {
+                    if (string.IsNullOrEmpty(phone)) phone = prof.Celular ?? prof.Telefono ?? string.Empty;
+                    email = prof.EmailInstitucional ?? prof.Email ?? email;
+                }
+                else if (pa.IdUsuarioNavigation?.TablaSigafi == "alumno" && alumnosDict.TryGetValue(cedula, out var alum))
+                {
+                    if (string.IsNullOrEmpty(phone)) phone = alum.Celular ?? alum.Telefono ?? string.Empty;
+                    email = alum.EmailInstitucional ?? alum.Email ?? email;
+                }
+
                 if (string.IsNullOrEmpty(email)) email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "";
 
-                var cedula = pa.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
                 var sCareerIds = alumCareers
                     .Where(ac => ac.IdAlumno != null && ac.IdAlumno.Trim().Equals(cedula, StringComparison.OrdinalIgnoreCase))
                     .Select(ac => ac.IdCarrera)

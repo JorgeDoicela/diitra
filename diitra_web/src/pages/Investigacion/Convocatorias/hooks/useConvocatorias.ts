@@ -144,25 +144,27 @@ export const useConvocatorias = () => {
             const response = await api.get('/Convocatorias');
             const data: Convocatoria[] = response.data;
             setConvocatorias(data);
-
-            if (openUuid && !selectedConvocatoria) {
-                const target = data.find(c => c.uuid === openUuid);
-                if (target) {
-                    setSelectedConvocatoria(target);
-                    setLastActiveUuid(null);
-                    setSearchParams(prev => {
-                        const next = new URLSearchParams(prev);
-                        next.delete('open');
-                        return next;
-                    });
-                }
-            }
         } catch (error) {
             console.error('Error fetching convocatorias:', error);
         } finally {
             setLoading(false);
         }
     };
+
+    // Deep-link handling reactively for Convocatorias (e.g. from CommandPalette or notifications)
+    useEffect(() => {
+        if (!openUuid || convocatorias.length === 0) return;
+        const target = convocatorias.find(c => c.uuid === openUuid);
+        if (target) {
+            setSelectedConvocatoria(target);
+            setLastActiveUuid(null);
+            setSearchParams(prev => {
+                const next = new URLSearchParams(prev);
+                next.delete('open');
+                return next;
+            }, { replace: true });
+        }
+    }, [openUuid, convocatorias, setSearchParams]);
 
     const fetchCatalogos = async () => {
         try {

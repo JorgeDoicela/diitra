@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../../../../api/axios_config';
 import { useAuth } from '../../../../../api/AuthContext';
@@ -30,6 +30,7 @@ export function useGroupsPage() {
     const [detailGroup, setDetailGroup] = useState<Group | null>(null);
     const [detailGroupIsEditing, setDetailGroupIsEditing] = useState(false);
     const [lastActiveGroupId, setLastActiveGroupId] = useState<string | null>(null);
+    const lastOpenedUuidRef = useRef<string | null>(null);
 
     // Confirmation dialog state
     const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
@@ -76,6 +77,9 @@ export function useGroupsPage() {
     // Deep-link handling from notifications, emails, or CommandPalette: ?open=GROUP_UUID
     useEffect(() => {
         if (!openUuid || loading) return;
+        if (openUuid === lastOpenedUuidRef.current) return;
+        lastOpenedUuidRef.current = openUuid;
+        let cancelled = false;
 
         const clearOpenParam = () => {
             setSearchParams(prev => {
@@ -88,6 +92,7 @@ export function useGroupsPage() {
         const openFromDeepLink = async () => {
             const target = groups.find(g => g.uuid === openUuid);
             if (target) {
+                if (cancelled) return;
                 setDetailGroup(target);
                 setSearch(target.nombre);
                 setLastActiveGroupId(null);
@@ -97,17 +102,23 @@ export function useGroupsPage() {
 
             try {
                 const res = await api.get(`/Groups/${openUuid}`);
+                if (cancelled) return;
                 setDetailGroup(res.data);
                 setSearch(res.data.nombre);
                 setLastActiveGroupId(null);
                 clearOpenParam();
             } catch (err) {
+                if (cancelled) return;
                 console.error('No se pudo abrir el grupo desde el enlace:', openUuid, err);
             }
         };
 
         openFromDeepLink();
-    }, [openUuid, groups, loading]);
+        return () => {
+            cancelled = true;
+            lastOpenedUuidRef.current = null;
+        };
+    }, [openUuid, groups, loading, setSearchParams]);
 
     const handleCloseGroupDetail = () => {
         if (detailGroup) {

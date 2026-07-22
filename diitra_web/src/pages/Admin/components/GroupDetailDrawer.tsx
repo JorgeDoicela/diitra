@@ -104,7 +104,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-end">
+        <div className="fixed inset-0 z-[100] flex items-center justify-end">
             <div 
                 className="absolute inset-0 bg-bg-deep/60 backdrop-blur-sm transition-opacity" 
                 onClick={() => handleCloseAttempt('close-drawer')}

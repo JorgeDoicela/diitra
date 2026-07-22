@@ -237,15 +237,16 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
 
 // ─── Live search helpers ──────────────────────────────────────────────────────
 
-function proyectoToItem(p: any, isMyProject: boolean): SearchItem {
+function proyectoToItem(p: any, isMyProject: boolean, isAdminUser = false): SearchItem {
     const cat: Category = isMyProject ? 'Mis Proyectos' : 'Todos los Proyectos';
+    const prefix = isAdminUser ? '/investigacion' : (isMyProject ? '/investigacion/mis-proyectos' : '/investigacion');
     return {
         id: `proj-${p.uuid}`,
         label: p.titulo || 'Proyecto sin título',
         description: [p.codigo_institucional, p.linea_investigacion, p.estado].filter(Boolean).join(' · '),
         category: cat,
         icon: FolderOpen,
-        path: buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', isMyProject ? '/investigacion/mis-proyectos' : '/investigacion'),
+        path: buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', prefix),
         keywords: [p.codigo_institucional || '', p.linea_investigacion || '', p.estado || ''],
         boost: 0,
         isLive: true,
@@ -322,6 +323,98 @@ function grupoToItem(g: any): SearchItem {
     };
 }
 
+const getBadgeClass = (badge?: string) => {
+    if (!badge) return '';
+    const lower = badge.toLowerCase();
+    if (lower.includes('aprobado') || lower.includes('finalizado') || lower.includes('activa')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-success/10 text-success border border-success/20';
+    if (lower.includes('revisión') || lower.includes('revision') || lower.includes('enviado')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-warning/10 text-warning border border-warning/20';
+    if (lower.includes('rechazado') || lower.includes('cerrada')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-error/10 text-error border border-error/20';
+    if (lower.includes('ejecución') || lower.includes('ejecucion')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-brand/10 text-brand border border-brand/20';
+    return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-surface text-text-dim border border-border-thin';
+};
+
+const CommandPaletteItem = React.memo(({
+    item,
+    isActive,
+    labelRanges,
+    globalIdx,
+    onMouseEnter,
+    onClick,
+    query
+}: {
+    item: SearchItem;
+    isActive: boolean;
+    labelRanges: [number, number][];
+    globalIdx: number;
+    onMouseEnter: (idx: number) => void;
+    onClick: (item: SearchItem) => void;
+    query: string;
+}) => {
+    const Icon = item.icon;
+
+    return (
+        <div
+            data-idx={globalIdx}
+            className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-100 group ${
+                globalIdx === 0 ? 'scroll-mt-10' : ''
+            } ${isActive
+                    ? 'bg-surface-hover text-text-main'
+                    : 'hover:bg-surface/50 text-text-dim'
+                }`}
+            onMouseEnter={() => onMouseEnter(globalIdx)}
+            onClick={() => onClick(item)}
+        >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-all duration-100 ${
+                    isActive
+                        ? 'bg-bg-deep border border-border-thin shadow-sm text-text-main'
+                        : 'text-text-dim group-hover:text-text-main'
+                }`}>
+                    <Icon size={13} strokeWidth={isActive ? 2 : 1.5} />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <HighlightedText
+                            text={item.label}
+                            ranges={query ? labelRanges : []}
+                            className={`text-[13px] font-medium truncate transition-colors ${isActive ? 'text-text-main' : ''}`}
+                            highlightClass="text-text-main font-bold"
+                        />
+                        {item.badge && (
+                            <span className={`shrink-0 ${getBadgeClass(item.badge)}`}>
+                                {item.badge}
+                            </span>
+                        )}
+                    </div>
+                    {item.description && (
+                        <span className={`text-[11px] truncate block transition-colors ${isActive ? 'text-text-dim' : 'text-text-dim/50'}`}>
+                            {item.description}
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                {item.shortcut && (
+                    <kbd className={`text-[10px] px-1.5 py-0.5 rounded border font-mono transition-colors ${isActive
+                            ? 'bg-bg-deep border-border-thin text-text-main'
+                            : 'bg-bg-deep border-border-thin text-text-dim/40'
+                        }`}>
+                        {item.shortcut}
+                    </kbd>
+                )}
+                {isActive && <ArrowRight size={12} className="text-text-dim/40" />}
+            </div>
+        </div>
+    );
+}, (prevProps, nextProps) => {
+    return prevProps.isActive === nextProps.isActive &&
+        prevProps.query === nextProps.query &&
+        prevProps.labelRanges === nextProps.labelRanges &&
+        prevProps.item.badge === nextProps.item.badge &&
+        prevProps.item.label === nextProps.item.label &&
+        prevProps.item.description === nextProps.item.description;
+});
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const CommandPalette = () => {
@@ -330,6 +423,8 @@ export const CommandPalette = () => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isLoadingLive, setIsLoadingLive] = useState(false);
     const [liveItems, setLiveItems] = useState<SearchItem[]>([]);
+    const [preloadedItems, setPreloadedItems] = useState<SearchItem[]>([]);
+    const [isLoadingPreload, setIsLoadingPreload] = useState(false);
     const navigate = useNavigate();
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
@@ -346,66 +441,100 @@ export const CommandPalette = () => {
     // triggering re-subscriptions every render. Updated synchronously each render.
     const flatItemsRef = useRef<SearchItem[]>([]);
 
-    // ── Live search from backend ──────────────────────────────────────────────
+    // ── Preload data (Projects, Calls, Reviews) once on open ──────────────────
+    useEffect(() => {
+        if (!isOpen) {
+            setPreloadedItems([]);
+            setIsLoadingPreload(false);
+            return;
+        }
+
+        const preloadData = async () => {
+            setIsLoadingPreload(true);
+            const results: SearchItem[] = [];
+            try {
+                const promises: Promise<void>[] = [];
+
+                // Mis proyectos (docente/estudiante/admin)
+                promises.push(
+                    api.get('/projects/my').then(res => {
+                        const data: any[] = Array.isArray(res.data) ? res.data : [];
+                        data.forEach(p => results.push(proyectoToItem(p, true, isAdmin)));
+                    }).catch(() => {})
+                );
+
+                // Todos los proyectos (admin)
+                if (isAdmin) {
+                    promises.push(
+                        api.get('/projects').then(res => {
+                            const data: any[] = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+                            data.forEach(p => {
+                                if (!results.some(r => r.id === `proj-${p.uuid}`)) {
+                                    results.push(proyectoToItem(p, false, isAdmin));
+                                }
+                            });
+                        }).catch(() => {})
+                    );
+                }
+
+                // Convocatorias
+                promises.push(
+                    api.get('/Convocatorias').then(res => {
+                        const data: any[] = Array.isArray(res.data) ? res.data : [];
+                        data
+                            .filter(c => c.estado !== 'Borrador' || isAdmin)
+                            .forEach(c => results.push(convocatoriaToItem(c)));
+                    }).catch(() => {})
+                );
+
+                // Mis revisiones por pares
+                if (isRevisor) {
+                    promises.push(
+                        api.get('/PeerReviews/my').then(res => {
+                            const data: any[] = Array.isArray(res.data) ? res.data : [];
+                            data.forEach(r => results.push(revisionToItem(r)));
+                        }).catch(() => {})
+                    );
+                }
+
+                await Promise.allSettled(promises);
+                setPreloadedItems(results);
+            } catch (err) {
+                console.error("Error preloading data in CommandPalette:", err);
+            } finally {
+                setIsLoadingPreload(false);
+            }
+        };
+
+        preloadData();
+    }, [isOpen, isAdmin, isRevisor]);
+
+    // ── Live search for database-heavy items (Users, Groups) ──────────────────
 
     const fetchLive = useCallback(async (q: string) => {
+        const queryClean = q.trim();
+        if (queryClean.length < 2) {
+            setLiveItems([]);
+            setIsLoadingLive(false);
+            return;
+        }
+
         if (abortRef.current) abortRef.current.abort();
         const ctrl = new AbortController();
         abortRef.current = ctrl;
 
         setIsLoadingLive(true);
         const results: SearchItem[] = [];
-        const ql = q.toLowerCase();
-        const matches = (str: string) => !q || str.toLowerCase().includes(ql);
 
         try {
             const promises: Promise<void>[] = [];
-
-            // Mis proyectos (docente/estudiante/admin)
-            promises.push(
-                api.get('/projects/my', { signal: ctrl.signal }).then(res => {
-                    const data: any[] = Array.isArray(res.data) ? res.data : [];
-                    data
-                        .filter(p => matches(p.titulo || '') || matches(p.codigo_institucional || ''))
-                        .slice(0, 5)
-                        .forEach(p => results.push(proyectoToItem(p, true)));
-                }).catch(() => {})
-            );
-
-            // Todos los proyectos (admin)
-            if (isAdmin) {
-                promises.push(
-                    api.get('/projects', { signal: ctrl.signal }).then(res => {
-                        const data: any[] = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
-                        data
-                            .filter(p => matches(p.titulo || '') || matches(p.codigo_institucional || ''))
-                            .slice(0, 5)
-                            .forEach(p => {
-                                if (!results.some(r => r.id === `proj-${p.uuid}`)) {
-                                    results.push(proyectoToItem(p, false));
-                                }
-                            });
-                    }).catch(() => {})
-                );
-            }
-
-            // Convocatorias
-            promises.push(
-                api.get('/Convocatorias', { signal: ctrl.signal }).then(res => {
-                    const data: any[] = Array.isArray(res.data) ? res.data : [];
-                    data
-                        .filter(c => (c.estado !== 'Borrador' || isAdmin) && (matches(c.titulo || '') || matches(c.codigo_convocatoria || '') || matches(c.periodo_nombre || c.periodo || '')))
-                        .slice(0, 4)
-                        .forEach(c => results.push(convocatoriaToItem(c)));
-                }).catch(() => {})
-            );
 
             // Usuarios (admin con permiso) — busca docentes, estudiantes y externos
             if (isAdmin || hasPermission('USUARIOS', 'VER')) {
                 const userTypes = ['DOCENTE', 'ESTUDIANTE', 'EXTERNO'];
                 userTypes.forEach(type => {
                     promises.push(
-                        api.get(`/Admin/users?search=${encodeURIComponent(q)}&type=${type}&page=1&pageSize=3`, { signal: ctrl.signal }).then(res => {
+                        api.get(`/Admin/users?search=${encodeURIComponent(queryClean)}&type=${type}&page=1&pageSize=3`, { signal: ctrl.signal }).then(res => {
                             const data: any[] = res.data?.items ?? [];
                             data.forEach(u => {
                                 if (!results.some(r => r.id === `user-${u.user_uuid || u.id_profesor}`)) {
@@ -417,31 +546,15 @@ export const CommandPalette = () => {
                 });
             }
 
-            // Mis revisiones por pares — solo si el usuario tiene rol revisor
-            // (el endpoint /PeerReviews/my devuelve 404 para roles que no tienen revisiones)
-            if (isRevisor) {
-                promises.push(
-                    api.get('/PeerReviews/my', { signal: ctrl.signal }).then(res => {
-                        const data: any[] = Array.isArray(res.data) ? res.data : [];
-                        data
-                            .filter(r => matches(r.proyecto_titulo || '') || matches(r.estado || '') || matches(r.revisor_nombre || ''))
-                            .slice(0, 4)
-                            .forEach(r => results.push(revisionToItem(r)));
-                    }).catch(() => {})
-                );
-            }
-
             // Grupos de investigación
-            if (q.length >= 2) { // Solo buscar grupos cuando hay query (evitar cargar lista completa)
-                promises.push(
-                    api.get(`/Groups?search=${encodeURIComponent(q)}`, { signal: ctrl.signal }).then(res => {
-                        const data: any[] = Array.isArray(res.data) ? res.data : [];
-                        data
-                            .slice(0, 4)
-                            .forEach(g => results.push(grupoToItem(g)));
-                    }).catch(() => {})
-                );
-            }
+            promises.push(
+                api.get(`/Groups?search=${encodeURIComponent(queryClean)}`, { signal: ctrl.signal }).then(res => {
+                    const data: any[] = Array.isArray(res.data) ? res.data : [];
+                    data
+                        .slice(0, 4)
+                        .forEach(g => results.push(grupoToItem(g)));
+                }).catch(() => {})
+            );
 
             await Promise.allSettled(promises);
 
@@ -455,32 +568,40 @@ export const CommandPalette = () => {
                 setIsLoadingLive(false);
             }
         }
-    }, [isAdmin, isDocente, isEstudiante, isRevisor, hasPermission]);
+    }, [isAdmin, hasPermission]);
 
-    // Debounced live search
+    // Debounced search for DB-heavy items
     useEffect(() => {
         if (!isOpen) return;
+        const queryClean = query.trim();
+        if (queryClean.length < 2) {
+            setLiveItems([]);
+            setIsLoadingLive(false);
+            return;
+        }
+
         const timer = setTimeout(() => {
-            fetchLive(query);
-        }, query ? 300 : 0);
+            fetchLive(queryClean);
+        }, 350);
         return () => clearTimeout(timer);
     }, [query, isOpen, fetchLive]);
 
     // Close → cancel pending request
     useEffect(() => {
-        if (!isOpen && abortRef.current) {
-            abortRef.current.abort();
+        if (!isOpen) {
+            if (abortRef.current) abortRef.current.abort();
             setLiveItems([]);
             setIsLoadingLive(false);
         }
     }, [isOpen]);
 
-    // ── Merged & scored results ───────────────────────────────────────────────
+    // ── Merged & scored results (local preloaded + dynamic live) ───────────────
 
     const scoredItems = React.useMemo(() => {
         const staticFiltered = staticItems.filter(passesRoleFilter);
+        const queryClean = query.trim();
 
-        if (!query.trim()) {
+        if (!queryClean) {
             // No query: show top static items sorted by boost
             return staticFiltered
                 .sort((a, b) => (b.boost ?? 0) - (a.boost ?? 0))
@@ -489,23 +610,32 @@ export const CommandPalette = () => {
 
         const results: { item: SearchItem; score: number; labelRanges: [number, number][] }[] = [];
 
-        // Score static items
+        // 1. Score static items
         for (const item of staticFiltered) {
-            const res = scoreItem(item, query);
+            const res = scoreItem(item, queryClean);
             if (res && res.score > 0) {
                 results.push({ item, score: res.score + (item.boost ?? 0) * 0.5, labelRanges: res.labelRanges });
             }
         }
 
-        // Score live items (already pre-filtered by backend)
+        // 2. Score preloaded items (instant clientside filter)
+        for (const item of preloadedItems) {
+            const res = scoreItem(item, queryClean);
+            if (res && res.score > 0) {
+                const boost = item.category === 'Mis Proyectos' ? 15 : 0;
+                results.push({ item, score: res.score + boost, labelRanges: res.labelRanges });
+            }
+        }
+
+        // 3. Score live items (async users & groups loaded in background)
         for (const item of liveItems) {
-            const res = scoreItem(item, query);
-            const score = res && res.score > 0 ? res.score : 20; // live items are always somewhat relevant
+            const res = scoreItem(item, queryClean);
+            const score = res && res.score > 0 ? res.score : 20;
             results.push({ item, score, labelRanges: res?.labelRanges ?? [] });
         }
 
         return results.sort((a, b) => b.score - a.score);
-    }, [staticItems, passesRoleFilter, query, liveItems]);
+    }, [staticItems, passesRoleFilter, query, preloadedItems, liveItems]);
 
     // flatItems must match the visual grouped order so ↑↓ keyboard navigation
     // moves through items exactly as the user sees them on screen.
@@ -553,6 +683,14 @@ export const CommandPalette = () => {
         setTimeout(() => setIsOpen(false), 50);
     };
 
+    const handleItemMouseEnter = useCallback((idx: number) => {
+        setSelectedIndex(idx);
+    }, []);
+
+    const handleItemClick = useCallback((item: SearchItem) => {
+        handleSelect(item);
+    }, [handleSelect]);
+
     if (!isOpen) return null;
 
     // ── Grouping ──────────────────────────────────────────────────────────────
@@ -597,17 +735,6 @@ export const CommandPalette = () => {
     // Sync into ref so the keyboard handler always reads the current list
     flatItemsRef.current = flatItems;
 
-    // Badge color
-    const getBadgeClass = (badge?: string) => {
-        if (!badge) return '';
-        const lower = badge.toLowerCase();
-        if (lower.includes('aprobado') || lower.includes('finalizado') || lower.includes('activa')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-success/10 text-success border border-success/20';
-        if (lower.includes('revisión') || lower.includes('revision') || lower.includes('enviado')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-warning/10 text-warning border border-warning/20';
-        if (lower.includes('rechazado') || lower.includes('cerrada')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-error/10 text-error border border-error/20';
-        if (lower.includes('ejecución') || lower.includes('ejecucion')) return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-brand/10 text-brand border border-brand/20';
-        return 'text-[9px] px-1.5 py-0.5 rounded font-mono bg-surface text-text-dim border border-border-thin';
-    };
-
     return (
         <div
             className="fixed inset-0 z-[10000] flex items-start justify-center pt-[10vh] px-4 bg-black/70 backdrop-blur-[3px]"
@@ -619,7 +746,7 @@ export const CommandPalette = () => {
             >
                 {/* Search input */}
                 <div className="flex items-center px-4 py-3.5 border-b border-border-thin gap-3">
-                    {isLoadingLive
+                    {isLoadingLive || isLoadingPreload
                         ? <Loader2 size={15} className="text-text-dim shrink-0 animate-spin" />
                         : <Search size={15} className="text-text-dim shrink-0" />
                     }
@@ -661,62 +788,20 @@ export const CommandPalette = () => {
                                         </span>
                                         <span className="text-[9px] text-text-dim/40 ml-auto">{groupItems.length}</span>
                                     </div>
-                                    {groupItems.map(({ item, labelRanges }, itemIdx) => {
+                                    {groupItems.map(({ item, labelRanges }) => {
                                         const globalIdx = flatItems.indexOf(item);
                                         const isActive = globalIdx === selectedIndex;
                                         return (
-                                            <div
+                                            <CommandPaletteItem
                                                 key={item.id}
-                                                data-idx={globalIdx}
-                                                className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-100 group ${
-                                                    itemIdx === 0 ? 'scroll-mt-10' : ''
-                                                } ${isActive
-                                                        ? 'bg-surface-hover text-text-main'
-                                                        : 'hover:bg-surface/50 text-text-dim'
-                                                    }`}
-                                                onMouseEnter={() => setSelectedIndex(globalIdx)}
-                                                onClick={() => handleSelect(item)}
-                                            >
-                                                <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                    <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-all duration-100 ${isActive
-                                                            ? 'bg-bg-deep border border-border-thin shadow-sm text-text-main'
-                                                            : 'text-text-dim group-hover:text-text-main'
-                                                        }`}>
-                                                        <item.icon size={13} strokeWidth={isActive ? 2 : 1.5} />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <HighlightedText
-                                                                text={item.label}
-                                                                ranges={query ? labelRanges : []}
-                                                                className={`text-[13px] font-medium truncate transition-colors ${isActive ? 'text-text-main' : ''}`}
-                                                                highlightClass="text-text-main font-bold"
-                                                            />
-                                                            {item.badge && (
-                                                                <span className={`shrink-0 ${getBadgeClass(item.badge)}`}>
-                                                                    {item.badge}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {item.description && (
-                                                            <span className={`text-[11px] truncate block transition-colors ${isActive ? 'text-text-dim' : 'text-text-dim/50'}`}>
-                                                                {item.description}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                                    {item.shortcut && (
-                                                        <kbd className={`text-[10px] px-1.5 py-0.5 rounded border font-mono transition-colors ${isActive
-                                                                ? 'bg-bg-deep border-border-thin text-text-main'
-                                                                : 'bg-bg-deep border-border-thin text-text-dim/40'
-                                                            }`}>
-                                                            {item.shortcut}
-                                                        </kbd>
-                                                    )}
-                                                    {isActive && <ArrowRight size={12} className="text-text-dim/40" />}
-                                                </div>
-                                            </div>
+                                                item={item}
+                                                isActive={isActive}
+                                                labelRanges={labelRanges}
+                                                globalIdx={globalIdx}
+                                                onMouseEnter={handleItemMouseEnter}
+                                                onClick={handleItemClick}
+                                                query={query}
+                                            />
                                         );
                                     })}
                                 </React.Fragment>

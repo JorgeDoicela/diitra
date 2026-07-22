@@ -70,9 +70,12 @@ export const useUsersPage = () => {
 
     const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
         setSearch('');
+        setDetailUser(null);
+        lastOpenedUuidRef.current = null;
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('type', type);
+            next.delete('open');
             return next;
         });
     };
@@ -139,19 +142,22 @@ export const useUsersPage = () => {
             return;
         }
         if (openUuid === lastOpenedUuidRef.current) return;
+        lastOpenedUuidRef.current = openUuid; // Synchronous ref assignment to prevent race-conditions on fast re-renders
         let cancelled = false;
 
         const resolveOpenUser = async () => {
             try {
-                lastOpenedUuidRef.current = openUuid;
                 const res = await api.get(
                     `/Admin/users?search=${encodeURIComponent(openUuid)}&type=${userType}&page=1&pageSize=5`
                 );
                 if (cancelled) return;
 
                 const items: ManagedUser[] = res.data.items ?? [];
+                const searchLower = openUuid.trim().toLowerCase();
                 const target = items.find(
-                    u => u.id_profesor === openUuid || u.user_uuid === openUuid
+                    u => 
+                        (u.id_profesor && u.id_profesor.trim().toLowerCase() === searchLower) ||
+                        (u.user_uuid && u.user_uuid.trim().toLowerCase() === searchLower)
                 ) ?? items[0];
 
                 if (target) {
@@ -161,13 +167,16 @@ export const useUsersPage = () => {
                     openedAtRef.current = Date.now();
                     setLastActiveUserId(null);
                 }
-            } catch {
-                // Silently fail
+            } catch (err) {
+                console.error('[resolveOpenUser] Error en petición API:', err);
             }
         };
 
         resolveOpenUser();
-        return () => { cancelled = true; };
+        return () => { 
+            cancelled = true; 
+            lastOpenedUuidRef.current = null; // Permite que re-montajes de React StrictMode vuelvan a ejecutar la petición
+        };
     }, [openUuid, userType]);
 
     const handleCloseDetail = () => {
