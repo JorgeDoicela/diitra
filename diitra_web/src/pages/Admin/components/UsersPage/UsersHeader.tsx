@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, UserPlus, Globe, Search, X } from 'lucide-react';
+import { PageHeader } from '../../../../components/Common/PageHeader';
 
 interface UsersHeaderProps {
     userType: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO';
@@ -23,17 +24,12 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
     setShowExternalForm
 }) => {
     return (
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 animate-fade-up gap-8 lg:gap-0">
-            <div className="space-y-2">
-                <div className="section-label text-text-main">
-                    <Shield size={10} strokeWidth={2} />
-                    <span>Administración Central - DIITRA</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Gestión Institucional</h2>
-                <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                    Control de acceso institucional y gestión de evaluadores pares externos.
-                </p>
-            </div>
+        <PageHeader
+            kicker="Administración Central - DIITRA"
+            icon={Shield}
+            title="Gestión Institucional"
+            description="Control de acceso institucional y gestión de evaluadores pares externos."
+        >
 
             <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
                 {userType === 'EXTERNO' && (
@@ -110,6 +106,6 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
                     </div>
                 </div>
             </div>
-        </header>
+        </PageHeader>
     );
 };

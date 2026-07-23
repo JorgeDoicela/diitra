@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '../../components/Common/PageHeader';
 import api from '../../api/axios_config';
 import {
     Shield,
@@ -545,20 +546,12 @@ const AuditPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <div className="max-w-[1600px] mx-auto">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-up">
-                    <div className="space-y-2">
-                        <div className="section-label text-text-main">
-                            <Shield size={10} strokeWidth={2} />
-                            <span>Seguridad Institucional</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                            Registro de auditoría
-                        </h2>
-                        <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Registro completo de acciones administrativas y académicas para el cumplimiento de normativas SENESCYT/CACES.
-                        </p>
-                    </div>
-
+                <PageHeader
+                    kicker="Seguridad Institucional"
+                    icon={Shield}
+                    title="Registro de auditoría"
+                    description="Registro completo de acciones administrativas y académicas para el cumplimiento de normativas SENESCYT/CACES."
+                >
                     <div className="flex items-center gap-3">
                         <Link
                             to="/lopdp"
@@ -576,7 +569,7 @@ const AuditPage: React.FC = () => {
                             Exportar Reporte
                         </button>
                     </div>
-                </header>
+                </PageHeader>
 
                 <div className="bento-card static p-6 mb-8 animate-fade-up [animation-delay:100ms]">
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">

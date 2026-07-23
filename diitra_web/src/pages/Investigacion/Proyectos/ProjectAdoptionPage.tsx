@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
 import {
@@ -209,21 +210,12 @@ const ProjectAdoptionPage: React.FC = () => {
                     <span className="text-text-main/80 font-medium">Adopción de Proyectos</span>
                 </div>
 
-                {/* Header */}
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-up">
-                    <div className="space-y-2">
-                        <div className="section-label text-brand">
-                            <Award size={10} strokeWidth={2} />
-                            <span>Centro de Adopciones DIITRA</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                            Bandeja de Adopción de Proyectos
-                        </h2>
-                        <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Rescate y reanudación de proyectos de investigación inconclusos o abandonados para asegurar la continuidad del conocimiento.
-                        </p>
-                    </div>
-
+                <PageHeader
+                    kicker="Centro de Adopciones DIITRA"
+                    icon={Award}
+                    title="Bandeja de Adopción de Proyectos"
+                    description="Rescate y reanudación de proyectos de investigación inconclusos o abandonados para asegurar la continuidad del conocimiento."
+                >
                     {/* Admin Switch View */}
                     {isAdmin && (
                         <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none self-start md:self-end">
@@ -249,7 +241,7 @@ const ProjectAdoptionPage: React.FC = () => {
                             </button>
                         </div>
                     )}
-                </header>
+                </PageHeader>
 
                 {/* Filter and search bar */}
                 <div className="relative mb-8 max-w-md animate-fade-up [animation-delay:100ms]">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../api/axios_config';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     FileCode2,
     Save,
@@ -601,21 +602,19 @@ const DocumentTemplatesPage: React.FC = () => {
     const activeBlock = blocks.find(b => b.id === activeBlockId);
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 flex flex-col h-[calc(100vh-112px)] overflow-hidden font-sans">
+        <main className="flex-1 bg-bg-deep p-4 md:px-10 md:pt-8 md:pb-4 flex flex-col h-[calc(100vh-56px)] overflow-hidden font-sans">
             {/* Cabecera Principal */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-border-thin/40 shrink-0">
-                <div>
-                    <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
-                        <FileCode2 className="w-5 h-5 text-text-main" />
-                        Editor de Plantillas
-                    </h1>
-                    <p className="text-xs text-text-dim mt-0.5">
-                        Creador visual de documentos. Arrastra bloques, añade tablas y define la maquetación del PDF oficial.
-                    </p>
-                </div>
+            <PageHeader
+                kicker="Administración de Plantillas"
+                icon={FileCode2}
+                title="Editor de Plantillas"
+                description="Creador visual de documentos. Arrastra bloques, añade tablas y define la maquetación del PDF oficial."
+                className="relative z-30"
+            >
                 {selectedTemplate && (
-                    <div className="flex items-center gap-2 mt-3 md:mt-0">
+                    <div className="flex items-center gap-2 mt-3 md:mt-0 md:translate-y-11">
  
+
                         {/* Paleta de bloques tipo Notion */}
                         <div ref={paletteRef} className="relative">
                             <button
@@ -628,20 +627,20 @@ const DocumentTemplatesPage: React.FC = () => {
                             </button>
  
                             {showPalette && (
-                                <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-lg p-3 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-3">
+                                <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
                                     {/* ── Bloques de Contenido ── */}
                                     <div>
-                                        <p className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1 mb-1.5">Bloques Estructurales & Contenido</p>
+                                        <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {([
-                                                { type: 'cover' as const,             icon: Image,         label: 'Portada Institucional',   desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/10' },
-                                                { type: 'title' as const,             icon: Heading1,      label: 'Título de Sección',       desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/10' },
-                                                { type: 'rich_text' as const,         icon: AlignLeft,     label: 'Párrafo Enriquecido',     desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-50/10' },
-                                                { type: 'advanced_table' as const,    icon: Grid,          label: 'Tabla Avanzada',          desc: 'Tabla con filas y columnas fijas.',   color: 'text-blue-500 bg-blue-500/10' },
-                                                { type: 'multi_section_table' as const,icon: LayoutTemplate,label: 'Tabla Multi-Sección',    desc: 'Conjunto de sub-tablas fijas.',          color: 'text-blue-500 bg-blue-500/10' },
-                                                { type: 'two_column' as const,        icon: Columns2,      label: 'Dos Columnas',            desc: 'Dos bloques de texto lado a lado.',  color: 'text-blue-500 bg-blue-500/10' },
-                                                { type: 'page_break' as const,        icon: Minus,         label: 'Salto de Página',         desc: 'Forzar salto de página en el PDF.',  color: 'text-slate-400 bg-slate-400/10' },
-                                                { type: 'gantt' as const,              icon: BarChart2,     label: 'Diagrama de Gantt',        desc: 'Pestaña de Cronograma en Workspace.',  color: 'text-indigo-500 bg-indigo-500/10' },
+                                                { type: 'cover' as const,             icon: Image,         label: 'Portada Institucional',   desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'title' as const,             icon: Heading1,      label: 'Título de Sección',       desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'rich_text' as const,         icon: AlignLeft,     label: 'Párrafo Enriquecido',     desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-500/5' },
+                                                { type: 'advanced_table' as const,    icon: Grid,          label: 'Tabla Avanzada',          desc: 'Tabla con filas y columnas fijas.',   color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'multi_section_table' as const,icon: LayoutTemplate,label: 'Tabla Multi-Sección',    desc: 'Conjunto de sub-tablas fijas.',          color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'two_column' as const,        icon: Columns2,      label: 'Dos Columnas',            desc: 'Dos bloques de texto lado a lado.',  color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'page_break' as const,        icon: Minus,         label: 'Salto de Página',         desc: 'Forzar salto de página en el PDF.',  color: 'text-zinc-400 bg-zinc-400/5' },
+                                                { type: 'gantt' as const,              icon: BarChart2,     label: 'Diagrama de Gantt',        desc: 'Pestaña de Cronograma en Workspace.',  color: 'text-indigo-500 bg-indigo-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;
                                                 const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
@@ -649,15 +648,15 @@ const DocumentTemplatesPage: React.FC = () => {
                                                     <button key={item.type}
                                                         disabled={alreadyExists}
                                                         onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
-                                                        className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-colors bg-surface border border-border-thin/40 ${alreadyExists ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-hover hover:border-border-hover cursor-pointer'}`}
+                                                        className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
                                                     >
-                                                        <div className={`p-1.5 rounded-md shrink-0 mt-0.5 ${item.color}`}>
+                                                        <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
                                                             <ItemIcon className="w-3.5 h-3.5" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1">
+                                                            <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
                                                                 <span>{item.label}</span>
-                                                                {alreadyExists && <span className="text-[8px] bg-slate-100 text-slate-400 border border-slate-200 px-1 rounded font-black">Ya añadido</span>}
+                                                                {alreadyExists && <span className="text-[8px] font-medium font-mono bg-surface-hover border border-border-thin/30 px-1.5 py-0.5 rounded text-text-dim shrink-0">Añadido</span>}
                                                             </p>
                                                             <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
                                                         </div>
@@ -666,21 +665,21 @@ const DocumentTemplatesPage: React.FC = () => {
                                             })}
                                         </div>
                                     </div>
- 
+
                                     {/* ── Bloques Dinámicos ── */}
-                                    <div className="border-t border-border-thin/40 pt-2.5">
-                                        <p className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1 mb-1.5">Bloques de Base de Datos (Dinámicos)</p>
+                                    <div className="border-t border-border-thin/30 pt-3">
+                                        <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques de Base de Datos (Dinámicos)</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {([
-                                                { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'researchers_table' as const, icon: Users,   label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.',        color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'project_technical_section' as const, icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'project_ethics_report' as const, icon: Award, label: 'Acta de Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'impacts' as const,           icon: Target,  label: 'Matriz de Impactos',       desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'rubric_table' as const,      icon: Award,   label: 'Rúbrica de Calificación',  desc: 'Criterios para los revisores pares.',  color: 'text-emerald-500 bg-emerald-500/10' },
-                                                { type: 'signatures' as const,        icon: PenLine, label: 'Bloque de Firmas',         desc: 'Firmas físicas o electrónica CACES.',color: 'text-emerald-500 bg-emerald-500/10' },
+                                                { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'researchers_table' as const, icon: Users,   label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.',        color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'project_technical_section' as const, icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'project_ethics_report' as const, icon: Award, label: 'Acta de Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'impacts' as const,           icon: Target,  label: 'Matriz de Impactos',       desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'rubric_table' as const,      icon: Award,   label: 'Rúbrica de Calificación',  desc: 'Criterios para los revisores pares.',  color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'signatures' as const,        icon: PenLine, label: 'Bloque de Firmas',         desc: 'Firmas físicas o electrónica CACES.',color: 'text-emerald-500 bg-emerald-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;
                                                 const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
@@ -688,15 +687,15 @@ const DocumentTemplatesPage: React.FC = () => {
                                                     <button key={item.type}
                                                         disabled={alreadyExists}
                                                         onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
-                                                        className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-colors bg-surface border border-border-thin/40 ${alreadyExists ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-hover hover:border-border-hover cursor-pointer'}`}
+                                                        className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
                                                     >
-                                                        <div className={`p-1.5 rounded-md shrink-0 mt-0.5 ${item.color}`}>
+                                                        <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
                                                             <ItemIcon className="w-3.5 h-3.5" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1">
+                                                            <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
                                                                 <span>{item.label}</span>
-                                                                {alreadyExists && <span className="text-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-1 rounded font-black">Ya añadido</span>}
+                                                                {alreadyExists && <span className="text-[8px] font-medium font-mono bg-emerald-500/5 border border-emerald-500/15 px-1.5 py-0.5 rounded text-emerald-600 shrink-0">Añadido</span>}
                                                             </p>
                                                             <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
                                                         </div>
@@ -708,18 +707,6 @@ const DocumentTemplatesPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
- 
-                        {isDirty ? (
-                            <span className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-md animate-pulse">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                Cambios sin guardar
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                Todo guardado
-                            </span>
-                        )}
 
                         <button
                             onClick={handleSaveTemplate}
@@ -735,7 +722,7 @@ const DocumentTemplatesPage: React.FC = () => {
                         </button>
                     </div>
                 )}
-            </div>
+            </PageHeader>
  
             {selectedTemplate && (
                 <div className="flex xl:hidden items-center bg-surface border border-border-thin rounded-md p-1 shrink-0 mt-3 gap-0.5">
@@ -797,7 +784,9 @@ const DocumentTemplatesPage: React.FC = () => {
                                     onToggleActive={handleToggleActive}
                                     onDeleteBlock={handleDeleteBlock}
                                     onDuplicateBlock={handleDuplicateBlock}
-                                    />
+                                    templateName={selectedTemplate.name}
+                                    isDirty={isDirty}
+                                />
                             </div>
  
                             {/* ── PROPIEDADES ── */}

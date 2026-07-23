@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, FileCheck, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award
@@ -293,17 +294,12 @@ const ResearchProjectsPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-10">
-            {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 animate-fade-up gap-6 md:gap-0">
-                <div className="space-y-2">
-                    <div className="section-label text-brand">
-                        <ClipboardList size={10} />
-                        <span>Revisión Institucional de Proyectos</span>
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        Supervisión de Investigaciones
-                    </h2>
-                    <div className="flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1 text-xs text-text-dim max-w-lg font-medium leading-relaxed">
+            <PageHeader
+                kicker="Revisión Institucional de Proyectos"
+                icon={ClipboardList}
+                title="Supervisión de Investigaciones"
+                description={
+                    <span className="flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1">
                         <span>
                             Administre y califique los proyectos de investigación registrados en el sistema, supervise su presupuesto y valide sus productos.
                         </span>
@@ -313,9 +309,9 @@ const ResearchProjectsPage = () => {
                                 Sincronizando...
                             </span>
                         )}
-                    </div>
-                </div>
-
+                    </span>
+                }
+            >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
                     <button
                         onClick={() => setShowReportLauncher(true)}
@@ -340,7 +336,7 @@ const ResearchProjectsPage = () => {
                         Nueva Postulación
                     </button>
                 </div>
-            </header>
+            </PageHeader>
 
             {error && (
                 <div className="badge-vercel-error !rounded-xl !p-4 mb-6 w-full text-sm flex items-center gap-3">

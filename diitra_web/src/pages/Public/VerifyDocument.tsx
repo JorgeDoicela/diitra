@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { PageHeader } from '../../components/Common/PageHeader';
 import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 
@@ -31,18 +32,12 @@ const VerifyDocument = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 animate-fade-up gap-6 md:gap-0">
-                <div className="space-y-2">
-                    <div className="section-label text-brand">
-                        <ShieldCheck size={10} />
-                        <span>Verificador Documental</span>
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Verificación de autenticidad</h2>
-                    <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Ingrese el código de verificación impreso en el documento o escaneado vía QR para validar su autenticidad ante el CACES.
-                    </p>
-                </div>
-            </header>
+            <PageHeader
+                kicker="Verificador Documental"
+                icon={ShieldCheck}
+                title="Verificación de autenticidad"
+                description="Ingrese el código de verificación impreso en el documento o escaneado vía QR para validar su autenticidad ante el CACES."
+            />
 
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-up [animation-delay:100ms]">
                 {!result && !loading && (

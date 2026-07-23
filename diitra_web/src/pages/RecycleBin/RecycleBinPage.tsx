@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, RotateCcw, FileText, Calendar, Award, RefreshCw, Trash } from 'lucide-react';
+import { PageHeader } from '../../components/Common/PageHeader';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useConfirm } from '../../api/ConfirmContext';
@@ -114,17 +115,12 @@ const RecycleBinPage: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/5 dark:border-white/5 pb-5">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
-                        <Trash2 className="text-text-main" size={24} />
-                        Papelera de Reciclaje
-                    </h1>
-                    <p className="text-sm text-text-dim mt-1">
-                        Restaura elementos eliminados temporalmente o elimínalos de forma permanente de la base de datos.
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                kicker="Mantenimiento del Sistema"
+                icon={Trash2}
+                title="Papelera de Reciclaje"
+                description="Restaura elementos eliminados temporalmente o elimínalos de forma permanente de la base de datos."
+            />
 
             {/* Tabs */}
             <div className="flex border-b border-black/5 dark:border-white/5">

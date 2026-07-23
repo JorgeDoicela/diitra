@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { stripHtmlToText } from '../../utils/notificationText';
+import { PageHeader } from '../../components/Common/PageHeader';
 
 interface NotificationItem {
     uuid: string;
@@ -250,32 +251,22 @@ const NotificationsPage = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto custom-scrollbar">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-fade-up">
-                <div className="space-y-1.5">
-                    <div className="section-label text-brand animate-pulse">
-                        <Bell size={10} />
-                        <span>Centro de Notificaciones</span>
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        Historial Completo
-                    </h1>
-                    <p className="text-xs text-text-dim max-w-lg font-medium leading-relaxed">
-                        Historial de alertas del sistema, avisos de investigación y mensajes institucionales.
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                    {unreadCount > 0 && (
-                        <button
-                            onClick={handleMarkAllRead}
-                            className="btn-vercel-secondary flex items-center gap-2 h-10"
-                        >
-                            <CheckCheck size={14} />
-                            <span>Marcar leídas</span>
-                        </button>
-                    )}
-                </div>
-            </header>
+            <PageHeader
+                kicker="Centro de Notificaciones"
+                icon={Bell}
+                title="Historial Completo"
+                description="Historial de alertas del sistema, avisos de investigación y mensajes institucionales."
+            >
+                {unreadCount > 0 && (
+                    <button
+                        onClick={handleMarkAllRead}
+                        className="btn-vercel-secondary flex items-center gap-2 h-10"
+                    >
+                        <CheckCheck size={14} />
+                        <span>Marcar leídas</span>
+                    </button>
+                )}
+            </PageHeader>
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">

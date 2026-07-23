@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
     RefreshCw, ChevronDown, ChevronUp, X, FileSignature, Activity,
@@ -263,30 +264,28 @@ const InformesAvancePage: React.FC = () => {
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
 
             {/* Header */}
-            <header className="mb-8 animate-fade-up">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest mb-4 transition-colors"
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest mb-4 transition-colors"
+            >
+                <ArrowLeft size={13} />
+                Volver al proyecto
+            </button>
+            <PageHeader
+                    kicker="Informes de Avance · DIITRA CACES"
+                    icon={FileText}
+                    title="Informes de Avance"
+                    description={
+                        <span className="flex flex-col gap-1">
+                            {projectTitle && (
+                                <strong className="text-text-main font-semibold text-xs block">{projectTitle}</strong>
+                            )}
+                            <span>
+                                Cada informe contiene bitácora científica, avance de actividades del cronograma, evidencias físicas y ejecución presupuestaria — conforme al modelo CACES.
+                            </span>
+                        </span>
+                    }
                 >
-                    <ArrowLeft size={13} />
-                    Volver al proyecto
-                </button>
-                <div className="section-label mb-2">
-                    <FileText size={12} className="text-text-main" />
-                    <span>Informes de Avance · DIITRA CACES</span>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-2">
-                            Informes de Avance
-                        </h2>
-                        {projectTitle && (
-                            <p className="text-sm text-text-dim font-medium">{projectTitle}</p>
-                        )}
-                        <p className="text-[10px] text-text-dim mt-1 max-w-lg leading-relaxed">
-                            Cada informe contiene bitácora científica, avance de actividades del cronograma, evidencias físicas y ejecución presupuestaria — conforme al modelo CACES.
-                        </p>
-                    </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
                             onClick={() => navigate(`/investigacion/monitoreo/${projectId}`)}
@@ -311,8 +310,7 @@ const InformesAvancePage: React.FC = () => {
                             Nuevo Informe
                         </button>
                     </div>
-                </div>
-            </header>
+                </PageHeader>
 
             {/* Guía CACES */}
             <div className="mb-6 p-4 rounded-2xl bg-surface border border-border-thin flex flex-col sm:flex-row items-start gap-3">

@@ -1,7 +1,9 @@
 import React from 'react';
+import { Calendar } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import './CalendarioPage.css';
+import { PageHeader } from '../../components/Common/PageHeader';
 
 import { CalendarioSidebar } from './components/CalendarioSidebar';
 import { CalendarioHeader } from './components/CalendarioHeader';
@@ -136,90 +138,101 @@ export const CalendarioPage: React.FC = () => {
     });
 
     return (
-        <div className="calendario-page-container">
-            <CalendarioSidebar
-                categoriasVisibles={categoriasVisibles}
-                toggleCategoria={toggleCategoria}
-                stickyNotes={stickyNotes}
-                draggingUuid={draggingUuid}
-                handleNoteDragStart={handleNoteDragStart}
-                handleGlobalDragEnd={handleGlobalDragEnd}
-                handleEditEventClick={handleEditEventClick}
-                handleDeleteStickyNote={(uuid) => handleDeleteStickyNote(uuid)}
-                proximosEventos={proximosEventos}
-                setSelectedEvent={setSelectedEvent}
-                icalUrl={icalUrl}
-                copied={copied}
-                generatingToken={generatingToken}
-                handleCopyIcal={handleCopyIcal}
-                handleGenerarToken={handleGenerarToken}
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 flex flex-col h-[calc(100vh-56px)] overflow-hidden font-sans gap-6">
+            <PageHeader
+                kicker="Planificación y Seguimiento"
+                icon={Calendar}
+                title="Calendario de Actividades"
+                description="Gestiona hitos científicos, plazos de acreditación y tareas colaborativas en tiempo real."
+                className="mb-0"
             />
 
-            <div className={`calendario-main ${loading ? 'calendario-loading' : ''}`}>
-                <CalendarioHeader
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
-                    view={view}
-                    setView={setView}
-                    handleNavigateClick={handleNavigateClick}
-                    getLabelFecha={getLabelFecha}
-                    handleNewEventClick={handleNewEventClick}
+            {/* Contenedor de dos columnas por debajo del título */}
+            <div className="flex flex-1 gap-6 min-h-0 overflow-hidden">
+                <CalendarioSidebar
+                    categoriasVisibles={categoriasVisibles}
+                    toggleCategoria={toggleCategoria}
+                    stickyNotes={stickyNotes}
+                    draggingUuid={draggingUuid}
+                    handleNoteDragStart={handleNoteDragStart}
+                    handleGlobalDragEnd={handleGlobalDragEnd}
+                    handleEditEventClick={handleEditEventClick}
+                    handleDeleteStickyNote={(uuid) => handleDeleteStickyNote(uuid)}
+                    proximosEventos={proximosEventos}
+                    setSelectedEvent={setSelectedEvent}
+                    icalUrl={icalUrl}
+                    copied={copied}
+                    generatingToken={generatingToken}
+                    handleCopyIcal={handleCopyIcal}
+                    handleGenerarToken={handleGenerarToken}
                 />
 
-                {viewMode === 'calendar' ? (
-                    <CalendarView
+                <div className={`calendario-main ${loading ? 'calendario-loading' : ''}`}>
+                    <CalendarioHeader
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
                         view={view}
                         setView={setView}
-                        currentDate={currentDate}
-                        filteredEventos={filteredEventos}
-                        handleSelectEvent={handleSelectEvent}
-                        handleSelectSlot={handleSelectSlot}
-                        handleNavigate={handleNavigate}
-                        eventStyleGetter={eventStyleGetter}
-                        handleEventDrop={handleEventDrop}
-                        handleEventResize={handleEventResize}
-                        isDraggable={isDraggable}
+                        handleNavigateClick={handleNavigateClick}
+                        getLabelFecha={getLabelFecha}
+                        handleNewEventClick={handleNewEventClick}
                     />
-                ) : viewMode === 'kanban' ? (
-                    <KanbanView
-                        filteredEventos={filteredEventos}
-                        dragOverColumn={dragOverColumn}
-                        draggingUuid={draggingUuid}
-                        handleDragOver={handleDragOver}
-                        setDragOverColumn={setDragOverColumn}
-                        handleDrop={handleDrop}
-                        handleDragStart={handleDragStart}
-                        handleGlobalDragEnd={handleGlobalDragEnd}
-                        setSelectedEvent={setSelectedEvent}
-                        handleQuickComplete={handleQuickComplete}
-                        handleDevolverAInbox={handleDevolverAInbox}
-                        handleEditEventClick={handleEditEventClick}
-                        handleDeleteEvent={handleDeleteEvent}
-                        handleGoToEventAction={handleGoToEventAction}
-                    />
-                ) : (
-                    <InboxView
-                        stickyNotes={stickyNotes}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        selectedFilterContext={selectedFilterContext}
-                        setSelectedFilterContext={setSelectedFilterContext}
-                        selectedFilterColor={selectedFilterColor}
-                        setSelectedFilterColor={setSelectedFilterColor}
-                        draggedNoteIndex={draggedNoteIndex}
-                        draggedNote={draggedNote}
-                        draggedSize={draggedSize}
-                        dragPreviewRef={dragPreviewRef}
-                        handleInboxPointerDown={handleInboxPointerDown}
-                        handleInboxPointerMove={handleInboxPointerMove}
-                        handleInboxPointerUp={handleInboxPointerUp}
-                        setPlanificando={setPlanificando}
-                        handleEditEventClick={handleEditEventClick}
-                        handleDeleteStickyNote={(uuid) => handleDeleteStickyNote(uuid)}
-                        handleQuickPriorityChange={handleQuickPriorityChange}
-                        handleQuickColorChange={handleQuickColorChange}
-                    />
-                )}
+
+                    {viewMode === 'calendar' ? (
+                        <CalendarView
+                            view={view}
+                            setView={setView}
+                            currentDate={currentDate}
+                            filteredEventos={filteredEventos}
+                            handleSelectEvent={handleSelectEvent}
+                            handleSelectSlot={handleSelectSlot}
+                            handleNavigate={handleNavigate}
+                            eventStyleGetter={eventStyleGetter}
+                            handleEventDrop={handleEventDrop}
+                            handleEventResize={handleEventResize}
+                            isDraggable={isDraggable}
+                        />
+                    ) : viewMode === 'kanban' ? (
+                        <KanbanView
+                            filteredEventos={filteredEventos}
+                            dragOverColumn={dragOverColumn}
+                            draggingUuid={draggingUuid}
+                            handleDragOver={handleDragOver}
+                            setDragOverColumn={setDragOverColumn}
+                            handleDrop={handleDrop}
+                            handleDragStart={handleDragStart}
+                            handleGlobalDragEnd={handleGlobalDragEnd}
+                            setSelectedEvent={setSelectedEvent}
+                            handleQuickComplete={handleQuickComplete}
+                            handleDevolverAInbox={handleDevolverAInbox}
+                            handleEditEventClick={handleEditEventClick}
+                            handleDeleteEvent={handleDeleteEvent}
+                            handleGoToEventAction={handleGoToEventAction}
+                        />
+                    ) : (
+                        <InboxView
+                            stickyNotes={stickyNotes}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            selectedFilterContext={selectedFilterContext}
+                            setSelectedFilterContext={setSelectedFilterContext}
+                            selectedFilterColor={selectedFilterColor}
+                            setSelectedFilterColor={setSelectedFilterColor}
+                            draggedNoteIndex={draggedNoteIndex}
+                            draggedNote={draggedNote}
+                            draggedSize={draggedSize}
+                            dragPreviewRef={dragPreviewRef}
+                            handleInboxPointerDown={handleInboxPointerDown}
+                            handleInboxPointerMove={handleInboxPointerMove}
+                            handleInboxPointerUp={handleInboxPointerUp}
+                            setPlanificando={setPlanificando}
+                            handleEditEventClick={handleEditEventClick}
+                            handleDeleteStickyNote={(uuid) => handleDeleteStickyNote(uuid)}
+                            handleQuickPriorityChange={handleQuickPriorityChange}
+                            handleQuickColorChange={handleQuickColorChange}
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Event Detail Drawer */}
@@ -268,6 +281,6 @@ export const CalendarioPage: React.FC = () => {
                 onClose={() => setPlanificando(null)}
                 handleConfirmPlanificacion={handleConfirmPlanificacion}
             />
-        </div>
+        </main>
     );
 };

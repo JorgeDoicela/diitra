@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Loader2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { PageHeader } from '../../components/Common/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -58,16 +59,12 @@ const LopdpAdminPage: React.FC = () => {
                 <span className="text-text-main/80 font-medium">Panel LOPDP</span>
             </div>
 
-            <header className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
-                    <ShieldCheck size={12} className="text-brand" />
-                    <span>Administración LOPDP</span>
-                </div>
-                <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">Panel de Control LOPDP</h1>
-                <p className="text-xs md:text-sm text-text-dim max-w-xl leading-relaxed">
-                    Audite el registro histórico de consentimientos otorgados bajo la normativa de protección de datos personales.
-                </p>
-            </header>
+            <PageHeader
+                kicker="Administración LOPDP"
+                icon={ShieldCheck}
+                title="Panel de Control LOPDP"
+                description="Audite el registro histórico de consentimientos otorgados bajo la normativa de protección de datos personales."
+            />
 
             <div className="bento-card static p-6 space-y-6">
                 <div className="flex items-center justify-between">

@@ -124,7 +124,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
             <div className="tabs-vercel">
                 <button
                     onClick={() => { setActiveTab('lineas'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'lineas' ? 'active' : ''
                     }`}
                 >
@@ -133,7 +133,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                 </button>
                 <button
                     onClick={() => { setActiveTab('periodos'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'periodos' ? 'active' : ''
                     }`}
                 >
@@ -142,7 +142,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                 </button>
                 <button
                     onClick={() => { setActiveTab('productos'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'productos' ? 'active' : ''
                     }`}
                 >
@@ -151,7 +151,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                 </button>
                 <button
                     onClick={() => { setActiveTab('dominios'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'dominios' ? 'active' : ''
                     }`}
                 >
@@ -160,7 +160,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                 </button>
                 <button
                     onClick={() => { setActiveTab('indicadores'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'indicadores' ? 'active' : ''
                     }`}
                 >
@@ -169,7 +169,7 @@ const ConfiguracionPage: React.FC<ConfiguracionPageProps> = ({ embedded = false 
                 </button>
                 <button
                     onClick={() => { setActiveTab('calendario'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeTab === 'calendario' ? 'active' : ''
                     }`}
                 >

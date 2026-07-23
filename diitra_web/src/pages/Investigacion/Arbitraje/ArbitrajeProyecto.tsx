@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
     Loader2, Users, Building, GraduationCap, FileDown,
@@ -383,88 +384,82 @@ const ArbitrajeProyecto: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* Header */}
-            <header className="mb-10 animate-fade-up relative z-10">
-                <button
-                    onClick={() => navigate('/evaluacion-pares')}
-                    className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
-                >
-                    <ArrowLeft size={12} /> Volver al Panel de Evaluación
-                </button>
+            <button
+                onClick={() => navigate('/evaluacion-pares')}
+                className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
+            >
+                <ArrowLeft size={12} /> Volver al Panel de Evaluación
+            </button>
 
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                        <div className="section-label mb-2">
-                            <Gavel size={12} className="text-brand" />
-                            <span>Evaluación por Pares · {arbitraje.convocatoria ?? 'Sin convocatoria'}</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-snug mb-3 max-w-4xl">
-                            {arbitraje.proyecto_titulo}
-                        </h2>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {arbitraje.codigo_institucional && (
-                                <span className="text-[10px] font-mono bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
-                                    {arbitraje.codigo_institucional}
-                                </span>
-                            )}
-                            <div className={`badge-vercel ${estadoCfg.badge}`}>
-                                <span className={`dot ${estadoCfg.dot}`} />
-                                {estadoCfg.label}
-                            </div>
-                            <span className="text-[10px] bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
-                                Estado: {arbitraje.estado_proyecto}
+            <PageHeader
+                kicker={`Evaluación por Pares · ${arbitraje.convocatoria ?? 'Sin convocatoria'}`}
+                icon={Gavel}
+                title={arbitraje.proyecto_titulo}
+                description={
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {arbitraje.codigo_institucional && (
+                            <span className="text-[10px] font-mono bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
+                                {arbitraje.codigo_institucional}
                             </span>
+                        )}
+                        <div className={`badge-vercel ${estadoCfg.badge}`}>
+                            <span className={`dot ${estadoCfg.dot}`} />
+                            {estadoCfg.label}
                         </div>
+                        <span className="text-[10px] bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
+                            Estado: {arbitraje.estado_proyecto}
+                        </span>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 md:mt-1">
+                }
+            >
+                <div className="flex flex-wrap items-center gap-2 shrink-0 md:mt-1">
+                    <button
+                        onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                        className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                    >
+                        <ExternalLink size={14} />
+                        Ver Proyecto
+                    </button>
+                    {!arbitraje.arbitraje_cerrado && (
                         <button
-                            onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                            onClick={() => setShowAsignar(true)}
                             className="btn-vercel-secondary flex items-center gap-2 shrink-0"
                         >
-                            <ExternalLink size={14} />
-                            Ver Proyecto
+                            <PlusCircle size={14} />
+                            Agregar Evaluador
                         </button>
-                        {!arbitraje.arbitraje_cerrado && (
-                            <button
-                                onClick={() => setShowAsignar(true)}
-                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
-                            >
-                                <PlusCircle size={14} />
-                                Agregar Evaluador
-                            </button>
-                        )}
-                        {arbitraje.arbitraje_cerrado ? (
-                            <button
-                                onClick={handleDescargarPdf}
-                                disabled={descargandoPdf}
-                                className="btn-vercel-primary flex items-center gap-2 shrink-0"
-                            >
-                                {descargandoPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-                                Descargar Acta PDF
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleCerrar}
-                                disabled={!puedesCerrar || cerrando}
-                                className="btn-vercel-primary flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
-                                Cerrar Evaluación
-                            </button>
-                        )}
-                        {arbitraje.estado_proyecto === 'Aprobado' && (
-                            <button
-                                onClick={handleIniciarEjecucion}
-                                disabled={iniciandoEjecucion}
-                                className="btn-vercel-secondary flex items-center gap-2 shrink-0 border-brand/40 text-brand hover:bg-brand/5"
-                            >
-                                {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
-                                Iniciar Ejecución
-                            </button>
-                        )}
-                    </div>
+                    )}
+                    {arbitraje.arbitraje_cerrado ? (
+                        <button
+                            onClick={handleDescargarPdf}
+                            disabled={descargandoPdf}
+                            className="btn-vercel-primary flex items-center gap-2 shrink-0"
+                        >
+                            {descargandoPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                            Descargar Acta PDF
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleCerrar}
+                            disabled={!puedesCerrar || cerrando}
+                            className="btn-vercel-primary flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
+                            Cerrar Evaluación
+                        </button>
+                    )}
+                    {arbitraje.estado_proyecto === 'Aprobado' && (
+                        <button
+                            onClick={handleIniciarEjecucion}
+                            disabled={iniciandoEjecucion}
+                            className="btn-vercel-secondary flex items-center gap-2 shrink-0 border-brand/40 text-brand hover:bg-brand/5"
+                        >
+                            {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
+                            Iniciar Ejecución
+                        </button>
+                    )}
                 </div>
-            </header>
+            </PageHeader>
 
             {/* Aviso si hay desempate */}
             {arbitraje.estado_arbitraje === 'Desempate' && (

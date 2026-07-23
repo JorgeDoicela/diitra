@@ -55,7 +55,7 @@
     --accents-8: #fafafa;
 }
 
-[data-theme="light"] {
+[data-theme="light"], .force-light-theme {
     /* TEMA CLARO: Inversión de tonos de grises y adaptabilidad semántica */
     --bg: #fafafa;
     --fg: #09090b;

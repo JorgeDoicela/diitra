@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool, FileText
@@ -258,16 +259,12 @@ const MyProjectsPage: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 animate-fade-up">
-                <div className="space-y-2">
-                    <div className="section-label text-brand">
-                        <ClipboardList size={10} />
-                        <span>Mis Investigaciones</span>
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        Mis proyectos de investigación
-                    </h2>
-                    <div className="flex items-center gap-2 text-xs text-text-dim font-medium">
+            <PageHeader
+                kicker="Mis Investigaciones"
+                icon={ClipboardList}
+                title="Mis proyectos de investigación"
+                description={
+                    <span className="flex items-center gap-2">
                         <span>
                             {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
                         </span>
@@ -277,8 +274,9 @@ const MyProjectsPage: React.FC = () => {
                                 Sincronizando...
                             </span>
                         )}
-                    </div>
-                </div>
+                    </span>
+                }
+            >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
                     <Link
                         to="/convocatorias"
@@ -306,7 +304,7 @@ const MyProjectsPage: React.FC = () => {
                         </button>
                     )}
                 </div>
-            </header>
+            </PageHeader>
 
             {/* Banner de Recuperación de Borrador */}
             {pendingDraft && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     Gavel, Loader2,
     AlertTriangle, UserPlus, Building,
@@ -267,30 +268,17 @@ const ArbitrajePage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
 
-            {/* ── PAGE HEADER ──────────────────────────────────── */}
-            <header className="mb-10 animate-fade-up relative z-10">
-                <div className="section-label mb-2">
-                    <Gavel size={12} className="text-brand" />
-                    <span>Módulo de Evaluación por Pares · DIITRA</span>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-3">
-                            Evaluación por Pares
-                        </h2>
-                        <p className="text-sm text-text-dim max-w-2xl font-medium leading-relaxed">
-                            Panel de control del proceso de evaluación por pares bajo la normativa CACES.
-                            Asigne evaluadores, supervise el avance y emita dictámenes formales.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setShowExterno(true)} className="btn-vercel-secondary flex items-center gap-2 shrink-0">
-                            <UserPlus size={14} />
-                            Par Evaluador Externo
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                kicker="Módulo de Evaluación por Pares · DIITRA"
+                icon={Gavel}
+                title="Evaluación por Pares"
+                description="Panel de control del proceso de evaluación por pares bajo la normativa CACES. Asigne evaluadores, supervise el avance y emita dictámenes formales."
+            >
+                <button onClick={() => setShowExterno(true)} className="btn-vercel-secondary flex items-center gap-2 shrink-0">
+                    <UserPlus size={14} />
+                    Par Evaluador Externo
+                </button>
+            </PageHeader>
 
 
 

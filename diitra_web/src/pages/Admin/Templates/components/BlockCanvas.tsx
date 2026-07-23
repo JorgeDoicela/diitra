@@ -6,7 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Trash2, Eye, EyeOff, Copy, GripVertical, DollarSign
+    Layers, Trash2, Eye, EyeOff, Copy, GripVertical
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection } from '../types';
 
@@ -17,6 +17,8 @@ interface BlockCanvasProps {
     onToggleActive: (index: number) => void;
     onDeleteBlock: (id: string) => void;
     onDuplicateBlock: (id: string) => void;
+    templateName?: string;
+    isDirty?: boolean;
 }
 
 const COLORS = {
@@ -60,7 +62,7 @@ const RenderCover: React.FC<{ config: any }> = ({ config }) => {
 const RenderTitle: React.FC<{ config: any }> = ({ config }) => {
     const text = config.text || 'Título de Sección';
     const level = config.level || 'h1';
-    
+
     if (level === 'h1') {
         return (
             <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider flex items-center justify-between" style={{ color: COLORS.blue }}>
@@ -86,7 +88,7 @@ const RenderRichText: React.FC<{ config: any }> = ({ config }) => {
     const html = config.html || '<p className="text-gray-400 italic">Escribe el contenido enriquecido aquí...</p>';
     return (
         <div className="space-y-2">
-            <div 
+            <div
                 className="prose max-w-none text-xs leading-relaxed text-[#1e2a4a]/90 tiptap-editor"
                 dangerouslySetInnerHTML={{ __html: html }}
             />
@@ -110,8 +112,8 @@ const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
                 <thead>
                     <tr>
                         {headers.map((h: string, i: number) => (
-                            <th 
-                                key={i} 
+                            <th
+                                key={i}
                                 className="border border-slate-300 p-2 font-bold text-left uppercase text-[9px]"
                                 style={{
                                     backgroundColor: headerStyle === 'blue' ? COLORS.blue : headerStyle === 'gold' ? COLORS.gold : headerStyle === 'gray' ? COLORS.gray : '#f8fafc',
@@ -157,8 +159,8 @@ const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) => {
                         <thead>
                             <tr>
                                 {sec.headers.map((h, i) => (
-                                    <th 
-                                        key={i} 
+                                    <th
+                                        key={i}
                                         className="border border-slate-300 p-1.5 font-bold text-left uppercase text-[8.5px]"
                                         style={{
                                             backgroundColor: sec.headerStyle === 'blue' ? COLORS.blue : sec.headerStyle === 'gold' ? COLORS.gold : sec.headerStyle === 'gray' ? COLORS.gray : '#f8fafc',
@@ -202,7 +204,7 @@ const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
                 }}>
                     {config.leftTitle || 'COLUMNA IZQUIERDA'}
                 </div>
-                <div 
+                <div
                     className="p-3 text-[10px] text-slate-700 rich-content tiptap-editor"
                     dangerouslySetInnerHTML={{ __html: config.leftContent || '' }}
                 />
@@ -214,7 +216,7 @@ const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
                 }}>
                     {config.rightTitle || 'COLUMNA DERECHA'}
                 </div>
-                <div 
+                <div
                     className="p-3 text-[10px] text-slate-700 rich-content tiptap-editor"
                     dangerouslySetInnerHTML={{ __html: config.rightContent || '' }}
                 />
@@ -225,15 +227,15 @@ const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
 
 const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
     const months = config.ganttMonths || [
-        'Marzo','Abril','Mayo','Junio','Julio','Agosto',
-        'Sept','Octubre','Nov','Dic','Enero','Febrero'
+        'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+        'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'
     ];
     const objectives: GanttObjective[] = config.ganttObjectives || [];
 
     const isInRange = (startMonth: number, startWeek: number, endMonth: number, endWeek: number, mIdx: number, wIdx: number): boolean => {
         const startGlobal = startMonth * 4 + startWeek;
-        const endGlobal   = endMonth   * 4 + endWeek;
-        const cellGlobal  = mIdx * 4 + wIdx;
+        const endGlobal = endMonth * 4 + endWeek;
+        const cellGlobal = mIdx * 4 + wIdx;
         return cellGlobal >= startGlobal && cellGlobal <= endGlobal;
     };
 
@@ -253,8 +255,8 @@ const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                         ))}
                     </tr>
                     <tr>
-                        {months.map(() => 
-                            [1,2,3,4].map((w) => (
+                        {months.map(() =>
+                            [1, 2, 3, 4].map((w) => (
                                 <th key={w} className="border border-slate-300 p-0.5 bg-[#1e2a4a] text-white text-[7px] text-center font-semibold">
                                     {w}
                                 </th>
@@ -268,7 +270,7 @@ const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                         return acts.map((act, aIdx) => (
                             <tr key={act.id || aIdx} className="hover:bg-slate-50/50">
                                 {aIdx === 0 && (
-                                    <td 
+                                    <td
                                         className="border border-slate-300 p-2 font-bold bg-slate-50/80 text-center align-middle text-[9px] w-8 uppercase text-slate-600"
                                         rowSpan={acts.length}
                                         style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }}
@@ -279,12 +281,12 @@ const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                                 <td className="border border-slate-200 p-1 text-center font-bold text-slate-500">{aIdx + 1}</td>
                                 <td className="border border-slate-200 p-1.5 font-semibold text-slate-700">{act.name}</td>
                                 <td className="border border-slate-200 p-1 text-slate-400 text-[8px] leading-tight">{act.resources}</td>
-                                {months.map((_, mIdx) => 
-                                    [0,1,2,3].map((wIdx) => {
+                                {months.map((_, mIdx) =>
+                                    [0, 1, 2, 3].map((wIdx) => {
                                         const filled = isInRange(act.startMonth, act.startWeek, act.endMonth, act.endWeek, mIdx, wIdx);
                                         return (
-                                            <td 
-                                                key={`${mIdx}-${wIdx}`} 
+                                            <td
+                                                key={`${mIdx}-${wIdx}`}
                                                 className="border border-slate-200 p-0"
                                                 style={{ backgroundColor: filled ? act.color : 'transparent' }}
                                             />
@@ -465,7 +467,7 @@ const RenderImpacts: React.FC<{ config: any }> = () => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Matriz de Impactos y Productos Esperados</span>
             </div>
-            
+
             <div className="space-y-4">
                 <div>
                     <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Productos Esperados:</span>
@@ -507,7 +509,7 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = () => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Presupuesto y Financiamiento del Proyecto</span>
             </div>
-            
+
             <div className="space-y-4">
                 <div>
                     <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Recursos Disponibles (Equipos, Licencias, Espacios):</span>
@@ -567,7 +569,7 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = () => {
                         <span className="text-sm font-black text-slate-800">$100.00</span>
                     </div>
                 </div>
-                
+
                 <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Los investigadores ingresarán los recursos y montos en la pestaña "Recursos & Financiamiento" del Workspace.
@@ -583,7 +585,7 @@ const RenderProjectTechnicalSection: React.FC<{ config: any }> = () => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Plan Técnico y Científico (8 Sub-Secciones)</span>
             </div>
-            
+
             <div className="space-y-2 text-[9px] text-slate-700">
                 <div className="grid grid-cols-2 gap-2">
                     {[
@@ -618,7 +620,7 @@ const RenderProjectProgressReport: React.FC<{ config: any }> = () => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Avance de Ejecución y Monitoreo (Fase 3)</span>
             </div>
-            
+
             <div className="space-y-4 text-[9px] text-slate-700">
                 <div>
                     <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Bitácora Científica:</span>
@@ -678,13 +680,13 @@ const RenderProjectEthicsReport: React.FC<{ config: any }> = () => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Evaluación de Pertinencia Ética y Bioética</span>
             </div>
-            
+
             <div className="space-y-3 text-[9px] text-slate-700">
                 <div className="p-2 border border-slate-150 rounded bg-white">
                     <strong className="text-[8px] uppercase text-slate-400 block mb-0.5">Justificación Ética de la Propuesta:</strong>
                     <span className="text-slate-600 italic font-medium">[Descripción detallada del impacto ético e intervenciones]</span>
                 </div>
-                
+
                 <div className="p-2 border border-slate-150 rounded bg-white">
                     <strong className="text-[8px] uppercase text-slate-400 block mb-0.5">Riesgos Identificados & Mitigación:</strong>
                     <span className="text-slate-600 italic font-medium">[Detalle de riesgos biológicos, sociales o digitales]</span>
@@ -759,6 +761,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
     };
 
     const badge = (() => {
+        const baseStyle = 'bg-slate-50 text-slate-500 border-slate-200/60';
         switch (block.type) {
             case 'cover':
             case 'title':
@@ -767,11 +770,11 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'multi_section_table':
             case 'two_column':
             case 'signatures':
-                return { text: 'Estructura Estática (PDF)', color: 'bg-slate-50 text-slate-400 border-slate-200' };
+                return { text: 'Estático', dotColor: 'bg-slate-400', color: baseStyle, activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm' };
             case 'rich_text':
-                return { text: 'Editor Colaborativo (Workspace)', color: 'bg-pink-50 text-pink-600 border-pink-100 animate-pulse' };
+                return { text: 'Colaborativo', dotColor: 'bg-pink-500 animate-pulse', color: baseStyle, activeCls: 'ring-1 ring-pink-500 border-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.08)]' };
             case 'gantt':
-                return { text: 'Cronograma Interactivo (Workspace)', color: 'bg-indigo-50 text-indigo-600 border-indigo-100' };
+                return { text: 'Cronograma', dotColor: 'bg-indigo-500', color: baseStyle, activeCls: 'ring-1 ring-indigo-500 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.08)]' };
             case 'project_general_section':
             case 'project_technical_section':
             case 'project_budget_section':
@@ -780,7 +783,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'researchers_table':
             case 'rubric_table':
             case 'impacts':
-                return { text: 'Datos de Base de Datos (Dinámico)', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+                return { text: 'Dinámico', dotColor: 'bg-emerald-500', color: baseStyle, activeCls: 'ring-1 ring-emerald-500 border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.08)]' };
             default:
                 return null;
         }
@@ -796,25 +799,25 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 </div>
             );
         }
-        
+
         switch (block.type) {
-            case 'cover':               return <RenderCover config={block.config} />;
-            case 'title':               return <RenderTitle config={block.config} />;
-            case 'rich_text':           return <RenderRichText config={block.config} />;
-            case 'advanced_table':      return <RenderAdvancedTable config={block.config} />;
+            case 'cover': return <RenderCover config={block.config} />;
+            case 'title': return <RenderTitle config={block.config} />;
+            case 'rich_text': return <RenderRichText config={block.config} />;
+            case 'advanced_table': return <RenderAdvancedTable config={block.config} />;
             case 'multi_section_table': return <RenderMultiSectionTable config={block.config} />;
-            case 'two_column':          return <RenderTwoColumn config={block.config} />;
-            case 'gantt':               return <RenderGantt config={block.config} />;
-            case 'researchers_table':   return <RenderResearchersTable config={block.config} />;
-            case 'rubric_table':        return <RenderRubricTable config={block.config} />;
-            case 'signatures':          return <RenderSignatures config={block.config} />;
+            case 'two_column': return <RenderTwoColumn config={block.config} />;
+            case 'gantt': return <RenderGantt config={block.config} />;
+            case 'researchers_table': return <RenderResearchersTable config={block.config} />;
+            case 'rubric_table': return <RenderRubricTable config={block.config} />;
+            case 'signatures': return <RenderSignatures config={block.config} />;
             case 'project_general_section': return <RenderProjectGeneralSection config={block.config} />;
             case 'project_technical_section': return <RenderProjectTechnicalSection config={block.config} />;
-            case 'project_budget_section':  return <RenderProjectBudgetSection config={block.config} />;
+            case 'project_budget_section': return <RenderProjectBudgetSection config={block.config} />;
             case 'project_progress_report': return <RenderProjectProgressReport config={block.config} />;
-            case 'project_ethics_report':   return <RenderProjectEthicsReport config={block.config} />;
-            case 'impacts':             return <RenderImpacts config={block.config} />;
-            case 'page_break':          return null;
+            case 'project_ethics_report': return <RenderProjectEthicsReport config={block.config} />;
+            case 'impacts': return <RenderImpacts config={block.config} />;
+            case 'page_break': return null;
             default:
                 return <div className="p-4 border bg-red-50 text-red-500 text-xs">Bloque no renderizado: {block.type}</div>;
         }
@@ -826,8 +829,8 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 ref={setNodeRef}
                 style={style}
                 onClick={() => onSelectBlock(block.id)}
-                className={`group relative py-1 px-4 my-2 border-t-2 border-b-2 border-dashed border-slate-300 bg-slate-50/30 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400 transition-all cursor-pointer hover:border-brand/40 hover:bg-brand-subtle/5
-                    ${isActive ? 'ring-2 ring-brand' : ''}
+                className={`group relative py-1 px-4 my-2 border-t-2 border-b-2 border-dashed border-slate-300 bg-slate-50/30 flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 transition-all cursor-pointer hover:border-slate-400 hover:bg-slate-50/50
+                    ${isActive ? 'ring-1 ring-zinc-950 border-zinc-950' : ''}
                     ${isDragging ? 'opacity-50' : ''}
                 `}
             >
@@ -854,9 +857,9 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         if (isCover) return '';
         switch (block.type) {
             case 'rich_text':
-                return 'border-l-4 border-l-pink-500 bg-pink-50/10 hover:bg-pink-50/20';
+                return 'bg-white hover:bg-pink-50/30 hover:border-pink-300';
             case 'gantt':
-                return 'border-l-4 border-l-indigo-500 bg-indigo-50/10 hover:bg-indigo-50/20';
+                return 'bg-white hover:bg-indigo-50/30 hover:border-indigo-300';
             case 'project_general_section':
             case 'project_technical_section':
             case 'project_budget_section':
@@ -865,9 +868,9 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'researchers_table':
             case 'rubric_table':
             case 'impacts':
-                return 'border-l-4 border-l-emerald-500 bg-emerald-50/10 hover:bg-emerald-50/20';
+                return 'bg-white hover:bg-emerald-50/30 hover:border-emerald-300';
             default:
-                return 'border-l-4 border-l-slate-400 bg-slate-50/20 hover:bg-slate-50/30';
+                return 'bg-white hover:bg-slate-50/30 hover:border-slate-300';
         }
     })();
 
@@ -876,28 +879,29 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             ref={setNodeRef}
             style={style}
             onClick={() => onSelectBlock(block.id)}
-            className={`group relative border rounded-md bg-white transition-all cursor-pointer ${isCover ? 'p-0' : 'p-4'} ${themeCls}
-                ${isDragging ? 'shadow-lg border-slate-300 opacity-95 scale-[1.002]' : ''}
+            className={`group relative border rounded-md transition-all cursor-pointer ${isCover ? 'p-0' : 'p-4'} ${themeCls}
+                ${isDragging ? 'shadow-md border-slate-300 opacity-95 scale-[1.001]' : ''}
                 ${isActive
-                    ? 'ring-2 ring-[#1e2a4a]/80 shadow-[0_0_15px_rgba(30,42,74,0.15)] border-slate-400'
+                    ? (badge?.activeCls || 'ring-1 ring-zinc-950 border-zinc-950 shadow-sm')
                     : isCover
                         ? 'border-transparent'
-                        : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
+                        : 'border-slate-200'
                 }
             `}
         >
             {/* Insignia de Comportamiento del Plugin */}
             {badge && !isCover && (
-                <div className={`absolute top-2 right-2 z-10 px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest border select-none ${badge.color}`}>
+                <div className={`absolute top-2 right-2 z-10 px-2 py-0.5 rounded text-[8px] font-mono font-medium uppercase tracking-widest border select-none flex items-center gap-1.5 ${badge.color}`}>
+                    <span className={`w-1 h-1 rounded-full ${badge.dotColor}`} />
                     {badge.text}
                 </div>
             )}
 
             {/* Controles Flotantes Notion-style */}
             <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
-                <div 
-                    {...attributes} 
-                    {...listeners} 
+                <div
+                    {...attributes}
+                    {...listeners}
                     onClick={e => e.stopPropagation()}
                     className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
                     title="Arrastrar para reordenar"
@@ -957,6 +961,8 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     onToggleActive,
     onDeleteBlock,
     onDuplicateBlock,
+    templateName,
+    isDirty,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
 
@@ -971,21 +977,36 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-bg-deep border border-border-thin rounded-md overflow-hidden">
             {/* Header del panel */}
             <div className="p-3 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 shadow-none">
-                <span className="text-[10px] font-black text-text-main uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-text-main" />
-                    Lienzo de Maquetación (Edición Directa A4)
+                    {templateName || 'Lienzo de Maquetación (Edición Directa A4)'}
                 </span>
-                <span className="text-[9px] font-bold text-text-main bg-surface-hover border border-border-thin px-2 py-0.5 rounded-md">
+                <span className="text-[10px] font-medium text-text-dim transform -translate-x-10">
                     {activeCount} / {blocks.length} visibles
                 </span>
+                <div className="flex items-center gap-2.5 shrink-0">
+                    {isDirty !== undefined && (
+                        isDirty ? (
+                            <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                Cambios sin guardar
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Todo guardado
+                            </span>
+                        )
+                    )}
+                </div>
             </div>
 
             {/* Scroll del lienzo */}
-            <div className="flex-1 overflow-y-auto p-8 bg-slate-100/40 dark:bg-zinc-950/20" style={{ scrollbarWidth: 'thin' }}>
-                
+            <div className="flex-1 overflow-y-auto p-8 bg-bg-deep" style={{ scrollbarWidth: 'thin' }}>
+
                 {/* Contenedor simulando hoja A4 */}
-                <div className="max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-150 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all">
-                    
+                <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all">
+
                     {blocks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center flex-1 border-2 border-dashed border-border-thin rounded-md text-center p-12 my-auto">
                             <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
@@ -1022,13 +1043,6 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         </SortableContext>
                     )}
                 </div>
-            </div>
-            
-            {/* Nota de ayuda */}
-            <div className="px-4 py-2 border-t border-border-thin bg-surface text-center shrink-0">
-                <p className="text-[9px] text-text-dim leading-normal font-medium">
-                    Pasa el cursor sobre un bloque para arrastrar ⠿, duplicar o eliminar. Haz clic para editar sus propiedades.
-                </p>
             </div>
         </div>
     );

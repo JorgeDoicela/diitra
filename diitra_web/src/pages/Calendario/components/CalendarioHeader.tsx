@@ -25,13 +25,6 @@ export const CalendarioHeader: React.FC<CalendarioHeaderProps> = ({
     return (
         <div className="calendario-header-actions">
             <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                    <CalendarIcon className="text-brand" size={18} />
-                    <h2 className="text-sm font-bold text-text-main font-sans uppercase tracking-wider">
-                        Agenda
-                    </h2>
-                </div>
-
                 <div className="view-selector-pill">
                     <button
                         type="button"

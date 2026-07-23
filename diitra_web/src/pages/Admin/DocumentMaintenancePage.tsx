@@ -438,7 +438,7 @@ const DocumentMaintenancePage: React.FC<DocumentMaintenancePageProps> = ({ isEmb
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('versiones')}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeSubTab === 'versiones' ? 'active' : ''
                     }`}
                 >
@@ -451,7 +451,7 @@ const DocumentMaintenancePage: React.FC<DocumentMaintenancePageProps> = ({ isEmb
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('backups')}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 ${
                         activeSubTab === 'backups' ? 'active' : ''
                     }`}
                 >

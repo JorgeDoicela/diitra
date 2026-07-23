@@ -145,7 +145,7 @@ export const DocenteDashboard: React.FC = () => {
                                 <h3 className="text-xl font-semibold tracking-tight text-text-main mb-2">
                                     Resumen de Propuestas Académicas
                                 </h3>
-                                <p className="text-xs text-text-dim max-w-xl font-medium leading-relaxed mb-6">
+                                <p className="text-xs text-text-dim font-medium leading-relaxed mb-6">
                                     Administra tus propuestas, realiza el seguimiento del ciclo de vida (Borrador, En Revisión, En Ejecución, Finalizado) y justifica egresos financieros bajo normativas vigentes.
                                 </p>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, Search, Plus } from 'lucide-react';
+import { PageHeader } from '../../../../components/Common/PageHeader';
 
 interface GroupsHeaderProps {
     search: string;
@@ -15,21 +16,13 @@ export const GroupsHeader: React.FC<GroupsHeaderProps> = ({
     isAdmin,
 }) => {
     return (
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 animate-fade-up gap-8 lg:gap-0">
-            <div className="space-y-2">
-                <div className="section-label text-text-main">
-                    <Users size={10} strokeWidth={2} />
-                    <span>Investigación y Desarrollo</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                    Grupos de Investigación
-                </h2>
-                <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                    Administración centralizada de grupos institucionales, semilleros y líneas de vinculación tecnológica.
-                </p>
-            </div>
-
-            <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
+        <PageHeader
+            kicker="Investigación y Desarrollo"
+            icon={Users}
+            title="Grupos de Investigación"
+            description="Administración centralizada de grupos institucionales, semilleros y líneas de vinculación tecnológica."
+        >
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                 <div className="relative group w-full md:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
                     <input
@@ -48,6 +41,6 @@ export const GroupsHeader: React.FC<GroupsHeaderProps> = ({
                     {isAdmin ? 'Crear Grupo' : 'Proponer Grupo'}
                 </button>
             </div>
-        </header>
+        </PageHeader>
     );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, ChevronRight } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import type { DocumentTemplateDto } from '../types';
 
 interface TemplateCatalogProps {
@@ -14,42 +14,51 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
     onSelectTemplate
 }) => {
     return (
-        <div className="w-full border border-border-thin/40 rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
-            <div className="p-2 px-3 border-b border-border-thin/30 bg-surface-hover shrink-0">
-                <span className="text-[10px] font-black text-text-dim uppercase tracking-wider">
+        <div className="w-full border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
+            {/* Header del panel */}
+            <div className="p-3 border-b border-border-thin bg-surface shrink-0">
+                <span className="text-xs font-semibold text-text-main">
                     Catálogo de Documentos ({templates.length})
                 </span>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            
+            {/* Lista unificada sin separaciones toscas */}
+            <div className="flex-1 overflow-y-auto divide-y divide-border-thin/30">
                 {templates.map(t => {
                     const isSelected = selectedTemplate?.code === t.code;
                     return (
                         <button
                             key={t.code}
+                            type="button"
                             onClick={() => onSelectTemplate(t)}
-                            className={`w-full text-left p-2 rounded-md border transition-all flex items-start gap-2 ${
+                            className={`w-full text-left p-3 flex items-start gap-3 transition-all relative last:border-b-0 ${
                                 isSelected 
-                                    ? 'bg-surface-hover border-border-hover text-text-main shadow-none' 
-                                    : 'bg-surface hover:bg-surface-hover/60 border-border-thin/30 hover:border-border-thin/60 text-text-dim hover:text-text-main'
+                                    ? 'bg-surface-hover text-text-main' 
+                                    : 'bg-surface hover:bg-surface-hover/40 text-text-dim hover:text-text-main'
                             }`}
                         >
-                            <div className={`p-1.5 rounded-md mt-0.5 shrink-0 ${isSelected ? 'bg-surface text-text-main border border-border-thin' : 'bg-surface-hover text-text-dim'}`}>
-                                <FileText className="w-4 h-4" />
+                            {/* Línea de acento izquierda de selección activa */}
+                            {isSelected && (
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent" />
+                            )}
+                            
+                            <div className="p-1.5 rounded bg-surface border border-border-thin/40 shrink-0 text-text-main shadow-none">
+                                <FileText className="w-3.5 h-3.5" />
                             </div>
+                            
                             <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-1">
-                                    <span className="font-semibold text-xs truncate text-text-main">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className={`text-[11px] leading-snug transition-colors break-words ${isSelected ? 'font-bold text-text-main' : 'font-medium text-text-main/80'}`}>
                                         {t.name}
                                     </span>
-                                    <span className="text-[9px] bg-surface-hover px-1.5 py-0.5 rounded font-mono border border-border-thin/20 shrink-0">
+                                    <span className="text-[8px] bg-surface-hover/60 px-1.5 py-0.5 rounded font-mono border border-border-thin/10 shrink-0 text-text-dim">
                                         v{t.version}
                                     </span>
                                 </div>
-                                <p className="text-[10px] truncate text-text-dim mt-0.5">
+                                <p className="text-[9px] text-text-dim mt-1 font-mono tracking-tight select-all">
                                     {t.code}
                                 </p>
                             </div>
-                            <ChevronRight className={`w-3.5 h-3.5 mt-1 shrink-0 ${isSelected ? 'text-text-main' : 'text-text-dim/40'}`} />
                         </button>
                     );
                 })}

@@ -42,7 +42,7 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             </span>
                         </div>
                     )}
-                    <p className="text-sm text-text-dim max-w-lg font-medium mt-1">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
+                    <p className="text-sm text-text-dim font-medium mt-1">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
                 </div>
             </header>
 
@@ -57,7 +57,7 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             <h3 className="text-xs font-semibold text-text-main uppercase tracking-widest">
                                 {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'Informe Final en Proceso' : 'Documento en Edición'}
                             </h3>
-                            <p className="text-xs text-text-dim mt-1.5 leading-relaxed max-w-xl">
+                            <p className="text-xs text-text-dim mt-1.5 leading-relaxed">
                                 Estás en el espacio de trabajo de este proyecto. Puedes continuar completando los campos colaborativos del {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'informe final' : 'documento'} o revisar el estado institucional abajo.
                             </p>
                         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Send, History, Layers, Loader2 } from 'lucide-react';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import { useEmailEngineData } from './hooks/useEmailEngineData';
 import { useEmailComposer } from './hooks/useEmailComposer';
 import { useEmailTemplates } from './hooks/useEmailTemplates';
@@ -49,20 +50,12 @@ const EmailEnginePage: React.FC = () => {
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <div className="max-w-[1600px] mx-auto">
                 {/* Brand Header */}
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-up">
-                    <div className="space-y-2">
-                        <div className="section-label text-brand">
-                            <Mail size={10} strokeWidth={2} />
-                            <span>Comunicaciones de Investigación</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                            Correos DIITRA
-                        </h2>
-                        <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Comunicaciones guiadas por plantillas del sistema: el contenido se arma automáticamente según el contexto que seleccione.
-                        </p>
-                    </div>
-
+                <PageHeader
+                    kicker="Comunicaciones de Investigación"
+                    icon={Mail}
+                    title="Correos DIITRA"
+                    description="Comunicaciones guiadas por plantillas del sistema: el contenido se arma automáticamente según el contexto que seleccione."
+                >
                     {/* Tabs Control */}
                     <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none">
                         <button
@@ -96,7 +89,7 @@ const EmailEnginePage: React.FC = () => {
                             Historial
                         </button>
                     </div>
-                </header>
+                </PageHeader>
 
                 {/* Loading state indicator */}
                 {loading && (

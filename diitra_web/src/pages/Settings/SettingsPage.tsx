@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Loader2, Shield, CheckCircle2, KeyRound, Info, Eye, EyeOff, CheckCircle, XCircle, Settings2, HardDrive } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { PageHeader } from '../../components/Common/PageHeader';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useAuth } from '../../api/AuthContext';
@@ -261,50 +262,38 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="p-4 md:p-10 space-y-8 animate-fade-up">
-            <header className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
-                    {activeMainTab === 'parametros' ? (
-                        <>
-                            <Settings2 size={12} className="text-brand" />
-                            <span>Parámetros del Sistema</span>
-                        </>
-                    ) : activeMainTab === 'plantillas' ? (
-                        <>
-                            <Shield size={12} className="text-brand" />
-                            <span>Seguridad Documental</span>
-                        </>
-                    ) : activeMainTab === 'almacenamiento' ? (
-                        <>
-                            <HardDrive size={12} className="text-brand" />
-                            <span>Mantenimiento y Almacenamiento</span>
-                        </>
-                    ) : (
-                        <>
-                            <User size={12} className="text-brand" />
-                            <span>Configuración de Cuenta</span>
-                        </>
-                    )}
-                </div>
-                <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">
-                    {activeMainTab === 'parametros' ? 'Administración Global' : activeMainTab === 'plantillas' ? 'Firmas por Plantilla' : activeMainTab === 'almacenamiento' ? 'Ciclo de Vida Documental' : 'Mi Cuenta'}
-                </h1>
-                <p className="text-xs md:text-sm text-text-dim max-w-xl leading-relaxed">
-                    {activeMainTab === 'parametros'
-                        ? 'Administre las líneas de investigación, períodos académicos, dominios institucionales e hitos normativos CACES.'
-                        : activeMainTab === 'plantillas'
-                            ? 'Configure las firmas requeridas y el tipo de firma electrónica para cada plantilla de documento oficial de la institución.'
-                            : activeMainTab === 'almacenamiento'
-                                ? 'Depure y audite el almacenamiento físico de versiones preliminares de documentos obsoletos bajo políticas del CACES.'
-                                : 'Administre su perfil científico, identificadores de investigación y otorgue su consentimiento de firma conforme a la LOPDP.'
-                    }
-                </p>
-            </header>
+            <PageHeader
+                kicker={
+                    activeMainTab === 'parametros' ? 'Parámetros del Sistema'
+                    : activeMainTab === 'plantillas' ? 'Seguridad Documental'
+                    : activeMainTab === 'almacenamiento' ? 'Mantenimiento y Almacenamiento'
+                    : 'Configuración de Cuenta'
+                }
+                icon={
+                    activeMainTab === 'parametros' ? Settings2
+                    : activeMainTab === 'plantillas' ? Shield
+                    : activeMainTab === 'almacenamiento' ? HardDrive
+                    : User
+                }
+                title={
+                    activeMainTab === 'parametros' ? 'Administración Global'
+                    : activeMainTab === 'plantillas' ? 'Firmas por Plantilla'
+                    : activeMainTab === 'almacenamiento' ? 'Ciclo de Vida Documental'
+                    : 'Mi Cuenta'
+                }
+                description={
+                    activeMainTab === 'parametros' ? 'Administre las líneas de investigación, períodos académicos, dominios institucionales e hitos normativos CACES.'
+                    : activeMainTab === 'plantillas' ? 'Configure las firmas requeridas y el tipo de firma electrónica para cada plantilla de documento oficial de la institución.'
+                    : activeMainTab === 'almacenamiento' ? 'Depure y audite el almacenamiento físico de versiones preliminares de documentos obsoletos bajo políticas del CACES.'
+                    : 'Administre su perfil científico, identificadores de investigación y otorgue su consentimiento de firma conforme a la LOPDP.'
+                }
+            />
 
             {isAdmin && (
                 <div className="tabs-vercel !mb-2">
                     <button
                         onClick={() => setActiveMainTab('perfil')}
-                        className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                        className={`tab-vercel-item flex items-center gap-2 ${
                             activeMainTab === 'perfil' ? 'active' : ''
                         }`}
                     >
@@ -313,7 +302,7 @@ const SettingsPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveMainTab('parametros')}
-                        className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                        className={`tab-vercel-item flex items-center gap-2 ${
                             activeMainTab === 'parametros' ? 'active' : ''
                         }`}
                     >
@@ -322,7 +311,7 @@ const SettingsPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveMainTab('plantillas')}
-                        className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                        className={`tab-vercel-item flex items-center gap-2 ${
                             activeMainTab === 'plantillas' ? 'active' : ''
                         }`}
                     >
@@ -331,7 +320,7 @@ const SettingsPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveMainTab('almacenamiento')}
-                        className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
+                        className={`tab-vercel-item flex items-center gap-2 ${
                             activeMainTab === 'almacenamiento' ? 'active' : ''
                         }`}
                     >

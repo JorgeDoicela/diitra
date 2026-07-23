@@ -1,7 +1,10 @@
+import React from 'react';
 import {
     Plus, Calendar, FileText, CheckCircle,
     Trash2, Edit2, Activity, AlertCircle, ShieldCheck
 } from 'lucide-react';
+
+import { PageHeader } from '../../../components/Common/PageHeader';
 
 import {
     useConvocatorias,
@@ -61,30 +64,20 @@ const ConvocatoriasPage = () => {
                     transition: all 0.2s ease-in-out;
                 }
             `}</style>
-            {/* Header */}
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
-                <div className="space-y-2">
-                    <div className="section-label">
-                        <Activity size={10} strokeWidth={2} />
-                        <span>Gestión de Investigación - Convocatorias</span>
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Ciclos de Investigación</h2>
-                    <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Administración de convocatorias anuales para proyectos de investigación.
-                        Alineado con estándares CACES y SENESCYT.
-                    </p>
-                </div>
-
-                <div className="w-full lg:w-auto">
-                    <button
-                        onClick={handleNewConvocatoria}
-                        className="btn-vercel-primary w-full lg:w-auto"
-                    >
-                        <Plus size={14} strokeWidth={3} />
-                        Nueva Convocatoria
-                    </button>
-                </div>
-            </header>
+            <PageHeader
+                kicker="Gestión de Investigación - Convocatorias"
+                icon={Activity}
+                title="Ciclos de Investigación"
+                description="Administración de convocatorias anuales para proyectos de investigación. Alineado con estándares CACES y SENESCYT."
+            >
+                <button
+                    onClick={handleNewConvocatoria}
+                    className="btn-vercel-primary w-full lg:w-auto shrink-0"
+                >
+                    <Plus size={14} strokeWidth={3} />
+                    Nueva Convocatoria
+                </button>
+            </PageHeader>
 
             {/* Banner de Recuperación de Borrador */}
             <DraftRestoreBanner

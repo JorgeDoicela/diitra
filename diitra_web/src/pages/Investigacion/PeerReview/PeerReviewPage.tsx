@@ -4,6 +4,7 @@ import {
     ShieldCheck, Clock, CheckCircle, FileText,
     ChevronRight, Loader2, Award
 } from 'lucide-react';
+import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     getPendingReviews,
     ESTADO_REVISION_CONFIG
@@ -76,23 +77,12 @@ const PeerReviewPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* Header */}
-            <header className="mb-10 animate-fade-up relative z-10">
-                <div className="section-label mb-2">
-                    <ShieldCheck size={12} className="text-brand" />
-                    <span>Evaluación por Pares · DIITRA</span>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-3">
-                            Mis Revisiones
-                        </h2>
-                        <p className="text-sm text-text-dim max-w-2xl font-medium leading-relaxed">
-                            Ha sido asignado como árbitro para los siguientes proyectos de investigación.
-                            Evalúe con rigor científico y ética académica conforme a la normativa CACES.
-                        </p>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                kicker="Evaluación por Pares · DIITRA"
+                icon={ShieldCheck}
+                title="Mis Revisiones"
+                description="Ha sido asignado como árbitro para los siguientes proyectos de investigación. Evalúe con rigor científico y ética académica conforme a la normativa CACES."
+            />
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:100ms] relative z-10">
