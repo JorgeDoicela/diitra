@@ -47,7 +47,6 @@ const RenderCover: React.FC<{ config: any }> = ({ config }) => {
                 <h1 className="text-xl font-black mt-12 tracking-tight uppercase" style={{ color }}>
                     {config.tituloSuperior || 'TÍTULO DE LA PLANTILLA'}
                 </h1>
-                <div className="w-16 h-1 my-6 mx-auto rounded" style={{ backgroundColor: COLORS.gold }} />
             </div>
 
             <div className="space-y-4 text-center">

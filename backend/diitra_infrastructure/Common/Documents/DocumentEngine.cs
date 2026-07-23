@@ -33,6 +33,17 @@ namespace Diitra.Infrastructure.Common.Documents
     ///   4. PdfMergerService        → Ensambla el PDF con los anexos (paquetes CACES)
     ///   5. IDocumentAuditRepository → Registra cada emisión en el log de auditoría
     /// 
+    /// VISIÓN DE EVOLUCIÓN NO-CODE (FUTURE ROADMAP):
+    /// Para extender este motor de tematización dinámico sin código en el futuro:
+    ///   1. Inyección de Web Fonts: Soportar el mapeo y descarga temporal de fuentes de Google Fonts
+    ///      desde la propiedad 'theme.typography.fontUrl' o 'fontFamily' para incrustarlas en iText.
+    ///   2. Configuración de Logos: Parametrizar la ruta, alineación y escalado de los logotipos de
+    ///      cabecera de portada y páginas (ej. 'theme.brand.logoScale') desde el JSON del tema.
+    ///   3. UI Dinámica en Frontend (JSON Schema): Renderizar dinámicamente campos de estilo en la barra
+    ///      lateral a partir de una especificación schema, facilitando añadir nuevos tokens sin cambiar React.
+    ///   4. Consistencia Multiformato (DOCX): Aplicar los mismos tokens de color y márgenes al exportar 
+    ///      los documentos colaborativos de CoWork a formatos Word.
+    /// 
     /// Uso desde cualquier módulo del sistema:
     ///   var result = await _documentEngine.GenerateAsync(new DocumentRequest {
     ///       TemplateCode = "ACTA_APROBACION",
@@ -231,6 +242,70 @@ namespace Diitra.Infrastructure.Common.Documents
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
                 var extraImageVars = new Dictionary<string, object?>();
+
+                // Tema visual por defecto (Design Tokens) para tematización No-Code
+                var defaultTheme = new Dictionary<string, object>
+                {
+                    { "colors", new Dictionary<string, string>
+                        {
+                            { "primary", "#222c57" },
+                            { "secondary", "#c4a857" },
+                            { "text", "#222c57" },
+                            { "tableHeaderBg", "#222c57" },
+                            { "tableHeaderColor", "#ffffff" },
+                            { "accent", "#9ad3de" }
+                        }
+                    },
+                    { "typography", new Dictionary<string, string>
+                        {
+                            { "fontFamily", "'Calibri', 'Open Sans', Arial, sans-serif" },
+                            { "baseSize", "10pt" },
+                            { "lineHeight", "1.4" }
+                        }
+                    },
+                    { "layout", new Dictionary<string, string>
+                        {
+                            { "marginTop", "3cm" },
+                            { "marginBottom", "2cm" },
+                            { "marginLeft", "2cm" },
+                            { "marginRight", "2cm" },
+                            { "landscapeMarginTop", "1.8cm" },
+                            { "landscapeMarginBottom", "1.5cm" },
+                            { "landscapeMarginLeft", "1.2cm" },
+                            { "landscapeMarginRight", "1.2cm" }
+                        }
+                    },
+                    { "brand", new Dictionary<string, object>
+                        {
+                            { "showCoverPage", true },
+                            { "logoScale", "100%" }
+                        }
+                    }
+                };
+
+                // VISIÓN ARQUITECTÓNICA - tematización NO-CODE:
+                // Se desacopla el diseño estético de los documentos del código fuente.
+                // Si la plantilla no define un tema en BD, se utiliza el defaultTheme (estilos institucionales originales).
+                // Si existe un JSON de tema en base de datos (Design Tokens de colores/márgenes),
+                // se deserializa y se inyecta como variable 'theme' en Scriban, permitiendo que
+                // el CSS parametrizado compile visualmente con los nuevos ajustes guardados por el administrador.
+                object themeToInject = defaultTheme;
+                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
+                {
+                    try
+                    {
+                        var customTheme = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(template.ThemeConfigJson);
+                        if (customTheme != null)
+                        {
+                            themeToInject = customTheme;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al deserializar ThemeConfigJson para {Code}. Usando tema por defecto.", template.Code);
+                    }
+                }
+                extraImageVars["theme"] = themeToInject;
 
                 if (request.ExtraVariables != null)
                 {
@@ -465,13 +540,14 @@ namespace Diitra.Infrastructure.Common.Documents
 
         public async Task UpdateTemplateAsync(
             string templateCode, string newHtmlContent,
-            string? customCss, string? collaborativeFieldsJson, string updatedBy,
+            string? customCss, string? collaborativeFieldsJson, string? themeConfigJson, string updatedBy,
             CancellationToken cancellationToken = default)
         {
             var template = await _templateRepository.FindByCodeAsync(templateCode, cancellationToken)
                 ?? throw new KeyNotFoundException($"Plantilla '{templateCode}' no encontrada.");
 
             template.UpdateContent(newHtmlContent, customCss, collaborativeFieldsJson, updatedBy);
+            template.UpdateThemeConfig(themeConfigJson, updatedBy);
             await _templateRepository.SaveAsync(template, cancellationToken);
 
             _logger.LogInformation(

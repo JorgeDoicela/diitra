@@ -4,9 +4,9 @@ import type { DocumentBlock, TableSection, GanttObjective } from '../types';
 // Helpers de estilo institucional
 // ─────────────────────────────────────────────────────────────────────────────
 const COLORS = {
-    blue: '#1e2a4a',
-    gold: '#b8912e',
-    gray: '#475569',
+    blue: '{{ theme.colors.primary }}',
+    gold: '{{ theme.colors.secondary }}',
+    gray: '{{ theme.colors.text }}',
     lightBlue: '#f0f3f9',
     lightGold: '#fdf8ef',
     lightGray: '#f8fafc',
@@ -14,50 +14,210 @@ const COLORS = {
 
 const headerBg = (style?: string) => {
     switch (style) {
-        case 'blue': return `background: ${COLORS.blue}; color: white;`;
-        case 'gold': return `background: ${COLORS.gold}; color: white;`;
-        case 'gray': return `background: ${COLORS.gray}; color: white;`;
-        default: return `background: ${COLORS.lightGray}; color: ${COLORS.gray};`;
+        case 'blue': 
+        case 'gold': 
+        case 'gray': 
+            return `background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};`;
+        default: 
+            return `background: #ffffff; color: #000000;`;
     }
 };
 
 const BASE_STYLES = `
 <style>
   * { box-sizing: border-box; }
-  .doc-container { font-family: 'Inter', Arial, sans-serif; color: ${COLORS.blue}; padding: 30px; line-height: 1.6; }
-  /* Portada */
-  .cover-logo   { text-align: right; margin-bottom: 50px; }
-  .cover-title  { font-size: 22pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-top: 60px; }
-  .cover-line   { width: 80px; height: 4px; background: ${COLORS.gold}; margin: 30px auto; }
-  .cover-subtitle { font-size: 14pt; font-weight: 800; color: ${COLORS.gold}; text-align: center; text-transform: uppercase; margin: 40px 0; }
-  .cover-career { font-size: 11pt; font-weight: bold; color: #475569; text-align: center; margin-top: 80px; }
-  .cover-period { font-size: 10pt; color: #64748b; text-align: center; margin-top: 10px; }
+  
+  /* Reset y Core del Documento con Tematización Dinámica */
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+  
+  /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      color: {{ theme.colors.primary }};
+      z-index: 1000;
+      overflow: hidden;
+  }
+
+  .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 8.8cm;
+      right: 1.2cm;
+      bottom: 0;
+      padding: 2cm 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+  }
+
+  .main-label {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 28pt;
+      font-weight: bold;
+      color: {{ theme.colors.secondary }};
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 8.2cm;
+      width: 100%;
+  }
+
+  .project-theme {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 18pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin-top: 2.8cm;
+      margin-bottom: 2.8cm;
+      line-height: 1.2;
+      width: 100%;
+      word-wrap: break-word;
+  }
+
+  .career-container {
+      margin-top: 0;
+      margin-bottom: 2.5cm;
+      text-align: center;
+      width: 100%;
+  }
+
+  .career-label {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 14pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+  }
+
+  .career-value {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 14pt;
+      font-weight: normal;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin-top: 8px;
+  }
+
+  .period-container {
+      width: 100%;
+      margin-top: auto;
+      margin-bottom: 1cm;
+      text-align: center;
+  }
+
+  .period-label {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      color: {{ theme.colors.primary }};
+  }
+
+  .period-value {
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 12pt;
+      font-weight: normal;
+      text-transform: uppercase;
+      color: {{ theme.colors.primary }};
+  }
+
   /* Títulos de sección */
-  .title-h1 { font-size: 16pt; font-weight: bold; color: ${COLORS.blue}; margin-top: 35px; text-transform: uppercase; }
-  .title-h2 { font-size: 11pt; font-weight: bold; background: ${COLORS.blue}; color: white; padding: 8px 15px; margin-top: 30px; text-transform: uppercase; }
-  .title-h3 { font-size: 10pt; font-weight: bold; color: ${COLORS.gold}; margin-top: 20px; text-transform: uppercase; }
-  /* Tablas generales */
-  .info-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 9.5pt; }
-  .info-table td, .info-table th { border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; vertical-align: top; }
-  .info-table th { font-weight: bold; text-transform: uppercase; font-size: 8.5pt; }
-  .label-cell   { font-weight: bold; background: ${COLORS.lightGray}; width: 28%; text-transform: uppercase; font-size: 8.5pt; color: #475569; }
+  .title-h1 { 
+      font-size: 16pt; 
+      font-weight: bold; 
+      color: {{ theme.colors.primary }}; 
+      margin-top: 35px; 
+      text-transform: uppercase; 
+  }
+  .title-h2 { 
+      font-size: 10pt; 
+      font-weight: 800; 
+      background: {{ theme.colors.table_header_bg }}; 
+      color: {{ theme.colors.table_header_color }}; 
+      padding: 6px 12px; 
+      margin-top: 25px; 
+      text-transform: uppercase; 
+  }
+  .title-h3 { 
+      font-size: 9.5pt; 
+      font-weight: bold; 
+      color: {{ theme.colors.secondary }}; 
+      margin-top: 15px; 
+      text-transform: uppercase; 
+  }
+  
+  /* Tablas generales compactas con bordes negros (formato premium original) */
+  .info-table, .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 12px; 
+      font-size: 9pt; 
+      background: #ffffff; 
+  }
+  .info-table td, .info-table th, .data-table td, .data-table th { 
+      border: 1px solid #000000; 
+      padding: 0 8px; 
+      height: 0.6cm;
+      vertical-align: middle; 
+      color: #000000;
+  }
+  .info-table th, .data-table th { 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+      background: {{ theme.colors.table_header_bg }};
+      color: {{ theme.colors.table_header_color }};
+      text-align: center;
+  }
+  .label-cell { 
+      font-weight: bold; 
+      background: {{ theme.colors.table_header_bg }}; 
+      color: {{ theme.colors.table_header_color }};
+      width: 35%; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+  }
+  
   /* Texto enriquecido */
-  .rich-content { font-size: 9.5pt; text-align: justify; color: #334155; margin-top: 10px; line-height: 1.6; }
+  .rich-content { 
+      font-size: 9.5pt; 
+      text-align: justify; 
+      color: #000000; 
+      margin-top: 10px; 
+      line-height: 1.4; 
+  }
   .rich-content p { margin: 6px 0; }
   .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
   .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-  .rich-content table td, .rich-content table th { border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 9pt; }
-  .rich-content table th { background: ${COLORS.lightGray}; font-weight: bold; }
+  .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
+  .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
+  
   /* Dos columnas */
   .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
-  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #cbd5e1; vertical-align: top; }
+  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
   .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
-  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.6; }
+  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
+  
   /* Salto de página */
   .page-break { page-break-after: always; height: 0; }
-  /* Firmas */
-  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; }
-  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid ${COLORS.blue}; font-size: 9pt; line-height: 1.5; }
+  
+  /* Firmas y Trazabilidad */
+  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
+  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
   .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
   .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
 </style>
@@ -100,15 +260,21 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             case 'cover':
                 html += `
   <!-- BLOQUE: PORTADA -->
-  <div style="text-align: center; margin-bottom: 100px; page-break-after: always;">
-    <div class="cover-logo">
-      <img src="{{logo_base64}}" style="max-height: 70px;" alt="Logo Traversari" />
+  <div class="page">
+    <div class="cover-page">
+      <div class="cover-overlay">
+        <h1 class="main-label">${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}</h1>
+        <div class="project-theme">{{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}</div>
+        <div class="career-container">
+          <div class="career-label">TECNOLOGÍA SUPERIOR EN</div>
+          <div class="career-value">{{default career "${c.carreraPorDefecto || '________________________'}"}}</div>
+        </div>
+        <div class="period-container">
+          <div class="period-label">PERIODO ACADÉMICO</div>
+          <div class="period-value">{{default periodo "${c.periodoPorDefecto || '________________________'}"}}</div>
+        </div>
+      </div>
     </div>
-    <h1 class="cover-title" style="color: ${c.colorTema || COLORS.blue};">${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}</h1>
-    <div class="cover-line"></div>
-    <div class="cover-subtitle">{{titulo}}</div>
-    <div class="cover-career">{{default carrera "${c.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}</div>
-    <div class="cover-period">{{default periodo "${c.periodoPorDefecto || 'PERIODO ACADÉMICO 2026'}"}}</div>
   </div>`;
                 break;
 
@@ -189,14 +355,11 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 ];
                 const objectives: GanttObjective[] = c.ganttObjectives ?? [];
 
-                // Calcular total de columnas: Objetivos + N° + Actividades + Recursos + (meses * 4 semanas)
-                const totalWeekCols = months.length * 4;
-
                 // Estilos inline para la tabla Gantt
-                const ganttTh = `border: 1px solid #cbd5e1; padding: 4px 2px; font-size: 7pt; text-align: center; font-weight: bold; background: ${COLORS.blue}; color: white; white-space: nowrap;`;
-                const ganttTd = `border: 1px solid #e2e8f0; padding: 3px 4px; font-size: 7.5pt; vertical-align: middle;`;
+                const ganttTh = `border: 1px solid #000000; padding: 4px 2px; font-size: 7pt; text-align: center; font-weight: bold; background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; white-space: nowrap;`;
+                const ganttTd = `border: 1px solid #000000; padding: 3px 4px; font-size: 7.5pt; vertical-align: middle;`;
                 const ganttTdCenter = `${ganttTd} text-align: center;`;
-                const objCell = `border: 1px solid #cbd5e1; padding: 4px 6px; font-size: 7.5pt; font-weight: bold; background: #f8fafc; text-align: center; vertical-align: middle;`;
+                const objCell = `border: 1px solid #000000; padding: 4px 6px; font-size: 7.5pt; font-weight: bold; background: #ffffff; text-align: center; vertical-align: middle;`;
 
                 // Helper: ¿la semana global [weekIdx] está dentro del rango de la actividad?
                 const isInRange = (startMonth: number, startWeek: number, endMonth: number, endWeek: number, mIdx: number, wIdx: number): boolean => {
@@ -205,9 +368,6 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                     const cellGlobal  = mIdx * 4 + wIdx;
                     return cellGlobal >= startGlobal && cellGlobal <= endGlobal;
                 };
-
-                // Calcular cuantas filas tiene cada objetivo para el rowspan
-                const objRowspans = objectives.map(o => Math.max(o.activities.length, 1));
 
                 // Construir cabecera de meses
                 const monthHeaders = months.map(m =>
@@ -350,7 +510,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             case 'project_general_section':
                 html += `
   <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->
-  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">Ficha de Identificación del Proyecto (Metadatos Científicos)</p>
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">Ficha de Identificación del Proyecto (Metadatos Científicos)</p>
   <table class="info-table">
     <tbody>
       <tr>
@@ -384,53 +544,53 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 html += `
   <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (8 SECCIONES) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 10px; border-bottom: 1.5px solid ${COLORS.blue}; padding-bottom: 4px;">3. Plan Técnico del Proyecto</p>
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">3. Plan Técnico del Proyecto</p>
     
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default antecedentes "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default antecedentes "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default descripcion_proyecto "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default descripcion_proyecto "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default justificacion "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default justificacion "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b; margin-bottom: 8px;">
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000; margin-bottom: 8px;">
         <strong>Objetivo General:</strong>
         <div style="margin-top: 4px;">{{default objetivo_general "No redactado."}}</div>
       </div>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">
         <strong>Objetivos Específicos:</strong>
         <div style="margin-top: 4px;">{{default objetivos_especificos "No redactado."}}</div>
       </div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default marco_teorico "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default marco_teorico "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default metodologia "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default metodologia "No redactado."}}</div>
     </div>
 
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: ${COLORS.gray}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default evaluacion "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
+      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default evaluacion "No redactado."}}</div>
     </div>
   </div>`;
                 break;
@@ -490,7 +650,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 html += `
   <!-- BLOQUE: EVALUACIÓN DE ÉTICA -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px; border-bottom: 1.5px solid ${COLORS.blue}; padding-bottom: 4px;">Dictamen de Pertinencia Ética y Bioética</p>
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">Dictamen de Pertinencia Ética y Bioética</p>
     
     <div style="margin-bottom: 12px;">
       <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Justificación Ética de la Propuesta:</strong>

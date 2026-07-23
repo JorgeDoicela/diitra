@@ -561,6 +561,11 @@ const DocumentTemplatesPage: React.FC = () => {
         setIsDirty(true);
     };
 
+    const handleUpdateThemeConfig = (newThemeJson: string) => {
+        setSelectedTemplate(prev => prev ? { ...prev, themeConfigJson: newThemeJson } : null);
+        setIsDirty(true);
+    };
+
     const extractScribanVariables = (htmlContent: string): string[] => {
         // Busca expresiones {{variable}}, {{#each variable}}, {{#if variable}} o {{this.variable}}
         const regex = /\{\{\s*(?:#each\s+|#if\s+|this\.)?([a-zA-Z0-9_]+)/g;
@@ -609,7 +614,8 @@ const DocumentTemplatesPage: React.FC = () => {
             await api.put(`/admin/templates/${selectedTemplate.code}`, {
                 htmlContent: htmlWithEmbeddedJson,
                 customCss: selectedTemplate.customCss || null,
-                collaborativeFieldsJson
+                collaborativeFieldsJson,
+                themeConfigJson: selectedTemplate.themeConfigJson || null
             });
 
             addToast("Plantilla Publicada", `La maqueta visual de la plantilla '${selectedTemplate.name}' ha sido publicada con éxito.`, "success");
@@ -1099,6 +1105,8 @@ const DocumentTemplatesPage: React.FC = () => {
                                     onCellChange={handleCellChange}
                                     onAddRow={handleAddRow}
                                     onRemoveRow={handleRemoveRow}
+                                    themeConfigJson={selectedTemplate.themeConfigJson}
+                                    onUpdateThemeConfig={handleUpdateThemeConfig}
                                 />
                             </div>
                         </DndContext>

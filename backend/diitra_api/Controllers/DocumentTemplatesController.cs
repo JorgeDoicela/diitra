@@ -42,6 +42,7 @@ namespace diitra_api.Controllers
                 t.SupportsBlindMode,
                 RequiresElectronicSignature = t.RequiresElectronicSignature,
                 SignatureType = t.SignatureType,
+                t.ThemeConfigJson,
                 t.UpdatedAt,
                 t.UpdatedBy
             }));
@@ -73,6 +74,7 @@ namespace diitra_api.Controllers
                 RequiresElectronicSignature = template.RequiresElectronicSignature,
                 SignatureType = template.SignatureType,
                 template.CollaborativeFieldsJson,
+                template.ThemeConfigJson,
                 HtmlContent = template.HtmlContent,
                 CustomCss = template.CustomCss,
                 template.UpdatedAt
@@ -89,7 +91,7 @@ namespace diitra_api.Controllers
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
-                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, updatedBy, ct);
+                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, request.ThemeConfigJson, updatedBy, ct);
                 return Ok(new { message = $"Plantilla '{code}' actualizada correctamente." });
             }
             catch (KeyNotFoundException)
@@ -160,6 +162,13 @@ namespace diitra_api.Controllers
 
         [JsonPropertyName("collaborativeFieldsJson")]
         public string? CollaborativeFieldsJson { get; set; }
+
+        /// <summary>
+        /// JSON que define los Design Tokens de tematización (colores, márgenes, tipografías)
+        /// de la plantilla, permitiendo la tematización visual sin código.
+        /// </summary>
+        [JsonPropertyName("themeConfigJson")]
+        public string? ThemeConfigJson { get; set; }
     }
 
     public class UpdateSignatureConfigRequest

@@ -59,6 +59,13 @@ namespace Diitra.Domain.Common.Documents
         /// </summary>
         public string? CollaborativeFieldsJson { get; private set; }
 
+        /// <summary>
+        /// JSON que define los Design Tokens de tematización (colores, márgenes, tipografías).
+        /// Permite la personalización visual de la plantilla sin alterar código CSS ni HTML.
+        /// Se inyecta dinámicamente en el motor de renderizado (Scriban/iText) al generar el PDF.
+        /// </summary>
+        public string? ThemeConfigJson { get; private set; }
+
         public bool IsActive { get; private set; } = true;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
@@ -73,7 +80,8 @@ namespace Diitra.Domain.Common.Documents
             bool requiresLopdp = true, bool supportsBlind = false,
             bool requiresTraceability = true, bool requiresSignature = false,
             string signatureType = "DIITRA",
-            string? collaborativeFields = null, int version = 1)
+            string? collaborativeFields = null, int version = 1,
+            string? themeConfigJson = null)
         {
             return new DocumentTemplate
             {
@@ -88,7 +96,8 @@ namespace Diitra.Domain.Common.Documents
                 RequiresElectronicSignature = requiresSignature,
                 SignatureType = signatureType,
                 CollaborativeFieldsJson = collaborativeFields,
-                Version = version
+                Version = version,
+                ThemeConfigJson = themeConfigJson
             };
         }
 
@@ -114,6 +123,17 @@ namespace Diitra.Domain.Common.Documents
         {
             RequiresElectronicSignature = requiresSignature;
             SignatureType = signatureType;
+            Version++;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = updatedBy;
+        }
+
+        /// <summary>
+        /// Actualiza la configuración visual de tematización (Design Tokens) sin código para la plantilla.
+        /// </summary>
+        public void UpdateThemeConfig(string? themeConfigJson, string updatedBy)
+        {
+            ThemeConfigJson = themeConfigJson;
             Version++;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = updatedBy;
@@ -145,6 +165,10 @@ namespace Diitra.Domain.Common.Documents
             SupportsBlindMode = seed.SupportsBlindMode;
             RequiresElectronicSignature = seed.RequiresElectronicSignature;
             SignatureType = seed.SignatureType;
+            if (seed.ThemeConfigJson != null)
+            {
+                ThemeConfigJson = seed.ThemeConfigJson;
+            }
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = "SYSTEM_SYNC";
         }

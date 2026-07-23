@@ -1178,6 +1178,7 @@ CREATE TABLE inv_document_templates (
     html_content            LONGTEXT      NOT NULL,
     custom_css              TEXT,
     collaborative_fields_json TEXT          NULL COMMENT 'JSON con los campos que usan CoWork (ej: ["antecedentes", "justificacion"])',
+    theme_config_json       LONGTEXT      NULL COMMENT 'JSON que define los Design Tokens de tematización (colores, márgenes, tipografías)',
     version                 INT           NOT NULL DEFAULT 1,
     category                INT           NOT NULL COMMENT 'Enum DocumentCategory',
     requires_lopdp          TINYINT(1)    NOT NULL DEFAULT 1,
@@ -1420,11 +1421,11 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
     CONSTRAINT fk_comment_parent FOREIGN KEY (parentId) REFERENCES inv_collaboration_comments(idComment) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Hilos de discusión real-time dentro de los documentos';
 
--- =============================================================================
--- SEMILLAS: Documentos Base DIITRA Builder
--- =============================================================================
-
--- =============================================================================
+/*
+=============================================================================
+RESPALDO HISTÓRICO: INSERCIONES DE SEMILLAS ORIGINALES (MIGRACIÓN ANTERIOR)
+=============================================================================
+A continuación se conserva el respaldo comentado de las semillas SQL originales:
 
 INSERT INTO inv_document_templates
     (code, name, description, html_content, category, collaborative_fields_json, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp)
@@ -1433,71 +1434,7 @@ VALUES
         'PROTOCOLO_INVESTIGACION',
         'Protocolo de Investigación',
         'Template oficial para la presentación de proyectos SENESCYT/CACES.',
-        '<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xIiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwgKFJvbWJvcykiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyBNQVJaTyAyMDI1IC0gU0VQVElFTUJSRSAyMDI1IiwiY29sb3JUZW1hIjoiIzFlMmE0YSJ9fSx7ImlkIjoiYmxvY2stMS10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjEuIElERU5USUZJQ0FDScOTTiBERUwgUFJPWUVDVE8iLCJmb250U2l6ZSI6IkgyIiwiY29sb3IiOiIjMWUyYTRhIiwiYWxpZ25tZW50IjoibGVmdCJ9fSx7ImlkIjoiYmxvY2stMi10YWJsZSIsInR5cGUiOiJhZHZhbmNlZF90YWJsZSIsInRpdGxlIjoiVGFibGEgZGUgSWRlbnRpZmljYWNpw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJoZWFkZXJzIjpbIkNhbXBvIiwiRGV0YWxsZSBkZWwgUHJveWVjdG8iXSwiY29sV2lkdGhzIjpbIjMwJSIsIjcwJSJdLCJyb3dzIjpbeyJjZWxscyI6WyJOb21icmUgZGVsIFByb3llY3RvOiIsInt7dGl0dWxvfX0iXX0seyJjZWxscyI6WyJQcm9ncmFtYSBkZSBJbnZlc3RpZ2FjacOzbjoiLCJ7e3Byb2dyYW1hfX0iXX0seyJjZWxscyI6WyJMw61uZWEgZGUgSW52ZXN0aWdhY2nDs246Iiwie3tsaW5lYV9pbnZlc3RpZ2FjaW9ufX0iXX0seyJjZWxscyI6WyJEaXJlY3RvciBkZWwgUHJveWVjdG86Iiwie3tkaXJlY3Rvcl9wcm95ZWN0b319Il19LHsiY2VsbHMiOlsiR3J1cG8gZGUgSW52ZXN0aWdhY2nDs246Iiwie3tncnVwb19pbnZlc3RpZ2FjaW9ufX0iXX0seyJjZWxscyI6WyJQZXJpb2RvIEFjYWTDqW1pY286Iiwie3twZXJpb2RvfX0iXX1dfX0seyJpZCI6ImJsb2NrLTMtdGl0bGUiLCJ0eXBlIjoidGl0bGUiLCJ0aXRsZSI6IlTDrXR1bG8gZGUgU2VjY2nDs24iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRleHQiOiIyLiBFUVVJUE8gREUgSU5WRVNUSUdBRE9SRVMiLCJmb250U2l6ZSI6IkgyIiwiY29sb3IiOiIjMWUyYTRhIiwiYWxpZ25tZW50IjoibGVmdCJ9fSx7ImlkIjoiYmxvY2stNC10YWJsZSIsInR5cGUiOiJyZXNlYXJjaGVyc190YWJsZSIsInRpdGxlIjoiVGFibGEgZGUgUGFydGljaXBhbnRlcyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsibW9zdHJhckNlZHVsYSI6dHJ1ZSwibW9zdHJhckhvcmFzIjp0cnVlfX0seyJpZCI6ImJsb2NrLTUtdGl0bGUiLCJ0eXBlIjoidGl0bGUiLCJ0aXRsZSI6IlTDrXR1bG8gZGUgU2VjY2nDs24iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRleHQiOiIzLiBFU1BFQ0lGSUNBQ0nDk04gVMOJQ05JQ0EgKFBMQU4gVMOJQ05JQ08pIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSIsImFsaWdubWVudCI6ImxlZnQifX0seyJpZCI6ImJsb2NrLWFudGVjZWRlbnRlcyIsInR5cGUiOiJyaWNoX3RleHQiLCJ0aXRsZSI6IkFudGVjZWRlbnRlcyBkZWwgUHJveWVjdG8iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Imh0bWwiOiI8aDM+QW50ZWNlZGVudGVzPC9oMz48cD57e2FudGVjZWRlbnRlc319PC9wPiJ9fSx7ImlkIjoiYmxvY2stanVzdGlmaWNhY2lvbiIsInR5cGUiOiJyaWNoX3RleHQiLCJ0aXRsZSI6Ikp1c3RpZmljYWNpw7NuIGRlIGxhIEludmVzdGlnYWNpw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJodG1sIjoiPGgzPkp1c3RpZmljYWNpw7NuPC9oMz48cD57e2p1c3RpZmljYWNpb259fTwvcD4ifX0seyJpZCI6ImJsb2NrLW1hcmNvIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiTWFyY28gVGXDs3JpY28gUmVmZXJlbmNpYWwiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Imh0bWwiOiI8aDM+TWFyY28gVGXDs3JpY288L2gzPjxwPnt7bWFyY29fdGVvcmljb319PC9wPiJ9fSx7ImlkIjoiYmxvY2stbWV0b2RvbG9naWEiLCJ0eXBlIjoicmljaF90ZXh0IiwidGl0bGUiOiJNZXRvZG9sb2fDrWEgZGUgVHJhYmFqbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaHRtbCI6IjxoMz5NZXRvZG9sb2fDrWE8L2gzPjxwPnt7bWV0b2RvbG9naWF9fTwvcD4ifX0seyJpZCI6ImJsb2NrLWV2YWx1YWNpb24iLCJ0eXBlIjoicmljaF90ZXh0IiwidGl0bGUiOiJFdmFsdWFjacOzbiB5IFJlc3VsdGFkb3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Imh0bWwiOiI8aDM+UmVzdWx0YWRvcyBFc3BlcmFkb3M8L2gzPjxwPnt7ZXZhbHVhY2lvbn19PC9wPiJ9fSx7ImlkIjoiYmxvY2stY3Jvbm9ncmFtYS10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjQuIENST05PR1JBTUEgREUgQUNUSVZJREFERVMiLCJmb250U2l6ZSI6IkgyIiwiY29sb3IiOiIjMWUyYTRhIiwiYWxpZ25tZW50IjoibGVmdCJ9fSx7ImlkIjoiYmxvY2stZ2FudHQiLCJ0eXBlIjoiZ2FudHQiLCJ0aXRsZSI6IkNyb25vZ3JhbWEgZGUgR2FudHQiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7ImdhbnR0TW9udGhzIjpbIk1lcyAxIiwiTWVzIDIiLCJNZXMgMyIsIk1lcyA0IiwiTWVzIDUiLCJNZXMgNiJdLCJnYW50dE9iamVjdGl2ZXMiOltdfX0seyJpZCI6ImJsb2NrLWJpYmxpb2dyYWZpYS10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjUuIEZVRU5URVMgQklCTElPR1LDgUZJQ0FTIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSIsImFsaWdubWVudCI6ImxlZnQifX0seyJpZCI6ImJsb2NrLWJpYmxpb2dyYWZpYSIsInR5cGUiOiJyaWNoX3RleHQiLCJ0aXRsZSI6IkJpYmxpb2dyYWbDrWEiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Imh0bWwiOiI8aDM+UmVmZXJlbmNpYXMgQmlibGlvZ3LDoWZpY2FzPC9oMz48cD57e2JpYmxpb2dyYWZpYX19PC9wPiJ9fSx7ImlkIjoiYmxvY2stOCIsInR5cGUiOiJzaWduYXR1cmVzIiwidGl0bGUiOiJCbG9xdWUgZGUgRmlybWFzIHkgVHJhemFiaWxpZGFkIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0ZXh0b1BpZUZpcm1hIjoiQ29taXNpw7NuIGRlIEFjcmVkaXRhY2nDs24gZSBJbnZlc3RpZ2FjacOzbiBJU1QgVHJhdmVyc2FyaSJ9fV0= -->\n<div class="protocolo-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
-            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
-                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
-            </div>
-            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">PROTOCOLO DE PROYECTO DE INVESTIGACIÓN</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Título del Proyecto:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{titulo}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{codigo_institucional}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Línea de Investigación:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{linea_investigacion}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Director de Proyecto:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{director_proyecto}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Presupuesto Asignado:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${{costo_total}}</td>
-                </tr>
-            </table>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">1. Antecedentes</h3>
-                <p style="text-align: justify;">{{antecedentes}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">2. Justificación</h3>
-                <p style="text-align: justify;">{{justificacion}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">3. Marco Teórico</h3>
-                <p style="text-align: justify;">{{marco_teorico}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">4. Metodología</h3>
-                <p style="text-align: justify;">{{metodologia}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">5. Evaluación y Resultados Esperados</h3>
-                <p style="text-align: justify;">{{evaluacion}}</p>
-            </div>
-            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <table style="width: 100%;">
-                    <tr>
-                        <td style="width: 50%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_proyecto}}</div>
-                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
-                            <p style="margin: 0; font-size: 12px; color: #555;">Docente Investigador</p>
-                        </td>
-                        <td style="width: 50%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_investigacion}}</div>
-                            <p style="margin: 0; font-weight: bold;">Director de Investigación</p>
-                            <p style="margin: 0; font-size: 12px; color: #555;">DIITRA — IST Traversari</p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>',
+        '<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9... -->\n<div class="protocolo-container"...',
         1, -- category
         '["antecedentes", "justificacion", "marco_teorico", "metodologia", "evaluacion"]',
         1, -- requires_signature
@@ -1509,203 +1446,6 @@ VALUES
         'INFORME_FINAL_INVESTIGACION',
         'Informe Final de Investigación',
         'Template consolidado para el cierre de proyectos CACES 2026.',
-        '<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xIiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwgKFJvbWJvcykiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiSU5GT1JNRSBGSU5BTCBERSBJTlZFU1RJR0FDScOTTiIsImNhcnJlcmFQb3JEZWZlY3RvIjoiVEVDTk9MT0fDjUEgU1VQRVJJT1IgRU4gREVTQVJST0xMTyBERSBTT0ZUV0FSRSIsInBlcmlvZG9Qb3JEZWZlY3RvIjoiUEVSSU9ETyBBQ0FEw4lNSUNPIE1BUlpPIDIwMjUgLSBTRVBUSUVNQlJFIDIwMjUiLCJjb2xvclRlbWEiOiIjMWUyYTRhIn19LHsiaWQiOiJibG9jay0xLXRpdGxlIiwidHlwZSI6InRpdGxlIiwidGl0bGUiOiJUw610dWxvIGRlIFNlY2Npw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0ZXh0IjoiMS4gSURFTlRJRklDQUNJw5NOIERFTCBQUk9ZRUNUTyIsImZvbnRTaXplIjoiSDIiLCJjb2xvciI6IiMxZTJhNGEiLCJhbGlnbm1lbnQiOiJsZWZ0In19LHsiaWQiOiJibG9jay0yLXRhYmxlIiwidHlwZSI6ImFkdmFuY2VkX3RhYmxlIiwidGl0bGUiOiJUYWJsYSBkZSBJZGVudGlmaWNhY2nDs24iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7ImhlYWRlcnMiOlsiQ2FtcG8iLCJEZXRhbGxlIGRlIENpZXJyZSJdLCJjb2xXaWR0aHMiOlsiMzUlIiwiNjUlIl0sInJvd3MiOlt7ImNlbGxzIjpbIlByb3llY3RvOiIsInt7dGl0dWxvfX0iXX0seyJjZWxscyI6WyJEaXJlY3RvcjoiLCJ7e2RpcmVjdG9yX3Byb3llY3RvfX0iXX0seyJjZWxscyI6WyJMw61uZWEgZGUgSW52ZXN0aWdhY2nDs246Iiwie3tsaW5lYV9pbnZlc3RpZ2FjaW9ufX0iXX0seyJjZWxscyI6WyJTdWJsw61uZWE6Iiwie3tzdWJsaW5lYV9pbnZlc3RpZ2FjaW9ufX0iXX0seyJjZWxscyI6WyJJZGVudGlmaWNhZG9yIERTcGFjZToiLCJ7e2RzcGFjZV9oYW5kbGV9fSJdfV19fSx7ImlkIjoiYmxvY2stMy10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjIuIENPTlRFTklET1MgQ09OU09MSURBRE9TIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSIsImFsaWdubWVudCI6ImxlZnQifX0seyJpZCI6ImJsb2NrLXJlc3VtZW4iLCJ0eXBlIjoicmljaF90ZXh0IiwidGl0bGUiOiJSZXN1bWVuIEVqZWN1dGl2byIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaHRtbCI6IjxoMz5SZXN1bWVuIEVqZWN1dGl2bzwvaDM+PHA+e3tyZXN1bWVuX2VqZWN1dGl2b319PC9wPiJ9fSx7ImlkIjoiYmxvY2staW50cm8iLCJ0eXBlIjoicmljaF90ZXh0IiwidGl0bGUiOiJJbnRyb2R1Y2Npw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJodG1sIjoiPGgzPkludHJvZHVjY2nDs248L2gzPjxwPnt7aW50cm9kdWNjaW9ufX08L3A+In19LHsiaWQiOiJibG9jay1kZXNhcnJvbGxvIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiRGVzYXJyb2xsbyBUw6ljbmljbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaHRtbCI6IjxoMz5EZXNhcnJvbGxvIFTDqWNuaWNvPC9oMz48cD57e2Rlc2Fycm9sbG9fdGVjbmljb319PC9wPiJ9fSx7ImlkIjoiYmxvY2stcmVzdWx0YWRvcyIsInR5cGUiOiJyaWNoX3RleHQiLCJ0aXRsZSI6IlJlc3VsdGFkb3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Imh0bWwiOiI8aDM+QW7DoWxpc2lzIGRlIFJlc3VsdGFkb3M8L2gzPjxwPnt7cmVzdWx0YWRvc319PC9wPiJ9fSx7ImlkIjoiYmxvY2stY29uY2x1c2lvbmVzIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiQ29uY2x1c2lvbmVzIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJodG1sIjoiPGgzPkNvbmNsdXNpb25lcyB5IFJlY29tZW5kYWNpb25lczwvaDM+PHA+e3tjb25jbHVzaW9uZXN9fTwvcD4ifX0seyJpZCI6ImJsb2NrLTgiLCJ0eXBlIjoic2lnbmF0dXJlcyIsInRpdGxlIjoiQmxvcXVlIGRlIEZpcm1hcyB5IFRyYXphYmlsaWRhZCIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dG9QaWVGaXJtYSI6IkNvbWlzacOzbiBkZSBBY3JlZGl0YWNpw7NuIGUgSW52ZXN0aWdhY2nDs24gSVNUIFRyYXZlcnNhcmkifX1d -->\n<div class="informe-final-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
-            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
-                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
-            </div>
-            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold; text-transform: uppercase;">Informe Final de Cierre de Proyecto</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Título del Proyecto:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{titulo}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{codigo_institucional}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Línea/Sublínea:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{linea_investigacion}} / {{sublinea_investigacion}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Director de Proyecto:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{director_proyecto}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Repositorio DSpace Handle:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{dspace_handle}}</td>
-                </tr>
-            </table>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Resumen Ejecutivo</h3>
-                <p style="text-align: justify;">{{resumen_ejecutivo}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Introducción</h3>
-                <p style="text-align: justify;">{{introduccion}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Desarrollo Técnico y Metodología Aplicada</h3>
-                <p style="text-align: justify;">{{desarrollo_tecnico}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Análisis de Resultados y Productos Científicos</h3>
-                <p style="text-align: justify;">{{resultados}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Conclusiones y Recomendaciones</h3>
-                <p style="text-align: justify;">{{conclusiones}}</p>
-            </div>
-            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <table style="width: 100%;">
-                    <tr>
-                        <td style="width: 33%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_proyecto}}</div>
-                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
-                            <p style="margin: 0; font-size: 11px; color: #555;">Docente Investigador</p>
-                        </td>
-                        <td style="width: 33%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_investigacion}}</div>
-                            <p style="margin: 0; font-weight: bold;">Director de Investigación</p>
-                            <p style="margin: 0; font-size: 11px; color: #555;">DIITRA — IST Traversari</p>
-                        </td>
-                        <td style="width: 33%; text-align: center;">
-                            <div style="height: 60px;">{{firma_rector}}</div>
-                            <p style="margin: 0; font-weight: bold;">Rector / Vicerrector</p>
-                            <p style="margin: 0; font-size: 11px; color: #555;">IST Traversari</p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>',
-        1, -- category
-        '["resumen_ejecutivo", "introduccion", "desarrollo_tecnico", "resultados", "conclusiones"]',
-        1, -- requires_signature
-        0, -- supports_blind_mode
-        1, -- requires_traceability
-        1  -- requires_lopdp
-    ),
-    (
-        'INFORME_AVANCE',
-        'Informe de Avance de Investigación',
-        'Template mensual/trimestral para reportar el avance físico e hitos del proyecto.',
-        '<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xIiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwgKFJvbWJvcykiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiSU5GT1JNRSBERSBBVkFOQ0UgREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyBNQVJaTyAyMDI1IC0gU0VQVElFTUJSRSAyMDI1IiwiY29sb3JUZW1hIjoiIzFlMmE0YSJ9fSx7ImlkIjoiYmxvY2stMS10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjEuIElERU5USUZJQ0FDScOTTiBERUwgUFJPWUVDVE8iLCJmb250U2l6ZSI6IkgyIiwiY29sb3IiOiIjMWUyYTRhIiwiYWxpZ25tZW50IjoibGVmdCJ9fSx7ImlkIjoiYmxvY2stMi10YWJsZSIsInR5cGUiOiJhZHZhbmNlZF90YWJsZSIsInRpdGxlIjoiVGFibGEgZGUgSWRlbnRpZmljYWNpw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJoZWFkZXJzIjpbIkNhbXBvIiwiRGV0YWxsZSBkZSBBdmFuY2UiXSwiY29sV2lkdGhzIjpbIjMwJSIsIjcwJSJdLCJyb3dzIjpbeyJjZWxscyI6WyJQcm95ZWN0bzoiLCJ7e3RpdHVsb319Il19LHsiY2VsbHMiOlsiQ8OzZGlnbyBkZSBQcm95ZWN0bzoiLCJ7e2NvZGlnb19pbnN0aXR1Y2lvbmFsfX0iXX0seyJjZWxscyI6WyJOwrAgZGUgSW5mb3JtZToiLCJ7e251bWVyb19pbmZvcm1lfX0iXX0seyJjZWxscyI6WyJGZWNoYSBkZSBFbWlzacOzbjoiLCJ7e2ZlY2hhX3JlcG9ydGV9fSJdfV19fSx7ImlkIjoiYmxvY2stMy10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjIuIEFWQU5DRSBZIEFDVElWSURBREVTIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSIsImFsaWdubWVudCI6ImxlZnQifX0seyJpZCI6ImJsb2NrLWFjdGl2aWRhZGVzIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiQWN0aXZpZGFkZXMgRWplY3V0YWRhcyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaHRtbCI6IjxoMz5SZXN1bWVuIGRlIEFjdGl2aWRhZGVzIEVqZWN1dGFkYXM8L2gzPjxwPnt7Y29uY2x1c2lvbmVzX3BhcmNpYWxlc319PC9wPiJ9fSx7ImlkIjoiYmxvY2stZ2FzdG9zIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiR2FzdG9zIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJodG1sIjoiPGgzPkRldGFsbGUgZGUgUHJlc3VwdWVzdG8gRWplY3V0YWRvPC9oMz48cD57e2dhc3Rvc19wZXJpb2RvfX08L3A+In19LHsiaWQiOiJibG9jay1ldmlkZW5jaWFzIiwidHlwZSI6InJpY2hfdGV4dCIsInRpdGxlIjoiRXZpZGVuY2lhcyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaHRtbCI6IjxoMz5MaXN0YWRvIGRlIEV2aWRlbmNpYXM8L2gzPjxwPnt7ZXZpZGVuY2lhc19jaGVja2xpc3R9fTwvcD4ifX0seyJpZCI6ImJsb2NrLTgiLCJ0eXBlIjoic2lnbmF0dXJlcyIsInRpdGxlIjoiQmxvcXVlIGRlIEZpcm1hcyB5IFRyYXphYmlsaWRhZCIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dG9QaWVGaXJtYSI6IkNvbWlzacOzbiBkZSBBY3JlZGl0YWNpw7NuIGUgSW52ZXN0aWdhY2nDs24gSVNUIFRyYXZlcnNhcmkifX1d -->\n<div class="informe-avance-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
-            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
-                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
-            </div>
-            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">INFORME DE AVANCE DE PROYECTO</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Proyecto:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{titulo}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{codigo_institucional}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Informe N°:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{numero_informe}}</td>
-                </tr>
-                <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Fecha de Emisión:</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{fecha_reporte}}</td>
-                </tr>
-            </table>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Resumen de Actividades Ejecutadas</h3>
-                <p style="text-align: justify;">{{conclusiones_parciales}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Presupuesto Ejecutado en el Periodo</h3>
-                <p style="text-align: justify;">{{gastos_periodo}}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Evidencias Adjuntas</h3>
-                <p style="text-align: justify;">{{evidencias_checklist}}</p>
-            </div>
-            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <table style="width: 100%;">
-                    <tr>
-                        <td style="width: 50%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_proyecto}}</div>
-                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
-                            <p style="margin: 0; font-size: 12px; color: #555;">Docente Investigador</p>
-                        </td>
-                        <td style="width: 50%; text-align: center;">
-                            <div style="height: 60px;">{{firma_director_investigacion}}</div>
-                            <p style="margin: 0; font-weight: bold;">Aprobado por Dirección de Investigación</p>
-                            <p style="margin: 0; font-size: 12px; color: #555;">DIITRA — IST Traversari</p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>',
-        1, -- category
-        '["conclusiones_parciales"]',
-        1, -- requires_signature
-        0, -- supports_blind_mode
-        1, -- requires_traceability
-        1  -- requires_lopdp
-    ),
-    (
-        'DICTAMEN_ARBITRAJE',
-        'Acta de Dictamen de Arbitraje',
-        'Documento oficial CACES del resultado de la evaluación por pares doble ciego. Requiere firma digital del Director de Investigación.',
-        '<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xIiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwgKFJvbWJvcykiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiQUNUQSBERSBESUNUQU1FTiBERSBBUkJJVFJBSkUiLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyBNQVJaTyAyMDI1IC0gU0VQVElFTUJSRSAyMDI1IiwiY29sb3JUZW1hIjoiIzFlMmE0YSJ9fSx7ImlkIjoiYmxvY2stMS10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjEuIElERU5USUZJQ0FDScOTTiBERSBMQSBFVkFMVUFDScOTTiIsImZvbnRTaXplIjoiSDIiLCJjb2xvciI6IiMxZTJhNGEiLCJhbGlnbm1lbnQiOiJsZWZ0In19LHsiaWQiOiJibG9jay0yLXRhYmxlIiwidHlwZSI6ImFkdmFuY2VkX3RhYmxlIiwidGl0bGUiOiJUYWJsYSBkZSBJZGVudGlmaWNhY2nDs24iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7ImhlYWRlcnMiOlsiQ2FtcG8iLCJEZXRhbGxlIGRlIGxhIEV2YWx1YWNpw7NuIl0sImNvbFdpZHRocyI6WyIzMCUiLCI3MCUiXSwicm93cyI6W3siY2VsbHMiOlsiTm9tYnJlIGRlbCBQcm95ZWN0bzoiLCJ7e3RpdHVsb319Il19LHsiY2VsbHMiOlsiRXZhbHVhZG9yIFTDqWNuaWNvOiIsInt7ZXZhbHVhZG9yfX0iXX0seyJjZWxscyI6WyJGZWNoYSBkZSBFdmFsdWFjacOzbjoiLCJ7e2ZlY2hhX2V2YWx1YWNpb259fSJdfV19fSx7ImlkIjoiYmxvY2stMy10aXRsZSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiVMOtdHVsbyBkZSBTZWNjacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjIuIENSSVRFUklPUyBERSBFVkFMVUFDScOTTiIsImZvbnRTaXplIjoiSDIiLCJjb2xvciI6IiMxZTJhNGEiLCJhbGlnbm1lbnQiOiJsZWZ0In19LHsiaWQiOiJibG9jay1ydWJyaWMiLCJ0eXBlIjoicnVicmljX3RhYmxlIiwidGl0bGUiOiJUYWJsYSBkZSBDcml0ZXJpb3MgKFLDumJyaWNhKSIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsibW9zdHJhckRlc2NyaXBjaW9uQ3JpdGVyaW8iOnRydWUsIm1vc3RyYXJPYnNlcnZhY2lvbmVzQ3JpdGVyaW8iOnRydWV9fSx7ImlkIjoiYmxvY2stOCIsInR5cGUiOiJzaWduYXR1cmVzIiwidGl0bGUiOiJCbG9xdWUgZGUgRmlybWFzIHkgVHJhemFiaWxpZGFkIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0ZXh0b1BpZUZpcm1hIjoiQ29taXNpw7NuIGRlIEFjcmVkaXRhY2nDs24gZSBJbnZlc3RpZ2FjacOzbiBJU1QgVHJhdmVyc2FyaSJ9fV0= -->\n<div class="dictamen-header" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
-            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
-                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
-                <p class="codigo-trazabilidad" style="font-size: 11px; color: #777; margin-top: 5px;">Código: {{traceability_code}}</p>
-            </div>
-            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">ACTA DE DICTAMEN DE ARBITRAJE</h2>
-            <section class="datos-proyecto" style="margin-bottom: 25px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">1. Datos del Proyecto</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; width: 30%;">Código Institucional:</td><td style="border: 1px solid #ddd; padding: 6px;">{{codigo_institucional}}</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Título:</td><td style="border: 1px solid #ddd; padding: 6px;">{{titulo}}</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Convocatoria:</td><td style="border: 1px solid #ddd; padding: 6px;">{{convocatoria}}</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Línea de Investigación:</td><td style="border: 1px solid #ddd; padding: 6px;">{{linea_investigacion}}</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Fecha de Postulación:</td><td style="border: 1px solid #ddd; padding: 6px;">{{fecha_postulacion}}</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Fecha de Cierre del Arbitraje:</td><td style="border: 1px solid #ddd; padding: 6px;">{{fecha_evaluacion}}</td></tr>
-                </table>
-            </section>
-            <section class="panel-arbitros" style="margin-bottom: 25px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">2. Panel de Árbitros Evaluadores</h3>
-                <p style="font-size: 12px; font-style: italic; color: #666; margin-bottom: 10px;">La identidad de los árbitros se mantiene bajo estricta reserva de conformidad con el proceso de doble ciego (Reglamento de Régimen Académico, Art. 75).</p>
-                {{tabla_arbitros}}
-            </section>
-            <section class="resolucion" style="margin-bottom: 25px;">
-                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">3. Resolución Final</h3>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; width: 40%;">Puntaje Promedio Ponderado:</td><td style="border: 1px solid #ddd; padding: 6px;">{{puntaje_promedio}}/100</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Puntaje Mínimo de Aprobación:</td><td style="border: 1px solid #ddd; padding: 6px;">{{puntaje_minimo}}/100</td></tr>
-                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Dictamen:</td><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; color: {{dictamen_color}};">{{dictamen_resultado}}</td></tr>
-                </table>
-                <div class="observaciones" style="background: #fafafa; border: 1px solid #ddd; padding: 12px; border-radius: 4px;">
-                    <h4 style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold;">Observaciones Generales del Panel:</h4>
-                    <p style="margin: 0; font-size: 12px; line-height: 1.5; text-align: justify;">{{comentarios_generales}}</p>
-                </div>
-            </section>
-            <section class="firma-digital" style="margin-top: 35px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <table style="width: 100%;">
-                    <tr>
-                        <td style="width: 50%; text-align: center; vertical-align: top;">
-                            <div class="firma-imagen" style="height: 60px; margin-bottom: 5px;">{{firma_imagen}}</div>
-                            <p style="margin: 0; font-weight: bold; font-size: 13px;">Director/a de Investigación e Innovación</p>
-                            <p style="margin: 0; font-size: 12px; color: #555;">{{director_nombre}}</p>
-                            <p style="margin: 0; font-size: 11px; color: #777;">DIITRA — IST Traversari</p>
-                            <p style="margin: 0; font-size: 11px; color: #777;">Fecha de Firma: {{fecha_firma}}</p>
-                        </td>
-                        <td style="width: 50%; text-align: center; vertical-align: top;">
-                            <div class="qr-container" style="display: inline-block; padding: 5px; border: 1px solid #ddd; margin-bottom: 5px;">
-                                {{qr_code}}
-                            </div>
-                            <p style="margin: 0; font-weight: bold; font-size: 11px;">Verificación de Integridad</p>
-                            <p class="qr-url" style="margin: 0; font-size: 9px; color: #0066cc;">{{verification_url}}</p>
-                        </td>
                     </tr>
                 </table>
             </section>

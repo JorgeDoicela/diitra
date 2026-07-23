@@ -51,6 +51,7 @@ public class DocumentTemplateConfiguration : IEntityTypeConfiguration<Diitra.Dom
         entity.Property(e => e.RequiresElectronicSignature).HasColumnName("requires_signature").IsRequired();
         entity.Property(e => e.SignatureType).HasColumnName("signature_type").HasMaxLength(50).HasDefaultValue("DIITRA").IsRequired();
         entity.Property(e => e.CollaborativeFieldsJson).HasColumnName("collaborative_fields_json");
+        entity.Property(e => e.ThemeConfigJson).HasColumnName("theme_config_json");
         entity.Property(e => e.IsActive).HasColumnName("is_active").IsRequired();
         entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").IsRequired();

@@ -15,6 +15,7 @@ export interface DocumentTemplateDto {
     updatedBy: string | null;
     htmlContent?: string;
     customCss?: string | null;
+    themeConfigJson?: string | null;
 }
 
 export interface TableRow {
