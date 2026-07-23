@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { GroupFormData, GroupMember } from '../types';
 
 const DRAFT_KEY = 'new_group_form_draft';
@@ -107,20 +108,39 @@ export function useGroupFormDraft({
     useEffect(() => {
         if (!isOpen || !isInitializedRef.current) return;
 
-        const draftData = {
-            formData,
-            selectedCoordName,
-            selectedCoordCareer,
-            groupMembers
-        };
+        const hasChanges =
+            formData.nombre.trim() !== '' ||
+            formData.siglas.trim() !== '' ||
+            formData.objetivo_general.trim() !== '' ||
+            formData.mision.trim() !== '' ||
+            formData.vision.trim() !== '' ||
+            formData.id_dominio !== '' ||
+            formData.id_profesor_coordinador !== '' ||
+            formData.lineas_ids.length > 0 ||
+            formData.carreras_ids.length > 0 ||
+            formData.link_whatsapp.trim() !== '' ||
+            formData.telefono_coordinador.trim() !== '' ||
+            groupMembers.length > 0;
 
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
-        const meta = {
-            type: 'new',
-            groupName: formData.nombre || 'Borrador de Nueva Propuesta',
-            timestamp: Date.now()
-        };
-        localStorage.setItem(META_KEY, JSON.stringify(meta));
+        if (hasChanges) {
+            const draftData = {
+                formData,
+                selectedCoordName,
+                selectedCoordCareer,
+                groupMembers
+            };
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+            const meta = {
+                type: 'new',
+                groupName: formData.nombre || 'Borrador de Nueva Propuesta',
+                timestamp: Date.now()
+            };
+            localStorage.setItem(META_KEY, JSON.stringify(meta));
+        } else {
+            localStorage.removeItem(DRAFT_KEY);
+            localStorage.removeItem(META_KEY);
+        }
     }, [formData, selectedCoordName, selectedCoordCareer, groupMembers, isOpen]);
 
     const clearDraft = () => {

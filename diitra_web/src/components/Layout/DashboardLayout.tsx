@@ -44,6 +44,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const { isAuthenticated, isLoading, user } = useAuth();
     const location = useLocation();
     const isWorkspace = location.pathname.includes('/workspace/');
+    const isFullHeightPage = isWorkspace || location.pathname === '/admin/plantillas';
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showHeader, setShowHeader] = useState(true);
@@ -52,6 +53,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
     });
+    const [topBarCollapsed, setTopBarCollapsed] = useState(false);
 
     // ── Contador de notas rápidas sin planificar (badge del botón flotante) ─────
     const [pendingNotesCount, setPendingNotesCount] = useState(0);
@@ -199,10 +201,19 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         window.dispatchEvent(event);
     }, [isCollapsed]);
 
+    useEffect(() => {
+        const handleTopbarCollapse = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            setTopBarCollapsed(!!customEvent.detail?.collapsed);
+        };
+        window.addEventListener('diitra-topbar-collapse-change', handleTopbarCollapse);
+        return () => window.removeEventListener('diitra-topbar-collapse-change', handleTopbarCollapse);
+    }, []);
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (isWorkspace) return;
         const currentScrollY = e.currentTarget.scrollTop;
-        
+
         if (currentScrollY < 10) {
             if (!showHeader) setShowHeader(true);
         } else if (currentScrollY > lastScrollY + 10) {
@@ -231,7 +242,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Desktop TopBar */}
                 {!isWorkspace && (
-                    <header className="hidden lg:flex items-center justify-between h-14 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
+                    <header className={`hidden lg:flex items-center justify-between bg-bg-deep border-b border-border-thin sticky top-0 z-[40] transition-all duration-300 ease-in-out ${topBarCollapsed
+                            ? 'max-h-0 opacity-0 overflow-hidden border-b-0 pointer-events-none'
+                            : 'max-h-14 h-14 opacity-100'
+                        }`}>
                         <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 flex items-center justify-between relative">
                             <div className="flex items-center gap-4">
                                 {isCollapsed && (
@@ -282,11 +296,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
                 {/* Mobile Header */}
                 {!isWorkspace && (
-                    <header className={`lg:hidden flex items-center justify-between px-6 bg-bg-deep border-b border-border-thin z-50 transition-all duration-300 ease-in-out ${
-                        showHeader 
-                            ? 'max-h-20 py-4 opacity-100' 
+                    <header className={`lg:hidden flex items-center justify-between px-6 bg-bg-deep border-b border-border-thin z-50 transition-all duration-300 ease-in-out ${showHeader && !topBarCollapsed
+                            ? 'max-h-20 py-4 opacity-100'
                             : 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none'
-                    }`}>
+                        }`}>
                         <button
                             onClick={() => setIsSidebarOpen(true)}
                             className="p-2 -ml-2 text-text-dim hover:text-text-main transition-colors"
@@ -304,11 +317,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     </header>
                 )}
 
-                <div 
+                <div
                     onScroll={handleScroll}
-                    className={`flex-1 ${isWorkspace ? 'overflow-hidden h-full' : 'overflow-y-auto custom-scrollbar'}`}
+                    className={`flex-1 ${isFullHeightPage ? 'overflow-hidden h-full' : 'overflow-y-auto custom-scrollbar'}`}
                 >
-                    <div className={isWorkspace ? 'h-full w-full' : 'max-w-[1600px] mx-auto w-full'}>
+                    <div className={isFullHeightPage ? 'h-full w-full' : 'max-w-[1600px] mx-auto w-full'}>
                         {children}
                     </div>
                 </div>

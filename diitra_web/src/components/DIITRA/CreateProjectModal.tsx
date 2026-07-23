@@ -146,22 +146,34 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             return;
         }
 
-        const draftData = {
-            titulo,
-            descripcion,
-            presupuestoEstimado,
-            idCarrera,
-            idConvocatoria
-        };
+        const hasChanges =
+            titulo.trim() !== '' ||
+            descripcion.trim() !== '' ||
+            presupuestoEstimado.trim() !== '' ||
+            (!careerLocked && idCarrera !== 0) ||
+            (!preselectedConvocatoriaId && idConvocatoria !== 0);
 
-        localStorage.setItem('preproposal_form_draft', JSON.stringify(draftData));
+        if (hasChanges) {
+            const draftData = {
+                titulo,
+                descripcion,
+                presupuestoEstimado,
+                idCarrera,
+                idConvocatoria
+            };
 
-        const meta = {
-            titulo: titulo || 'Postulación sin título',
-            timestamp: Date.now()
-        };
-        localStorage.setItem('preproposal_draft_metadata', JSON.stringify(meta));
-    }, [titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria]);
+            localStorage.setItem('preproposal_form_draft', JSON.stringify(draftData));
+
+            const meta = {
+                titulo: titulo || 'Postulación sin título',
+                timestamp: Date.now()
+            };
+            localStorage.setItem('preproposal_draft_metadata', JSON.stringify(meta));
+        } else {
+            localStorage.removeItem('preproposal_form_draft');
+            localStorage.removeItem('preproposal_draft_metadata');
+        }
+    }, [titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria, careerLocked, preselectedConvocatoriaId]);
 
     const handleDiscardDraft = async () => {
         if (await confirm({

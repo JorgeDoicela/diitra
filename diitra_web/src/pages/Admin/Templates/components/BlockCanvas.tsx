@@ -6,7 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Trash2, Eye, EyeOff, Copy, GripVertical
+    Layers, Trash2, Eye, EyeOff, Copy
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection } from '../types';
 
@@ -19,6 +19,9 @@ interface BlockCanvasProps {
     onDuplicateBlock: (id: string) => void;
     templateName?: string;
     isDirty?: boolean;
+    headerCollapsed?: boolean;
+    onToggleHeader?: () => void;
+    rightActions?: React.ReactNode;
 }
 
 const COLORS = {
@@ -756,7 +759,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? 'none' : transition,
         zIndex: isDragging ? 999 : undefined,
     };
 
@@ -828,16 +831,15 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             <div
                 ref={setNodeRef}
                 style={style}
+                {...attributes}
+                {...listeners}
                 onClick={() => onSelectBlock(block.id)}
-                className={`group relative py-1 px-4 my-2 border-t-2 border-b-2 border-dashed border-slate-300 bg-slate-50/30 flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 transition-all cursor-pointer hover:border-slate-400 hover:bg-slate-50/50
+                className={`group relative py-1.5 px-4 my-2 border-t-2 border-b-2 border-dashed border-slate-300 bg-slate-50/30 flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 cursor-grab active:cursor-grabbing hover:border-slate-400 hover:bg-slate-50/50
                     ${isActive ? 'ring-1 ring-zinc-950 border-zinc-950' : ''}
-                    ${isDragging ? 'opacity-50' : ''}
+                    ${isDragging ? 'opacity-60 scale-[0.97] transition-none border-t-indigo-400 border-b-indigo-400 shadow-sm' : 'transition-all'}
                 `}
             >
                 <div className="flex items-center gap-2">
-                    <div {...attributes} {...listeners} className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-200 rounded">
-                        <GripVertical className="w-3.5 h-3.5" />
-                    </div>
                     <span>Salto de Página en PDF</span>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -878,14 +880,17 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         <div
             ref={setNodeRef}
             style={style}
+            {...attributes}
+            {...listeners}
             onClick={() => onSelectBlock(block.id)}
-            className={`group relative border rounded-md transition-all cursor-pointer ${isCover ? 'p-0' : 'p-4'} ${themeCls}
-                ${isDragging ? 'shadow-md border-slate-300 opacity-95 scale-[1.001]' : ''}
-                ${isActive
-                    ? (badge?.activeCls || 'ring-1 ring-zinc-950 border-zinc-950 shadow-sm')
-                    : isCover
-                        ? 'border-transparent'
-                        : 'border-slate-200'
+            className={`group relative border rounded-md cursor-grab active:cursor-grabbing ${isCover ? 'p-0' : 'p-4'} ${themeCls}
+                ${isDragging
+                    ? 'shadow-[0_20px_40px_rgba(0,0,0,0.12)] border-slate-300 opacity-80 scale-[0.97] rotate-[-0.5deg] transition-none z-[999]'
+                    : isActive
+                        ? (badge?.activeCls || 'ring-1 ring-zinc-950 border-zinc-950 shadow-sm')
+                        : isCover
+                            ? 'border-transparent'
+                            : 'border-slate-200'
                 }
             `}
         >
@@ -898,17 +903,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             )}
 
             {/* Controles Flotantes Notion-style */}
-            <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
-                <div
-                    {...attributes}
-                    {...listeners}
-                    onClick={e => e.stopPropagation()}
-                    className="p-1 cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                    title="Arrastrar para reordenar"
-                >
-                    <GripVertical className="w-3.5 h-3.5" />
-                </div>
-                <div className="w-px h-3.5 bg-slate-200" />
+            <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm no-drag">
                 <button
                     onClick={e => { e.stopPropagation(); onToggleActive(index); }}
                     className={`p-1 rounded hover:bg-slate-100 transition-colors ${block.isActive ? 'text-slate-400 hover:text-slate-600' : 'text-error'}`}
@@ -963,6 +958,9 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     onDuplicateBlock,
     templateName,
     isDirty,
+    headerCollapsed,
+    onToggleHeader,
+    rightActions,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
 
@@ -984,7 +982,31 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                 <span className="text-[10px] font-medium text-text-dim transform -translate-x-10">
                     {activeCount} / {blocks.length} visibles
                 </span>
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-3.5 shrink-0">
+                    {rightActions}
+                    {rightActions && <div className="w-px h-3.5 bg-border-thin" />}
+                    {onToggleHeader && (
+                        <button
+                            onClick={onToggleHeader}
+                            className="p-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-medium"
+                            title={headerCollapsed ? "Mostrar cabecera de la página" : "Ocultar cabecera (Modo Enfoque)"}
+                        >
+                            {headerCollapsed ? (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m18 15-6-6-6 6" /></svg>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold">Mostrar Cabecera</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m6 9 6 6 6-6" /></svg>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold text-text-dim/60">Ocultar Cabecera</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {onToggleHeader && <div className="w-px h-3.5 bg-border-thin" />}
+
                     {isDirty !== undefined && (
                         isDirty ? (
                             <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
@@ -1002,7 +1024,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
             </div>
 
             {/* Scroll del lienzo */}
-            <div className="flex-1 overflow-y-auto p-8 bg-bg-deep" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep" style={{ scrollbarWidth: 'thin' }}>
 
                 {/* Contenedor simulando hoja A4 */}
                 <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all">

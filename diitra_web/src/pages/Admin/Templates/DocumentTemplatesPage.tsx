@@ -34,6 +34,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 import type { DocumentTemplateDto, DocumentBlock, BlockType } from './types';
 import { TemplateCatalog } from './components/TemplateCatalog';
 import { BlockCanvas } from './components/BlockCanvas';
@@ -54,19 +55,70 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'rubric_table'
 ];
 
+// Sensor personalizado para evitar que el arrastre se active al interactuar con elementos editables
+class SmartPointerSensor extends PointerSensor {
+    static activators = [
+        {
+            eventName: 'onPointerDown' as const,
+            handler: ({ nativeEvent: event }: { nativeEvent: PointerEvent }) => {
+                let cur = event.target as HTMLElement | null;
+                while (cur) {
+                    if (
+                        cur.tagName === 'INPUT' ||
+                        cur.tagName === 'TEXTAREA' ||
+                        cur.tagName === 'SELECT' ||
+                        cur.tagName === 'BUTTON' ||
+                        cur.tagName === 'A' ||
+                        cur.contentEditable === 'true' ||
+                        (cur.classList && (cur.classList.contains('no-drag') || cur.classList.contains('interactive-element')))
+                    ) {
+                        return false;
+                    }
+                    cur = cur.parentElement;
+                }
+                return true;
+            },
+        },
+    ];
+}
+
 const DocumentTemplatesPage: React.FC = () => {
     const [templates, setTemplates] = useState<DocumentTemplateDto[]>([]);
     const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
-    
+    const [isDark, setIsDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        return () => observer.disconnect();
+    }, []);
+
     // Lista de Bloques del Documento (Gutenberg/Word Style)
     const [blocks, setBlocks] = useState<DocumentBlock[]>([]);
     const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
     const [showPalette, setShowPalette] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<'catalog' | 'canvas' | 'properties'>('catalog');
     const paletteRef = useRef<HTMLDivElement>(null);
+    const [headerCollapsed, setHeaderCollapsed] = useState(false);
+
+    // Notificar al Layout global sobre el cambio de estado de la barra superior
+    useEffect(() => {
+        const event = new CustomEvent('diitra-topbar-collapse-change', { detail: { collapsed: headerCollapsed } });
+        window.dispatchEvent(event);
+    }, [headerCollapsed]);
+
+    // Al desmontar la página, asegurarse de restaurar la barra superior global
+    useEffect(() => {
+        return () => {
+            const event = new CustomEvent('diitra-topbar-collapse-change', { detail: { collapsed: false } });
+            window.dispatchEvent(event);
+        };
+    }, []);
 
     // Prevenir la recarga/cierre de la pestaña si hay cambios pendientes
     useEffect(() => {
@@ -83,7 +135,7 @@ const DocumentTemplatesPage: React.FC = () => {
 
     // Sensores para Drag & Drop
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
@@ -110,6 +162,7 @@ const DocumentTemplatesPage: React.FC = () => {
     }, []);
 
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
 
     const fetchTemplates = async () => {
         setLoading(true);
@@ -136,7 +189,7 @@ const DocumentTemplatesPage: React.FC = () => {
             setSelectedTemplate(fullData);
 
             let loadedBlocks: DocumentBlock[] = [];
-            
+
             // Intentar extraer los bloques desde el comentario HTML
             if (fullData.htmlContent) {
                 const match = fullData.htmlContent.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
@@ -144,7 +197,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     try {
                         const decoded = decodeURIComponent(escape(atob(match[1])));
                         loadedBlocks = JSON.parse(decoded);
-                    } catch {}
+                    } catch { }
                 }
             }
 
@@ -154,7 +207,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
                         loadedBlocks = parsed;
                     }
-                } catch {}
+                } catch { }
             }
 
             // Estructura por defecto
@@ -165,15 +218,15 @@ const DocumentTemplatesPage: React.FC = () => {
                     title: "Portada Institucional (Rombos)",
                     isActive: true,
                     config: {
-                        tituloSuperior: tmpl.code === "INFORME_AVANCE" 
-                            ? "INFORME DE AVANCE DE INVESTIGACIÓN" 
+                        tituloSuperior: tmpl.code === "INFORME_AVANCE"
+                            ? "INFORME DE AVANCE DE INVESTIGACIÓN"
                             : tmpl.code === "INFORME_FINAL_INVESTIGACION"
-                            ? "INFORME FINAL DE INVESTIGACIÓN"
-                            : tmpl.code === "DICTAMEN_ARBITRAJE"
-                            ? "ACTA DE DICTAMEN DE ARBITRAJE"
-                            : tmpl.code === "REPORTE_ANALITICAS"
-                            ? "REPORTE DE ANALÍTICAS DE INVESTIGACIÓN"
-                            : "PROYECTO DE INVESTIGACIÓN",
+                                ? "INFORME FINAL DE INVESTIGACIÓN"
+                                : tmpl.code === "DICTAMEN_ARBITRAJE"
+                                    ? "ACTA DE DICTAMEN DE ARBITRAJE"
+                                    : tmpl.code === "REPORTE_ANALITICAS"
+                                        ? "REPORTE DE ANALÍTICAS DE INVESTIGACIÓN"
+                                        : "PROYECTO DE INVESTIGACIÓN",
                         carreraPorDefecto: "TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE",
                         periodoPorDefecto: "PERIODO ACADÉMICO MARZO 2025 - SEPTIEMBRE 2025",
                         colorTema: "#1e2a4a"
@@ -329,45 +382,56 @@ const DocumentTemplatesPage: React.FC = () => {
 
         switch (type) {
             case 'title':
-                newBlock = { id: newId, type, title: 'Título de Sección', isActive: true,
-                    config: { text: 'NUEVA SECCIÓN DE DOCUMENTO', fontSize: 'H2', color: '#1e2a4a', alignment: 'left' } };
+                newBlock = {
+                    id: newId, type, title: 'Título de Sección', isActive: true,
+                    config: { text: 'NUEVA SECCIÓN DE DOCUMENTO', fontSize: 'H2', color: '#1e2a4a', alignment: 'left' }
+                };
                 break;
             case 'rich_text':
-                newBlock = { id: newId, type, title: 'Párrafo de Texto Enriquecido', isActive: true,
-                    config: { html: '<p>Escribe el contenido aquí. Puedes usar <strong>negritas</strong>, <em>cursiva</em>, listas y hasta insertar tablas internas.</p>' } };
+                newBlock = {
+                    id: newId, type, title: 'Párrafo de Texto Enriquecido', isActive: true,
+                    config: { html: '<p>Escribe el contenido aquí. Puedes usar <strong>negritas</strong>, <em>cursiva</em>, listas y hasta insertar tablas internas.</p>' }
+                };
                 break;
             case 'advanced_table':
-                newBlock = { id: newId, type, title: 'Tabla Avanzada', isActive: true,
+                newBlock = {
+                    id: newId, type, title: 'Tabla Avanzada', isActive: true,
                     config: {
                         headerStyle: 'blue',
                         headers: ['Campo', 'Descripción'],
                         colWidths: ['30%', '70%'],
                         rows: [{ cells: ['', ''] }, { cells: ['', ''] }]
-                    } };
+                    }
+                };
                 break;
             case 'multi_section_table':
-                newBlock = { id: newId, type, title: 'Tabla Multi-Sección', isActive: true,
+                newBlock = {
+                    id: newId, type, title: 'Tabla Multi-Sección', isActive: true,
                     config: {
                         sections: [
                             { title: 'Sección 1', headerStyle: 'blue', headers: ['Descripción', 'Cantidad', 'Fuente'], colWidths: ['50%', '25%', '25%'], rows: [{ cells: ['', '', ''] }] },
                             { title: 'Sección 2', headerStyle: 'gold', headers: ['Descripción', 'Costo'], colWidths: ['70%', '30%'], rows: [{ cells: ['', ''] }] },
                         ]
-                    } };
+                    }
+                };
                 break;
             case 'two_column':
-                newBlock = { id: newId, type, title: 'Bloque Dos Columnas', isActive: true,
+                newBlock = {
+                    id: newId, type, title: 'Bloque Dos Columnas', isActive: true,
                     config: {
                         leftTitle: 'COLUMNA IZQUIERDA', leftHeaderStyle: 'blue', leftContent: '<p>Contenido izquierdo...</p>',
                         rightTitle: 'COLUMNA DERECHA', rightHeaderStyle: 'blue', rightContent: '<p>Contenido derecho...</p>'
-                    } };
+                    }
+                };
                 break;
             case 'page_break':
                 newBlock = { id: newId, type, title: 'Salto de Página', isActive: true, config: {} };
                 break;
             case 'gantt':
-                newBlock = { id: newId, type, title: 'Cronograma de Actividades (Gantt)', isActive: true,
+                newBlock = {
+                    id: newId, type, title: 'Cronograma de Actividades (Gantt)', isActive: true,
                     config: {
-                        ganttMonths: ['Marzo','Abril','Mayo','Junio','Julio','Agosto','Sept','Octubre','Nov','Dic','Enero','Febrero'],
+                        ganttMonths: ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'],
                         ganttObjectives: [
                             {
                                 id: `obj-${Date.now()}`,
@@ -378,29 +442,38 @@ const DocumentTemplatesPage: React.FC = () => {
                                 ]
                             }
                         ]
-                    } };
+                    }
+                };
                 break;
             case 'cover':
-                newBlock = { id: newId, type, title: 'Portada Institucional', isActive: true,
-                    config: { tituloSuperior: 'NUEVO DOCUMENTO', carreraPorDefecto: 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', periodoPorDefecto: 'PERIODO ACADÉMICO 2025-2026', colorTema: '#1e2a4a' } };
+                newBlock = {
+                    id: newId, type, title: 'Portada Institucional', isActive: true,
+                    config: { tituloSuperior: 'NUEVO DOCUMENTO', carreraPorDefecto: 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', periodoPorDefecto: 'PERIODO ACADÉMICO 2025-2026', colorTema: '#1e2a4a' }
+                };
                 break;
             case 'researchers_table':
-                newBlock = { id: newId, type, title: 'Tabla de Participantes', isActive: true,
-                    config: { mostrarCedula: true, mostrarHoras: true, mostrarEmail: false, mostrarNivelAcademico: false, mostrarTelefono: false } };
+                newBlock = {
+                    id: newId, type, title: 'Tabla de Participantes', isActive: true,
+                    config: { mostrarCedula: true, mostrarHoras: true, mostrarEmail: false, mostrarNivelAcademico: false, mostrarTelefono: false }
+                };
                 break;
             case 'rubric_table':
-                newBlock = { id: newId, type, title: 'Tabla de Criterios (Rúbrica)', isActive: true,
-                    config: { mostrarDescripcionCriterio: true, mostrarObservacionesCriterio: true } };
+                newBlock = {
+                    id: newId, type, title: 'Tabla de Criterios (Rúbrica)', isActive: true,
+                    config: { mostrarDescripcionCriterio: true, mostrarObservacionesCriterio: true }
+                };
                 break;
             case 'signatures':
-                newBlock = { id: newId, type, title: 'Bloque de Firmas y Trazabilidad', isActive: true,
+                newBlock = {
+                    id: newId, type, title: 'Bloque de Firmas y Trazabilidad', isActive: true,
                     config: {
                         signatories: [
                             { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
                             { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' }
                         ],
                         textoPieFirma: 'Comisión de Acreditación e Investigación IST Traversari'
-                    } };
+                    }
+                };
                 break;
             case 'project_general_section':
                 newBlock = { id: newId, type, title: 'Ficha de Identificación del Proyecto', isActive: true, config: {} };
@@ -513,6 +586,17 @@ const DocumentTemplatesPage: React.FC = () => {
 
     const handleSaveTemplate = async () => {
         if (!selectedTemplate) return;
+
+        const ok = await confirm({
+            title: 'Publicar Plantilla',
+            message: `¿Estás seguro de que deseas publicar la plantilla '${selectedTemplate.name}'? Todos los nuevos documentos generados utilizarán esta versión.`,
+            confirmText: 'Sí, publicar',
+            cancelText: 'Cancelar',
+            variant: 'primary'
+        });
+
+        if (!ok) return;
+
         setSaving(true);
         try {
             const generatedHtml = generateHtmlFromBlocks(blocks);
@@ -528,17 +612,12 @@ const DocumentTemplatesPage: React.FC = () => {
                 collaborativeFieldsJson
             });
 
-            await api.put(`/admin/templates/${selectedTemplate.code}/signature-config`, {
-                requiresSignature: selectedTemplate.requiresElectronicSignature,
-                signatureType: selectedTemplate.signatureType
-            });
-
             addToast("Plantilla Publicada", `La maqueta visual de la plantilla '${selectedTemplate.name}' ha sido publicada con éxito.`, "success");
             setIsDirty(false);
-            
+
             const resCatalog = await api.get('/admin/templates');
             setTemplates(resCatalog.data || []);
-            
+
             const updated = resCatalog.data.find((t: any) => t.code === selectedTemplate.code);
             if (updated) {
                 let extractedBlocks = blocks;
@@ -548,7 +627,7 @@ const DocumentTemplatesPage: React.FC = () => {
                         try {
                             const decoded = decodeURIComponent(escape(atob(match[1])));
                             extractedBlocks = JSON.parse(decoded);
-                        } catch {}
+                        } catch { }
                     }
                 }
                 setSelectedTemplate(prev => prev ? { ...prev, ...updated } : null);
@@ -602,19 +681,25 @@ const DocumentTemplatesPage: React.FC = () => {
     const activeBlock = blocks.find(b => b.id === activeBlockId);
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:px-10 md:pt-8 md:pb-4 flex flex-col h-[calc(100vh-56px)] overflow-hidden font-sans">
-            {/* Cabecera Principal */}
-            <PageHeader
-                kicker="Administración de Plantillas"
-                icon={FileCode2}
-                title="Editor de Plantillas"
-                description="Creador visual de documentos. Arrastra bloques, añade tablas y define la maquetación del PDF oficial."
-                className="relative z-30"
-            >
-                {selectedTemplate && (
-                    <div className="flex items-center gap-2 mt-3 md:mt-0 md:translate-y-11">
- 
+        <main className={`flex-1 bg-bg-deep p-4 md:px-10 md:pb-4 flex flex-col h-full overflow-hidden relative transition-all duration-300 ease-in-out ${headerCollapsed
+            ? 'md:pt-3'
+            : 'md:pt-10'
+        }`}>
+            {/* Cabecera Principal Colapsable */}
+            <div className={`transition-all duration-300 ease-in-out origin-top shrink-0 relative ${headerCollapsed
+                ? 'max-h-0 opacity-0 mb-0 pb-0 pointer-events-none overflow-hidden'
+                : 'max-h-[170px] opacity-100 pb-5 mb-1 overflow-visible'
+                }`}>
+                <PageHeader
+                    kicker="Administración de Plantillas"
+                    icon={FileCode2}
+                    title="Editor de Plantillas"
+                    description="Creador visual de documentos. Arrastra bloques, añade tablas y define la maquetación del PDF oficial."
+                    className="relative z-30"
+                />
 
+                {selectedTemplate && !headerCollapsed && (
+                    <div className="absolute bottom-1 right-0 flex items-center gap-2.5 z-30">
                         {/* Paleta de bloques tipo Notion */}
                         <div ref={paletteRef} className="relative">
                             <button
@@ -625,7 +710,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                 Agregar Bloque
                                 <ChevronDown className={`w-3 h-3 transition-transform ${showPalette ? 'rotate-180' : ''}`} />
                             </button>
- 
+
                             {showPalette && (
                                 <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
                                     {/* ── Bloques de Contenido ── */}
@@ -633,14 +718,14 @@ const DocumentTemplatesPage: React.FC = () => {
                                         <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {([
-                                                { type: 'cover' as const,             icon: Image,         label: 'Portada Institucional',   desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/5' },
-                                                { type: 'title' as const,             icon: Heading1,      label: 'Título de Sección',       desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/5' },
-                                                { type: 'rich_text' as const,         icon: AlignLeft,     label: 'Párrafo Enriquecido',     desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-500/5' },
-                                                { type: 'advanced_table' as const,    icon: Grid,          label: 'Tabla Avanzada',          desc: 'Tabla con filas y columnas fijas.',   color: 'text-blue-500 bg-blue-500/5' },
-                                                { type: 'multi_section_table' as const,icon: LayoutTemplate,label: 'Tabla Multi-Sección',    desc: 'Conjunto de sub-tablas fijas.',          color: 'text-blue-500 bg-blue-500/5' },
-                                                { type: 'two_column' as const,        icon: Columns2,      label: 'Dos Columnas',            desc: 'Dos bloques de texto lado a lado.',  color: 'text-blue-500 bg-blue-500/5' },
-                                                { type: 'page_break' as const,        icon: Minus,         label: 'Salto de Página',         desc: 'Forzar salto de página en el PDF.',  color: 'text-zinc-400 bg-zinc-400/5' },
-                                                { type: 'gantt' as const,              icon: BarChart2,     label: 'Diagrama de Gantt',        desc: 'Pestaña de Cronograma en Workspace.',  color: 'text-indigo-500 bg-indigo-500/5' },
+                                                { type: 'cover' as const, icon: Image, label: 'Portada Institucional', desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'title' as const, icon: Heading1, label: 'Título de Sección', desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'rich_text' as const, icon: AlignLeft, label: 'Párrafo Enriquecido', desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-500/5' },
+                                                { type: 'advanced_table' as const, icon: Grid, label: 'Tabla Avanzada', desc: 'Tabla con filas y columnas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'multi_section_table' as const, icon: LayoutTemplate, label: 'Tabla Multi-Sección', desc: 'Conjunto de sub-tablas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'two_column' as const, icon: Columns2, label: 'Dos Columnas', desc: 'Dos bloques de texto lado a lado.', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'page_break' as const, icon: Minus, label: 'Salto de Página', desc: 'Forzar salto de página en el PDF.', color: 'text-zinc-400 bg-zinc-400/5' },
+                                                { type: 'gantt' as const, icon: BarChart2, label: 'Diagrama de Gantt', desc: 'Pestaña de Cronograma en Workspace.', color: 'text-indigo-500 bg-indigo-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;
                                                 const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
@@ -672,14 +757,14 @@ const DocumentTemplatesPage: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-2">
                                             {([
                                                 { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
-                                                { type: 'researchers_table' as const, icon: Users,   label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.',        color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'researchers_table' as const, icon: Users, label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_technical_section' as const, icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_ethics_report' as const, icon: Award, label: 'Acta de Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
-                                                { type: 'impacts' as const,           icon: Target,  label: 'Matriz de Impactos',       desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
-                                                { type: 'rubric_table' as const,      icon: Award,   label: 'Rúbrica de Calificación',  desc: 'Criterios para los revisores pares.',  color: 'text-emerald-500 bg-emerald-500/5' },
-                                                { type: 'signatures' as const,        icon: PenLine, label: 'Bloque de Firmas',         desc: 'Firmas físicas o electrónica CACES.',color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;
                                                 const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
@@ -722,48 +807,155 @@ const DocumentTemplatesPage: React.FC = () => {
                         </button>
                     </div>
                 )}
-            </PageHeader>
- 
+            </div>
+
+            {selectedTemplate && headerCollapsed && (
+                <div className="absolute top-[13px] right-6 md:right-14 z-50 flex items-center gap-3 animate-fade-in">
+                    {/* Paleta de bloques tipo Notion */}
+                    <div ref={paletteRef} className="relative">
+                        <button
+                            onClick={() => setShowPalette(p => !p)}
+                            title="Agregar Bloque"
+                            className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-none shrink-0"
+                        >
+                            <Plus className="w-5 h-5" />
+                        </button>
+
+                        {showPalette && (
+                            <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
+                                {/* ── Bloques de Contenido ── */}
+                                <div>
+                                    <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {([
+                                            { type: 'cover' as const, icon: Image, label: 'Portada Institucional', desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/5' },
+                                            { type: 'title' as const, icon: Heading1, label: 'Título de Sección', desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/5' },
+                                            { type: 'rich_text' as const, icon: AlignLeft, label: 'Párrafo Enriquecido', desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-500/5' },
+                                            { type: 'advanced_table' as const, icon: Grid, label: 'Tabla Avanzada', desc: 'Tabla con filas y columnas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                            { type: 'multi_section_table' as const, icon: LayoutTemplate, label: 'Tabla Multi-Sección', desc: 'Conjunto de sub-tablas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                            { type: 'two_column' as const, icon: Columns2, label: 'Dos Columnas', desc: 'Dos bloques de texto lado a lado.', color: 'text-blue-500 bg-blue-500/5' },
+                                            { type: 'page_break' as const, icon: Minus, label: 'Salto de Página', desc: 'Forzar salto de página en el PDF.', color: 'text-zinc-400 bg-zinc-400/5' },
+                                            { type: 'gantt' as const, icon: BarChart2, label: 'Diagrama de Gantt', desc: 'Pestaña de Cronograma en Workspace.', color: 'text-indigo-500 bg-indigo-500/5' },
+                                        ]).map(item => {
+                                            const ItemIcon = item.icon;
+                                            const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
+                                            return (
+                                                <button key={item.type}
+                                                    disabled={alreadyExists}
+                                                    onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
+                                                    className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
+                                                >
+                                                    <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
+                                                        <ItemIcon className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
+                                                            <span>{item.label}</span>
+                                                            {alreadyExists && <span className="text-[8px] font-medium font-mono bg-surface-hover border border-border-thin/30 px-1.5 py-0.5 rounded text-text-dim shrink-0">Añadido</span>}
+                                                        </p>
+                                                        <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ── Bloques Dinámicos ── */}
+                                <div className="border-t border-border-thin/30 pt-3">
+                                    <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques de Base de Datos (Dinámicos)</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {([
+                                            { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'researchers_table' as const, icon: Users, label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'project_technical_section' as const, icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'project_ethics_report' as const, icon: Award, label: 'Acta de Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                            { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                        ]).map(item => {
+                                            const ItemIcon = item.icon;
+                                            const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
+                                            return (
+                                                <button key={item.type}
+                                                    disabled={alreadyExists}
+                                                    onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
+                                                    className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
+                                                >
+                                                    <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
+                                                        <ItemIcon className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
+                                                            <span>{item.label}</span>
+                                                            {alreadyExists && <span className="text-[8px] font-medium font-mono bg-emerald-500/5 border border-emerald-500/15 px-1.5 py-0.5 rounded text-emerald-600 shrink-0">Añadido</span>}
+                                                        </p>
+                                                        <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={handleSaveTemplate}
+                        disabled={saving}
+                        title={`Guardar y Publicar v${selectedTemplate.version}`}
+                        className="w-10 h-10 rounded-full bg-text-main text-bg-deep flex items-center justify-center hover:opacity-90 transition-all shadow-none disabled:opacity-50 cursor-pointer shrink-0"
+                    >
+                        {saving ? (
+                            <RefreshCw className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <Save className="w-5 h-5" />
+                        )}
+                    </button>
+                </div>
+            )}
+
             {selectedTemplate && (
                 <div className="flex xl:hidden items-center bg-surface border border-border-thin rounded-md p-1 shrink-0 mt-3 gap-0.5">
                     {([
-                        { key: 'catalog',    label: 'Catálogo' },
-                        { key: 'canvas',     label: `Documento (${blocks.length})` },
+                        { key: 'catalog', label: 'Catálogo' },
+                        { key: 'canvas', label: `Documento (${blocks.length})` },
                         { key: 'properties', label: 'Propiedades' },
                     ] as const).map(tab => (
                         <button key={tab.key}
                             onClick={() => setActiveMobileTab(tab.key)}
-                            className={`flex-1 text-center py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                                activeMobileTab === tab.key
-                                    ? 'bg-surface-hover text-text-main border border-border-thin'
-                                    : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex-1 text-center py-1.5 rounded-md text-[10px] font-bold transition-all ${activeMobileTab === tab.key
+                                ? 'bg-surface-hover text-text-main border border-border-thin'
+                                : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             {tab.label}
                         </button>
                     ))}
                 </div>
             )}
- 
+
             {loading && templates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center flex-1">
                     <RefreshCw className="w-8 h-8 text-brand animate-spin mb-2" />
                     <span className="text-xs text-text-dim">Cargando catálogo Traversari...</span>
                 </div>
             ) : (
-                <div className="flex flex-1 overflow-hidden min-h-0 mt-4 gap-3 flex-col xl:flex-row">
- 
+                <div className="flex flex-1 overflow-hidden min-h-0 mt-0 gap-3 flex-col xl:flex-row">
+
                     {/* ── CATÁLOGO ── */}
-                    <div className={`w-full xl:w-60 shrink-0 flex flex-col min-h-0 ${
-                        selectedTemplate && activeMobileTab !== 'catalog' ? 'hidden xl:flex' : 'flex'
-                    }`}>
+                    <div className={`w-full xl:w-60 shrink-0 flex flex-col min-h-0 ${selectedTemplate && activeMobileTab !== 'catalog' ? 'hidden xl:flex' : 'flex'
+                        }`}>
                         <TemplateCatalog
                             templates={templates}
                             selectedTemplate={selectedTemplate}
                             onSelectTemplate={handleSelectTemplate}
                         />
                     </div>
- 
+
                     {selectedTemplate ? (
                         <DndContext
                             sensors={sensors}
@@ -771,9 +963,8 @@ const DocumentTemplatesPage: React.FC = () => {
                             onDragEnd={handleDragEnd}
                         >
                             {/* ── ESTRUCTURA (Lienzo visual A4 central) ── */}
-                            <div className={`flex-1 flex flex-col min-w-0 min-h-0 ${
-                                activeMobileTab === 'canvas' ? 'flex' : 'hidden xl:flex'
-                            }`}>
+                            <div className={`flex-1 flex flex-col min-w-0 min-h-0 ${activeMobileTab === 'canvas' ? 'flex' : 'hidden xl:flex'
+                                }`}>
                                 <BlockCanvas
                                     blocks={blocks}
                                     activeBlockId={activeBlockId}
@@ -786,13 +977,122 @@ const DocumentTemplatesPage: React.FC = () => {
                                     onDuplicateBlock={handleDuplicateBlock}
                                     templateName={selectedTemplate.name}
                                     isDirty={isDirty}
+                                    headerCollapsed={headerCollapsed}
+                                    onToggleHeader={() => setHeaderCollapsed(c => !c)}
+                                    rightActions={headerCollapsed ? (
+                                        <div className="flex items-center gap-2">
+                                            {/* Paleta de bloques tipo Notion */}
+                                            <div ref={paletteRef} className="relative">
+                                                <button
+                                                    onClick={() => setShowPalette(p => !p)}
+                                                    title="Agregar Bloque"
+                                                    className="w-9 h-9 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-none shrink-0"
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
+
+                                                {showPalette && (
+                                                    <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
+                                                        {/* ── Bloques de Contenido ── */}
+                                                        <div>
+                                                            <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {([
+                                                                    { type: 'cover' as const, icon: Image, label: 'Portada Institucional', desc: 'Portada del PDF con logos y título.', color: 'text-blue-500 bg-blue-500/5' },
+                                                                    { type: 'title' as const, icon: Heading1, label: 'Título de Sección', desc: 'Encabezado de sección para el PDF.', color: 'text-blue-500 bg-blue-500/5' },
+                                                                    { type: 'rich_text' as const, icon: AlignLeft, label: 'Párrafo Enriquecido', desc: 'Editor colaborativo en el Workspace.', color: 'text-pink-500 bg-pink-500/5' },
+                                                                    { type: 'advanced_table' as const, icon: Grid, label: 'Tabla Avanzada', desc: 'Tabla con filas y columnas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                                                    { type: 'multi_section_table' as const, icon: LayoutTemplate, label: 'Tabla Multi-Sección', desc: 'Conjunto de sub-tablas fijas.', color: 'text-blue-500 bg-blue-500/5' },
+                                                                    { type: 'two_column' as const, icon: Columns2, label: 'Dos Columnas', desc: 'Dos bloques de texto lado a lado.', color: 'text-blue-500 bg-blue-500/5' },
+                                                                    { type: 'page_break' as const, icon: Minus, label: 'Salto de Página', desc: 'Forzar salto de página en el PDF.', color: 'text-zinc-400 bg-zinc-400/5' },
+                                                                    { type: 'gantt' as const, icon: BarChart2, label: 'Diagrama de Gantt', desc: 'Pestaña de Cronograma en Workspace.', color: 'text-indigo-500 bg-indigo-500/5' },
+                                                                ]).map(item => {
+                                                                    const ItemIcon = item.icon;
+                                                                    const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
+                                                                    return (
+                                                                        <button key={item.type}
+                                                                            disabled={alreadyExists}
+                                                                            onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
+                                                                            className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
+                                                                        >
+                                                                            <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
+                                                                                <ItemIcon className="w-3.5 h-3.5" />
+                                                                            </div>
+                                                                            <div className="min-w-0">
+                                                                                <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
+                                                                                    <span>{item.label}</span>
+                                                                                    {alreadyExists && <span className="text-[8px] font-medium font-mono bg-surface-hover border border-border-thin/30 px-1.5 py-0.5 rounded text-text-dim shrink-0">Añadido</span>}
+                                                                                </p>
+                                                                                <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
+                                                                            </div>
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* ── Bloques Dinámicos ── */}
+                                                        <div className="border-t border-border-thin/30 pt-3">
+                                                            <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques de Base de Datos (Dinámicos)</p>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {([
+                                                                    { type: 'project_general_section' as const, icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'researchers_table' as const, icon: Users, label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'project_technical_section' as const, icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'project_ethics_report' as const, icon: Award, label: 'Acta de Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                    { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                                ]).map(item => {
+                                                                    const ItemIcon = item.icon;
+                                                                    const alreadyExists = UNIQUE_BLOCK_TYPES.includes(item.type) && blocks.some(b => b.type === item.type);
+                                                                    return (
+                                                                        <button key={item.type}
+                                                                            disabled={alreadyExists}
+                                                                            onClick={() => { handleAddBlock(item.type); setShowPalette(false); }}
+                                                                            className={`flex items-start gap-2.5 p-2 rounded-md text-left transition-all ${alreadyExists ? 'opacity-35 cursor-not-allowed' : 'hover:bg-surface-hover hover:text-text-main cursor-pointer'}`}
+                                                                        >
+                                                                            <div className={`p-1.5 rounded shrink-0 mt-0.5 ${item.color}`}>
+                                                                                <ItemIcon className="w-3.5 h-3.5" />
+                                                                            </div>
+                                                                            <div className="min-w-0">
+                                                                                <p className="text-[11px] font-bold text-text-main truncate flex items-center gap-1.5">
+                                                                                    <span>{item.label}</span>
+                                                                                    {alreadyExists && <span className="text-[8px] font-medium font-mono bg-emerald-500/5 border border-emerald-500/15 px-1.5 py-0.5 rounded text-emerald-600 shrink-0">Añadido</span>}
+                                                                                </p>
+                                                                                <p className="text-[9px] text-text-dim leading-snug mt-0.5 line-clamp-2">{item.desc}</p>
+                                                                            </div>
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={handleSaveTemplate}
+                                                disabled={saving}
+                                                title={`Guardar y Publicar v${selectedTemplate.version}`}
+                                                className="w-9 h-9 rounded-full bg-text-main text-bg-deep flex items-center justify-center hover:opacity-90 transition-all shadow-none disabled:opacity-50 cursor-pointer shrink-0"
+                                            >
+                                                {saving ? (
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    ) : null}
                                 />
                             </div>
- 
+
                             {/* ── PROPIEDADES ── */}
-                            <div className={`xl:w-96 shrink-0 flex flex-col min-h-0 ${
-                                activeMobileTab === 'properties' ? 'flex w-full' : 'hidden xl:flex'
-                            }`}>
+                            <div className={`xl:w-96 shrink-0 flex flex-col min-h-0 ${activeMobileTab === 'properties' ? 'flex w-full' : 'hidden xl:flex'
+                                }`}>
                                 <BlockProperties
                                     activeBlock={activeBlock}
                                     onUpdateConfig={handleUpdateConfig}
@@ -804,9 +1104,11 @@ const DocumentTemplatesPage: React.FC = () => {
                         </DndContext>
                     ) : (
                         <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none border border-border-thin rounded-md bg-surface">
-                            <div className="p-4 bg-surface-hover rounded-full text-text-dim/60 mb-3 border border-border-thin/60">
-                                <FileCode2 className="w-8 h-8" />
-                            </div>
+                            <img 
+                                src={isDark ? "/logo_blanco.webp" : "/logo_negro.webp"} 
+                                className="w-14 h-14 object-contain select-none pointer-events-none mb-3.5" 
+                                alt="Logo DIITRA" 
+                            />
                             <h3 className="text-sm font-bold text-text-main">
                                 Ninguna plantilla seleccionada
                             </h3>
