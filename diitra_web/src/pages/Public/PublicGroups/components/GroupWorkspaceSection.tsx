@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, Mail } from 'lucide-react';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 interface GroupWorkspaceSectionProps {
     selectedGroup: Group;

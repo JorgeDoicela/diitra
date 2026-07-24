@@ -1,4 +1,5 @@
-import { FileText, Users, Activity, DollarSign, Target, BookOpen, LucideIcon } from 'lucide-react';
+import { FileText, Users, Activity, DollarSign, Target, BookOpen } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface ProjectDetail {
     uuid: string;

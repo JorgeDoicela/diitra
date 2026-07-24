@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { SECTIONS, SectionComment } from '../types/revisionTecnicaTypes';
+import { SECTIONS } from '../types/revisionTecnicaTypes';
+import type { SectionComment } from '../types/revisionTecnicaTypes';
 
 interface SectionsSidebarProps {
     isOpen: boolean;

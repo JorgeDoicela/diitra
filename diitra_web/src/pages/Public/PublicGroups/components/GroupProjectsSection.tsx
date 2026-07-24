@@ -1,6 +1,7 @@
 import React from 'react';
 import { Activity } from 'lucide-react';
-import { Group, estadoColor } from '../types';
+import { estadoColor } from '../types';
+import type { Group } from '../types';
 
 interface GroupProjectsSectionProps {
     selectedGroup: Group;

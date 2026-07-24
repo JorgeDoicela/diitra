@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { SectionComment, FIELD_LABELS } from '../types/revisionTecnicaTypes';
+import { FIELD_LABELS } from '../types/revisionTecnicaTypes';
+import type { SectionComment } from '../types/revisionTecnicaTypes';
 import api from '../../../../api/axios_config';
 
 interface UseRevisionTecnicaCommentsParams {

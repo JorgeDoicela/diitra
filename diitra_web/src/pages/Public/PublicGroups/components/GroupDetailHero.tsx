@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Layers, Users, FileText, BookOpen, Mail } from 'lucide-react';
-import { Group, formatNombre, formatFecha } from '../types';
+import { formatNombre, formatFecha } from '../types';
+import type { Group } from '../types';
 
 interface GroupDetailHeroProps {
     selectedGroup: Group;

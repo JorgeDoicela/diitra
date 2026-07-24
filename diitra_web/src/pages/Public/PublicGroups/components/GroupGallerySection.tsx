@@ -1,6 +1,6 @@
 import React from 'react';
 import { Camera, Trash } from 'lucide-react';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 interface GroupGallerySectionProps {
     selectedGroup: Group;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 interface LineaStat {
     nombre: string;

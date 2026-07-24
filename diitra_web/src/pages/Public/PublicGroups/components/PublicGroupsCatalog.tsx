@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ChevronRight, Loader2 } from 'lucide-react';
-import { Group, formatNombre } from '../types';
+import { formatNombre } from '../types';
+import type { Group } from '../types';
 
 interface PublicGroupsCatalogProps {
     selectedType: string;

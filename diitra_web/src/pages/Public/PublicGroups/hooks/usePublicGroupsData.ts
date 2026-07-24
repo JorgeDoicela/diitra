@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../../../api/axios_config';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 export const usePublicGroupsData = (uuid?: string) => {
     const [groups, setGroups] = useState<Group[]>([]);

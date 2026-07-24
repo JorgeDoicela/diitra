@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight, Loader2 } from 'lucide-react';
-import { Group, estadoColor } from '../types';
+import { estadoColor } from '../types';
+import type { Group } from '../types';
 
 interface PublicGroupsHeroProps {
     heroRef: React.RefObject<HTMLDivElement>;

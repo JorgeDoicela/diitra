@@ -1,5 +1,5 @@
 import React from 'react';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 interface GroupMembersSectionProps {
     selectedGroup: Group;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
-import { Group } from '../types';
+import type { Group } from '../types';
 
 export const useGroupDetail = (uuid?: string) => {
     const { user, isAdmin, isAuthenticated } = useAuth();
