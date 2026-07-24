@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FIELD_LABELS } from '../types/revisionTecnicaTypes';
 import type { SectionComment } from '../types/revisionTecnicaTypes';
 import api from '../../../../api/axios_config';
@@ -19,10 +19,29 @@ export const useRevisionTecnicaComments = ({
     const [isListening, setIsListening] = useState(false);
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
 
+    const prevActiveFieldRef = useRef(activeCommentField);
+    const commentsLoadedRef = useRef(false);
+
     useEffect(() => {
-        setContextualInput('');
-        setEditingCommentId(null);
-    }, [activeCommentField]);
+        const hasComments = Object.keys(comments).length > 0;
+        const fieldChanged = prevActiveFieldRef.current !== activeCommentField;
+        
+        if (fieldChanged || (hasComments && !commentsLoadedRef.current)) {
+            const fieldComments = comments[activeCommentField];
+            if (fieldComments && fieldComments.length > 0) {
+                setContextualInput(fieldComments[0].text || '');
+            } else {
+                setContextualInput('');
+            }
+            setEditingCommentId(null);
+            
+            prevActiveFieldRef.current = activeCommentField;
+            if (hasComments) {
+                commentsLoadedRef.current = true;
+            }
+        }
+    }, [activeCommentField, comments, setContextualInput]);
+
 
     const addCommentLocal = (section: string, comment: SectionComment) => {
         setComments(prev => {

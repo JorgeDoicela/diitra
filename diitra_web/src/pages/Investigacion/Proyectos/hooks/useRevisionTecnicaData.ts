@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FIELD_LABELS } from '../types/revisionTecnicaTypes';
 import type { ProjectDetail, SectionComment } from '../types/revisionTecnicaTypes';
 import api from '../../../../api/axios_config';
@@ -24,6 +24,14 @@ export const useRevisionTecnicaData = ({
     activeCommentField,
     setContextualInput
 }: UseRevisionTecnicaDataParams) => {
+    const addToastRef = useRef(addToast);
+    const confirmRef = useRef(confirm);
+
+    useEffect(() => {
+        addToastRef.current = addToast;
+        confirmRef.current = confirm;
+    }, [addToast, confirm]);
+
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [investigadores, setInvestigadores] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -152,11 +160,6 @@ export const useRevisionTecnicaData = ({
                         setComments(prev => {
                             const merged = { ...prev, ...backendComments };
                             localStorage.setItem(`comments_${projectUuid}`, JSON.stringify(merged));
-                            
-                            if (merged[activeCommentField] && merged[activeCommentField].length > 0) {
-                                setContextualInput(merged[activeCommentField][0].text || '');
-                            }
-                            
                             return merged;
                         });
                     }
@@ -167,11 +170,11 @@ export const useRevisionTecnicaData = ({
 
         } catch (err) {
             console.error('[DIITRA] Error al cargar detalles de revisión:', err);
-            addToast("Error", "No se pudo cargar la información del proyecto.", "error");
+            addToastRef.current("Error", "No se pudo cargar la información del proyecto.", "error");
         } finally {
             setLoading(false);
         }
-    }, [projectUuid, addToast, loadPdf, calculateMetrics, setComments, activeCommentField, setContextualInput]);
+    }, [projectUuid, loadPdf, calculateMetrics, setComments]);
 
     useEffect(() => {
         loadProjectData();
