@@ -1,4 +1,4 @@
-import type { DocumentBlock, TableSection, GanttObjective } from '../types';
+﻿import type { DocumentBlock, TableSection, GanttObjective } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de estilo institucional
@@ -269,23 +269,82 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             // ── PORTADA ─────────────────────────────────────────────────────
             case 'cover': {
                 const colorTheme = c.colorTema || '{{ theme.colors.primary }}';
+                const isFreeForm = c.coverLayoutMode !== 'zones';
 
-                const showInst = c.showInstitution !== false;
-                const showTitle = c.showTitle !== false;
+                const showInst    = c.showInstitution !== false;
+                const showTitle   = c.showTitle !== false;
                 const showCarrera = c.showCarrera !== false;
                 const showPeriodo = c.showPeriodo !== false;
 
-                const posInst = c.posInstitution || 'top';
-                const posTitle = c.posTitle || 'middle';
-                const posCarrera = c.posCarrera || 'bottom';
-                const posPeriodo = c.posPeriodo || 'bottom';
-
-                const alignInst = c.alignInstitution || 'center';
-                const alignTitle = c.alignTitle || 'center';
+                const alignInst    = c.alignInstitution || 'center';
+                const alignTitle   = c.alignTitle || 'center';
                 const alignCarrera = c.alignCarrera || 'center';
                 const alignPeriodo = c.alignPeriodo || 'center';
 
                 const textInst = c.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+
+                // ── MODO FREE-FORM: position:absolute con coordenadas en % ────────────
+                if (isFreeForm) {
+                    // Posiciones por defecto (en %) — deben coincidir con BlockCanvas
+                    const xInst  = c.xInstitution ?? 10; const yInst  = c.yInstitution ?? 4;
+                    const xTitle = c.xTitle       ?? 10; const yTitle = c.yTitle       ?? 35;
+                    const xCar   = c.xCarrera     ?? 10; const yCar   = c.yCarrera     ?? 70;
+                    const xPer   = c.xPeriodo     ?? 10; const yPer   = c.yPeriodo     ?? 80;
+
+                    // Alineación de texto dentro de cada caja flotante
+                    const alignStyle = (align: string) => `text-align:${align};`;
+
+                    const instEl = showInst ? `
+        <div style="position:absolute; left:${xInst}%; top:${yInst}%; max-width:80%; ${alignStyle(alignInst)}">
+          <span style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color:${colorTheme}; padding:3px 10px; border-radius:9999px; display:inline-block; white-space:nowrap;">
+            ${textInst}
+          </span>
+        </div>` : '';
+
+                    const titleEl = showTitle ? `
+        <div style="position:absolute; left:${xTitle}%; top:${yTitle}%; max-width:80%; ${alignStyle(alignTitle)}">
+          <div style="font-family:'Century Gothic',sans-serif; font-size:22pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; line-height:1.2;">
+            ${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}
+          </div>
+          <div style="font-family:'Century Gothic',sans-serif; font-size:13pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; margin-top:8px; line-height:1.3; word-wrap:break-word;">
+            {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
+          </div>
+        </div>` : '';
+
+                    const carreraEl = showCarrera ? `
+        <div style="position:absolute; left:${xCar}%; top:${yCar}%; max-width:80%; ${alignStyle(alignCarrera)}">
+          <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">TECNOLOGÍA SUPERIOR EN</div>
+          <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:3px;">
+            {{default carrera "${c.carreraPorDefecto || '________________________'}"}}
+          </div>
+        </div>` : '';
+
+                    const periodoEl = showPeriodo ? `
+        <div style="position:absolute; left:${xPer}%; top:${yPer}%; max-width:80%; ${alignStyle(alignPeriodo)}">
+          <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">PERIODO ACADÉMICO</div>
+          <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:2px;">
+            {{default periodo "${c.periodoPorDefecto || '________________________'}"}}
+          </div>
+        </div>` : '';
+
+                    html += `
+  <!-- BLOQUE: PORTADA FREE-FORM -->
+  <div class="page">
+    <div class="cover-page" style="position:relative; width:210mm; height:297mm; overflow:hidden; box-sizing:border-box;">
+      ${instEl}
+      ${titleEl}
+      ${carreraEl}
+      ${periodoEl}
+    </div>
+  </div>`;
+                    break;
+                }
+
+                // ── MODO ZONES LEGACY: layout flexbox por secciones ───────────────────
+                const posInst    = c.posInstitution || 'top';
+                const posTitle   = c.posTitle || 'middle';
+                const posCarrera = c.posCarrera || 'bottom';
+                const posPeriodo = c.posPeriodo || 'bottom';
 
                 const instHtml = showInst ? `
         <div style="text-align: ${alignInst}; width: 100%;">
@@ -346,7 +405,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 ].filter(Boolean).join('\n');
 
                 html += `
-  <!-- BLOQUE: PORTADA CONFIGURABLE -->
+  <!-- BLOQUE: PORTADA ZONAS LEGACY -->
   <div class="page">
     <div class="cover-page" style="display: flex; flex-direction: column; justify-content: space-between; height: 297mm; padding: 2.2cm 1.2cm 2.2cm 8.8cm; box-sizing: border-box;">
       <div class="cover-section-top" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%;">
@@ -362,6 +421,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
   </div>`;
                 break;
             }
+
 
             // ── TÍTULO ──────────────────────────────────────────────────────
             case 'title': {

@@ -9,7 +9,8 @@ import {
     Layers, Trash2, Eye, EyeOff, Copy, Move
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection } from '../types';
-import { useZoneDragDrop } from '../hooks/useZoneDragDrop';
+import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
+import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 
 interface BlockCanvasProps {
     blocks: DocumentBlock[];
@@ -34,6 +35,17 @@ const DYN_COLORS = {
     lightBlue: '#f0f3f9',
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Posiciones por defecto para el modo freeform (% relativo al canvas A4)
+// ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_POSITIONS: Record<string, FreeFormPosition> = {
+    institution: { x: 10, y: 4 },
+    title:       { x: 10, y: 35 },
+    carrera:     { x: 10, y: 70 },
+    periodo:     { x: 10, y: 80 },
+};
+
+type CoverElementId = 'institution' | 'title' | 'carrera' | 'periodo';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-renderizadores estáticos de alta fidelidad para el lienzo A4
@@ -46,183 +58,199 @@ const RenderCover: React.FC<{
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }> = ({ config, coverImage, blockId, onUpdateConfig }) => {
     const color = config.colorTema || DYN_COLORS.blue;
+    const isFreeForm = config.coverLayoutMode !== 'zones';
 
-    const showInst = config.showInstitution !== false;
-    const showTitle = config.showTitle !== false;
+    const showInst    = config.showInstitution !== false;
+    const showTitle   = config.showTitle !== false;
     const showCarrera = config.showCarrera !== false;
     const showPeriodo = config.showPeriodo !== false;
 
-    const posInst = config.posInstitution || 'top';
-    const posTitle = config.posTitle || 'middle';
-    const posCarrera = config.posCarrera || 'bottom';
-    const posPeriodo = config.posPeriodo || 'bottom';
-
-    const alignInst = config.alignInstitution || 'center';
-    const alignTitle = config.alignTitle || 'center';
+    const alignInst    = config.alignInstitution || 'center';
+    const alignTitle   = config.alignTitle || 'center';
     const alignCarrera = config.alignCarrera || 'center';
     const alignPeriodo = config.alignPeriodo || 'center';
 
-    const textInst = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
-    const textTitle = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textInst    = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textTitle   = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
     const textCarrera = config.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
     const textPeriodo = config.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
 
-    const { draggingElement, activeZone, dragProps, zoneProps } = useZoneDragDrop<'institution' | 'title' | 'carrera' | 'periodo', 'top' | 'middle' | 'bottom'>(
-        (elementId, zoneId) => {
+    // Posiciones actuales (desde config o defaults)
+    const positions: Record<CoverElementId, FreeFormPosition> = {
+        institution: { x: config.xInstitution ?? DEFAULT_POSITIONS.institution.x, y: config.yInstitution ?? DEFAULT_POSITIONS.institution.y },
+        title:       { x: config.xTitle       ?? DEFAULT_POSITIONS.title.x,       y: config.yTitle       ?? DEFAULT_POSITIONS.title.y       },
+        carrera:     { x: config.xCarrera      ?? DEFAULT_POSITIONS.carrera.x,     y: config.yCarrera     ?? DEFAULT_POSITIONS.carrera.y     },
+        periodo:     { x: config.xPeriodo      ?? DEFAULT_POSITIONS.periodo.x,     y: config.yPeriodo     ?? DEFAULT_POSITIONS.periodo.y     },
+    };
+
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const { draggingId, isDragging, dragHandlers, getElementStyle } = useFreeFormDrag<CoverElementId>(
+        containerRef,
+        (elementId, position) => {
             if (onUpdateConfig && blockId) {
-                const configKey = elementId === 'institution' ? 'posInstitution'
-                                : elementId === 'title' ? 'posTitle'
-                                : elementId === 'carrera' ? 'posCarrera'
-                                : 'posPeriodo';
-                onUpdateConfig(blockId, configKey, zoneId);
+                const xKey = `x${elementId.charAt(0).toUpperCase() + elementId.slice(1)}` as string;
+                const yKey = `y${elementId.charAt(0).toUpperCase() + elementId.slice(1)}` as string;
+                onUpdateConfig(blockId, xKey, Math.round(position.x * 10) / 10);
+                onUpdateConfig(blockId, yKey, Math.round(position.y * 10) / 10);
             }
         }
     );
 
-    const getHorizontalAlignmentStyle = (align: string) => {
-        if (align === 'left') return { textAlign: 'left' as const, alignSelf: 'flex-start' as const, alignItems: 'flex-start' as const };
-        if (align === 'right') return { textAlign: 'right' as const, alignSelf: 'flex-end' as const, alignItems: 'flex-end' as const };
-        return { textAlign: 'center' as const, alignSelf: 'center' as const, alignItems: 'center' as const };
+    const getAlignStyle = (align: string): React.CSSProperties => {
+        const map: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end' };
+        return { alignItems: map[align] || 'center', display: 'flex', flexDirection: 'column' };
     };
 
-    const renderSectionElements = (sectionName: 'top' | 'middle' | 'bottom') => {
-        const elements: React.ReactNode[] = [];
+    // ─── Renderizador de cada elemento arrastrable ────────────────────────────
+    const renderElement = (
+        id: CoverElementId,
+        visible: boolean,
+        align: string,
+        children: React.ReactNode
+    ) => {
+        if (!visible) return null;
+        const pos = positions[id];
+        const isThisDragging = draggingId === id;
 
-        if (showInst && posInst === sectionName) {
-            const isDraggingThis = draggingElement === 'institution';
-            elements.push(
-                <div 
-                    key="inst" 
-                    {...dragProps('institution')}
-                    style={getHorizontalAlignmentStyle(alignInst)} 
-                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
-                        isDraggingThis 
-                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
-                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
-                    } animate-fade-in`}
-                >
-                    <span 
-                        className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white w-max select-none flex items-center gap-1.5 transition-transform" 
-                        style={{ backgroundColor: color }}
-                    >
-                        <Move className="w-3 h-3 opacity-60 group-hover/item:opacity-100 transition-opacity" />
-                        {textInst}
-                    </span>
-                </div>
-            );
-        }
+        const style: React.CSSProperties = isFreeForm
+            ? { ...getElementStyle(pos, isThisDragging), ...getAlignStyle(align), maxWidth: '80%' }
+            : {};
 
-        if (showTitle && posTitle === sectionName) {
-            const isDraggingThis = draggingElement === 'title';
-            elements.push(
-                <div 
-                    key="title" 
-                    {...dragProps('title')}
-                    style={getHorizontalAlignmentStyle(alignTitle)} 
-                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
-                        isDraggingThis 
-                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
-                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
-                    } animate-fade-in-up`}
-                >
-                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignTitle)}>
-                        <Move className="w-4 h-4 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
-                        <h1 style={{ color }} className="text-2xl font-black tracking-tight uppercase flex-1">
-                            {textTitle}
-                        </h1>
-                    </div>
-                </div>
-            );
-        }
-
-        if (showCarrera && posCarrera === sectionName) {
-            const isDraggingThis = draggingElement === 'carrera';
-            elements.push(
-                <div 
-                    key="carrera" 
-                    {...dragProps('carrera')}
-                    style={getHorizontalAlignmentStyle(alignCarrera)} 
-                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
-                        isDraggingThis 
-                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
-                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
-                    } animate-fade-in-up`}
-                >
-                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignCarrera)}>
-                        <Move className="w-3.5 h-3.5 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
-                        <div className="text-sm font-bold text-gray-600 uppercase tracking-wider flex-1">
-                            {textCarrera}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (showPeriodo && posPeriodo === sectionName) {
-            const isDraggingThis = draggingElement === 'periodo';
-            elements.push(
-                <div 
-                    key="periodo" 
-                    {...dragProps('periodo')}
-                    style={getHorizontalAlignmentStyle(alignPeriodo)} 
-                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
-                        isDraggingThis 
-                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
-                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
-                    } animate-fade-in-up`}
-                >
-                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignPeriodo)}>
-                        <Move className="w-3 h-3 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
-                        <div className="text-xs text-gray-500 font-semibold uppercase flex-1">
-                            {textPeriodo}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        return elements;
-    };
-
-    const renderSection = (sectionName: 'top' | 'middle' | 'bottom', mtClass: string) => {
-        const elements = renderSectionElements(sectionName);
-        const isZoneActive = activeZone === sectionName;
-        const hasDragging = draggingElement !== null;
+        const handlers = isFreeForm ? dragHandlers(id, pos) : {};
 
         return (
-            <div 
-                {...zoneProps(sectionName)}
-                className={`flex flex-col gap-4 w-full items-center p-6 transition-all duration-300 ease-out rounded-xl border-2 ${mtClass} ${
-                    isZoneActive 
-                        ? 'bg-indigo-50/60 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.25)] scale-[1.02]' 
-                        : hasDragging 
-                            ? 'border-dashed border-slate-300 bg-slate-50/20 shadow-[inset_0_2px_8px_rgba(0,0,0,0.01)]' 
-                            : 'border-transparent bg-transparent'
+            <div
+                key={id}
+                style={style}
+                {...handlers}
+                className={`group/item p-2 rounded-lg transition-all duration-200 ${
+                    isFreeForm
+                        ? isThisDragging
+                            ? 'ring-2 ring-indigo-500 bg-indigo-50/20'
+                            : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10'
+                        : ''
                 }`}
+                title={isFreeForm ? `Arrastra para mover ${id}` : undefined}
             >
-                {elements.length === 0 && hasDragging && (
-                    <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider my-auto animate-pulse">
-                        Soltar aquí
+                {/* Indicador de arrastre visible al hover */}
+                {isFreeForm && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none select-none whitespace-nowrap flex items-center gap-1">
+                        <Move className="w-2.5 h-2.5" />
+                        Mover
                     </span>
                 )}
-                {elements}
+                {children}
             </div>
         );
     };
 
+    // ─── Cuadrícula de guías (aparece solo durante drag en modo freeform) ─────
+    const GuideGrid = () => (
+        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
+            {/* Líneas horizontales de guía */}
+            {[25, 50, 75].map(pct => (
+                <div key={pct} className="absolute left-0 right-0 border-t border-dashed border-indigo-300/30" style={{ top: `${pct}%` }}>
+                    <span className="absolute right-1 -top-3 text-[8px] text-indigo-400/60 font-mono select-none">{pct}%</span>
+                </div>
+            ))}
+            {/* Líneas verticales de guía */}
+            {[33, 66].map(pct => (
+                <div key={pct} className="absolute top-0 bottom-0 border-l border-dashed border-indigo-300/20" style={{ left: `${pct}%` }} />
+            ))}
+            {/* Cruz central */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 opacity-30">
+                <div className="absolute left-1/2 top-0 bottom-0 border-l border-indigo-400" />
+                <div className="absolute top-1/2 left-0 right-0 border-t border-indigo-400" />
+            </div>
+        </div>
+    );
+
+    // ─── MODO FREE-FORM ───────────────────────────────────────────────────────
+    if (isFreeForm) {
+        return (
+            <div
+                ref={containerRef}
+                style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
+            >
+                <GuideGrid />
+
+                {/* Badge de modo freeform */}
+                <div className="absolute top-2 right-2 z-50 bg-indigo-600/80 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 pointer-events-none">
+                    <Move className="w-2.5 h-2.5" />
+                    Canvas Libre
+                </div>
+
+                {renderElement('institution', showInst, alignInst,
+                    <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white select-none flex items-center gap-1.5" style={{ backgroundColor: color }}>
+                        {textInst}
+                    </span>
+                )}
+
+                {renderElement('title', showTitle, alignTitle,
+                    <div>
+                        <h1 className="text-2xl font-black tracking-tight uppercase leading-tight" style={{ color }}>{textTitle}</h1>
+                        <div className="text-base font-bold uppercase mt-1 leading-tight opacity-70 italic" style={{ color }}>
+                            Escribir tema aquí...
+                        </div>
+                    </div>
+                )}
+
+                {renderElement('carrera', showCarrera, alignCarrera,
+                    <div>
+                        <div className="text-sm font-bold text-gray-600 uppercase tracking-wider">{textCarrera}</div>
+                    </div>
+                )}
+
+                {renderElement('periodo', showPeriodo, alignPeriodo,
+                    <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">{textPeriodo}</div>
+                )}
+            </div>
+        );
+    }
+
+    // ─── MODO ZONES LEGACY (retrocompatibilidad) ──────────────────────────────
+    const posInst    = config.posInstitution || 'top';
+    const posTitle   = config.posTitle || 'middle';
+    const posCarrera = config.posCarrera || 'bottom';
+    const posPeriodo = config.posPeriodo || 'bottom';
+
+    const getHorizontalAlignmentStyle = (align: string) => {
+        if (align === 'left') return { textAlign: 'left' as const, alignSelf: 'flex-start' as const };
+        if (align === 'right') return { textAlign: 'right' as const, alignSelf: 'flex-end' as const };
+        return { textAlign: 'center' as const, alignSelf: 'center' as const };
+    };
+
+    const renderZoneSection = (sectionName: 'top' | 'middle' | 'bottom', mtClass: string) => {
+        const elems: React.ReactNode[] = [];
+        if (showInst && posInst === sectionName) elems.push(
+            <div key="inst" style={getHorizontalAlignmentStyle(alignInst)} className="w-full">
+                <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white flex items-center gap-1.5 w-max" style={{ backgroundColor: color }}>{textInst}</span>
+            </div>
+        );
+        if (showTitle && posTitle === sectionName) elems.push(
+            <div key="title" style={getHorizontalAlignmentStyle(alignTitle)} className="w-full">
+                <h1 className="text-2xl font-black tracking-tight uppercase" style={{ color }}>{textTitle}</h1>
+            </div>
+        );
+        if (showCarrera && posCarrera === sectionName) elems.push(
+            <div key="carrera" style={getHorizontalAlignmentStyle(alignCarrera)} className="w-full text-sm font-bold text-gray-600 uppercase tracking-wider">{textCarrera}</div>
+        );
+        if (showPeriodo && posPeriodo === sectionName) elems.push(
+            <div key="periodo" style={getHorizontalAlignmentStyle(alignPeriodo)} className="w-full text-xs text-gray-500 font-semibold uppercase">{textPeriodo}</div>
+        );
+        return elems.length > 0 ? <div className={`flex flex-col gap-4 w-full items-center ${mtClass}`}>{elems}</div> : null;
+    };
+
     return (
-        <div 
+        <div
             style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
             className="relative w-full min-h-[1123px] flex-1 p-16 flex flex-col justify-between overflow-hidden bg-white select-none"
         >
-            {/* Sección Superior */}
-            {renderSection('top', 'mt-6')}
-
-            {/* Sección Media */}
-            {renderSection('middle', 'my-auto')}
-
-            {/* Sección Inferior */}
-            {renderSection('bottom', 'mb-6')}
+            {renderZoneSection('top', 'mt-6')}
+            <div className="my-auto">{renderZoneSection('middle', '')}</div>
+            {renderZoneSection('bottom', 'mb-6')}
         </div>
     );
 };

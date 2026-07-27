@@ -99,22 +99,30 @@ export interface DocumentBlock {
         allowDynamicRows?: boolean;
 
         // ── cover ──────────────────────────────────────────────────────────
+        coverLayoutMode?: 'zones' | 'freeform'; // 'freeform' es el default moderno
         tituloSuperior?: string;
         carreraPorDefecto?: string;
         periodoPorDefecto?: string;
         colorTema?: string;
         showInstitution?: boolean;
         textoInstitucion?: string;
-        posInstitution?: string;
+        // posicionamiento libre (% relativo al canvas A4 210×297mm)
+        xInstitution?: number;     yInstitution?: number;  // default: x=10, y=4
+        xTitle?: number;           yTitle?: number;         // default: x=10, y=35
+        xCarrera?: number;         yCarrera?: number;       // default: x=10, y=70
+        xPeriodo?: number;         yPeriodo?: number;       // default: x=10, y=80
         alignInstitution?: string;
         showTitle?: boolean;
-        posTitle?: string;
         alignTitle?: string;
-        posCarrera?: string;
+        showCarrera?: boolean;
         alignCarrera?: string;
         showPeriodo?: boolean;
-        posPeriodo?: string;
         alignPeriodo?: string;
+        // legacy (zonas fijas - retrocompatibilidad)
+        posInstitution?: string;
+        posTitle?: string;
+        posCarrera?: string;
+        posPeriodo?: string;
 
         // ── title ──────────────────────────────────────────────────────────
         text?: string;
