@@ -763,7 +763,7 @@ namespace diitra_api.Controllers
                     try
                     {
                         string jsonToDeserialize = instance.DataSnapshotJson ?? metadataJson;
-                        jsonToDeserialize = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(jsonToDeserialize);
+                        jsonToDeserialize = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(jsonToDeserialize);
 
                         var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(jsonToDeserialize, ProyectoDto.DefaultDeserializerOptions);
                         if (dto != null)

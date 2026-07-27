@@ -432,7 +432,7 @@ public class UnitTest1
     public void TestCleanAndNormalizeJson()
     {
         var dirtyJson = "{\"Titulo\":\"PRUEBA1\",\"titulo\":\"\",\"IdCarrera\":13,\"idCarrera\":0,\"Investigadores\":[{\"Nombre\":\"Erika\",\"nombre\":\"\"}]}";
-        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(dirtyJson);
+        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(dirtyJson);
         
         Assert.Contains("\"Titulo\":\"PRUEBA1\"", cleanedJson);
         Assert.DoesNotContain("\"titulo\"", cleanedJson);

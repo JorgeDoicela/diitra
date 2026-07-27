@@ -28,7 +28,7 @@ namespace Diitra.Infrastructure.Common.Documents
     /// Orquestador encargado de transformar datos colaborativos en documentos legales.
     /// 
     /// Implementa IDocumentEngine y coordina todos los sub-componentes del motor:
-    ///   1. ScribanTemplateEngine   → Inyecta datos en el HTML de la plantilla
+    ///   1. HandlebarsTemplateEngine → Inyecta datos en el HTML de la plantilla
     ///   2. LegalComplianceInjector → Añade encabezado institucional, pie LOPDP, código QR
     ///   3. ITextHtmlPdfRenderer    → Convierte el HTML enriquecido a PDF de alta calidad
     ///   4. PdfMergerService        → Ensambla el PDF con los anexos (paquetes CACES)
@@ -68,7 +68,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly DiitraContext _db;
 
         // Stateless engines: safe to share across requests
-        private static readonly ScribanTemplateEngine _scribanEngine = new();
+        private static readonly HandlebarsTemplateEngine _handlebarsEngine = new();
         private static readonly LegalComplianceInjector _complianceInjector = new();
 
         // Stateful iText engines: must be per-request to avoid PDF indirect object corruption
@@ -474,7 +474,7 @@ namespace Diitra.Infrastructure.Common.Documents
                             }
                             else
                             {
-                                var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(rawText);
+                                var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(rawText);
                                 projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedRaw, ProyectoDto.DefaultDeserializerOptions);
                             }
                         }
@@ -531,7 +531,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 // 5. Inyectar datos + imágenes con Handlebars
-                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender ?? string.Empty, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
+                var renderedHtml = await _handlebarsEngine.RenderAsync(htmlToRender ?? string.Empty, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
                 
                 // 5. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
                 var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
@@ -595,7 +595,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 string? renderedCss = null;
                 if (!string.IsNullOrEmpty(cssToUse))
                 {
-                    renderedCss = await _scribanEngine.RenderAsync(
+                    renderedCss = await _handlebarsEngine.RenderAsync(
                         cssToUse,
                         renderData ?? new object(),
                         extraImageVars.Count > 0 ? extraImageVars : null,

@@ -12,7 +12,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     /// Motor de renderizado de DIITRA Builder (usando Handlebars.Net).
     /// Sintaxis: {{ variable_en_snake_case }} — compatible con el estándar Handlebars/Mustache.
     /// </summary>
-    public class ScribanTemplateEngine   // Nombre interno mantenido por compatibilidad
+    public class HandlebarsTemplateEngine
     {
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -24,7 +24,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
         private readonly IHandlebars _handlebars;
 
-        public ScribanTemplateEngine()
+        public HandlebarsTemplateEngine()
         {
             _handlebars = Handlebars.Create();
 
@@ -458,7 +458,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                         var strVal = val.GetString()?.Trim();
                         if (!string.IsNullOrEmpty(strVal) &&
                             ((strVal.StartsWith("[") && strVal.EndsWith("]")) ||
-                             (strVal.StartsWith("{") && strVal.EndsWith("}"))))
+                              (strVal.StartsWith("{") && strVal.EndsWith("}"))))
                         {
                             try
                             {

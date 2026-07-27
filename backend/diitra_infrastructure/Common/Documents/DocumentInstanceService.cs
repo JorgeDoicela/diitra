@@ -529,9 +529,9 @@ namespace Diitra.Infrastructure.Common.Documents
             {
                 Console.WriteLine($"[DIITRA] [MergeSnapshot] Fusionando {instance.DataSnapshotJson.Length} bytes existentes con {incomingJson?.Length ?? 0} bytes entrantes.");
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var cleanedExisting = Engine.ScribanTemplateEngine.CleanAndNormalizeJson(SanitizeObjectObjectValues(instance.DataSnapshotJson));
+                var cleanedExisting = Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(SanitizeObjectObjectValues(instance.DataSnapshotJson));
                 var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedExisting, options);
-                var cleanedIncoming = !string.IsNullOrEmpty(incomingJson) ? Engine.ScribanTemplateEngine.CleanAndNormalizeJson(incomingJson) : incomingJson;
+                var cleanedIncoming = !string.IsNullOrEmpty(incomingJson) ? Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(incomingJson) : incomingJson;
                 var incoming = !string.IsNullOrEmpty(cleanedIncoming)
                     ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedIncoming, options)
                     : null;
@@ -617,7 +617,7 @@ namespace Diitra.Infrastructure.Common.Documents
                                 // Si ya existe, fusionamos campos clave del proyecto relacional (Título, Grupo, Integrantes)
                                 // para evitar que datos viejos del editor de documentos sobrescriban los del Workspace.
                                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                                var cleanedSnapshotJson = Engine.ScribanTemplateEngine.CleanAndNormalizeJson(instance.DataSnapshotJson);
+                                var cleanedSnapshotJson = Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(instance.DataSnapshotJson);
                                 var snapshot = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedSnapshotJson, options);
                                 if (snapshot != null)
                                 {
