@@ -765,17 +765,33 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 
     const badge = (() => {
         const baseStyle = 'bg-slate-50 text-slate-500 border-slate-200/60';
+        const isEditable = block.config?.isEditableWorkspace !== false;
+
         switch (block.type) {
             case 'cover':
             case 'title':
             case 'page_break':
-            case 'advanced_table':
-            case 'multi_section_table':
-            case 'two_column':
             case 'signatures':
                 return { text: 'Estático', dotColor: 'bg-slate-400', color: baseStyle, activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm' };
+            
+            case 'two_column':
+            case 'advanced_table':
             case 'rich_text':
-                return { text: 'Colaborativo', dotColor: 'bg-pink-500 animate-pulse', color: baseStyle, activeCls: 'ring-1 ring-pink-500 border-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.08)]' };
+                if (isEditable) {
+                    return { 
+                        text: block.type === 'rich_text' ? 'Colaborativo' : 'Configurable', 
+                        dotColor: 'bg-pink-500 animate-pulse', 
+                        color: baseStyle, 
+                        activeCls: 'ring-1 ring-pink-500 border-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.08)]' 
+                    };
+                } else {
+                    return { 
+                        text: 'Estático', 
+                        dotColor: 'bg-slate-400', 
+                        color: baseStyle, 
+                        activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm' 
+                    };
+                }
             case 'gantt':
                 return { text: 'Cronograma', dotColor: 'bg-indigo-500', color: baseStyle, activeCls: 'ring-1 ring-indigo-500 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.08)]' };
             case 'project_general_section':
@@ -786,6 +802,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'researchers_table':
             case 'rubric_table':
             case 'impacts':
+            case 'multi_section_table':
                 return { text: 'Dinámico', dotColor: 'bg-emerald-500', color: baseStyle, activeCls: 'ring-1 ring-emerald-500 border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.08)]' };
             default:
                 return null;

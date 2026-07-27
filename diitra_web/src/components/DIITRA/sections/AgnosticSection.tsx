@@ -24,7 +24,7 @@ const sanitize = (html: string): string =>
 interface FieldConfig {
     name: string;
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'rich-text' | 'list';
+    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'rich-text' | 'list' | 'table';
     collaborative: boolean;
     placeholder?: string;
     min?: number;
@@ -45,6 +45,7 @@ interface AgnosticSectionProps {
     tiposProducto?: any[];
     onAdd?: (list: string, template: any) => void;
     onRemove?: (list: string, index: number) => void;
+    onUpdateItem?: (list: string, index: number, field: string, value: any) => void;
 }
 
 export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
@@ -59,10 +60,11 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     tiposProducto = [],
     onAdd,
     onRemove,
+    onUpdateItem,
     config: configProp,    // <-- prop directo desde DocumentEditor (carga dinámica)
 }) => {
     // Evitar errores de compilación por variables no leídas pero requeridas por la firma genérica
-    void carreras; void convocatorias; void tiposProducto; void onAdd; void onRemove;
+    void carreras; void convocatorias; void tiposProducto; void onAdd; void onRemove; void onUpdateItem;
 
     const [collapsed, setCollapsed] = useState(false);
     const [referenceData, setReferenceData] = useState<any>(null);
@@ -123,13 +125,132 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
         // A) MODO COLABORATIVO (SignalR + Yjs)
         if (collaborative) {
-            if (type === 'rich-text') {
+            if (type === 'table') {
+                const columns: string[] = (field as any).config?.columns || [];
+                const allowDynamicRows: boolean = !!(field as any).config?.allowDynamicRows;
+                const tableHeaderStyle = (field as any).config?.headerStyle || 'blue';
+                const rowsData = formData[name] || [];
+
+                let thCls = "p-3 text-[9px] font-black uppercase tracking-wider ";
+                let trHeaderCls = "border-b border-border-thin ";
+
+                if (tableHeaderStyle === 'blue') {
+                    trHeaderCls += "bg-blue-600 dark:bg-blue-700 text-white";
+                    thCls += "text-white";
+                } else if (tableHeaderStyle === 'gold') {
+                    trHeaderCls += "bg-amber-500 dark:bg-amber-600 text-white";
+                    thCls += "text-white";
+                } else if (tableHeaderStyle === 'gray') {
+                    trHeaderCls += "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200";
+                    thCls += "text-slate-800 dark:text-slate-200";
+                } else {
+                    trHeaderCls += "bg-surface-hover/20";
+                    thCls += "text-text-dim";
+                }
+
                 return (
-                    <div key={name} className="space-y-2">
-                        <label className="block text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                            {label} (Colaborativo)
-                        </label>
-                        <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep focus-within:ring-2 focus-within:ring-text-main/15 transition-all">
+                    <div key={name} className="p-5 bg-bg-deep border border-border-thin rounded-2xl space-y-4 shadow-sm">
+                        <div className="flex justify-between items-center px-1">
+                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                {label} (Tabla Colaborativa)
+                            </label>
+                            {allowDynamicRows && !isDisabled && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const tpl: any = {};
+                                        columns.forEach((_, colIndex) => {
+                                            tpl[colIndex.toString()] = "";
+                                        });
+                                        onAdd?.(name, tpl);
+                                    }}
+                                    className="px-2.5 py-1 bg-surface border border-border-thin hover:border-text-main/25 text-text-main rounded-lg text-[9px] font-black uppercase flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                >
+                                    + Añadir Fila
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="overflow-x-auto border border-border-thin rounded-xl">
+                            <table className="w-full border-collapse text-left text-xs text-text-main bg-bg-deep">
+                                <thead>
+                                    <tr className={trHeaderCls}>
+                                        {columns.map((col, colIdx) => (
+                                            <th key={colIdx} className={thCls}>
+                                                {col}
+                                            </th>
+                                        ))}
+                                        {allowDynamicRows && !isDisabled && <th className="p-3 w-10"></th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rowsData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={columns.length + (allowDynamicRows && !isDisabled ? 1 : 0)} className="p-6 text-center text-text-dim italic text-[10px]">
+                                                No hay filas registradas. {allowDynamicRows && !isDisabled && "Haga clic en 'Añadir Fila' para empezar."}
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        rowsData.map((row: any, rIdx: number) => (
+                                            <tr key={rIdx} className="border-b border-border-thin last:border-0 hover:bg-surface-hover/10 transition-colors">
+                                                {columns.map((_, cIdx) => {
+                                                    const cellValue = row?.[cIdx.toString()] ?? "";
+                                                    return (
+                                                        <td key={cIdx} className="p-2">
+                                                            <input
+                                                                type="text"
+                                                                value={cellValue}
+                                                                disabled={isDisabled}
+                                                                onChange={(e) => {
+                                                                    onUpdateItem?.(name, rIdx, cIdx.toString(), e.target.value);
+                                                                }}
+                                                                className="w-full bg-transparent hover:bg-surface-hover/25 focus:bg-surface border border-transparent focus:border-border-thin rounded-lg px-2 py-1.5 text-xs text-text-main transition-all outline-none"
+                                                                placeholder="Escriba..."
+                                                            />
+                                                        </td>
+                                                    );
+                                                })}
+                                                {allowDynamicRows && !isDisabled && (
+                                                    <td className="p-2 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onRemove?.(name, rIdx)}
+                                                            className="p-1.5 rounded-lg hover:bg-error/10 text-text-dim hover:text-error transition-all cursor-pointer"
+                                                            title="Eliminar fila"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                                                        </button>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (type === 'rich-text') {
+                const headerStyle = (field as any).headerStyle || 'none';
+                const hasHeader = headerStyle !== 'none';
+
+                let headerCls = "px-4 py-2 text-[10px] font-black uppercase tracking-wider block ";
+                if (headerStyle === 'blue') headerCls += "bg-blue-600 dark:bg-blue-700 text-white border-b border-blue-800";
+                else if (headerStyle === 'gold') headerCls += "bg-amber-500 dark:bg-amber-600 text-white border-b border-amber-700";
+                else if (headerStyle === 'gray') headerCls += "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-b border-border-thin";
+
+                return (
+                    <div key={name} className={hasHeader ? "border border-border-thin rounded-2xl overflow-hidden bg-bg-deep/40 shadow-sm" : "space-y-2"}>
+                        {hasHeader ? (
+                            <label className={headerCls}>{label}</label>
+                        ) : (
+                            <label className="block text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
+                                {label} (Colaborativo)
+                            </label>
+                        )}
+                        <div className={hasHeader ? "p-3 bg-surface" : "border border-border-thin rounded-2xl overflow-hidden bg-bg-deep focus-within:ring-2 focus-within:ring-text-main/15 transition-all"}>
                             <CoWorkEditor
                                 field={name}
                                 cowork={cowork}
@@ -405,7 +526,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className={config.layout === 'two-column' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
                         {fields.map(field => renderField(field))}
                     </div>
                 </div>

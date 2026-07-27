@@ -9,6 +9,7 @@ namespace diitra_api.Controllers
     public class RichTextBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "rich_text";
+        public BlockBehavior Behavior => BlockBehavior.Configurable;
 
         public void PopulateSchema(
             JsonElement block, 
@@ -46,10 +47,19 @@ namespace diitra_api.Controllers
                 varName = "field_" + varName;
             }
 
+            string defaultHtml = "";
+            if (block.TryGetProperty("config", out var configProp) && configProp.ValueKind == JsonValueKind.Object)
+            {
+                if (configProp.TryGetProperty("html", out var htmlProp) && htmlProp.ValueKind == JsonValueKind.String)
+                {
+                    defaultHtml = htmlProp.GetString() ?? "";
+                }
+            }
+
             // Si es bibliografía, la dejamos para la sección final
             if (varName.ToLower() == "bibliografia" || varName == "field_bibliografia")
             {
-                schemaDict["Bibliografia"] = "";
+                schemaDict["Bibliografia"] = defaultHtml;
             }
             else
             {
@@ -58,7 +68,7 @@ namespace diitra_api.Controllers
                     premiumFieldsCount++;
                 }
 
-                schemaDict[varName] = "";
+                schemaDict[varName] = defaultHtml;
             }
         }
 
@@ -104,7 +114,7 @@ namespace diitra_api.Controllers
                 Id = varName,
                 Label = titleText,
                 IconName = "FileText",
-                ComponentName = null, // AgnosticSection
+                ComponentName = "AgnosticSection",
                 Config = new {
                     completionFields = new[] { varName },
                     fields = new[] {

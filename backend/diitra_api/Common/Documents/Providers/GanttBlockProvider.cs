@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class GanttBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "gantt";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

@@ -9,6 +9,7 @@ namespace diitra_api.Controllers
     public class TitleBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "title";
+        public BlockBehavior Behavior => BlockBehavior.StaticLayout;
 
         public void PopulateSchema(
             JsonElement block, 

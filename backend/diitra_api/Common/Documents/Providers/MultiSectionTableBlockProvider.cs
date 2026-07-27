@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class MultiSectionTableBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "multi_section_table";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

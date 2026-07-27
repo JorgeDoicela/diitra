@@ -277,7 +277,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
         <div class="project-theme">{{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}</div>
         <div class="career-container">
           <div class="career-label">TECNOLOGÍA SUPERIOR EN</div>
-          <div class="career-value">{{default career "${c.carreraPorDefecto || '________________________'}"}}</div>
+          <div class="career-value">{{default carrera "${c.carreraPorDefecto || '________________________'}"}}</div>
         </div>
         <div class="period-container">
           <div class="period-label">PERIODO ACADÉMICO</div>

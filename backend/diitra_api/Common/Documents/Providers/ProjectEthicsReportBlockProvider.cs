@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class ProjectEthicsReportBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "project_ethics_report";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

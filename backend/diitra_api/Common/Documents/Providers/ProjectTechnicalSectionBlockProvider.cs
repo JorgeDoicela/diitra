@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class ProjectTechnicalSectionBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "project_technical_section";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

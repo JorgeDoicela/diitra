@@ -1,50 +1,17 @@
-/* RESET & CORE */
 * {
     box-sizing: border-box;
 }
 
-.page-break {
-    page-break-after: always;
+/* Reset y Core del Documento con Tematización Dinámica */
+.doc-container { 
+    font-family: {{ theme.typography.font_family }}; 
+    color: {{ theme.colors.text }}; 
+    line-height: {{ theme.typography.line_height }};
+    padding: 0; 
+    background: transparent; 
 }
 
-@page {
-    margin-top: {{ theme.layout.margin_top }};
-    margin-bottom: {{ theme.layout.margin_bottom }};
-    margin-left: {{ theme.layout.margin_left }};
-    margin-right: {{ theme.layout.margin_right }};
-}
-
-@page:first {
-    margin: 0;
-}
-
-@page landscape-page {
-    size: A4 landscape;
-    margin-top: {{ theme.layout.landscape_margin_top }};
-    margin-bottom: {{ theme.layout.landscape_margin_bottom }};
-    margin-left: {{ theme.layout.landscape_margin_left }};
-    margin-right: {{ theme.layout.landscape_margin_right }};
-}
-
-.landscape-section {
-    page: landscape-page;
-    page-break-before: always;
-    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
-}
-
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.page {
-    page-break-after: always;
-    position: relative;
-    width: 210mm;
-    height: 297mm;
-}
-
-/* PORTADA (COVER PAGE) FULL BLEED - Breaking out of the page margins to span 100% A4 */
+/* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
 .cover-page {
     font-family: {{ theme.typography.font_family }};
     position: relative;
@@ -62,7 +29,6 @@ html, body {
     position: absolute;
     top: 0;
     left: 8.8cm;
-    /* Iniciamos exactamente donde termina la zona de triángulos */
     right: 1.2cm;
     bottom: 0;
     padding: 2cm 0;
@@ -99,6 +65,7 @@ html, body {
 .career-container {
     margin-top: 0;
     margin-bottom: 2.5cm;
+    text-align: center;
     width: 100%;
 }
 
@@ -123,6 +90,7 @@ html, body {
     width: 100%;
     margin-top: auto;
     margin-bottom: 1cm;
+    text-align: center;
 }
 
 .period-label {
@@ -131,6 +99,7 @@ html, body {
     font-weight: bold;
     text-transform: uppercase;
     margin-bottom: 2px;
+    color: {{ theme.colors.primary }};
 }
 
 .period-value {
@@ -138,158 +107,91 @@ html, body {
     font-size: 12pt;
     font-weight: normal;
     text-transform: uppercase;
-}
-
-/* CUERPO DEL DOCUMENTO (PAGE 2+) */
-.doc-container {
-    font-family: {{ theme.typography.font_family }};
-    color: {{ theme.colors.text }};
-    line-height: {{ theme.typography.line_height }};
-    padding: 0;
-    background: transparent;
-}
-
-.section-title {
     color: {{ theme.colors.primary }};
-    padding: 4px 0;
-    font-weight: 800;
-    font-size: 10pt;
-    margin: 10px 0 4px 0;
-    text-transform: uppercase;
 }
 
-.info-table,
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 12px;
-    font-size: 9pt;
-    background: #fff;
+/* Títulos de sección */
+.title-h1 { 
+    font-size: 16pt; 
+    font-weight: bold; 
+    color: {{ theme.colors.primary }}; 
+    margin-top: 35px; 
+    text-transform: uppercase; 
+}
+.title-h2 { 
+    font-size: 10pt; 
+    font-weight: 800; 
+    background: {{ theme.colors.table_header_bg }}; 
+    color: {{ theme.colors.table_header_color }}; 
+    padding: 6px 12px; 
+    margin-top: 25px; 
+    text-transform: uppercase; 
+}
+.title-h3 { 
+    font-size: 9.5pt; 
+    font-weight: bold; 
+    color: {{ theme.colors.secondary }}; 
+    margin-top: 15px; 
+    text-transform: uppercase; 
 }
 
-.info-table td {
-    border: 1px solid #000000;
-    padding: 0 8px;
+/* Tablas generales compactas con bordes negros (formato premium original) */
+.info-table, .data-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 12px; 
+    font-size: 9pt; 
+    background: #ffffff; 
+}
+.info-table td, .info-table th, .data-table td, .data-table th { 
+    border: 1px solid #000000; 
+    padding: 0 8px; 
     height: 0.6cm;
-    vertical-align: middle;
+    vertical-align: middle; 
+    color: #000000;
 }
-
-.info-table .label {
-    font-weight: bold;
+.info-table th, .data-table th { 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    font-size: 8.5pt; 
     background: {{ theme.colors.table_header_bg }};
-    width: 35%;
-    text-transform: uppercase;
-    font-size: 8.5pt;
-    color: {{ theme.colors.table_header_color }};
-}
-
-.data-table th {
-    background: {{ theme.colors.table_header_bg }};
-    border: 1px solid #000000;
-    padding: 0 8px;
-    height: 0.6cm;
-    font-size: 8.5pt;
-    font-weight: bold;
-    text-transform: uppercase;
     color: {{ theme.colors.table_header_color }};
     text-align: center;
 }
-
-.data-table td {
-    border: 1px solid #000000;
-    padding: 0 8px;
-    height: 0.6cm;
-    background: #ffffff;
-    color: #000000;
-    vertical-align: middle;
-}
-
-.firma-box {
-    border: 1px solid #000000;
-    padding: 15px;
-    height: 100px;
-    vertical-align: bottom;
-    background: #fff;
-}
-
-.identificacion-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 12px;
-    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
-    font-size: 9.5pt;
-    line-height: 1.2;
-    background: #fff;
-}
-
-.identificacion-table td {
-    border: 1px solid #000000;
-    padding: 0 8px;
-    height: 0.6cm;
-    vertical-align: middle;
-    color: #000000;
-    font-family: 'Calibri', 'Open Sans', Arial, sans-serif;
-    font-size: 9.5pt;
-    line-height: 1.2;
-}
-
-.identificacion-table .label {
-    font-weight: bold;
-    background: {{ theme.colors.table_header_bg }};
-    width: 35%;
-    text-transform: uppercase;
+.label-cell { 
+    font-weight: bold; 
+    background: {{ theme.colors.table_header_bg }}; 
     color: {{ theme.colors.table_header_color }};
-    text-align: left;
+    width: 35%; 
+    text-transform: uppercase; 
+    font-size: 8.5pt; 
 }
 
-.identificacion-table .label-white {
-    font-weight: bold;
-    background: #ffffff;
-    color: #000000;
-    text-transform: uppercase;
-    text-align: left;
+/* Texto enriquecido */
+.rich-content { 
+    font-size: 9.5pt; 
+    text-align: justify; 
+    color: #000000; 
+    margin-top: 10px; 
+    line-height: 1.4; 
 }
+.rich-content p { margin: 6px 0; }
+.rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
+.rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+.rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
+.rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
 
-.identificacion-table .date-header {
-    font-weight: bold;
-    background: {{ theme.colors.secondary }};
-    color: #000000;
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 9pt;
-    padding: 0 8px;
-    height: 0.6cm;
-    border: 1px solid #000000;
-}
+/* Dos columnas */
+.two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
+.two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
+.col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+.col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
 
-.bg-gantt-0 {
-    background-color: #9ad3de !important;
-}
+/* Salto de página */
+.page-break { page-break-after: always; height: 0; }
 
-.bg-gantt-1 {
-    background-color: #f9cb9c !important;
-}
-
-.bg-gantt-2 {
-    background-color: #ea9999 !important;
-}
-
-.bg-gantt-3 {
-    background-color: #4f81bd !important;
-}
-
-.bg-gantt-4 {
-    background-color: #0f243e !important;
-}
-
-.bg-gantt-5 {
-    background-color: #595959 !important;
-}
-
-.bg-gantt-6 {
-    background-color: #ffc000 !important;
-}
-
-.bg-gantt-7 {
-    background-color: #7030a0 !important;
-}
+/* Firmas y Trazabilidad */
+.signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
+.sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+.sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
+.sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }

@@ -95,6 +95,9 @@ export interface DocumentBlock {
     title: string;
     isActive: boolean;
     config: {
+        isEditableWorkspace?: boolean;
+        allowDynamicRows?: boolean;
+
         // ── cover ──────────────────────────────────────────────────────────
         tituloSuperior?: string;
         carreraPorDefecto?: string;

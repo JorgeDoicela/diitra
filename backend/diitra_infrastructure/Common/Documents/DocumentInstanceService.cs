@@ -494,7 +494,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         {
                             var base64 = match.Groups[1].Value;
                             var bytes = System.Convert.FromBase64String(base64);
-                            instance.TemplateConfigSnapshotJson = System.Text.Encoding.UTF8.GetString(bytes);
+                            instance.UpdateTemplateConfigSnapshot(System.Text.Encoding.UTF8.GetString(bytes));
                         }
                         catch { }
                     }

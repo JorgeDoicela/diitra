@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class ProjectGeneralSectionBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "project_general_section";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

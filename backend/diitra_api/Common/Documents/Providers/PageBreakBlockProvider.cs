@@ -9,6 +9,7 @@ namespace diitra_api.Controllers
     public class PageBreakBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "page_break";
+        public BlockBehavior Behavior => BlockBehavior.StaticLayout;
 
         public void PopulateSchema(
             JsonElement block, 

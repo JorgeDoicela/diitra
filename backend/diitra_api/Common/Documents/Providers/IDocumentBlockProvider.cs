@@ -6,9 +6,17 @@ using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers
 {
+    public enum BlockBehavior
+    {
+        StaticLayout,
+        DataCapture,
+        Configurable
+    }
+
     public interface IDocumentBlockProvider
     {
         string BlockType { get; }
+        BlockBehavior Behavior { get; }
         
         void PopulateSchema(
             JsonElement block, 

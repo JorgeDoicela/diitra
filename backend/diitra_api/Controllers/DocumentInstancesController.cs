@@ -925,8 +925,31 @@ namespace diitra_api.Controllers
                     var provider = _blockProviders.FirstOrDefault(p => p.BlockType == type);
                     if (provider != null)
                     {
-                        provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
-                        await provider.MapToUiSectionAsync(block, title, sectionsList, _context, template.Code, ct);
+                        if (provider.Behavior == BlockBehavior.StaticLayout)
+                        {
+                            provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
+                            continue;
+                        }
+
+                        bool isEditableWorkspace = true;
+                        if (provider.Behavior == BlockBehavior.Configurable)
+                        {
+                            // Por defecto es true para soportar documentos antiguos, a menos que se configure explícitamente como false
+                            isEditableWorkspace = true;
+                            if (block.TryGetProperty("config", out var configProp))
+                            {
+                                if (configProp.TryGetProperty("isEditableWorkspace", out var isEditableProp))
+                                {
+                                    isEditableWorkspace = isEditableProp.GetBoolean();
+                                }
+                            }
+                        }
+
+                        if (provider.Behavior == BlockBehavior.DataCapture || isEditableWorkspace)
+                        {
+                            provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
+                            await provider.MapToUiSectionAsync(block, title, sectionsList, _context, template.Code, ct);
+                        }
                     }
                 }
 

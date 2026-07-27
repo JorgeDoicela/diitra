@@ -29,7 +29,7 @@ export const mapInvestigador = (inv: any) => {
 };
 
 export function useProjectCore() {
-    const { documentUuid, templateCode: templateSlug } = useParams<{ documentUuid: string; templateCode: string }>();
+    const { projectUuid, templateCode: templateSlug } = useParams<{ projectUuid: string; templateCode: string }>();
     const templateCode = templateSlug ? slugToTemplateCode(templateSlug) : 'PROTOCOLO_INVESTIGACION';
     const { user, isAdmin, roles } = useAuth();
     const { addToast } = useNotifications();
@@ -63,9 +63,9 @@ export function useProjectCore() {
     }, []);
 
     useEffect(() => {
-        if (!templateSlug || !documentUuid || !isLegacyTemplateUrlSegment(templateSlug)) return;
-        navigate(buildWorkspacePath(templateCode, documentUuid, location.search, urlPrefix), { replace: true });
-    }, [templateSlug, templateCode, documentUuid, location.search, navigate, urlPrefix]);
+        if (!templateSlug || !projectUuid || !isLegacyTemplateUrlSegment(templateSlug)) return;
+        navigate(buildWorkspacePath(templateCode, projectUuid, location.search, urlPrefix), { replace: true });
+    }, [templateSlug, templateCode, projectUuid, location.search, navigate, urlPrefix]);
 
     useEffect(() => {
         if (!editParam || !isLegacyEditParam(editParam)) return;
@@ -76,7 +76,7 @@ export function useProjectCore() {
 
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
+    const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(projectUuid || null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -99,24 +99,10 @@ export function useProjectCore() {
     }, [location.search, navigate]);
 
     useEffect(() => {
-        const resolveUuid = async () => {
-            if (!documentUuid) return;
-            try {
-                const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
-                const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid || instanceRes.data?.EntityUuid;
-                if (entityUuid) {
-                    setResolvedProjectUuid(entityUuid);
-                } else {
-                    console.warn("[DIITRA] EntityUuid no encontrado en la instancia, usando fallback");
-                    setResolvedProjectUuid(documentUuid);
-                }
-            } catch (err) {
-                console.warn("[DIITRA] Fallback: No se pudo cargar la instancia, asumiendo documentUuid como proyecto", err);
-                setResolvedProjectUuid(documentUuid);
-            }
-        };
-        resolveUuid();
-    }, [documentUuid, templateCode]);
+        if (projectUuid) {
+            setResolvedProjectUuid(projectUuid);
+        }
+    }, [projectUuid]);
 
     const fetchProject = useCallback(async (onProjectFetched?: (data: any) => void) => {
         if (!resolvedProjectUuid) return;
@@ -272,11 +258,15 @@ export function useProjectCore() {
     useEffect(() => {
         if (activeDocument && resolvedProjectUuid) {
             const isPrimaryDocument = activeDocument.toUpperCase() === templateCode.toUpperCase();
-            if (!isPrimaryDocument && !subDocumentUuids[activeDocument] && !resolvingDocument) {
+            const needsResolve = !isPrimaryDocument 
+                ? !subDocumentUuids[activeDocument] 
+                : !subDocumentUuids[activeDocument]; // El principal ahora también se resuelve dinámicamente
+
+            if (needsResolve && !resolvingDocument) {
                 resolveDocumentInstance(activeDocument);
             }
         }
-    }, [activeDocument, resolvedProjectUuid, templateCode, subDocumentUuids, resolvingDocument, resolveDocumentInstance]);
+    }, [activeDocument, resolvedProjectUuid, templateCode, subDocumentUuids, resolvingDocument, resolveDocumentInstance, projectUuid]);
 
     const handleIniciarEjecucion = async () => {
         const uuid = resolvedProjectUuid || currentProject?.uuid;
@@ -307,7 +297,7 @@ export function useProjectCore() {
     };
 
     return {
-        documentUuid,
+        projectUuid,
         templateSlug,
         templateCode,
         user,

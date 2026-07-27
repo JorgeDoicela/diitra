@@ -9,6 +9,7 @@ namespace diitra_api.Controllers
     public class CoverBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "cover";
+        public BlockBehavior Behavior => BlockBehavior.StaticLayout;
 
         public void PopulateSchema(
             JsonElement block, 

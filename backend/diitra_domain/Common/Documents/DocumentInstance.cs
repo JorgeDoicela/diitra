@@ -115,6 +115,15 @@ namespace Diitra.Domain.Common.Documents
             EntityUuid = entityUuid;
             UpdatedAt = DateTime.UtcNow;
         }
+
+        public void UpdateTemplateConfigSnapshot(string? json)
+        {
+            if (State == DocumentState.Signed || State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede modificar la configuración de plantilla de un documento inmutable.");
+
+            TemplateConfigSnapshotJson = json;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public enum DocumentState

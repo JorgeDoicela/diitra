@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class ProjectProgressReportBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "project_progress_report";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class ResearchersTableBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "researchers_table";
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 

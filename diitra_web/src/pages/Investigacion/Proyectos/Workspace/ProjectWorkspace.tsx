@@ -41,7 +41,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const core = useProjectCore();
     const {
-        documentUuid,
+        projectUuid,
         templateCode,
         user,
         isAdmin,
@@ -138,10 +138,9 @@ export const ProjectWorkspace: React.FC = () => {
     };
 
     if (activeDocument) {
-        const isPrimaryDocument = activeDocument?.toUpperCase() === templateCode?.toUpperCase();
-        const editorUuid = isPrimaryDocument ? documentUuid : subDocumentUuids[activeDocument];
+        const editorUuid = subDocumentUuids[activeDocument];
 
-        if (!isPrimaryDocument && !editorUuid) {
+        if (!editorUuid) {
             return <FullscreenLoader message="Resolviendo documento..." />;
         }
 

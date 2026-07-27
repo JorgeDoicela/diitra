@@ -229,6 +229,39 @@ namespace Diitra.Infrastructure.Common.Documents
                 // 3b. Cargar CSS asociado
                 var fileCss = await _templateFileLoader.LoadCssAsync(template.Code);
                 var cssToUse = template.CustomCss;
+
+                // Sanación en caliente de la plantilla para resolver el bug de career -> carrera y extraer estilos embebidos hacia CustomCss
+                bool needsSave = false;
+                if (!string.IsNullOrEmpty(htmlToRender) && htmlToRender.Contains("{{default career"))
+                {
+                    _logger.LogInformation("DIITRA DocumentEngine: Sanando plantilla '{Code}' en BD corrigiendo 'career' por 'carrera'...", template.Code);
+                    htmlToRender = htmlToRender.Replace("{{default career", "{{default carrera");
+                    needsSave = true;
+                }
+
+                if (!string.IsNullOrEmpty(htmlToRender) && htmlToRender.Contains("<style>") && htmlToRender.Contains("</style>"))
+                {
+                    var styleStart = htmlToRender.IndexOf("<style>");
+                    var styleEnd = htmlToRender.IndexOf("</style>");
+                    if (styleEnd > styleStart)
+                    {
+                        var styleContent = htmlToRender.Substring(styleStart + 7, styleEnd - styleStart - 7).Trim();
+                        var cleanHtml = (htmlToRender.Substring(0, styleStart) + htmlToRender.Substring(styleEnd + 8)).Trim();
+                        
+                        _logger.LogInformation("DIITRA DocumentEngine: Extrayendo estilo embebido de '{Code}' en BD hacia CustomCss...", template.Code);
+                        htmlToRender = cleanHtml;
+                        cssToUse = styleContent;
+                        template.UpdateCustomCssOnly(cssToUse);
+                        needsSave = true;
+                    }
+                }
+
+                if (needsSave)
+                {
+                    template.UpdateHtmlContentOnly(htmlToRender ?? string.Empty);
+                    await _templateRepository.SaveAsync(template, cancellationToken);
+                }
+
                 if (string.IsNullOrEmpty(cssToUse))
                 {
                     cssToUse = fileCss;

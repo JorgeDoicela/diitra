@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     public class SignaturesBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "signatures";
+        public BlockBehavior Behavior => BlockBehavior.StaticLayout;
 
         public void PopulateSchema(
             JsonElement block, 
