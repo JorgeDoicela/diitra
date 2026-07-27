@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import React, { useContext } from 'react';
+import * as Y from 'yjs';
 import { useEditor, EditorContent } from '@tiptap/react';
 import api from '../../../api/axios_config';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
@@ -48,7 +49,16 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
     }
 
     const isReadOnlyMode = props.readonly || guardContext.readOnly || props.cowork.session.readOnly;
-    const xmlFragment = props.cowork.ydoc.getXmlFragment(field);
+    
+    // Evitar conflicto de constructor en Yjs si la clave ya fue registrada con un tipo diferente (ej. Y.Text)
+    const ydoc = props.cowork.ydoc;
+    const sharedType = ydoc.share.get(field);
+    if (sharedType && !(sharedType instanceof Y.XmlFragment)) {
+        console.warn(`[CoWorkEditor] Conflicto de constructor detectado para '${field}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.XmlFragment.`);
+        ydoc.share.delete(field);
+    }
+    
+    const xmlFragment = ydoc.getXmlFragment(field);
     const hasYjsContent = xmlFragment.length > 0;
     const useCollaboration = !isReadOnlyMode || hasYjsContent;
     const editorKey = `${field}_collab_${useCollaboration}`;

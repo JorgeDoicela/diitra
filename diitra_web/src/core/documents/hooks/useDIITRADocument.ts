@@ -110,6 +110,12 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 !options.nonCollaborative?.includes(name) &&
                 name.toLowerCase() !== 'uuid' &&
                 name.toLowerCase() !== 'entityuuid') {
+                // Evitar conflicto de constructor en Yjs si la clave fue registrada con un tipo diferente (ej. Y.XmlFragment)
+                const sharedType = ydoc.share.get(name);
+                if (sharedType && !(sharedType instanceof Y.Text)) {
+                    console.warn(`[useDIITRADocument] Conflicto de constructor detectado para '${name}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.Text.`);
+                    ydoc.share.delete(name);
+                }
                 const ytext = ydoc.getText(name);
                 const stringVal = typeof resolvedValue === 'object' && resolvedValue !== null ? JSON.stringify(resolvedValue) : String(resolvedValue);
                 if (ytext.toString() !== stringVal) {
@@ -226,6 +232,12 @@ export function useDIITRADocument<T extends Record<string, any>>(
             if (options.nonCollaborative?.includes(key)) return;
             if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return;
 
+            // Evitar conflicto de constructor en Yjs si la clave fue registrada con un tipo diferente (ej. Y.XmlFragment)
+            const sharedType = ydoc.share.get(key);
+            if (sharedType && !(sharedType instanceof Y.Text)) {
+                console.warn(`[useDIITRADocument] Conflicto de constructor detectado para '${key}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.Text.`);
+                ydoc.share.delete(key);
+            }
             const ytext = ydoc.getText(key);
             const observer = (event: Y.YTextEvent) => {
                 if (event.transaction.origin === 'remote') {

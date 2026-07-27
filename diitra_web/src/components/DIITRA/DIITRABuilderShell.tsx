@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Unlock, Shield } from 'lucide-react';
+import { Lock, Unlock, Shield, Award } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
@@ -33,6 +33,11 @@ export interface DIITRABuilderShellProps {
     onUpdateField?: (name: string, value: any) => void;
     signatureType?: string;
     documentUuid?: string;
+    hasTemplateUpdate?: boolean;
+    instanceVersion?: number;
+    templateVersion?: number;
+    onUpgradeTemplate?: () => Promise<void>;
+    isUpgrading?: boolean;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
@@ -50,7 +55,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
         canSign = true,
         onUpdateField,
         signatureType = 'DIITRA',
-        documentUuid
+        documentUuid,
+        hasTemplateUpdate = false,
+        instanceVersion,
+        templateVersion,
+        onUpgradeTemplate,
+        isUpgrading = false
     } = props;
 
     const { layout, autoSave, pdfAndSign, network } = useDIITRABuilderShell(props);
@@ -179,6 +189,33 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                         </div>
                                                     )}
                                                 </div>
+
+                                                {hasTemplateUpdate && !readOnly && onUpgradeTemplate && (
+                                                    <div className="callout-vercel callout-vercel-info mb-8 animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                        <div className="flex gap-3">
+                                                            <Award size={16} className="text-info mt-0.5 shrink-0" />
+                                                            <div>
+                                                                <p className="callout-vercel-title">Nueva versión de plantilla disponible</p>
+                                                                <p className="callout-vercel-body">
+                                                                    El administrador ha actualizado el formato oficial de esta plantilla a la versión {templateVersion}. Tu borrador actual utiliza la versión {instanceVersion}. Puedes actualizar para aplicar las últimas secciones y formatos. Tus datos actuales se conservarán.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={onUpgradeTemplate}
+                                                            disabled={isUpgrading}
+                                                            className="px-4 py-2 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-50 transition-all flex items-center gap-1.5"
+                                                        >
+                                                            {isUpgrading ? (
+                                                                <>
+                                                                    <span className="animate-spin mr-1">⌛</span> Actualizando...
+                                                                </>
+                                                            ) : (
+                                                                "Actualizar Formato"
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                )}
 
                                                 {readOnly && (
                                                     <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">

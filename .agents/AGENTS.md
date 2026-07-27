@@ -5,6 +5,7 @@ Este archivo define las directrices y estándares obligatorios de desarrollo par
 ## Stack Tecnológico del Proyecto
 * **Frontend:** React, Vite, TypeScript, Axios (cliente de API configurado en `api`), Yjs (colaboración en tiempo real con `CoWorkField`).
   * *Estilos:* CSS Vanilla de alta calidad (premium, animaciones fluidas). Evitar TailwindCSS a menos que el usuario lo solicite.
+  * *Casing y Serialización:* El backend de DIITRA tiene una política de serialización global que transforma todas las propiedades a `snake_case` (por ejemplo, `hasTemplateUpdate` se convierte en `has_template_update`). Por lo tanto, al consumir servicios de la API en el frontend (React), siempre se deben mapear las propiedades esperando `snake_case` (o proveer fallbacks locales como `has_template_update || hasTemplateUpdate` para evitar fallos si el frontend espera camelCase).
 * **Backend:** ASP.NET Core (Web API, .NET 8), Entity Framework Core (ORM), Pomelo MySQL.
 * **Base de Datos:** MySQL (base de datos `sigafi_es`, puerto `3307`).
 

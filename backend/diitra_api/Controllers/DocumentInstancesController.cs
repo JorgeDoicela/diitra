@@ -79,7 +79,29 @@ namespace diitra_api.Controllers
 
             if (!string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson))
             {
-                var result = await BuildUiConfigResponseAsync(instance.TemplateConfigSnapshotJson, template, ct);
+                var result = await BuildUiConfigResponseAsync(instance.TemplateConfigSnapshotJson, template, instance, ct);
+                if (result != null) return result;
+            }
+
+            var blocksJson = "";
+            if (!string.IsNullOrEmpty(template.HtmlContent))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    try
+                    {
+                        var base64 = match.Groups[1].Value;
+                        var bytes = System.Convert.FromBase64String(base64);
+                        blocksJson = System.Text.Encoding.UTF8.GetString(bytes);
+                    }
+                    catch { }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(blocksJson))
+            {
+                var result = await BuildUiConfigResponseAsync(blocksJson, template, instance, ct);
                 if (result != null) return result;
             }
 
@@ -122,7 +144,7 @@ namespace diitra_api.Controllers
 
             if (!string.IsNullOrEmpty(blocksJson))
             {
-                var result = await BuildUiConfigResponseAsync(blocksJson, template, ct);
+                var result = await BuildUiConfigResponseAsync(blocksJson, template, null, ct);
                 if (result != null) return result;
             }
 
@@ -849,6 +871,28 @@ namespace diitra_api.Controllers
             }
         }
 
+        [HttpPost("{uuid}/upgrade-template")]
+        public async Task<IActionResult> UpgradeTemplate(string uuid, CancellationToken ct)
+        {
+            try
+            {
+                var instance = await _instanceService.UpgradeTemplateAsync(uuid, ct);
+                return Ok(new { success = true, version = instance.TemplateVersion });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet("maintenance/diagnose")]
         public async Task<IActionResult> DiagnoseObsolete(CancellationToken ct)
         {
@@ -894,7 +938,11 @@ namespace diitra_api.Controllers
             }
         }
 
-        private async Task<IActionResult> BuildUiConfigResponseAsync(string blocksJson, Diitra.Domain.Common.Documents.DocumentTemplate template, CancellationToken ct)
+        private async Task<IActionResult> BuildUiConfigResponseAsync(
+            string blocksJson, 
+            Diitra.Domain.Common.Documents.DocumentTemplate template, 
+            Diitra.Domain.Common.Documents.DocumentInstance? instance, 
+            CancellationToken ct)
         {
             try
             {
@@ -955,6 +1003,10 @@ namespace diitra_api.Controllers
 
                 var orderedSections = sectionsList.ToArray();
 
+                bool hasTemplateUpdate = instance != null 
+                    && instance.State == Diitra.Domain.Common.Documents.DocumentState.Draft 
+                    && template.Version > instance.TemplateVersion;
+
                 return Ok(new
                 {
                     title = template.Name,
@@ -962,7 +1014,11 @@ namespace diitra_api.Controllers
                     signatureType = template.SignatureType,
                     schema = schemaDict,
                     lists = listsList.ToArray(),
-                    sections = orderedSections
+                    sections = orderedSections,
+                    hasTemplateUpdate = hasTemplateUpdate,
+                    instanceVersion = instance?.TemplateVersion ?? template.Version,
+                    templateVersion = template.Version,
+                    instanceState = instance?.State.ToString() ?? "TemplateOnly"
                 });
             }
             catch (Exception ex)

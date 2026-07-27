@@ -124,6 +124,16 @@ namespace Diitra.Domain.Common.Documents
             TemplateConfigSnapshotJson = json;
             UpdatedAt = DateTime.UtcNow;
         }
+
+        public void UpgradeTemplate(string? templateConfigSnapshotJson, int newVersion)
+        {
+            if (State == DocumentState.Signed || State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede actualizar la versión de plantilla de un documento inmutable.");
+
+            TemplateConfigSnapshotJson = templateConfigSnapshotJson;
+            TemplateVersion = newVersion;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public enum DocumentState

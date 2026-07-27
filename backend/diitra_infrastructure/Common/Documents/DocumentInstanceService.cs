@@ -684,5 +684,44 @@ namespace Diitra.Infrastructure.Common.Documents
             var existingKey = target.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase)) ?? key;
             target[existingKey] = newValue;
         }
+
+        public async Task<DocumentInstance> UpgradeTemplateAsync(string uuid, CancellationToken ct = default)
+        {
+            var instance = await _context.DocumentInstances
+                .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+
+            if (instance == null)
+                throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
+
+            if (instance.State == DocumentState.Signed || instance.State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede actualizar la plantilla de un documento firmado o archivado.");
+
+            var template = await _context.DocumentTemplates
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Code == instance.TemplateCode && t.IsActive, ct);
+
+            if (template == null)
+                throw new KeyNotFoundException($"La plantilla activa '{instance.TemplateCode}' no existe.");
+
+            string? blocksJson = null;
+            if (!string.IsNullOrEmpty(template.HtmlContent))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    try
+                    {
+                        var base64 = match.Groups[1].Value;
+                        var bytes = System.Convert.FromBase64String(base64);
+                        blocksJson = System.Text.Encoding.UTF8.GetString(bytes);
+                    }
+                    catch { }
+                }
+            }
+
+            instance.UpgradeTemplate(blocksJson, template.Version);
+            await _context.SaveChangesAsync(ct);
+            return instance;
+        }
     }
 }

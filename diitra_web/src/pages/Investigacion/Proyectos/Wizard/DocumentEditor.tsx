@@ -4,6 +4,7 @@ import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, B
 
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
+import { useNotifications } from '../../../../api/NotificationsContext';
 
 // ── DIITRA CoWork — importar SOLO desde el índice público ────────
 import { useCoWork, coworkUserFromAuth } from '../../../../core/cowork';
@@ -286,6 +287,32 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 }) => {
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
+    const { addToast } = useNotifications();
+    const [isUpgrading, setIsUpgrading] = useState(false);
+    const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+
+    useEffect(() => {
+        if (templateConfig?.has_template_update || templateConfig?.hasTemplateUpdate) {
+            setShowUpgradeBanner(true);
+        }
+    }, [templateConfig]);
+
+    const handleUpgradeTemplate = async () => {
+        const documentId = initialData?.Uuid || initialData?.uuid;
+        if (!documentId) return;
+        setIsUpgrading(true);
+        try {
+            await api.post(`/documents/instances/${documentId}/upgrade-template`);
+            addToast("Formato Actualizado", "El borrador ha sido adaptado al nuevo formato de plantilla con éxito.", "success");
+            setShowUpgradeBanner(false);
+            window.location.reload();
+        } catch (err: any) {
+            console.error("[DIITRA] Error al actualizar formato de plantilla:", err);
+            addToast("Error al actualizar", err?.response?.data?.message || "No se pudo actualizar el formato.", "error");
+        } finally {
+            setIsUpgrading(false);
+        }
+    };
 
     // Log para depuración en caliente
     useEffect(() => {
@@ -321,21 +348,21 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         const list: string[] = [];
         const hasTechnicalSection = templateConfig?.sections?.some((s: any) => s.componentName === "TechnicalSection" || s.component_name === "TechnicalSection");
         if (templateCode === 'PROTOCOLO_INVESTIGACION' && hasTechnicalSection) {
-            return [
+            list.push(
                 'Antecedentes', 'DescripcionProyecto', 'Justificacion',
                 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico',
                 'Metodologia', 'Evaluacion', 'Bibliografia'
-            ];
+            );
+        } else if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some(s => s.id === "edicion_colaborativa")) {
+            list.push('ConclusionesParciales');
         }
-        if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some(s => s.id === "edicion_colaborativa")) {
-            return ['ConclusionesParciales'];
-        }
+
         if (templateConfig?.sections) {
             templateConfig.sections.forEach((sec: any) => {
                 const fields = sec.config?.fields || sec.fields;
                 if (Array.isArray(fields)) {
                     fields.forEach((f: any) => {
-                        if (f.type === 'rich-text') {
+                        if (f.type === 'rich-text' && !list.includes(f.name)) {
                             list.push(f.name);
                         }
                     });
@@ -533,6 +560,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             onUpdateField={updateField}
             signatureType={templateConfig?.signatureType || 'DIITRA'}
             documentUuid={formData.Uuid || formData.uuid || initialData?.Uuid || initialData?.uuid}
+            hasTemplateUpdate={showUpgradeBanner}
+            instanceVersion={templateConfig?.instance_version ?? templateConfig?.instanceVersion}
+            templateVersion={templateConfig?.template_version ?? templateConfig?.templateVersion}
+            onUpgradeTemplate={handleUpgradeTemplate}
+            isUpgrading={isUpgrading}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);

@@ -17,5 +17,6 @@ namespace Diitra.Application.Common.Documents
         Task<IEnumerable<object>> GetObsoleteDocumentDiagnosisAsync(CancellationToken ct = default);
         Task<bool> PurgeObsoleteFileByUuidAsync(string uuid, string purgedBy, CancellationToken ct = default);
         Task<int> PurgeAllObsoleteDocumentFilesAsync(string purgedBy, CancellationToken ct = default);
+        Task<DocumentInstance> UpgradeTemplateAsync(string uuid, CancellationToken ct = default);
     }
 }

@@ -19,6 +19,6 @@ Esta habilidad regula y optimiza el flujo de trabajo para el desarrollo del fron
    * Asegura que los nombres de los campos coincidan exactamente con la estructura definida en `DocumentTemplateRegistry.ts` (ej. `LineaInvestigacion`, `SublineaInvestigacion`).
 4. **Peticiones a la API:**
    * Utiliza el cliente Axios configurado (`api`) para comunicarse con el backend.
-   * **Casing:** Ten en cuenta que el backend serializa las respuestas en formato **snake_case** (ej. `id_sublinea`, `id_linea`) o **camelCase** según el controlador. Inspecciona el JSON devuelto en la consola o pestaña de red para mapear las propiedades correctamente.
+   * **Casing y Serialización:** El backend de DIITRA tiene una política de serialización global que transforma todas las propiedades a `snake_case` (por ejemplo, `hasTemplateUpdate` se convierte en `has_template_update`). Por lo tanto, al consumir servicios de la API en el frontend (React), siempre se deben mapear las propiedades esperando `snake_case` (o proveer fallbacks locales como `has_template_update || hasTemplateUpdate` para evitar fallos si el frontend espera camelCase).
 5. **Mapeo de Catálogos:**
    * Al mapear datos en selects o dropdowns, verifica que la variable contenga tanto el identificador local como las claves de vinculación externa (ej: para vincular líneas y sublíneas de forma reactiva, busca `l.id` y `s.id_linea`).
