@@ -40,19 +40,51 @@ const DYN_COLORS = {
 // ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_POSITIONS: Record<string, FreeFormPosition> = {
     institution: { x: 10, y: 4 },
-    title:       { x: 10, y: 35 },
-    carrera:     { x: 10, y: 70 },
-    periodo:     { x: 10, y: 80 },
+    title: { x: 10, y: 35 },
+    carrera: { x: 10, y: 70 },
+    periodo: { x: 10, y: 80 },
 };
 
 type CoverElementId = 'institution' | 'title' | 'carrera' | 'periodo';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sub-renderizadores estáticos de alta fidelidad para el lienzo A4
+// GUÍA DE ARQUITECTURA Y RESTRICCIONES DEL SISTEMA DE PORTADA DINÁMICA
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 1. ¿CÓMO SE GENERA EL PDF FÍSICO DESDE EL CANVAS LIBRE?
+//    - El lienzo del navegador representa una hoja A4 física real (210mm x 297mm).
+//    - Al mover los elementos, calculamos su ubicación en porcentaje (%) relativo al contenedor.
+//    - El compilador HTML ("HtmlGenerator.ts") convierte estas coordenadas a estilos CSS en línea
+//      (ej: position: absolute; left: 15.5%; top: 42%).
+//    - El motor de PDF en el backend C# ("DocumentEngine.cs") utiliza PuppeteerSharp e iText,
+//      los cuales respetan al 100% el box-model de CSS y posicionan los elementos con precisión
+//      milimétrica física basándose en dichos porcentajes absolutos.
+//
+// 2. RESTRICCIÓN CRÍTICA DE SCRIBAN (¡EVITAR DAÑAR EL MOTOR DE PLANTILLAS!):
+//    - ATENCIÓN: Las variables dinámicas de Scriban como {{default titulo '...'}}, {{carrera}},
+//      o {{periodo}} NUNCA deben inyectarse dentro de atributos de estilo (ej. style="top: {{y}}%").
+//      Scriban procesa e interpreta estas llaves como texto plano y el analizador de HTML del
+//      generador de PDFs podría escapar o corromper los caracteres, rompiendo el CSS.
+//    - La solución profesional: Las coordenadas X/Y las compila "HtmlGenerator.ts" directamente en
+//      TypeScript como valores literales estáticos (ej: left: 10%; top: 35%). Las llaves de Scriban
+//      se colocan única y exclusivamente dentro del CONTENIDO del texto del div (el innerHTML).
+//      Esto es 100% robusto y seguro.
+//
+// 3. RETROCOMPATIBILIDAD DE COMPOSICIÓN (ZONAS vs. CANVAS LIBRE):
+//    - Mantenemos el campo "coverLayoutMode". Si es "zones", la portada se renderiza usando el
+//      diseño flexbox tradicional por tercios (Superior, Medio, Inferior). Si es "freeform",
+//      se activa la maquetación de posiciones absolutas libres. Esto garantiza que ninguna
+//      plantilla institucional existente en producción sufra desajustes.
+//
+// 4. ARRASTRE LIBRE PURO 1:1 (SIN MAGNETIZACIÓN):
+//    - Desactivamos cualquier tipo de snap magnético automático o forzado en caliente, dado que
+//      los saltos por software alteraban la trayectoria natural del puntero y generaban tosquedad.
+//    - En su lugar, el arrastre es puramente lineal y directo 1:1. El lienzo muestra guías punteadas
+//      estáticas de referencia en tercios (25%, 50%, 75%) para asistir visualmente en la alineación.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RenderCover: React.FC<{ 
-    config: any; 
+const RenderCover: React.FC<{
+    config: any;
     coverImage?: string;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
@@ -60,27 +92,27 @@ const RenderCover: React.FC<{
     const color = config.colorTema || DYN_COLORS.blue;
     const isFreeForm = config.coverLayoutMode !== 'zones';
 
-    const showInst    = config.showInstitution !== false;
-    const showTitle   = config.showTitle !== false;
+    const showInst = config.showInstitution !== false;
+    const showTitle = config.showTitle !== false;
     const showCarrera = config.showCarrera !== false;
     const showPeriodo = config.showPeriodo !== false;
 
-    const alignInst    = config.alignInstitution || 'center';
-    const alignTitle   = config.alignTitle || 'center';
+    const alignInst = config.alignInstitution || 'center';
+    const alignTitle = config.alignTitle || 'center';
     const alignCarrera = config.alignCarrera || 'center';
     const alignPeriodo = config.alignPeriodo || 'center';
 
-    const textInst    = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
-    const textTitle   = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textInst = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textTitle = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
     const textCarrera = config.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
     const textPeriodo = config.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
 
     // Posiciones actuales (desde config o defaults)
     const positions: Record<CoverElementId, FreeFormPosition> = {
         institution: { x: config.xInstitution ?? DEFAULT_POSITIONS.institution.x, y: config.yInstitution ?? DEFAULT_POSITIONS.institution.y },
-        title:       { x: config.xTitle       ?? DEFAULT_POSITIONS.title.x,       y: config.yTitle       ?? DEFAULT_POSITIONS.title.y       },
-        carrera:     { x: config.xCarrera      ?? DEFAULT_POSITIONS.carrera.x,     y: config.yCarrera     ?? DEFAULT_POSITIONS.carrera.y     },
-        periodo:     { x: config.xPeriodo      ?? DEFAULT_POSITIONS.periodo.x,     y: config.yPeriodo     ?? DEFAULT_POSITIONS.periodo.y     },
+        title: { x: config.xTitle ?? DEFAULT_POSITIONS.title.x, y: config.yTitle ?? DEFAULT_POSITIONS.title.y },
+        carrera: { x: config.xCarrera ?? DEFAULT_POSITIONS.carrera.x, y: config.yCarrera ?? DEFAULT_POSITIONS.carrera.y },
+        periodo: { x: config.xPeriodo ?? DEFAULT_POSITIONS.periodo.x, y: config.yPeriodo ?? DEFAULT_POSITIONS.periodo.y },
     };
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -124,13 +156,12 @@ const RenderCover: React.FC<{
                 key={id}
                 style={style}
                 {...handlers}
-                className={`group/item p-2 rounded-lg transition-all duration-200 ${
-                    isFreeForm
+                className={`group/item p-2 rounded-lg ${isFreeForm
                         ? isThisDragging
                             ? 'ring-2 ring-indigo-500 bg-indigo-50/20'
-                            : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10'
-                        : ''
-                }`}
+                            : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10 transition-all duration-200'
+                        : 'transition-all duration-200'
+                    }`}
                 title={isFreeForm ? `Arrastra para mover ${id}` : undefined}
             >
                 {/* Indicador de arrastre visible al hover */}
@@ -148,17 +179,19 @@ const RenderCover: React.FC<{
     // ─── Cuadrícula de guías (aparece solo durante drag en modo freeform) ─────
     const GuideGrid = () => (
         <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isDragging ? 'opacity-100' : 'opacity-0'}`}>
-            {/* Líneas horizontales de guía */}
+            {/* Líneas horizontales de guía estándar */}
             {[25, 50, 75].map(pct => (
-                <div key={pct} className="absolute left-0 right-0 border-t border-dashed border-indigo-300/30" style={{ top: `${pct}%` }}>
-                    <span className="absolute right-1 -top-3 text-[8px] text-indigo-400/60 font-mono select-none">{pct}%</span>
+                <div key={pct} className="absolute left-0 right-0 border-t border-dashed border-indigo-300/20" style={{ top: `${pct}%` }}>
+                    <span className="absolute right-1 -top-3 text-[8px] text-indigo-400/40 font-mono select-none">{pct}%</span>
                 </div>
             ))}
-            {/* Líneas verticales de guía */}
+            {/* Líneas verticales de guía estándar */}
             {[33, 66].map(pct => (
-                <div key={pct} className="absolute top-0 bottom-0 border-l border-dashed border-indigo-300/20" style={{ left: `${pct}%` }} />
+                <div key={pct} className="absolute top-0 bottom-0 border-l border-dashed border-indigo-300/10" style={{ left: `${pct}%` }} />
             ))}
-            {/* Cruz central */}
+
+
+            {/* Cruz central de referencia */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 opacity-30">
                 <div className="absolute left-1/2 top-0 bottom-0 border-l border-indigo-400" />
                 <div className="absolute top-1/2 left-0 right-0 border-t border-indigo-400" />
@@ -211,8 +244,8 @@ const RenderCover: React.FC<{
     }
 
     // ─── MODO ZONES LEGACY (retrocompatibilidad) ──────────────────────────────
-    const posInst    = config.posInstitution || 'top';
-    const posTitle   = config.posTitle || 'middle';
+    const posInst = config.posInstitution || 'top';
+    const posTitle = config.posTitle || 'middle';
     const posCarrera = config.posCarrera || 'bottom';
     const posPeriodo = config.posPeriodo || 'bottom';
 

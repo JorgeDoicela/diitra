@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, RefObject } from 'react';
+import { useState, useRef, useCallback, useEffect, type RefObject } from 'react';
 
 /**
  * Posición libre de un elemento expresada en porcentajes (0-100) relativos al contenedor.
@@ -39,6 +39,12 @@ export type OnPositionChanged<TElement extends string> = (
  *   </div>
  * );
  */
+/**
+ * useFreeFormDrag — Hook genérico reutilizable para posicionamiento libre de elementos
+ * dentro de un contenedor de referencia. Compatible con @dnd-kit porque intercepta
+ * onPointerDown/onMouseDown antes de que el evento burbujee al SortableItem padre.
+ * Provee arrastre libre fluido 1:1 con autoscroll adaptativo.
+ */
 export function useFreeFormDrag<TElement extends string>(
     containerRef: RefObject<HTMLDivElement | null>,
     onPositionChanged: OnPositionChanged<TElement>
@@ -58,7 +64,7 @@ export function useFreeFormDrag<TElement extends string>(
         containerH: number;
     } | null>(null);
 
-    // Elemento DOM que se mueve durante el drag (para actualizar posición sin re-render)
+    // Elemento DOM que se mueve durante el drag
     const draggingElementRef = useRef<HTMLElement | null>(null);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -69,11 +75,42 @@ export function useFreeFormDrag<TElement extends string>(
         const deltaX = e.clientX - ds.startMouseX;
         const deltaY = e.clientY - ds.startMouseY;
 
+        // ── AUTOSCROLL DINÁMICO DE PANTALLA DURANTE EL DRAG ───────────────────
+        // Si el viewport de la pantalla o del contenedor de scroll limita el mouse,
+        // nos desplazamos de forma automática para permitir arrastrar al final de la página.
+        let scrollParent: HTMLElement | null = containerRef.current;
+        while (scrollParent && scrollParent !== document.body) {
+            const overflow = window.getComputedStyle(scrollParent).overflowY;
+            if (overflow === 'auto' || overflow === 'scroll') {
+                break;
+            }
+            scrollParent = scrollParent.parentElement;
+        }
+
+        const scrollThreshold = 60; // píxeles de tolerancia al borde
+        const scrollSpeed = 10;     // velocidad del desplazamiento
+
+        if (scrollParent && scrollParent !== document.body) {
+            const parentRect = scrollParent.getBoundingClientRect();
+            if (e.clientY > parentRect.bottom - scrollThreshold) {
+                scrollParent.scrollTop += scrollSpeed;
+            } else if (e.clientY < parentRect.top + scrollThreshold) {
+                scrollParent.scrollTop -= scrollSpeed;
+            }
+        } else {
+            // Fallback a nivel de ventana global
+            if (e.clientY > window.innerHeight - scrollThreshold) {
+                window.scrollBy(0, scrollSpeed);
+            } else if (e.clientY < scrollThreshold) {
+                window.scrollBy(0, -scrollSpeed);
+            }
+        }
+
         const deltaXPct = (deltaX / ds.containerW) * 100;
         const deltaYPct = (deltaY / ds.containerH) * 100;
 
-        const newX = Math.max(0, Math.min(90, ds.startElemX + deltaXPct));
-        const newY = Math.max(0, Math.min(92, ds.startElemY + deltaYPct));
+        let newX = Math.max(0, Math.min(95, ds.startElemX + deltaXPct));
+        let newY = Math.max(0, Math.min(97, ds.startElemY + deltaYPct));
 
         ds.currentX = newX;
         ds.currentY = newY;
@@ -93,7 +130,7 @@ export function useFreeFormDrag<TElement extends string>(
         setDraggingId(null);
         dragState.current = null;
         draggingElementRef.current = null;
-
+        
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
         document.body.classList.remove('diitra-freeform-dragging');

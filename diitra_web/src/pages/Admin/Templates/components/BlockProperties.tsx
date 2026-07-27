@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Settings, Palette, Plus, Trash2, Type, Layout, Shield } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
@@ -271,14 +271,13 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 </p>
                             </div>
 
-                            {/* â”€â”€ PORTADA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                             {activeBlock.type === 'cover' && (() => {
                                 const isFreeForm = activeBlock.config.coverLayoutMode !== 'zones';
                                 const DEFAULT_POS: Record<string, { x: number; y: number }> = {
                                     institution: { x: 10, y: 4 },
-                                    title:       { x: 10, y: 35 },
-                                    carrera:     { x: 10, y: 70 },
-                                    periodo:     { x: 10, y: 80 },
+                                    title: { x: 10, y: 35 },
+                                    carrera: { x: 10, y: 70 },
+                                    periodo: { x: 10, y: 80 },
                                 };
 
                                 const renderElementPanel = (
@@ -301,20 +300,30 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         <div key={showKey} className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] font-bold text-text-main">{label}</span>
-                                                <input type="checkbox" checked={isVisible}
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isVisible}
                                                     onChange={e => onUpdateConfig(activeBlock.id, showKey, e.target.checked)}
-                                                    className="w-4 h-4 accent-text-main rounded cursor-pointer" />
+                                                    className="w-4 h-4 accent-text-main rounded cursor-pointer"
+                                                />
                                             </div>
                                             {isVisible && (
                                                 <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
                                                     <LabeledField label="Texto">
-                                                        <input type="text" className={inputCls} value={textVal}
+                                                        <input
+                                                            type="text"
+                                                            className={inputCls}
+                                                            value={textVal}
                                                             onChange={e => onUpdateConfig(activeBlock.id, textKey, e.target.value)}
-                                                            placeholder={textPlaceholder} />
+                                                            placeholder={textPlaceholder}
+                                                        />
                                                     </LabeledField>
-                                                    <LabeledField label="AlineaciÃ³n">
-                                                        <select className={selectCls} value={alignVal}
-                                                            onChange={e => onUpdateConfig(activeBlock.id, alignKey, e.target.value)}>
+                                                    <LabeledField label="Alineacion">
+                                                        <select
+                                                            className={selectCls}
+                                                            value={alignVal}
+                                                            onChange={e => onUpdateConfig(activeBlock.id, alignKey, e.target.value)}
+                                                        >
                                                             <option value="left">Izquierda</option>
                                                             <option value="center">Centro</option>
                                                             <option value="right">Derecha</option>
@@ -323,33 +332,56 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                     {isFreeForm && (
                                                         <div>
                                                             <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">PosiciÃ³n en Canvas</span>
-                                                                <button type="button"
-                                                                    onClick={() => { onUpdateConfig(activeBlock.id, xKey, defPos.x); onUpdateConfig(activeBlock.id, yKey, defPos.y); }}
+                                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Posicion en Canvas</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        onUpdateConfig(activeBlock.id, xKey, defPos.x);
+                                                                        onUpdateConfig(activeBlock.id, yKey, defPos.y);
+                                                                    }}
                                                                     className="text-[9px] text-indigo-500 hover:text-indigo-700 font-bold uppercase tracking-wide px-1.5 py-0.5 rounded hover:bg-indigo-50 transition-all cursor-pointer"
-                                                                    title="Restablecer posiciÃ³n por defecto">â†º Reset</button>
+                                                                    title="Restablecer posicion por defecto"
+                                                                >
+                                                                    Reset
+                                                                </button>
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <div>
-                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">â† X  {xVal.toFixed(1)}%</label>
-                                                                    <input type="range" min={0} max={90} step={0.5} value={xVal}
+                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">X  {xVal.toFixed(1)}%</label>
+                                                                    <input
+                                                                        type="range"
+                                                                        min={0} max={95} step={0.5}
+                                                                        value={xVal}
                                                                         onChange={e => onUpdateConfig(activeBlock.id, xKey, parseFloat(e.target.value))}
-                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer" />
+                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer"
+                                                                    />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">â†• Y  {yVal.toFixed(1)}%</label>
-                                                                    <input type="range" min={0} max={92} step={0.5} value={yVal}
+                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">Y  {yVal.toFixed(1)}%</label>
+                                                                    <input
+                                                                        type="range"
+                                                                        min={0} max={97} step={0.5}
+                                                                        value={yVal}
                                                                         onChange={e => onUpdateConfig(activeBlock.id, yKey, parseFloat(e.target.value))}
-                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer" />
+                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer"
+                                                                    />
                                                                 </div>
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2 mt-1.5">
-                                                                <input type="number" min={0} max={90} step={0.5} value={xVal}
+                                                                <input
+                                                                    type="number"
+                                                                    min={0} max={95} step={0.5}
+                                                                    value={xVal}
                                                                     onChange={e => onUpdateConfig(activeBlock.id, xKey, parseFloat(e.target.value))}
-                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full" />
-                                                                <input type="number" min={0} max={92} step={0.5} value={yVal}
+                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full"
+                                                                />
+                                                                <input
+                                                                    type="number"
+                                                                    min={0} max={97} step={0.5}
+                                                                    value={yVal}
                                                                     onChange={e => onUpdateConfig(activeBlock.id, yKey, parseFloat(e.target.value))}
-                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full" />
+                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full"
+                                                                />
                                                             </div>
                                                         </div>
                                                     )}
@@ -364,18 +396,23 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         <div className="space-y-2">
                                             <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
                                                 <Layout className="w-3.5 h-3.5" />
-                                                Modo de ComposiciÃ³n
+                                                Modo de Composicion
                                             </label>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {[
-                                                    { value: 'freeform', label: 'âœ¦ Canvas Libre', desc: 'Arrastra a cualquier posiciÃ³n' },
-                                                    { value: 'zones',    label: 'â‰¡ Zonas Fijas',  desc: 'Superior / Medio / Inferior' },
+                                                    { value: 'freeform', label: 'Canvas Libre', desc: 'Arrastra a cualquier posicion' },
+                                                    { value: 'zones', label: 'Zonas Fijas', desc: 'Superior / Medio / Inferior' },
                                                 ].map(opt => (
-                                                    <button key={opt.value} type="button"
+                                                    <button
+                                                        key={opt.value}
+                                                        type="button"
                                                         onClick={() => onUpdateConfig(activeBlock.id, 'coverLayoutMode', opt.value)}
-                                                        className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${(isFreeForm ? 'freeform' : 'zones') === opt.value
-                                                            ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
-                                                            : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'}`}>
+                                                        className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                                                            (isFreeForm ? 'freeform' : 'zones') === opt.value
+                                                                ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
+                                                                : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
+                                                        }`}
+                                                    >
                                                         <div className="text-[10px] font-bold">{opt.label}</div>
                                                         <div className="text-[9px] opacity-70 mt-0.5">{opt.desc}</div>
                                                     </button>
@@ -390,15 +427,22 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             <div className="flex items-center gap-3 bg-surface border border-border-thin rounded-md p-2 w-max">
                                                 {[
                                                     { name: 'Azul Traversari', hex: '#1e2a4a' },
-                                                    { name: 'Dorado AcreditaciÃ³n', hex: '#b8912e' },
+                                                    { name: 'Dorado Acreditacion', hex: '#b8912e' },
                                                     { name: 'Gris Oscuro', hex: '#334155' },
                                                 ].map(color => {
                                                     const isSel = activeBlock.config.colorTema === color.hex;
                                                     return (
-                                                        <button key={color.hex} type="button"
+                                                        <button
+                                                            key={color.hex}
+                                                            type="button"
                                                             onClick={() => onUpdateConfig(activeBlock.id, 'colorTema', color.hex)}
-                                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${isSel ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
-                                                            title={color.name}>
+                                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${
+                                                                isSel
+                                                                    ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105'
+                                                                    : 'hover:scale-105 opacity-80 hover:opacity-100'
+                                                            }`}
+                                                            title={color.name}
+                                                        >
                                                             <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: color.hex }} />
                                                             {isSel && <span className="absolute w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
                                                         </button>
@@ -408,10 +452,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         </div>
                                         <div className="space-y-3">
                                             <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Elementos de la Portada</h5>
-                                            {renderElementPanel('InstituciÃ³n / Logo',  'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLÃ“GICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution)}
-                                            {renderElementPanel('TÃ­tulo de Portada',   'showTitle',       'xTitle',       'yTitle',       'alignTitle',       'tituloSuperior',   'PROYECTO DE INVESTIGACIÃ“N',                 DEFAULT_POS.title)}
-                                            {renderElementPanel('Carrera / Unidad',    'showCarrera',     'xCarrera',     'yCarrera',     'alignCarrera',     'carreraPorDefecto','TECNOLOGÃA SUPERIOR EN ...',                DEFAULT_POS.carrera)}
-                                            {renderElementPanel('PerÃ­odo AcadÃ©mico',   'showPeriodo',     'xPeriodo',     'yPeriodo',     'alignPeriodo',     'periodoPorDefecto','PERIODO ACADÃ‰MICO 2026-2026',               DEFAULT_POS.periodo)}
+                                            {renderElementPanel('Institucion / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLOGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution)}
+                                            {renderElementPanel('Titulo de Portada', 'showTitle', 'xTitle', 'yTitle', 'alignTitle', 'tituloSuperior', 'PROYECTO DE INVESTIGACION', DEFAULT_POS.title)}
+                                            {renderElementPanel('Carrera / Unidad', 'showCarrera', 'xCarrera', 'yCarrera', 'alignCarrera', 'carreraPorDefecto', 'TECNOLOGIA SUPERIOR EN ...', DEFAULT_POS.carrera)}
+                                            {renderElementPanel('Periodo Academico', 'showPeriodo', 'xPeriodo', 'yPeriodo', 'alignPeriodo', 'periodoPorDefecto', 'PERIODO ACADEMICO 2026-2026', DEFAULT_POS.periodo)}
                                         </div>
                                     </div>
                                 );
