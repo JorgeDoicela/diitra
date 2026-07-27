@@ -304,7 +304,7 @@ namespace Diitra.Infrastructure.Research
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
-                        ? $"/investigacion/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        ? $"/investigacion/workspace/protocolo-investigacion/{proyecto.Uuid}"
                         : $"/investigacion";
  
                     await _notificationService.NotifyByRoleCodesAsync(
@@ -332,7 +332,7 @@ namespace Diitra.Infrastructure.Research
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
                         : $"/investigacion/mis-proyectos";
  
                     foreach (var userId in participantUserIds)
@@ -364,7 +364,7 @@ namespace Diitra.Infrastructure.Research
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
                         : $"/investigacion/mis-proyectos";
  
                     foreach (var userId in participantUserIds)
@@ -396,7 +396,7 @@ namespace Diitra.Infrastructure.Research
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
                         : $"/investigacion/mis-proyectos";
  
                     foreach (var userId in participantUserIds)
@@ -432,7 +432,7 @@ namespace Diitra.Infrastructure.Research
                     var docInstance = await _context.DocumentInstances
                         .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
                     string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{docInstance.Uuid}"
+                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
                         : $"/investigacion/mis-proyectos";
  
                     foreach (var userId in participantUserIds)

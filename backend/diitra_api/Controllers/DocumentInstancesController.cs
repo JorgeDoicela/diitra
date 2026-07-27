@@ -813,7 +813,7 @@ namespace diitra_api.Controllers
                                                 "Prepropuesta Registrada",
                                                 $"La prepropuesta del proyecto '{dto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
                                                 new[] { "DIITRA_ADMIN" },
-                                                $"/investigacion/workspace/{instance.TemplateCode}/{instance.Uuid}"
+                                                $"/investigacion/workspace/{instance.TemplateCode}/{dto.Uuid}"
                                             );
                                         }
                                         catch (Exception ex)

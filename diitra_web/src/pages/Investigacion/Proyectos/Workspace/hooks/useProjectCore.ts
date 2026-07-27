@@ -80,6 +80,7 @@ export function useProjectCore() {
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
+    const [isNotFound, setIsNotFound] = useState(false);
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
@@ -173,26 +174,13 @@ export function useProjectCore() {
                 convocatoriaMontoMaximo: res.data.convocatoria_monto_maximo ?? res.data.convocatoriaMontoMaximo ?? res.data.ConvocatoriaMontoMaximo ?? null
             };
             setCurrentProject(projectData);
+            setIsNotFound(false);
             if (onProjectFetched) {
                 onProjectFetched(res.data);
             }
         } else if (isNotFound) {
-            setCurrentProject({
-                id: resolvedProjectUuid?.substring(0, 8).toUpperCase() || 'NEW',
-                uuid: resolvedProjectUuid || '',
-                title: 'Nuevo Proyecto de Investigación',
-                status: 'Borrador',
-                presupuesto: 0,
-                linea: 'No definida',
-                directorProyecto: user?.nombre_completo || '',
-                puedeEditar: true,
-                puedeSolicitarCambioEquipo: false,
-                puedeFirmar: true,
-                grupoInvestigacion: '',
-                grupoInvestigacionUuid: '',
-                tieneGrupoInvestigacion: false,
-                dominio: ''
-            });
+            setIsNotFound(true);
+            setCurrentProject(null);
             if (onProjectFetched) {
                 onProjectFetched(null);
             }
@@ -316,6 +304,7 @@ export function useProjectCore() {
         subDocumentUuids,
         resolvingDocument,
         isUnauthorized,
+        isNotFound,
         assignedRevisionUuid,
         assignedRevisionStatus,
         iniciandoEjecucion,
