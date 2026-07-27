@@ -267,26 +267,101 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
 
         switch (block.type) {
             // ── PORTADA ─────────────────────────────────────────────────────
-            case 'cover':
+            case 'cover': {
+                const colorTheme = c.colorTema || '{{ theme.colors.primary }}';
+
+                const showInst = c.showInstitution !== false;
+                const showTitle = c.showTitle !== false;
+                const showCarrera = c.showCarrera !== false;
+                const showPeriodo = c.showPeriodo !== false;
+
+                const posInst = c.posInstitution || 'top';
+                const posTitle = c.posTitle || 'middle';
+                const posCarrera = c.posCarrera || 'bottom';
+                const posPeriodo = c.posPeriodo || 'bottom';
+
+                const alignInst = c.alignInstitution || 'center';
+                const alignTitle = c.alignTitle || 'center';
+                const alignCarrera = c.alignCarrera || 'center';
+                const alignPeriodo = c.alignPeriodo || 'center';
+
+                const textInst = c.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+
+                const instHtml = showInst ? `
+        <div style="text-align: ${alignInst}; width: 100%;">
+          <span style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #ffffff; background-color: ${colorTheme}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
+            ${textInst}
+          </span>
+        </div>` : '';
+
+                const titleHtml = showTitle ? `
+        <div style="text-align: ${alignTitle}; width: 100%;">
+          <h1 style="font-family: 'Century Gothic', sans-serif; font-size: 24pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin: 0; line-height: 1.2;">
+            ${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}
+          </h1>
+          <div style="font-family: 'Century Gothic', sans-serif; font-size: 15pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
+            {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
+          </div>
+        </div>` : '';
+
+                const carreraHtml = showCarrera ? `
+        <div style="text-align: ${alignCarrera}; width: 100%;">
+          <div style="font-family: 'Century Gothic', sans-serif; font-size: 11pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase;">
+            TECNOLOGÍA SUPERIOR EN
+          </div>
+          <div style="font-family: 'Century Gothic', sans-serif; font-size: 11pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 4px;">
+            {{default carrera "${c.carreraPorDefecto || '________________________'}"}}
+          </div>
+        </div>` : '';
+
+                const periodoHtml = showPeriodo ? `
+        <div style="text-align: ${alignPeriodo}; width: 100%;">
+          <div style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase;">
+            PERIODO ACADÉMICO
+          </div>
+          <div style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 2px;">
+            {{default periodo "${c.periodoPorDefecto || '________________________'}"}}
+          </div>
+        </div>` : '';
+
+                const topElements = [
+                    posInst === 'top' ? instHtml : '',
+                    posTitle === 'top' ? titleHtml : '',
+                    posCarrera === 'top' ? carreraHtml : '',
+                    posPeriodo === 'top' ? periodoHtml : '',
+                ].filter(Boolean).join('\n');
+
+                const middleElements = [
+                    posInst === 'middle' ? instHtml : '',
+                    posTitle === 'middle' ? titleHtml : '',
+                    posCarrera === 'middle' ? carreraHtml : '',
+                    posPeriodo === 'middle' ? periodoHtml : '',
+                ].filter(Boolean).join('\n');
+
+                const bottomElements = [
+                    posInst === 'bottom' ? instHtml : '',
+                    posTitle === 'bottom' ? titleHtml : '',
+                    posCarrera === 'bottom' ? carreraHtml : '',
+                    posPeriodo === 'bottom' ? periodoHtml : '',
+                ].filter(Boolean).join('\n');
+
                 html += `
-  <!-- BLOQUE: PORTADA -->
+  <!-- BLOQUE: PORTADA CONFIGURABLE -->
   <div class="page">
-    <div class="cover-page">
-      <div class="cover-overlay">
-        <h1 class="main-label">${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}</h1>
-        <div class="project-theme">{{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}</div>
-        <div class="career-container">
-          <div class="career-label">TECNOLOGÍA SUPERIOR EN</div>
-          <div class="career-value">{{default carrera "${c.carreraPorDefecto || '________________________'}"}}</div>
-        </div>
-        <div class="period-container">
-          <div class="period-label">PERIODO ACADÉMICO</div>
-          <div class="period-value">{{default periodo "${c.periodoPorDefecto || '________________________'}"}}</div>
-        </div>
+    <div class="cover-page" style="display: flex; flex-direction: column; justify-content: space-between; height: 297mm; padding: 2.2cm 1.2cm 2.2cm 8.8cm; box-sizing: border-box;">
+      <div class="cover-section-top" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%;">
+        ${topElements}
+      </div>
+      <div class="cover-section-middle" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%; margin-top: auto; margin-bottom: auto; padding: 0.5cm 0;">
+        ${middleElements}
+      </div>
+      <div class="cover-section-bottom" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%;">
+        ${bottomElements}
       </div>
     </div>
   </div>`;
                 break;
+            }
 
             // ── TÍTULO ──────────────────────────────────────────────────────
             case 'title': {

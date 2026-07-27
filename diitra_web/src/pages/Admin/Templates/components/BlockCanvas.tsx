@@ -6,9 +6,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Trash2, Eye, EyeOff, Copy, Palette
+    Layers, Trash2, Eye, EyeOff, Copy, Move
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection } from '../types';
+import { useZoneDragDrop } from '../hooks/useZoneDragDrop';
 
 interface BlockCanvasProps {
     blocks: DocumentBlock[];
@@ -23,6 +24,7 @@ interface BlockCanvasProps {
     onToggleHeader?: () => void;
     rightActions?: React.ReactNode;
     themeConfig?: any;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }
 
 const DYN_COLORS = {
@@ -37,27 +39,190 @@ const DYN_COLORS = {
 // Sub-renderizadores estáticos de alta fidelidad para el lienzo A4
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RenderCover: React.FC<{ config: any }> = ({ config }) => {
+const RenderCover: React.FC<{ 
+    config: any; 
+    coverImage?: string;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config, coverImage, blockId, onUpdateConfig }) => {
     const color = config.colorTema || DYN_COLORS.blue;
-    return (
-        <div className="relative rounded-md p-8 flex flex-col justify-between min-h-[480px] overflow-hidden bg-white select-none">
-            <div className="text-center">
-                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: color }}>
-                    INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI
-                </span>
-                <h1 className="text-xl font-black mt-12 tracking-tight uppercase" style={{ color }}>
-                    {config.tituloSuperior || 'TÍTULO DE LA PLANTILLA'}
-                </h1>
-            </div>
 
-            <div className="space-y-4 text-center">
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {config.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}
+    const showInst = config.showInstitution !== false;
+    const showTitle = config.showTitle !== false;
+    const showCarrera = config.showCarrera !== false;
+    const showPeriodo = config.showPeriodo !== false;
+
+    const posInst = config.posInstitution || 'top';
+    const posTitle = config.posTitle || 'middle';
+    const posCarrera = config.posCarrera || 'bottom';
+    const posPeriodo = config.posPeriodo || 'bottom';
+
+    const alignInst = config.alignInstitution || 'center';
+    const alignTitle = config.alignTitle || 'center';
+    const alignCarrera = config.alignCarrera || 'center';
+    const alignPeriodo = config.alignPeriodo || 'center';
+
+    const textInst = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textTitle = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textCarrera = config.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
+    const textPeriodo = config.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
+
+    const { draggingElement, activeZone, dragProps, zoneProps } = useZoneDragDrop<'institution' | 'title' | 'carrera' | 'periodo', 'top' | 'middle' | 'bottom'>(
+        (elementId, zoneId) => {
+            if (onUpdateConfig && blockId) {
+                const configKey = elementId === 'institution' ? 'posInstitution'
+                                : elementId === 'title' ? 'posTitle'
+                                : elementId === 'carrera' ? 'posCarrera'
+                                : 'posPeriodo';
+                onUpdateConfig(blockId, configKey, zoneId);
+            }
+        }
+    );
+
+    const getHorizontalAlignmentStyle = (align: string) => {
+        if (align === 'left') return { textAlign: 'left' as const, alignSelf: 'flex-start' as const, alignItems: 'flex-start' as const };
+        if (align === 'right') return { textAlign: 'right' as const, alignSelf: 'flex-end' as const, alignItems: 'flex-end' as const };
+        return { textAlign: 'center' as const, alignSelf: 'center' as const, alignItems: 'center' as const };
+    };
+
+    const renderSectionElements = (sectionName: 'top' | 'middle' | 'bottom') => {
+        const elements: React.ReactNode[] = [];
+
+        if (showInst && posInst === sectionName) {
+            const isDraggingThis = draggingElement === 'institution';
+            elements.push(
+                <div 
+                    key="inst" 
+                    {...dragProps('institution')}
+                    style={getHorizontalAlignmentStyle(alignInst)} 
+                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
+                        isDraggingThis 
+                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
+                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+                    } animate-fade-in`}
+                >
+                    <span 
+                        className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white w-max select-none flex items-center gap-1.5 transition-transform" 
+                        style={{ backgroundColor: color }}
+                    >
+                        <Move className="w-3 h-3 opacity-60 group-hover/item:opacity-100 transition-opacity" />
+                        {textInst}
+                    </span>
                 </div>
-                <div className="text-[10px] text-gray-400 font-semibold uppercase">
-                    {config.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026'}
+            );
+        }
+
+        if (showTitle && posTitle === sectionName) {
+            const isDraggingThis = draggingElement === 'title';
+            elements.push(
+                <div 
+                    key="title" 
+                    {...dragProps('title')}
+                    style={getHorizontalAlignmentStyle(alignTitle)} 
+                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
+                        isDraggingThis 
+                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
+                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+                    } animate-fade-in-up`}
+                >
+                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignTitle)}>
+                        <Move className="w-4 h-4 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
+                        <h1 style={{ color }} className="text-2xl font-black tracking-tight uppercase flex-1">
+                            {textTitle}
+                        </h1>
+                    </div>
                 </div>
+            );
+        }
+
+        if (showCarrera && posCarrera === sectionName) {
+            const isDraggingThis = draggingElement === 'carrera';
+            elements.push(
+                <div 
+                    key="carrera" 
+                    {...dragProps('carrera')}
+                    style={getHorizontalAlignmentStyle(alignCarrera)} 
+                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
+                        isDraggingThis 
+                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
+                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+                    } animate-fade-in-up`}
+                >
+                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignCarrera)}>
+                        <Move className="w-3.5 h-3.5 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
+                        <div className="text-sm font-bold text-gray-600 uppercase tracking-wider flex-1">
+                            {textCarrera}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (showPeriodo && posPeriodo === sectionName) {
+            const isDraggingThis = draggingElement === 'periodo';
+            elements.push(
+                <div 
+                    key="periodo" 
+                    {...dragProps('periodo')}
+                    style={getHorizontalAlignmentStyle(alignPeriodo)} 
+                    className={`w-full flex flex-col group/item relative cursor-grab active:cursor-grabbing p-2 rounded-lg transition-all duration-300 ${
+                        isDraggingThis 
+                            ? 'opacity-25 border border-dashed border-indigo-400 bg-indigo-50/10 scale-95' 
+                            : 'hover:bg-slate-100/40 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+                    } animate-fade-in-up`}
+                >
+                    <div className="flex items-center gap-2 w-full" style={getHorizontalAlignmentStyle(alignPeriodo)}>
+                        <Move className="w-3 h-3 opacity-0 group-hover/item:opacity-60 transition-opacity shrink-0" />
+                        <div className="text-xs text-gray-500 font-semibold uppercase flex-1">
+                            {textPeriodo}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return elements;
+    };
+
+    const renderSection = (sectionName: 'top' | 'middle' | 'bottom', mtClass: string) => {
+        const elements = renderSectionElements(sectionName);
+        const isZoneActive = activeZone === sectionName;
+        const hasDragging = draggingElement !== null;
+
+        return (
+            <div 
+                {...zoneProps(sectionName)}
+                className={`flex flex-col gap-4 w-full items-center p-6 transition-all duration-300 ease-out rounded-xl border-2 ${mtClass} ${
+                    isZoneActive 
+                        ? 'bg-indigo-50/60 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.25)] scale-[1.02]' 
+                        : hasDragging 
+                            ? 'border-dashed border-slate-300 bg-slate-50/20 shadow-[inset_0_2px_8px_rgba(0,0,0,0.01)]' 
+                            : 'border-transparent bg-transparent'
+                }`}
+            >
+                {elements.length === 0 && hasDragging && (
+                    <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider my-auto animate-pulse">
+                        Soltar aquí
+                    </span>
+                )}
+                {elements}
             </div>
+        );
+    };
+
+    return (
+        <div 
+            style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+            className="relative w-full min-h-[1123px] flex-1 p-16 flex flex-col justify-between overflow-hidden bg-white select-none"
+        >
+            {/* Sección Superior */}
+            {renderSection('top', 'mt-6')}
+
+            {/* Sección Media */}
+            {renderSection('middle', 'my-auto')}
+
+            {/* Sección Inferior */}
+            {renderSection('bottom', 'mb-6')}
         </div>
     );
 };
@@ -739,14 +904,16 @@ interface SortableBlockItemProps {
     block: DocumentBlock;
     index: number;
     isActive: boolean;
+    coverImage?: string;
     onSelectBlock: (id: string) => void;
     onToggleActive: (index: number) => void;
     onDeleteBlock: (id: string) => void;
     onDuplicateBlock: (id: string) => void;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }
 
 const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
-    block, index, isActive, onSelectBlock, onToggleActive, onDeleteBlock, onDuplicateBlock,
+    block, index, isActive, coverImage, onSelectBlock, onToggleActive, onDeleteBlock, onDuplicateBlock, onUpdateConfig,
 }) => {
     const {
         attributes,
@@ -773,23 +940,23 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'page_break':
             case 'signatures':
                 return { text: 'Estático', dotColor: 'bg-slate-400', color: baseStyle, activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm' };
-            
+
             case 'two_column':
             case 'advanced_table':
             case 'rich_text':
                 if (isEditable) {
-                    return { 
-                        text: block.type === 'rich_text' ? 'Colaborativo' : 'Configurable', 
-                        dotColor: 'bg-pink-500 animate-pulse', 
-                        color: baseStyle, 
-                        activeCls: 'ring-1 ring-pink-500 border-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.08)]' 
+                    return {
+                        text: block.type === 'rich_text' ? 'Colaborativo' : 'Configurable',
+                        dotColor: 'bg-pink-500 animate-pulse',
+                        color: baseStyle,
+                        activeCls: 'ring-1 ring-pink-500 border-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.08)]'
                     };
                 } else {
-                    return { 
-                        text: 'Estático', 
-                        dotColor: 'bg-slate-400', 
-                        color: baseStyle, 
-                        activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm' 
+                    return {
+                        text: 'Estático',
+                        dotColor: 'bg-slate-400',
+                        color: baseStyle,
+                        activeCls: 'ring-1 ring-slate-400 border-slate-400 shadow-sm'
                     };
                 }
             case 'gantt':
@@ -821,7 +988,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         }
 
         switch (block.type) {
-            case 'cover': return <RenderCover config={block.config} />;
+            case 'cover': return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'title': return <RenderTitle config={block.config} />;
             case 'rich_text': return <RenderRichText config={block.config} />;
             case 'advanced_table': return <RenderAdvancedTable config={block.config} />;
@@ -900,7 +1067,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             {...attributes}
             {...listeners}
             onClick={() => onSelectBlock(block.id)}
-            className={`group relative border rounded-md cursor-grab active:cursor-grabbing ${isCover ? 'p-0' : 'p-4'} ${themeCls}
+            className={`group relative cursor-grab active:cursor-grabbing ${isCover ? 'p-0 border-none w-full h-full flex flex-col flex-1' : 'border rounded-md p-4'} ${themeCls}
                 ${isDragging
                     ? 'shadow-[0_20px_40px_rgba(0,0,0,0.12)] border-slate-300 opacity-80 scale-[0.97] rotate-[-0.5deg] transition-none z-[999]'
                     : isActive
@@ -947,7 +1114,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             </div>
 
             {/* Renderizado de contenido real */}
-            <div className="relative pt-6">
+            <div className={`relative ${isCover ? 'pt-0 flex-1 flex flex-col' : 'pt-6'}`}>
                 {renderContent()}
             </div>
         </div>
@@ -979,6 +1146,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     onToggleHeader,
     rightActions,
     themeConfig,
+    onUpdateConfig,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
 
@@ -994,7 +1162,33 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     }, [activeBlockId]);
 
     const activeCount = blocks.filter(b => b.isActive).length;
-    let pageNum = 1;
+
+    // Agrupamos los bloques en páginas lógicas para renderizarlos en hojas A4 independientes.
+    // La portada ('cover') siempre fuerza la creación de su propia página exclusiva.
+    const pages: { pageNum: number; blocks: { block: DocumentBlock; originalIndex: number }[] }[] = [];
+    let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
+    let currentPageNum = 1;
+
+    blocks.forEach((block, idx) => {
+        if (block.type === 'page_break') {
+            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+            currentPageBlocks = [];
+            currentPageNum++;
+        } else if (block.type === 'cover') {
+            if (currentPageBlocks.length > 0) {
+                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+                currentPageNum++;
+            }
+            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
+            currentPageBlocks = [];
+            currentPageNum++;
+        } else {
+            currentPageBlocks.push({ block, originalIndex: idx });
+        }
+    });
+    if (currentPageBlocks.length > 0 || pages.length === 0) {
+        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+    }
 
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-bg-deep border border-border-thin rounded-md overflow-hidden">
@@ -1049,54 +1243,73 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
             </div>
 
             {/* Scroll del lienzo */}
-            <div 
+            <div
                 onClick={() => onSelectBlock(null)}
-                className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep cursor-default" 
+                className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep cursor-default"
                 style={{ scrollbarWidth: 'thin' }}
             >
-
-                {/* Contenedor simulando hoja A4 */}
-                <div 
-                    onClick={e => e.stopPropagation()}
-                    className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all cursor-default"
-                >
-
-                    {blocks.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center flex-1 border-2 border-dashed border-border-thin rounded-md text-center p-12 my-auto">
-                            <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
-                            <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">El documento está vacío</h3>
-                            <p className="text-[10px] text-slate-400 max-w-[200px] mt-1 leading-normal">
-                                Usa el menú superior "+ Agregar Bloque" para inyectar componentes en esta hoja A4.
-                            </p>
-                        </div>
-                    ) : (
-                        <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                            {blocks.map((block, idx) => {
-                                const isActiveBlock = activeBlockId === block.id;
-                                const prevBlock = idx > 0 ? blocks[idx - 1] : null;
-                                const showPageIndicator = prevBlock?.type === 'page_break';
-                                if (showPageIndicator) pageNum++;
+                {blocks.length === 0 ? (
+                    /* Contenedor simulando hoja A4 vacía */
+                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-center items-center text-center">
+                        <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
+                        <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">El documento está vacío</h3>
+                        <p className="text-[10px] text-slate-400 max-w-[200px] mt-1 leading-normal">
+                            Usa el menú superior "+ Agregar Bloque" para inyectar componentes en esta hoja A4.
+                        </p>
+                    </div>
+                ) : (
+                    <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-8 flex flex-col items-center">
+                            {pages.map((page) => {
+                                const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
+                                const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
 
                                 return (
-                                    <React.Fragment key={block.id}>
-                                        {showPageIndicator && <PageBreakIndicator pageNum={pageNum} />}
-                                        <div ref={isActiveBlock ? activeRef : undefined}>
-                                            <SortableBlockItem
-                                                block={block}
-                                                index={idx}
-                                                isActive={isActiveBlock}
-                                                onSelectBlock={onSelectBlock}
-                                                onToggleActive={onToggleActive}
-                                                onDeleteBlock={onDeleteBlock}
-                                                onDuplicateBlock={onDuplicateBlock}
-                                            />
+                                    <React.Fragment key={page.pageNum}>
+                                        {page.pageNum > 1 && <PageBreakIndicator pageNum={page.pageNum} />}
+                                        <div
+                                            onClick={e => e.stopPropagation()}
+                                            style={bgImg ? {
+                                                backgroundImage: `url(${bgImg})`,
+                                                backgroundSize: 'contain',
+                                                backgroundRepeat: 'no-repeat',
+                                                backgroundPosition: 'top center'
+                                            } : undefined}
+                                            className={`force-light-theme max-w-[794px] w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'p-0 gap-0' : 'p-12 gap-2'
+                                                }`}
+                                        >
+                                            {page.blocks.length === 0 ? (
+                                                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded p-6 text-slate-400 italic text-[10px]">
+                                                    Página vacía. Arrastra bloques aquí o escribe contenido.
+                                                </div>
+                                            ) : (
+                                                page.blocks.map(({ block, originalIndex }) => {
+                                                    const isActiveBlock = activeBlockId === block.id;
+
+                                                    return (
+                                                        <div key={block.id} ref={isActiveBlock ? activeRef : undefined}>
+                                                            <SortableBlockItem
+                                                                block={block}
+                                                                index={originalIndex}
+                                                                isActive={isActiveBlock}
+                                                                coverImage={themeConfig?.brand?.coverImage}
+                                                                onSelectBlock={onSelectBlock}
+                                                                onToggleActive={onToggleActive}
+                                                                onDeleteBlock={onDeleteBlock}
+                                                                onDuplicateBlock={onDuplicateBlock}
+                                                                onUpdateConfig={onUpdateConfig}
+                                                            />
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
                                         </div>
                                     </React.Fragment>
                                 );
                             })}
-                        </SortableContext>
-                    )}
-                </div>
+                        </div>
+                    </SortableContext>
+                )}
             </div>
         </div>
     );

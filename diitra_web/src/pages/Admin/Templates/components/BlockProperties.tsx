@@ -188,6 +188,58 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                             />
                                                         </div>
                                                     )}
+
+                                                    {token.type === 'image' && (
+                                                        <div className="space-y-2">
+                                                            {currentVal ? (
+                                                                <div className="relative group border border-border-thin rounded-lg overflow-hidden bg-surface-hover/30 p-1.5 flex items-center justify-between gap-3 animate-fade-in">
+                                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                                        <img
+                                                                            src={currentVal as string}
+                                                                            alt={token.label}
+                                                                            className="w-10 h-10 object-cover rounded-md border border-border-thin shrink-0 bg-white"
+                                                                        />
+                                                                        <div className="text-[10px] text-text-dim truncate">
+                                                                            <span className="font-semibold text-text-main block">Personalizado</span>
+                                                                            Imagen cargada
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleThemeChange(cat, token.camelKey, '')}
+                                                                        className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-colors duration-150 shrink-0 cursor-pointer"
+                                                                        title="Eliminar imagen y usar valor por defecto"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <label className="border border-dashed border-border-thin hover:border-text-main/50 rounded-lg p-3 text-center block cursor-pointer bg-surface-hover/20 hover:bg-surface-hover/40 transition-all duration-150 relative">
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/png, image/jpeg, image/jpg"
+                                                                        onChange={e => {
+                                                                            const file = e.target.files?.[0];
+                                                                            if (file) {
+                                                                                const reader = new FileReader();
+                                                                                reader.onloadend = () => {
+                                                                                    const base64String = reader.result as string;
+                                                                                    handleThemeChange(cat, token.camelKey, base64String);
+                                                                                };
+                                                                                reader.readAsDataURL(file);
+                                                                            }
+                                                                        }}
+                                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                                    />
+                                                                    <div className="flex flex-col items-center justify-center gap-1 text-text-dim hover:text-text-main transition-colors">
+                                                                        <Plus className="w-4 h-4" />
+                                                                        <span className="text-[10px] font-bold uppercase tracking-wider">Cargar Imagen</span>
+                                                                        <span className="text-[8px] opacity-75">PNG, JPG hasta 2MB</span>
+                                                                    </div>
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </LabeledField>
                                             </div>
                                         );
@@ -221,25 +273,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {/* ── PORTADA ─────────────────────────────────────────────────── */}
                             {activeBlock.type === 'cover' && (
-                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
-                                    <LabeledField label="Título Superior de Portada">
-                                        <input type="text" className={inputCls}
-                                            value={activeBlock.config.tituloSuperior || ''}
-                                            onChange={e => onUpdateConfig(activeBlock.id, 'tituloSuperior', e.target.value)} />
-                                    </LabeledField>
-                                    <LabeledField label="Carrera a Mostrar">
-                                        <input type="text" className={inputCls}
-                                            value={activeBlock.config.carreraPorDefecto || ''}
-                                            onChange={e => onUpdateConfig(activeBlock.id, 'carreraPorDefecto', e.target.value)} />
-                                    </LabeledField>
-                                    <LabeledField label="Período Académico">
-                                        <input type="text" className={inputCls}
-                                            value={activeBlock.config.periodoPorDefecto || ''}
-                                            onChange={e => onUpdateConfig(activeBlock.id, 'periodoPorDefecto', e.target.value)} />
-                                    </LabeledField>
+                                <div className="space-y-5 border-t border-border-thin/20 pt-4">
+                                    {/* Color del Tema */}
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-medium text-text-dim flex items-center gap-1.5">
-                                            <Palette className="w-3.5 h-3.5 text-text-main" />
+                                        <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
+                                            <Palette className="w-3.5 h-3.5" />
                                             Color del Tema Visual
                                         </label>
                                         <div className="flex items-center gap-3 bg-surface border border-border-thin rounded-md p-2 w-max shadow-none">
@@ -266,6 +304,207 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                     </button>
                                                 );
                                             })}
+                                        </div>
+                                    </div>
+
+                                    {/* Disposición de Elementos de Portada */}
+                                    <div className="space-y-4">
+                                        <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Disposición de Elementos</h5>
+
+                                        {/* ELEMENTO: INSTITUCIÓN */}
+                                        <div className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-bold text-text-main">Institución / Logo</span>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={activeBlock.config.showInstitution !== false}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'showInstitution', e.target.checked)}
+                                                    className="w-4 h-4 text-text-main accent-text-main rounded cursor-pointer"
+                                                />
+                                            </div>
+                                            {activeBlock.config.showInstitution !== false && (
+                                                <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
+                                                    <LabeledField label="Texto Institucional">
+                                                        <input 
+                                                            type="text" 
+                                                            className={inputCls}
+                                                            value={activeBlock.config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI'}
+                                                            onChange={e => onUpdateConfig(activeBlock.id, 'textoInstitucion', e.target.value)}
+                                                        />
+                                                    </LabeledField>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <LabeledField label="Sección Vertical">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.posInstitution || 'top'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'posInstitution', e.target.value)}
+                                                            >
+                                                                <option value="top">Superior</option>
+                                                                <option value="middle">Medio</option>
+                                                                <option value="bottom">Inferior</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                        <LabeledField label="Alineación">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.alignInstitution || 'center'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'alignInstitution', e.target.value)}
+                                                            >
+                                                                <option value="left">Izquierda</option>
+                                                                <option value="center">Centro</option>
+                                                                <option value="right">Derecha</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* ELEMENTO: TÍTULO PRINCIPAL */}
+                                        <div className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-bold text-text-main">Título de Portada</span>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={activeBlock.config.showTitle !== false}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'showTitle', e.target.checked)}
+                                                    className="w-4 h-4 text-text-main accent-text-main rounded cursor-pointer"
+                                                />
+                                            </div>
+                                            {activeBlock.config.showTitle !== false && (
+                                                <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
+                                                    <LabeledField label="Texto del Título">
+                                                        <input 
+                                                            type="text" 
+                                                            className={inputCls}
+                                                            value={activeBlock.config.tituloSuperior || ''}
+                                                            onChange={e => onUpdateConfig(activeBlock.id, 'tituloSuperior', e.target.value)}
+                                                        />
+                                                    </LabeledField>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <LabeledField label="Sección Vertical">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.posTitle || 'middle'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'posTitle', e.target.value)}
+                                                            >
+                                                                <option value="top">Superior</option>
+                                                                <option value="middle">Medio</option>
+                                                                <option value="bottom">Inferior</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                        <LabeledField label="Alineación">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.alignTitle || 'center'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'alignTitle', e.target.value)}
+                                                            >
+                                                                <option value="left">Izquierda</option>
+                                                                <option value="center">Centro</option>
+                                                                <option value="right">Derecha</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* ELEMENTO: CARRERA */}
+                                        <div className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-bold text-text-main">Carrera / Unidad Académica</span>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={activeBlock.config.showCarrera !== false}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'showCarrera', e.target.checked)}
+                                                    className="w-4 h-4 text-text-main accent-text-main rounded cursor-pointer"
+                                                />
+                                            </div>
+                                            {activeBlock.config.showCarrera !== false && (
+                                                <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
+                                                    <LabeledField label="Carrera a Mostrar">
+                                                        <input 
+                                                            type="text" 
+                                                            className={inputCls}
+                                                            value={activeBlock.config.carreraPorDefecto || ''}
+                                                            onChange={e => onUpdateConfig(activeBlock.id, 'carreraPorDefecto', e.target.value)}
+                                                        />
+                                                    </LabeledField>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <LabeledField label="Sección Vertical">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.posCarrera || 'bottom'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'posCarrera', e.target.value)}
+                                                            >
+                                                                <option value="top">Superior</option>
+                                                                <option value="middle">Medio</option>
+                                                                <option value="bottom">Inferior</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                        <LabeledField label="Alineación">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.alignCarrera || 'center'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'alignCarrera', e.target.value)}
+                                                            >
+                                                                <option value="left">Izquierda</option>
+                                                                <option value="center">Centro</option>
+                                                                <option value="right">Derecha</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* ELEMENTO: PERÍODO ACADÉMICO */}
+                                        <div className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-bold text-text-main">Período Académico</span>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={activeBlock.config.showPeriodo !== false}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'showPeriodo', e.target.checked)}
+                                                    className="w-4 h-4 text-text-main accent-text-main rounded cursor-pointer"
+                                                />
+                                            </div>
+                                            {activeBlock.config.showPeriodo !== false && (
+                                                <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
+                                                    <LabeledField label="Período Académico">
+                                                        <input 
+                                                            type="text" 
+                                                            className={inputCls}
+                                                            value={activeBlock.config.periodoPorDefecto || ''}
+                                                            onChange={e => onUpdateConfig(activeBlock.id, 'periodoPorDefecto', e.target.value)}
+                                                        />
+                                                    </LabeledField>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <LabeledField label="Sección Vertical">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.posPeriodo || 'bottom'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'posPeriodo', e.target.value)}
+                                                            >
+                                                                <option value="top">Superior</option>
+                                                                <option value="middle">Medio</option>
+                                                                <option value="bottom">Inferior</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                        <LabeledField label="Alineación">
+                                                            <select 
+                                                                className={selectCls}
+                                                                value={activeBlock.config.alignPeriodo || 'center'}
+                                                                onChange={e => onUpdateConfig(activeBlock.id, 'alignPeriodo', e.target.value)}
+                                                            >
+                                                                <option value="left">Izquierda</option>
+                                                                <option value="center">Centro</option>
+                                                                <option value="right">Derecha</option>
+                                                            </select>
+                                                        </LabeledField>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

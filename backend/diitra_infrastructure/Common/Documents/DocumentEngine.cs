@@ -1,5 +1,6 @@
 using Diitra.Application.Common.Documents;
 using Diitra.Application.Common;
+using System.Text.Json;
 using Diitra.Domain.Common.Documents;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -397,21 +398,52 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 // CARGA DE PORTADA DESACOPLADA (Por convención de nombres o fallback histórico)
-                var possibleCoverNames = new[]
+                string? coverBase64 = null;
+                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
                 {
-                    $"portada_{template.Code.ToLower()}",
-                    $"portada_{template.Category.ToString().ToLower()}",
-                    template.Code == ProyectoInvestigacionTemplate.CODE ? "portada_proyecto" : null
-                }.Where(n => n != null).Cast<string>();
-
-                foreach (var coverName in possibleCoverNames)
-                {
-                    var coverBase64 = await _imageLoader.LoadAsBase64Async(coverName);
-                    if (coverBase64 != null)
+                    try
                     {
-                        extraImageVars["portada_base64"] = coverBase64;
-                        break;
+                        using var doc = JsonDocument.Parse(template.ThemeConfigJson);
+                        if (doc.RootElement.TryGetProperty("brand", out var brandEl) &&
+                            brandEl.TryGetProperty("coverImage", out var coverEl) &&
+                            coverEl.ValueKind == JsonValueKind.String)
+                        {
+                            var rawVal = coverEl.GetString();
+                            if (!string.IsNullOrEmpty(rawVal))
+                            {
+                                coverBase64 = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
+                            }
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error decodificando coverImage del ThemeConfigJson para la plantilla [{Code}].", template.Code);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(coverBase64))
+                {
+                    var possibleCoverNames = new[]
+                    {
+                        $"portada_{template.Code.ToLower()}",
+                        $"portada_{template.Category.ToString().ToLower()}",
+                        template.Code == ProyectoInvestigacionTemplate.CODE ? "portada_proyecto" : null
+                    }.Where(n => n != null).Cast<string>();
+
+                    foreach (var coverName in possibleCoverNames)
+                    {
+                        var tempCover = await _imageLoader.LoadAsBase64Async(coverName);
+                        if (tempCover != null)
+                        {
+                            coverBase64 = tempCover;
+                            break;
+                        }
+                    }
+                }
+
+                if (coverBase64 != null)
+                {
+                    extraImageVars["portada_base64"] = coverBase64;
                 }
 
                 if (template.Code == ProyectoInvestigacionTemplate.CODE)
@@ -513,22 +545,49 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 // 7. Renderizado a PDF
                 //    Carga de fondo de hojas (stationary) desacoplada (Por convención de nombres o fallback histórico)
-                var possibleBackgroundNames = new[]
-                {
-                    $"fondo_{template.Code.ToLower()}",
-                    $"fondo_hojas_{template.Code.ToLower()}",
-                    $"fondo_hojas_{template.Category.ToString().ToLower()}",
-                    template.Code == ProyectoInvestigacionTemplate.CODE ? "fondo_hojas_investigacion" : null
-                }.Where(n => n != null).Cast<string>();
-
                 ImageData? stationaryImage = null;
-                foreach (var bgName in possibleBackgroundNames)
+                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
                 {
-                    var img = await _imageLoader.LoadAsImageDataAsync(bgName);
-                    if (img != null)
+                    try
                     {
-                        stationaryImage = img;
-                        break;
+                        using var doc = JsonDocument.Parse(template.ThemeConfigJson);
+                        if (doc.RootElement.TryGetProperty("brand", out var brandEl) &&
+                            brandEl.TryGetProperty("backgroundImage", out var bgEl) &&
+                            bgEl.ValueKind == JsonValueKind.String)
+                        {
+                            var rawVal = bgEl.GetString();
+                            if (!string.IsNullOrEmpty(rawVal))
+                            {
+                                var base64Data = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
+                                var bytes = Convert.FromBase64String(base64Data);
+                                stationaryImage = ImageDataFactory.Create(bytes);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error decodificando backgroundImage del ThemeConfigJson para la plantilla [{Code}].", template.Code);
+                    }
+                }
+
+                if (stationaryImage == null)
+                {
+                    var possibleBackgroundNames = new[]
+                    {
+                        $"fondo_{template.Code.ToLower()}",
+                        $"fondo_hojas_{template.Code.ToLower()}",
+                        $"fondo_hojas_{template.Category.ToString().ToLower()}",
+                        template.Code == ProyectoInvestigacionTemplate.CODE ? "fondo_hojas_investigacion" : null
+                    }.Where(n => n != null).Cast<string>();
+
+                    foreach (var bgName in possibleBackgroundNames)
+                    {
+                        var img = await _imageLoader.LoadAsImageDataAsync(bgName);
+                        if (img != null)
+                        {
+                            stationaryImage = img;
+                            break;
+                        }
                     }
                 }
 

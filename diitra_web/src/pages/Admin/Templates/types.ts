@@ -103,6 +103,18 @@ export interface DocumentBlock {
         carreraPorDefecto?: string;
         periodoPorDefecto?: string;
         colorTema?: string;
+        showInstitution?: boolean;
+        textoInstitucion?: string;
+        posInstitution?: string;
+        alignInstitution?: string;
+        showTitle?: boolean;
+        posTitle?: string;
+        alignTitle?: string;
+        posCarrera?: string;
+        alignCarrera?: string;
+        showPeriodo?: boolean;
+        posPeriodo?: string;
+        alignPeriodo?: string;
 
         // ── title ──────────────────────────────────────────────────────────
         text?: string;

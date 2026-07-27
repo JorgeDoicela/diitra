@@ -2,7 +2,7 @@ export interface ThemeToken {
     key: string;            // Nombre en snake_case para Handlebars: theme.colors.primary
     camelKey: string;       // Nombre en camelCase para el JSON
     label: string;          // Etiqueta para la UI
-    type: 'color' | 'text' | 'select' | 'toggle';
+    type: 'color' | 'text' | 'select' | 'toggle' | 'image';
     category: 'colors' | 'typography' | 'layout' | 'brand';
     defaultValue: string | boolean;
     options?: { label: string; value: string }[]; // Para type='select'
@@ -39,6 +39,8 @@ export const THEME_SCHEMA: ThemeToken[] = [
     // BRAND
     { key: 'show_cover_page', camelKey: 'showCoverPage', label: 'Mostrar Portada Institucional', type: 'toggle', category: 'brand', defaultValue: true },
     { key: 'logo_scale', camelKey: 'logoScale', label: 'Escala del Logo (%)', type: 'text', category: 'brand', defaultValue: '100%' },
+    { key: 'cover_image', camelKey: 'coverImage', label: 'Imagen de Portada (Personalizada)', type: 'image', category: 'brand', defaultValue: '' },
+    { key: 'background_image', camelKey: 'backgroundImage', label: 'Imagen de Fondo de Hojas', type: 'image', category: 'brand', defaultValue: '' },
 ];
 
 export function buildDefaultTheme(): Record<string, Record<string, any>> {
