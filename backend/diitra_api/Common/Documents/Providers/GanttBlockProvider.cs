@@ -33,12 +33,17 @@ namespace diitra_api.Controllers
         {
             if (!sectionsList.Any(s => s.Id == "cronograma"))
             {
+                var configDict = new Dictionary<string, object>
+                {
+                    ["completionFields"] = new[] { "Cronograma" }
+                };
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "cronograma",
                     Label = "Cronograma (Gantt)",
                     IconName = "Calendar",
                     ComponentName = "TimelineSection",
-                    Config = null
+                    Config = configDict
                 });
             }
             return Task.CompletedTask;

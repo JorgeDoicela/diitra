@@ -54,6 +54,27 @@ namespace diitra_api.Controllers
                     catch { }
                 }
 
+                if (configDict == null)
+                {
+                    configDict = new Dictionary<string, object>();
+                }
+
+                var completionList = new List<string>();
+                bool IsEnabled(string key)
+                {
+                    if (configDict.TryGetValue(key, out var val))
+                    {
+                        if (val is JsonElement je && je.ValueKind == JsonValueKind.False) return false;
+                        if (val is bool b && !b) return false;
+                    }
+                    return true;
+                }
+
+                if (IsEnabled("showRecursosNecesarios")) completionList.Add("RecursosNecesarios");
+                else if (IsEnabled("showRecursosDisponibles")) completionList.Add("RecursosDisponibles");
+
+                configDict["completionFields"] = completionList.ToArray();
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "recursos",
                     Label = string.IsNullOrEmpty(title) ? "Recursos & Financiamiento" : title,

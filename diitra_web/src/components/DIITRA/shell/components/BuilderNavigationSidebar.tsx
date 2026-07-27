@@ -15,6 +15,42 @@ export interface BuilderNavigationSidebarProps {
     setShowMobileSections: (show: boolean) => void;
 }
 
+const calculateSectionProgress = (config: any, formData: any): number | null => {
+    if (!formData) return null;
+    const completionFields = config?.completionFields || config?.completion_fields;
+    if (!completionFields || !Array.isArray(completionFields) || completionFields.length === 0) {
+        return null;
+    }
+    
+    let completedCount = 0;
+    completionFields.forEach((field: string) => {
+        const value = formData[field];
+        if (value === undefined || value === null) return;
+
+        // Si es un arreglo (ej: Investigadores, RecursosNecesarios, Cronograma)
+        if (Array.isArray(value)) {
+            if (value.length > 0) completedCount++;
+            return;
+        }
+
+        // Si es un objeto (ej: Impacto)
+        if (typeof value === 'object') {
+            const values = Object.values(value);
+            const filled = values.filter(v => v !== undefined && v !== null && v !== '').length;
+            if (filled > 0) completedCount++;
+            return;
+        }
+
+        // Si es string o rich-text
+        const str = String(value).trim();
+        if (str !== '' && str !== '<p></p>' && str !== '<p><br></p>' && str !== '<p><br/></p>') {
+            completedCount++;
+        }
+    });
+
+    return Math.round((completedCount / completionFields.length) * 100);
+};
+
 export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> = ({
     sections,
     activeTab,
@@ -76,52 +112,7 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                     </div>
                     <div className="space-y-1">
                         {sections.map(section => {
-                            const progress = (() => {
-                                if (!formData) return null;
-                                if (section.id === 'identificacion') {
-                                    const fields = [
-                                        formData.Titulo, formData.IdCarrera, formData.IdConvocatoria,
-                                        formData.Periodo, formData.TiempoEjecucion, formData.Programa,
-                                        formData.Dominio, formData.LineaInvestigacion, formData.SublineaInvestigacion
-                                    ];
-                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== 0).length;
-                                    return Math.round((filled / fields.length) * 100);
-                                }
-                                if (section.id === 'equipo') {
-                                    const hasTeam = Array.isArray(formData.Investigadores) && formData.Investigadores.length > 0;
-                                    return hasTeam ? 100 : 0;
-                                }
-                                if (section.id === 'tecnico') {
-                                    const fields = [];
-                                    const checkKeys = ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion'];
-                                    checkKeys.forEach(k => {
-                                        if (formData[k] !== undefined) fields.push(formData[k]);
-                                    });
-                                    if (fields.length === 0) return null;
-                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== '<p></p>' && f !== '<p><br></p>').length;
-                                    return Math.round((filled / fields.length) * 100);
-                                }
-                                if (section.id === 'recursos') {
-                                    const hasRec = (Array.isArray(formData.RecursosDisponibles) && formData.RecursosDisponibles.length > 0) ||
-                                                    (Array.isArray(formData.RecursosNecesarios) && formData.RecursosNecesarios.length > 0);
-                                    return hasRec ? 100 : 0;
-                                }
-                                if (section.id === 'impactos') {
-                                    const hasProdOrImp = (Array.isArray(formData.ProductosEsperados) && formData.ProductosEsperados.length > 0) ||
-                                                         (formData.Impacto && Object.values(formData.Impacto).some(v => v !== ''));
-                                    return hasProdOrImp ? 100 : 0;
-                                }
-                                if (section.id === 'cronograma') {
-                                    const hasCron = Array.isArray(formData.Cronograma) && formData.Cronograma.length > 0;
-                                    return hasCron ? 100 : 0;
-                                }
-                                if (section.id === 'bibliografia') {
-                                    const fields = [formData.Bibliografia];
-                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== '<p></p>' && f !== '<p><br></p>').length;
-                                    return Math.round((filled / fields.length) * 100);
-                                }
-                                return null;
-                            })();
+                            const progress = calculateSectionProgress(section.config, formData);
 
                             return (
                                 <button

@@ -52,6 +52,41 @@ namespace diitra_api.Controllers
                     catch { }
                 }
 
+                if (configDict == null)
+                {
+                    configDict = new Dictionary<string, object>();
+                }
+
+                var completionList = new List<string>();
+                bool IsEnabled(string key)
+                {
+                    if (configDict.TryGetValue(key, out var val))
+                    {
+                        if (val is JsonElement je && je.ValueKind == JsonValueKind.False) return false;
+                        if (val is bool b && !b) return false;
+                    }
+                    return true;
+                }
+
+                if (IsEnabled("showProductosEsperados")) completionList.Add("ProductosEsperados");
+
+                if (IsEnabled("showImpactoSocial") || 
+                    IsEnabled("showImpactoCientifico") || 
+                    IsEnabled("showImpactoEconomico") || 
+                    IsEnabled("showImpactoPolitico") || 
+                    IsEnabled("showImpactoAmbiental") || 
+                    IsEnabled("showImpactoOtro"))
+                {
+                    completionList.Add("Impacto");
+                }
+
+                if (completionList.Count == 0)
+                {
+                    completionList.Add("ProductosEsperados");
+                }
+
+                configDict["completionFields"] = completionList.ToArray();
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "impactos",
                     Label = string.IsNullOrEmpty(title) ? "Impacto & Productos" : title,

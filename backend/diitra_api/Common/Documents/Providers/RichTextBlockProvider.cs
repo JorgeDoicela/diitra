@@ -106,6 +106,7 @@ namespace diitra_api.Controllers
                 IconName = "FileText",
                 ComponentName = null, // AgnosticSection
                 Config = new {
+                    completionFields = new[] { varName },
                     fields = new[] {
                         new {
                             name = varName,

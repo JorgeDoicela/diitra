@@ -53,6 +53,34 @@ namespace diitra_api.Controllers
                     catch { }
                 }
 
+                if (configDict == null)
+                {
+                    configDict = new Dictionary<string, object>();
+                }
+
+                var completionList = new List<string>();
+                bool IsEnabled(string key)
+                {
+                    if (configDict.TryGetValue(key, out var val))
+                    {
+                        if (val is JsonElement je && je.ValueKind == JsonValueKind.False) return false;
+                        if (val is bool b && !b) return false;
+                    }
+                    return true;
+                }
+
+                if (IsEnabled("showAntecedentes")) completionList.Add("Antecedentes");
+                if (IsEnabled("showDescripcionProyecto")) completionList.Add("DescripcionProyecto");
+                if (IsEnabled("showJustificacion")) completionList.Add("Justificacion");
+                if (IsEnabled("showObjetivoGeneral")) completionList.Add("ObjetivoGeneral");
+                if (IsEnabled("showObjetivosEspecificos")) completionList.Add("ObjetivosEspecificos");
+                if (IsEnabled("showOds")) completionList.Add("Ods");
+                if (IsEnabled("showMarcoTeorico")) completionList.Add("MarcoTeorico");
+                if (IsEnabled("showMetodologia")) completionList.Add("Metodologia");
+                if (IsEnabled("showEvaluacion")) completionList.Add("Evaluacion");
+
+                configDict["completionFields"] = completionList.ToArray();
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "tecnico",
                     Label = string.IsNullOrEmpty(title) ? "Plan Técnico" : title,

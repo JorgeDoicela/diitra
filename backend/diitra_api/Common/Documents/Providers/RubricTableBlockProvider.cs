@@ -115,12 +115,23 @@ namespace diitra_api.Controllers
                     placeholder = (string?)null 
                 });
 
+                var completionList = new List<string>();
+                if (rubricaActiva != null)
+                {
+                    foreach (var criterion in rubricaActiva.InvRubricaCriterios)
+                    {
+                        completionList.Add($"Criterio_{criterion.IdCriterio}");
+                    }
+                }
+                completionList.Add("RecomendacionFinal");
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "evaluacion",
                     Label = "Evaluación Técnica",
                     IconName = "CheckSquare",
                     ComponentName = null, // Usa AgnosticSection
                     Config = new {
+                        completionFields = completionList.ToArray(),
                         referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
                         fields = rubricFields.ToArray()
                     }

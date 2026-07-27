@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { CoWorkHandle } from '../../../../../core/cowork/types';
+import type { CoWorkHandle } from '../../../../core/cowork/types';
 
 export interface BuilderSection {
     id: string;
     label: string;
     icon: React.ReactNode;
+    config?: any;
+    component?: React.ComponentType<any>;
 }
 
 export interface UseBuilderLayoutProps {

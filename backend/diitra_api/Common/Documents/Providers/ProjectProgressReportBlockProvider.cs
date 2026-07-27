@@ -52,6 +52,12 @@ namespace diitra_api.Controllers
                     catch { }
                 }
 
+                if (configDict == null)
+                {
+                    configDict = new Dictionary<string, object>();
+                }
+                configDict["completionFields"] = new[] { "ConclusionesParciales" };
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "ejecucion",
                     Label = string.IsNullOrEmpty(title) ? "Avance de Ejecución" : title,

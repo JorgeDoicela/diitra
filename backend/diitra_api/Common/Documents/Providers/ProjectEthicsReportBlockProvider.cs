@@ -55,6 +55,7 @@ namespace diitra_api.Controllers
                     IconName = "CheckSquare",
                     ComponentName = null, // AgnosticSection
                     Config = new {
+                        completionFields = new[] { "JustificacionEtica", "RiesgosIdentificados", "DictamenComite" },
                         referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
                         fields = fieldsList.ToArray()
                     }

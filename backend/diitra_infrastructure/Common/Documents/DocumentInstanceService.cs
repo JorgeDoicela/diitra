@@ -470,10 +470,35 @@ namespace Diitra.Infrastructure.Common.Documents
                     instance.TemplateCode, instance.TemplateVersion,
                     instance.EntityUuid, "sistema",
                     instance.Title, instance.EntityType,
-                    instance.DataSnapshotJson);
+                    instance.DataSnapshotJson,
+                    instance.TemplateConfigSnapshotJson);
                 _context.DocumentInstances.Add(instance);
                 await _context.SaveChangesAsync(ct);
                 Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Nuevo Draft creado: {instance.Uuid}");
+            }
+
+            // Si la instancia es antigua (legacy) y no tiene snapshot de plantilla,
+            // capturar y guardar en caliente el diseño de la plantilla activa actual.
+            if (string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson))
+            {
+                var template = await _context.DocumentTemplates
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.Code == instance.TemplateCode && t.IsActive, ct);
+
+                if (template != null && !string.IsNullOrEmpty(template.HtmlContent))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                    if (match.Success && match.Groups.Count > 1)
+                    {
+                        try
+                        {
+                            var base64 = match.Groups[1].Value;
+                            var bytes = System.Convert.FromBase64String(base64);
+                            instance.TemplateConfigSnapshotJson = System.Text.Encoding.UTF8.GetString(bytes);
+                        }
+                        catch { }
+                    }
+                }
             }
 
             // Fusionar metadatos con snapshot existente respetando campos volátiles

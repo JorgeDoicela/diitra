@@ -60,6 +60,12 @@ namespace diitra_api.Controllers
                     catch { }
                 }
 
+                if (configDict == null)
+                {
+                    configDict = new Dictionary<string, object>();
+                }
+                configDict["completionFields"] = new[] { "Titulo", "IdCarrera", "IdConvocatoria", "Periodo" };
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "identificacion",
                     Label = string.IsNullOrEmpty(title) ? "Identificación del Proyecto" : title,

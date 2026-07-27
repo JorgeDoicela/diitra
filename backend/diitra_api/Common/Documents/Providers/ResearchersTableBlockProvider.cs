@@ -33,12 +33,17 @@ namespace diitra_api.Controllers
         {
             if (!sectionsList.Any(s => s.Id == "equipo"))
             {
+                var configDict = new Dictionary<string, object>
+                {
+                    ["completionFields"] = new[] { "Investigadores" }
+                };
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "equipo",
                     Label = "Equipo Humano",
                     IconName = "Users",
                     ComponentName = "TeamSection",
-                    Config = null
+                    Config = configDict
                 });
             }
             return Task.CompletedTask;
