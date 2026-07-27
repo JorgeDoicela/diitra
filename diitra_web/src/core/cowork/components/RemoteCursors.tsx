@@ -58,7 +58,16 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
     const lastValidCursorRef = useRef<Map<number, CursorState>>(new Map());
 
     const updateCursors = () => {
-        if (!editor || !editor.view || !containerRef.current || !awareness) return;
+        let view: any = null;
+        try {
+            if (editor && !editor.isDestroyed) {
+                view = editor.view;
+            }
+        } catch (e) {
+            return; // La vista de Tiptap no está disponible
+        }
+
+        if (!view || !containerRef.current || !awareness) return;
 
         const states = awareness.getStates();
         const nextCursors: CursorState[] = [];
@@ -107,7 +116,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                 const head = rawHead;
                 const anchor = rawAnchor <= docSize ? rawAnchor : head;
 
-                const coords = editor.view.coordsAtPos(head);
+                const coords = view.coordsAtPos(head);
                 if (!coords) return;
 
                 const selectionRects: CursorState['selectionRects'] = [];
@@ -119,8 +128,8 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
 
                     try {
                         // Obtener los rangos del DOM y rectángulos exactos por cada línea (Multilínea Perfecto)
-                        const start = editor.view.domAtPos(from);
-                        const end = editor.view.domAtPos(to);
+                        const start = view.domAtPos(from);
+                        const end = view.domAtPos(to);
 
                         if (start && end) {
                             const range = document.createRange();
@@ -142,8 +151,8 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                         }
                     } catch (e) {
                         // Fallback básico si falla la selección por DOM Range
-                        const startCoords = editor.view.coordsAtPos(from);
-                        const endCoords = editor.view.coordsAtPos(to);
+                        const startCoords = view.coordsAtPos(from);
+                        const endCoords = view.coordsAtPos(to);
                         if (startCoords && endCoords) {
                             if (startCoords.top === endCoords.top) {
                                 selectionRects.push({
@@ -257,8 +266,17 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             handleUpdate();
         });
 
-        if (editor?.view?.dom?.parentElement) {
-            resizeObserver.observe(editor.view.dom.parentElement);
+        let parentEl: HTMLElement | null = null;
+        try {
+            if (editor && !editor.isDestroyed && editor.view && editor.view.dom) {
+                parentEl = editor.view.dom.parentElement;
+            }
+        } catch (e) {
+            // El editor de Tiptap aún no está completamente montado o ya está destruido
+        }
+
+        if (parentEl) {
+            resizeObserver.observe(parentEl);
         }
 
         // Ejecutar primer renderizado al montar

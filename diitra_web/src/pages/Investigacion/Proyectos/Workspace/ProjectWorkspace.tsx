@@ -88,6 +88,9 @@ export const ProjectWorkspace: React.FC = () => {
         fetchProject
     );
 
+    const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
+    const preloadedData = React.useMemo(() => ({ Uuid: editorUuid }), [editorUuid]);
+
     useEffect(() => {
         if (resolvedProjectUuid) {
             fetchProject((data) => {
@@ -184,8 +187,6 @@ export const ProjectWorkspace: React.FC = () => {
             isReadOnly = currentProject.status === 'Finalizado';
             readOnlyReason = 'state';
         }
-
-        const preloadedData = { Uuid: editorUuid };
 
         return (
             <DocumentEditor

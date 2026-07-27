@@ -78,6 +78,24 @@ const PROTOCOLO_STRING_FIELDS: ReadonlyArray<string> = [
 //   5. PERSISTENCIA: El documento se guardará automáticamente como snapshot JSON sin requerir
 //      crear tablas relacionales a menos que sea un dato crítico a consultar por SQL.
 
+// Cache global en memoria para evitar ráfagas redundantes de catálogos institucionales en re-montajes de DocumentEditor
+const catalogsCache: Record<string, any> = {};
+
+const getCachedOrFetch = async (key: string, fetchFn: () => Promise<any>) => {
+    if (catalogsCache[key]) {
+        return catalogsCache[key];
+    }
+    try {
+        const res = await fetchFn();
+        catalogsCache[key] = res;
+        return res;
+    } catch (err) {
+        return { data: [] };
+    }
+};
+
+const EMPTY_ARRAY: any[] = [];
+
 interface DocumentEditorProps {
     templateCode: string;
     initialData?: any;
@@ -124,14 +142,14 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
                     : Promise.resolve({ data: null }),
-                // Catálogos institucionales
-                api.get('/catalogs/carreras').catch(() => ({ data: [] })),
-                api.get('/Convocatorias').catch(() => ({ data: [] })),
-                api.get('/catalogs/tipo-producto').catch(() => ({ data: [] })),
-                api.get('/groups').catch(() => ({ data: [] })),
-                api.get('/catalogs/dominios').catch(() => ({ data: [] })),
-                api.get('/Convocatorias/catalogos/lineas').catch(() => ({ data: [] })),
-                api.get('/catalogs/sublineas-investigacion').catch(() => ({ data: [] })),
+                // Catálogos institucionales (con cache en memoria para evitar ráfagas duplicadas innecesarias)
+                getCachedOrFetch('carreras', () => api.get('/catalogs/carreras')),
+                getCachedOrFetch('convocatorias', () => api.get('/Convocatorias')),
+                getCachedOrFetch('tipos-producto', () => api.get('/catalogs/tipo-producto')),
+                getCachedOrFetch('groups', () => api.get('/groups')),
+                getCachedOrFetch('dominios', () => api.get('/catalogs/dominios')),
+                getCachedOrFetch('lineas', () => api.get('/Convocatorias/catalogos/lineas')),
+                getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
             // Aplicar config de plantilla (prioriza la API, cae en la localConfig si la API no retorna nada o falla)
@@ -410,9 +428,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         mergedInitial,
         cowork.ydoc,        // ← parámetro reactivo: React detecta cambios si SignalR reconecta
         {
-            lists: templateConfig?.lists || [],
+            lists: templateConfig?.lists || EMPTY_ARRAY,
             richTexts,
-            nonCollaborative,
+            nonCollaborative: nonCollaborative || EMPTY_ARRAY,
             isHistoryLoaded: cowork.session.lastSyncedAt !== null
         }
     );

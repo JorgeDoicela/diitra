@@ -110,8 +110,12 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 !options.nonCollaborative?.includes(name) &&
                 name.toLowerCase() !== 'uuid' &&
                 name.toLowerCase() !== 'entityuuid') {
-                // Evitar conflicto de constructor en Yjs si la clave fue registrada con un tipo diferente (ej. Y.XmlFragment)
+                // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment (texto enriquecido),
+                // la respetamos y no intentamos interactuar con ella como texto plano (Y.Text).
                 const sharedType = ydoc.share.get(name);
+                if (sharedType instanceof Y.XmlFragment) {
+                    return;
+                }
                 if (sharedType && !(sharedType instanceof Y.Text)) {
                     console.warn(`[useDIITRADocument] Conflicto de constructor detectado para '${name}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.Text.`);
                     ydoc.share.delete(name);
@@ -232,8 +236,12 @@ export function useDIITRADocument<T extends Record<string, any>>(
             if (options.nonCollaborative?.includes(key)) return;
             if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return;
 
-            // Evitar conflicto de constructor en Yjs si la clave fue registrada con un tipo diferente (ej. Y.XmlFragment)
+            // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment (texto enriquecido),
+            // la respetamos y no intentamos observarla o inicializarla como texto plano (Y.Text).
             const sharedType = ydoc.share.get(key);
+            if (sharedType instanceof Y.XmlFragment) {
+                return;
+            }
             if (sharedType && !(sharedType instanceof Y.Text)) {
                 console.warn(`[useDIITRADocument] Conflicto de constructor detectado para '${key}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.Text.`);
                 ydoc.share.delete(key);
