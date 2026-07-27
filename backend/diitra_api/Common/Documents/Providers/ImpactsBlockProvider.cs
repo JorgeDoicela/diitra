@@ -21,12 +21,12 @@ namespace diitra_api.Controllers
         {
             schemaDict["ProductosEsperados"] = new object[] { };
             schemaDict["Impacto"] = new Dictionary<string, string> { 
-                { "Social", "" }, 
-                { "Cientifico", "" }, 
-                { "Economico", "" }, 
-                { "Politico", "" }, 
-                { "Ambiental", "" }, 
-                { "Otro", "" } 
+                { "social", "" }, 
+                { "cientifico", "" }, 
+                { "economico", "" }, 
+                { "politico", "" }, 
+                { "ambiental", "" }, 
+                { "otro", "" } 
             };
 
             if (!listsList.Contains("ProductosEsperados")) listsList.Add("ProductosEsperados");
@@ -44,7 +44,7 @@ namespace diitra_api.Controllers
             {
                 sectionsList.Add(new UiSectionDto {
                     Id = "impactos",
-                    Label = title,
+                    Label = string.IsNullOrEmpty(title) ? "Impacto & Productos" : title,
                     IconName = "Target",
                     ComponentName = "ImpactSection",
                     Config = null

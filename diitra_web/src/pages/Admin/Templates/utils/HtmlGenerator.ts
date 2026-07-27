@@ -27,6 +27,16 @@ const BASE_STYLES = `
 <style>
   * { box-sizing: border-box; }
   
+  @page {
+      margin-top: {{ theme.layout.margin_top }};
+      margin-bottom: {{ theme.layout.margin_bottom }};
+      margin-left: {{ theme.layout.margin_left }};
+      margin-right: {{ theme.layout.margin_right }};
+  }
+  @page :first {
+      margin: 0;
+  }
+
   /* Reset y Core del Documento con Tematización Dinámica */
   .doc-container { 
       font-family: {{ theme.typography.font_family }}; 

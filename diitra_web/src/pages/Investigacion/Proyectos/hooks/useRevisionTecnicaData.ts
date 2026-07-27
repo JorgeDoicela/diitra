@@ -21,8 +21,6 @@ export const useRevisionTecnicaData = ({
     confirm,
     comments,
     setComments,
-    activeCommentField,
-    setContextualInput
 }: UseRevisionTecnicaDataParams) => {
     const addToastRef = useRef(addToast);
     const confirmRef = useRef(confirm);

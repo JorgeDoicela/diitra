@@ -1,11 +1,12 @@
 import React from 'react';
-import { Settings, Palette, Plus, Trash2 } from 'lucide-react';
+import { Settings, Palette, Plus, Trash2, Type, Layout, Shield } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
 import { TwoColumnProperties } from './properties/TwoColumnProperties';
 import { GanttProperties } from './properties/GanttProperties';
+import { THEME_SCHEMA, mergeWithDefaults } from '../utils/theme-schema';
 
 interface BlockPropertiesProps {
     activeBlock: DocumentBlock | undefined;
@@ -15,6 +16,7 @@ interface BlockPropertiesProps {
     onRemoveRow: (blockId: string, rowIndex: number) => void;
     themeConfigJson: string | null | undefined;
     onUpdateThemeConfig: (newThemeJson: string) => void;
+    headerCollapsed?: boolean;
 }
 
 const HEADER_STYLE_OPTIONS = [
@@ -34,37 +36,11 @@ const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ 
 const inputCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 const selectCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 
-// VISIÓN ARQUITECTÓNICA - tematización NO-CODE:
-// Tema visual por defecto (Design Tokens) que replica los estilos de marca institucionales del IST Traversari.
-// Si no hay un tema guardado en base de datos, este objeto define la paleta de colores y márgenes base.
-const defaultTheme = {
-    colors: {
-        primary: "#222c57",
-        secondary: "#c4a857",
-        text: "#222c57",
-        tableHeaderBg: "#222c57",
-        tableHeaderColor: "#ffffff",
-        accent: "#9ad3de"
-    },
-    typography: {
-        fontFamily: "'Calibri', 'Open Sans', Arial, sans-serif",
-        baseSize: "10pt",
-        lineHeight: "1.4"
-    },
-    layout: {
-        marginTop: "3cm",
-        marginBottom: "2cm",
-        marginLeft: "2cm",
-        marginRight: "2cm",
-        landscapeMarginTop: "1.8cm",
-        landscapeMarginBottom: "1.5cm",
-        landscapeMarginLeft: "1.2cm",
-        landscapeMarginRight: "1.2cm"
-    },
-    brand: {
-        showCoverPage: true,
-        logoScale: "100%"
-    }
+const CATEGORY_META = {
+    colors: { label: 'Paleta de Colores', icon: Palette },
+    typography: { label: 'Tipografía', icon: Type },
+    layout: { label: 'Diseño y Márgenes', icon: Layout },
+    brand: { label: 'Marca e Identidad', icon: Shield },
 };
 
 export const BlockProperties: React.FC<BlockPropertiesProps> = ({
@@ -75,21 +51,20 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
     onRemoveRow,
     themeConfigJson,
     onUpdateThemeConfig,
+    headerCollapsed,
 }) => {
+    const [activeTab, setActiveTab] = React.useState<'properties' | 'theme'>('properties');
+
     const theme = React.useMemo(() => {
-        if (!themeConfigJson) return defaultTheme;
-        try {
-            const parsed = JSON.parse(themeConfigJson);
-            return {
-                colors: { ...defaultTheme.colors, ...(parsed.colors || {}) },
-                typography: { ...defaultTheme.typography, ...(parsed.typography || {}) },
-                layout: { ...defaultTheme.layout, ...(parsed.layout || {}) },
-                brand: { ...defaultTheme.brand, ...(parsed.brand || {}) }
-            };
-        } catch {
-            return defaultTheme;
-        }
+        return mergeWithDefaults(themeConfigJson);
     }, [themeConfigJson]);
+
+    // Cambiar automáticamente a la pestaña de propiedades al seleccionar un bloque
+    React.useEffect(() => {
+        if (activeBlock) {
+            setActiveTab('properties');
+        }
+    }, [activeBlock?.id]);
 
     const handleThemeChange = (category: string, key: string, val: any) => {
         const nextTheme = {
@@ -102,187 +77,151 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
         onUpdateThemeConfig(JSON.stringify(nextTheme));
     };
 
-    if (!activeBlock) {
-        return (
-            <div className="w-96 border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
-                {/* Header del panel */}
-                <div className="p-3 border-b border-border-thin bg-surface shrink-0">
-                    <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
-                        <Palette className="w-4 h-4 text-text-main" />
-                        Estilos Globales de la Plantilla
-                    </span>
-                </div>
+    const categories = ['colors', 'typography', 'layout', 'brand'] as const;
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-5">
+    return (
+        <div className="w-96 border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0 h-full">
+            {/* Cabecera con Pestañas */}
+            <div className="flex border-b border-border-thin bg-surface shrink-0 select-none items-stretch h-11">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('properties')}
+                    className={`py-2 text-center text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 border-b-2 cursor-pointer ${
+                        headerCollapsed ? 'px-6' : 'flex-1'
+                    } ${
+                        activeTab === 'properties'
+                            ? 'border-text-main text-text-main bg-surface'
+                            : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/10'
+                    }`}
+                >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Propiedades</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('theme')}
+                    className={`py-2 text-center text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 border-b-2 cursor-pointer ${
+                        headerCollapsed ? 'px-6' : 'flex-1'
+                    } ${
+                        activeTab === 'theme'
+                            ? 'border-text-main text-text-main bg-surface'
+                            : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/10'
+                    }`}
+                >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Estilos</span>
+                </button>
+
+                {/* Espacio derecho vacío cuando el header está colapsado para no tapar los textos */}
+                {headerCollapsed && <div className="w-24 border-b-2 border-transparent" />}
+            </div>
+
+            {/* CUERPO DEL PANEL: PESTAÑA ESTILOS */}
+            {activeTab === 'theme' && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
                     <p className="text-[10px] text-text-dim leading-relaxed">
                         Configura el tema visual y el diseño de página del documento PDF. Estos ajustes aplican a todo el documento.
                     </p>
 
-                    {/* Colores */}
-                    <div className="space-y-3">
-                        <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider">Paleta de Colores</h5>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                            <LabeledField label="Color Primario">
-                                <div className="flex items-center gap-2">
-                                    <input 
-                                        type="color" 
-                                        value={theme.colors.primary} 
-                                        onChange={e => handleThemeChange('colors', 'primary', e.target.value)}
-                                        className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0" 
-                                    />
-                                    <input 
-                                        type="text" 
-                                        value={theme.colors.primary} 
-                                        onChange={e => handleThemeChange('colors', 'primary', e.target.value)}
-                                        className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover" 
-                                    />
+                    {categories.map(cat => {
+                        const meta = CATEGORY_META[cat];
+                        const CatIcon = meta.icon;
+                        const tokens = THEME_SCHEMA.filter(t => t.category === cat);
+
+                        return (
+                            <div key={cat} className="space-y-3 border-t border-border-thin/25 pt-4 first:border-t-0 first:pt-0">
+                                <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider flex items-center gap-1.5">
+                                    <CatIcon className="w-3.5 h-3.5" />
+                                    {meta.label}
+                                </h5>
+
+                                <div className="space-y-4">
+                                    {tokens.map(token => {
+                                        const currentVal = (theme as any)[cat]?.[token.camelKey] ?? token.defaultValue;
+
+                                        return (
+                                            <div key={token.key}>
+                                                <LabeledField label={token.label}>
+                                                    {token.type === 'color' && (
+                                                        <div className="flex items-center gap-2">
+                                                            <input 
+                                                                type="color" 
+                                                                value={currentVal} 
+                                                                onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
+                                                                className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0" 
+                                                            />
+                                                            <input 
+                                                                type="text" 
+                                                                value={currentVal} 
+                                                                onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
+                                                                className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover text-text-main focus:outline-none" 
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    {token.type === 'select' && (
+                                                        <select 
+                                                            value={currentVal} 
+                                                            onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
+                                                            className={selectCls}
+                                                        >
+                                                            {token.options?.map(o => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {token.type === 'text' && (
+                                                        <input 
+                                                            type="text" 
+                                                            value={currentVal} 
+                                                            onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
+                                                            className={inputCls}
+                                                            placeholder={`Ej: ${token.defaultValue}`}
+                                                        />
+                                                    )}
+
+                                                    {token.type === 'toggle' && (
+                                                        <div className="flex items-center justify-between bg-surface-hover/30 border border-border-thin/15 rounded-md p-2">
+                                                            <span className="text-[10px] text-text-dim">Activar</span>
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={!!currentVal} 
+                                                                onChange={e => handleThemeChange(cat, token.camelKey, e.target.checked)}
+                                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </LabeledField>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            </LabeledField>
-
-                            <LabeledField label="Color Secundario">
-                                <div className="flex items-center gap-2">
-                                    <input 
-                                        type="color" 
-                                        value={theme.colors.secondary} 
-                                        onChange={e => handleThemeChange('colors', 'secondary', e.target.value)}
-                                        className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0" 
-                                    />
-                                    <input 
-                                        type="text" 
-                                        value={theme.colors.secondary} 
-                                        onChange={e => handleThemeChange('colors', 'secondary', e.target.value)}
-                                        className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover" 
-                                    />
-                                </div>
-                            </LabeledField>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <LabeledField label="Fondo de Encabezados">
-                                <div className="flex items-center gap-2">
-                                    <input 
-                                        type="color" 
-                                        value={theme.colors.tableHeaderBg || theme.colors.primary} 
-                                        onChange={e => handleThemeChange('colors', 'tableHeaderBg', e.target.value)}
-                                        className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0" 
-                                    />
-                                    <input 
-                                        type="text" 
-                                        value={theme.colors.tableHeaderBg || theme.colors.primary} 
-                                        onChange={e => handleThemeChange('colors', 'tableHeaderBg', e.target.value)}
-                                        className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover" 
-                                    />
-                                </div>
-                            </LabeledField>
-
-                            <LabeledField label="Texto del Encabezado">
-                                <div className="flex items-center gap-2">
-                                    <input 
-                                        type="color" 
-                                        value={theme.colors.tableHeaderColor || '#ffffff'} 
-                                        onChange={e => handleThemeChange('colors', 'tableHeaderColor', e.target.value)}
-                                        className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0" 
-                                    />
-                                    <input 
-                                        type="text" 
-                                        value={theme.colors.tableHeaderColor || '#ffffff'} 
-                                        onChange={e => handleThemeChange('colors', 'tableHeaderColor', e.target.value)}
-                                        className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover" 
-                                    />
-                                </div>
-                            </LabeledField>
-                        </div>
-                    </div>
-
-                    {/* Diseño de Página y Márgenes */}
-                    <div className="space-y-3 border-t border-border-thin/25 pt-4">
-                        <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider">Diseño y Márgenes de Página</h5>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                            <LabeledField label="Margen Superior (PDF)">
-                                <input 
-                                    type="text" 
-                                    value={theme.layout.marginTop} 
-                                    onChange={e => handleThemeChange('layout', 'marginTop', e.target.value)}
-                                    placeholder="Ej: 3cm" 
-                                    className={inputCls} 
-                                />
-                            </LabeledField>
-
-                            <LabeledField label="Margen Inferior (PDF)">
-                                <input 
-                                    type="text" 
-                                    value={theme.layout.marginBottom} 
-                                    onChange={e => handleThemeChange('layout', 'marginBottom', e.target.value)}
-                                    placeholder="Ej: 2cm" 
-                                    className={inputCls} 
-                                />
-                            </LabeledField>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <LabeledField label="Margen Izquierdo (PDF)">
-                                <input 
-                                    type="text" 
-                                    value={theme.layout.marginLeft} 
-                                    onChange={e => handleThemeChange('layout', 'marginLeft', e.target.value)}
-                                    placeholder="Ej: 2cm" 
-                                    className={inputCls} 
-                                />
-                            </LabeledField>
-
-                            <LabeledField label="Margen Derecho (PDF)">
-                                <input 
-                                    type="text" 
-                                    value={theme.layout.marginRight} 
-                                    onChange={e => handleThemeChange('layout', 'marginRight', e.target.value)}
-                                    placeholder="Ej: 2cm" 
-                                    className={inputCls} 
-                                />
-                            </LabeledField>
-                        </div>
-                    </div>
-
-                    {/* Tipografía */}
-                    <div className="space-y-3 border-t border-border-thin/25 pt-4">
-                        <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider">Tipografía Base</h5>
-                        
-                        <LabeledField label="Familia Tipográfica">
-                            <select 
-                                value={theme.typography.fontFamily} 
-                                onChange={e => handleThemeChange('typography', 'fontFamily', e.target.value)}
-                                className={selectCls}
-                            >
-                                <option value="'Calibri', 'Open Sans', Arial, sans-serif">Calibri (Recomendado)</option>
-                                <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
-                                <option value="'Century Gothic', sans-serif">Century Gothic</option>
-                                <option value="Georgia, serif">Georgia (Serif)</option>
-                            </select>
-                        </LabeledField>
-                    </div>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
-        );
-    }
+            )}
 
-    return (
-        <div className="w-96 border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
-            {/* Header del panel */}
-            <div className="p-3 border-b border-border-thin bg-surface shrink-0">
-                <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
-                    <Settings className="w-4 h-4 text-text-main" />
-                    Propiedades del Bloque
-                </span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                <div>
-                    <h4 className="font-bold text-xs text-text-main">{activeBlock.title}</h4>
-                    <p className="text-[10px] text-text-dim mt-0.5 leading-normal capitalize">
-                        Tipo: <span className="text-text-main font-semibold">{activeBlock.type.replace('_', ' ')}</span>
-                    </p>
-                </div>
+            {/* CUERPO DEL PANEL: PESTAÑA PROPIEDADES */}
+            {activeTab === 'properties' && (
+                <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+                    {!activeBlock ? (
+                        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none bg-surface-hover/5">
+                            <Settings className="w-10 h-10 text-text-dim/30 mb-3 animate-pulse" />
+                            <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Ningún bloque seleccionado</h4>
+                            <p className="text-[10px] text-text-dim/80 max-w-xs mt-1 leading-normal">
+                                Haz clic sobre cualquier bloque en el lienzo A4 para configurar sus propiedades específicas, o cambia a la pestaña de <strong>Estilos</strong> para editar el diseño general de la hoja.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex-1 p-4 space-y-5">
+                            <div>
+                                <h4 className="font-bold text-xs text-text-main">{activeBlock.title}</h4>
+                                <p className="text-[10px] text-text-dim mt-0.5 leading-normal capitalize">
+                                    Tipo: <span className="text-text-main font-semibold">{activeBlock.type.replace('_', ' ')}</span>
+                                </p>
+                            </div>
 
                 {/* ── PORTADA ─────────────────────────────────────────────────── */}
                 {activeBlock.type === 'cover' && (
@@ -598,7 +537,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                         ))}
                     </div>
                 )}
-            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

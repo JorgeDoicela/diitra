@@ -6,14 +6,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Trash2, Eye, EyeOff, Copy
+    Layers, Trash2, Eye, EyeOff, Copy, Palette
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection } from '../types';
 
 interface BlockCanvasProps {
     blocks: DocumentBlock[];
     activeBlockId: string | null;
-    onSelectBlock: (id: string) => void;
+    onSelectBlock: (id: string | null) => void;
     onToggleActive: (index: number) => void;
     onDeleteBlock: (id: string) => void;
     onDuplicateBlock: (id: string) => void;
@@ -22,9 +22,10 @@ interface BlockCanvasProps {
     headerCollapsed?: boolean;
     onToggleHeader?: () => void;
     rightActions?: React.ReactNode;
+    themeConfig?: any;
 }
 
-const COLORS = {
+const DYN_COLORS = {
     blue: '#1e2a4a',
     gold: '#b8912e',
     gray: '#475569',
@@ -37,7 +38,7 @@ const COLORS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RenderCover: React.FC<{ config: any }> = ({ config }) => {
-    const color = config.colorTema || COLORS.blue;
+    const color = config.colorTema || DYN_COLORS.blue;
     return (
         <div className="relative rounded-md p-8 flex flex-col justify-between min-h-[480px] overflow-hidden bg-white select-none">
             <div className="text-center">
@@ -67,20 +68,20 @@ const RenderTitle: React.FC<{ config: any }> = ({ config }) => {
 
     if (level === 'h1') {
         return (
-            <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider flex items-center justify-between" style={{ color: COLORS.blue }}>
+            <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider flex items-center justify-between" style={{ color: DYN_COLORS.blue }}>
                 <span>{text}</span>
             </h1>
         );
     }
     if (level === 'h2') {
         return (
-            <h2 className="text-xs font-black text-white px-3 py-2 uppercase tracking-wide mb-2 mt-4" style={{ backgroundColor: COLORS.blue }}>
+            <h2 className="text-xs font-black text-white px-3 py-2 uppercase tracking-wide mb-2 mt-4" style={{ backgroundColor: DYN_COLORS.blue }}>
                 {text}
             </h2>
         );
     }
     return (
-        <h3 className="text-xs font-bold uppercase tracking-wide mb-2 mt-3" style={{ color: COLORS.gold }}>
+        <h3 className="text-xs font-bold uppercase tracking-wide mb-2 mt-3" style={{ color: DYN_COLORS.gold }}>
             {text}
         </h3>
     );
@@ -118,7 +119,7 @@ const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
                                 key={i}
                                 className="border border-slate-300 p-2 font-bold text-left uppercase text-[9px]"
                                 style={{
-                                    backgroundColor: headerStyle === 'blue' ? COLORS.blue : headerStyle === 'gold' ? COLORS.gold : headerStyle === 'gray' ? COLORS.gray : '#f8fafc',
+                                    backgroundColor: headerStyle === 'blue' ? DYN_COLORS.blue : headerStyle === 'gold' ? DYN_COLORS.gold : headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
                                     color: headerStyle !== 'none' ? 'white' : '#1e2a4a',
                                     width: colWidths[i] || 'auto'
                                 }}
@@ -165,7 +166,7 @@ const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) => {
                                         key={i}
                                         className="border border-slate-300 p-1.5 font-bold text-left uppercase text-[8.5px]"
                                         style={{
-                                            backgroundColor: sec.headerStyle === 'blue' ? COLORS.blue : sec.headerStyle === 'gold' ? COLORS.gold : sec.headerStyle === 'gray' ? COLORS.gray : '#f8fafc',
+                                            backgroundColor: sec.headerStyle === 'blue' ? DYN_COLORS.blue : sec.headerStyle === 'gold' ? DYN_COLORS.gold : sec.headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
                                             color: sec.headerStyle !== 'none' ? 'white' : '#1e2a4a',
                                             width: sec.colWidths?.[i] || 'auto'
                                         }}
@@ -201,7 +202,7 @@ const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
         <div className="grid grid-cols-2 gap-3 my-2 border border-slate-200 rounded-lg overflow-hidden bg-white">
             <div className="flex flex-col border-r border-slate-200">
                 <div className="p-2 font-bold text-[9px] uppercase text-white" style={{
-                    backgroundColor: config.leftHeaderStyle === 'blue' ? COLORS.blue : config.leftHeaderStyle === 'gold' ? COLORS.gold : config.leftHeaderStyle === 'gray' ? COLORS.gray : '#f8fafc',
+                    backgroundColor: config.leftHeaderStyle === 'blue' ? DYN_COLORS.blue : config.leftHeaderStyle === 'gold' ? DYN_COLORS.gold : config.leftHeaderStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
                     color: config.leftHeaderStyle !== 'none' ? 'white' : '#1e2a4a'
                 }}>
                     {config.leftTitle || 'COLUMNA IZQUIERDA'}
@@ -213,7 +214,7 @@ const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
             </div>
             <div className="flex flex-col">
                 <div className="p-2 font-bold text-[9px] uppercase text-white" style={{
-                    backgroundColor: config.rightHeaderStyle === 'blue' ? COLORS.blue : config.rightHeaderStyle === 'gold' ? COLORS.gold : config.rightHeaderStyle === 'gray' ? COLORS.gray : '#f8fafc',
+                    backgroundColor: config.rightHeaderStyle === 'blue' ? DYN_COLORS.blue : config.rightHeaderStyle === 'gold' ? DYN_COLORS.gold : config.rightHeaderStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
                     color: config.rightHeaderStyle !== 'none' ? 'white' : '#1e2a4a'
                 }}>
                     {config.rightTitle || 'COLUMNA DERECHA'}
@@ -342,13 +343,13 @@ const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) => {
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
                     <tr>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Nombre Completo</th>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Rol en Proyecto</th>
-                        {config.mostrarCedula !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Cédula</th>}
-                        {config.mostrarEmail !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Email</th>}
-                        {config.mostrarTelefono !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Teléfono</th>}
-                        {config.mostrarNivelAcademico !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Nivel Académico</th>}
-                        {config.mostrarHoras !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Horas</th>}
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nombre Completo</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Rol en Proyecto</th>
+                        {config.mostrarCedula !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Cédula</th>}
+                        {config.mostrarEmail !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Email</th>}
+                        {config.mostrarTelefono !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Teléfono</th>}
+                        {config.mostrarNivelAcademico !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nivel Académico</th>}
+                        {config.mostrarHoras !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Horas</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -385,9 +386,9 @@ const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
                     <tr>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: COLORS.blue }}>Criterio Evaluado</th>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-20" style={{ backgroundColor: COLORS.blue }}>Máximo</th>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-28" style={{ backgroundColor: COLORS.blue }}>Calificación</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Criterio Evaluado</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-20" style={{ backgroundColor: DYN_COLORS.blue }}>Máximo</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-28" style={{ backgroundColor: DYN_COLORS.blue }}>Calificación</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -960,8 +961,16 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     headerCollapsed,
     onToggleHeader,
     rightActions,
+    themeConfig,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
+
+    // Actualizar colores dinámicos desde el themeConfig
+    if (themeConfig?.colors) {
+        DYN_COLORS.blue = themeConfig.colors.primary || '#1e2a4a';
+        DYN_COLORS.gold = themeConfig.colors.secondary || '#b8912e';
+        DYN_COLORS.gray = themeConfig.colors.text || '#475569';
+    }
 
     useEffect(() => {
         activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1023,10 +1032,17 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
             </div>
 
             {/* Scroll del lienzo */}
-            <div className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep" style={{ scrollbarWidth: 'thin' }}>
+            <div 
+                onClick={() => onSelectBlock(null)}
+                className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep cursor-default" 
+                style={{ scrollbarWidth: 'thin' }}
+            >
 
                 {/* Contenedor simulando hoja A4 */}
-                <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all">
+                <div 
+                    onClick={e => e.stopPropagation()}
+                    className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col gap-2 transition-all cursor-default"
+                >
 
                     {blocks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center flex-1 border-2 border-dashed border-border-thin rounded-md text-center p-12 my-auto">

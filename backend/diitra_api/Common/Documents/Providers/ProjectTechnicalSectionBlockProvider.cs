@@ -25,6 +25,7 @@ namespace diitra_api.Controllers
             schemaDict["ObjetivoGeneral"] = "";
             schemaDict["ObjetivosEspecificos"] = "";
             schemaDict["ObjetivosDesarrolloSostenible"] = "";
+            schemaDict["Ods"] = "";
             schemaDict["MarcoTeorico"] = "";
             schemaDict["Metodologia"] = "";
             schemaDict["Evaluacion"] = "";

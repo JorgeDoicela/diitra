@@ -60,7 +60,7 @@ namespace Diitra.Domain.Common.Documents
         public string? CollaborativeFieldsJson { get; private set; }
 
         /// <summary>
-        /// JSON que define los Design Tokens de tematización (colores, márgenes, tipografías).
+        /// JSON que define los estilos estructurados (Schema-Driven) de tematización (colores, márgenes, tipografías).
         /// Permite la personalización visual de la plantilla sin alterar código CSS ni HTML.
         /// Se inyecta dinámicamente en el motor de renderizado (Scriban/iText) al generar el PDF.
         /// </summary>
@@ -129,7 +129,7 @@ namespace Diitra.Domain.Common.Documents
         }
 
         /// <summary>
-        /// Actualiza la configuración visual de tematización (Design Tokens) sin código para la plantilla.
+        /// Actualiza la configuración visual de tematización estructurada (Schema-Driven) sin código para la plantilla.
         /// </summary>
         public void UpdateThemeConfig(string? themeConfigJson, string updatedBy)
         {

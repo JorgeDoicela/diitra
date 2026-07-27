@@ -90,7 +90,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             * { box-sizing: border-box; }
             
             body {
-                font-family: 'Calibri', 'Open Sans', 'Helvetica', 'Arial', sans-serif;
+                font-family: inherit;
                 font-size: 9pt;
                 line-height: 1.3;
                 color: #1a1a1a;
@@ -192,7 +192,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             /* ── Configuración de Página ── */
             @page {
-                margin: 1cm 1.5cm 1.5cm 1.5cm;
                 @bottom-right {
                     content: counter(page);
                     font-size: 8pt;

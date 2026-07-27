@@ -3,6 +3,8 @@ using Diitra.Infrastructure.Common.Documents;
 using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
+using diitra_infrastructure.data.models;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers
 {
@@ -16,10 +18,12 @@ namespace diitra_api.Controllers
     public class DocumentTemplatesController : ControllerBase
     {
         private readonly IDocumentEngine _documentEngine;
+        private readonly DiitraContext _db;
 
-        public DocumentTemplatesController(IDocumentEngine documentEngine)
+        public DocumentTemplatesController(IDocumentEngine documentEngine, DiitraContext db)
         {
             _documentEngine = documentEngine;
+            _db = db;
         }
 
         /// <summary>
@@ -150,6 +154,85 @@ namespace diitra_api.Controllers
                 return NotFound(new { error = $"Plantilla '{code}' no encontrada." });
             }
         }
+
+        /// <summary>
+        /// Obtiene el tema visual global de la institución.
+        /// </summary>
+        [HttpGet("global-theme")]
+        public async Task<IActionResult> GetGlobalTheme(CancellationToken ct)
+        {
+            var config = await _db.InvConfigsGenerales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Clave == "Theme.GlobalConfigJson", ct);
+                
+            if (config == null || string.IsNullOrEmpty(config.Valor))
+            {
+                // Fallback por defecto institucional de Traversari
+                var fallbackTheme = new
+                {
+                    colors = new
+                    {
+                        primary = "#222c57",
+                        secondary = "#c4a857",
+                        text = "#1a1a1a",
+                        tableHeaderBg = "#222c57",
+                        tableHeaderColor = "#ffffff",
+                        accent = "#9ad3de"
+                    },
+                    typography = new
+                    {
+                        fontFamily = "'Calibri', 'Open Sans', Arial, sans-serif",
+                        baseSize = "10pt",
+                        lineHeight = "1.4"
+                    },
+                    layout = new
+                    {
+                        marginTop = "3cm",
+                        marginBottom = "2cm",
+                        marginLeft = "2cm",
+                        marginRight = "2cm",
+                        landscapeMarginTop = "1.8cm",
+                        landscapeMarginLeft = "1.2cm"
+                    },
+                    brand = new
+                    {
+                        showCoverPage = true,
+                        logoScale = "100%"
+                    }
+                };
+                return Ok(new { themeConfigJson = System.Text.Json.JsonSerializer.Serialize(fallbackTheme) });
+            }
+            
+            return Ok(new { themeConfigJson = config.Valor });
+        }
+
+        /// <summary>
+        /// Actualiza el tema visual global de la institución.
+        /// </summary>
+        [HttpPut("global-theme")]
+        public async Task<IActionResult> UpdateGlobalTheme([FromBody] UpdateGlobalThemeRequest request, CancellationToken ct)
+        {
+            var config = await _db.InvConfigsGenerales
+                .FirstOrDefaultAsync(c => c.Clave == "Theme.GlobalConfigJson", ct);
+
+            if (config == null)
+            {
+                config = new InvConfigGeneral
+                {
+                    Clave = "Theme.GlobalConfigJson",
+                    Valor = request.ThemeConfigJson ?? string.Empty,
+                    Descripcion = "Diseño y branding global institucional (colores, márgenes, tipografía)."
+                };
+                _db.InvConfigsGenerales.Add(config);
+            }
+            else
+            {
+                config.Valor = request.ThemeConfigJson ?? string.Empty;
+            }
+
+            await _db.SaveChangesAsync(ct);
+            return Ok(new { message = "Tema global institucional actualizado correctamente." });
+        }
     }
 
     public class UpdateTemplateRequest
@@ -163,10 +246,6 @@ namespace diitra_api.Controllers
         [JsonPropertyName("collaborativeFieldsJson")]
         public string? CollaborativeFieldsJson { get; set; }
 
-        /// <summary>
-        /// JSON que define los Design Tokens de tematización (colores, márgenes, tipografías)
-        /// de la plantilla, permitiendo la tematización visual sin código.
-        /// </summary>
         [JsonPropertyName("themeConfigJson")]
         public string? ThemeConfigJson { get; set; }
     }
@@ -178,5 +257,11 @@ namespace diitra_api.Controllers
 
         [JsonPropertyName("signatureType")]
         public string SignatureType { get; set; } = string.Empty;
+    }
+
+    public class UpdateGlobalThemeRequest
+    {
+        [JsonPropertyName("themeConfigJson")]
+        public string? ThemeConfigJson { get; set; }
     }
 }

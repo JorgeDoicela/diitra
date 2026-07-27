@@ -243,69 +243,117 @@ namespace Diitra.Infrastructure.Common.Documents
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
                 var extraImageVars = new Dictionary<string, object?>();
 
-                // Tema visual por defecto (Design Tokens) para tematización No-Code
-                var defaultTheme = new Dictionary<string, object>
+                // Tema base estructurado (Schema-Driven): primero intentamos leer el tema global de la BD,
+                // si no existe, usamos el fallback institucional de Traversari.
+                var baseThemeDict = new Dictionary<string, object>();
+                
+                try
                 {
-                    { "colors", new Dictionary<string, string>
+                    var globalThemeEntry = await _db.InvConfigsGenerales
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.Clave == "Theme.GlobalConfigJson", cancellationToken);
+                        
+                    if (globalThemeEntry != null && !string.IsNullOrEmpty(globalThemeEntry.Valor))
+                    {
+                        var parsedGlobal = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(globalThemeEntry.Valor);
+                        if (parsedGlobal != null)
                         {
-                            { "primary", "#222c57" },
-                            { "secondary", "#c4a857" },
-                            { "text", "#222c57" },
-                            { "tableHeaderBg", "#222c57" },
-                            { "tableHeaderColor", "#ffffff" },
-                            { "accent", "#9ad3de" }
-                        }
-                    },
-                    { "typography", new Dictionary<string, string>
-                        {
-                            { "fontFamily", "'Calibri', 'Open Sans', Arial, sans-serif" },
-                            { "baseSize", "10pt" },
-                            { "lineHeight", "1.4" }
-                        }
-                    },
-                    { "layout", new Dictionary<string, string>
-                        {
-                            { "marginTop", "3cm" },
-                            { "marginBottom", "2cm" },
-                            { "marginLeft", "2cm" },
-                            { "marginRight", "2cm" },
-                            { "landscapeMarginTop", "1.8cm" },
-                            { "landscapeMarginBottom", "1.5cm" },
-                            { "landscapeMarginLeft", "1.2cm" },
-                            { "landscapeMarginRight", "1.2cm" }
-                        }
-                    },
-                    { "brand", new Dictionary<string, object>
-                        {
-                            { "showCoverPage", true },
-                            { "logoScale", "100%" }
+                            baseThemeDict = parsedGlobal;
                         }
                     }
-                };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al cargar el tema global desde inv_config_general. Usando fallback.");
+                }
 
-                // VISIÓN ARQUITECTÓNICA - tematización NO-CODE:
-                // Se desacopla el diseño estético de los documentos del código fuente.
-                // Si la plantilla no define un tema en BD, se utiliza el defaultTheme (estilos institucionales originales).
-                // Si existe un JSON de tema en base de datos (Design Tokens de colores/márgenes),
-                // se deserializa y se inyecta como variable 'theme' en Scriban, permitiendo que
-                // el CSS parametrizado compile visualmente con los nuevos ajustes guardados por el administrador.
-                object themeToInject = defaultTheme;
+                // Fallback institucional en caso de que la BD esté vacía o tenga esquemas dañados
+                if (baseThemeDict.Count == 0)
+                {
+                    baseThemeDict = new Dictionary<string, object>
+                    {
+                        { "colors", new Dictionary<string, string>
+                            {
+                                { "primary", "#222c57" },
+                                { "secondary", "#c4a857" },
+                                { "text", "#222c57" },
+                                { "tableHeaderBg", "#222c57" },
+                                { "tableHeaderColor", "#ffffff" },
+                                { "accent", "#9ad3de" }
+                            }
+                        },
+                        { "typography", new Dictionary<string, string>
+                            {
+                                { "fontFamily", "'Calibri', 'Open Sans', Arial, sans-serif" },
+                                { "baseSize", "10pt" },
+                                { "lineHeight", "1.4" }
+                            }
+                        },
+                        { "layout", new Dictionary<string, string>
+                            {
+                                { "marginTop", "3cm" },
+                                { "marginBottom", "2cm" },
+                                { "marginLeft", "2cm" },
+                                { "marginRight", "2cm" },
+                                { "landscapeMarginTop", "1.8cm" },
+                                { "landscapeMarginBottom", "1.5cm" },
+                                { "landscapeMarginLeft", "1.2cm" },
+                                { "landscapeMarginRight", "1.2cm" }
+                            }
+                        },
+                        { "brand", new Dictionary<string, object>
+                            {
+                                { "showCoverPage", true },
+                                { "logoScale", "100%" }
+                            }
+                        }
+                    };
+                }
+
+                // Aplicar Overrides por Plantilla (si existen)
                 if (!string.IsNullOrEmpty(template.ThemeConfigJson))
                 {
                     try
                     {
-                        var customTheme = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(template.ThemeConfigJson);
-                        if (customTheme != null)
+                        var templateTheme = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(template.ThemeConfigJson);
+                        if (templateTheme != null)
                         {
-                            themeToInject = customTheme;
+                            // Mezclar categorías
+                            foreach (var categoryKey in templateTheme.Keys)
+                            {
+                                if (templateTheme[categoryKey] is System.Text.Json.JsonElement catVal && catVal.ValueKind == System.Text.Json.JsonValueKind.Object)
+                                {
+                                    var categoryDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(catVal.GetRawText()) ?? new Dictionary<string, object>();
+                                    
+                                    if (baseThemeDict.TryGetValue(categoryKey, out var existingCategory) && existingCategory is Dictionary<string, object> baseCatDict)
+                                    {
+                                        foreach (var kv in categoryDict)
+                                        {
+                                            baseCatDict[kv.Key] = kv.Value;
+                                        }
+                                    }
+                                    else if (baseThemeDict.TryGetValue(categoryKey, out var existingCategoryStrDict) && existingCategoryStrDict is Dictionary<string, string> baseCatStrDict)
+                                    {
+                                        foreach (var kv in categoryDict)
+                                        {
+                                            baseCatStrDict[kv.Key] = kv.Value?.ToString() ?? "";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        baseThemeDict[categoryKey] = categoryDict;
+                                    }
+                                }
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al deserializar ThemeConfigJson para {Code}. Usando tema por defecto.", template.Code);
+                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al fusionar ThemeConfigJson para {Code}.", template.Code);
                     }
                 }
-                extraImageVars["theme"] = themeToInject;
+
+                extraImageVars["theme"] = baseThemeDict;
 
                 if (request.ExtraVariables != null)
                 {
