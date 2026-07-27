@@ -211,6 +211,14 @@ const DocumentTemplatesPage: React.FC = () => {
                 };
                 setSelectedTemplate(fullData);
 
+                let parsedTheme: any = {};
+                if (res.data.themeConfigJson) {
+                    try {
+                        parsedTheme = JSON.parse(res.data.themeConfigJson);
+                    } catch {}
+                }
+                const savedCoverConfig = parsedTheme?.brand?.coverConfig || {};
+
                 // Bloques virtuales interactivos para que el canvas sirva de vista previa del tema global
                 loadedBlocks = [
                     {
@@ -235,7 +243,8 @@ const DocumentTemplatesPage: React.FC = () => {
                             alignCarrera: "center",
                             showPeriodo: true,
                             posPeriodo: "bottom",
-                            alignPeriodo: "center"
+                            alignPeriodo: "center",
+                            ...savedCoverConfig
                         }
                     },
                     {
@@ -695,9 +704,26 @@ const DocumentTemplatesPage: React.FC = () => {
 
             setSaving(true);
             try {
+                // Obtener la configuración actual del bloque de portada virtual
+                const coverBlock = blocks.find(b => b.id === 'sample-cover');
+                let updatedThemeConfigJson = selectedTemplate.themeConfigJson || '{}';
+                if (coverBlock) {
+                    try {
+                        const parsed = JSON.parse(updatedThemeConfigJson);
+                        if (!parsed.brand) parsed.brand = {};
+                        parsed.brand.coverConfig = coverBlock.config;
+                        updatedThemeConfigJson = JSON.stringify(parsed);
+                    } catch (e) {
+                        console.error("Error parsing themeConfigJson during save:", e);
+                    }
+                }
+
                 await api.put('/admin/templates/global-theme', {
-                    themeConfigJson: selectedTemplate.themeConfigJson || null
+                    themeConfigJson: updatedThemeConfigJson
                 });
+
+                setSelectedTemplate(prev => prev ? { ...prev, themeConfigJson: updatedThemeConfigJson } : null);
+
                 addToast("Diseño Global Guardado", "El tema visual institucional ha sido actualizado con éxito.", "success");
                 setIsDirty(false);
             } catch (err) {
@@ -732,7 +758,8 @@ const DocumentTemplatesPage: React.FC = () => {
 
         setSaving(true);
         try {
-            const generatedHtml = generateHtmlFromBlocks(blocks);
+            const themeConfig = mergeWithDefaults(selectedTemplate.themeConfigJson);
+            const generatedHtml = generateHtmlFromBlocks(blocks, themeConfig);
             const blocksJson = JSON.stringify(blocks);
             const htmlWithEmbeddedJson = `<!-- DIITRA_SECTIONS_JSON: ${btoa(unescape(encodeURIComponent(blocksJson)))} -->\n${generatedHtml}`;
 

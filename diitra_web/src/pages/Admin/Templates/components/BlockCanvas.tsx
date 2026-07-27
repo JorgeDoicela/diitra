@@ -88,31 +88,45 @@ const RenderCover: React.FC<{
     coverImage?: string;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config, coverImage, blockId, onUpdateConfig }) => {
-    const color = config.colorTema || DYN_COLORS.blue;
-    const isFreeForm = config.coverLayoutMode !== 'zones';
+    themeConfig?: any;
+}> = ({ config, coverImage, blockId, onUpdateConfig, themeConfig }) => {
+    const gCover = themeConfig?.brand?.coverConfig || {};
+    const color = config.colorTema || gCover.colorTema || DYN_COLORS.blue;
+    const isFreeForm = (config.coverLayoutMode !== undefined ? config.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
 
-    const showInst = config.showInstitution !== false;
-    const showTitle = config.showTitle !== false;
-    const showCarrera = config.showCarrera !== false;
-    const showPeriodo = config.showPeriodo !== false;
+    const showInst = config.showInstitution !== undefined ? config.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
+    const showTitle = config.showTitle !== undefined ? config.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
+    const showCarrera = config.showCarrera !== undefined ? config.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
+    const showPeriodo = config.showPeriodo !== undefined ? config.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-    const alignInst = config.alignInstitution || 'center';
-    const alignTitle = config.alignTitle || 'center';
-    const alignCarrera = config.alignCarrera || 'center';
-    const alignPeriodo = config.alignPeriodo || 'center';
+    const alignInst = config.alignInstitution || gCover.alignInstitution || 'center';
+    const alignTitle = config.alignTitle || gCover.alignTitle || 'center';
+    const alignCarrera = config.alignCarrera || gCover.alignCarrera || 'center';
+    const alignPeriodo = config.alignPeriodo || gCover.alignPeriodo || 'center';
 
-    const textInst = config.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
-    const textTitle = config.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
-    const textCarrera = config.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
-    const textPeriodo = config.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
+    const textInst = config.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textCarrera = config.carreraPorDefecto || gCover.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
+    const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
 
     // Posiciones actuales (desde config o defaults)
     const positions: Record<CoverElementId, FreeFormPosition> = {
-        institution: { x: config.xInstitution ?? DEFAULT_POSITIONS.institution.x, y: config.yInstitution ?? DEFAULT_POSITIONS.institution.y },
-        title: { x: config.xTitle ?? DEFAULT_POSITIONS.title.x, y: config.yTitle ?? DEFAULT_POSITIONS.title.y },
-        carrera: { x: config.xCarrera ?? DEFAULT_POSITIONS.carrera.x, y: config.yCarrera ?? DEFAULT_POSITIONS.carrera.y },
-        periodo: { x: config.xPeriodo ?? DEFAULT_POSITIONS.periodo.x, y: config.yPeriodo ?? DEFAULT_POSITIONS.periodo.y },
+        institution: { 
+            x: config.xInstitution ?? gCover.xInstitution ?? DEFAULT_POSITIONS.institution.x, 
+            y: config.yInstitution ?? gCover.yInstitution ?? DEFAULT_POSITIONS.institution.y 
+        },
+        title: { 
+            x: config.xTitle ?? gCover.xTitle ?? DEFAULT_POSITIONS.title.x, 
+            y: config.yTitle ?? gCover.yTitle ?? DEFAULT_POSITIONS.title.y 
+        },
+        carrera: { 
+            x: config.xCarrera ?? gCover.xCarrera ?? DEFAULT_POSITIONS.carrera.x, 
+            y: config.yCarrera ?? gCover.yCarrera ?? DEFAULT_POSITIONS.carrera.y 
+        },
+        periodo: { 
+            x: config.xPeriodo ?? gCover.xPeriodo ?? DEFAULT_POSITIONS.periodo.x, 
+            y: config.yPeriodo ?? gCover.yPeriodo ?? DEFAULT_POSITIONS.periodo.y 
+        },
     };
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -131,7 +145,12 @@ const RenderCover: React.FC<{
 
     const getAlignStyle = (align: string): React.CSSProperties => {
         const map: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end' };
-        return { alignItems: map[align] || 'center', display: 'flex', flexDirection: 'column' };
+        return { 
+            alignItems: map[align] || 'center', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            textAlign: align as any 
+        };
     };
 
     // ─── Renderizador de cada elemento arrastrable ────────────────────────────
@@ -971,10 +990,11 @@ interface SortableBlockItemProps {
     onDeleteBlock: (id: string) => void;
     onDuplicateBlock: (id: string) => void;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+    themeConfig?: any;
 }
 
 const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
-    block, index, isActive, coverImage, onSelectBlock, onToggleActive, onDeleteBlock, onDuplicateBlock, onUpdateConfig,
+    block, index, isActive, coverImage, onSelectBlock, onToggleActive, onDeleteBlock, onDuplicateBlock, onUpdateConfig, themeConfig,
 }) => {
     const {
         attributes,
@@ -1049,7 +1069,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         }
 
         switch (block.type) {
-            case 'cover': return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'cover': return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} themeConfig={themeConfig} />;
             case 'title': return <RenderTitle config={block.config} />;
             case 'rich_text': return <RenderRichText config={block.config} />;
             case 'advanced_table': return <RenderAdvancedTable config={block.config} />;
@@ -1359,6 +1379,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                                 onDeleteBlock={onDeleteBlock}
                                                                 onDuplicateBlock={onDuplicateBlock}
                                                                 onUpdateConfig={onUpdateConfig}
+                                                                themeConfig={themeConfig}
                                                             />
                                                         </div>
                                                     );

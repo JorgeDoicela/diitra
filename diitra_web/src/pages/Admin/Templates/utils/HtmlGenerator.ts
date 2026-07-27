@@ -1,4 +1,4 @@
-﻿import type { DocumentBlock, TableSection, GanttObjective } from '../types';
+import type { DocumentBlock, TableSection, GanttObjective } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de estilo institucional
@@ -258,7 +258,7 @@ const renderSection = (section: TableSection): string => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Función principal
 // ─────────────────────────────────────────────────────────────────────────────
-export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
+export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
     let html = `${BASE_STYLES}\n<div class="doc-container">`;
 
     for (const block of blockList) {
@@ -269,42 +269,65 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             // ── PORTADA ─────────────────────────────────────────────────────
             case 'cover': {
                 const colorTheme = c.colorTema || '{{ theme.colors.primary }}';
-                const isFreeForm = c.coverLayoutMode !== 'zones';
+                const gCover = themeConfig?.brand?.coverConfig || {};
+                const isFreeForm = (c.coverLayoutMode !== undefined ? c.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
 
-                const showInst    = c.showInstitution !== false;
-                const showTitle   = c.showTitle !== false;
-                const showCarrera = c.showCarrera !== false;
-                const showPeriodo = c.showPeriodo !== false;
+                const showInst    = c.showInstitution !== undefined ? c.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
+                const showTitle   = c.showTitle !== undefined ? c.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
+                const showCarrera = c.showCarrera !== undefined ? c.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
+                const showPeriodo = c.showPeriodo !== undefined ? c.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-                const alignInst    = c.alignInstitution || 'center';
-                const alignTitle   = c.alignTitle || 'center';
-                const alignCarrera = c.alignCarrera || 'center';
-                const alignPeriodo = c.alignPeriodo || 'center';
+                const alignInst    = c.alignInstitution || gCover.alignInstitution || 'center';
+                const alignTitle   = c.alignTitle || gCover.alignTitle || 'center';
+                const alignCarrera = c.alignCarrera || gCover.alignCarrera || 'center';
+                const alignPeriodo = c.alignPeriodo || gCover.alignPeriodo || 'center';
 
-                const textInst = c.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+                const textInst = c.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+                const textTitle = c.tituloSuperior || gCover.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+
+                // Sanitizar comillas para evitar romper Scriban
+                const cleanCarrera = (c.carreraPorDefecto || gCover.carreraPorDefecto || '').replace(/"/g, '\\"');
+                const cleanPeriodo = (c.periodoPorDefecto || gCover.periodoPorDefecto || '').replace(/"/g, '\\"');
 
                 // ── MODO FREE-FORM: position:absolute con coordenadas en % ────────────
                 if (isFreeForm) {
                     // Posiciones por defecto (en %) — deben coincidir con BlockCanvas
-                    const xInst  = c.xInstitution ?? 10; const yInst  = c.yInstitution ?? 4;
-                    const xTitle = c.xTitle       ?? 10; const yTitle = c.yTitle       ?? 35;
-                    const xCar   = c.xCarrera     ?? 10; const yCar   = c.yCarrera     ?? 70;
-                    const xPer   = c.xPeriodo     ?? 10; const yPer   = c.yPeriodo     ?? 80;
+                    const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
+                    const yInst  = c.yInstitution ?? gCover.yInstitution ?? 4;
+                    const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
+                    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
+                    const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 10; 
+                    const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
+                    const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
+                    const yPer   = c.yPeriodo     ?? gCover.yPeriodo     ?? 80;
+
+                    // Convertir a mm físicos para garantizar soporte en iText pdfHTML
+                    // NOTA DE ARQUITECTURA / COMPATIBILIDAD CON ITEXT:
+                    // El motor de C# (iText pdfHTML) tiene un soporte limitado para porcentajes (%) en 
+                    // posicionamiento absoluto, causando que las cajas colapsen a ancho cero y se traslapen 
+                    // en la esquina superior izquierda (0,0).
+                    // Para solucionarlo, convertimos los porcentajes del editor a milímetros físicos (mm) 
+                    // basados en las dimensiones oficiales de una página A4 (210mm x 297mm).
+                    // También calculamos el ancho de forma dinámica (getWidthMm) restando el margen derecho (15mm)
+                    // para darles a las cajas un límite físico de ancho y evitar envolturas de texto toscas.
+                    const toMmX = (pct: number) => `${(pct * 2.1).toFixed(1)}mm`;
+                    const toMmY = (pct: number) => `${(pct * 2.97).toFixed(1)}mm`;
+                    const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
 
                     // Alineación de texto dentro de cada caja flotante
                     const alignStyle = (align: string) => `text-align:${align};`;
 
                     const instEl = showInst ? `
-        <div style="position:absolute; left:${xInst}%; top:${yInst}%; max-width:80%; ${alignStyle(alignInst)}">
-          <span style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color:${colorTheme}; padding:3px 10px; border-radius:9999px; display:inline-block; white-space:nowrap;">
+        <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; ${alignStyle(alignInst)}">
+          <span style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color:${colorTheme}; padding:3px 10px; border-radius:9999px; display:inline-block;">
             ${textInst}
           </span>
         </div>` : '';
 
                     const titleEl = showTitle ? `
-        <div style="position:absolute; left:${xTitle}%; top:${yTitle}%; max-width:80%; ${alignStyle(alignTitle)}">
+        <div style="position:absolute; left:${toMmX(xTitle)}; top:${toMmY(yTitle)}; width:${getWidthMm(xTitle)}; ${alignStyle(alignTitle)}">
           <div style="font-family:'Century Gothic',sans-serif; font-size:22pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; line-height:1.2;">
-            ${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}
+            ${textTitle}
           </div>
           <div style="font-family:'Century Gothic',sans-serif; font-size:13pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; margin-top:8px; line-height:1.3; word-wrap:break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
@@ -312,18 +335,18 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
         </div>` : '';
 
                     const carreraEl = showCarrera ? `
-        <div style="position:absolute; left:${xCar}%; top:${yCar}%; max-width:80%; ${alignStyle(alignCarrera)}">
+        <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; ${alignStyle(alignCarrera)}">
           <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">TECNOLOGÍA SUPERIOR EN</div>
           <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:3px;">
-            {{default carrera "${c.carreraPorDefecto || '________________________'}"}}
+            {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
                     const periodoEl = showPeriodo ? `
-        <div style="position:absolute; left:${xPer}%; top:${yPer}%; max-width:80%; ${alignStyle(alignPeriodo)}">
+        <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; ${alignStyle(alignPeriodo)}">
           <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">PERIODO ACADÉMICO</div>
           <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:2px;">
-            {{default periodo "${c.periodoPorDefecto || '________________________'}"}}
+            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
           </div>
         </div>` : '';
 
@@ -341,10 +364,10 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 }
 
                 // ── MODO ZONES LEGACY: layout flexbox por secciones ───────────────────
-                const posInst    = c.posInstitution || 'top';
-                const posTitle   = c.posTitle || 'middle';
-                const posCarrera = c.posCarrera || 'bottom';
-                const posPeriodo = c.posPeriodo || 'bottom';
+                const posInst    = c.posInstitution || gCover.posInstitution || 'top';
+                const posTitle   = c.posTitle || gCover.posTitle || 'middle';
+                const posCarrera = c.posCarrera || gCover.posCarrera || 'bottom';
+                const posPeriodo = c.posPeriodo || gCover.posPeriodo || 'bottom';
 
                 const instHtml = showInst ? `
         <div style="text-align: ${alignInst}; width: 100%;">
@@ -356,7 +379,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
                 const titleHtml = showTitle ? `
         <div style="text-align: ${alignTitle}; width: 100%;">
           <h1 style="font-family: 'Century Gothic', sans-serif; font-size: 24pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin: 0; line-height: 1.2;">
-            ${c.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN'}
+            ${textTitle}
           </h1>
           <div style="font-family: 'Century Gothic', sans-serif; font-size: 15pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
@@ -369,7 +392,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             TECNOLOGÍA SUPERIOR EN
           </div>
           <div style="font-family: 'Century Gothic', sans-serif; font-size: 11pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 4px;">
-            {{default carrera "${c.carreraPorDefecto || '________________________'}"}}
+            {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
@@ -379,7 +402,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[]): string => {
             PERIODO ACADÉMICO
           </div>
           <div style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 2px;">
-            {{default periodo "${c.periodoPorDefecto || '________________________'}"}}
+            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
           </div>
         </div>` : '';
 
