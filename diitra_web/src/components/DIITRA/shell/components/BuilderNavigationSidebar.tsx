@@ -75,25 +75,83 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                         </button>
                     </div>
                     <div className="space-y-1">
-                        {sections.map(section => (
-                            <button
-                                key={section.id}
-                                onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
-                            >
-                                <span className="flex items-center gap-4">
-                                    {section.icon} {section.label}
-                                </span>
-                                {formData?.BlockedSections?.[section.id] && (
-                                    <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
-                                )}
-                            </button>
-                        ))}
+                        {sections.map(section => {
+                            const progress = (() => {
+                                if (!formData) return null;
+                                if (section.id === 'identificacion') {
+                                    const fields = [
+                                        formData.Titulo, formData.IdCarrera, formData.IdConvocatoria,
+                                        formData.Periodo, formData.TiempoEjecucion, formData.Programa,
+                                        formData.Dominio, formData.LineaInvestigacion, formData.SublineaInvestigacion
+                                    ];
+                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== 0).length;
+                                    return Math.round((filled / fields.length) * 100);
+                                }
+                                if (section.id === 'equipo') {
+                                    const hasTeam = Array.isArray(formData.Investigadores) && formData.Investigadores.length > 0;
+                                    return hasTeam ? 100 : 0;
+                                }
+                                if (section.id === 'tecnico') {
+                                    const fields = [];
+                                    const checkKeys = ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion'];
+                                    checkKeys.forEach(k => {
+                                        if (formData[k] !== undefined) fields.push(formData[k]);
+                                    });
+                                    if (fields.length === 0) return null;
+                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== '<p></p>' && f !== '<p><br></p>').length;
+                                    return Math.round((filled / fields.length) * 100);
+                                }
+                                if (section.id === 'recursos') {
+                                    const hasRec = (Array.isArray(formData.RecursosDisponibles) && formData.RecursosDisponibles.length > 0) ||
+                                                    (Array.isArray(formData.RecursosNecesarios) && formData.RecursosNecesarios.length > 0);
+                                    return hasRec ? 100 : 0;
+                                }
+                                if (section.id === 'impactos') {
+                                    const hasProdOrImp = (Array.isArray(formData.ProductosEsperados) && formData.ProductosEsperados.length > 0) ||
+                                                         (formData.Impacto && Object.values(formData.Impacto).some(v => v !== ''));
+                                    return hasProdOrImp ? 100 : 0;
+                                }
+                                if (section.id === 'cronograma') {
+                                    const hasCron = Array.isArray(formData.Cronograma) && formData.Cronograma.length > 0;
+                                    return hasCron ? 100 : 0;
+                                }
+                                if (section.id === 'bibliografia') {
+                                    const fields = [formData.Bibliografia];
+                                    const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== '<p></p>' && f !== '<p><br></p>').length;
+                                    return Math.round((filled / fields.length) * 100);
+                                }
+                                return null;
+                            })();
+
+                            return (
+                                <button
+                                    key={section.id}
+                                    onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
+                                    className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                >
+                                    <span className="flex items-center gap-4">
+                                        {section.icon} {section.label}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {progress !== null && (
+                                            <span className={`text-[9px] font-black tracking-normal px-1.5 py-0.5 rounded-full border ${activeTab === section.id ? 'text-bg-deep border-bg-deep/20 bg-bg-deep/5' : 'text-text-dim border-border-thin bg-surface/30'}`}>
+                                                {progress}%
+                                            </span>
+                                        )}
+                                        {formData?.BlockedSections?.[section.id] && (
+                                            <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
                         <button
                             onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
                         >
-                            <FileText size={18} /> Finalizar y Firmar
+                            <span className="flex items-center gap-4">
+                                <FileText size={18} /> Finalizar y Firmar
+                            </span>
                         </button>
                     </div>
                 </div>

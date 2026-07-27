@@ -1088,7 +1088,8 @@ INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
 ('Caces.AñoModelo',                    '2024',              'Año del modelo de evaluación CACES vigente. Afecta qué indicadores en inv_config_indicadores se usan en el reporte.'),
 ('Workflow.EstadosEditables',          'Borrador,En Corrección', 'Lista CSV de estados en los que un proyecto puede ser editado por su director.'),
 ('Caces.RangosEvaluacion',           '[{"label":"Insatisfactorio","max":50,"badgeClass":"text-error bg-error/10 border-error/20"},{"label":"Poco Satisfactorio","max":70,"badgeClass":"text-warning bg-warning/10 border-warning/20"},{"label":"Satisfactorio","max":90,"badgeClass":"text-info bg-info/10 border-info/20"},{"label":"Excelente","max":100,"badgeClass":"text-success bg-success/10 border-success/20"}]', 'Rangos cualitativos y estilos visuales de calificación del CACES.'),
-('DocumentMaintenance.RetentionDays', '1825',              'Cantidad de días de retención legal para evidencias físicas de proyectos de investigación del CACES (por defecto 5 años / 1825 días).');
+('DocumentMaintenance.RetentionDays', '1825',              'Cantidad de días de retención legal para evidencias físicas de proyectos de investigación del CACES (por defecto 5 años / 1825 días).'),
+('Theme.GlobalConfigJson', '{"colors":{"primary":"#222c57","secondary":"#c4a857","text":"#1a1a1a","tableHeaderBg":"#222c57","tableHeaderColor":"#ffffff","accent":"#9ad3de"},"typography":{"fontFamily":"\'Calibri\', \'Open Sans\', Arial, sans-serif","baseSize":"10pt","lineHeight":"1.4"},"layout":{"marginTop":"3cm","marginBottom":"2cm","marginLeft":"2cm","marginRight":"2cm","landscapeMarginTop":"1.8cm","landscapeMarginLeft":"1.2cm"},"brand":{"showCoverPage":true,"logoScale":"100%"}}', 'Diseño y branding global institucional (colores, márgenes, tipografía).');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
 -- ADAPTABILIDAD: umbralCumplido y umbralEnProceso son ahora campos de BD.
@@ -1208,6 +1209,7 @@ CREATE TABLE inv_documentos_instancias (
     file_hash               VARCHAR(100)  NULL            COMMENT 'Hash SHA-256 del PDF final',
     traceability_code       VARCHAR(100)  NULL            COMMENT 'Código impreso en el PDF para validación externa',
     data_snapshot_json      LONGTEXT      NULL            COMMENT 'Snapshot forense de los datos inyectados',
+    template_config_snapshot_json LONGTEXT NULL           COMMENT 'Snapshot del JSON de bloques dinámicos en el momento de creación',
     is_file_purged          TINYINT(1)    NOT NULL DEFAULT 0 COMMENT 'Indica si el PDF físico fue eliminado para liberar espacio',
     purged_at               TIMESTAMP     NULL            COMMENT 'Fecha y hora de la depuración del archivo físico',
     purged_by               VARCHAR(100)  NULL            COMMENT 'Usuario o Job que ejecutó la depuración del archivo',

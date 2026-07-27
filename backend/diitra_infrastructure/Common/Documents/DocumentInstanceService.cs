@@ -46,7 +46,30 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
             }
 
-            var instance = DocumentInstance.Create(templateCode, template.Version, entityUuid, createdBy, title, entityType);
+            string? blocksJson = null;
+            if (!string.IsNullOrEmpty(template.HtmlContent))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    try
+                    {
+                        var base64 = match.Groups[1].Value;
+                        var bytes = System.Convert.FromBase64String(base64);
+                        blocksJson = System.Text.Encoding.UTF8.GetString(bytes);
+                    }
+                    catch { }
+                }
+            }
+
+            var instance = DocumentInstance.Create(
+                templateCode, 
+                template.Version, 
+                entityUuid, 
+                createdBy, 
+                title, 
+                entityType, 
+                templateConfigSnapshotJson: blocksJson);
             
             _context.DocumentInstances.Add(instance);
             await _context.SaveChangesAsync(ct);

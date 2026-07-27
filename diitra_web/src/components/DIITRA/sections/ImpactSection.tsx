@@ -15,6 +15,7 @@ interface ImpactSectionProps {
     onUpdateImpacto: (tipo: string, value: string) => void;
     onUpdate?: (field: string, value: any) => void;
     readOnly?: boolean;
+    config?: any;
 }
 
 export const ImpactSection: React.FC<ImpactSectionProps> = ({
@@ -25,31 +26,50 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
     onRemoveProducto,
     onUpdateProducto,
     onUpdateImpacto,
-    readOnly = false
+    readOnly = false,
+    config
 }) => {
+    const showProductos = config?.showProductosEsperados !== false;
+    
+    const activeImpacts = React.useMemo(() => {
+        const list = [];
+        if (config?.showImpactoSocial !== false) list.push('Social');
+        if (config?.showImpactoCientifico !== false) list.push('Cientifico');
+        if (config?.showImpactoEconomico !== false) list.push('Economico');
+        if (config?.showImpactoPolitico !== false) list.push('Politico');
+        if (config?.showImpactoAmbiental !== false) list.push('Ambiental');
+        if (config?.showImpactoOtro !== false) list.push('Otro');
+        return list;
+    }, [config]);
+
     return (
         <div className="space-y-12">
             {/* 5. Productos Esperados */}
-            <SectionBlockGuard id="productos_esperados" title="5. Productos Esperados" showInlineLock={true}>
-                <ProductosEsperadosBlock 
-                    productosEsperados={productosEsperados}
-                    tiposProducto={tiposProducto}
-                    cowork={cowork}
-                    onAddProducto={onAddProducto}
-                    onRemoveProducto={onRemoveProducto}
-                    onUpdateProducto={onUpdateProducto}
-                    parentReadOnly={readOnly}
-                />
-            </SectionBlockGuard>
+            {showProductos && (
+                <SectionBlockGuard id="productos_esperados" title="5. Productos Esperados" showInlineLock={true}>
+                    <ProductosEsperadosBlock 
+                        productosEsperados={productosEsperados}
+                        tiposProducto={tiposProducto}
+                        cowork={cowork}
+                        onAddProducto={onAddProducto}
+                        onRemoveProducto={onRemoveProducto}
+                        onUpdateProducto={onUpdateProducto}
+                        parentReadOnly={readOnly}
+                    />
+                </SectionBlockGuard>
+            )}
 
             {/* 6. Matriz de Impacto */}
-            <SectionBlockGuard id="matriz_impacto" title="6. Matriz de Impacto" showInlineLock={true}>
-                <MatrizImpactoBlock 
-                    cowork={cowork}
-                    onUpdateImpacto={onUpdateImpacto}
-                    parentReadOnly={readOnly}
-                />
-            </SectionBlockGuard>
+            {activeImpacts.length > 0 && (
+                <SectionBlockGuard id="matriz_impacto" title="6. Matriz de Impacto" showInlineLock={true}>
+                    <MatrizImpactoBlock 
+                        cowork={cowork}
+                        onUpdateImpacto={onUpdateImpacto}
+                        parentReadOnly={readOnly}
+                        activeImpacts={activeImpacts}
+                    />
+                </SectionBlockGuard>
+            )}
         </div>
     );
 };
@@ -135,10 +155,12 @@ const MatrizImpactoBlock: React.FC<{
     cowork: CoWorkHandle;
     onUpdateImpacto: (tipo: string, value: string) => void;
     parentReadOnly?: boolean;
+    activeImpacts: string[];
 }> = ({
     cowork,
     onUpdateImpacto,
-    parentReadOnly = false
+    parentReadOnly = false,
+    activeImpacts
 }) => {
     const { readOnly: blockReadOnly } = useContext(SectionGuardContext);
     const readOnly = parentReadOnly || blockReadOnly;
@@ -147,7 +169,7 @@ const MatrizImpactoBlock: React.FC<{
         <div className="space-y-6">
             <h4 className="text-xs font-black uppercase tracking-widest px-2">6. Matriz de Impacto</h4>
             <div className="grid grid-cols-1 gap-3">
-                {['Social', 'Cientifico', 'Economico', 'Politico', 'Ambiental', 'Otro'].map((tipo) => (
+                {activeImpacts.map((tipo) => (
                     <div key={tipo} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex gap-6 items-center shadow-sm">
                         <div className="w-32 text-[10px] font-black uppercase text-text-main">{tipo}</div>
                         <CoWorkField 

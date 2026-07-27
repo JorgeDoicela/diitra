@@ -115,8 +115,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
             const [configResult, instanceResult, carrerasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
-                // Intentar cargar la configuración dinámica desde la API
-                api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
+                // Intentar cargar la configuración dinámica desde la API (de la instancia o global según corresponda)
+                needsInstanceFetch
+                    ? api.get(`/documents/instances/${initialData.Uuid}/ui-config`).catch(() => ({ data: null }))
+                    : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
                 // Datos de la instancia: siempre fresco desde backend si existe
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))

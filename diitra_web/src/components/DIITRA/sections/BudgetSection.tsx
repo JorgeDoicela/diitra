@@ -57,175 +57,185 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 
         return null;
     }, [formData?.IdConvocatoria, convocatorias]);
+    const showDisponibles = config?.showRecursosDisponibles !== false;
+    const showNecesarios = config?.showRecursosNecesarios !== false;
+    const showFinanciamiento = config?.showFinanciamiento !== false;
+
     return (
         <div className="space-y-8">
-            <div className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2">
-                    <DollarSign size={18} /> {config?.title || "4. Recursos y Presupuesto"}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Recursos Disponibles */}
-                    <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion1Label || "4.1 Recursos Disponibles"}</p>
-                            {!readOnly && (
-                                <button
-                                    onClick={onAddDisponible}
-                                    className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90 transition-opacity"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-3">
-                            {recursosDisponibles.map((_r, i) => (
-                                <div key={_r.id || i} className="flex gap-2 items-center">
-                                    <CoWorkField
-                                        name={`RecDisp_${_r.id || i}_desc`}
-                                        cowork={cowork}
-                                        placeholder="Descripción del recurso..."
-                                        onValueChange={(v) => onUpdateDisponible(i, 'Descripcion', v)}
-                                        className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
-                                        readOnly={readOnly}
-                                    />
-                                    <div className="w-28">
-                                        <CoWorkField
-                                            name={`RecDisp_${_r.id || i}_fnt`}
-                                            cowork={cowork}
-                                            placeholder="Fuente..."
-                                            onValueChange={(v) => onUpdateDisponible(i, 'Fuente', v)}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
-                                            readOnly={readOnly}
-                                        />
-                                    </div>
-                                    <div className="w-16">
-                                        <CoWorkField
-                                            name={`RecDisp_${_r.id || i}_cant`}
-                                            cowork={cowork}
-                                            placeholder="Cant."
-                                            onValueChange={(v) => onUpdateDisponible(i, 'Cantidad', v)}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center"
-                                            readOnly={readOnly}
-                                        />
-                                    </div>
+            {(showDisponibles || showNecesarios) && (
+                <div className="space-y-6">
+                    <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2">
+                        <DollarSign size={18} /> {config?.title || "4. Recursos y Presupuesto"}
+                    </h4>
+                    <div className={showDisponibles && showNecesarios ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
+                        {/* Recursos Disponibles */}
+                        {showDisponibles && (
+                            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion1Label || "4.1 Recursos Disponibles"}</p>
                                     {!readOnly && (
                                         <button
-                                            onClick={() => onRemoveDisponible(i)}
-                                            className="text-red-500 p-1 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            onClick={onAddDisponible}
+                                            className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90 transition-opacity"
                                         >
-                                            <Trash2 size={14} />
+                                            <Plus size={14} />
                                         </button>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Recursos Necesarios */}
-                    <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion2Label || "4.2 Recursos Necesarios (Gasto)"}</p>
-                            {!readOnly && (
-                                <button
-                                    onClick={onAddNecesario}
-                                    className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90 transition-opacity"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-3">
-                            {recursosNecesarios.map((r, i) => (
-                                <div key={r.id || i} className="flex gap-2 items-center">
-                                    <CoWorkField
-                                        name={`RecNec_${r.id || i}_desc`}
-                                        cowork={cowork}
-                                        placeholder="Descripción del rubro..."
-                                        onValueChange={(v) => onUpdateNecesario(i, 'Descripcion', v)}
-                                        className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
-                                        readOnly={readOnly}
-                                    />
-                                    <div className="w-12">
-                                        <CoWorkField
-                                            name={`RecNec_${r.id || i}_cant`}
-                                            cowork={cowork}
-                                            onValueChange={(v) => {
-                                                const c = parseFloat(v) || 0;
-                                                onUpdateNecesario(i, 'Cantidad', c);
-                                                onUpdateNecesario(i, 'CostoTotal', c * (r.CostoUnitario || 0));
-                                            }}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center"
-                                            placeholder="1"
-                                            readOnly={readOnly}
-                                        />
-                                    </div>
-                                    <div className="w-20 md:w-24">
-                                        <CoWorkField
-                                            name={`RecNec_${r.id || i}_unit`}
-                                            cowork={cowork}
-                                            onValueChange={(v) => {
-                                                const u = parseFloat(v) || 0;
-                                                onUpdateNecesario(i, 'CostoUnitario', u);
-                                                onUpdateNecesario(i, 'CostoTotal', (r.Cantidad || 1) * u);
-                                            }}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-right"
-                                            placeholder="$ 0.00"
-                                            readOnly={readOnly}
-                                        />
-                                    </div>
-                                    {!readOnly && (
-                                        <button
-                                            onClick={() => onRemoveNecesario(i)}
-                                            className="text-red-500 p-1 hover:bg-red-500/10 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <div className="pt-4 mt-4 border-t border-border-thin space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black uppercase text-text-dim">Costo Total Estimado</span>
-                                    <span className={`text-sm font-black transition-colors ${limit !== null && limit > 0 && costoTotal > limit ? 'text-red-500 font-extrabold animate-pulse' : 'text-text-main'}`}>
-                                        $ {costoTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    </span>
-                                </div>
-                                {limit !== null && limit > 0 && (
-                                    <div className="space-y-2 mt-2">
-                                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-text-dim/80">
-                                            <span>Límite de Convocatoria</span>
-                                            <span className={`font-black ${costoTotal > limit ? 'text-red-500' : 'text-text-main'}`}>
-                                                $ {limit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-border-thin/20 h-1.5 rounded-full overflow-hidden">
-                                            <div 
-                                                className={`h-full transition-all duration-500 ${costoTotal > limit ? 'bg-red-500' : 'bg-text-main'}`}
-                                                style={{ width: `${Math.min(100, (costoTotal / limit) * 100)}%` }}
+                                <div className="space-y-3">
+                                    {recursosDisponibles.map((_r, i) => (
+                                        <div key={_r.id || i} className="flex gap-2 items-center">
+                                            <CoWorkField
+                                                name={`RecDisp_${_r.id || i}_desc`}
+                                                cowork={cowork}
+                                                placeholder="Descripción del recurso..."
+                                                onValueChange={(v) => onUpdateDisponible(i, 'Descripcion', v)}
+                                                className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
+                                                readOnly={readOnly}
                                             />
+                                            <div className="w-28">
+                                                <CoWorkField
+                                                    name={`RecDisp_${_r.id || i}_fnt`}
+                                                    cowork={cowork}
+                                                    placeholder="Fuente..."
+                                                    onValueChange={(v) => onUpdateDisponible(i, 'Fuente', v)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
+                                                    readOnly={readOnly}
+                                                />
+                                            </div>
+                                            <div className="w-16">
+                                                <CoWorkField
+                                                    name={`RecDisp_${_r.id || i}_cant`}
+                                                    cowork={cowork}
+                                                    placeholder="Cant."
+                                                    onValueChange={(v) => onUpdateDisponible(i, 'Cantidad', v)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center"
+                                                    readOnly={readOnly}
+                                                />
+                                            </div>
+                                            {!readOnly && (
+                                                <button
+                                                    onClick={() => onRemoveDisponible(i)}
+                                                    className="text-red-500 p-1 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
-                                        <div className="flex justify-between text-[9px] text-text-dim font-bold uppercase tracking-wider">
-                                            <span>Consumo de Presupuesto</span>
-                                            <span className={costoTotal > limit ? 'text-red-500' : 'text-text-main'}>
-                                                {((costoTotal / limit) * 100).toFixed(0)}%
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Recursos Necesarios */}
+                        {showNecesarios && (
+                            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <p className="text-[10px] font-black uppercase text-text-dim">{config?.seccion2Label || "4.2 Recursos Necesarios (Gasto)"}</p>
+                                    {!readOnly && (
+                                        <button
+                                            onClick={onAddNecesario}
+                                            className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90 transition-opacity"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="space-y-3">
+                                    {recursosNecesarios.map((r, i) => (
+                                        <div key={r.id || i} className="flex gap-2 items-center">
+                                            <CoWorkField
+                                                name={`RecNec_${r.id || i}_desc`}
+                                                cowork={cowork}
+                                                placeholder="Descripción del rubro..."
+                                                onValueChange={(v) => onUpdateNecesario(i, 'Descripcion', v)}
+                                                className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs"
+                                                readOnly={readOnly}
+                                            />
+                                            <div className="w-12">
+                                                <CoWorkField
+                                                    name={`RecNec_${r.id || i}_cant`}
+                                                    cowork={cowork}
+                                                    onValueChange={(v) => {
+                                                        const c = parseFloat(v) || 0;
+                                                        onUpdateNecesario(i, 'Cantidad', c);
+                                                        onUpdateNecesario(i, 'CostoTotal', c * (r.CostoUnitario || 0));
+                                                    }}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center"
+                                                    placeholder="1"
+                                                    readOnly={readOnly}
+                                                />
+                                            </div>
+                                            <div className="w-20 md:w-24">
+                                                <CoWorkField
+                                                    name={`RecNec_${r.id || i}_unit`}
+                                                    cowork={cowork}
+                                                    onValueChange={(v) => {
+                                                        const u = parseFloat(v) || 0;
+                                                        onUpdateNecesario(i, 'CostoUnitario', u);
+                                                        onUpdateNecesario(i, 'CostoTotal', (r.Cantidad || 1) * u);
+                                                    }}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-right"
+                                                    placeholder="$ 0.00"
+                                                    readOnly={readOnly}
+                                                />
+                                            </div>
+                                            {!readOnly && (
+                                                <button
+                                                    onClick={() => onRemoveNecesario(i)}
+                                                    className="text-red-500 p-1 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <div className="pt-4 mt-4 border-t border-border-thin space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-text-dim">Costo Total Estimado</span>
+                                            <span className={`text-sm font-black transition-colors ${limit !== null && limit > 0 && costoTotal > limit ? 'text-red-500 font-extrabold animate-pulse' : 'text-text-main'}`}>
+                                                $ {costoTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                             </span>
                                         </div>
+                                        {limit !== null && limit > 0 && (
+                                            <div className="space-y-2 mt-2">
+                                                <div className="flex justify-between items-center text-[10px] font-black uppercase text-text-dim/80">
+                                                    <span>Límite de Convocatoria</span>
+                                                    <span className={`font-black ${costoTotal > limit ? 'text-red-500' : 'text-text-main'}`}>
+                                                        $ {limit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-border-thin/20 h-1.5 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full transition-all duration-500 ${costoTotal > limit ? 'bg-red-500' : 'bg-text-main'}`}
+                                                        style={{ width: `${Math.min(100, (costoTotal / limit) * 100)}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-between text-[9px] text-text-dim font-bold uppercase tracking-wider">
+                                                    <span>Consumo de Presupuesto</span>
+                                                    <span className={costoTotal > limit ? 'text-red-500' : 'text-text-main'}>
+                                                        {((costoTotal / limit) * 100).toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {limit !== null && limit > 0 && costoTotal > limit && (
+                                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-wider flex items-center gap-2 animate-fade-in">
+                                                <AlertCircle size={14} className="shrink-0 text-red-500" />
+                                                <span>El costo excede el límite permitido por la convocatoria.</span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {limit !== null && limit > 0 && costoTotal > limit && (
-                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-wider flex items-center gap-2 animate-fade-in">
-                                        <AlertCircle size={14} className="shrink-0 text-red-500" />
-                                        <span>El costo excede el límite permitido por la convocatoria.</span>
-                                    </div>
-                                )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* 4.3 Financiamiento (Oculto en bloques dinámicos si no lo requiere) */}
-            {!config && (
+            {/* Fuentes de Financiamiento */}
+            {showFinanciamiento && (
                 <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-4 shadow-sm">
                     <p className="text-[10px] font-black uppercase text-text-dim">4.3 Fuentes de Financiamiento</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">

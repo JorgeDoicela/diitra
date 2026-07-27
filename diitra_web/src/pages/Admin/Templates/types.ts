@@ -146,5 +146,47 @@ export interface DocumentBlock {
         // ── signatures ─────────────────────────────────────────────────────
         signatories?: Signatory[];
         textoPieFirma?: string;    // Pie de página institucional
+
+        // ── project_general_section ────────────────────────────────────────
+        showTitulo?: boolean;
+        showPrograma?: boolean;
+        showGrupo?: boolean;
+        showLinea?: boolean;
+        showTipo?: boolean;
+        showCaces?: boolean;
+        showCarrera?: boolean;
+        showConvocatoria?: boolean;
+        showDirector?: boolean;
+        showFechas?: boolean;
+
+        // ── project_technical_section ──────────────────────────────────────
+        showAntecedentes?: boolean;
+        showDescripcionProyecto?: boolean;
+        showJustificacion?: boolean;
+        showObjetivoGeneral?: boolean;
+        showObjetivosEspecificos?: boolean;
+        showOds?: boolean;
+        showMarcoTeorico?: boolean;
+        showMetodologia?: boolean;
+        showEvaluacion?: boolean;
+
+        // ── project_budget_section ─────────────────────────────────────────
+        showRecursosDisponibles?: boolean;
+        showRecursosNecesarios?: boolean;
+        showFinanciamiento?: boolean;
+
+        // ── impacts ────────────────────────────────────────────────────────
+        showImpactoSocial?: boolean;
+        showImpactoCientifico?: boolean;
+        showImpactoEconomico?: boolean;
+        showImpactoPolitico?: boolean;
+        showImpactoAmbiental?: boolean;
+        showImpactoOtro?: boolean;
+        showProductosEsperados?: boolean;
+
+        // ── project_progress_report ────────────────────────────────────────
+        showHitosCompletados?: boolean;
+        showEvidencias?: boolean;
+        showPresupuestoEjecutado?: boolean;
     };
 }

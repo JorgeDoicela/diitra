@@ -25,6 +25,7 @@ public class DocumentInstanceConfiguration : IEntityTypeConfiguration<Diitra.Dom
         entity.Property(e => e.FileHash).HasColumnName("file_hash").HasMaxLength(100);
         entity.Property(e => e.TraceabilityCode).HasColumnName("traceability_code").HasMaxLength(100);
         entity.Property(e => e.DataSnapshotJson).HasColumnName("data_snapshot_json").HasColumnType("longtext");
+        entity.Property(e => e.TemplateConfigSnapshotJson).HasColumnName("template_config_snapshot_json").HasColumnType("longtext");
         entity.Property(e => e.IsFilePurged).HasColumnName("is_file_purged").HasDefaultValue(false).IsRequired();
         entity.Property(e => e.PurgedAt).HasColumnName("purged_at");
         entity.Property(e => e.PurgedBy).HasColumnName("purged_by").HasMaxLength(100);

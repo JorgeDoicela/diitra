@@ -21,15 +21,15 @@ interface TechnicalSectionProps {
     cowork: CoWorkHandle;
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
     formData?: any;
+    config?: any;
 }
 
 export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     cowork,
     onUpdate,
-    formData
+    formData,
+    config
 }) => {
-    const [activeSubTab, setActiveSubTab] = useState('antecedentes');
-
     const subTabs = [
         { id: 'antecedentes', label: '3.1 Antecedentes', icon: BookOpen },
         { id: 'descripcion', label: '3.2 Descripción', icon: FileText },
@@ -41,6 +41,30 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
         { id: 'evaluacion', label: '3.8 Evaluación', icon: ClipboardCheck }
     ];
 
+    const activeSubTabs = React.useMemo(() => {
+        return subTabs.filter(tab => {
+            if (tab.id === 'antecedentes') return config?.showAntecedentes !== false;
+            if (tab.id === 'descripcion') return config?.showDescripcionProyecto !== false;
+            if (tab.id === 'justificacion') return config?.showJustificacion !== false;
+            if (tab.id === 'objetivos') return config?.showObjetivoGeneral !== false || config?.showObjetivosEspecificos !== false;
+            if (tab.id === 'ods') return config?.showOds !== false;
+            if (tab.id === 'marco_teorico') return config?.showMarcoTeorico !== false;
+            if (tab.id === 'metodologia') return config?.showMetodologia !== false;
+            if (tab.id === 'evaluacion') return config?.showEvaluacion !== false;
+            return true;
+        });
+    }, [config]);
+
+    const [activeSubTab, setActiveSubTab] = useState(() => {
+        return activeSubTabs[0]?.id || 'antecedentes';
+    });
+
+    React.useEffect(() => {
+        if (activeSubTabs.length > 0 && !activeSubTabs.some(t => t.id === activeSubTab)) {
+            setActiveSubTab(activeSubTabs[0].id);
+        }
+    }, [activeSubTabs, activeSubTab]);
+
     const isSubTabBlocked = (subTabId: string) => {
         return formData?.BlockedSections?.[subTabId] === true;
     };
@@ -49,7 +73,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
         <div className="flex flex-col md:flex-row gap-8 animate-fade-in pb-10 min-h-[600px]">
             {/* Navegación lateral interna */}
             <div className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 border-b md:border-b-0 md:border-r border-border-thin pr-0 md:pr-4">
-                {subTabs.map((tab) => {
+                {activeSubTabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeSubTab === tab.id;
                     const isBlocked = isSubTabBlocked(tab.id);

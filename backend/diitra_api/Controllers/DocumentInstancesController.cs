@@ -54,6 +54,39 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// RETORNA LA CONFIGURACIÓN DE LA INTERFAZ DE USUARIO BASADA EN EL SNAPSHOT DE LA INSTANCIA.
+        /// Si la instancia posee un snapshot guardado, se utiliza para asegurar retrocompatibilidad.
+        /// De lo contrario, cae en la configuración activa de la plantilla actual.
+        /// </summary>
+        [HttpGet("{uuid}/ui-config")]
+        public async Task<IActionResult> GetInstanceUiConfig(string uuid, CancellationToken ct)
+        {
+            var instance = await _context.DocumentInstances
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+
+            if (instance == null)
+            {
+                return NotFound(new { message = $"No se encontró la instancia de documento '{uuid}'." });
+            }
+
+            var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
+            var template = templates.FirstOrDefault(t => t.Code == instance.TemplateCode);
+            if (template == null)
+            {
+                return NotFound(new { message = $"La plantilla '{instance.TemplateCode}' no está activa o no existe en la base de datos." });
+            }
+
+            if (!string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson))
+            {
+                var result = await BuildUiConfigResponseAsync(instance.TemplateConfigSnapshotJson, template, ct);
+                if (result != null) return result;
+            }
+
+            return await GetUiConfig(instance.TemplateCode, ct);
+        }
+
+        /// <summary>
         /// RETORNA LA CONFIGURACIÓN DINÁMICA DE LA INTERFAZ DE USUARIO (Metadata-Driven UI).
         /// Si la plantilla es una de las oficiales, retorna su estructura premium pre-mapeada.
         /// Si es una nueva plantilla creada por base de datos, auto-genera la UI en caliente
@@ -89,57 +122,8 @@ namespace diitra_api.Controllers
 
             if (!string.IsNullOrEmpty(blocksJson))
             {
-                try
-                {
-                    var blocks = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(blocksJson);
-                    if (blocks == null)
-                        throw new InvalidOperationException("Los bloques estructurales no pudieron ser deserializados.");
-
-                    var sectionsList = new List<UiSectionDto>();
-                    var schemaDict = new Dictionary<string, object>();
-                    var listsList = new List<string>();
-                    var richTextFields = new List<object>();
-                    int premiumFieldsCount = 0;
-
-                    foreach (var block in blocks)
-                    {
-                        if (block.TryGetProperty("isActive", out var activeProp) && !activeProp.GetBoolean())
-                            continue;
-
-                        string type = "";
-                        string title = "";
-
-                        if (block.TryGetProperty("type", out var typeProp)) type = typeProp.GetString() ?? "";
-                        if (block.TryGetProperty("title", out var titleProp)) title = titleProp.GetString() ?? "";
-
-                        if (string.IsNullOrEmpty(type))
-                            continue;
-
-                        var provider = _blockProviders.FirstOrDefault(p => p.BlockType == type);
-                        if (provider != null)
-                        {
-                            provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
-                            await provider.MapToUiSectionAsync(block, title, sectionsList, _context, template.Code, ct);
-                        }
-                    }
-
-                    var orderedSections = sectionsList.ToArray();
-
-                    return Ok(new
-                    {
-                        title = template.Name,
-                        subtitle = template.Description ?? "Formulario de Colaboración Dinámico",
-                        signatureType = template.SignatureType,
-                        schema = schemaDict,
-                        lists = listsList.ToArray(),
-                        sections = orderedSections
-                    });
-                }
-                catch (Exception ex)
-                {
-                    System.Console.WriteLine($"[DIITRA WARNING] Error al procesar bloques dinámicos en ui-config para '{code}': {ex.Message}\n{ex.StackTrace}");
-                    return NotFound(new { message = $"La estructura de bloques de la plantilla '{code}' está corrupta. Cayendo en fallback local del frontend.", error = ex.Message });
-                }
+                var result = await BuildUiConfigResponseAsync(blocksJson, template, ct);
+                if (result != null) return result;
             }
 
             /*
@@ -907,6 +891,61 @@ namespace diitra_api.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        private async Task<IActionResult> BuildUiConfigResponseAsync(string blocksJson, Diitra.Domain.Common.Documents.DocumentTemplate template, CancellationToken ct)
+        {
+            try
+            {
+                var blocks = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(blocksJson);
+                if (blocks == null)
+                    throw new InvalidOperationException("Los bloques estructurales no pudieron ser deserializados.");
+
+                var sectionsList = new List<UiSectionDto>();
+                var schemaDict = new Dictionary<string, object>();
+                var listsList = new List<string>();
+                var richTextFields = new List<object>();
+                int premiumFieldsCount = 0;
+
+                foreach (var block in blocks)
+                {
+                    if (block.TryGetProperty("isActive", out var activeProp) && !activeProp.GetBoolean())
+                        continue;
+
+                    string type = "";
+                    string title = "";
+
+                    if (block.TryGetProperty("type", out var typeProp)) type = typeProp.GetString() ?? "";
+                    if (block.TryGetProperty("title", out var titleProp)) title = titleProp.GetString() ?? "";
+
+                    if (string.IsNullOrEmpty(type))
+                        continue;
+
+                    var provider = _blockProviders.FirstOrDefault(p => p.BlockType == type);
+                    if (provider != null)
+                    {
+                        provider.PopulateSchema(block, schemaDict, listsList, richTextFields, ref premiumFieldsCount, template.Code);
+                        await provider.MapToUiSectionAsync(block, title, sectionsList, _context, template.Code, ct);
+                    }
+                }
+
+                var orderedSections = sectionsList.ToArray();
+
+                return Ok(new
+                {
+                    title = template.Name,
+                    subtitle = template.Description ?? "Formulario de Colaboración Dinámico",
+                    signatureType = template.SignatureType,
+                    schema = schemaDict,
+                    lists = listsList.ToArray(),
+                    sections = orderedSections
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA WARNING] Error al procesar bloques dinámicos en BuildUiConfigResponseAsync: {ex.Message}\n{ex.StackTrace}");
+                return NotFound(new { message = $"La estructura de bloques de la plantilla '{template.Code}' está corrupta. Cayendo en fallback local del frontend.", error = ex.Message });
             }
         }
     }

@@ -696,9 +696,20 @@ const DocumentTemplatesPage: React.FC = () => {
             return;
         }
 
+        let usageMessage = `¿Estás seguro de que deseas publicar la plantilla '${selectedTemplate.name}'? Todos los nuevos documentos generados utilizarán esta versión.`;
+        try {
+            const usageRes = await api.get(`/admin/templates/${selectedTemplate.code}/usage-count`);
+            const activeDocsCount = usageRes.data?.count || 0;
+            if (activeDocsCount > 0) {
+                usageMessage = `Hay ${activeDocsCount} documento(s) activo(s) (borradores o en revisión) creados con esta plantilla. Al publicar una nueva versión, los documentos creados previamente conservarán la configuración de la versión con la que fueron inicializados. ¿Estás seguro de que deseas continuar con la publicación de esta nueva versión?`;
+            }
+        } catch (e) {
+            console.error('[DIITRA] Error al consultar usage-count:', e);
+        }
+
         const ok = await confirm({
             title: 'Publicar Plantilla',
-            message: `¿Estás seguro de que deseas publicar la plantilla '${selectedTemplate.name}'? Todos los nuevos documentos generados utilizarán esta versión.`,
+            message: usageMessage,
             confirmText: 'Sí, publicar',
             cancelText: 'Cancelar',
             variant: 'primary'

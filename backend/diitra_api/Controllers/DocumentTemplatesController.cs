@@ -156,6 +156,17 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// Obtiene el conteo de documentos activos asociados a una plantilla.
+        /// </summary>
+        [HttpGet("{code}/usage-count")]
+        public async Task<IActionResult> GetUsageCount(string code, CancellationToken ct)
+        {
+            var count = await _db.DocumentInstances
+                .CountAsync(i => i.TemplateCode == code && (int)i.State < 3, ct);
+            return Ok(new { count });
+        }
+
+        /// <summary>
         /// Obtiene el tema visual global de la institución.
         /// </summary>
         [HttpGet("global-theme")]

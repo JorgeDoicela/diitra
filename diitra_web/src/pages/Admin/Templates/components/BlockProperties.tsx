@@ -537,6 +537,136 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                         ))}
                     </div>
                 )}
+
+                {/* ── PLAN TÉCNICO ────────────────────────────────────────────── */}
+                {activeBlock.type === 'project_technical_section' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Activa o desactiva qué apartados del plan técnico se mostrarán al docente para redacción:
+                        </p>
+                        {[
+                            { key: 'showAntecedentes', label: 'Mostrar Antecedentes', desc: 'Sección 3.1 Antecedentes de la Problemática.' },
+                            { key: 'showDescripcionProyecto', label: 'Mostrar Descripción del Proyecto', desc: 'Sección 3.2 Descripción General de la Propuesta.' },
+                            { key: 'showJustificacion', label: 'Mostrar Justificación', desc: 'Sección 3.3 Justificación e Importancia.' },
+                            { key: 'showObjetivoGeneral', label: 'Mostrar Objetivo General', desc: 'Sección 3.4 Objetivo General.' },
+                            { key: 'showObjetivosEspecificos', label: 'Mostrar Objetivos Específicos', desc: 'Sección 3.4 Objetivos Específicos (Lista editable).' },
+                            { key: 'showOds', label: 'Mostrar Objetivos de Desarrollo Sostenible (ODS)', desc: 'Sección 3.5 Alineación ODS.' },
+                            { key: 'showMarcoTeorico', label: 'Mostrar Marco Teórico', desc: 'Sección 3.6 Marco Teórico Científico.' },
+                            { key: 'showMetodologia', label: 'Mostrar Metodología', desc: 'Sección 3.7 Enfoque Metodológico.' },
+                            { key: 'showEvaluacion', label: 'Mostrar Evaluación de Resultados', desc: 'Sección 3.8 Evaluación Técnica de Resultados.' },
+                        ].map(({ key, label, desc }) => (
+                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={(activeBlock.config as any)[key] !== false}
+                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── RECURSOS Y PRESUPUESTO ──────────────────────────────────── */}
+                {activeBlock.type === 'project_budget_section' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Activa o desactiva las tablas de recursos y financiamiento:
+                        </p>
+                        {[
+                            { key: 'showRecursosDisponibles', label: 'Mostrar Recursos Disponibles', desc: 'Bienes, infraestructura o equipos ya provistos.' },
+                            { key: 'showRecursosNecesarios', label: 'Mostrar Recursos Necesarios', desc: 'Tabla de presupuesto detallado para adquisiciones.' },
+                            { key: 'showFinanciamiento', label: 'Mostrar Financiamiento', desc: 'Origen de recursos (ISTPET / Otras Fuentes).' },
+                        ].map(({ key, label, desc }) => (
+                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={(activeBlock.config as any)[key] !== false}
+                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── IMPACTO Y PRODUCTOS ─────────────────────────────────────── */}
+                {activeBlock.type === 'impacts' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Activa o desactiva qué áreas de impacto y productos esperados se solicitarán:
+                        </p>
+                        {[
+                            { key: 'showProductosEsperados', label: 'Mostrar Productos Esperados', desc: 'Tabla de entregables/artículos/patentes a generar.' },
+                            { key: 'showImpactoSocial', label: 'Mostrar Impacto Social', desc: 'Descripción del impacto en la comunidad.' },
+                            { key: 'showImpactoCientifico', label: 'Mostrar Impacto Científico', desc: 'Aporte a la literatura o conocimiento.' },
+                            { key: 'showImpactoEconomico', label: 'Mostrar Impacto Económico', desc: 'Impacto productivo o financiero.' },
+                            { key: 'showImpactoPolitico', label: 'Mostrar Impacto Político', desc: 'Influencia en políticas públicas o normas.' },
+                            { key: 'showImpactoAmbiental', label: 'Mostrar Impacto Ambiental', desc: 'Sustentabilidad y mitigación ecológica.' },
+                            { key: 'showImpactoOtro', label: 'Mostrar Otros Impactos', desc: 'Cualquier otro impacto relevante.' },
+                        ].map(({ key, label, desc }) => (
+                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={(activeBlock.config as any)[key] !== false}
+                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── AVANCE DE EJECUCIÓN ──────────────────────────────────────── */}
+                {activeBlock.type === 'project_progress_report' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Activa o desactiva los apartados del informe de avance / bitácora:
+                        </p>
+                        {[
+                            { key: 'showHitosCompletados', label: 'Mostrar Monitoreo de Hitos', desc: 'Seguimiento porcentual de las actividades programadas.' },
+                            { key: 'showEvidencias', label: 'Mostrar Bitácoras y Evidencias', desc: 'Carga de archivos o links de evidencia física.' },
+                            { key: 'showPresupuestoEjecutado', label: 'Mostrar Libro de Presupuesto Ejecutado', desc: 'Control de montos de gastos devengados.' },
+                        ].map(({ key, label, desc }) => (
+                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={(activeBlock.config as any)[key] !== false}
+                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── ACTA DE COMITÉ DE ÉTICA ─────────────────────────────────── */}
+                {activeBlock.type === 'project_ethics_report' && (
+                    <div className="space-y-3 border-t border-border-thin/20 pt-4">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Bloque Dinámico institucional para la evaluación ética y bioética de la propuesta.
+                        </p>
+                        <div className="p-3 rounded-lg bg-surface-hover/30 border border-border-thin/15 text-center">
+                            <p className="text-[10px] text-text-dim">No requiere configuración adicional.</p>
+                        </div>
+                    </div>
+                )}
                         </div>
                     )}
                 </div>

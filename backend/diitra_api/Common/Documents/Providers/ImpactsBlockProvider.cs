@@ -42,12 +42,22 @@ namespace diitra_api.Controllers
         {
             if (!sectionsList.Any(s => s.Id == "impactos"))
             {
+                Dictionary<string, object>? configDict = null;
+                if (block.TryGetProperty("config", out var configProp) && configProp.ValueKind == JsonValueKind.Object)
+                {
+                    try
+                    {
+                        configDict = JsonSerializer.Deserialize<Dictionary<string, object>>(configProp.GetRawText());
+                    }
+                    catch { }
+                }
+
                 sectionsList.Add(new UiSectionDto {
                     Id = "impactos",
                     Label = string.IsNullOrEmpty(title) ? "Impacto & Productos" : title,
                     IconName = "Target",
                     ComponentName = "ImpactSection",
-                    Config = null
+                    Config = configDict
                 });
             }
             return Task.CompletedTask;

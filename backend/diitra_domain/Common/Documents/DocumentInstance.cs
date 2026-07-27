@@ -37,6 +37,8 @@ namespace Diitra.Domain.Common.Documents
         public string? TraceabilityCode { get; private set; }
         public string? DataSnapshotJson { get; private set; }
 
+        public string? TemplateConfigSnapshotJson { get; private set; }
+
         public bool IsFilePurged { get; private set; } = false;
         public DateTime? PurgedAt { get; private set; }
         public string? PurgedBy { get; private set; }
@@ -50,7 +52,8 @@ namespace Diitra.Domain.Common.Documents
             string createdBy, 
             string? title = null,
             string entityType = "Proyecto",
-            string? dataSnapshotJson = null)
+            string? dataSnapshotJson = null,
+            string? templateConfigSnapshotJson = null)
         {
             return new DocumentInstance
             {
@@ -61,7 +64,8 @@ namespace Diitra.Domain.Common.Documents
                 CreatedBy = createdBy,
                 Title = title,
                 State = DocumentState.Draft,
-                DataSnapshotJson = dataSnapshotJson
+                DataSnapshotJson = dataSnapshotJson,
+                TemplateConfigSnapshotJson = templateConfigSnapshotJson
             };
         }
 
