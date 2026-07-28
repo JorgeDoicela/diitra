@@ -20,13 +20,40 @@ namespace diitra_api.Controllers
             ref int premiumFieldsCount,
             string templateCode)
         {
-            schemaDict["RecursosDisponibles"] = new object[] { };
-            schemaDict["RecursosNecesarios"] = new object[] { };
-            schemaDict["CostoTotal"] = 0;
-            schemaDict["FinanciamientoIstpet"] = false;
-            schemaDict["FinanciamientoOtrasFuentes"] = false;
-            schemaDict["NombresOtrasFuentes"] = "";
+            string blockId = "default";
+            if (block.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String)
+            {
+                blockId = idProp.GetString() ?? "default";
+            }
 
+            if (block.TryGetProperty("config", out var configProp) && 
+                configProp.TryGetProperty("sections", out var sectionsProp) && 
+                sectionsProp.ValueKind == JsonValueKind.Array)
+            {
+                int idx = 0;
+                foreach (var sec in sectionsProp.EnumerateArray())
+                {
+                    string listKey = $"MultiSec_{blockId}_{idx}";
+                    schemaDict[listKey] = new object[] { };
+                    if (!listsList.Contains(listKey)) listsList.Add(listKey);
+
+                    if (sec.TryGetProperty("title", out var titleProp) && titleProp.ValueKind == JsonValueKind.String)
+                    {
+                        string titleSlug = titleProp.GetString()?.Replace(" ", "").Replace("_", "") ?? "";
+                        if (!string.IsNullOrEmpty(titleSlug))
+                        {
+                            string aliasKey = $"MultiSec_{titleSlug}";
+                            schemaDict[aliasKey] = new object[] { };
+                            if (!listsList.Contains(aliasKey)) listsList.Add(aliasKey);
+                        }
+                    }
+                    idx++;
+                }
+            }
+
+            // Retrocompatibilidad
+            if (!schemaDict.ContainsKey("RecursosDisponibles")) schemaDict["RecursosDisponibles"] = new object[] { };
+            if (!schemaDict.ContainsKey("RecursosNecesarios")) schemaDict["RecursosNecesarios"] = new object[] { };
             if (!listsList.Contains("RecursosDisponibles")) listsList.Add("RecursosDisponibles");
             if (!listsList.Contains("RecursosNecesarios")) listsList.Add("RecursosNecesarios");
         }
@@ -39,35 +66,34 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            string s1Label = "Sección 1";
-            string s2Label = "Sección 2";
-
-            if (block.TryGetProperty("config", out var configProp) && 
-                configProp.TryGetProperty("sections", out var sectionsProp) && 
-                sectionsProp.ValueKind == System.Text.Json.JsonValueKind.Array)
+            string blockId = "default";
+            if (block.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String)
             {
-                var secArray = sectionsProp.EnumerateArray().ToList();
-                if (secArray.Count > 0)
-                {
-                    s1Label = secArray[0].TryGetProperty("title", out var t1) ? t1.GetString() ?? "Sección 1" : "Sección 1";
-                }
-                if (secArray.Count > 1)
-                {
-                    s2Label = secArray[1].TryGetProperty("title", out var t2) ? t2.GetString() ?? "Sección 2" : "Sección 2";
-                }
+                blockId = idProp.GetString() ?? "default";
             }
 
-            if (!sectionsList.Any(s => s.Id == "recursos"))
+            object? rawConfig = null;
+            if (block.TryGetProperty("config", out var configProp) && configProp.ValueKind == JsonValueKind.Object)
+            {
+                try
+                {
+                    rawConfig = JsonSerializer.Deserialize<object>(configProp.GetRawText());
+                }
+                catch { }
+            }
+
+            string sectionId = $"multi_section_table_{blockId}";
+            if (!sectionsList.Any(s => s.Id == sectionId))
             {
                 sectionsList.Add(new UiSectionDto {
-                    Id = "recursos",
-                    Label = title,
-                    IconName = "DollarSign",
-                    ComponentName = "BudgetSection",
+                    Id = sectionId,
+                    Label = string.IsNullOrEmpty(title) ? "Tabla Multi-Sección" : title,
+                    IconName = "Grid",
+                    ComponentName = "MultiSectionTableSection",
                     Config = new {
+                        blockId = blockId,
                         title = title,
-                        seccion1Label = s1Label,
-                        seccion2Label = s2Label
+                        config = rawConfig
                     }
                 });
             }
@@ -76,3 +102,4 @@ namespace diitra_api.Controllers
         }
     }
 }
+

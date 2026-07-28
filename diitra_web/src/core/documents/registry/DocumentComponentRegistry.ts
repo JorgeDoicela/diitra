@@ -31,6 +31,7 @@ import { ImpactSection }          from '../../../components/DIITRA/sections/Impa
 import { BibliographySection }    from '../../../components/DIITRA/sections/BibliographySection';
 import { ProgressReportSection }  from '../../../components/DIITRA/sections/ProgressReportSection';
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
+import { MultiSectionTableSection } from '../../../components/DIITRA/sections/MultiSectionTableSection';
 
 /**
  * Mapa de nombre string de componente → Componente React real
@@ -44,7 +45,8 @@ export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
     'TimelineSection': TimelineSection,
     'BibliographySection': BibliographySection,
     'ProgressReportSection': ProgressReportSection,
-    'AgnosticSection': AgnosticSection
+    'AgnosticSection': AgnosticSection,
+    'MultiSectionTableSection': MultiSectionTableSection
 };
 
 /**
