@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     TrendingUp, Briefcase, ClipboardList,
     Fingerprint, FileText, Layers, ExternalLink,
-    Activity, FileEdit, RotateCw, Inbox, HelpCircle, ArrowRight
+    Activity, FileEdit, RotateCw, Inbox, HelpCircle, ArrowRight, AlertTriangle
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -371,8 +371,9 @@ export const DocenteDashboard: React.FC = () => {
                                             </span>
                                         </>
                                     ) : (
-                                        <div className="mt-2 text-[10px] text-error bg-error-subtle/10 border border-error/20 rounded-lg p-2.5 font-medium leading-relaxed">
-                                            ⚠️ No tienes registradas horas de investigación en tu distributivo académico para el período actual.
+                                        <div className="mt-2 text-[10px] text-error bg-error-subtle/10 border border-error/20 rounded-lg p-2.5 font-medium leading-relaxed flex items-center gap-1.5">
+                                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                                            <span>No tienes registradas horas de investigación en tu distributivo académico para el período actual.</span>
                                         </div>
                                     )}
                                 </div>

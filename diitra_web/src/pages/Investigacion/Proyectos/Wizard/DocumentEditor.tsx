@@ -5,6 +5,7 @@ import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, B
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
+import { useTemplatePublishedListener } from '../../../../core/events/templateEvents';
 
 // ── DIITRA CoWork — importar SOLO desde el índice público ────────
 import { useCoWork, coworkUserFromAuth } from '../../../../core/cowork';
@@ -314,6 +315,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             setShowUpgradeBanner(true);
         }
     }, [templateConfig]);
+
+    useTemplatePublishedListener(() => {
+        setShowUpgradeBanner(true);
+    }, templateCode);
 
     const handleUpgradeTemplate = async () => {
         const documentId = initialData?.Uuid || initialData?.uuid;

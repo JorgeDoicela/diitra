@@ -2,6 +2,8 @@ using Diitra.Application.Common.Documents;
 using Diitra.Infrastructure.Common.Documents;
 using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using diitra_infrastructure.Collaboration;
 using System.Text.Json.Serialization;
 using diitra_infrastructure.data.models;
 using Microsoft.EntityFrameworkCore;
@@ -19,11 +21,13 @@ namespace diitra_api.Controllers
     {
         private readonly IDocumentEngine _documentEngine;
         private readonly DiitraContext _db;
+        private readonly IHubContext<CollaborationHub> _hubContext;
 
-        public DocumentTemplatesController(IDocumentEngine documentEngine, DiitraContext db)
+        public DocumentTemplatesController(IDocumentEngine documentEngine, DiitraContext db, IHubContext<CollaborationHub> hubContext)
         {
             _documentEngine = documentEngine;
             _db = db;
+            _hubContext = hubContext;
         }
 
         /// <summary>
@@ -96,6 +100,16 @@ namespace diitra_api.Controllers
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
                 await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, request.ThemeConfigJson, updatedBy, ct);
+                
+                // Transmitir evento WebSocket en vivo a todos los usuarios y pestañas del sistema
+                await _hubContext.Clients.All.SendAsync("TemplatePublished", new
+                {
+                    template_code = code,
+                    templateCode = code,
+                    updated_by = updatedBy,
+                    timestamp = DateTime.UtcNow
+                }, ct);
+
                 return Ok(new { message = $"Plantilla '{code}' actualizada correctamente." });
             }
             catch (KeyNotFoundException)

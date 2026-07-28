@@ -107,6 +107,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const lastTrWasRemoteRef = React.useRef(false);
     const lastSelectionSendRef = React.useRef<number>(0);
     const selectionTimeoutRef = React.useRef<any>(null);
+    const seededRef = React.useRef(false);
 
     React.useEffect(() => {
         onChangeRef.current = onChange;
@@ -259,16 +260,45 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
     React.useEffect(() => {
         if (!editor || !useCollaboration) return;
+        const isReadOnlyMode = readonly || cowork.session.readOnly;
+        if (isReadOnlyMode) return;
+
         const xmlFragment = ydoc.getXmlFragment(field);
-        const isYjsEmpty = xmlFragment.length === 0;
-        if (isYjsEmpty && dbValue && dbValue.trim() !== '') {
-            const isReadOnlyMode = readonly || cowork.session.readOnly;
-            if (!isReadOnlyMode) {
-                coworkLog(`[CoWorkEditor] Seeding Yjs '${field}' from DB`);
-                editor.commands.setContent(dbValue, { emitUpdate: false });
+
+        // 1. Detección y limpieza automática si el contenido del Yjs ya se encuentra duplicado
+        if (dbValue && dbValue.trim() !== '') {
+            const cleanDb = dbValue.trim();
+            const currentHtml = editor.getHTML();
+            const textOnlyDb = cleanDb.replace(/<[^>]*>/g, '').trim();
+            const textOnlyEditor = currentHtml.replace(/<[^>]*>/g, '').trim();
+
+            if (textOnlyDb && textOnlyEditor.length > 0 && textOnlyEditor.length % textOnlyDb.length === 0) {
+                const repeatCount = Math.round(textOnlyEditor.length / textOnlyDb.length);
+                if (repeatCount >= 2 && textOnlyDb.repeat(repeatCount) === textOnlyEditor) {
+                    coworkLog(`[CoWorkEditor:${field}] Detección de contenido duplicado (repetido ${repeatCount}x). Limpiando a versión semilla única.`);
+                    seededRef.current = true;
+                    editor.commands.setContent(dbValue, { emitUpdate: false });
+                    return;
+                }
             }
         }
-    }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly]);
+
+        // 2. Sembrado inicial Yjs desde BD (Solo una vez, cuando Yjs está vacío y el cliente es el Líder de sesión)
+        if (!seededRef.current && xmlFragment.length === 0 && dbValue && dbValue.trim() !== '') {
+            const clientIds = awareness
+                ? Array.from(awareness.getStates().keys()).sort((a, b) => a - b)
+                : [];
+            const isLeader = clientIds.length === 0 || ydoc.clientID === clientIds[0];
+
+            if (isLeader) {
+                seededRef.current = true;
+                coworkLog(`[CoWorkEditor:${field}] Sembrando Yjs desde BD (líder de sesión)`);
+                editor.commands.setContent(dbValue, { emitUpdate: false });
+            }
+        } else if (xmlFragment.length > 0) {
+            seededRef.current = true;
+        }
+    }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly, awareness]);
 
     const isEditable = !readonly && !cowork.session.readOnly;
     React.useEffect(() => {

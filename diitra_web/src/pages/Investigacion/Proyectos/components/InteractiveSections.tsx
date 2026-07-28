@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { TimelineSection } from '../../../../components/DIITRA/sections/TimelineSection';
 
 const stripHtml = (html: string | null | undefined): string => {
@@ -246,8 +247,9 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                         Disponibles: {inv.horasDisponibles || 0}h | Asignadas: {inv.horasAsignadas || 0}h
                                     </span>
                                     {(inv.horasAsignadas + inv.horasSemanales) > inv.horasDisponibles && (
-                                        <span className="text-[8px] font-bold text-error block mt-1 animate-pulse">
-                                            ⚠️ Exceso en Período Activo (+{(inv.horasAsignadas + inv.horasSemanales) - inv.horasDisponibles}h)
+                                        <span className="text-[8px] font-bold text-error flex items-center gap-1 mt-1 animate-pulse">
+                                            <AlertTriangle className="w-2.5 h-2.5 shrink-0 text-red-500" />
+                                            <span>Exceso en Período Activo (+{(inv.horasAsignadas + inv.horasSemanales) - inv.horasDisponibles}h)</span>
                                         </span>
                                     )}
                                 </div>
@@ -257,7 +259,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                         {/* CACES COMPLIANCE ALERT */}
                         {!isHoursOk && (
                             <div className="p-4 rounded-xl border border-error/15 bg-error/[0.015] flex gap-3 animate-pulse">
-                                <span className="text-error mt-0.5">⚠️</span>
+                                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
                                 <div>
                                     <p className="text-[10px] font-black text-error uppercase tracking-wider">Control de consistencia de carga horaria (CACES)</p>
                                     <p className="text-[9px] text-text-main font-mono leading-relaxed mt-1">

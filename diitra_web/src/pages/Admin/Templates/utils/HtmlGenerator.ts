@@ -15,9 +15,11 @@ const COLORS = {
 const headerBg = (style?: string) => {
     switch (style) {
         case 'blue': 
+            return `background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;`;
         case 'gold': 
+            return `background: {{default theme.colors.secondary "#c4a857"}}; color: #ffffff !important;`;
         case 'gray': 
-            return `background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};`;
+            return `background: #f1f5f9; color: {{default theme.colors.text "#1a1a1a"}};`;
         default: 
             return `background: #ffffff; color: #000000;`;
     }
@@ -177,15 +179,15 @@ const BASE_STYLES = `
   .title-h1 { 
       font-size: 16pt; 
       font-weight: bold; 
-      color: {{ theme.colors.primary }}; 
+      color: {{default theme.colors.primary "#222c57"}}; 
       margin-top: 35px; 
       text-transform: uppercase; 
   }
   .title-h2 { 
       font-size: 10pt; 
       font-weight: 800; 
-      background: {{ theme.colors.table_header_bg }}; 
-      color: {{ theme.colors.table_header_color }}; 
+      background: {{default theme.colors.table_header_bg "#222c57"}}; 
+      color: {{default theme.colors.table_header_color "#ffffff"}} !important; 
       padding: 6px 12px; 
       margin-top: 25px; 
       text-transform: uppercase; 
@@ -193,7 +195,7 @@ const BASE_STYLES = `
   .title-h3 { 
       font-size: 9.5pt; 
       font-weight: bold; 
-      color: {{ theme.colors.secondary }}; 
+      color: {{default theme.colors.secondary "#c4a857"}}; 
       margin-top: 15px; 
       text-transform: uppercase; 
   }
@@ -470,7 +472,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 const cls = c.fontSize === 'H1' ? 'title-h1' : c.fontSize === 'H3' ? 'title-h3' : 'title-h2';
                 html += `
   <!-- BLOQUE: TÍTULO -->
-  <div class="${cls}" style="text-align: ${c.alignment || 'left'}; ${c.color ? `color: ${c.color};` : ''}">${c.text || 'TÍTULO'}</div>`;
+  <div class="${cls}" style="text-align: ${c.alignment || 'left'};">${c.text || 'TÍTULO'}</div>`;
                 break;
             }
 

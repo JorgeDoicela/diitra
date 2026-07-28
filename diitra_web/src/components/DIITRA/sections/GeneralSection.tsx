@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import api from '../../../api/axios_config';
@@ -531,7 +532,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 
                             {!isAdmin && misCarreras.length > 1 && (
                                 <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold flex items-center gap-1.5 animate-fade-in">
-                                    <span>⚠️</span>
+                                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
                                     <span>Perteneces a múltiples carreras. Por favor, selecciona una carrera principal para esta propuesta.</span>
                                 </div>
                             )}

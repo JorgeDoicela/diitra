@@ -51,8 +51,8 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     signatureRefreshTrigger
 }) => {
     return (
-        <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-y-auto lg:overflow-hidden p-1">
+        <div className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-y-auto lg:overflow-hidden custom-scrollbar">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 md:gap-5 flex-1 min-h-0 lg:overflow-hidden p-0.5">
                 {/* Panel de Controles Unificado */}
                 <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
                     {/* Sección 1: Emisión */}
@@ -236,7 +236,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                 </div>
 
                 {/* Visor de PDF */}
-                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
+                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden h-[85vh] sm:h-[88vh] min-h-[750px] lg:h-full lg:min-h-0">
                     {isGenerating ? (
                         <FullscreenLoader 
                             fullscreen={false} 

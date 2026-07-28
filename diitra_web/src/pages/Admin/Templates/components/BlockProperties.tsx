@@ -1,12 +1,12 @@
 import React from 'react';
-import { Settings, Palette, Plus, Trash2, Type, Layout, Shield, Image as ImageIcon } from 'lucide-react';
+import { Settings, Palette, Plus, Trash2, Type, Layout, Shield, Image as RotateCcw, Eye } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
 import { TwoColumnProperties } from './properties/TwoColumnProperties';
 import { GanttProperties } from './properties/GanttProperties';
-import { THEME_SCHEMA, mergeWithDefaults } from '../utils/theme-schema';
+import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme } from '../utils/theme-schema';
 
 interface BlockPropertiesProps {
     activeBlock: DocumentBlock | undefined;
@@ -20,10 +20,10 @@ interface BlockPropertiesProps {
 }
 
 const HEADER_STYLE_OPTIONS = [
-    { value: 'blue', label: '🔵 Azul Institucional' },
-    { value: 'gold', label: '🟡 Dorado Acreditación' },
-    { value: 'gray', label: '⬜ Gris Neutro' },
-    { value: 'none', label: '— Sin fondo de encabezado' },
+    { value: 'blue', label: 'Azul Institucional' },
+    { value: 'gold', label: 'Dorado Acreditación' },
+    { value: 'gray', label: 'Gris Neutro' },
+    { value: 'none', label: 'Sin fondo de encabezado' },
 ] as const;
 
 const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -114,10 +114,21 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
             {/* CUERPO DEL PANEL: PESTAÑA ESTILOS */}
             {activeTab === 'theme' && (
-                <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                    <p className="text-[10px] text-text-dim leading-relaxed">
-                        Configura el tema visual y el diseño de página del documento PDF. Estos ajustes aplican a todo el documento.
-                    </p>
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-28 custom-scrollbar">
+                    <div className="flex items-center justify-between gap-2 border-b border-border-thin/20 pb-3">
+                        <p className="text-[10px] text-text-dim leading-relaxed">
+                            Configura el tema visual y el diseño de página del documento PDF. Estos ajustes aplican a todo el documento.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => onUpdateThemeConfig(JSON.stringify(buildDefaultTheme()))}
+                            className="p-1.5 text-[10px] font-medium text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md border border-border-thin shrink-0 flex items-center gap-1 transition-all cursor-pointer"
+                            title="Restablecer valores institucionales por defecto"
+                        >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Restablecer</span>
+                        </button>
+                    </div>
 
                     {categories.map(cat => {
                         const meta = CATEGORY_META[cat];
@@ -127,7 +138,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                         return (
                             <div key={cat} className="space-y-3 border-t border-border-thin/25 pt-4 first:border-t-0 first:pt-0">
                                 <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider flex items-center gap-1.5">
-                                    <CatIcon className="w-3.5 h-3.5" />
+                                    <CatIcon className="w-3.5 h-3.5 text-text-main" />
                                     {meta.label}
                                 </h5>
 
@@ -140,17 +151,19 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 <LabeledField label={token.label}>
                                                     {token.type === 'color' && (
                                                         <div className="flex items-center gap-2">
-                                                            <input
-                                                                type="color"
-                                                                value={currentVal}
-                                                                onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
-                                                                className="w-8 h-8 rounded-md border border-border-thin bg-transparent cursor-pointer p-0 shrink-0"
-                                                            />
+                                                            <div className="w-7 h-7 rounded-md border border-border-thin shadow-xs overflow-hidden shrink-0 relative bg-surface">
+                                                                <input
+                                                                    type="color"
+                                                                    value={currentVal}
+                                                                    onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
+                                                                    className="absolute -inset-2 w-11 h-11 cursor-pointer p-0 border-0"
+                                                                />
+                                                            </div>
                                                             <input
                                                                 type="text"
                                                                 value={currentVal}
                                                                 onChange={e => handleThemeChange(cat, token.camelKey, e.target.value)}
-                                                                className="w-full text-[10px] border border-border-thin rounded-md p-1 bg-surface-hover text-text-main focus:outline-none"
+                                                                className="w-full text-[11px] font-mono uppercase tracking-wider border border-border-thin rounded-md p-1.5 bg-surface-hover/60 focus:bg-surface text-text-main focus:outline-none focus:border-black dark:focus:border-white transition-all"
                                                             />
                                                         </div>
                                                     )}
@@ -184,7 +197,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                                 type="checkbox"
                                                                 checked={!!currentVal}
                                                                 onChange={e => handleThemeChange(cat, token.camelKey, e.target.checked)}
-                                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded"
+                                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded cursor-pointer"
                                                             />
                                                         </div>
                                                     )}
@@ -248,6 +261,57 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             </div>
                         );
                     })}
+
+                    {/* VISTA PREVIA EN TIEMPO REAL DEL TEMA (MINI LIVE PREVIEW CARD) */}
+                    <div className="space-y-2 border-t border-border-thin pt-4">
+                        <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-text-main" />
+                            Vista Previa del Tema en Vivo
+                        </h5>
+                        <div className="border border-border-thin rounded-lg overflow-hidden bg-white dark:bg-zinc-900 shadow-sm p-3 space-y-2 select-none">
+                            {/* Cabecera simulada */}
+                            <div
+                                className="p-2 rounded text-center font-bold text-xs shadow-xs text-white"
+                                style={{ backgroundColor: theme.colors?.primary || '#222c57' }}
+                            >
+                                UNIVERSIDAD DIITRA
+                                <div
+                                    className="h-0.5 mt-1 w-full rounded"
+                                    style={{ backgroundColor: theme.colors?.secondary || '#c4a857' }}
+                                />
+                            </div>
+                            {/* Texto y tipografía simulada */}
+                            <div
+                                className="text-[10px] space-y-1 p-1"
+                                style={{
+                                    color: theme.colors?.text || '#1a1a1a',
+                                    fontFamily: theme.typography?.fontFamily || 'sans-serif'
+                                }}
+                            >
+                                <div className="font-bold text-[11px]">1.1 Objetivos del Proyecto</div>
+                                <p className="opacity-90 leading-tight">
+                                    Texto de ejemplo redactado para verificar el contraste, la tipografía y los colores del documento PDF.
+                                </p>
+                            </div>
+                            {/* Encabezado de tabla simulado */}
+                            <div className="overflow-hidden rounded border border-border-thin/40 text-[9px]">
+                                <div
+                                    className="px-2 py-1 font-bold flex justify-between"
+                                    style={{
+                                        backgroundColor: theme.colors?.tableHeaderBg || '#222c57',
+                                        color: theme.colors?.tableHeaderColor || '#ffffff'
+                                    }}
+                                >
+                                    <span>CONCEPTO</span>
+                                    <span>VALOR</span>
+                                </div>
+                                <div className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800 text-text-dim flex justify-between">
+                                    <span>Equipos e Insumos</span>
+                                    <span>$ 1.500,00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -407,11 +471,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                         key={opt.value}
                                                         type="button"
                                                         onClick={() => onUpdateConfig(activeBlock.id, 'coverLayoutMode', opt.value)}
-                                                        className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
-                                                            (isFreeForm ? 'freeform' : 'zones') === opt.value
+                                                        className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${(isFreeForm ? 'freeform' : 'zones') === opt.value
                                                                 ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
                                                                 : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <div className="text-[10px] font-bold">{opt.label}</div>
                                                         <div className="text-[9px] opacity-70 mt-0.5">{opt.desc}</div>
@@ -436,11 +499,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                             key={color.hex}
                                                             type="button"
                                                             onClick={() => onUpdateConfig(activeBlock.id, 'colorTema', color.hex)}
-                                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${
-                                                                isSel
+                                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${isSel
                                                                     ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105'
                                                                     : 'hover:scale-105 opacity-80 hover:opacity-100'
-                                                            }`}
+                                                                }`}
                                                             title={color.name}
                                                         >
                                                             <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: color.hex }} />
@@ -450,58 +512,6 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 })}
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                             <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
-                                                 <ImageIcon className="w-3.5 h-3.5" />
-                                                 Imagen de Fondo de Portada
-                                             </label>
-                                             {activeBlock.config.coverImage ? (
-                                                 <div className="relative group border border-border-thin rounded-lg overflow-hidden bg-surface-hover/30 p-1.5 flex items-center justify-between gap-3">
-                                                     <div className="flex items-center gap-2 overflow-hidden">
-                                                         <img
-                                                             src={activeBlock.config.coverImage}
-                                                             alt="Portada Personalizada"
-                                                             className="w-10 h-10 object-cover rounded-md border border-border-thin shrink-0 bg-white"
-                                                         />
-                                                         <div className="text-[10px] text-text-dim truncate">
-                                                             <span className="font-semibold text-text-main block">Personalizado</span>
-                                                             Imagen de este Bloque
-                                                         </div>
-                                                     </div>
-                                                     <button
-                                                         type="button"
-                                                         onClick={() => onUpdateConfig(activeBlock.id, 'coverImage', '')}
-                                                         className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-colors shrink-0 cursor-pointer"
-                                                         title="Usar imagen de portada del Tema Global"
-                                                     >
-                                                         <Trash2 className="w-4 h-4" />
-                                                     </button>
-                                                 </div>
-                                             ) : (
-                                                 <label className="border border-dashed border-border-thin hover:border-text-main/50 rounded-lg p-3 text-center block cursor-pointer bg-surface-hover/20 hover:bg-surface-hover/40 transition-all duration-150 relative">
-                                                     <input
-                                                         type="file"
-                                                         accept="image/png, image/jpeg, image/jpg"
-                                                         onChange={e => {
-                                                             const file = e.target.files?.[0];
-                                                             if (file) {
-                                                                 const reader = new FileReader();
-                                                                 reader.onloadend = () => {
-                                                                     onUpdateConfig(activeBlock.id, 'coverImage', reader.result as string);
-                                                                 };
-                                                                 reader.readAsDataURL(file);
-                                                             }
-                                                         }}
-                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                     />
-                                                     <div className="flex flex-col items-center justify-center gap-1 text-text-dim hover:text-text-main transition-colors">
-                                                         <Plus className="w-4 h-4" />
-                                                         <span className="text-[10px] font-bold uppercase tracking-wider">Cargar Imagen para este Bloque</span>
-                                                         <span className="text-[8px] opacity-75">Sobreescribe la portada del Tema Global</span>
-                                                     </div>
-                                                 </label>
-                                             )}
-                                         </div>
                                         <div className="space-y-3">
                                             <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Elementos de la Portada</h5>
                                             {renderElementPanel('Institucion / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLOGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution)}

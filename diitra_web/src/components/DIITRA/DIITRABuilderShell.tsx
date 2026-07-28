@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Unlock, Shield, Award } from 'lucide-react';
+import { Lock, Unlock, Shield, Award, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
@@ -204,14 +204,18 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                         <button
                                                             onClick={onUpgradeTemplate}
                                                             disabled={isUpgrading}
-                                                            className="px-4 py-2 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-50 transition-all flex items-center gap-1.5"
+                                                            className="px-4 py-2 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                                                         >
                                                             {isUpgrading ? (
                                                                 <>
-                                                                    <span className="animate-spin mr-1">⌛</span> Actualizando...
+                                                                    <Loader2 size={14} className="animate-spin shrink-0" />
+                                                                    <span>Actualizando...</span>
                                                                 </>
                                                             ) : (
-                                                                "Actualizar Formato"
+                                                                <>
+                                                                    <RefreshCw size={14} className="shrink-0" />
+                                                                    <span>Actualizar Formato</span>
+                                                                </>
                                                             )}
                                                         </button>
                                                     </div>

@@ -8,10 +8,10 @@ interface Props {
 }
 
 const HEADER_STYLE_OPTIONS = [
-    { value: 'blue', label: '🔵 Azul Institucional' },
-    { value: 'gold', label: '🟡 Dorado Acreditación' },
-    { value: 'gray', label: '⬜ Gris Neutro' },
-    { value: 'none', label: '⬜ Sin fondo' },
+    { value: 'blue', label: 'Azul Institucional' },
+    { value: 'gold', label: 'Dorado Acreditación' },
+    { value: 'gray', label: 'Gris Neutro' },
+    { value: 'none', label: 'Sin fondo' },
 ] as const;
 
 const newSection = (): TableSection => ({

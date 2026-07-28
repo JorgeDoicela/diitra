@@ -312,27 +312,33 @@ const RenderCover: React.FC<{
     );
 };
 
-const RenderTitle: React.FC<{ config: any }> = ({ config }) => {
+const RenderTitle: React.FC<{ config: any; themeConfig?: any }> = ({ config, themeConfig }) => {
     const text = config.text || 'Título de Sección';
-    // Soportar tanto config.fontSize (H1/H2/H3) como config.level (h1/h2/h3) por retrocompatibilidad
     const fontSize = (config.fontSize || config.level || 'H2').toUpperCase();
+    const align = config.alignment || 'left';
+    const alignStyle: React.CSSProperties = { textAlign: align as any };
+
+    const primaryColor = themeConfig?.colors?.primary || DYN_COLORS.blue;
+    const secondaryColor = themeConfig?.colors?.secondary || DYN_COLORS.gold;
+    const tableHeaderBg = themeConfig?.colors?.tableHeaderBg || primaryColor;
+    const tableHeaderColor = themeConfig?.colors?.tableHeaderColor || '#ffffff';
 
     if (fontSize === 'H1') {
         return (
-            <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider flex items-center justify-between" style={{ color: DYN_COLORS.blue }}>
+            <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider" style={{ ...alignStyle, color: primaryColor }}>
                 <span>{text}</span>
             </h1>
         );
     }
     if (fontSize === 'H2') {
         return (
-            <h2 className="text-xs font-black text-white px-3 py-2 uppercase tracking-wide mb-2 mt-4" style={{ backgroundColor: DYN_COLORS.blue }}>
+            <h2 className="text-xs font-black px-3 py-2 uppercase tracking-wide mb-2 mt-4 shadow-xs rounded-xs" style={{ ...alignStyle, backgroundColor: tableHeaderBg, color: tableHeaderColor }}>
                 {text}
             </h2>
         );
     }
     return (
-        <h3 className="text-xs font-bold uppercase tracking-wide mb-2 mt-3" style={{ color: DYN_COLORS.gold }}>
+        <h3 className="text-xs font-bold uppercase tracking-wide mb-2 mt-3" style={{ ...alignStyle, color: secondaryColor }}>
             {text}
         </h3>
     );
@@ -1149,7 +1155,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 
         switch (block.type) {
             case 'cover': return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} themeConfig={themeConfig} />;
-            case 'title': return <RenderTitle config={block.config} />;
+            case 'title': return <RenderTitle config={block.config} themeConfig={themeConfig} />;
             case 'rich_text': return <RenderRichText config={block.config} />;
             case 'advanced_table': return <RenderAdvancedTable config={block.config} />;
             case 'multi_section_table': return <RenderMultiSectionTable config={block.config} />;

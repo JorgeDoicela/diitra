@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Users, AlertCircle, ExternalLink, RefreshCw, X,
-    Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp
+    Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
 
 const formatNombre = (nombre: string | null | undefined) => {
@@ -278,7 +278,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                 <div className="flex items-center gap-2 mt-1">
                                                                     <div className="flex flex-col gap-0.5">
                                                                         <span className="text-[8px] font-bold text-warning uppercase tracking-wider flex items-center gap-1 animate-pulse">
-                                                                            ⚠️ Elegir Carrera de Asociación
+                                                                            <AlertTriangle className="w-2.5 h-2.5 shrink-0 text-amber-500" /> Elegir Carrera de Asociación
                                                                         </span>
                                                                         <select
                                                                             value={currentValue}

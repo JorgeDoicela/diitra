@@ -7,6 +7,7 @@ import type { ICoWorkTransport } from './ICoWorkTransport';
 import type { CoWorkUser } from '../types';
 import { COWORK_CONFIG } from '../config';
 import { coworkLog } from '../utils/log';
+import { notifyTemplatePublished } from '../../events/templateEvents';
 
 export class SignalRTransport implements ICoWorkTransport {
     private connection: signalR.HubConnection;
@@ -27,12 +28,16 @@ export class SignalRTransport implements ICoWorkTransport {
             .configureLogging(signalR.LogLevel.Warning)
             .build();
 
-        // No-ops to avoid SignalR noise
+        // SignalR Real-Time Event Handlers
         this.connection.on('ReceiveYjsUpdate', () => {});
         this.connection.on('ReceiveAwarenessUpdate', () => {});
         this.connection.on('ReceiveUpdateHistory', () => {});
         this.connection.on('UserJoined', () => {});
         this.connection.on('TriggerCompaction', () => {});
+        this.connection.on('TemplatePublished', (data: any) => {
+            console.info('[SignalR] Recibida notificación de plantilla publicada vía WebSocket:', data);
+            notifyTemplatePublished(data || {});
+        });
 
         this.connection.onreconnecting(() => { 
             console.warn("[SignalR] Reconectando...");

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../api/axios_config';
+import { notifyTemplatePublished } from '../../../core/events/templateEvents';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     FileCode2,
@@ -774,6 +775,10 @@ const DocumentTemplatesPage: React.FC = () => {
             });
 
             addToast("Plantilla Publicada", `La maqueta visual de la plantilla '${selectedTemplate.name}' ha sido publicada con éxito.`, "success");
+            const st = selectedTemplate as any;
+            const pubCode = st?.code || st?.template_code || st?.codigo || '';
+            const pubName = st?.name || st?.nombre || '';
+            notifyTemplatePublished({ templateCode: pubCode, template_code: pubCode, name: pubName });
             setIsDirty(false);
 
             const resCatalog = await api.get('/admin/templates');
