@@ -123,26 +123,48 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
         const { name, label, type, collaborative, placeholder, min = 0, max = 25, options = [] } = field;
         const isDisabled = cowork?.session?.readOnly;
 
-        // A) MODO COLABORATIVO (SignalR + Yjs)
+        // A) MODO COLABORATIVO
         if (collaborative) {
             if (type === 'table') {
-                const columns: string[] = (field as any).config?.columns || [];
-                const allowDynamicRows: boolean = !!(field as any).config?.allowDynamicRows;
-                const tableHeaderStyle = (field as any).config?.headerStyle || 'blue';
-                const rowsData = formData[name] || [];
+                const columns: string[] = (field as any).config?.columns || (field as any).config?.headers || [];
+                const allowDynamicRows: boolean = !!(
+                    (field as any).config?.allowDynamicRows ??
+                    (field as any).config?.allow_dynamic_rows
+                );
+                const tableHeaderStyle =
+                    (field as any).config?.headerStyle ||
+                    (field as any).config?.header_style ||
+                    'blue';
+                const defaultRowsFromConfig =
+                    (field as any).config?.defaultRows ||
+                    (field as any).config?.default_rows ||
+                    (field as any).config?.rows ||
+                    [];
+                const rawRowsData = Array.isArray(formData[name]) ? formData[name] : [];
+
+                // Determinar el número total de filas a mostrar en el Workspace
+                // Garantiza que si el Admin agregó filas en la plantilla, aparezcan todas en el Workspace para el Investigador
+                const totalRowsCount = Math.max(rawRowsData.length, defaultRowsFromConfig.length);
+
+                const rowsData: any[] = [];
+                for (let rIdx = 0; rIdx < totalRowsCount; rIdx++) {
+                    const userRow = rawRowsData[rIdx];
+                    const tplRow = defaultRowsFromConfig[rIdx];
+                    rowsData.push(userRow || tplRow || {});
+                }
 
                 let thCls = "p-3 text-[9px] font-black uppercase tracking-wider ";
                 let trHeaderCls = "border-b border-border-thin ";
 
                 if (tableHeaderStyle === 'blue') {
-                    trHeaderCls += "bg-blue-600 dark:bg-blue-700 text-white";
+                    trHeaderCls += "bg-[#1e2a4a] text-white";
                     thCls += "text-white";
                 } else if (tableHeaderStyle === 'gold') {
-                    trHeaderCls += "bg-amber-500 dark:bg-amber-600 text-white";
+                    trHeaderCls += "bg-[#b8912e] text-white";
                     thCls += "text-white";
                 } else if (tableHeaderStyle === 'gray') {
-                    trHeaderCls += "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200";
-                    thCls += "text-slate-800 dark:text-slate-200";
+                    trHeaderCls += "bg-slate-700 text-white";
+                    thCls += "text-white";
                 } else {
                     trHeaderCls += "bg-surface-hover/20";
                     thCls += "text-text-dim";
@@ -175,7 +197,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             <table className="w-full border-collapse text-left text-xs text-text-main bg-bg-deep">
                                 <thead>
                                     <tr className={trHeaderCls}>
-                                        {columns.map((col, colIdx) => (
+                                        {columns.map((col: string, colIdx: number) => (
                                             <th key={colIdx} className={thCls}>
                                                 {col}
                                             </th>
@@ -191,25 +213,44 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                             </td>
                                         </tr>
                                     ) : (
-                                        rowsData.map((row: any, rIdx: number) => (
-                                            <tr key={rIdx} className="border-b border-border-thin last:border-0 hover:bg-surface-hover/10 transition-colors">
-                                                {columns.map((_, cIdx) => {
-                                                    const cellValue = row?.[cIdx.toString()] ?? "";
-                                                    return (
-                                                        <td key={cIdx} className="p-2">
-                                                            <input
-                                                                type="text"
-                                                                value={cellValue}
-                                                                disabled={isDisabled}
-                                                                onChange={(e) => {
-                                                                    onUpdateItem?.(name, rIdx, cIdx.toString(), e.target.value);
-                                                                }}
-                                                                className="w-full bg-transparent hover:bg-surface-hover/25 focus:bg-surface border border-transparent focus:border-border-thin rounded-lg px-2 py-1.5 text-xs text-text-main transition-all outline-none"
-                                                                placeholder="Escriba..."
-                                                            />
-                                                        </td>
-                                                    );
-                                                })}
+                                        rowsData.map((_: any, rIdx: number) => {
+                                            const userRow = rawRowsData[rIdx];
+                                            const tplRow = defaultRowsFromConfig[rIdx];
+
+                                            return (
+                                                <tr key={rIdx} className="border-b border-border-thin last:border-0 hover:bg-surface-hover/10 transition-colors">
+                                                    {columns.map((_: string, cIdx: number) => {
+                                                        const getUserCellValue = (r: any) => {
+                                                            if (!r) return undefined;
+                                                            if (Array.isArray(r)) return r[cIdx];
+                                                            if (r[cIdx.toString()] !== undefined && r[cIdx.toString()] !== null) return r[cIdx.toString()];
+                                                            if (r[cIdx] !== undefined && r[cIdx] !== null) return r[cIdx];
+                                                            if (r.cells && Array.isArray(r.cells)) return r.cells[cIdx];
+                                                            return undefined;
+                                                        };
+
+                                                        const valFromUser = getUserCellValue(userRow);
+                                                        const valFromTpl  = getUserCellValue(tplRow);
+
+                                                        const cellValue = (valFromUser !== undefined && valFromUser !== "")
+                                                            ? valFromUser
+                                                            : (valFromTpl !== undefined ? valFromTpl : "");
+
+                                                        return (
+                                                            <td key={cIdx} className="p-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={cellValue}
+                                                                    disabled={isDisabled}
+                                                                    onChange={(e) => {
+                                                                        onUpdateItem?.(name, rIdx, cIdx.toString(), e.target.value);
+                                                                    }}
+                                                                    className="w-full bg-transparent hover:bg-surface-hover/25 focus:bg-surface border border-transparent focus:border-border-thin rounded-lg px-2 py-1.5 text-xs text-text-main transition-all outline-none"
+                                                                    placeholder="Escriba..."
+                                                                />
+                                                            </td>
+                                                        );
+                                                    })}
                                                 {allowDynamicRows && !isDisabled && (
                                                     <td className="p-2 text-center">
                                                         <button
@@ -223,7 +264,8 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                                     </td>
                                                 )}
                                             </tr>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>

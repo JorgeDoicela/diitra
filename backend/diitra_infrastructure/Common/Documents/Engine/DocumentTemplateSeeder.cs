@@ -55,12 +55,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     bool cssDiffers  = fileCss  != null && template.CustomCss   != fileCss;
                     bool contentDiffers = htmlDiffers || cssDiffers;
 
-                    // Comprobar si la versión de fábrica es mayor
+                    // Comprobar si la versión de fábrica es mayor (semilla en código)
                     bool versionBumped = seed.Version > template.Version;
 
-                    if (contentDiffers || versionBumped)
+                    // No sobreescribir si un usuario/admin personalizó la plantilla desde la interfaz web, a menos que la semilla tenga versión mayor
+                    bool isUserCustomized = !string.IsNullOrEmpty(template.UpdatedBy) && 
+                                           template.UpdatedBy != "system" && 
+                                           template.UpdatedBy != "seeder";
+
+                    if (versionBumped || (!isUserCustomized && contentDiffers))
                     {
-                        var reason = contentDiffers ? "Diferencia de contenido en archivos físicos (.html/.css)" : $"Versión mayor v{seed.Version} > v{template.Version}";
+                        var reason = versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización inicial de archivos físicos";
                         logger.LogInformation("DIITRA DocumentSeeder: Actualizando plantilla [{Code}] ({Reason})...", seed.Code, reason);
 
                         if (fileHtml != null) template.UpdateHtmlContentOnly(fileHtml);

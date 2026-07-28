@@ -77,12 +77,7 @@ namespace diitra_api.Controllers
                 return NotFound(new { message = $"La plantilla '{instance.TemplateCode}' no está activa o no existe en la base de datos." });
             }
 
-            if (!string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson))
-            {
-                var result = await BuildUiConfigResponseAsync(instance.TemplateConfigSnapshotJson, template, instance, ct);
-                if (result != null) return result;
-            }
-
+            // 1. Obtener la estructura de bloques más reciente desde la plantilla activa (HtmlContent Base64)
             var blocksJson = "";
             if (!string.IsNullOrEmpty(template.HtmlContent))
             {
@@ -97,6 +92,20 @@ namespace diitra_api.Controllers
                     }
                     catch { }
                 }
+            }
+
+            // 2. Si la instancia está en borrador (Draft) o no tiene snapshot, usar la estructura más reciente de la plantilla
+            if ((instance.State == Diitra.Domain.Common.Documents.DocumentState.Draft || string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson)) && !string.IsNullOrEmpty(blocksJson))
+            {
+                var result = await BuildUiConfigResponseAsync(blocksJson, template, instance, ct);
+                if (result != null) return result;
+            }
+
+            // 3. Fallback para documentos históricos congelados o sin Base64
+            if (!string.IsNullOrEmpty(instance.TemplateConfigSnapshotJson))
+            {
+                var result = await BuildUiConfigResponseAsync(instance.TemplateConfigSnapshotJson, template, instance, ct);
+                if (result != null) return result;
             }
 
             if (!string.IsNullOrEmpty(blocksJson))

@@ -73,6 +73,7 @@ namespace diitra_api.Controllers
             }
 
             var columns = new List<string>();
+            var defaultRows = new List<Dictionary<string, string>>();
             bool allowDynamicRows = false;
             string headerStyle = "blue";
 
@@ -91,9 +92,29 @@ namespace diitra_api.Controllers
                     }
                 }
 
-                if (configProp.TryGetProperty("headerStyle", out var hsProp))
+                if (configProp.TryGetProperty("headerStyle", out var hsProp) ||
+                    configProp.TryGetProperty("header_style", out hsProp) ||
+                    configProp.TryGetProperty("HeaderStyle", out hsProp))
                 {
                     headerStyle = hsProp.GetString() ?? "blue";
+                }
+
+                if (configProp.TryGetProperty("rows", out var rowsProp) && rowsProp.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var r in rowsProp.EnumerateArray())
+                    {
+                        if (r.TryGetProperty("cells", out var cellsProp) && cellsProp.ValueKind == JsonValueKind.Array)
+                        {
+                            var rowDict = new Dictionary<string, string>();
+                            int cellIdx = 0;
+                            foreach (var cell in cellsProp.EnumerateArray())
+                            {
+                                rowDict[cellIdx.ToString()] = cell.ValueKind == JsonValueKind.String ? cell.GetString() ?? "" : "";
+                                cellIdx++;
+                            }
+                            defaultRows.Add(rowDict);
+                        }
+                    }
                 }
             }
 
@@ -118,7 +139,8 @@ namespace diitra_api.Controllers
                             {
                                 columns = columns.ToArray(),
                                 allowDynamicRows = allowDynamicRows,
-                                headerStyle = headerStyle
+                                headerStyle = headerStyle,
+                                defaultRows = defaultRows.ToArray()
                             }
                         }
                     }

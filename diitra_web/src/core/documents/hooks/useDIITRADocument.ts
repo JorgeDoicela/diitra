@@ -176,6 +176,9 @@ export function useDIITRADocument<T extends Record<string, any>>(
     const updateItem = useCallback((listName: string, index: number, field: string, value: any) => {
         if (ydoc) {
             const yarray = ydoc.getArray(listName);
+            while (yarray.length <= index) {
+                yarray.push([{}]);
+            }
             const currentItem = yarray.get(index) as any;
             if (currentItem) {
                 if (currentItem[field] === value) return;
@@ -188,7 +191,11 @@ export function useDIITRADocument<T extends Record<string, any>>(
             }
         }
         setFormData(prev => {
-            const newList = [...(prev as any)[listName]];
+            const rawList = (prev as any)[listName];
+            const newList = Array.isArray(rawList) ? [...rawList] : [];
+            while (newList.length <= index) {
+                newList.push({});
+            }
             newList[index] = { ...newList[index], [field]: value };
             return { ...prev, [listName]: newList };
         });

@@ -80,6 +80,34 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         }
 
         /// <summary>
+        /// Sincroniza el HTML (y opcionalmente CSS) actualizado de una plantilla hacia el archivo físico en disco.
+        /// </summary>
+        public async Task SaveAsync(string templateCode, string htmlContent, string? customCss = null)
+        {
+            try
+            {
+                var filePath = ResolveFilePath(templateCode);
+                var dir = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                await File.WriteAllTextAsync(filePath, htmlContent, System.Text.Encoding.UTF8);
+
+                if (customCss != null)
+                {
+                    var cssPath = Path.ChangeExtension(filePath, ".css");
+                    await File.WriteAllTextAsync(cssPath, customCss, System.Text.Encoding.UTF8);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "TemplateFileLoader: No se pudo guardar en disco para la plantilla '{Code}'", templateCode);
+            }
+        }
+
+        /// <summary>
         /// Resuelve la ruta física del archivo .html para un código de plantilla dado.
         /// Convención de nombres: PROTOCOLO_INVESTIGACION → ProyectoInvestigacion.html
         /// Mapa explícito de código → nombre de archivo.

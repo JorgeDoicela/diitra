@@ -659,8 +659,11 @@ namespace Diitra.Infrastructure.Common.Documents
             template.UpdateThemeConfig(themeConfigJson, updatedBy);
             await _templateRepository.SaveAsync(template, cancellationToken);
 
+            // Sincronización bidireccional en disco para mantener 100% de paridad con los archivos en caliente (.html/.css)
+            await _templateFileLoader.SaveAsync(templateCode, newHtmlContent, customCss);
+
             _logger.LogInformation(
-                "DIITRA DocumentEngine: Plantilla [{Code}] actualizada a v{Version} por [{User}].",
+                "DIITRA DocumentEngine: Plantilla [{Code}] actualizada a v{Version} por [{User}] (BD + Disco).",
                 templateCode, template.Version, updatedBy);
         }
 
