@@ -126,6 +126,22 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
         // A) MODO COLABORATIVO
         if (collaborative) {
             if (type === 'table') {
+                // ── BUG RAÍZ (resuelto) ──────────────────────────────────────────────────────
+                // El backend tiene la política global JsonNamingPolicy.SnakeCaseLower (Program.cs).
+                // Esto significa que las propiedades camelCase del objeto Config retornado por
+                // AdvancedTableBlockProvider se serializan a snake_case antes de llegar al frontend:
+                //   allowDynamicRows → allow_dynamic_rows
+                //   headerStyle      → header_style
+                //   defaultRows      → default_rows
+                //
+                // El código original solo buscaba las versiones camelCase, por lo que:
+                //   - defaultRowsFromConfig siempre era [] (las filas del template se "perdían")
+                //   - El merge Math.max(userRows, templateRows) nunca aplicaba filas extra del template
+                //   - El Workspace mostraba solo las filas guardadas por el investigador en Yjs,
+                //     ignorando por completo las filas nuevas que el Admin agregó en la plantilla.
+                //
+                // SOLUCIÓN: Leer siempre camelCase || snake_case como fallback.
+                // ─────────────────────────────────────────────────────────────────────────────
                 const columns: string[] = (field as any).config?.columns || (field as any).config?.headers || [];
                 const allowDynamicRows: boolean = !!(
                     (field as any).config?.allowDynamicRows ??
@@ -138,12 +154,13 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                 const defaultRowsFromConfig =
                     (field as any).config?.defaultRows ||
                     (field as any).config?.default_rows ||
-                    (field as any).config?.rows ||
+                    (field as any).config?.rows ||    // fallback: formato raw del editor Admin
                     [];
                 const rawRowsData = Array.isArray(formData[name]) ? formData[name] : [];
 
-                // Determinar el número total de filas a mostrar en el Workspace
-                // Garantiza que si el Admin agregó filas en la plantilla, aparezcan todas en el Workspace para el Investigador
+                // Merge: siempre mostrar max(filas del usuario en Yjs, filas definidas en plantilla).
+                // Garantiza que si el Admin agrega filas al template, aparezcan en el Workspace
+                // aunque el borrador del investigador ya tenga datos guardados con menos filas.
                 const totalRowsCount = Math.max(rawRowsData.length, defaultRowsFromConfig.length);
 
                 const rowsData: any[] = [];
