@@ -53,7 +53,9 @@ const BASE_STYLES = `
       top: 0;
       left: 0;
       width: 210mm;
-      height: 297mm;
+      height: 0;
+      line-height: 0;
+      font-size: 0;
       z-index: -1;
       pointer-events: none;
       {{#if theme.brand.background_image}}
@@ -70,8 +72,12 @@ const BASE_STYLES = `
       font-family: {{ theme.typography.font_family }};
       position: relative;
       width: 210mm;
-      height: 297mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      max-height: 296.5mm;
       box-sizing: border-box;
+      padding: 0;
+      margin: 0;
       {{#if portada_base64}}
       background-image: url('data:image/jpeg;base64,{{portada_base64}}');
       background-size: 100% 100%;
@@ -80,6 +86,7 @@ const BASE_STYLES = `
       color: {{ theme.colors.primary }};
       z-index: 1000;
       overflow: hidden;
+      page-break-inside: avoid;
       page-break-after: always;
   }
 
@@ -280,7 +287,7 @@ const renderSection = (section: TableSection): string => {
 // Función principal
 // ─────────────────────────────────────────────────────────────────────────────
 export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
-    let html = `<div class="doc-container">\n  <div class="doc-watermark"></div>`;
+    let html = `${BASE_STYLES}\n<div class="doc-container">`;
 
     for (const block of blockList) {
         if (!block.isActive) continue;
@@ -289,7 +296,6 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         switch (block.type) {
             // ── PORTADA ─────────────────────────────────────────────────────
             case 'cover': {
-                const colorTheme = c.colorTema || '{{ theme.colors.primary }}';
                 const gCover = themeConfig?.brand?.coverConfig || {};
                 const isFreeForm = (c.coverLayoutMode !== undefined ? c.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
 
@@ -332,7 +338,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                     // También calculamos el ancho de forma dinámica (getWidthMm) restando el margen derecho (15mm)
                     // para darles a las cajas un límite físico de ancho y evitar envolturas de texto toscas.
                     const toMmX = (pct: number) => `${(pct * 2.1).toFixed(1)}mm`;
-                    const toMmY = (pct: number) => `${(pct * 2.97).toFixed(1)}mm`;
+                    const toMmY = (pct: number) => `${(Math.min(pct, 75) * 2.70).toFixed(1)}mm`;
                     const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
 
                     // Alineación de texto dentro de cada caja flotante

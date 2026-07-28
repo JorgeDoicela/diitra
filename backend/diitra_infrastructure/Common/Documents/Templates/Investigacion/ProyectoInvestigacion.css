@@ -40,18 +40,23 @@
     {{/if}}
 }
 
-/* Portada (Cover Page) - Soporte para Canvas Libre */
+/* Portada (Cover Page) - Soporte para Canvas Libre (Full-Bleed A4) */
 .cover-page {
     font-family: {{ theme.typography.font_family }};
     position: relative !important;
     display: block !important;
-    width: 100% !important;
-    height: 260mm !important;
-    min-height: 260mm !important;
-    max-height: 260mm !important;
+    width: 210mm !important;
+    height: 296.5mm !important;
+    min-height: 296.5mm !important;
+    max-height: 296.5mm !important;
     box-sizing: border-box !important;
     padding: 0 !important;
     margin: 0 !important;
+    {{#if portada_base64}}
+    background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    {{/if}}
     color: {{ theme.colors.primary }};
     overflow: hidden !important;
     page-break-inside: avoid !important;
