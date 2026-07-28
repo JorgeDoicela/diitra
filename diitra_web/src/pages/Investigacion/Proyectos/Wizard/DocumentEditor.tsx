@@ -546,12 +546,13 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     const mappedSections = React.useMemo(() => {
         return (templateConfig.sections as any[]).map((sec: any) => {
             // Ícono: puede ser componente directo (legacy) o nombre string (nuevo)
-            const IconComponent = sec.icon || ICON_MAP[sec.iconName] || FileText;
+            const iconName = sec.icon_name || sec.iconName;
+            const IconComponent = sec.icon || (iconName ? ICON_MAP[iconName] : null) || FileText;
             // Config de campos: normalizado en una sola forma
             const normalizedConfig = sec.config || (sec.fields ? { fields: sec.fields } : undefined);
-            // Componente de sección: resuelto dinámicamente por nombre o ID
-            const componentName = sec.componentName || sec.component;
-            const SectionComponent = COMPONENT_MAP[componentName] || getDocumentSection(sec.id, sec.component);
+            // Componente de sección: resuelto dinámicamente por nombre o ID (soporta snake_case y camelCase)
+            const componentName = sec.component_name || sec.componentName || sec.component;
+            const SectionComponent = (componentName ? COMPONENT_MAP[componentName] : null) || getDocumentSection(sec.id, sec.component);
 
             return {
                 ...sec,

@@ -85,6 +85,10 @@ export function getDocumentSection(
     if (COMPONENT_MAP[sectionId]) return COMPONENT_MAP[sectionId];
     // Prioridad 3: Registro explícito por ID
     if (DocumentComponentRegistry[sectionId]) return DocumentComponentRegistry[sectionId];
+    // Prioridad 4: Prefijos dinámicos de bloques conocidos
+    if (sectionId && typeof sectionId === 'string' && sectionId.startsWith('multi_section_table')) {
+        return MultiSectionTableSection;
+    }
     // Fallback: AgnosticSection para secciones dinámicas del backend
     return AgnosticSection;
 }
