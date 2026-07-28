@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Palette, Plus, Trash2, Type, Layout, Shield } from 'lucide-react';
+import { Settings, Palette, Plus, Trash2, Type, Layout, Shield, Image as ImageIcon } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
@@ -450,6 +450,58 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 })}
                                             </div>
                                         </div>
+                                        <div className="space-y-2">
+                                             <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
+                                                 <ImageIcon className="w-3.5 h-3.5" />
+                                                 Imagen de Fondo de Portada
+                                             </label>
+                                             {activeBlock.config.coverImage ? (
+                                                 <div className="relative group border border-border-thin rounded-lg overflow-hidden bg-surface-hover/30 p-1.5 flex items-center justify-between gap-3">
+                                                     <div className="flex items-center gap-2 overflow-hidden">
+                                                         <img
+                                                             src={activeBlock.config.coverImage}
+                                                             alt="Portada Personalizada"
+                                                             className="w-10 h-10 object-cover rounded-md border border-border-thin shrink-0 bg-white"
+                                                         />
+                                                         <div className="text-[10px] text-text-dim truncate">
+                                                             <span className="font-semibold text-text-main block">Personalizado</span>
+                                                             Imagen de este Bloque
+                                                         </div>
+                                                     </div>
+                                                     <button
+                                                         type="button"
+                                                         onClick={() => onUpdateConfig(activeBlock.id, 'coverImage', '')}
+                                                         className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-colors shrink-0 cursor-pointer"
+                                                         title="Usar imagen de portada del Tema Global"
+                                                     >
+                                                         <Trash2 className="w-4 h-4" />
+                                                     </button>
+                                                 </div>
+                                             ) : (
+                                                 <label className="border border-dashed border-border-thin hover:border-text-main/50 rounded-lg p-3 text-center block cursor-pointer bg-surface-hover/20 hover:bg-surface-hover/40 transition-all duration-150 relative">
+                                                     <input
+                                                         type="file"
+                                                         accept="image/png, image/jpeg, image/jpg"
+                                                         onChange={e => {
+                                                             const file = e.target.files?.[0];
+                                                             if (file) {
+                                                                 const reader = new FileReader();
+                                                                 reader.onloadend = () => {
+                                                                     onUpdateConfig(activeBlock.id, 'coverImage', reader.result as string);
+                                                                 };
+                                                                 reader.readAsDataURL(file);
+                                                             }
+                                                         }}
+                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                     />
+                                                     <div className="flex flex-col items-center justify-center gap-1 text-text-dim hover:text-text-main transition-colors">
+                                                         <Plus className="w-4 h-4" />
+                                                         <span className="text-[10px] font-bold uppercase tracking-wider">Cargar Imagen para este Bloque</span>
+                                                         <span className="text-[8px] opacity-75">Sobreescribe la portada del Tema Global</span>
+                                                     </div>
+                                                 </label>
+                                             )}
+                                         </div>
                                         <div className="space-y-3">
                                             <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Elementos de la Portada</h5>
                                             {renderElementPanel('Institucion / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLOGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution)}

@@ -34,8 +34,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _isDevelopment = environment.IsDevelopment();
             _logger = logger;
 
-            // En desarrollo, apuntamos directamente al código fuente para edición en caliente.
-            // En producción, el .csproj ya se encarga de copiar los .html al directorio de salida.
+            // En desarrollo → lee directamente del código fuente (hot-reload).
+            // En producción → lee desde el directorio de publicación (copiado por .csproj).
             _sourceRoot = _isDevelopment
                 ? FindSourceRoot()
                 : Path.Combine(AppContext.BaseDirectory, TemplatesRelativePath);

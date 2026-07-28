@@ -84,8 +84,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             return fp;
         }
 
-        // CSS base institucional DIITRA...
-        // (keeping InstitutionalBaseCss as is)
+        // CSS base institucional DIITRA (Reset neutro guiado por el esquema de temas dinámicos)
         private const string InstitutionalBaseCss = @"
             * { box-sizing: border-box; }
             
@@ -93,7 +92,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 font-family: inherit;
                 font-size: 9pt;
                 line-height: 1.3;
-                color: #1a1a1a;
+                color: inherit;
                 margin: 0;
                 padding: 0;
             }
@@ -102,7 +101,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             .doc-header {
                 width: 100%;
                 margin-bottom: 10px;
-                font-family: 'Century Gothic', 'Helvetica', sans-serif;
             }
             .header-logo {
                 height: 50px;
@@ -111,8 +109,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             /* ── Títulos de Sección ── */
             .section-title {
-                font-family: 'Century Gothic', 'Helvetica', sans-serif;
-                color: #1e2a4a;
                 font-size: 11pt;
                 font-weight: bold;
                 text-transform: uppercase;
@@ -131,13 +127,10 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 vertical-align: middle;
             }
             table.info-table td.label {
-                background-color: #1e2a4a;
-                color: #ffffff;
                 font-weight: bold;
                 text-transform: uppercase;
                 font-size: 8pt;
                 width: 30%;
-                font-family: 'Century Gothic', sans-serif;
             }
             table.info-table td.value {
                 background-color: #ffffff;
@@ -150,30 +143,16 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 margin-bottom: 15px;
             }
             table.data-table th {
-                background-color: #1e2a4a;
-                color: #ffffff;
                 font-weight: bold;
                 text-transform: uppercase;
                 padding: 6px;
                 font-size: 8.5pt;
                 border: 1px solid #000;
-                font-family: 'Century Gothic', sans-serif;
             }
             table.data-table td {
                 border: 1px solid #000;
                 padding: 5px;
                 font-size: 8.5pt;
-            }
-            
-            /* ── Fila de Fechas (Gold) ── */
-            tr.date-row td {
-                background-color: #b8912e !important;
-                color: #000;
-                font-weight: bold;
-                text-align: center;
-                font-size: 7.5pt;
-                text-transform: uppercase;
-                font-family: 'Century Gothic', sans-serif;
             }
             
             /* ── Firma Electrónica ── */
@@ -188,14 +167,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 min-height: 80px;
                 width: 48%;
                 display: inline-block;
-            }
-            
-            /* ── Configuración de Página ── */
-            @page {
-                @bottom-right {
-                    content: counter(page);
-                    font-size: 8pt;
-                }
             }
         ";
 

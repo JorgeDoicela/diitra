@@ -2,115 +2,138 @@
     box-sizing: border-box;
 }
 
-/* Reset y Core del Documento con Tematización Dinámica */
+@page {
+    margin-top: {{default theme.layout.margin_top "3cm"}};
+    margin-bottom: {{default theme.layout.margin_bottom "2cm"}};
+    margin-left: {{default theme.layout.margin_left "2cm"}};
+    margin-right: {{default theme.layout.margin_right "2cm"}};
+}
+@page:first {
+    margin: 0 !important;
+}
+
+/* Reset y Core del Documento con TematizaciÃ³n DinÃ¡mica */
 .doc-container { 
     font-family: {{ theme.typography.font_family }}; 
+    font-size: {{default theme.typography.base_size "10pt"}};
     color: {{ theme.colors.text }}; 
     line-height: {{ theme.typography.line_height }};
     padding: 0; 
     background: transparent; 
 }
 
-/* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
-.cover-page {
-    font-family: {{ theme.typography.font_family }};
-    position: relative;
+/* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
+.doc-watermark {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 210mm;
     height: 297mm;
-    background-image: url('data:image/jpeg;base64,{{portada_base64}}');
-    background-size: 100% 100%;
+    z-index: -1;
+    pointer-events: none;
+    {{#if theme.brand.background_image}}
+    background-image: url('{{ theme.brand.background_image }}');
+    background-size: {{default theme.brand.background_fit "contain"}};
+    background-position: center center;
     background-repeat: no-repeat;
+    opacity: {{default theme.brand.background_opacity "0.12"}};
+    {{/if}}
+}
+
+/* Portada (Cover Page) - Soporte para Canvas Libre */
+.cover-page {
+    font-family: {{ theme.typography.font_family }};
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: 260mm !important;
+    min-height: 260mm !important;
+    max-height: 260mm !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
     color: {{ theme.colors.primary }};
-    z-index: 1000;
-    overflow: hidden;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: always !important;
 }
 
 .cover-overlay {
-    position: absolute;
-    top: 0;
-    left: 8.8cm;
-    right: 1.2cm;
-    bottom: 0;
-    padding: 2cm 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
     text-align: center;
 }
 
 .main-label {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 28pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 24pt;
     font-weight: bold;
     color: {{ theme.colors.secondary }};
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-top: 8.2cm;
+    margin: 0;
     width: 100%;
 }
 
 .project-theme {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 18pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 16pt;
     font-weight: bold;
     color: {{ theme.colors.primary }};
     text-transform: uppercase;
-    margin-top: 2.8cm;
-    margin-bottom: 2.8cm;
-    line-height: 1.2;
+    margin: 1.5cm 0;
+    line-height: 1.3;
     width: 100%;
     word-wrap: break-word;
 }
 
 .career-container {
-    margin-top: 0;
-    margin-bottom: 2.5cm;
+    margin: 1cm 0;
     text-align: center;
     width: 100%;
 }
 
 .career-label {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 14pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 12pt;
     font-weight: bold;
     color: {{ theme.colors.primary }};
     text-transform: uppercase;
 }
 
 .career-value {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 14pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 12pt;
     font-weight: normal;
     color: {{ theme.colors.primary }};
     text-transform: uppercase;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .period-container {
     width: 100%;
-    margin-top: auto;
-    margin-bottom: 1cm;
+    margin-top: 1cm;
     text-align: center;
 }
 
 .period-label {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 12pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 11pt;
     font-weight: bold;
     text-transform: uppercase;
-    margin-bottom: 2px;
     color: {{ theme.colors.primary }};
 }
 
 .period-value {
-    font-family: 'Century Gothic', sans-serif;
-    font-size: 12pt;
+    font-family: {{ theme.typography.font_family }};
+    font-size: 11pt;
     font-weight: normal;
     text-transform: uppercase;
     color: {{ theme.colors.primary }};
+    margin-top: 2px;
 }
 
-/* Títulos de sección */
+/* TÃ­tulos de secciÃ³n */
 .title-h1 { 
     font-size: 16pt; 
     font-weight: bold; 
@@ -187,11 +210,11 @@
 .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
 .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
 
-/* Salto de página */
+/* Salto de pÃ¡gina */
 .page-break { page-break-after: always; height: 0; }
 
 /* Firmas y Trazabilidad */
-.signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
-.sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+.signatures-row { display: table; width: 100%; margin-top: 60px; page-break-inside: avoid; }
+.sig-box        { display: table-cell; width: 50%; text-align: center; padding: 12px 20px 0 20px; font-size: 9pt; line-height: 1.5; vertical-align: top; }
 .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
 .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }

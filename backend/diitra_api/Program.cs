@@ -325,20 +325,7 @@ var app = builder.Build();
 
     app.MapGet("/api/ping", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
-    // Sincronizar catálogo de plantillas al arrancar la aplicación
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        try
-        {
-            await Diitra.Infrastructure.Common.Documents.Engine.DocumentTemplateSeeder.SeedTemplatesAsync(context, logger);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al inicializar/sincronizar el catálogo de plantillas en la base de datos.");
-        }
-    }
+
 
 app.Run();
 

@@ -1,21 +1,21 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <style>
-        /* ═══════════════════════════════════════════════════════════════
-     ACTA DE DICTAMEN DE ARBITRAJE — DIITRA
-     Plantilla oficial CACES para evaluación por pares doble ciego
-     Versión 1.0 | Normativa: Reglamento RRA CES-2021
-  ═══════════════════════════════════════════════════════════════ */
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     ACTA DE DICTAMEN DE ARBITRAJE â€” DIITRA
+     Plantilla oficial CACES para evaluaciÃ³n por pares doble ciego
+     VersiÃ³n 1.0 | Normativa: Reglamento RRA CES-2021
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
         body {
-            font-family: 'Inter', 'Calibri', 'Arial', sans-serif;
-            font-size: 10.5pt;
-            color: #1a1a2e;
+            font-family: {{ theme.typography.font_family }};
+            font-size: {{default theme.typography.base_size "10.5pt"}};
+            color: {{default theme.colors.text "#1a1a2e"}};
             margin: 0;
             padding: 0;
             background: #fff;
@@ -100,7 +100,7 @@
             color: #1a1a6e;
         }
 
-        /* TABLA DE ÁRBITROS */
+        /* TABLA DE ÃRBITROS */
         table.arbitros {
             width: 100%;
             border-collapse: collapse;
@@ -127,7 +127,7 @@
             background: #f8f9ff;
         }
 
-        /* RESOLUCIÓN */
+        /* RESOLUCIÃ“N */
         .resultado-badge {
             display: inline-block;
             padding: 6px 18px;
@@ -252,54 +252,54 @@
 
 <body>
 
-    <!-- ══════════════════════════════════════════════════════
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      ENCABEZADO INSTITUCIONAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div class="dictamen-header">
-        <div class="logo-area">{{default institucion_nombre "Instituto Superior Tecnológico"}}</div>
+        <div class="logo-area">{{default institucion_nombre "Instituto Superior TecnolÃ³gico"}}</div>
         <h1>Acta de Dictamen de Arbitraje</h1>
-        <p class="subtitulo">Departamento de Investigación e Innovación Traversari — DIITRA</p>
-        <p class="subtitulo">Proceso de Evaluación por Pares Doble Ciego | Normativa CACES-IST 2024-2025</p>
-        <p class="codigo-trazabilidad">Código de Trazabilidad: {{default traceability_code "N/A"}}</p>
+        <p class="subtitulo">Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari â€” DIITRA</p>
+        <p class="subtitulo">Proceso de EvaluaciÃ³n por Pares Doble Ciego | Normativa CACES-IST 2024-2025</p>
+        <p class="codigo-trazabilidad">CÃ³digo de Trazabilidad: {{default traceability_code "N/A"}}</p>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      AVISO DOBLE CIEGO (solo si aplica)
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     {{#if es_doble_ciego}}
     <section>
         <div class="aviso-ciego">
-            <strong>PROCESO DE DOBLE CIEGO:</strong> La identidad de los árbitros evaluadores se mantiene bajo
-            reserva conforme al Art. 10 del Reglamento de Régimen Académico (CES). Los evaluadores desconocen la
-            identidad de los autores y viceversa durante el proceso de revisión.
+            <strong>PROCESO DE DOBLE CIEGO:</strong> La identidad de los Ã¡rbitros evaluadores se mantiene bajo
+            reserva conforme al Art. 10 del Reglamento de RÃ©gimen AcadÃ©mico (CES). Los evaluadores desconocen la
+            identidad de los autores y viceversa durante el proceso de revisiÃ³n.
         </div>
     </section>
     {{/if}}
 
-    <!-- ══════════════════════════════════════════════════════
-     SECCIÓN 1: DATOS DEL PROYECTO
-══════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SECCIÃ“N 1: DATOS DEL PROYECTO
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section>
         <h2>1. Datos del Proyecto Evaluado</h2>
         <table class="datos">
             <tr>
-                <td>Código Institucional:</td>
-                <td><strong>{{default codigo_institucional "Sin código asignado"}}</strong></td>
+                <td>CÃ³digo Institucional:</td>
+                <td><strong>{{default codigo_institucional "Sin cÃ³digo asignado"}}</strong></td>
             </tr>
             <tr>
-                <td>Título del Proyecto:</td>
-                <td>{{default proyecto_titulo "[Anonimizado — Doble Ciego]"}}</td>
+                <td>TÃ­tulo del Proyecto:</td>
+                <td>{{default proyecto_titulo "[Anonimizado â€” Doble Ciego]"}}</td>
             </tr>
             <tr>
                 <td>Convocatoria:</td>
                 <td>{{default convocatoria_titulo "N/A"}}</td>
             </tr>
             <tr>
-                <td>Línea de Investigación:</td>
+                <td>LÃ­nea de InvestigaciÃ³n:</td>
                 <td>{{default linea_investigacion "N/A"}}</td>
             </tr>
             <tr>
-                <td>Fecha de Postulación:</td>
+                <td>Fecha de PostulaciÃ³n:</td>
                 <td>{{default fecha_postulacion "N/A"}}</td>
             </tr>
             <tr>
@@ -309,23 +309,23 @@
         </table>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-     SECCIÓN 2: PANEL DE ÁRBITROS
-══════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SECCIÃ“N 2: PANEL DE ÃRBITROS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section>
-        <h2>2. Panel de Árbitros Evaluadores</h2>
+        <h2>2. Panel de Ãrbitros Evaluadores</h2>
         <p style="font-size:9pt; color:#555; margin-bottom:8px;">
-            La composición del panel cumple con el criterio de <strong>mínimo 2 árbitros por proyecto</strong>
-            establecido en el Art. 75 del Reglamento de Régimen Académico del CES.
+            La composiciÃ³n del panel cumple con el criterio de <strong>mÃ­nimo 2 Ã¡rbitros por proyecto</strong>
+            establecido en el Art. 75 del Reglamento de RÃ©gimen AcadÃ©mico del CES.
         </p>
 
         <table class="arbitros">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Árbitro (Anon.)</th>
+                    <th>Ãrbitro (Anon.)</th>
                     <th>Tipo</th>
-                    <th>Grado Académico</th>
+                    <th>Grado AcadÃ©mico</th>
                     <th>Puntaje Asignado</th>
                     <th>Dictamen Individual</th>
                     <th>Estado</th>
@@ -338,7 +338,7 @@
                     <td>{{sum @index 1}}</td>
                     <td>
                         {{#if ../es_doble_ciego}}
-                        Árbitro #{{sum @index 1}}
+                        Ãrbitro #{{sum @index 1}}
                         {{else}}
                         {{revisor_nombre}}
                         {{/if}}
@@ -351,21 +351,21 @@
                         {{/if}}
                     </td>
                     <td>{{default revisor_grado "N/I"}}</td>
-                    <td><strong>{{default puntaje_total "—"}}/100</strong></td>
+                    <td><strong>{{default puntaje_total "â€”"}}/100</strong></td>
                     <td>{{default dictamen_revisor "Pendiente"}}</td>
                     <td>{{estado}}</td>
-                    <td>{{default fecha_completado "—"}}</td>
+                    <td>{{default fecha_completado "â€”"}}</td>
                 </tr>
                 {{/each}}
             </tbody>
         </table>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-     SECCIÓN 3: RESOLUCIÓN FINAL
-══════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SECCIÃ“N 3: RESOLUCIÃ“N FINAL
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section>
-        <h2>3. Resolución Final del Panel</h2>
+        <h2>3. ResoluciÃ³n Final del Panel</h2>
 
         <div style="text-align:center; margin: 14px 0;">
             <div class="puntaje-box">
@@ -375,19 +375,19 @@
             &nbsp;&nbsp;&nbsp;
             <div class="puntaje-box">
                 <span class="valor">{{default puntaje_minimo "70"}}/100</span>
-                <span class="etiqueta">Puntaje Mínimo de Aprobación</span>
+                <span class="etiqueta">Puntaje MÃ­nimo de AprobaciÃ³n</span>
             </div>
         </div>
 
         <div style="text-align:center; margin: 12px 0;">
             {{#if (eq dictamen_resultado "Aprobado")}}
-            <div class="resultado-badge resultado-aprobado">✓ {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-aprobado">âœ“ {{dictamen_resultado}}</div>
             {{else}}{{#if (eq dictamen_resultado "Rechazado")}}
-            <div class="resultado-badge resultado-rechazado">✗ {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-rechazado">âœ— {{dictamen_resultado}}</div>
             {{else}}{{#if (eq dictamen_resultado "Desempate")}}
-            <div class="resultado-badge resultado-desempate">⚖ Desempate Requerido</div>
+            <div class="resultado-badge resultado-desempate">âš– Desempate Requerido</div>
             {{else}}
-            <div class="resultado-badge resultado-revision">↺ {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-revision">â†º {{dictamen_resultado}}</div>
             {{/if}}{{/if}}{{/if}}
         </div>
 
@@ -408,36 +408,36 @@
             </tr>
             <tr>
                 <td>Fundamento Normativo:</td>
-                <td>Art. 75, Reglamento de Régimen Académico (CES) — Criterios de evaluación CACES-IST Indicador I5</td>
+                <td>Art. 75, Reglamento de RÃ©gimen AcadÃ©mico (CES) â€” Criterios de evaluaciÃ³n CACES-IST Indicador I5</td>
             </tr>
         </table>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-     SECCIÓN 4: OBSERVACIONES DEL PANEL
-══════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SECCIÃ“N 4: OBSERVACIONES DEL PANEL
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section>
         <h2>4. Observaciones Consolidadas del Panel</h2>
         {{#each revisiones}}
         {{#if observaciones_gral}}
         <div>
-            <h3>Árbitro #{{sum @index 1}}:</h3>
+            <h3>Ãrbitro #{{sum @index 1}}:</h3>
             <div class="obs-box">{{observaciones_gral}}</div>
         </div>
         {{/if}}
         {{/each}}
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
-     SECCIÓN 5: CERTIFICACIÓN Y FIRMA
-══════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SECCIÃ“N 5: CERTIFICACIÃ“N Y FIRMA
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section>
-        <h2>5. Certificación Institucional</h2>
+        <h2>5. CertificaciÃ³n Institucional</h2>
         <p style="font-size:9.5pt; text-align:justify;">
-            El presente dictamen es emitido por el Departamento de Investigación e Innovación Traversari (DIITRA)
-            en cumplimiento del proceso de evaluación por pares establecido en el Reglamento de Régimen Académico
-            del Consejo de Educación Superior (CES) y los criterios de acreditación del CACES para Institutos
-            Superiores Tecnológicos. El resultado es <strong>definitivo y vinculante</strong> para la continuación
+            El presente dictamen es emitido por el Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari (DIITRA)
+            en cumplimiento del proceso de evaluaciÃ³n por pares establecido en el Reglamento de RÃ©gimen AcadÃ©mico
+            del Consejo de EducaciÃ³n Superior (CES) y los criterios de acreditaciÃ³n del CACES para Institutos
+            Superiores TecnolÃ³gicos. El resultado es <strong>definitivo y vinculante</strong> para la continuaciÃ³n
             del proyecto en el sistema SIGAFI-DIITRA.
         </p>
 
@@ -449,9 +449,9 @@
                 <div style="height:60px; border-bottom: 1px dashed #aaa; margin-bottom:4px;"></div>
                 {{/if}}
                 <div class="firma-linea"></div>
-                <div class="firma-nombre">{{default director_nombre "Director/a de Investigación"}}</div>
-                <div class="firma-cargo">Director/a de Investigación e Innovación</div>
-                <div class="firma-cargo">DIITRA — {{default institucion_nombre "IST"}}</div>
+                <div class="firma-nombre">{{default director_nombre "Director/a de InvestigaciÃ³n"}}</div>
+                <div class="firma-cargo">Director/a de InvestigaciÃ³n e InnovaciÃ³n</div>
+                <div class="firma-cargo">DIITRA â€” {{default institucion_nombre "IST"}}</div>
                 <div class="firma-cargo">Fecha: {{default fecha_cierre "N/A"}}</div>
             </div>
             <div class="firma-box">
@@ -461,21 +461,21 @@
                 </div>
                 <div class="firma-linea"></div>
                 <div class="firma-nombre">Sello DIITRA</div>
-                <div class="firma-cargo">Departamento de Investigación e Innovación Traversari</div>
-                <div class="firma-cargo">{{default institucion_nombre "Instituto Superior Tecnológico"}}</div>
+                <div class="firma-cargo">Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari</div>
+                <div class="firma-cargo">{{default institucion_nombre "Instituto Superior TecnolÃ³gico"}}</div>
                 <div class="firma-cargo">Quito, Ecuador</div>
             </div>
         </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      PIE DE LEGITIMIDAD
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div class="legitimidad">
-        Este documento ha sido generado automáticamente por el Sistema DIITRA v2.0.
+        Este documento ha sido generado automÃ¡ticamente por el Sistema DIITRA v2.0.
         Su autenticidad puede verificarse en: <strong>{{default verification_url
             "https://diitra.ist.edu.ec/verificar"}}</strong><br />
-        Código de Trazabilidad: {{default traceability_code "N/A"}} |
+        CÃ³digo de Trazabilidad: {{default traceability_code "N/A"}} |
         Generado el {{default fecha_generacion ""}} (UTC-5)
     </div>
 

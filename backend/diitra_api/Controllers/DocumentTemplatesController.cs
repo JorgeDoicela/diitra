@@ -138,6 +138,24 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// Restablece una plantilla en la BD a sus archivos físicos oficiales (HTML y CSS).
+        /// </summary>
+        [HttpPost("{code}/reset-to-default")]
+        public async Task<IActionResult> ResetToDefault(string code, CancellationToken ct)
+        {
+            try
+            {
+                var updatedBy = User.Identity?.Name ?? "admin";
+                await _documentEngine.ResetTemplateToDefaultAsync(code, updatedBy, ct);
+                return Ok(new { message = $"Plantilla '{code}' restablecida exitosamente a sus archivos por defecto de fábrica." });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = $"Plantilla '{code}' no encontrada." });
+            }
+        }
+
+        /// <summary>
         /// Actualiza la configuración de firmas de una plantilla.
         /// </summary>
         [HttpPut("{code}/signature-config")]

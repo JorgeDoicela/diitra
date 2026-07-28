@@ -37,7 +37,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"dominio\", \"linea_investigacion\", \"sublinea_investigacion\", \"tipo_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"antecedentes\", \"descripcion_proyecto\", \"justificacion\", \"objetivo_general\", \"objetivos_especificos\", \"ods\", \"marco_teorico\", \"metodologia\", \"evaluacion\", \"bibliografia\"]",
-                version: 1);
+                version: 300);
 
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)
@@ -66,7 +66,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"resumen_ejecutivo\", \"cumplimiento_objetivos\", \"resultados\", \"discusion\", \"impacto_final\", \"transferencia_conocimiento\", \"conclusiones\", \"recomendaciones\", \"bibliografia_final\"]",
-                version: 1);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: RubricaEvaluacionTemplate.CODE,
@@ -79,7 +79,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"Pertinencia\", \"Metodologia\", \"Viabilidad\", \"Impacto\", \"ComentariosGenerales\", \"RecomendacionFinal\"]",
-                version: 1);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: InformeAvanceTemplate.CODE,
@@ -92,7 +92,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"HitosCompletados\", \"Evidencias\", \"PresupuestoEjecutado\", \"ConclusionesParciales\"]",
-                version: 1);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: ReporteAnaliticasTemplate.CODE,
@@ -104,7 +104,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: false,
-                version: 1);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: "DICTAMEN_ARBITRAJE",
@@ -116,7 +116,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 supportsBlind: true,
                 requiresTraceability: true,
                 requiresSignature: true,
-                version: 1);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: "ACTA_COMITE_ETICA",
@@ -129,7 +129,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"JustificacionEtica\", \"RiesgosIdentificados\", \"MetodoConsentimiento\", \"DictamenComite\", \"ObservacionesEspecificas\"]",
-                version: 1);
+                version: 20);
 
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html

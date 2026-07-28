@@ -178,20 +178,7 @@ namespace Diitra.Infrastructure.Common.Documents
                     }
                     else throw new KeyNotFoundException($"Plantilla '{request.TemplateCode}' no disponible.");
                 }
-                else
-                {
-                    var seed = DocumentTemplateRegistry.GetByCode(request.TemplateCode);
-                    if (seed != null && (seed.Version > template.Version || 
-                                         (seed.Version == template.Version && 
-                                          (seed.SupportsBlindMode != template.SupportsBlindMode || 
-                                           seed.RequiresLopdpClause != template.RequiresLopdpClause || 
-                                           seed.RequiresElectronicSignature != template.RequiresElectronicSignature))))
-                    {
-                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando v{SeedVersion} de '{Code}' por cambio de metadatos...", seed.Version, request.TemplateCode);
-                        template.SyncWithSeed(seed);
-                        await _templateRepository.SaveAsync(template, cancellationToken);
-                    }
-                }
+
 
                 // 2. Validaciones
                 if (request.IsBlindMode && !template.SupportsBlindMode)
@@ -199,79 +186,19 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
-                // 3. Cargar HTML desde la Base de Datos prioritariamente (Gobernanza de Plantillas /admin/plantillas).
-                //    Si está vacío en BD, intentamos cargar desde el archivo físico (hot-reload / seed) e inicializar la BD.
+                // 3. HTML y CSS: Arquitectura Fallback (File-First Default + DB Customization Override)
+                //    - Si el Administrador personalizó la plantilla desde la web, usa el Override de la BD.
+                //    - De lo contrario, lee directamente el archivo físico oficial de Git (desarrollador).
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
-                var htmlToRender = template.HtmlContent;
+                var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                if (string.IsNullOrEmpty(htmlToRender))
-                {
-                    htmlToRender = fileHtml;
-                    if (fileHtml != null)
-                    {
-                        _logger.LogInformation("DIITRA DocumentEngine: Inicializando plantilla '{Code}' en BD desde archivo físico...", template.Code);
-                        template.UpdateHtmlContentOnly(fileHtml);
-                        await _templateRepository.SaveAsync(template, cancellationToken);
-                    }
-                }
-                else if (fileHtml != null && !htmlToRender.Contains("DIITRA_SECTIONS_JSON"))
-                {
-                    // Fallback resiliente: Si el archivo físico tiene metadatos de bloques pero la BD no,
-                    // sincronizamos para no perder el estado inicial.
-                    if (fileHtml.Contains("DIITRA_SECTIONS_JSON"))
-                    {
-                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando metadatos iniciales del archivo físico '{Code}' hacia la BD...", template.Code);
-                        template.UpdateHtmlContentOnly(fileHtml);
-                        await _templateRepository.SaveAsync(template, cancellationToken);
-                        htmlToRender = fileHtml;
-                    }
-                }
+                var htmlToRender = !string.IsNullOrWhiteSpace(template.HtmlContent)
+                    ? template.HtmlContent
+                    : fileHtml;
 
-                // 3b. Cargar CSS asociado
-                var fileCss = await _templateFileLoader.LoadCssAsync(template.Code);
-                var cssToUse = template.CustomCss;
-
-                // Sanación en caliente de la plantilla para resolver el bug de career -> carrera y extraer estilos embebidos hacia CustomCss
-                bool needsSave = false;
-                if (!string.IsNullOrEmpty(htmlToRender) && htmlToRender.Contains("{{default career"))
-                {
-                    _logger.LogInformation("DIITRA DocumentEngine: Sanando plantilla '{Code}' en BD corrigiendo 'career' por 'carrera'...", template.Code);
-                    htmlToRender = htmlToRender.Replace("{{default career", "{{default carrera");
-                    needsSave = true;
-                }
-
-                if (!string.IsNullOrEmpty(htmlToRender) && htmlToRender.Contains("<style>") && htmlToRender.Contains("</style>"))
-                {
-                    var styleStart = htmlToRender.IndexOf("<style>");
-                    var styleEnd = htmlToRender.IndexOf("</style>");
-                    if (styleEnd > styleStart)
-                    {
-                        var styleContent = htmlToRender.Substring(styleStart + 7, styleEnd - styleStart - 7).Trim();
-                        var cleanHtml = (htmlToRender.Substring(0, styleStart) + htmlToRender.Substring(styleEnd + 8)).Trim();
-                        
-                        _logger.LogInformation("DIITRA DocumentEngine: Extrayendo estilo embebido de '{Code}' en BD hacia CustomCss...", template.Code);
-                        htmlToRender = cleanHtml;
-                        cssToUse = styleContent;
-                        template.UpdateCustomCssOnly(cssToUse);
-                        needsSave = true;
-                    }
-                }
-
-                if (needsSave)
-                {
-                    template.UpdateHtmlContentOnly(htmlToRender ?? string.Empty);
-                    await _templateRepository.SaveAsync(template, cancellationToken);
-                }
-
-                if (string.IsNullOrEmpty(cssToUse))
-                {
-                    cssToUse = fileCss;
-                    if (fileCss != null)
-                    {
-                        template.UpdateCustomCssOnly(fileCss);
-                        await _templateRepository.SaveAsync(template, cancellationToken);
-                    }
-                }
+                var cssToUse = !string.IsNullOrWhiteSpace(template.CustomCss)
+                    ? template.CustomCss
+                    : fileCss;
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
@@ -397,37 +324,50 @@ namespace Diitra.Infrastructure.Common.Documents
                     }
                 }
 
-                // CARGA DE PORTADA DESACOPLADA (Por convención de nombres o fallback histórico)
+                // CARGA DE PORTADA DESACOPLADA (Schema-driven desde Tema Global o Plantilla con Fallback Histórico)
                 string? coverBase64 = null;
-                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
+                bool isCoverConfigured = false;
+
+                if (baseThemeDict.TryGetValue("brand", out var brandObj) && brandObj != null)
                 {
                     try
                     {
-                        using var doc = JsonDocument.Parse(template.ThemeConfigJson);
-                        if (doc.RootElement.TryGetProperty("brand", out var brandEl) &&
-                            brandEl.TryGetProperty("coverImage", out var coverEl) &&
-                            coverEl.ValueKind == JsonValueKind.String)
+                        string? rawVal = null;
+                        if (brandObj is JsonElement brandEl && brandEl.ValueKind == JsonValueKind.Object)
                         {
-                            var rawVal = coverEl.GetString();
-                            if (!string.IsNullOrEmpty(rawVal))
+                            if (brandEl.TryGetProperty("coverImage", out var cEl) || brandEl.TryGetProperty("cover_image", out cEl))
                             {
-                                coverBase64 = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
+                                isCoverConfigured = true;
+                                if (cEl.ValueKind == JsonValueKind.String) rawVal = cEl.GetString();
                             }
+                        }
+                        else if (brandObj is Dictionary<string, object> brandDict)
+                        {
+                            if (brandDict.TryGetValue("coverImage", out var cVal) || brandDict.TryGetValue("cover_image", out cVal))
+                            {
+                                isCoverConfigured = true;
+                                rawVal = cVal?.ToString();
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(rawVal))
+                        {
+                            coverBase64 = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error decodificando coverImage del ThemeConfigJson para la plantilla [{Code}].", template.Code);
+                        _logger.LogError(ex, "Error decodificando coverImage del tema para la plantilla [{Code}].", template.Code);
                     }
                 }
 
-                if (string.IsNullOrEmpty(coverBase64))
+                // Cargar fallback de disco SOLO SI la portada no ha sido configurada en el tema
+                if (string.IsNullOrEmpty(coverBase64) && !isCoverConfigured)
                 {
                     var possibleCoverNames = new[]
                     {
                         $"portada_{template.Code.ToLower()}",
-                        $"portada_{template.Category.ToString().ToLower()}",
-                        template.Code == ProyectoInvestigacionTemplate.CODE ? "portada_proyecto" : null
+                        $"portada_{template.Category.ToString().ToLower()}"
                     }.Where(n => n != null).Cast<string>();
 
                     foreach (var coverName in possibleCoverNames)
@@ -544,40 +484,53 @@ namespace Diitra.Infrastructure.Common.Documents
                                            ?? "https://diitra.ist.edu.ec";
 
                 // 7. Renderizado a PDF
-                //    Carga de fondo de hojas (stationary) desacoplada (Por convención de nombres o fallback histórico)
+                //    Carga de fondo de hojas (stationary) desacoplada (Schema-driven desde Tema Global o Plantilla)
                 ImageData? stationaryImage = null;
-                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
+                bool isExplicitlyConfigured = false;
+
+                if (baseThemeDict.TryGetValue("brand", out var bgBrandObj) && bgBrandObj != null)
                 {
                     try
                     {
-                        using var doc = JsonDocument.Parse(template.ThemeConfigJson);
-                        if (doc.RootElement.TryGetProperty("brand", out var brandEl) &&
-                            brandEl.TryGetProperty("backgroundImage", out var bgEl) &&
-                            bgEl.ValueKind == JsonValueKind.String)
+                        string? rawVal = null;
+                        if (bgBrandObj is JsonElement brandEl && brandEl.ValueKind == JsonValueKind.Object)
                         {
-                            var rawVal = bgEl.GetString();
-                            if (!string.IsNullOrEmpty(rawVal))
+                            if (brandEl.TryGetProperty("backgroundImage", out var bgEl) || brandEl.TryGetProperty("background_image", out bgEl))
                             {
-                                var base64Data = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
-                                var bytes = Convert.FromBase64String(base64Data);
-                                stationaryImage = ImageDataFactory.Create(bytes);
+                                isExplicitlyConfigured = true;
+                                if (bgEl.ValueKind == JsonValueKind.String) rawVal = bgEl.GetString();
                             }
+                        }
+                        else if (bgBrandObj is Dictionary<string, object> brandDict)
+                        {
+                            if (brandDict.TryGetValue("backgroundImage", out var bgVal) || brandDict.TryGetValue("background_image", out bgVal))
+                            {
+                                isExplicitlyConfigured = true;
+                                rawVal = bgVal?.ToString();
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(rawVal))
+                        {
+                            var base64Data = rawVal.Contains(",") ? rawVal.Split(',')[1] : rawVal;
+                            var bytes = Convert.FromBase64String(base64Data);
+                            stationaryImage = ImageDataFactory.Create(bytes);
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error decodificando backgroundImage del ThemeConfigJson para la plantilla [{Code}].", template.Code);
+                        _logger.LogError(ex, "Error decodificando backgroundImage del tema para la plantilla [{Code}].", template.Code);
                     }
                 }
 
-                if (stationaryImage == null)
+                // Cargar fallback de disco SOLO SI la propiedad no ha sido configurada en el esquema del tema
+                if (stationaryImage == null && !isExplicitlyConfigured)
                 {
                     var possibleBackgroundNames = new[]
                     {
                         $"fondo_{template.Code.ToLower()}",
                         $"fondo_hojas_{template.Code.ToLower()}",
-                        $"fondo_hojas_{template.Category.ToString().ToLower()}",
-                        template.Code == ProyectoInvestigacionTemplate.CODE ? "fondo_hojas_investigacion" : null
+                        $"fondo_hojas_{template.Category.ToString().ToLower()}"
                     }.Where(n => n != null).Cast<string>();
 
                     foreach (var bgName in possibleBackgroundNames)
@@ -676,6 +629,22 @@ namespace Diitra.Infrastructure.Common.Documents
             CancellationToken cancellationToken = default)
         {
             return await _templateRepository.GetAllActiveAsync(cancellationToken);
+        }
+
+        public async Task ResetTemplateToDefaultAsync(
+            string templateCode, string updatedBy,
+            CancellationToken cancellationToken = default)
+        {
+            var template = await _templateRepository.FindByCodeAsync(templateCode, cancellationToken)
+                ?? throw new KeyNotFoundException($"Plantilla '{templateCode}' no encontrada.");
+
+            // Al restablecer a fábrica, se limpian las columnas de Override en la BD,
+            // de modo que el motor vuelve a leer directamente los archivos físicos en disco.
+            template.UpdateHtmlContentOnly(string.Empty);
+            template.UpdateCustomCssOnly(null);
+
+            await _templateRepository.SaveAsync(template, cancellationToken);
+            _logger.LogInformation("DIITRA DocumentEngine: Plantilla [{Code}] restablecida a la versión por defecto de fábrica por [{User}].", templateCode, updatedBy);
         }
 
         public async Task UpdateTemplateAsync(

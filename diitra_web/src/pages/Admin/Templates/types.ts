@@ -106,6 +106,7 @@ export interface DocumentBlock {
         colorTema?: string;
         showInstitution?: boolean;
         textoInstitucion?: string;
+        coverImage?: string;
         // posicionamiento libre (% relativo al canvas A4 210×297mm)
         xInstitution?: number;     yInstitution?: number;  // default: x=10, y=4
         xTitle?: number;           yTitle?: number;         // default: x=10, y=35

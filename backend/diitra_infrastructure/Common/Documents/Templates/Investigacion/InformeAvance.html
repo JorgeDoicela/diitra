@@ -1,30 +1,30 @@
-<style>
-    .doc-container { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #1e2a4a; line-height: 1.6; padding: 30px; }
-    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; }
-    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: #b8912e; text-transform: uppercase; margin-bottom: 20px; }
-    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; }
-    .section-title { background: #1e2a4a; color: #fff; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
+﻿<style>
+    .doc-container { font-family: {{ theme.typography.font_family }}; color: {{ theme.colors.text }}; line-height: {{default theme.typography.line_height "1.6"}}; padding: 30px; }
+    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; color: {{ theme.colors.primary }}; }
+    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: {{ theme.colors.secondary }}; text-transform: uppercase; margin-bottom: 20px; }
+    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; color: {{ theme.colors.primary }}; }
+    .section-title { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
     .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; }
     .info-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; }
     .info-table .label { font-weight: bold; background: #f1f5f9; width: 30%; text-transform: uppercase; font-size: 8pt; color: #475569; }
     .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9.5pt; }
-    .data-table th { background: #1e2a4a; color: #fff; padding: 8px; text-align: left; text-transform: uppercase; font-size: 8.5pt; border: 1px solid #1e2a4a; }
+    .data-table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; padding: 8px; text-align: left; text-transform: uppercase; font-size: 8.5pt; border: 1px solid {{ theme.colors.primary }}; }
     .data-table td { border: 1px solid #cbd5e1; padding: 8px; }
     .content-box { border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 20px; text-align: justify; min-height: 80px; background: #fff; border-radius: 4px; font-size: 9.5pt; }
-    .firma-box { border-top: 1px solid #1e2a4a; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
+    .firma-box { border-top: 1px solid {{ theme.colors.primary }}; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
 </style>
 
 <div class="doc-container">
     <div style="text-align:center">
         <h1 class="main-title">INFORME DE AVANCE DE PROYECTO</h1>
-        <div class="report-type">Ejecución, Monitoreo e Hitos Parciales — Fase 3</div>
+        <div class="report-type">EjecuciÃ³n, Monitoreo e Hitos Parciales â€” Fase 3</div>
     </div>
 
-    <div class="project-name">{{default titulo 'PROYECTO EN EJECUCIÓN'}}</div>
+    <div class="project-name">{{default titulo 'PROYECTO EN EJECUCIÃ“N'}}</div>
 
     <div class="section-title">1. Datos Generales del Monitoreo</div>
     <table class="info-table">
-        <tr><td class="label">Código de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
+        <tr><td class="label">CÃ³digo de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
         <tr><td class="label">Periodo Evaluado:</td><td>{{default periodo '2026-05-22'}}</td></tr>
         <tr><td class="label">Director del Proyecto:</td><td>{{default nombre_director '...'}}</td></tr>
     </table>
@@ -33,7 +33,7 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>Descripción del Hito / Actividad</th>
+                <th>DescripciÃ³n del Hito / Actividad</th>
                 <th style="width: 120px; text-align: center;">Porcentaje Avance</th>
             </tr>
         </thead>
@@ -44,7 +44,7 @@
                 <td style="text-align: center; font-weight: bold;">{{this.avance}}%</td>
             </tr>
             {{else}}
-            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran hitos específicos en este avance.</td></tr>
+            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran hitos especÃ­ficos en este avance.</td></tr>
             {{/each}}
         </tbody>
     </table>
@@ -53,7 +53,7 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>Descripción de la Evidencia</th>
+                <th>DescripciÃ³n de la Evidencia</th>
                 <th style="width: 150px;">Tipo de Archivo / Enlace</th>
             </tr>
         </thead>
@@ -84,14 +84,14 @@
                 <td style="text-align: right; font-weight: bold;">{{moneda this.monto}}</td>
             </tr>
             {{else}}
-            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registra ejecución presupuestaria en este periodo.</td></tr>
+            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registra ejecuciÃ³n presupuestaria en este periodo.</td></tr>
             {{/each}}
         </tbody>
     </table>
 
     <div class="section-title">5. Conclusiones y Logros Parciales</div>
     <div class="content-box">
-        {{default ConclusionesParciales 'Pendiente de redacción o sin conclusiones parciales registradas.'}}
+        {{default ConclusionesParciales 'Pendiente de redacciÃ³n o sin conclusiones parciales registradas.'}}
     </div>
 
     <div style="display:flex; justify-content:space-between; margin-top:80px">
@@ -101,9 +101,9 @@
             Responsable del Proyecto
         </div>
         <div class="firma-box">
-            <strong>Comisión de Acompañamiento</strong><br/>
+            <strong>ComisiÃ³n de AcompaÃ±amiento</strong><br/>
             DIITRA Monitor<br/>
-            Aprobación de Avance
+            AprobaciÃ³n de Avance
         </div>
     </div>
 </div>

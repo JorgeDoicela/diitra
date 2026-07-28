@@ -1,8 +1,8 @@
-<style>
+﻿<style>
     .doc-container {
-        font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
-        color: #1e2a4a;
-        line-height: 1.5;
+        font-family: {{ theme.typography.font_family }};
+        color: {{ theme.colors.text }};
+        line-height: {{default theme.typography.line_height "1.5"}};
         padding: 0;
         margin: 0;
     }
@@ -18,7 +18,7 @@
     }
 
     .cover-border {
-        border: 3px solid #1e2a4a;
+        border: 3px solid {{ theme.colors.primary }};
         padding: 40px 30px;
         width: 100%;
     }
@@ -37,12 +37,12 @@
         text-transform: uppercase;
         margin: 15px 0 5px 0;
         letter-spacing: -0.5px;
-        color: #1e2a4a;
+        color: {{ theme.colors.primary }};
     }
 
     .cover-subtitle {
         font-size: 11pt;
-        color: #b8912e;
+        color: {{ theme.colors.secondary }};
         font-weight: 700;
         text-transform: uppercase;
         margin-bottom: 25px;
@@ -56,11 +56,11 @@
     }
 
     .cover-meta strong {
-        color: #1e2a4a;
+        color: {{ theme.colors.primary }};
     }
 
     .section-title {
-        background: #1e2a4a;
+        background: {{ theme.colors.primary }};
         color: #fff;
         padding: 8px 20px;
         font-weight: bold;
@@ -83,11 +83,11 @@
         border-radius: 4px;
         padding: 12px;
         text-align: center;
-        border-top: 3px solid #1e2a4a;
+        border-top: 3px solid {{ theme.colors.primary }};
     }
 
     .kpi-card.accent-gold {
-        border-top-color: #b8912e;
+        border-top-color: {{ theme.colors.secondary }};
     }
 
     .kpi-card.accent-emerald {
@@ -101,7 +101,7 @@
     .kpi-value {
         font-size: 20pt;
         font-weight: 900;
-        color: #1e2a4a;
+        color: {{ theme.colors.primary }};
         margin: 4px 0;
     }
 
@@ -127,13 +127,13 @@
     }
 
     .data-table th {
-        background: #1e2a4a;
-        color: #fff;
+        background: {{ theme.colors.table_header_bg }};
+        color: {{ theme.colors.table_header_color }};
         padding: 6px 8px;
         text-align: left;
         text-transform: uppercase;
         font-size: 7.5pt;
-        border: 1px solid #1e2a4a;
+        border: 1px solid {{ theme.colors.primary }};
     }
 
     .data-table td {
@@ -218,7 +218,7 @@
     .caces-code {
         font-size: 7pt;
         font-weight: 800;
-        background: #1e2a4a;
+        background: {{ theme.colors.primary }};
         color: #fff;
         padding: 2px 6px;
         border-radius: 3px;
@@ -228,7 +228,7 @@
     .caces-title {
         font-size: 9.5pt;
         font-weight: 700;
-        color: #1e2a4a;
+        color: {{ theme.colors.primary }};
         margin-bottom: 2px;
     }
 
@@ -307,14 +307,14 @@
     <!-- PORTADA -->
     <div class="cover-page">
         <div class="cover-border">
-            <div class="cover-institution">Tecnológico Traversari — Quito, Ecuador</div>
-            <div class="cover-title">Reporte de Analíticas de<br>Investigación e Innovación</div>
-            <div class="cover-subtitle">Departamento DIITRA — Consola Directiva</div>
+            <div class="cover-institution">TecnolÃ³gico Traversari â€” Quito, Ecuador</div>
+            <div class="cover-title">Reporte de AnalÃ­ticas de<br>InvestigaciÃ³n e InnovaciÃ³n</div>
+            <div class="cover-subtitle">Departamento DIITRA â€” Consola Directiva</div>
             <div class="cover-meta">
                 <strong>Periodo:</strong> {{default periodo 'Todos los Periodos'}} &nbsp;&nbsp;|&nbsp;&nbsp;
-                <strong>Carrera:</strong> {{default carrera 'Todas las Tecnologías'}}<br>
-                <strong>Fecha de generación:</strong> {{fecha_generacion}}<br>
-                <strong>Código de trazabilidad:</strong> {{default traceability_code 'PENDIENTE'}}<br>
+                <strong>Carrera:</strong> {{default carrera 'Todas las TecnologÃ­as'}}<br>
+                <strong>Fecha de generaciÃ³n:</strong> {{fecha_generacion}}<br>
+                <strong>CÃ³digo de trazabilidad:</strong> {{default traceability_code 'PENDIENTE'}}<br>
                 <strong>Emitido por:</strong> {{default generado_por 'Sistema DIITRA'}}
             </div>
         </div>
@@ -324,29 +324,29 @@
     <div class="section-title">1. Resumen Ejecutivo de Indicadores</div>
     <div class="kpi-row">
         <div class="kpi-card">
-            <div class="kpi-label">Proyectos de Investigación</div>
+            <div class="kpi-label">Proyectos de InvestigaciÃ³n</div>
             <div class="kpi-value">{{total_proyectos}}</div>
-            <div class="kpi-sub">{{proyectos_ejecucion}} en ejecución · {{proyectos_borrador}} en borrador</div>
+            <div class="kpi-sub">{{proyectos_ejecucion}} en ejecuciÃ³n Â· {{proyectos_borrador}} en borrador</div>
         </div>
         <div class="kpi-card accent-emerald">
-            <div class="kpi-label">Producción Científica</div>
+            <div class="kpi-label">ProducciÃ³n CientÃ­fica</div>
             <div class="kpi-value">{{total_productos}}</div>
-            <div class="kpi-sub">{{articulos_indexados}} artículos · {{prototipos}} prototipos</div>
+            <div class="kpi-sub">{{articulos_indexados}} artÃ­culos Â· {{prototipos}} prototipos</div>
         </div>
         <div class="kpi-card accent-gold">
             <div class="kpi-label">Presupuesto</div>
             <div class="kpi-value">{{presupuesto_total}}</div>
-            <div class="kpi-sub">{{presupuesto_ejecutado}} ejecutado · {{porcentaje_ejecucion}}%</div>
+            <div class="kpi-sub">{{presupuesto_ejecutado}} ejecutado Â· {{porcentaje_ejecucion}}%</div>
         </div>
         <div class="kpi-card accent-violet">
-            <div class="kpi-label">Redes de Investigación</div>
+            <div class="kpi-label">Redes de InvestigaciÃ³n</div>
             <div class="kpi-value">{{total_grupos}}</div>
-            <div class="kpi-sub">{{investigadores_activos}} docentes · {{convocatorias}} convocatorias</div>
+            <div class="kpi-sub">{{investigadores_activos}} docentes Â· {{convocatorias}} convocatorias</div>
         </div>
     </div>
 
-    <!-- DISTRIBUCIÓN POR ESTADO -->
-    <div class="section-title">2. Distribución por Estado y Línea de Investigación</div>
+    <!-- DISTRIBUCIÃ“N POR ESTADO -->
+    <div class="section-title">2. DistribuciÃ³n por Estado y LÃ­nea de InvestigaciÃ³n</div>
     <div class="dual-col">
         <div class="dual-col-left">
             <table class="data-table">
@@ -372,7 +372,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Línea de Investigación</th>
+                        <th>LÃ­nea de InvestigaciÃ³n</th>
                         <th style="width: 60px; text-align: center;">Proy.</th>
                         <th style="width: 80px; text-align: right;">Presupuesto</th>
                     </tr>
@@ -393,7 +393,7 @@
     <!-- CUMPLIMIENTO CACES -->
     <div class="section-title">3. Cumplimiento de Indicadores CACES</div>
     <p style="font-size: 8pt; color: #64748b; margin: 0 0 10px 0;">
-        Evaluación del modelo de acreditación del Consejo de Aseguramiento de la Calidad de la Educación Superior.
+        EvaluaciÃ³n del modelo de acreditaciÃ³n del Consejo de Aseguramiento de la Calidad de la EducaciÃ³n Superior.
         Los indicadores se calculan sobre el corte de datos seleccionado.
     </p>
 
@@ -410,7 +410,7 @@
         <div class="progress-bar-container">
             <div class="progress-bar-fill {{bar_color}}" {{#if progreso}}style="width: {{progreso}}%"{{/if}}></div>
         </div>
-        <div class="caces-meta">{{valor_actual}} · Meta: {{meta}}</div>
+        <div class="caces-meta">{{valor_actual}} Â· Meta: {{meta}}</div>
     </div>
     {{/each}}
 
@@ -419,9 +419,9 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 50px;">Código</th>
+                <th style="width: 50px;">CÃ³digo</th>
                 <th>Proyecto</th>
-                <th style="width: 110px;">Línea de Investigación</th>
+                <th style="width: 110px;">LÃ­nea de InvestigaciÃ³n</th>
                 <th style="width: 80px; text-align: right;">Presupuesto</th>
                 <th style="width: 45px; text-align: center;">Alum.</th>
                 <th style="width: 45px; text-align: center;">Prod.</th>
@@ -448,8 +448,8 @@
         </tbody>
     </table>
 
-    <!-- PARTICIPACIÓN -->
-    <div class="section-title">5. Métricas de Participación</div>
+    <!-- PARTICIPACIÃ“N -->
+    <div class="section-title">5. MÃ©tricas de ParticipaciÃ³n</div>
     <div class="kpi-row">
         <div class="kpi-card">
             <div class="kpi-label">Docentes Vinculados</div>
@@ -462,15 +462,15 @@
             <div class="kpi-sub">de {{total_grupos}} grupos registrados</div>
         </div>
         <div class="kpi-card accent-gold">
-            <div class="kpi-label">Vinculación Formativa</div>
+            <div class="kpi-label">VinculaciÃ³n Formativa</div>
             <div class="kpi-value">{{proyectos_con_estudiantes}}</div>
-            <div class="kpi-sub">proyectos con participación estudiantil</div>
+            <div class="kpi-sub">proyectos con participaciÃ³n estudiantil</div>
         </div>
     </div>
 
     <div class="info-footer">
-        ISTPET &mdash; Departamento de Investigación e Innovación (DIITRA)<br>
-        Documento generado electrónicamente · Código de trazabilidad: {{default traceability_code 'PENDIENTE'}}<br>
-        Ecuador, {{default fecha_generacion '—'}}
+        ISTPET &mdash; Departamento de InvestigaciÃ³n e InnovaciÃ³n (DIITRA)<br>
+        Documento generado electrÃ³nicamente Â· CÃ³digo de trazabilidad: {{default traceability_code 'PENDIENTE'}}<br>
+        Ecuador, {{default fecha_generacion 'â€”'}}
     </div>
 </div>

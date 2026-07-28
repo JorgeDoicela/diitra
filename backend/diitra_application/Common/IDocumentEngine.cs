@@ -117,6 +117,11 @@ namespace Diitra.Application.Common.Documents
         Task UpdateTemplateAsync(string templateCode, string newHtmlContent, string? customCss, string? collaborativeFieldsJson, string? themeConfigJson, string updatedBy, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Restablece una plantilla en la BD a sus archivos físicos oficiales de origen.
+        /// </summary>
+        Task ResetTemplateToDefaultAsync(string templateCode, string updatedBy, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Actualiza la configuración de firmas de una plantilla (panel de administración).
         /// </summary>
         Task UpdateSignatureConfigAsync(string templateCode, bool requiresSignature, string signatureType, string updatedBy, CancellationToken cancellationToken = default);

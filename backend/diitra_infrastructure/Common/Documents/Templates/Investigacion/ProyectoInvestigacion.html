@@ -3,19 +3,17 @@
 <div class="doc-container">
 
   <!-- BLOQUE: PORTADA -->
-  <div class="page">
-    <div class="cover-page">
-      <div class="cover-overlay">
-        <h1 class="main-label">PROYECTO DE INVESTIGACIÓN</h1>
-        <div class="project-theme">{{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}</div>
-        <div class="career-container">
-          <div class="career-label">TECNOLOGÍA SUPERIOR EN</div>
-          <div class="career-value">{{default carrera '________________________'}}</div>
-        </div>
-        <div class="period-container">
-          <div class="period-label">PERIODO ACADÉMICO</div>
-          <div class="period-value">{{default periodo '________________________'}}</div>
-        </div>
+  <div class="cover-page">
+    <div class="cover-overlay">
+      <h1 class="main-label">PROYECTO DE INVESTIGACIÓN</h1>
+      <div class="project-theme">{{default titulo (default title 'ESCRIBIR EL TEMA EN MAYÚSCULAS')}}</div>
+      <div class="career-container">
+        <div class="career-label">TECNOLOGÍA SUPERIOR EN</div>
+        <div class="career-value">{{default carrera (default carrera_nombre '________________________')}}</div>
+      </div>
+      <div class="period-container">
+        <div class="period-label">PERIODO ACADÉMICO</div>
+        <div class="period-value">{{default periodo (default periodo_academico '________________________')}}</div>
       </div>
     </div>
   </div>
@@ -25,11 +23,11 @@
   <table class="info-table">
     <tbody>
       <tr>
-        <td class="label-cell">Título del Proyecto</td>
+        <td class="label-cell">TÃ­tulo del Proyecto</td>
         <td style="font-weight: bold;">{{default titulo "[TEMA / NOMBRE DEL PROYECTO]"}}</td>
       </tr>
       <tr>
-        <td class="label-cell">Carrera / Unidad Académica</td>
+        <td class="label-cell">Carrera / Unidad AcadÃ©mica</td>
         <td>{{default carrera "No especificada"}}</td>
       </tr>
       <tr>
@@ -37,10 +35,10 @@
         <td>{{default convocatoria "No especificada"}}</td>
       </tr>
       <tr>
-        <td class="label-cell">Línea de Investigación</td>
+        <td class="label-cell">LÃ­nea de InvestigaciÃ³n</td>
         <td>
-          <div><strong>Línea:</strong> {{default linea_investigacion "No especificada"}}</div>
-          <div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>
+          <div><strong>LÃ­nea:</strong> {{default linea_investigacion "No especificada"}}</div>
+          <div style="margin-top: 4px;"><strong>SublÃ­nea:</strong> {{default sublinea_investigacion "No especificada"}}</div>
         </td>
       </tr>
       <tr>
@@ -57,7 +55,7 @@
       <tr>
         <th style="background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};">Nombre Completo</th>
         <th style="background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};">Rol en Proyecto</th>
-        <th style="background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};">Cédula</th>
+        <th style="background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};">CÃ©dula</th>
         <th style="background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }};">Horas</th>
       </tr>
     </thead>
@@ -73,59 +71,59 @@
     </tbody>
   </table>
 
-  <!-- BLOQUES DE CONTENIDO CIENTÍFICO (Antecedentes, Justificación, etc.) -->
-  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 20px; margin-bottom: 10px;">3. Plan Técnico del Proyecto</p>
+  <!-- BLOQUES DE CONTENIDO CIENTÃFICO (Antecedentes, JustificaciÃ³n, etc.) -->
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 20px; margin-bottom: 10px;">3. Plan TÃ©cnico del Proyecto</p>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.1 Antecedentes EspecÃ­ficos de la ProblemÃ¡tica</p>
     <div class="rich-content">{{default antecedentes "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.2 DescripciÃ³n General de la Propuesta</p>
     <div class="rich-content">{{default descripcion_proyecto "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.3 JustificaciÃ³n e Importancia</p>
     <div class="rich-content">{{default justificacion "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de InvestigaciÃ³n</p>
     <div class="rich-content" style="margin-bottom: 8px;">
       <strong>Objetivo General:</strong>
       <div style="margin-top: 4px;">{{default objetivo_general "No redactado."}}</div>
     </div>
     <div class="rich-content">
-      <strong>Objetivos Específicos:</strong>
+      <strong>Objetivos EspecÃ­ficos:</strong>
       <div style="margin-top: 4px;">{{default objetivos_especificos "No redactado."}}</div>
     </div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.5 AlineaciÃ³n de Objetivos de Desarrollo Sostenible (ODS)</p>
     <div class="rich-content">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.6 Marco TeÃ³rico CientÃ­fico</p>
     <div class="rich-content">{{default marco_teorico "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.7 Enfoque MetodolÃ³gico</p>
     <div class="rich-content">{{default metodologia "No redactado."}}</div>
   </div>
 
   <div style="margin-bottom: 15px;">
-    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
+    <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.8 EvaluaciÃ³n TÃ©cnica de Resultados</p>
     <div class="rich-content">{{default evaluacion "No redactado."}}</div>
   </div>
 
   <!-- BLOQUE: CRONOGRAMA -->
   <div class="page-break"></div>
-  <!-- BLOQUE GANTT DINÁMICO SE CARGA AQUÍ POR EL MOTOR -->
+  <!-- BLOQUE GANTT DINÃMICO SE CARGA AQUÃ POR EL MOTOR -->
   {{gantt_chart}}
 
   <!-- BLOQUE: FIRMAS -->
@@ -143,82 +141,6 @@
       <div style="color: #64748b; font-size: 8.5pt;">Coordinador de Carrera</div>
     </div>
   </div>
-  <div class="sig-footer">Comisión de Acreditación e Investigación IST Traversari</div>
+  <div class="sig-footer">ComisiÃ³n de AcreditaciÃ³n e InvestigaciÃ³n IST Traversari</div>
 
 </div>
-
-<!--
-=============================================================================
-RESPALDO HISTÓRICO: ESQUEMAS PREMIUM PRE-MAPEADOS CABLEADOS ANTERIORES
-=============================================================================
-A continuación se conserva el marcado plano original que funcionaba con tablas estáticas
-antes de migrar al editor de bloques dinámicos:
-
-    <div class="section-title">1. IDENTIFICACIÓN DEL PROYECTO</div>
-    <table class="identificacion-table" style="margin-bottom: 0px;">
-        <colgroup>
-            <col style="width: 32%;" />
-            <col style="width: 12%;" />
-            <col style="width: 6%;" />
-            <col style="width: 12%;" />
-            <col style="width: 6%;" />
-            <col style="width: 24%;" />
-            <col style="width: 8%;" />
-        </colgroup>
-        <tr>
-            <td class="label">NOMBRE DEL PROYECTO:</td>
-            <td colspan="6" style="text-transform: uppercase;"><strong>{{default titulo '...'}}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">PROGRAMA:</td>
-            <td colspan="6">{{default programa '...'}}</td>
-        </tr>
-        <tr>
-            <td class="label">GRUPO DE INVESTIGACIÓN:</td>
-            <td style="text-align: center; font-weight: bold;">NO</td>
-            <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (eq grupo_investigacion_tipo 'SI')}}&nbsp;{{else}}X{{/if}}
-            </td>
-            <td style="text-align: center; font-weight: bold;">SI</td>
-            <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (eq grupo_investigacion_tipo 'SI')}}X{{else}}&nbsp;{{/if}}
-            </td>
-            <td colspan="2">
-                {{#if (eq grupo_investigacion_tipo 'SI')}}{{grupo_investigacion}}{{else}}&nbsp;{{/if}}
-            </td>
-        </tr>
-        <tr>
-            <td class="label">DOMINIO:</td>
-            <td colspan="6">{{default dominio '...'}}</td>
-        </tr>
-        <tr>
-            <td class="label">LÍNEA DE INVESTIGACIÓN:</td>
-            <td colspan="6">{{default linea_investigacion '...'}}</td>
-        </tr>
-        <tr>
-            <td class="label">SUBLÍNEA DE INVESTIGACIÓN:</td>
-            <td colspan="6">{{default sublinea_investigacion '...'}}</td>
-        </tr>
-        <tr>
-            <td class="label">TIPO DE INVESTIGACIÓN (x):</td>
-            <td style="text-align: center; font-weight: bold;">BÁSICA</td>
-            <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (or (eq tipo_investigacion 'BÁSICA') (eq tipo_investigacion 'BASICA') (eq tipo_investigacion
-                'Básica') (eq tipo_investigacion 'basica'))}}X{{else}}&nbsp;{{/if}}
-            </td>
-            <td style="text-align: center; font-weight: bold;">APLICADA</td>
-            <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (or (eq tipo_investigacion 'APLICADA') (eq tipo_investigacion 'Aplicada') (eq tipo_investigacion
-                'aplicada'))}}X{{else}}&nbsp;{{/if}}
-            </td>
-            <td style="text-align: center; font-weight: bold;">DESARROLLO EXPERIMENTAL</td>
-            <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (or (eq tipo_investigacion 'DESARROLLO EXPERIMENTAL') (eq tipo_investigacion
-                'DESARROLLO_EXPERIMENTAL') (eq tipo_investigacion 'Desarrollo Experimental') (eq tipo_investigacion
-                'desarrollo experimental'))}}X{{else}}&nbsp;{{/if}}
-            </td>
-        </tr>
-        ...
-        (La estructura completa histórica se encuentra a salvo en el archivo ProyectoInvestigacion_Respaldo.html)
-=============================================================================
--->

@@ -33,17 +33,36 @@ const BASE_STYLES = `
       margin-left: {{ theme.layout.margin_left }};
       margin-right: {{ theme.layout.margin_right }};
   }
-  @page :first {
-      margin: 0;
+  @page:first {
+      margin: 0 !important;
   }
 
   /* Reset y Core del Documento con Tematización Dinámica */
   .doc-container { 
       font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
       color: {{ theme.colors.text }}; 
       line-height: {{ theme.typography.line_height }};
       padding: 0; 
       background: transparent; 
+  }
+  
+  /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
+  .doc-watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 210mm;
+      height: 297mm;
+      z-index: -1;
+      pointer-events: none;
+      {{#if theme.brand.background_image}}
+      background-image: url('{{ theme.brand.background_image }}');
+      background-size: {{default theme.brand.background_fit "contain"}};
+      background-position: center center;
+      background-repeat: no-repeat;
+      opacity: {{default theme.brand.background_opacity "0.12"}};
+      {{/if}}
   }
   
   /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
@@ -52,97 +71,99 @@ const BASE_STYLES = `
       position: relative;
       width: 210mm;
       height: 297mm;
+      box-sizing: border-box;
+      {{#if portada_base64}}
       background-image: url('data:image/jpeg;base64,{{portada_base64}}');
       background-size: 100% 100%;
       background-repeat: no-repeat;
+      {{/if}}
       color: {{ theme.colors.primary }};
       z-index: 1000;
       overflow: hidden;
+      page-break-after: always;
   }
 
   .cover-overlay {
       position: absolute;
       top: 0;
-      left: 8.8cm;
-      right: 1.2cm;
+      left: 0;
+      right: 0;
       bottom: 0;
-      padding: 2cm 0;
+      padding: 3cm 2cm;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
+      justify-content: space-around;
   }
 
   .main-label {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 28pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 24pt;
       font-weight: bold;
       color: {{ theme.colors.secondary }};
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-top: 8.2cm;
+      margin: 0;
       width: 100%;
   }
 
   .project-theme {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 18pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 16pt;
       font-weight: bold;
       color: {{ theme.colors.primary }};
       text-transform: uppercase;
-      margin-top: 2.8cm;
-      margin-bottom: 2.8cm;
-      line-height: 1.2;
+      margin: 1.5cm 0;
+      line-height: 1.3;
       width: 100%;
       word-wrap: break-word;
   }
 
   .career-container {
-      margin-top: 0;
-      margin-bottom: 2.5cm;
+      margin: 1cm 0;
       text-align: center;
       width: 100%;
   }
 
   .career-label {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 14pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
       font-weight: bold;
       color: {{ theme.colors.primary }};
       text-transform: uppercase;
   }
 
   .career-value {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 14pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
       font-weight: normal;
       color: {{ theme.colors.primary }};
       text-transform: uppercase;
-      margin-top: 8px;
+      margin-top: 4px;
   }
 
   .period-container {
       width: 100%;
-      margin-top: auto;
-      margin-bottom: 1cm;
+      margin-top: 1cm;
       text-align: center;
   }
 
   .period-label {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 12pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
       font-weight: bold;
       text-transform: uppercase;
-      margin-bottom: 2px;
       color: {{ theme.colors.primary }};
   }
 
   .period-value {
-      font-family: 'Century Gothic', sans-serif;
-      font-size: 12pt;
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
       font-weight: normal;
       text-transform: uppercase;
       color: {{ theme.colors.primary }};
+      margin-top: 2px;
   }
 
   /* Títulos de sección */
@@ -259,7 +280,7 @@ const renderSection = (section: TableSection): string => {
 // Función principal
 // ─────────────────────────────────────────────────────────────────────────────
 export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
-    let html = `${BASE_STYLES}\n<div class="doc-container">`;
+    let html = `<div class="doc-container">\n  <div class="doc-watermark"></div>`;
 
     for (const block of blockList) {
         if (!block.isActive) continue;
@@ -319,46 +340,44 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
 
                     const instEl = showInst ? `
         <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; ${alignStyle(alignInst)}">
-          <span style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color:${colorTheme}; padding:3px 10px; border-radius:9999px; display:inline-block;">
+          <span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color: {{ theme.colors.primary }}; padding:3px 10px; border-radius:9999px; display:inline-block;">
             ${textInst}
           </span>
         </div>` : '';
 
                     const titleEl = showTitle ? `
         <div style="position:absolute; left:${toMmX(xTitle)}; top:${toMmY(yTitle)}; width:${getWidthMm(xTitle)}; ${alignStyle(alignTitle)}">
-          <div style="font-family:'Century Gothic',sans-serif; font-size:22pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; line-height:1.2;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:22pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase; line-height:1.2;">
             ${textTitle}
           </div>
-          <div style="font-family:'Century Gothic',sans-serif; font-size:13pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase; margin-top:8px; line-height:1.3; word-wrap:break-word;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:13pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:8px; line-height:1.3; word-wrap:break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
           </div>
         </div>` : '';
 
                     const carreraEl = showCarrera ? `
         <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; ${alignStyle(alignCarrera)}">
-          <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">TECNOLOGÍA SUPERIOR EN</div>
-          <div style="font-family:'Century Gothic',sans-serif; font-size:10pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:3px;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase;">TECNOLOGÍA SUPERIOR EN</div>
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:normal; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:3px;">
             {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
                     const periodoEl = showPeriodo ? `
         <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; ${alignStyle(alignPeriodo)}">
-          <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:bold; color:${colorTheme}; text-transform:uppercase;">PERIODO ACADÉMICO</div>
-          <div style="font-family:'Century Gothic',sans-serif; font-size:9pt; font-weight:normal; color:${colorTheme}; text-transform:uppercase; margin-top:2px;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase;">PERIODO ACADÉMICO</div>
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:normal; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:2px;">
             {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
           </div>
         </div>` : '';
 
                     html += `
   <!-- BLOQUE: PORTADA FREE-FORM -->
-  <div class="page">
-    <div class="cover-page" style="position:relative; width:210mm; height:297mm; overflow:hidden; box-sizing:border-box;">
-      ${instEl}
-      ${titleEl}
-      ${carreraEl}
-      ${periodoEl}
-    </div>
+  <div class="cover-page">
+    ${instEl}
+    ${titleEl}
+    ${carreraEl}
+    ${periodoEl}
   </div>`;
                     break;
                 }
@@ -371,37 +390,37 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
 
                 const instHtml = showInst ? `
         <div style="text-align: ${alignInst}; width: 100%;">
-          <span style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #ffffff; background-color: ${colorTheme}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
+          <span style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #ffffff; background-color: {{ theme.colors.primary }}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
             ${textInst}
           </span>
         </div>` : '';
 
                 const titleHtml = showTitle ? `
         <div style="text-align: ${alignTitle}; width: 100%;">
-          <h1 style="font-family: 'Century Gothic', sans-serif; font-size: 24pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin: 0; line-height: 1.2;">
+          <h1 style="font-family: {{ theme.typography.font_family }}; font-size: 24pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase; margin: 0; line-height: 1.2;">
             ${textTitle}
           </h1>
-          <div style="font-family: 'Century Gothic', sans-serif; font-size: 15pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 15pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
           </div>
         </div>` : '';
 
                 const carreraHtml = showCarrera ? `
         <div style="text-align: ${alignCarrera}; width: 100%;">
-          <div style="font-family: 'Century Gothic', sans-serif; font-size: 11pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase;">
             TECNOLOGÍA SUPERIOR EN
           </div>
-          <div style="font-family: 'Century Gothic', sans-serif; font-size: 11pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 4px;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: normal; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 4px;">
             {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
                 const periodoHtml = showPeriodo ? `
         <div style="text-align: ${alignPeriodo}; width: 100%;">
-          <div style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: bold; color: ${colorTheme}; text-transform: uppercase;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase;">
             PERIODO ACADÉMICO
           </div>
-          <div style="font-family: 'Century Gothic', sans-serif; font-size: 10pt; font-weight: normal; color: ${colorTheme}; text-transform: uppercase; margin-top: 2px;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: normal; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 2px;">
             {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
           </div>
         </div>` : '';
@@ -428,18 +447,12 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 ].filter(Boolean).join('\n');
 
                 html += `
-  <!-- BLOQUE: PORTADA ZONAS LEGACY -->
-  <div class="page">
-    <div class="cover-page" style="display: flex; flex-direction: column; justify-content: space-between; height: 297mm; padding: 2.2cm 1.2cm 2.2cm 8.8cm; box-sizing: border-box;">
-      <div class="cover-section-top" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%;">
-        ${topElements}
-      </div>
-      <div class="cover-section-middle" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%; margin-top: auto; margin-bottom: auto; padding: 0.5cm 0;">
-        ${middleElements}
-      </div>
-      <div class="cover-section-bottom" style="display: flex; flex-direction: column; gap: 0.6cm; width: 100%;">
-        ${bottomElements}
-      </div>
+  <!-- BLOQUE: PORTADA ZONAS -->
+  <div class="cover-page">
+    <div class="cover-overlay">
+      ${topElements}
+      ${middleElements}
+      ${bottomElements}
     </div>
   </div>`;
                 break;
@@ -639,7 +652,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         <td>
           <strong>{{this.nombre}}</strong>
           ${c.mostrarDescripcionCriterio ? '<div style="font-size: 8pt; color: #64748b; margin-top: 2px;">{{this.descripcion}}</div>' : ''}
-          ${c.mostrarObservacionesCriterio ? '{{#if this.observaciones}}<div style="font-size: 8.5pt; color: #b8912e; margin-top: 4px; font-style: italic;">Obs: {{this.observaciones}}</div>{{/if}}' : ''}
+          ${c.mostrarObservacionesCriterio ? '{{#if this.observaciones}}<div style="font-size: 8.5pt; color: {{ theme.colors.secondary }}; margin-top: 4px; font-style: italic;">Obs: {{this.observaciones}}</div>{{/if}}' : ''}
         </td>
         <td style="text-align: center;">{{this.peso}}</td>
         <td style="text-align: center; font-weight: bold;">{{default this.puntaje "0"}}</td>

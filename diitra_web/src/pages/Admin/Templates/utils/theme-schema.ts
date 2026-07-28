@@ -41,6 +41,23 @@ export const THEME_SCHEMA: ThemeToken[] = [
     { key: 'logo_scale', camelKey: 'logoScale', label: 'Escala del Logo (%)', type: 'text', category: 'brand', defaultValue: '100%' },
     { key: 'cover_image', camelKey: 'coverImage', label: 'Imagen de Portada (Personalizada)', type: 'image', category: 'brand', defaultValue: '' },
     { key: 'background_image', camelKey: 'backgroundImage', label: 'Imagen de Fondo de Hojas', type: 'image', category: 'brand', defaultValue: '' },
+    { key: 'background_opacity', camelKey: 'backgroundOpacity', label: 'Opacidad de Marca de Agua / Fondo', type: 'select', category: 'brand', defaultValue: '0.12',
+      options: [
+        { label: '5% - Muy Suave (Recomendado)', value: '0.05' },
+        { label: '12% - Suave Estándar (Recomendado)', value: '0.12' },
+        { label: '20% - Visible Moderado', value: '0.2' },
+        { label: '35% - Intenso', value: '0.35' },
+        { label: '50% - Opacidad Media', value: '0.5' },
+        { label: '100% - Sin Transparencia', value: '1.0' },
+      ]
+    },
+    { key: 'background_fit', camelKey: 'backgroundFit', label: 'Modo de Ajuste de Fondo', type: 'select', category: 'brand', defaultValue: 'contain',
+      options: [
+        { label: 'Marca de Agua Central (Sello)', value: 'contain' },
+        { label: 'Hoja Membretada Completa (Full Bleed)', value: 'cover' },
+        { label: 'Extendido Exacto (100% 100%)', value: '100% 100%' },
+      ]
+    },
 ];
 
 export function buildDefaultTheme(): Record<string, Record<string, any>> {

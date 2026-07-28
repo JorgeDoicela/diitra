@@ -33,6 +33,11 @@ const DYN_COLORS = {
     gold: '#b8912e',
     gray: '#475569',
     lightBlue: '#f0f3f9',
+    tableHeaderBg: '#1e2a4a',
+    tableHeaderColor: '#ffffff',
+    accent: '#9ad3de',
+    fontFamily: "'Calibri', 'Open Sans', Arial, sans-serif",
+    baseSize: '10pt',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -365,8 +370,8 @@ const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
                                 key={i}
                                 className="border border-slate-300 p-2 font-bold text-left uppercase text-[9px]"
                                 style={{
-                                    backgroundColor: headerStyle === 'blue' ? DYN_COLORS.blue : headerStyle === 'gold' ? DYN_COLORS.gold : headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                                    color: headerStyle !== 'none' ? 'white' : '#1e2a4a',
+                                    backgroundColor: headerStyle === 'blue' ? DYN_COLORS.tableHeaderBg : headerStyle === 'gold' ? DYN_COLORS.gold : headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
+                                    color: headerStyle !== 'none' ? DYN_COLORS.tableHeaderColor : '#1e2a4a',
                                     width: colWidths[i] || 'auto'
                                 }}
                             >
@@ -412,8 +417,8 @@ const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) => {
                                         key={i}
                                         className="border border-slate-300 p-1.5 font-bold text-left uppercase text-[8.5px]"
                                         style={{
-                                            backgroundColor: sec.headerStyle === 'blue' ? DYN_COLORS.blue : sec.headerStyle === 'gold' ? DYN_COLORS.gold : sec.headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                                            color: sec.headerStyle !== 'none' ? 'white' : '#1e2a4a',
+                                            backgroundColor: sec.headerStyle === 'blue' ? DYN_COLORS.tableHeaderBg : sec.headerStyle === 'gold' ? DYN_COLORS.gold : sec.headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
+                                            color: sec.headerStyle !== 'none' ? DYN_COLORS.tableHeaderColor : '#1e2a4a',
                                             width: sec.colWidths?.[i] || 'auto'
                                         }}
                                     >
@@ -493,12 +498,12 @@ const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
             <table className="w-full border-collapse text-[9px] min-w-[700px]">
                 <thead>
                     <tr>
-                        <th className="border border-slate-300 p-1.5 bg-[#1e2a4a] text-white text-center font-bold" rowSpan={2}>Objetivos</th>
-                        <th className="border border-slate-300 p-1.5 bg-[#1e2a4a] text-white text-center font-bold" rowSpan={2}>N°</th>
-                        <th className="border border-slate-300 p-1.5 bg-[#1e2a4a] text-white text-center font-bold" rowSpan={2}>Actividades</th>
-                        <th className="border border-slate-300 p-1.5 bg-[#1e2a4a] text-white text-center font-bold" rowSpan={2}>Recursos</th>
+                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Objetivos</th>
+                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>N°</th>
+                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Actividades</th>
+                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Recursos</th>
                         {months.map((m: string, i: number) => (
-                            <th key={i} className="border border-slate-300 p-1 bg-[#1e2a4a] text-white text-center font-bold" colSpan={4}>
+                            <th key={i} className="border border-slate-300 p-1 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} colSpan={4}>
                                 {m}
                             </th>
                         ))}
@@ -506,7 +511,7 @@ const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                     <tr>
                         {months.map(() =>
                             [1, 2, 3, 4].map((w) => (
-                                <th key={w} className="border border-slate-300 p-0.5 bg-[#1e2a4a] text-white text-[7px] text-center font-semibold">
+                                <th key={w} className="border border-slate-300 p-0.5 text-[7px] text-center font-semibold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}>
                                     {w}
                                 </th>
                             ))
@@ -1305,11 +1310,18 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
 
-    // Actualizar colores dinámicos desde el themeConfig
+    // Actualizar colores y tipografía dinámicos desde el themeConfig
     if (themeConfig?.colors) {
         DYN_COLORS.blue = themeConfig.colors.primary || '#1e2a4a';
         DYN_COLORS.gold = themeConfig.colors.secondary || '#b8912e';
         DYN_COLORS.gray = themeConfig.colors.text || '#475569';
+        DYN_COLORS.tableHeaderBg = themeConfig.colors.tableHeaderBg || DYN_COLORS.blue;
+        DYN_COLORS.tableHeaderColor = themeConfig.colors.tableHeaderColor || '#ffffff';
+        DYN_COLORS.accent = themeConfig.colors.accent || '#9ad3de';
+    }
+    if (themeConfig?.typography) {
+        DYN_COLORS.fontFamily = themeConfig.typography.fontFamily || "'Calibri', 'Open Sans', Arial, sans-serif";
+        DYN_COLORS.baseSize = themeConfig.typography.baseSize || '10pt';
     }
 
     useEffect(() => {
@@ -1418,23 +1430,45 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                             {pages.map((page) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
+                                const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
+                                const bgFit = themeConfig?.brand?.backgroundFit || 'contain';
+                                const marginTop = themeConfig?.layout?.marginTop || '3cm';
+                                const marginBottom = themeConfig?.layout?.marginBottom || '2cm';
+                                const marginLeft = themeConfig?.layout?.marginLeft || '2cm';
+                                const marginRight = themeConfig?.layout?.marginRight || '2cm';
 
                                 return (
                                     <React.Fragment key={page.pageNum}>
                                         {page.pageNum > 1 && <PageBreakIndicator pageNum={page.pageNum} />}
                                         <div
                                             onClick={e => e.stopPropagation()}
-                                            style={bgImg ? {
-                                                backgroundImage: `url(${bgImg})`,
-                                                backgroundSize: 'contain',
-                                                backgroundRepeat: 'no-repeat',
-                                                backgroundPosition: 'top center'
-                                            } : undefined}
-                                            className={`force-light-theme max-w-[794px] w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'p-0 gap-0' : 'p-12 gap-2'
+                                            style={{
+                                                fontFamily: DYN_COLORS.fontFamily,
+                                                fontSize: DYN_COLORS.baseSize,
+                                                paddingTop: isCoverPage ? '0' : marginTop,
+                                                paddingBottom: isCoverPage ? '0' : marginBottom,
+                                                paddingLeft: isCoverPage ? '0' : marginLeft,
+                                                paddingRight: isCoverPage ? '0' : marginRight,
+                                            }}
+                                            className={`force-light-theme max-w-[794px] w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'gap-0' : 'gap-2'
                                                 }`}
                                         >
+                                            {/* Capa de Marca de Agua / Imagen de Fondo de Hojas */}
+                                            {bgImg && (
+                                                <div
+                                                    className="absolute inset-0 pointer-events-none rounded-sm overflow-hidden z-0"
+                                                    style={{
+                                                        backgroundImage: `url(${bgImg})`,
+                                                        backgroundSize: bgFit,
+                                                        backgroundPosition: 'center center',
+                                                        backgroundRepeat: 'no-repeat',
+                                                        opacity: bgOpacity,
+                                                    }}
+                                                />
+                                            )}
+
                                             {page.blocks.length === 0 ? (
-                                                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded p-6 text-slate-400 italic text-[10px]">
+                                                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded p-6 text-slate-400 italic text-[10px] relative z-10">
                                                     Página vacía. Arrastra bloques aquí o escribe contenido.
                                                 </div>
                                             ) : (
@@ -1442,12 +1476,12 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                     const isActiveBlock = activeBlockId === block.id;
 
                                                     return (
-                                                        <div key={block.id} ref={isActiveBlock ? activeRef : undefined}>
+                                                        <div key={block.id} ref={isActiveBlock ? activeRef : undefined} className="relative z-10">
                                                             <SortableBlockItem
                                                                 block={block}
                                                                 index={originalIndex}
                                                                 isActive={isActiveBlock}
-                                                                coverImage={themeConfig?.brand?.coverImage}
+                                                                coverImage={block.config?.coverImage || themeConfig?.brand?.coverImage}
                                                                 onSelectBlock={onSelectBlock}
                                                                 onToggleActive={onToggleActive}
                                                                 onDeleteBlock={onDeleteBlock}

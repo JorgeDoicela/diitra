@@ -1,46 +1,46 @@
-<style>
-    .doc-container { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #1e2a4a; line-height: 1.6; padding: 30px; }
-    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; }
-    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: #b8912e; text-transform: uppercase; margin-bottom: 20px; }
-    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; }
-    .section-title { background: #1e2a4a; color: #fff; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
+﻿<style>
+    .doc-container { font-family: {{ theme.typography.font_family }}; color: {{ theme.colors.text }}; line-height: {{default theme.typography.line_height "1.6"}}; padding: 30px; }
+    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; color: {{ theme.colors.primary }}; }
+    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: {{ theme.colors.secondary }}; text-transform: uppercase; margin-bottom: 20px; }
+    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; color: {{ theme.colors.primary }}; }
+    .section-title { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
     .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; }
     .info-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; }
     .info-table .label { font-weight: bold; background: #f1f5f9; width: 30%; text-transform: uppercase; font-size: 8pt; color: #475569; }
     .score-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-    .score-table th { background: #1e2a4a; color: #fff; padding: 10px; text-align: left; font-size: 9pt; text-transform: uppercase; border: 1px solid #1e2a4a; }
+    .score-table th { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px; text-align: left; font-size: 9pt; text-transform: uppercase; border: 1px solid {{ theme.colors.primary }}; }
     .score-table td { border: 1px solid #cbd5e1; padding: 10px; font-size: 9.5pt; }
     .score-table .score-cell { text-align: center; font-weight: bold; font-size: 11pt; width: 120px; background: #f8fafc; }
     .total-row { background: #f1f5f9; font-weight: bold; }
     .total-row td { font-size: 11pt !important; }
     .content-box { border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 20px; text-align: justify; min-height: 80px; background: #fff; border-radius: 4px; font-size: 9.5pt; }
-    .recommendation-box { border: 2px solid #b8912e; background: #fffdf5; padding: 15px; border-radius: 6px; margin: 20px 0; }
-    .recommendation-title { font-weight: bold; color: #b8912e; font-size: 11pt; text-transform: uppercase; margin-bottom: 8px; }
-    .recommendation-value { font-size: 12pt; font-weight: 800; color: #1e2a4a; }
-    .firma-box { border-top: 1px solid #1e2a4a; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
+    .recommendation-box { border: 2px solid {{ theme.colors.secondary }}; background: #fffdf5; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    .recommendation-title { font-weight: bold; color: {{ theme.colors.secondary }}; font-size: 11pt; text-transform: uppercase; margin-bottom: 8px; }
+    .recommendation-value { font-size: 12pt; font-weight: 800; color: {{ theme.colors.primary }}; }
+    .firma-box { border-top: 1px solid {{ theme.colors.primary }}; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
 </style>
 
 <div class="doc-container">
     <div style="text-align:center">
-        <h1 class="main-title">RÚBRICA DE EVALUACIÓN POR PARES</h1>
-        <div class="report-type">Evaluación de Proyectos I+D+i — {{default evaluador_tipo 'Doble Ciego'}}</div>
+        <h1 class="main-title">RÃšBRICA DE EVALUACIÃ“N POR PARES</h1>
+        <div class="report-type">EvaluaciÃ³n de Proyectos I+D+i â€” {{default evaluador_tipo 'Doble Ciego'}}</div>
     </div>
 
     <div class="project-name">{{default titulo 'PROYECTO EVALUADO'}}</div>
 
-    <div class="section-title">1. Información de Referencia</div>
+    <div class="section-title">1. InformaciÃ³n de Referencia</div>
     <table class="info-table">
-        <tr><td class="label">Código de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
-        <tr><td class="label">Tipo de Proceso:</td><td>Evaluación Técnica de Pares Académicos (Fase 2)</td></tr>
-        <tr><td class="label">Fecha de Evaluación:</td><td>{{default fecha_evaluacion '2026-05-22'}}</td></tr>
+        <tr><td class="label">CÃ³digo de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
+        <tr><td class="label">Tipo de Proceso:</td><td>EvaluaciÃ³n TÃ©cnica de Pares AcadÃ©micos (Fase 2)</td></tr>
+        <tr><td class="label">Fecha de EvaluaciÃ³n:</td><td>{{default fecha_evaluacion '2026-05-22'}}</td></tr>
     </table>
 
-    <div class="section-title">2. Criterios de Evaluación y Calificación</div>
+    <div class="section-title">2. Criterios de EvaluaciÃ³n y CalificaciÃ³n</div>
     <table class="score-table">
         <thead>
             <tr>
-                <th>Criterio Técnico Evaluado</th>
-                <th style="width: 150px; text-align: center;">Puntaje Máximo</th>
+                <th>Criterio TÃ©cnico Evaluado</th>
+                <th style="width: 150px; text-align: center;">Puntaje MÃ¡ximo</th>
                 <th style="width: 150px; text-align: center;">Puntaje Asignado</th>
             </tr>
         </thead>
@@ -54,7 +54,7 @@
                         <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">{{this.descripcion}}</div>
                         {{/if}}
                         {{#if this.observaciones}}
-                        <div style="font-size: 8.5pt; color: #b8912e; margin-top: 4px; font-style: italic;">Observación: {{this.observaciones}}</div>
+                        <div style="font-size: 8.5pt; color: {{ theme.colors.secondary }}; margin-top: 4px; font-style: italic;">ObservaciÃ³n: {{this.observaciones}}</div>
                         {{/if}}
                     </td>
                     <td style="text-align: center;">{{this.peso}}</td>
@@ -63,22 +63,22 @@
                 {{/each}}
             {{else}}
                 <tr>
-                    <td><strong>Pertinencia Social:</strong> Grado de alineación con prioridades nacionales, problemáticas locales y dominios del instituto.</td>
+                    <td><strong>Pertinencia Social:</strong> Grado de alineaciÃ³n con prioridades nacionales, problemÃ¡ticas locales y dominios del instituto.</td>
                     <td style="text-align: center;">25</td>
                     <td class="score-cell">{{default pertinencia '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Metodología Científica:</strong> Rigor metodológico, claridad de objetivos, diseño de actividades y coherencia técnica general.</td>
+                    <td><strong>MetodologÃ­a CientÃ­fica:</strong> Rigor metodolÃ³gico, claridad de objetivos, diseÃ±o de actividades y coherencia tÃ©cnica general.</td>
                     <td style="text-align: center;">25</td>
                     <td class="score-cell">{{default metodologia '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Viabilidad y Presupuesto:</strong> Factibilidad económica y temporal, correspondencia entre recursos y entregables planificados.</td>
+                    <td><strong>Viabilidad y Presupuesto:</strong> Factibilidad econÃ³mica y temporal, correspondencia entre recursos y entregables planificados.</td>
                     <td style="text-align: center;">25</td>
                     <td class="score-cell">{{default viabilidad '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Impacto y Transferencia:</strong> Potencial de transferencia tecnológica, difusión académica y beneficio directo al sector productivo.</td>
+                    <td><strong>Impacto y Transferencia:</strong> Potencial de transferencia tecnolÃ³gica, difusiÃ³n acadÃ©mica y beneficio directo al sector productivo.</td>
                     <td style="text-align: center;">25</td>
                     <td class="score-cell">{{default impacto '0'}}</td>
                 </tr>
@@ -93,24 +93,24 @@
 
     <div class="section-title">3. Observaciones y Comentarios Fundamentales</div>
     <div class="content-box">
-        {{default comentarios_generales 'Sin observaciones registradas por la comisión evaluadora.'}}
+        {{default comentarios_generales 'Sin observaciones registradas por la comisiÃ³n evaluadora.'}}
     </div>
 
     <div class="recommendation-box">
-        <div class="recommendation-title">4. Recomendación Final del Evaluador</div>
+        <div class="recommendation-title">4. RecomendaciÃ³n Final del Evaluador</div>
         <div class="recommendation-value">
-            {{default recomendacion_final 'Requiere revisión o no definido'}}
+            {{default recomendacion_final 'Requiere revisiÃ³n o no definido'}}
         </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; margin-top:80px">
         <div class="firma-box">
-            <strong>Evaluador Académico Acreditado</strong><br/>
+            <strong>Evaluador AcadÃ©mico Acreditado</strong><br/>
             DIITRA Peer Reviewer<br/>
-            Comisión de Investigación
+            ComisiÃ³n de InvestigaciÃ³n
         </div>
         <div class="firma-box">
-            <strong>Comisión del Proyecto</strong><br/>
+            <strong>ComisiÃ³n del Proyecto</strong><br/>
             DIITRA Coordinator<br/>
             Soporte y Trazabilidad
         </div>
