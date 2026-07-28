@@ -601,22 +601,22 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     <thead><tr>
       <th style="${headerBg('blue')}">Nombre Completo</th>
       <th style="${headerBg('blue')}">Rol en Proyecto</th>
-      ${c.mostrarCedula ? `<th style="${headerBg('blue')}">Cédula</th>` : ''}
-      ${c.mostrarEmail ? `<th style="${headerBg('blue')}">Email</th>` : ''}
-      ${c.mostrarTelefono ? `<th style="${headerBg('blue')}">Teléfono</th>` : ''}
-      ${c.mostrarNivelAcademico ? `<th style="${headerBg('blue')}">Nivel Académico</th>` : ''}
-      ${c.mostrarHoras ? `<th style="${headerBg('blue')}">Horas</th>` : ''}
+      ${c.mostrarCedula !== false ? `<th style="${headerBg('blue')}">Cédula</th>` : ''}
+      ${c.mostrarEmail !== false ? `<th style="${headerBg('blue')}">Email</th>` : ''}
+      ${c.mostrarTelefono !== false ? `<th style="${headerBg('blue')}">Teléfono</th>` : ''}
+      ${c.mostrarNivelAcademico !== false ? `<th style="${headerBg('blue')}">Nivel Académico</th>` : ''}
+      ${c.mostrarHoras !== false ? `<th style="${headerBg('blue')}">Horas</th>` : ''}
     </tr></thead>
     <tbody>
       {{#each participantes}}
       <tr>
         <td>{{this.nombre}}</td>
         <td>{{this.rol}}</td>
-        ${c.mostrarCedula ? '<td>{{this.cedula}}</td>' : ''}
-        ${c.mostrarEmail ? '<td>{{this.email}}</td>' : ''}
-        ${c.mostrarTelefono ? '<td>{{this.telefono}}</td>' : ''}
-        ${c.mostrarNivelAcademico ? '<td>{{this.nivelAcademico}}</td>' : ''}
-        ${c.mostrarHoras ? '<td>{{this.horas}} hs</td>' : ''}
+        ${c.mostrarCedula !== false ? '<td>{{this.cedula}}</td>' : ''}
+        ${c.mostrarEmail !== false ? '<td>{{this.email}}</td>' : ''}
+        ${c.mostrarTelefono !== false ? '<td>{{this.telefono}}</td>' : ''}
+        ${c.mostrarNivelAcademico !== false ? '<td>{{this.nivelAcademico}}</td>' : ''}
+        ${c.mostrarHoras !== false ? '<td>{{this.horas}} hs</td>' : ''}
       </tr>
       {{/each}}
     </tbody>
@@ -675,105 +675,143 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
             }
 
             // ── FICHA DE IDENTIFICACIÓN ──────────────────────────────────────
-            case 'project_general_section':
+            case 'project_general_section': {
+                const rows: string[] = [];
+                if (c.showTitulo !== false) {
+                    rows.push(`<tr><td class="label-cell">Título del Proyecto</td><td style="font-weight: bold;">{{default titulo "[TEMA / NOMBRE DEL PROYECTO]"}}</td></tr>`);
+                }
+                if (c.showDirector !== false) {
+                    rows.push(`<tr><td class="label-cell">Director del Proyecto</td><td>{{default director_proyecto "No especificado"}}</td></tr>`);
+                }
+                if (c.showCarrera !== false) {
+                    rows.push(`<tr><td class="label-cell">Carrera / Unidad Académica</td><td>{{default carrera "No especificada"}}</td></tr>`);
+                }
+                if (c.showConvocatoria !== false) {
+                    rows.push(`<tr><td class="label-cell">Convocatoria</td><td>{{default convocatoria "No especificada"}}</td></tr>`);
+                }
+                if (c.showPrograma !== false) {
+                    rows.push(`<tr><td class="label-cell">Programa</td><td>{{default programa "No especificado"}}</td></tr>`);
+                }
+                if (c.showGrupo !== false) {
+                    rows.push(`<tr><td class="label-cell">Grupo de Investigación</td><td>{{default grupo_investigacion "No especificado"}}</td></tr>`);
+                }
+                if (c.showLinea !== false) {
+                    rows.push(`<tr><td class="label-cell">Línea de Investigación</td><td><div><strong>Línea:</strong> {{default linea_investigacion "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div></td></tr>`);
+                }
+                if (c.showTipo !== false) {
+                    rows.push(`<tr><td class="label-cell">Tipo de Investigación</td><td>{{default tipo_investigacion "No especificado"}}</td></tr>`);
+                }
+                if (c.showCaces !== false) {
+                    rows.push(`<tr><td class="label-cell">Campo Detallado CACES</td><td>{{default campo_detallado "No especificado"}}</td></tr>`);
+                }
+                if (c.showFechas !== false) {
+                    rows.push(`<tr><td class="label-cell">Fechas y Plazos</td><td><div><strong>Inicio:</strong> {{default fecha_inicio "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div></td></tr>`);
+                }
+                if (rows.length === 0) break;
                 html += `
   <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->
   <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">Ficha de Identificación del Proyecto (Metadatos Científicos)</p>
   <table class="info-table">
     <tbody>
-      <tr>
-        <td class="label-cell">Título del Proyecto</td>
-        <td style="font-weight: bold;">{{default titulo "[TEMA / NOMBRE DEL PROYECTO]"}}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Carrera / Unidad Académica</td>
-        <td>{{default carrera "No especificada"}}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Convocatoria</td>
-        <td>{{default convocatoria "No especificada"}}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Línea de Investigación</td>
-        <td>
-          <div><strong>Línea:</strong> {{default linea_investigacion "No especificada"}}</div>
-          <div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>
-        </td>
-      </tr>
-      <tr>
-        <td class="label-cell">Campo Detallado CACES</td>
-        <td>{{default campo_detallado "No especificado"}}</td>
-      </tr>
+      ${rows.join('\n      ')}
     </tbody>
   </table>`;
                 break;
+            }
 
-            case 'project_technical_section':
-                html += `
-  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (8 SECCIONES) -->
-  <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">3. Plan Técnico del Proyecto</p>
-    
+            case 'project_technical_section': {
+                const parts: string[] = [];
+                if (c.showAntecedentes !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default antecedentes "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default antecedentes "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showDescripcionProyecto !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default descripcion_proyecto "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default descripcion_proyecto "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showJustificacion !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default justificacion "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default justificacion "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showObjetivoGeneral !== false || c.showObjetivosEspecificos !== false) {
+                    let objHtml = `
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000; margin-bottom: 8px;">
+      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>`;
+                    if (c.showObjetivoGeneral !== false) {
+                        objHtml += `
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000; margin-bottom: 8px;">
         <strong>Objetivo General:</strong>
         <div style="margin-top: 4px;">{{default objetivo_general "No redactado."}}</div>
-      </div>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">
+      </div>`;
+                    }
+                    if (c.showObjetivosEspecificos !== false) {
+                        objHtml += `
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">
         <strong>Objetivos Específicos:</strong>
         <div style="margin-top: 4px;">{{default objetivos_especificos "No redactado."}}</div>
-      </div>
-    </div>
-
+      </div>`;
+                    }
+                    objHtml += `\n    </div>`;
+                    parts.push(objHtml);
+                }
+                if (c.showOds !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showMarcoTeorico !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default marco_teorico "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default marco_teorico "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showMetodologia !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default metodologia "No redactado."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default metodologia "No redactado."}}</div>
+    </div>`);
+                }
+                if (c.showEvaluacion !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #000000;">{{default evaluacion "No redactado."}}</div>
-    </div>
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default evaluacion "No redactado."}}</div>
+    </div>`);
+                }
+                if (parts.length === 0) break;
+                html += `
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">3. Plan Técnico del Proyecto</p>
+    ${parts.join('')}
   </div>`;
                 break;
+            }
 
-            case 'project_progress_report':
-                html += `
-  <!-- BLOQUE: AVANCE DE EJECUCIÓN -->
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">Avance de Ejecución y Monitoreo del Proyecto</p>
-    
+            case 'project_progress_report': {
+                const parts: string[] = [];
+                if (c.showEvidencias !== false) {
+                    parts.push(`
     <div style="margin-bottom: 15px;">
       <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 4px;">Bitácora Científica & Conclusiones Parciales:</strong>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default conclusiones_parciales "Sin registros de bitácora."}}</div>
-    </div>
-
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default conclusiones_parciales "Sin registros de bitácora."}}</div>
+    </div>`);
+                }
+                if (c.showHitosCompletados !== false) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">Hitos & Entregables Completados</p>
     <table class="info-table">
       <thead>
@@ -792,8 +830,10 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         </tr>
         {{/each}}
       </tbody>
-    </table>
-
+    </table>`);
+                }
+                if (c.showPresupuestoEjecutado !== false) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">Presupuesto de Gasto Ejecutado</p>
     <table class="info-table">
       <thead>
@@ -810,9 +850,17 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         </tr>
         {{/each}}
       </tbody>
-    </table>
+    </table>`);
+                }
+                if (parts.length === 0) break;
+                html += `
+  <!-- BLOQUE: AVANCE DE EJECUCIÓN -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">Avance de Ejecución y Monitoreo del Proyecto</p>
+    ${parts.join('')}
   </div>`;
                 break;
+            }
 
             case 'project_ethics_report':
                 html += `
@@ -822,17 +870,17 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     
     <div style="margin-bottom: 12px;">
       <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Justificación Ética de la Propuesta:</strong>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default justificacion_etica "No registrada."}}</div>
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default justificacion_etica "No registrada."}}</div>
     </div>
 
     <div style="margin-bottom: 12px;">
       <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Riesgos Identificados & Medidas de Mitigación:</strong>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default riesgos_identificados "No registrada."}}</div>
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default riesgos_identificados "No registrada."}}</div>
     </div>
 
     <div style="margin-bottom: 12px;">
       <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Procedimiento de Consentimiento Informado:</strong>
-      <div style="font-size: 9pt; leading-relaxed: 1.5; color: #1e293b;">{{default metodo_consentimiento "No registrada."}}</div>
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default metodo_consentimiento "No registrada."}}</div>
     </div>
 
     <div style="margin-top: 15px; padding: 10px; bg-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
@@ -855,12 +903,10 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
 
             // ── RECURSOS Y PRESUPUESTO ───────────────────────────────────────
-            case 'project_budget_section':
-                html += `
-  <!-- BLOQUE: RECURSOS Y PRESUPUESTO -->
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">4. Recursos y Presupuesto Detallado</p>
-    
+            case 'project_budget_section': {
+                const parts: string[] = [];
+                if (c.showRecursosDisponibles !== false) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 10px 0 4px;">4.1 Recursos Disponibles (Equipos, Licencias, Espacios)</p>
     <table class="info-table">
       <thead>
@@ -879,8 +925,10 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         </tr>
         {{/each}}
       </tbody>
-    </table>
-
+    </table>`);
+                }
+                if (c.showRecursosNecesarios !== false) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">4.2 Recursos Necesarios (Presupuesto de Gasto)</p>
     <table class="info-table">
       <thead>
@@ -901,8 +949,10 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         </tr>
         {{/each}}
       </tbody>
-    </table>
-
+    </table>`);
+                }
+                if (c.showFinanciamiento !== false) {
+                    parts.push(`
     <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
         <tbody>
@@ -922,15 +972,23 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
           </tr>
         </tbody>
       </table>
-    </div>
+    </div>`);
+                }
+                if (parts.length === 0) break;
+                html += `
+  <!-- BLOQUE: RECURSOS Y PRESUPUESTO -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">4. Recursos y Presupuesto Detallado</p>
+    ${parts.join('')}
   </div>`;
                 break;
+            }
 
             // ── MATRIZ DE IMPACTOS ───────────────────────────────────────────
-            case 'impacts':
-                html += `
-  <!-- BLOQUE: MATRIZ DE IMPACTOS Y PRODUCTOS -->
-  <div style="margin-top: 20px;">
+            case 'impacts': {
+                const parts: string[] = [];
+                if (c.showProductosEsperados !== false) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">5. Productos Esperados</p>
     <table class="info-table">
       <thead>
@@ -947,39 +1005,35 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         </tr>
         {{/each}}
       </tbody>
-    </table>
+    </table>`);
+                }
 
+                const impactRows: string[] = [];
+                if (c.showImpactoSocial !== false) impactRows.push(`<tr><td class="label-cell" style="width: 25%;">Impacto Social</td><td>{{default impacto.social "Sin descripción."}}</td></tr>`);
+                if (c.showImpactoCientifico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Científico</td><td>{{default impacto.cientifico "Sin descripción."}}</td></tr>`);
+                if (c.showImpactoEconomico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Económico</td><td>{{default impacto.economico "Sin descripción."}}</td></tr>`);
+                if (c.showImpactoPolitico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Político</td><td>{{default impacto.politico "Sin descripción."}}</td></tr>`);
+                if (c.showImpactoAmbiental !== false) impactRows.push(`<tr><td class="label-cell">Impacto Ambiental</td><td>{{default impacto.ambiental "Sin descripción."}}</td></tr>`);
+                if (c.showImpactoOtro !== false) impactRows.push(`<tr><td class="label-cell">Otro Impacto</td><td>{{default impacto.otro "Sin descripción."}}</td></tr>`);
+
+                if (impactRows.length > 0) {
+                    parts.push(`
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 25px 0 6px;">6. Matriz de Impacto</p>
     <table class="info-table">
       <tbody>
-        <tr>
-          <td class="label-cell" style="width: 25%;">Impacto Social</td>
-          <td>{{default impacto.social "Sin descripción."}}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Impacto Científico</td>
-          <td>{{default impacto.cientifico "Sin descripción."}}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Impacto Económico</td>
-          <td>{{default impacto.economico "Sin descripción."}}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Impacto Político</td>
-          <td>{{default impacto.politico "Sin descripción."}}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Impacto Ambiental</td>
-          <td>{{default impacto.ambiental "Sin descripción."}}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Otro Impacto</td>
-          <td>{{default impacto.otro "Sin descripción."}}</td>
-        </tr>
+        ${impactRows.join('\n        ')}
       </tbody>
-    </table>
+    </table>`);
+                }
+
+                if (parts.length === 0) break;
+                html += `
+  <!-- BLOQUE: MATRIZ DE IMPACTOS Y PRODUCTOS -->
+  <div style="margin-top: 20px;">
+    ${parts.join('')}
   </div>`;
                 break;
+            }
         }
     }
 

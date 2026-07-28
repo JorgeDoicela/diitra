@@ -309,16 +309,17 @@ const RenderCover: React.FC<{
 
 const RenderTitle: React.FC<{ config: any }> = ({ config }) => {
     const text = config.text || 'Título de Sección';
-    const level = config.level || 'h1';
+    // Soportar tanto config.fontSize (H1/H2/H3) como config.level (h1/h2/h3) por retrocompatibilidad
+    const fontSize = (config.fontSize || config.level || 'H2').toUpperCase();
 
-    if (level === 'h1') {
+    if (fontSize === 'H1') {
         return (
             <h1 className="text-sm font-black uppercase mb-2 mt-4 tracking-wider flex items-center justify-between" style={{ color: DYN_COLORS.blue }}>
                 <span>{text}</span>
             </h1>
         );
     }
-    if (level === 'h2') {
+    if (fontSize === 'H2') {
         return (
             <h2 className="text-xs font-black text-white px-3 py-2 uppercase tracking-wide mb-2 mt-4" style={{ backgroundColor: DYN_COLORS.blue }}>
                 {text}
@@ -677,39 +678,90 @@ const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
     );
 };
 
-const RenderProjectGeneralSection: React.FC<{ config: any }> = () => {
+const RenderProjectGeneralSection: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
     return (
         <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
                 <span>Ficha de Identificación del Proyecto (Metadatos Científicos)</span>
             </div>
             <div className="grid grid-cols-2 gap-4 text-[10px] text-slate-700 leading-relaxed">
-                <div className="col-span-2">
-                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Título del Proyecto:</span>
-                    <span className="font-bold text-slate-800">[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]</span>
-                </div>
-                <div>
-                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Carrera / Unidad Académica:</span>
-                    <span className="font-semibold text-slate-600">[Carrera del Docente]</span>
-                </div>
-                <div>
-                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Convocatoria:</span>
-                    <span className="font-semibold text-slate-600">[Convocatoria Activa IST Traversari]</span>
-                </div>
-                <div>
-                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Línea de Investigación:</span>
-                    <span className="font-semibold text-slate-600">[Dominio, Línea y Sublínea Científica]</span>
-                </div>
-                <div>
-                    <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Campo Detallado CACES:</span>
-                    <span className="font-semibold text-slate-600">[Clasificación CACES de la Carrera]</span>
-                </div>
+                {c.showTitulo !== false && (
+                    <div className="col-span-2">
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Título del Proyecto:</span>
+                        <span className="font-bold text-slate-800">[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]</span>
+                    </div>
+                )}
+                {c.showDirector !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Director del Proyecto:</span>
+                        <span className="font-semibold text-slate-600">[Nombre del Director]</span>
+                    </div>
+                )}
+                {c.showCarrera !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Carrera / Unidad Académica:</span>
+                        <span className="font-semibold text-slate-600">[Carrera del Docente]</span>
+                    </div>
+                )}
+                {c.showConvocatoria !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Convocatoria:</span>
+                        <span className="font-semibold text-slate-600">[Convocatoria Activa IST Traversari]</span>
+                    </div>
+                )}
+                {c.showPrograma !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Programa de Investigación:</span>
+                        <span className="font-semibold text-slate-600">[Programa Institucional]</span>
+                    </div>
+                )}
+                {c.showGrupo !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Grupo de Investigación:</span>
+                        <span className="font-semibold text-slate-600">[Grupo Aprobado]</span>
+                    </div>
+                )}
+                {c.showLinea !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Línea de Investigación:</span>
+                        <span className="font-semibold text-slate-600">[Dominio, Línea y Sublínea Científica]</span>
+                    </div>
+                )}
+                {c.showTipo !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Tipo de Investigación:</span>
+                        <span className="font-semibold text-slate-600">[Básica / Aplicada / Experimental]</span>
+                    </div>
+                )}
+                {c.showCaces !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Campo Detallado CACES:</span>
+                        <span className="font-semibold text-slate-600">[Clasificación CACES de la Carrera]</span>
+                    </div>
+                )}
+                {c.showFechas !== false && (
+                    <div>
+                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Fechas y Plazos:</span>
+                        <span className="font-semibold text-slate-600">[Fecha Inicio - Fecha Fin]</span>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-const RenderImpacts: React.FC<{ config: any }> = () => {
+const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
+    const impactList = [
+        { key: 'showImpactoSocial', label: 'Social' },
+        { key: 'showImpactoCientifico', label: 'Científico' },
+        { key: 'showImpactoEconomico', label: 'Económico' },
+        { key: 'showImpactoPolitico', label: 'Político' },
+        { key: 'showImpactoAmbiental', label: 'Ambiental' },
+        { key: 'showImpactoOtro', label: 'Otro' },
+    ].filter(i => (c as any)[i.key] !== false);
+
     return (
         <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
@@ -717,41 +769,46 @@ const RenderImpacts: React.FC<{ config: any }> = () => {
             </div>
 
             <div className="space-y-4">
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Productos Esperados:</span>
-                    <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                        <thead>
-                            <tr>
-                                <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Tipo de Producto</th>
-                                <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-slate-200 p-1.5 text-slate-800">[Tipo de Producto de Investigación]</td>
-                                <td className="border border-slate-200 p-1.5 text-center font-bold text-slate-600">1</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Áreas de Impacto Mapeadas:</span>
-                    <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700 leading-normal">
-                        {['Social', 'Científico', 'Económico', 'Político', 'Ambiental', 'Otro'].map(tipo => (
-                            <div key={tipo} className="p-2 border border-slate-150 rounded bg-white flex justify-between gap-4">
-                                <strong className="text-[8px] uppercase text-slate-400 w-16 text-left">{tipo}</strong>
-                                <span className="text-slate-600 italic font-medium flex-1 text-right">[Descripción de Impacto]</span>
-                            </div>
-                        ))}
+                {c.showProductosEsperados !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Productos Esperados:</span>
+                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
+                            <thead>
+                                <tr>
+                                    <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Tipo de Producto</th>
+                                    <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="border border-slate-200 p-1.5 text-slate-800">[Tipo de Producto de Investigación]</td>
+                                    <td className="border border-slate-200 p-1.5 text-center font-bold text-slate-600">1</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+                )}
+
+                {impactList.length > 0 && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Áreas de Impacto Mapeadas:</span>
+                        <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700 leading-normal">
+                            {impactList.map(item => (
+                                <div key={item.label} className="p-2 border border-slate-150 rounded bg-white flex justify-between gap-4">
+                                    <strong className="text-[8px] uppercase text-slate-400 w-16 text-left">{item.label}</strong>
+                                    <span className="text-slate-600 italic font-medium flex-1 text-right">[Descripción de Impacto]</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-const RenderProjectBudgetSection: React.FC<{ config: any }> = () => {
+const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
     return (
         <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
@@ -759,64 +816,70 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = () => {
             </div>
 
             <div className="space-y-4">
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Recursos Disponibles (Equipos, Licencias, Espacios):</span>
-                    <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                        <thead>
-                            <tr>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Descripción del Recurso</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-12">Cant.</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600 w-24">Fuente</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-slate-200 p-1 text-slate-800">[Equipo/Laboratorio Computación]</td>
-                                <td className="border border-slate-200 p-1 text-center font-bold text-slate-600">1</td>
-                                <td className="border border-slate-200 p-1 text-slate-600">ISTPET</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                {c.showRecursosDisponibles !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Recursos Disponibles (Equipos, Licencias, Espacios):</span>
+                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
+                            <thead>
+                                <tr>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Descripción del Recurso</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-12">Cant.</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600 w-24">Fuente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="border border-slate-200 p-1 text-slate-800">[Equipo/Laboratorio Computación]</td>
+                                    <td className="border border-slate-200 p-1 text-center font-bold text-slate-600">1</td>
+                                    <td className="border border-slate-200 p-1 text-slate-600">ISTPET</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Recursos Necesarios (Gasto Detallado):</span>
-                    <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                        <thead>
-                            <tr>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Partida / Rubro</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-12">Cant.</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-20">P. Unit.</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-20">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-slate-200 p-1 text-slate-800">[Viáticos para salida de campo / Reactivos]</td>
-                                <td className="border border-slate-200 p-1 text-center font-bold text-slate-600">2</td>
-                                <td className="border border-slate-200 p-1 text-right text-slate-600">$50.00</td>
-                                <td className="border border-slate-200 p-1 text-right font-bold text-slate-800">$100.00</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                {c.showRecursosNecesarios !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Recursos Necesarios (Gasto Detallado):</span>
+                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
+                            <thead>
+                                <tr>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Partida / Rubro</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-12">Cant.</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-20">P. Unit.</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-20">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="border border-slate-200 p-1 text-slate-800">[Viáticos para salida de campo / Reactivos]</td>
+                                    <td className="border border-slate-200 p-1 text-center font-bold text-slate-600">2</td>
+                                    <td className="border border-slate-200 p-1 text-right text-slate-600">$50.00</td>
+                                    <td className="border border-slate-200 p-1 text-right font-bold text-slate-800">$100.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-4 pt-1.5 border-t border-dashed border-slate-200">
-                    <div className="text-[9px] text-slate-700 space-y-1">
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 border border-slate-300 bg-slate-50 rounded" />
-                            <span>Financiamiento Solicitado al ISTPET</span>
+                {c.showFinanciamiento !== false && (
+                    <div className="grid grid-cols-2 gap-4 pt-1.5 border-t border-dashed border-slate-200">
+                        <div className="text-[9px] text-slate-700 space-y-1">
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 border border-slate-300 bg-slate-50 rounded" />
+                                <span>Financiamiento Solicitado al ISTPET</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 border border-slate-300 bg-slate-50 rounded" />
+                                <span>Financiamiento de Otras Fuentes</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 border border-slate-300 bg-slate-50 rounded" />
-                            <span>Financiamiento de Otras Fuentes</span>
+                        <div className="text-right flex flex-col justify-end">
+                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Presupuesto Total Estimado:</span>
+                            <span className="text-sm font-black text-slate-800">$100.00</span>
                         </div>
                     </div>
-                    <div className="text-right flex flex-col justify-end">
-                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Presupuesto Total Estimado:</span>
-                        <span className="text-sm font-black text-slate-800">$100.00</span>
-                    </div>
-                </div>
+                )}
 
                 <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -827,42 +890,47 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = () => {
     );
 };
 
-const RenderProjectTechnicalSection: React.FC<{ config: any }> = () => {
+const RenderProjectTechnicalSection: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
+    const subs = [
+        { key: 'showAntecedentes', title: '3.1 Antecedentes de la Problemática' },
+        { key: 'showDescripcionProyecto', title: '3.2 Descripción General de la Propuesta' },
+        { key: 'showJustificacion', title: '3.3 Justificación e Importancia' },
+        { key: 'showObjetivoGeneral', title: '3.4 Objetivos (General)' },
+        { key: 'showObjetivosEspecificos', title: '3.4 Objetivos (Específicos)' },
+        { key: 'showOds', title: '3.5 Alineación ODS' },
+        { key: 'showMarcoTeorico', title: '3.6 Marco Teórico Científico' },
+        { key: 'showMetodologia', title: '3.7 Enfoque Metodológico' },
+        { key: 'showEvaluacion', title: '3.8 Evaluación Técnica de Resultados' },
+    ].filter(s => (c as any)[s.key] !== false);
+
     return (
         <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Plan Técnico y Científico (8 Sub-Secciones)</span>
+                <span>Plan Técnico y Científico ({subs.length} Sub-Secciones Activas)</span>
             </div>
 
             <div className="space-y-2 text-[9px] text-slate-700">
                 <div className="grid grid-cols-2 gap-2">
-                    {[
-                        '3.1 Antecedentes de la Problemática',
-                        '3.2 Descripción General de la Propuesta',
-                        '3.3 Justificación e Importancia',
-                        '3.4 Objetivos de Investigación (Gen/Esp)',
-                        '3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)',
-                        '3.6 Marco Teórico Científico',
-                        '3.7 Enfoque Metodológico',
-                        '3.8 Evaluación Técnica de Resultados'
-                    ].map(sub => (
-                        <div key={sub} className="p-2 border border-slate-150 rounded bg-white flex items-center gap-2">
+                    {subs.map(sub => (
+                        <div key={sub.key} className="p-2 border border-slate-150 rounded bg-white flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
-                            <span className="font-semibold text-slate-600 truncate">{sub}</span>
+                            <span className="font-semibold text-slate-600 truncate">{sub.title}</span>
                         </div>
                     ))}
                 </div>
 
                 <p className="text-[8px] text-pink-600 font-black border-t border-dashed border-pink-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
                     <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-                    Los investigadores redactarán estas 8 secciones colaborativamente en la pestaña "Plan Técnico" del Workspace.
+                    Los investigadores redactarán estas secciones colaborativamente en la pestaña "Plan Técnico" del Workspace.
                 </p>
             </div>
         </div>
     );
 };
 
-const RenderProjectProgressReport: React.FC<{ config: any }> = () => {
+const RenderProjectProgressReport: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
     return (
         <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
@@ -870,48 +938,54 @@ const RenderProjectProgressReport: React.FC<{ config: any }> = () => {
             </div>
 
             <div className="space-y-4 text-[9px] text-slate-700">
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Bitácora Científica:</span>
-                    <p className="text-slate-500 italic">[Campo colaborativo para registrar conclusiones parciales y bitácora del período]</p>
-                </div>
+                {c.showEvidencias !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Bitácora Científica:</span>
+                        <p className="text-slate-500 italic">[Campo colaborativo para registrar conclusiones parciales y bitácora del período]</p>
+                    </div>
+                )}
 
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Hitos y Entregables Completados:</span>
-                    <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                        <thead>
-                            <tr>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Actividad / Hito</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Avance</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Completado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-slate-200 p-1 text-slate-800">[Desarrollo de experimentos de campo]</td>
-                                <td className="border border-slate-200 p-1 text-center text-slate-600">100%</td>
-                                <td className="border border-slate-200 p-1 text-center font-bold text-emerald-600">SÍ</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                {c.showHitosCompletados !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Hitos y Entregables Completados:</span>
+                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
+                            <thead>
+                                <tr>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Actividad / Hito</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Avance</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Completado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="border border-slate-200 p-1 text-slate-800">[Desarrollo de experimentos de campo]</td>
+                                    <td className="border border-slate-200 p-1 text-center text-slate-600">100%</td>
+                                    <td className="border border-slate-200 p-1 text-center font-bold text-emerald-600">SÍ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                <div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ejecución del Presupuesto de Gasto:</span>
-                    <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                        <thead>
-                            <tr>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Partida Ejecutada</th>
-                                <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-24">Monto Gastado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-slate-200 p-1 text-slate-800">[Adquisición de insumos de laboratorio]</td>
-                                <td className="border border-slate-200 p-1 text-right font-bold text-slate-800">$100.00</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                {c.showPresupuestoEjecutado !== false && (
+                    <div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ejecución del Presupuesto de Gasto:</span>
+                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
+                            <thead>
+                                <tr>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Partida Ejecutada</th>
+                                    <th className="border border-slate-300 p-1 bg-slate-100 font-bold text-right uppercase text-[8px] text-slate-600 w-24">Monto Gastado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="border border-slate-200 p-1 text-slate-800">[Adquisición de insumos de laboratorio]</td>
+                                    <td className="border border-slate-200 p-1 text-right font-bold text-slate-800">$100.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
