@@ -1,91 +1,86 @@
-# DIITRA: Departamento de Investigación e Innovación Traversari
+# DIITRA - Departamento de Investigación e Innovación Traversari
 
-Sistema integral para la administración del ciclo de vida de proyectos de investigación e innovación tecnológica. Diseñado para garantizar la transparencia, trazabilidad y cumplimiento de los estándares de acreditación de Institutos Superiores en Ecuador.
-
----
-
-## Capacidades Nucleares del Sistema
-
-DIITRA se fundamenta en tres pilares estratégicos para asegurar la excelencia institucional:
-
-1. **Auditoría Integral**: Cada transición de estado genera un rastro inmutable de trazabilidad, integrando firmas digitales y sellos de tiempo.
-2. **Resiliencia Forense**: Implementación de snapshots de datos SHA-256 para la protección de la producción científica ante auditorías del CACES.
-3. **Gobernanza de Datos**: Modelo de persistencia robusto que asegura la integridad de la propiedad intelectual y el cumplimiento de la LOPDP.
-
-## Arquitectura Tecnológica
-
-La plataforma utiliza un stack tecnológico moderno y escalable:
-
-- **Frontend Web**: Aplicación React SPA con arquitectura de componentes modular.
-- **Backend Core**: API Gateway desarrollado en .NET 8.0 utilizando Clean Architecture.
-- **Persistencia**: Base de datos MariaDB/MySQL con segregación de esquemas.
-- **Integridad Documental**: Motor de generación PDF basado en iText9 y plantillas dinámicas.
-
-## Cumplimiento Normativo (CACES 2026)
-
-El sistema ha sido fortificado para cumplir con las exigencias regulatorias nacionales:
-
-- **Motor de Estados Configurable**: Adaptabilidad inmediata a cambios en el Reglamento de Régimen Académico.
-- **Trazabilidad de TRL**: Seguimiento detallado de los Niveles de Madurez Tecnológica (TRL 1-9).
-- **Verificación Pública**: Nodo de consulta externa para la validación de autenticidad de documentos mediante códigos QR.
-
-## Documentación Técnica Relacionada
-
-Para una comprensión profunda de los subsistemas, consulte los siguientes documentos:
-
-- [Arquitectura de Sistema y Diseño C4](./docs/documentacion/01_arquitectura.md)
-- [Gobernanza de Datos y Modelo de Base de Datos](./docs/documentacion/02_base_datos.md)
-- [Especificación Técnica de la API Backend](./docs/documentacion/03_api_backend_servicios.md)
-- [Interfaz Web y Panel Administrativo](./docs/documentacion/04_interfaz_web_panel.md)
-- [Aplicación Móvil para el Personal Docente](./docs/documentacion/05_aplicacion_movil_docente.md)
-- [Flujos de Trabajo y Diagramas de Secuencia](./docs/documentacion/06_flujos_trabajo.md)
-- [Arquitecturas de Detalle y Patrones](./docs/documentacion/07_arquitecturas_detalle.md)
-- [Motor de Documentos e Integridad Forense](./docs/documentacion/08_motor_documentos.md)
-- [Generador de Documentos Core](./docs/documentacion/09_generador_documentos_core.md)
-- [Motor Colaborativo CoWork](./docs/documentacion/10_motor_colaborativo_cowork.md)
-- [Ecosistema Institucional y Normativa](./docs/documentacion/11_diitra_ecosistema_institucional.md)
-- [Arquitectura Nuclear y Madurez TRL](./docs/documentacion/12_arquitectura_nuclear_trl.md)
+Sistema de gestión del ciclo de vida de proyectos de investigación, desarrollo tecnológico e innovación en el Instituto Superior Tecnológico Traversari (ISTT). La plataforma administra la formulación, evaluación por pares ciegos, seguimiento de TRL 1-9, control presupuestario y generación documental con integridad forense bajo los criterios del marco de acreditación **CACES 2026**, el Reglamento de Régimen Académico (RRA) y la Ley Orgánica de Protección de Datos Personales (LOPDP) del Ecuador.
 
 ---
 
-## Políticas de Desarrollo y Nomenclatura (API-Frontend Binding)
+## 1. Visión General de Arquitectura
 
-Para evitar fallos de enlace de datos (model binding) entre la aplicación frontend (React) y la API backend (.NET Core), se debe respetar rigurosamente la siguiente convención de nomenclatura:
+La plataforma implementa un modelo desacoplado compuesto por un backend API RESTful en .NET 8.0 y un cliente web de página única (SPA) en React 18.
 
-### 1. Política Global de Casing (`lower_snake_case`)
-El backend tiene configurada la política global `JsonNamingPolicy.SnakeCaseLower` para la serialización y deserialización de cuerpos JSON. Por lo tanto:
-* **Cuerpo de Solicitudes (`[FromBody]`)**: Cualquier payload JSON enviado en peticiones `POST`, `PUT` o `PATCH` desde React a un DTO de C# debe utilizar claves en **`lower_snake_case`** (ej: `project_uuid`, `id_tipo_producto`, `cuerpo_html`, `observacion_revision`).
-* **Mapeo a DTOs**: La deserialización automática de .NET transformará estas claves a las propiedades `PascalCase` del DTO (ej: `ProjectUuid`, `IdTipoProducto`, `CuerpoHtml`). Si el frontend envía `camelCase`, las propiedades en el backend quedarán como `null` o vacías.
+* **Backend API (`diitra_api`):** ASP.NET Core 8.0 estructurado bajo Clean Architecture (Domain, Application, Infrastructure, API).
+* **Frontend Web (`diitra_web`):** React 18 SPA compilado con Vite, TypeScript y Axios.
+* **Cliente Móvil (`diitra_mobile`):** Aplicación móvil para consulta docente y recepción de notificaciones.
+* **Base de Datos (`sigafi_es`):** MariaDB 10.5+ / MySQL 8.0+ en el puerto local `3307`, mapeado vía Entity Framework Core 9.0 (`Pomelo.EntityFrameworkCore.MySql`).
 
-### 2. Parámetros de Consulta (`[FromQuery]`) y Formularios (`[FromForm]`)
-* **Query Parameters / Query String**: El enlace de parámetros de consulta en el controlador de ASP.NET Core es insensible a mayúsculas/minúsculas y vincula directamente con los nombres de variables del método en C#. Por convención, se envían en **`camelCase`** (ej: `?grupoInvestigacion=123&tieneGrupoInvestigacion=true`).
-* **Form Data (`multipart/form-data`)**: Los datos cargados como archivos y campos de formulario se enlazan de forma insensible a mayúsculas/minúsculas con los nombres de variables del controlador, por lo que se utiliza habitualmente **`camelCase`** o el nombre exacto del parámetro (ej: `projectUuid`).
+---
 
-### 3. Excepciones de Casing Especiales
-* **Metadatos Universales (`/documents/instances`)**: El endpoint universal de parches de metadatos recibe un `JsonElement` dinámico, por lo que preserva el casing original. Por convención del motor de plantillas de documentos (Scriban), estos esquemas de formulario se manejan en **`PascalCase`** (ej: `Titulo`, `CostoTotal`, `Investigadores`).
-* **CreateInstanceRequest**: La clase C# que recibe la creación de instancias de documentos usa decoradores explícitos `[property: JsonPropertyName("templateCode")]` y `[property: JsonPropertyName("entityUuid")]`. Por ende, estas propiedades específicas deben enviarse estrictamente en **`camelCase`**.
+## 2. Componentes y Motores del Sistema
 
-### 4. Tolerancia a Discrepancias (Local Fallback Pattern)
-* **Principio de robustez**: Para evitar fallos silenciosos en producción por discrepancias de casing en campos dinámicos (como respuestas JSON anidadas, snapshots o DTOs heredados), el frontend debe usar operadores de coalescencia (`||`) al leer campos sensibles que puedan variar.
-* **Ejemplo práctico**: Al leer campos serializados o snapshots de datos, se debe tolerar `snake_case`, `camelCase` y `PascalCase` indistintamente:
+1. **Motor Documental PDF (`DocumentEngine`):** Renderizado de plantillas HTML (`Handlebars.Net` / `Scriban`), marcas de agua y generación PDF con **iText 7 / pdfHTML**.
+2. **Resiliencia Forense e Inmutabilidad:** Congelamiento de datos en punto de emisión (`data_snapshot_json`), hash de integridad **SHA-256** e inyección de códigos QR vectoriales para verificación pública sin requerir credenciales.
+3. **Máquina de Estados y Bloqueo (*State Locking*):** Control del flujo de vida del proyecto con inhabilitación atómica de escrituras en estados avanzados.
+4. **Motor Colaborativo en Tiempo Real (CoWork):** Sincronización de edición concurrente basada en **CRDT (Yjs)** sobre **SignalR WebSockets** con compresión GZip y bloqueo de secciones (`SectionBlockGuard`).
+5. **Evaluación por Pares Ciegos:** Anonimización automática de propuestas (*Blind Mode*) para evaluación confidencial y rúbricas ponderadas cuantitativas.
+6. **Firma Digital y Criptografía:** Verificación de certificados PKCS#12 / PFX (`BouncyCastle`), estampado gráfico de firmas de responsabilidad y sellos de tiempo UTC.
+7. **Notificaciones Multicanal:** WebSockets in-app (`SignalRDriver`), notificaciones push VAPID (`PushDriver`) y correos transaccionales HTML (`EmailMasterLayoutRenderer`).
+
+---
+
+## 3. Estructura del Repositorio
+
+```text
+diitra/
+├── backend/                  # Solución .NET 8.0 (diitra.slnx)
+│   ├── diitra_api/           # Controladores REST (23), Middlewares y Swagger
+│   ├── diitra_application/   # Casos de Uso, DTOs y FluentValidation
+│   ├── diitra_domain/        # Entidades puras y Contratos de Dominio
+│   ├── diitra_infrastructure/ # EF Core 9, Engines (PDF, CoWork, Auth, Signatures)
+│   └── diitra_tests/         # Pruebas unitarias e integración
+├── diitra_web/               # Cliente Web React 18 + Vite + TypeScript
+├── diitra_mobile/            # Aplicación Móvil Docente
+├── docs/
+│   └── documentacion/        # Centro de Documentación Técnica (19 archivos / 7 secciones)
+└── scripts/
+    └── base_datos/           # Scripts SQL de inicialización y seeds de catálogos
+```
+
+---
+
+## 4. Convenciones de Enlace de Datos (API-Frontend Binding)
+
+* **Cuerpo de Peticiones (`[FromBody]`):** Payloads `POST`, `PUT` y `PATCH` transmiten claves JSON en **`lower_snake_case`**.
+* **Query Parameters y Formularios (`[FromQuery]`, `[FromForm]`):** Parámetros de consulta y envíos `multipart/form-data` utilizan **`camelCase`**.
+* **Metadatos Universales:** Las llamadas a `/documents/instances/{uuid}/metadata` procesan esquemas dinámicos utilizando **`PascalCase`**.
+* **Tolerancia a Discrepancias (Local Fallback Pattern):** El frontend lee propiedades dinámicas utilizando operadores de coalescencia (`||`) para tolerar variaciones de casing:
   ```typescript
   const snapshotStr = response.data.data_snapshot_json || response.data.dataSnapshotJson || response.data.DataSnapshotJson;
   ```
 
 ---
 
-## Guía de Despliegue e Instalación
+## 5. Centro de Documentación Técnica
 
-### Requisitos del Entorno
-- .NET SDK 8.0 o superior
-- Node.js 18.x o superior
-- MariaDB 10.5+ o MySQL 8.0+
+La especificación detallada del sistema se encuentra centralizada en la carpeta **[docs/documentacion/](./docs/documentacion/README.md)**. 
 
-### Procedimiento de Arranque
-1. **Base de Datos**: Ejecute el script de inicialización ubicado en `scripts/base_datos/`.
-2. **Servidor API**: Configure la cadena de conexión en `appsettings.json` e inicie el servicio mediante `dotnet run`.
-3. **Cliente Web**: Instale las dependencias mediante `npm install` e inicie el entorno de desarrollo con `npm run dev`.
+Para consultar un área específica, acceda al módulo correspondiente:
+
+* **[Sección 01: Arquitectura de Sistemas y Patrones](./docs/documentacion/01-arquitectura/01-macro-arquitectura-clean-arch.md)**
+* **[Sección 02: Backend, APIs y Servicios REST](./docs/documentacion/02-backend-servicios/01-especificacion-api-rest.md)**
+* **[Sección 03: Motores Especializados (PDF, CoWork, Firmas, Pares, Notificaciones)](./docs/documentacion/03-motores-especializados/01-motor-documental-pdf.md)**
+* **[Sección 04: Base de Datos y Catálogos Normativos](./docs/documentacion/04-base-de-datos/01-esquema-relacional-sigafi.md)**
+* **[Sección 05: Frontend Web (React SPA)](./docs/documentacion/05-frontend-web/01-arquitectura-react-vite.md)**
+* **[Sección 06: Aplicación Móvil Docente](./docs/documentacion/06-aplicacion-movil/01-arquitectura-movil-docente.md)**
+* **[Sección 07: Despliegue y Operaciones (Instalación y CACES 2026)](./docs/documentacion/07-despliegue-y-operaciones/01-instalacion-entorno-local.md)**
 
 ---
 
-DIITRA Trust Architecture | IST Traversari | Quito, Ecuador
+## 6. Instalación Rápida en Entorno Local
+
+1. **Base de Datos:** Inicie MariaDB/MySQL en el puerto `3307` y ejecute los scripts de `scripts/base_datos/`.
+2. **Backend:** En `backend/diitra_api`, ejecute `dotnet run`.
+3. **Frontend:** En `diitra_web`, instale con `npm install` e inicie con `npm run dev`.
+
+---
+
+DIITRA Architecture | IST Traversari | Quito, Ecuador
