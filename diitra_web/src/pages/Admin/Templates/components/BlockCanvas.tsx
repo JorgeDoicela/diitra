@@ -9,7 +9,6 @@ import {
     Layers, Trash2, Eye, EyeOff, Copy, Move
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
-import { getEffectiveCoverImage } from '../utils/theme-schema';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 

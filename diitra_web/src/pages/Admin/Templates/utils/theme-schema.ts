@@ -93,13 +93,3 @@ export function mergeWithDefaults(partial: any): Record<string, Record<string, a
         brand: { ...defaults.brand, ...(parsed.brand || {}) },
     };
 }
-
-export function getEffectiveCoverImage(blockConfig?: any, themeConfig?: any): string | undefined {
-    const themeVal = themeConfig?.brand?.coverImage;
-    if (typeof themeVal === 'string' && themeVal.trim().length > 0) {
-        return themeVal.trim();
-    }
-    return undefined;
-}
-
-

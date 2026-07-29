@@ -7,7 +7,7 @@ import { SignaturesProperties } from './properties/SignaturesProperties';
 import { TwoColumnProperties } from './properties/TwoColumnProperties';
 import { GanttProperties } from './properties/GanttProperties';
 import { ProjectGeneralProperties } from './properties/ProjectGeneralProperties';
-import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme, getEffectiveCoverImage } from '../utils/theme-schema';
+import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme } from '../utils/theme-schema';
 
 
 interface BlockPropertiesProps {
