@@ -9,6 +9,7 @@ import {
     Layers, Trash2, Eye, EyeOff, Copy, Move
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
+import { getEffectiveCoverImage } from '../utils/theme-schema';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 
@@ -1721,7 +1722,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                                 block={block}
                                                                 index={originalIndex}
                                                                 isActive={isActiveBlock}
-                                                                coverImage={block.config?.coverImage || themeConfig?.brand?.coverImage}
+                                                                coverImage={themeConfig?.brand?.coverImage || undefined}
                                                                 onSelectBlock={onSelectBlock}
                                                                 onToggleActive={onToggleActive}
                                                                 onDeleteBlock={onDeleteBlock}
