@@ -11,7 +11,7 @@ La plataforma implementa un modelo desacoplado compuesto por un backend API REST
 * **Backend API (`diitra_api`):** ASP.NET Core 8.0 estructurado bajo Clean Architecture (Domain, Application, Infrastructure, API).
 * **Frontend Web (`diitra_web`):** React 18 SPA compilado con Vite, TypeScript y Axios.
 * **Cliente Móvil (`diitra_mobile`):** Aplicación móvil para consulta docente y recepción de notificaciones.
-* **Base de Datos (`sigafi_es`):** MariaDB 10.5+ / MySQL 8.0+ en el puerto local `3307`, mapeado vía Entity Framework Core 9.0 (`Pomelo.EntityFrameworkCore.MySql`).
+* **Base de Datos (`sigafi_es`):** MariaDB 10.5+ / MySQL 8.0+ en el puerto local `3306`, mapeado vía Entity Framework Core 9.0 (`Pomelo.EntityFrameworkCore.MySql`).
 
 ---
 
@@ -61,7 +61,7 @@ diitra/
 
 ## 5. Centro de Documentación Técnica
 
-La especificación detallada del sistema se encuentra centralizada en la carpeta **[docs/documentacion/](./docs/documentacion/README.md)**. 
+La especificación detallada del sistema se encuentra centralizada en la carpeta **[docs/documentacion/](./docs/documentacion/README.md)**.
 
 Para consultar un área específica, acceda al módulo correspondiente:
 
@@ -77,7 +77,7 @@ Para consultar un área específica, acceda al módulo correspondiente:
 
 ## 6. Instalación Rápida en Entorno Local
 
-1. **Base de Datos:** Inicie MariaDB/MySQL en el puerto `3307` y ejecute los scripts de `scripts/base_datos/`.
+1. **Base de Datos:** Inicie MariaDB/MySQL en el puerto `3306` y ejecute los scripts de `scripts/base_datos/`.
 2. **Backend:** En `backend/diitra_api`, ejecute `dotnet run`.
 3. **Frontend:** En `diitra_web`, instale con `npm install` e inicie con `npm run dev`.
 

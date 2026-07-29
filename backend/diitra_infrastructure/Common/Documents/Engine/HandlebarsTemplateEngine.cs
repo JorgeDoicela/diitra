@@ -640,6 +640,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     {
                         var value = ToNativeType(prop.Value);
                         
+                        // 0. Guardar la clave exacta original (ej: MultiSec_block-1785266742689_0)
+                        dict[prop.Name] = value;
+
                         // 1. Guardar la versión en minúsculas (ej: lineainvestigacion) para retrocompatibilidad
                         //    con plantillas antiguas o dinámicas que accedan a la propiedad sin guiones bajos.
                         dict[prop.Name.ToLower()] = value;

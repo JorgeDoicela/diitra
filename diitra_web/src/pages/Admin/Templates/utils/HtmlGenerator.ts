@@ -485,32 +485,107 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
 
             // ── TABLA AVANZADA ───────────────────────────────────────────────
             case 'advanced_table': {
+                const blockId = block.id ? block.id.replace('block-', '') : 'default';
+                let varName = blockId;
+                if (/^\d+$/.test(varName)) {
+                    varName = 'field_' + varName;
+                }
+
                 const thStyle = headerBg(c.headerStyle);
-                const heads = (c.headers ?? []).map((h, i) =>
+                const headersList = c.headers && c.headers.length > 0 ? c.headers : ['Columna 1', 'Columna 2'];
+                const heads = headersList.map((h: string, i: number) =>
                     `<th style="${thStyle}${c.colWidths?.[i] ? ` width: ${c.colWidths[i]};` : ''}">${h}</th>`
                 ).join('');
-                const rows = (c.rows ?? []).map(row =>
-                    `<tr>${row.cells.map((cell, idx) => {
+
+                const dynamicCells = headersList.map((_: string, colIdx: number) =>
+                    `<td>{{default (lookup this "${colIdx}") (default (lookup this "col_${colIdx}") (default (lookup this.cells ${colIdx}) ""))}}</td>`
+                ).join('');
+
+                const defaultRowsHtml = (c.rows ?? []).map((row: any) =>
+                    `<tr>${(row.cells || []).map((cell: string, idx: number) => {
                         const isLabel = idx === 0 && !c.headers?.length;
                         return `<td class="${isLabel ? 'label-cell' : ''}">${cell}</td>`;
                     }).join('')}</tr>`
                 ).join('');
+
                 html += `
   <!-- BLOQUE: TABLA AVANZADA -->
   <table class="info-table">
     ${heads ? `<thead><tr>${heads}</tr></thead>` : ''}
-    <tbody>${rows}</tbody>
+    <tbody>
+      {{#if ${varName}}}
+        {{#each ${varName}}}
+          <tr>${dynamicCells}</tr>
+        {{/each}}
+      {{else}}
+        ${defaultRowsHtml}
+      {{/if}}
+    </tbody>
   </table>`;
                 break;
             }
 
             // ── TABLA MULTI-SECCIÓN ──────────────────────────────────────────
-            case 'multi_section_table':
+            case 'multi_section_table': {
+                const blockId = block.id || 'default';
                 html += `\n  <!-- BLOQUE: TABLA MULTI-SECCIÓN -->`;
-                for (const section of (c.sections ?? [])) {
-                    html += renderSection(section);
-                }
+                const sectionsList = c.sections ?? [];
+                sectionsList.forEach((section: TableSection, secIdx: number) => {
+                    const listKey = `MultiSec_${blockId}_${secIdx}`;
+                    const snakeKey = `multi_sec_${blockId.replace(/-/g, '_')}_${secIdx}`;
+                    const lowerKey = `multisec_${blockId.replace(/-/g, '')}_${secIdx}`;
+                    const titleSlug = (section.title || '').replace(/\s+/g, '').replace(/_/g, '');
+                    const aliasKey = titleSlug ? `MultiSec_${titleSlug}` : null;
+                    const aliasSnake = titleSlug ? `multi_sec_${titleSlug.toLowerCase()}` : null;
+
+                    const thStyle = headerBg(section.headerStyle);
+                    const headers = section.headers && section.headers.length > 0 ? section.headers : ['Columna 1', 'Columna 2'];
+                    const headersHtml = headers.map((h, i) =>
+                        `<th style="${thStyle}${section.colWidths?.[i] ? ` width: ${section.colWidths[i]};` : ''}">${h}</th>`
+                    ).join('');
+
+                    const dynamicCellsHtml = headers.map((_, colIdx) =>
+                        `<td>{{default (lookup this "col_${colIdx}") (default (lookup this "col${colIdx}") (default (lookup this "${colIdx}") (default (lookup this.cells ${colIdx}) "")))}}</td>`
+                    ).join('');
+
+                    const defaultRowsHtml = (section.rows ?? []).map(row =>
+                        `<tr>${(row.cells || []).map(c => `<td>${c}</td>`).join('')}</tr>`
+                    ).join('');
+
+                    html += `
+  <p style="font-weight: bold; font-size: 9pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 14px 0 4px;">${section.title}</p>
+  <table class="info-table">
+    <thead><tr>${headersHtml}</tr></thead>
+    <tbody>
+      {{#if ${listKey}}}
+        {{#each ${listKey}}}
+          <tr>${dynamicCellsHtml}</tr>
+        {{/each}}
+      {{else}}{{#if ${snakeKey}}}
+        {{#each ${snakeKey}}}
+          <tr>${dynamicCellsHtml}</tr>
+        {{/each}}
+      {{else}}{{#if ${lowerKey}}}
+        {{#each ${lowerKey}}}
+          <tr>${dynamicCellsHtml}</tr>
+        {{/each}}
+      {{else}}{{#if ${aliasKey}}}
+        {{#each ${aliasKey}}}
+          <tr>${dynamicCellsHtml}</tr>
+        {{/each}}
+      {{else}}{{#if ${aliasSnake}}}
+        {{#each ${aliasSnake}}}
+          <tr>${dynamicCellsHtml}</tr>
+        {{/each}}
+      {{else}}
+        ${defaultRowsHtml}
+      {{/if}}{{/if}}{{/if}}{{/if}}{{/if}}
+    </tbody>
+  </table>
+`;
+                });
                 break;
+            }
 
             // ── DOS COLUMNAS ─────────────────────────────────────────────────
             case 'two_column': {

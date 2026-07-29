@@ -48,5 +48,5 @@ Este directorio constituye la fuente centralizada de conocimiento técnico y fun
 * [01. Arquitectura de Aplicación Móvil Docente](./06-aplicacion-movil/01-arquitectura-movil-docente.md): Arquitectura de `diitra_mobile`, integración REST, almacenamiento seguro de tokens y escáner de códigos QR.
 
 ### Sección 07: Despliegue y Operaciones
-* [01. Guía de Instalación y Configuración en Entorno Local](./07-despliegue-y-operaciones/01-instalacion-entorno-local.md): Requisitos de desarrollo (.NET 8, Node 18, MySQL 3307), scripts SQL iniciales y variables de entorno.
+* [01. Guía de Instalación y Configuración en Entorno Local](./07-despliegue-y-operaciones/01-instalacion-entorno-local.md): Requisitos de desarrollo (.NET 8, Node 18, MySQL 3306), scripts SQL iniciales y variables de entorno.
 * [02. Guía de Cumplimiento e Integridad Forense para Acreditación CACES 2026](./07-despliegue-y-operaciones/02-guia-acreditacion-caces-2026.md): Matriz de evidencias técnicas para los indicadores de acreditación institucionales.

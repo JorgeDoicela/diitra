@@ -27,7 +27,7 @@ graph TD
     end
 
     subgraph CapaPersistencia [Capa de Persistencia e Integracion]
-        MySQLDB[(MariaDB / MySQL 8.0\nBase 'sigafi_es' :3307)]
+        MySQLDB[(MariaDB / MySQL 8.0\nBase 'sigafi_es' :3306)]
         MailSMTP["Servidor SMTP / Push Notification Drivers"]
         ExternalSIGAFI[("Sistema Academico SIGAFI")]
     end
@@ -101,7 +101,7 @@ graph TB
     end
 
     subgraph DataStorage [Persistencia]
-        DB[(MariaDB / MySQL\nBase 'sigafi_es' :3307)]
+        DB[(MariaDB / MySQL\nBase 'sigafi_es' :3306)]
         FileStore["Almacenamiento Local de Plantillas y PDFs Emitidos"]
     end
 
@@ -169,7 +169,7 @@ La solución backend `diitra.slnx` implementa Clean Architecture segregada en ci
 
 ## 6. Estrategia de Persistencia y Separación de Entornos
 
-1. **Base de Datos:** MariaDB / MySQL en base de datos `sigafi_es`, expuesta localmente en el puerto `3307`.
+1. **Base de Datos:** MariaDB / MySQL en base de datos `sigafi_es`, expuesta localmente en el puerto `3306`.
 2. **Control de Borrado:** Implementación de Soft Delete en entidades sensibles; los registros eliminados se transfieren lógicamente a la papelera gestionada por `RecycleBinController`.
 3. **Bitácora de Auditoría:** La tabla `audit_logs` registra el identificador de usuario, dirección IP, acción, timestamp UTC y snapshots del estado anterior y posterior de cada mutación.
 4. **Configuración Desacoplada:** Variables de entorno parametrizadas mediante `appsettings.json` (Backend) y `.env` (Frontend) para la migración entre Desarrollo, Staging y Producción.

@@ -9,7 +9,7 @@ Para la instalación, ejecución y depuración de la plataforma DIITRA en un ent
 | **.NET SDK** | `8.0.x` | Compilación y ejecución de la solución backend (`backend/diitra.slnx`). |
 | **Node.js** | `18.x` o superior | Entorno de ejecución para la SPA React (`diitra_web`). |
 | **npm** | `9.x` o superior | Gestor de paquetes de dependencias del frontend. |
-| **MariaDB / MySQL** | `10.5+` / `8.0+` | Motor de base de datos relacional (Puerto `3307`). |
+| **MariaDB / MySQL** | `10.5+` / `8.0+` | Motor de base de datos relacional (Puerto `3306`). |
 
 ---
 
@@ -17,13 +17,13 @@ Para la instalación, ejecución y depuración de la plataforma DIITRA en un ent
 
 ```mermaid
 graph TD
-    Step1[1. Inicialización de Base de Datos\nEjecutar scripts SQL en puerto 3307] --> Step2[2. Configuración del Backend\nEditar appsettings.json y dotnet run]
+    Step1[1. Inicialización de Base de Datos\nEjecutar scripts SQL en puerto 3306] --> Step2[2. Configuración del Backend\nEditar appsettings.json y dotnet run]
     Step2 --> Step3[3. Configuración del Frontend\nEditar .env, npm install y npm run dev]
     Step3 --> Step4[4. Verificación de Servicios\nSwagger REST API & React SPA]
 ```
 
 ### Paso 1: Inicialización de la Base de Datos
-1. Inicie el servidor MariaDB/MySQL en el puerto local `3307`.
+1. Inicie el servidor MariaDB/MySQL en el puerto local `3306`.
 2. Cree la base de datos vacía denominada `sigafi_es`.
 3. Ejecute los scripts SQL ubicados en la carpeta `scripts/base_datos/`:
    * `Primera versión (formato proyecto de investigación) bien.sql`: Crea las tablas del esquema relacional.
@@ -39,7 +39,7 @@ graph TD
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Server=localhost;Port=3307;Database=sigafi_es;Uid=root;Pwd=tu_contraseña;"
+       "DefaultConnection": "Server=localhost;Port=3306;Database=sigafi_es;Uid=root;Pwd=tu_contraseña;"
      },
      "Jwt": {
        "Secret": "CLAVE_SECRETA_DE_ALTA_ENTROPIA_PARA_DESARROLLO_32_BYTES",

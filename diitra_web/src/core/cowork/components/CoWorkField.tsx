@@ -241,7 +241,10 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
 
         const readYjs = (): any => {
             const raw = ytext.toString();
-            if (!raw || raw === 'undefined') return null;
+            if (raw === 'undefined' || raw === null) return null;
+            if (raw === '' && !seededRef.current && dbValue !== undefined && dbValue !== null && dbValue !== '') {
+                return null;
+            }
             return type === 'checkbox' ? raw === 'true' : raw;
         };
 
@@ -322,12 +325,11 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
 
         const observer = (event: Y.YTextEvent) => {
             if (event.transaction.origin !== 'remote') return;
-            syncDisplayFromYjs();
-            const val = readYjs();
-            if (val !== null) {
-                const cb = onValueChangeRef.current;
-                if (cb) setTimeout(() => cb(val, { source: 'remote' }), 0);
-            }
+            const raw = ytext.toString();
+            const val = type === 'checkbox' ? raw === 'true' : raw;
+            setDisplayValue(val);
+            const cb = onValueChangeRef.current;
+            if (cb) setTimeout(() => cb(val, { source: 'remote' }), 0);
         };
 
         ytext.observe(observer);

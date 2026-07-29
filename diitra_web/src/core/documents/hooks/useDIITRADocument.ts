@@ -103,17 +103,19 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const resolvedValue = typeof value === 'function' ? value(prev[name]) : value;
             if (isEqualValue(prev[name], resolvedValue)) return prev;
 
+            const isList = options.lists?.includes(name) || name.startsWith('MultiSec_') || (ydoc && ydoc.share.get(name) instanceof Y.Array);
+
             if (source !== 'remote' &&
                 ydoc &&
-                !options.lists?.includes(name) &&
+                !isList &&
                 !options.richTexts?.includes(name) &&
                 !options.nonCollaborative?.includes(name) &&
                 name.toLowerCase() !== 'uuid' &&
                 name.toLowerCase() !== 'entityuuid') {
-                // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment (texto enriquecido),
+                // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment o Array,
                 // la respetamos y no intentamos interactuar con ella como texto plano (Y.Text).
                 const sharedType = ydoc.share.get(name);
-                if (sharedType instanceof Y.XmlFragment) {
+                if (sharedType instanceof Y.XmlFragment || sharedType instanceof Y.Array) {
                     return;
                 }
                 if (sharedType && !(sharedType instanceof Y.Text)) {
@@ -139,13 +141,23 @@ export function useDIITRADocument<T extends Record<string, any>>(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc, options.lists, options.richTexts, options.nonCollaborative]);
 
+    const ensureYArray = (listName: string): Y.Array<any> | null => {
+        if (!ydoc || !listName || listName.includes('[') || listName.includes('.')) return null;
+        const sharedType = ydoc.share.get(listName);
+        if (sharedType && !(sharedType instanceof Y.Array)) {
+            console.warn(`[useDIITRADocument] Limpiando tipo en conflicto para lista '${listName}' (tipo previo: ${sharedType.constructor.name}).`);
+            ydoc.share.delete(listName);
+        }
+        return ydoc.getArray(listName);
+    };
+
     const addItem = useCallback((listName: string, template: any) => {
         const enrichedTemplate = {
             ...template,
             id: template.id || `rand_${generateRandomId()}`
         };
-        if (ydoc) {
-            const yarray = ydoc.getArray(listName);
+        const yarray = ensureYArray(listName);
+        if (ydoc && yarray) {
             ydoc.transact(() => {
                 yarray.push([enrichedTemplate]);
             }, 'local-hook');
@@ -158,8 +170,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
     }, [ydoc]);
 
     const removeItem = useCallback((listName: string, index: number) => {
-        if (ydoc) {
-            const yarray = ydoc.getArray(listName);
+        const yarray = ensureYArray(listName);
+        if (ydoc && yarray) {
             if (index >= 0 && index < yarray.length) {
                 ydoc.transact(() => {
                     yarray.delete(index, 1);
@@ -174,8 +186,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
     }, [ydoc]);
 
     const updateItem = useCallback((listName: string, index: number, field: string, value: any) => {
-        if (ydoc) {
-            const yarray = ydoc.getArray(listName);
+        const yarray = ensureYArray(listName);
+        if (ydoc && yarray) {
             while (yarray.length <= index) {
                 yarray.push([{}]);
             }
@@ -203,8 +215,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
     }, [ydoc]);
 
     const reorderItem = useCallback((listName: string, fromIndex: number, toIndex: number) => {
-        if (ydoc) {
-            const yarray = ydoc.getArray(listName);
+        const yarray = ensureYArray(listName);
+        if (ydoc && yarray) {
             if (fromIndex >= 0 && fromIndex < yarray.length && toIndex >= 0 && toIndex < yarray.length) {
                 const item = yarray.get(fromIndex);
                 ydoc.transact(() => {
@@ -237,8 +249,31 @@ export function useDIITRADocument<T extends Record<string, any>>(
         const keysToObserve = new Set(Object.keys(initialData));
         keysToObserve.add('BlockedSections');
 
+        const isListNameKey = (k: string) => {
+            if (!k || k.includes('[') || k.includes('.')) return false;
+            if (options.lists?.includes(k)) return true;
+            if (k.startsWith('MultiSec_')) return true;
+            const shared = ydoc.share.get(k);
+            if (shared instanceof Y.Array) return true;
+            return false;
+        };
+
+        const listsToObserve = new Set<string>(options.lists || []);
+
+        Object.keys(initialData).forEach(k => {
+            if (isListNameKey(k)) {
+                listsToObserve.add(k);
+            }
+        });
+
+        ydoc.share.forEach((sharedType, k) => {
+            if (sharedType instanceof Y.Array || (k.startsWith('MultiSec_') && !k.includes('['))) {
+                listsToObserve.add(k);
+            }
+        });
+
         keysToObserve.forEach(key => {
-            if (options.lists?.includes(key)) return;
+            if (listsToObserve.has(key)) return;
             if (options.richTexts?.includes(key)) return;
             if (options.nonCollaborative?.includes(key)) return;
             if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return;
@@ -246,7 +281,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment (texto enriquecido),
             // la respetamos y no intentamos observarla o inicializarla como texto plano (Y.Text).
             const sharedType = ydoc.share.get(key);
-            if (sharedType instanceof Y.XmlFragment) {
+            if (sharedType instanceof Y.XmlFragment || sharedType instanceof Y.Array) {
                 return;
             }
             if (sharedType && !(sharedType instanceof Y.Text)) {
@@ -296,8 +331,16 @@ export function useDIITRADocument<T extends Record<string, any>>(
             }
         });
 
-        options.lists?.forEach(listName => {
-            const yarray = ydoc.getArray(listName);
+        const activeListObservers = new Set<string>();
+
+        const observeList = (listName: string) => {
+            if (!listName || listName.includes('[') || listName.includes('.')) return;
+            if (activeListObservers.has(listName)) return;
+            activeListObservers.add(listName);
+
+            const yarray = ensureYArray(listName);
+            if (!yarray) return;
+
             const observer = (event: any) => {
                 if (event.transaction.origin === 'remote') {
                     const rawArray = yarray.toArray();
@@ -322,13 +365,42 @@ export function useDIITRADocument<T extends Record<string, any>>(
                         if (isEqualValue(prev[listName], uniqueEnriched)) return prev;
                         return { ...prev, [listName]: uniqueEnriched };
                     });
+                    setRemoteChangeCount(c => c + 1);
                 }
             };
             yarray.observe(observer);
-            cleanups.push(() => yarray.unobserve(observer));
+            cleanups.push(() => {
+                yarray.unobserve(observer);
+                activeListObservers.delete(listName);
+            });
 
             deduplicateYArray(yarray, ydoc, listName);
+        };
 
+        listsToObserve.forEach(listName => observeList(listName));
+
+        // Escuchar actualizaciones remotas de Y.Doc para detectar nuevas listas registradas dinámicamente
+        const handleRemoteYdocUpdate = (_update: Uint8Array, origin: any) => {
+            if (origin === 'remote') {
+                ydoc.share.forEach((sharedType, key) => {
+                    if ((sharedType instanceof Y.Array || (key.startsWith('MultiSec_') && !key.includes('['))) && !activeListObservers.has(key)) {
+                        observeList(key);
+                        const currentArr = (sharedType as Y.Array<any>).toArray();
+                        if (currentArr.length > 0) {
+                            setFormData(prev => {
+                                if (isEqualValue(prev[key], currentArr)) return prev;
+                                return { ...prev, [key]: currentArr };
+                            });
+                        }
+                    }
+                });
+            }
+        };
+        ydoc.on('update', handleRemoteYdocUpdate);
+        cleanups.push(() => ydoc.off('update', handleRemoteYdocUpdate));
+
+        listsToObserve.forEach(listName => {
+            const yarray = ydoc.getArray(listName);
             const currentArray = yarray.toArray() as any[];
             const dbInvestigadores = initialData.investigadores || initialData.Investigadores;
             if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(dbInvestigadores)) {

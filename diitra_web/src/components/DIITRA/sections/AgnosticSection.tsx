@@ -158,10 +158,10 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                     [];
                 const rawRowsData = Array.isArray(formData[name]) ? formData[name] : [];
 
-                // Merge: siempre mostrar max(filas del usuario en Yjs, filas definidas en plantilla).
-                // Garantiza que si el Admin agrega filas al template, aparezcan en el Workspace
-                // aunque el borrador del investigador ya tenga datos guardados con menos filas.
-                const totalRowsCount = Math.max(rawRowsData.length, defaultRowsFromConfig.length);
+                // Merge: Si hay filas explícitas guardadas en Yjs/formData por el usuario,
+                // respetamos la cantidad real del arreglo para permitir eliminar filas.
+                const hasExplicitUserRows = Array.isArray(formData[name]);
+                const totalRowsCount = hasExplicitUserRows ? rawRowsData.length : defaultRowsFromConfig.length;
 
                 const rowsData: any[] = [];
                 for (let rIdx = 0; rIdx < totalRowsCount; rIdx++) {
@@ -230,40 +230,23 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                             </td>
                                         </tr>
                                     ) : (
-                                        rowsData.map((_: any, rIdx: number) => {
-                                            const userRow = rawRowsData[rIdx];
-                                            const tplRow = defaultRowsFromConfig[rIdx];
-
-                                            return (
-                                                <tr key={rIdx} className="border-b border-border-thin last:border-0 hover:bg-surface-hover/10 transition-colors">
-                                                    {columns.map((_: string, cIdx: number) => {
-                                                        const getUserCellValue = (r: any) => {
-                                                            if (!r) return undefined;
-                                                            if (Array.isArray(r)) return r[cIdx];
-                                                            if (r[cIdx.toString()] !== undefined && r[cIdx.toString()] !== null) return r[cIdx.toString()];
-                                                            if (r[cIdx] !== undefined && r[cIdx] !== null) return r[cIdx];
-                                                            if (r.cells && Array.isArray(r.cells)) return r.cells[cIdx];
-                                                            return undefined;
-                                                        };
-
-                                                        const valFromUser = getUserCellValue(userRow);
-                                                        const valFromTpl  = getUserCellValue(tplRow);
-
-                                                        const cellValue = (valFromUser !== undefined && valFromUser !== "")
-                                                            ? valFromUser
-                                                            : (valFromTpl !== undefined ? valFromTpl : "");
+                                        rowsData.map((_: any, rIdx: number) => (
+                                            <tr key={rIdx} className="border-b border-border-thin last:border-0 hover:bg-surface-hover/10 transition-colors">
+                                                {columns.map((_: string, cIdx: number) => {
+                                                    const cellFieldName = `${name}[${rIdx}].col_${cIdx}`;
 
                                                         return (
                                                             <td key={cIdx} className="p-2">
-                                                                <input
+                                                                <CoWorkField
+                                                                    name={cellFieldName}
+                                                                    cowork={cowork}
                                                                     type="text"
-                                                                    value={cellValue}
-                                                                    disabled={isDisabled}
-                                                                    onChange={(e) => {
-                                                                        onUpdateItem?.(name, rIdx, cIdx.toString(), e.target.value);
-                                                                    }}
-                                                                    className="w-full bg-transparent hover:bg-surface-hover/25 focus:bg-surface border border-transparent focus:border-border-thin rounded-lg px-2 py-1.5 text-xs text-text-main transition-all outline-none"
+                                                                    readOnly={isDisabled}
                                                                     placeholder="Escriba..."
+                                                                    className="w-full bg-transparent hover:bg-surface-hover/25 focus:bg-surface border border-transparent focus:border-border-thin rounded-lg px-2 py-1.5 text-xs text-text-main transition-all outline-none"
+                                                                    onValueChange={(val) => {
+                                                                        onUpdateItem?.(name, rIdx, cIdx.toString(), val);
+                                                                    }}
                                                                 />
                                                             </td>
                                                         );
@@ -281,8 +264,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                                     </td>
                                                 )}
                                             </tr>
-                                            );
-                                        })
+                                        ))
                                     )}
                                 </tbody>
                             </table>

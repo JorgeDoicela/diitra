@@ -2,7 +2,7 @@
 
 ## 1. Visión General del Modelo de Datos
 
-La capa de persistencia de DIITRA utiliza el motor de base de datos **MariaDB 10.5+ / MySQL 8.0+** sobre el esquema de base de datos **`sigafi_es`** (expuesto en el puerto por defecto `3307`).
+La capa de persistencia de DIITRA utiliza el motor de base de datos **MariaDB 10.5+ / MySQL 8.0+** sobre el esquema de base de datos **`sigafi_es`** (expuesto en el puerto por defecto `3306`).
 
 El mapeo objeto-relacional (ORM) es administrado por **Entity Framework Core 9.0** a través del conector `Pomelo.EntityFrameworkCore.MySql`. La base de datos almacena las entidades del dominio de investigación, la estructura de usuarios y permisos, el motor documental, la bitácora de auditoría inmutable y las tablas de sincronización colaborativa.
 
