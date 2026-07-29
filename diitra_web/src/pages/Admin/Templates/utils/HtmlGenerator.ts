@@ -795,8 +795,8 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
 
             // ── FICHA DE IDENTIFICACIÓN ──────────────────────────────────────
             case 'project_general_section': {
-                const tableStyleMode = c.tableStyle || 'classic';
                 const headerColorMode = c.headerColor || 'blue';
+                const borderStyleMode = c.borderStyle || 'solid';
 
                 const resolveHeaderPair = (mode: string) => {
                     switch (mode) {
@@ -809,129 +809,149 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 };
 
                 const headerPair = resolveHeaderPair(headerColorMode);
+                const tableBorder = borderStyleMode === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
+                const cellBorder = borderStyleMode === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
 
-                const rows: { label: string; content: string; colSpan: number }[] = [];
+                interface ItemRow {
+                    key: string;
+                    label: string;
+                    content: string;
+                    colSpan: 1 | 2;
+                }
+
+                const items: ItemRow[] = [];
+
                 if (c.showTitulo !== false) {
                     const lbl = c.customLabel_showTitulo || 'Título del Proyecto';
                     const scr = c.customScriban_showTitulo || 'titulo';
-                    rows.push({ label: lbl, content: `<span style="font-weight: bold;">{{default ${scr} "[TEMA / NOMBRE DEL PROYECTO]"}}</span>`, colSpan: c.colSpan_showTitulo || 3 });
+                    items.push({ key: 'showTitulo', label: lbl, content: `<span style="font-weight: bold;">{{default ${scr} "[TEMA / NOMBRE DEL PROYECTO]"}}</span>`, colSpan: (c.colSpan_showTitulo as 1 | 2) || 2 });
                 }
                 if (c.showDirector !== false) {
                     const lbl = c.customLabel_showDirector || 'Director del Proyecto';
                     const scr = c.customScriban_showDirector || 'director_proyecto';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: c.colSpan_showDirector || 1 });
+                    items.push({ key: 'showDirector', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showDirector as 1 | 2) || 1 });
                 }
                 if (c.showCarrera !== false) {
                     const lbl = c.customLabel_showCarrera || 'Carrera / Unidad Académica';
                     const scr = c.customScriban_showCarrera || 'carrera';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: c.colSpan_showCarrera || 1 });
+                    items.push({ key: 'showCarrera', label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: (c.colSpan_showCarrera as 1 | 2) || 1 });
                 }
                 if (c.showConvocatoria !== false) {
                     const lbl = c.customLabel_showConvocatoria || 'Convocatoria';
                     const scr = c.customScriban_showConvocatoria || 'convocatoria';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: c.colSpan_showConvocatoria || 1 });
+                    items.push({ key: 'showConvocatoria', label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: (c.colSpan_showConvocatoria as 1 | 2) || 1 });
                 }
                 if (c.showPrograma !== false) {
                     const lbl = c.customLabel_showPrograma || 'Programa';
                     const scr = c.customScriban_showPrograma || 'programa';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: c.colSpan_showPrograma || 1 });
+                    items.push({ key: 'showPrograma', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showPrograma as 1 | 2) || 1 });
                 }
                 if (c.showGrupo !== false) {
                     const lbl = c.customLabel_showGrupo || 'Grupo de Investigación';
                     const scr = c.customScriban_showGrupo || 'grupo_investigacion';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: c.colSpan_showGrupo || 1 });
+                    items.push({ key: 'showGrupo', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showGrupo as 1 | 2) || 1 });
                 }
                 if (c.showLinea !== false) {
                     const lbl = c.customLabel_showLinea || 'Línea de Investigación';
                     const scr = c.customScriban_showLinea || 'linea_investigacion';
-                    rows.push({ label: lbl, content: `<div><strong>Línea:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>`, colSpan: c.colSpan_showLinea || 1 });
+                    items.push({ key: 'showLinea', label: lbl, content: `<div><strong>Línea:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>`, colSpan: (c.colSpan_showLinea as 1 | 2) || 1 });
                 }
                 if (c.showTipo !== false) {
                     const lbl = c.customLabel_showTipo || 'Tipo de Investigación';
                     const scr = c.customScriban_showTipo || 'tipo_investigacion';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: c.colSpan_showTipo || 1 });
+                    items.push({ key: 'showTipo', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showTipo as 1 | 2) || 1 });
                 }
                 if (c.showCaces !== false) {
                     const lbl = c.customLabel_showCaces || 'Campo Detallado CACES';
                     const scr = c.customScriban_showCaces || 'campo_detallado';
-                    rows.push({ label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: c.colSpan_showCaces || 1 });
+                    items.push({ key: 'showCaces', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showCaces as 1 | 2) || 1 });
                 }
                 if (c.showFechas !== false) {
                     const lbl = c.customLabel_showFechas || 'Fechas y Plazos';
                     const scr = c.customScriban_showFechas || 'fecha_inicio';
-                    rows.push({ label: lbl, content: `<div><strong>Inicio:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div>`, colSpan: c.colSpan_showFechas || 1 });
+                    items.push({ key: 'showFechas', label: lbl, content: `<div><strong>Inicio:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div>`, colSpan: (c.colSpan_showFechas as 1 | 2) || 1 });
                 }
 
-                // Añadir filas de campos personalizados (Composición Unificada)
+                // Añadir filas de campos personalizados
                 const customFields: IdentificationField[] = c.customFields || [];
                 customFields.forEach((f: IdentificationField) => {
                     const scriban = f.scriptVariable || f.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
                     const cellContent = f.scriptMode === 'static'
                         ? (f.options?.[0] || f.label)
                         : `{{default ${scriban} "No especificado"}}`;
-                    rows.push({ label: f.label, content: cellContent, colSpan: f.colSpan || 1 });
+                    items.push({ key: f.fieldKey, label: f.label, content: cellContent, colSpan: (f.colSpan as 1 | 2) || 1 });
                 });
 
-                if (rows.length === 0) break;
-
-                let renderedContent = '';
-
-                if (tableStyleMode === 'cards') {
-                    // Rendimiento visual en Fichas Bento Box (CSS Grid)
-                    const bentoCols = c.bentoColumns || 3;
-                    const cardTextColor = headerPair.bg === 'transparent' ? '#1e293b' : headerPair.bg;
-                    const cardsHtml = rows.map(r => {
-                        const colSpan = r.colSpan || 1;
-                        const spanStyle = colSpan >= bentoCols ? `grid-column: span ${bentoCols};` : colSpan === 2 ? 'grid-column: span 2;' : 'grid-column: span 1;';
-
-                        return `
-    <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; background-color: #f8fafc; page-break-inside: avoid; ${spanStyle}">
-      <div style="font-size: 8pt; font-weight: bold; color: ${cardTextColor}; text-transform: uppercase; margin-bottom: 4px;">${r.label}</div>
-      <div style="font-size: 9.5pt; color: #1e293b;">${r.content}</div>
-    </div>`;
-                    }).join('\n');
-
-                    renderedContent = `<div style="display: grid; grid-template-columns: repeat(${bentoCols}, 1fr); gap: 8px; margin-top: 6px;">${cardsHtml}</div>`;
-                } else if (tableStyleMode === 'minimal') {
-                    // Estilo Minimalista Cero Bordes
-                    const minimalRows = rows.map(r => `
-    <tr style="border-bottom: 1px solid #e2e8f0;">
-      <td style="padding: 8px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; color: #475569; width: 35%;">${r.label}</td>
-      <td style="padding: 8px 10px; font-size: 9.5pt; color: #0f172a;">${r.content}</td>
-    </tr>`).join('\n');
-                    renderedContent = `
-    <table style="width: 100%; border-collapse: collapse; margin-top: 6px;">
-      <tbody>
-        ${minimalRows}
-      </tbody>
-    </table>`;
-                } else if (tableStyleMode === 'grid') {
-                    // Estilo Grilla de Filas Intercaladas
-                    const gridRows = rows.map((r, i) => `
-    <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#f8fafc'}; border: 1px solid #cbd5e1;">
-      <td style="padding: 8px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; color: #334155; width: 35%; border-right: 1px solid #cbd5e1;">${r.label}</td>
-      <td style="padding: 8px 10px; font-size: 9.5pt; color: #0f172a;">${r.content}</td>
-    </tr>`).join('\n');
-                    renderedContent = `
-    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
-      <tbody>
-        ${gridRows}
-      </tbody>
-    </table>`;
-                } else {
-                    // Estilo Clásico Institucional (Default)
-                    const classicRows = rows.map(r => `
-    <tr>
-      <td class="label-cell" style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important;">${r.label}</td>
-      <td>${r.content}</td>
-    </tr>`).join('\n');
-                    renderedContent = `
-    <table class="info-table">
-      <tbody>
-        ${classicRows}
-      </tbody>
-    </table>`;
+                // Ordenar elementos según fieldsOrder si existe
+                const fieldsOrder: string[] = c.fieldsOrder || [];
+                if (fieldsOrder.length > 0) {
+                    items.sort((a, b) => {
+                        const idxA = fieldsOrder.indexOf(a.key);
+                        const idxB = fieldsOrder.indexOf(b.key);
+                        if (idxA === -1 && idxB === -1) return 0;
+                        if (idxA === -1) return 1;
+                        if (idxB === -1) return -1;
+                        return idxA - idxB;
+                    });
                 }
+
+                if (items.length === 0) break;
+
+                // Algoritmo de agrupación en filas de 4 columnas (Label1, Val1, Label2, Val2)
+                type RowGroup = { type: 'full'; item: ItemRow } | { type: 'pair'; item1: ItemRow; item2?: ItemRow };
+                const rows: RowGroup[] = [];
+
+                let idx = 0;
+                while (idx < items.length) {
+                    const current = items[idx];
+                    if (current.colSpan === 2) {
+                        rows.push({ type: 'full', item: current });
+                        idx++;
+                    } else {
+                        const next = items[idx + 1];
+                        if (next && next.colSpan === 1) {
+                            rows.push({ type: 'pair', item1: current, item2: next });
+                            idx += 2;
+                        } else {
+                            rows.push({ type: 'pair', item1: current });
+                            idx++;
+                        }
+                    }
+                }
+
+                const tableRowsHtml = rows.map(r => {
+                    if (r.type === 'full') {
+                        return `
+    <tr>
+      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 25%; vertical-align: top; ${cellBorder}">${r.item.label}</td>
+      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${r.item.content}</td>
+    </tr>`;
+                    } else {
+                        const { item1, item2 } = r;
+                        if (item2) {
+                            return `
+    <tr>
+      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item1.content}</td>
+      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item2.label}</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item2.content}</td>
+    </tr>`;
+                        } else {
+                            return `
+    <tr>
+      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
+      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${item1.content}</td>
+    </tr>`;
+                        }
+                    }
+                }).join('\n');
+
+                let renderedContent = `
+    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder}">
+      <tbody>
+        ${tableRowsHtml}
+      </tbody>
+    </table>`;
 
                 html += `
   <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->

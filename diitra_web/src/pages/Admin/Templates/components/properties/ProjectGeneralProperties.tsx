@@ -187,21 +187,7 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                     Diseño y Estilo Visual en PDF
                 </span>
 
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                        <label className="block text-[9px] font-bold text-text-dim uppercase">Estilo de Tabla PDF</label>
-                        <select
-                            value={config.tableStyle || 'classic'}
-                            onChange={e => onUpdateConfig(block.id, 'tableStyle', e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded px-2 py-1 text-xs text-text-main outline-none focus:border-text-main font-medium"
-                        >
-                            <option value="classic">Clásica Institucional</option>
-                            <option value="grid">Grilla de Filas</option>
-                            <option value="cards">Fichas / Tarjetas (Bento Box)</option>
-                            <option value="minimal">Minimalista Cero Bordes</option>
-                        </select>
-                    </div>
-
+                <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                         <label className="block text-[9px] font-bold text-text-dim uppercase">Estilo de Encabezado</label>
                         <select
@@ -216,14 +202,14 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-bold text-text-dim uppercase">Columnas Bento</label>
+                        <label className="block text-[9px] font-bold text-text-dim uppercase">Bordes de Tabla</label>
                         <select
-                            value={config.bentoColumns || 3}
-                            onChange={e => onUpdateConfig(block.id, 'bentoColumns', Number(e.target.value))}
+                            value={config.borderStyle || 'solid'}
+                            onChange={e => onUpdateConfig(block.id, 'borderStyle', e.target.value)}
                             className="w-full bg-surface border border-border-thin rounded px-2 py-1 text-xs text-text-main outline-none focus:border-text-main font-medium"
                         >
-                            <option value={2}>2 Columnas</option>
-                            <option value={3}>3 Columnas (Bento Grid)</option>
+                            <option value="solid">Con Bordes Clásicos (Institucional)</option>
+                            <option value="none">Sin Bordes (Minimalista)</option>
                         </select>
                     </div>
                 </div>
@@ -238,44 +224,96 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                     </span>
                 </div>
                 <p className="text-[10px] text-text-dim leading-relaxed">
-                    Activa/desactiva y edita las etiquetas que verán los docentes al redactar el documento:
+                    Activa/desactiva, edita y reordena los campos que verán los docentes:
                 </p>
-                {CORE_ITEMS.map((item) => {
-                    const isChecked = (config as any)[item.key] !== false;
-                    const customLabel = (config as any)[item.labelKey] || item.defaultLabel;
-                    const customScriban = (config as any)[item.scribanKey] || item.defaultScriban;
-                    const isEditingThis = editingCoreKey === item.key;
+                {(() => {
+                    const fieldsOrder: string[] = config.fieldsOrder || [];
+                    const sortedCoreItems = [...CORE_ITEMS].sort((a, b) => {
+                        if (fieldsOrder.length === 0) return 0;
+                        const idxA = fieldsOrder.indexOf(a.key);
+                        const idxB = fieldsOrder.indexOf(b.key);
+                        if (idxA === -1 && idxB === -1) return 0;
+                        if (idxA === -1) return 1;
+                        if (idxB === -1) return -1;
+                        return idxA - idxB;
+                    });
 
-                    return (
-                        <div key={item.key} className="border-b border-border-thin/10 pb-2.5 last:border-0 last:pb-0 space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                        <label className="text-xs font-semibold text-text-main truncate block">{customLabel}</label>
-                                        {customLabel !== item.defaultLabel && (
-                                            <span className="px-1 py-0.2 rounded text-[7px] font-mono bg-surface-hover text-text-main border border-border-thin">personalizado</span>
-                                        )}
+                    const handleMoveCoreItem = (itemKey: string, direction: 'up' | 'down') => {
+                        const allKeys = [...CORE_ITEMS.map(c => c.key), ...customFields.map(f => f.fieldKey)];
+                        const currentOrder = fieldsOrder.length > 0
+                            ? fieldsOrder.filter(k => allKeys.includes(k))
+                            : [...allKeys];
+
+                        allKeys.forEach(k => {
+                            if (!currentOrder.includes(k)) currentOrder.push(k);
+                        });
+
+                        const index = currentOrder.indexOf(itemKey);
+                        if (index === -1) return;
+                        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+                        if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
+
+                        const updated = [...currentOrder];
+                        const [moved] = updated.splice(index, 1);
+                        updated.splice(targetIndex, 0, moved);
+
+                        onUpdateConfig(block.id, 'fieldsOrder', updated);
+                    };
+
+                    return sortedCoreItems.map((item, idx) => {
+                        const isChecked = (config as any)[item.key] !== false;
+                        const customLabel = (config as any)[item.labelKey] || item.defaultLabel;
+                        const customScriban = (config as any)[item.scribanKey] || item.defaultScriban;
+                        const isEditingThis = editingCoreKey === item.key;
+
+                        return (
+                            <div key={item.key} className="border-b border-border-thin/10 pb-2.5 last:border-0 last:pb-0 space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <label className="text-xs font-semibold text-text-main truncate block">{customLabel}</label>
+                                            {customLabel !== item.defaultLabel && (
+                                                <span className="px-1 py-0.2 rounded text-[7px] font-mono bg-surface-hover text-text-main border border-border-thin">personalizado</span>
+                                            )}
+                                        </div>
+                                        <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{item.desc}</span>
                                     </div>
-                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{item.desc}</span>
-                                </div>
 
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditingCoreKey(isEditingThis ? null : item.key)}
-                                        className={`p-1 text-text-dim hover:text-text-main transition-colors rounded ${isEditingThis ? 'text-text-main bg-surface-hover' : ''}`}
-                                        title="Personalizar nombre del campo"
-                                    >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                    </button>
-                                    <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={e => onUpdateConfig(block.id, item.key, e.target.checked)}
-                                        className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
-                                    />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveCoreItem(item.key, 'up')}
+                                            disabled={idx === 0}
+                                            className="p-1 text-text-dim hover:text-text-main disabled:opacity-20 transition-colors"
+                                            title="Mover arriba"
+                                        >
+                                            <ChevronUp className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveCoreItem(item.key, 'down')}
+                                            disabled={idx === sortedCoreItems.length - 1}
+                                            className="p-1 text-text-dim hover:text-text-main disabled:opacity-20 transition-colors"
+                                            title="Mover abajo"
+                                        >
+                                            <ChevronDown className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingCoreKey(isEditingThis ? null : item.key)}
+                                            className={`p-1 text-text-dim hover:text-text-main transition-colors rounded ${isEditingThis ? 'text-text-main bg-surface-hover' : ''}`}
+                                            title="Personalizar nombre del campo"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={e => onUpdateConfig(block.id, item.key, e.target.checked)}
+                                            className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
                             {/* Acordión de edición inline para el campo Core */}
                             {isEditingThis && (
@@ -330,7 +368,8 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                             )}
                         </div>
                     );
-                })}
+                });
+            })()}
             </div>
 
             {/* SECCIÓN B: CAMPOS PERSONALIZADOS EXTENDIDOS */}

@@ -713,44 +713,54 @@ const RenderProjectGeneralSection: React.FC<{
 }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const customFields: IdentificationField[] = c.customFields || [];
-    const tableStyleMode = c.tableStyle || 'classic';
     const headerColorMode = c.headerColor || 'blue';
-    const bentoCols = c.bentoColumns || 3;
+    const borderStyleMode = c.borderStyle || 'solid';
 
     const headerPair = getHeaderStylePair(headerColorMode);
+    const borderCss = borderStyleMode === 'none' ? 'border-0' : 'border border-slate-300';
+    const cellBorderCss = borderStyleMode === 'none' ? 'border-b border-slate-100' : 'border border-slate-300';
 
-    // Mapeo unificado de ítems Bento Grid
-    const items: { id: string; key: string; label: string; value: string; isCustom?: boolean; colSpan: number }[] = [];
-    
+    // Mapeo de ítems
+    interface TableItem {
+        id: string;
+        key: string;
+        label: string;
+        value: string;
+        isCustom?: boolean;
+        colSpan: 1 | 2;
+    }
+
+    const rawItems: TableItem[] = [];
+
     if (c.showTitulo !== false) {
-        items.push({ id: 'showTitulo', key: 'showTitulo', label: c.customLabel_showTitulo || 'Título del Proyecto', value: '[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]', colSpan: c.colSpan_showTitulo || 3 });
+        rawItems.push({ id: 'showTitulo', key: 'showTitulo', label: c.customLabel_showTitulo || 'Título del Proyecto', value: '[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]', colSpan: c.colSpan_showTitulo || 2 });
     }
     if (c.showDirector !== false) {
-        items.push({ id: 'showDirector', key: 'showDirector', label: c.customLabel_showDirector || 'Director del Proyecto', value: '[Nombre del Director]', colSpan: c.colSpan_showDirector || 1 });
+        rawItems.push({ id: 'showDirector', key: 'showDirector', label: c.customLabel_showDirector || 'Director del Proyecto', value: '[Nombre del Director]', colSpan: c.colSpan_showDirector || 1 });
     }
     if (c.showCarrera !== false) {
-        items.push({ id: 'showCarrera', key: 'showCarrera', label: c.customLabel_showCarrera || 'Carrera / Unidad Académica', value: '[Carrera del Docente]', colSpan: c.colSpan_showCarrera || 1 });
+        rawItems.push({ id: 'showCarrera', key: 'showCarrera', label: c.customLabel_showCarrera || 'Carrera / Unidad Académica', value: '[Carrera del Docente]', colSpan: c.colSpan_showCarrera || 1 });
     }
     if (c.showConvocatoria !== false) {
-        items.push({ id: 'showConvocatoria', key: 'showConvocatoria', label: c.customLabel_showConvocatoria || 'Convocatoria', value: '[Convocatoria Activa IST Traversari]', colSpan: c.colSpan_showConvocatoria || 1 });
+        rawItems.push({ id: 'showConvocatoria', key: 'showConvocatoria', label: c.customLabel_showConvocatoria || 'Convocatoria', value: '[Convocatoria Activa IST Traversari]', colSpan: c.colSpan_showConvocatoria || 1 });
     }
     if (c.showPrograma !== false) {
-        items.push({ id: 'showPrograma', key: 'showPrograma', label: c.customLabel_showPrograma || 'Programa de Investigación', value: '[Programa Institucional]', colSpan: c.colSpan_showPrograma || 1 });
+        rawItems.push({ id: 'showPrograma', key: 'showPrograma', label: c.customLabel_showPrograma || 'Programa de Investigación', value: '[Programa Institucional]', colSpan: c.colSpan_showPrograma || 1 });
     }
     if (c.showGrupo !== false) {
-        items.push({ id: 'showGrupo', key: 'showGrupo', label: c.customLabel_showGrupo || 'Grupo de Investigación', value: '[Grupo Aprobado]', colSpan: c.colSpan_showGrupo || 1 });
+        rawItems.push({ id: 'showGrupo', key: 'showGrupo', label: c.customLabel_showGrupo || 'Grupo de Investigación', value: '[Grupo Aprobado]', colSpan: c.colSpan_showGrupo || 1 });
     }
     if (c.showLinea !== false) {
-        items.push({ id: 'showLinea', key: 'showLinea', label: c.customLabel_showLinea || 'Línea de Investigación', value: '[Dominio, Línea y Sublínea Científica]', colSpan: c.colSpan_showLinea || 1 });
+        rawItems.push({ id: 'showLinea', key: 'showLinea', label: c.customLabel_showLinea || 'Línea de Investigación', value: '[Dominio, Línea y Sublínea Científica]', colSpan: c.colSpan_showLinea || 1 });
     }
     if (c.showTipo !== false) {
-        items.push({ id: 'showTipo', key: 'showTipo', label: c.customLabel_showTipo || 'Tipo de Investigación', value: '[Básica / Aplicada / Experimental]', colSpan: c.colSpan_showTipo || 1 });
+        rawItems.push({ id: 'showTipo', key: 'showTipo', label: c.customLabel_showTipo || 'Tipo de Investigación', value: '[Básica / Aplicada / Experimental]', colSpan: c.colSpan_showTipo || 1 });
     }
     if (c.showCaces !== false) {
-        items.push({ id: 'showCaces', key: 'showCaces', label: c.customLabel_showCaces || 'Campo Detallado CACES', value: '[Clasificación CACES de la Carrera]', colSpan: c.colSpan_showCaces || 1 });
+        rawItems.push({ id: 'showCaces', key: 'showCaces', label: c.customLabel_showCaces || 'Campo Detallado CACES', value: '[Clasificación CACES de la Carrera]', colSpan: c.colSpan_showCaces || 1 });
     }
     if (c.showFechas !== false) {
-        items.push({ id: 'showFechas', key: 'showFechas', label: c.customLabel_showFechas || 'Fechas y Plazos', value: '[Fecha Inicio - Fecha Fin]', colSpan: c.colSpan_showFechas || 1 });
+        rawItems.push({ id: 'showFechas', key: 'showFechas', label: c.customLabel_showFechas || 'Fechas y Plazos', value: '[Fecha Inicio - Fecha Fin]', colSpan: c.colSpan_showFechas || 1 });
     }
 
     customFields.forEach((f) => {
@@ -761,126 +771,192 @@ const RenderProjectGeneralSection: React.FC<{
             : f.fieldType === 'date'
             ? '[dd/mm/aaaa 📅]'
             : `[${f.placeholder || f.label}]`;
-        items.push({ id: f.fieldKey, key: f.fieldKey, label: f.label, value: val, isCustom: true, colSpan: f.colSpan || 1 });
+        rawItems.push({ id: f.fieldKey, key: f.fieldKey, label: f.label, value: val, isCustom: true, colSpan: (f.colSpan as 1 | 2) || 1 });
     });
 
-    const handleSpanChange = (item: typeof items[0], newSpan: number) => {
+    const fieldsOrder: string[] = c.fieldsOrder || [];
+
+    const handleSpanChange = (item: TableItem, newSpan: 1 | 2) => {
         if (!onUpdateConfig || !blockId) return;
         if (item.isCustom) {
-            const updated = customFields.map(f => f.fieldKey === item.key ? { ...f, colSpan: newSpan as any } : f);
+            const updated = customFields.map(f => f.fieldKey === item.key ? { ...f, colSpan: newSpan } : f);
             onUpdateConfig(blockId, 'customFields', updated);
         } else {
             onUpdateConfig(blockId, `colSpan_${item.key}`, newSpan);
         }
     };
 
+    const handleMoveItem = (itemKey: string, direction: 'up' | 'down') => {
+        if (!onUpdateConfig || !blockId) return;
+        const currentKeys = rawItems.map(i => i.key);
+        const activeOrder = fieldsOrder.length > 0
+            ? fieldsOrder.filter(k => currentKeys.includes(k))
+            : [...currentKeys];
+
+        // Asegurar que todos los keys están presentes
+        currentKeys.forEach(k => {
+            if (!activeOrder.includes(k)) activeOrder.push(k);
+        });
+
+        const index = activeOrder.indexOf(itemKey);
+        if (index === -1) return;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= activeOrder.length) return;
+
+        const updatedOrder = [...activeOrder];
+        const [moved] = updatedOrder.splice(index, 1);
+        updatedOrder.splice(targetIndex, 0, moved);
+
+        onUpdateConfig(blockId, 'fieldsOrder', updatedOrder);
+    };
+
+    // Ordenar rawItems según fieldsOrder si existe
+    if (fieldsOrder.length > 0) {
+        rawItems.sort((a, b) => {
+            const idxA = fieldsOrder.indexOf(a.key);
+            const idxB = fieldsOrder.indexOf(b.key);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+        });
+    }
+
+    // Algoritmo de agrupación en filas de 4 columnas (Label1, Val1, Label2, Val2)
+    type RowGroup = { type: 'full'; item: TableItem } | { type: 'pair'; item1: TableItem; item2?: TableItem };
+    const rows: RowGroup[] = [];
+
+    let i = 0;
+    while (i < rawItems.length) {
+        const current = rawItems[i];
+        if (current.colSpan === 2) {
+            rows.push({ type: 'full', item: current });
+            i++;
+        } else {
+            const next = rawItems[i + 1];
+            if (next && next.colSpan === 1) {
+                rows.push({ type: 'pair', item1: current, item2: next });
+                i += 2;
+            } else {
+                rows.push({ type: 'pair', item1: current });
+                i++;
+            }
+        }
+    }
+
+    const renderCellControls = (item: TableItem, itemIdx: number) => (
+        <div className="absolute -top-3.5 right-1 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-slate-900 text-white rounded px-1.5 py-0.5 shadow-md flex items-center gap-1 text-[8px] z-20">
+            {/* Reordenar */}
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'up'); }}
+                disabled={itemIdx === 0}
+                className="hover:text-amber-400 disabled:opacity-30 disabled:hover:text-white cursor-pointer px-0.5"
+                title="Mover elemento arriba"
+            >
+                ▲
+            </button>
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'down'); }}
+                disabled={itemIdx === rawItems.length - 1}
+                className="hover:text-amber-400 disabled:opacity-30 disabled:hover:text-white cursor-pointer px-0.5"
+                title="Mover elemento abajo"
+            >
+                ▼
+            </button>
+            <span className="text-slate-600 font-bold">|</span>
+            <span className="text-slate-400 font-bold">Ancho:</span>
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 1); }}
+                className={`px-1 rounded cursor-pointer transition-colors ${item.colSpan === 1 ? 'bg-indigo-500 text-white font-bold' : 'hover:bg-slate-700 text-slate-300'}`}
+                title="Ocupar la mitad de la fila (50%)"
+            >
+                Mitad
+            </button>
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 2); }}
+                className={`px-1 rounded cursor-pointer transition-colors ${item.colSpan === 2 ? 'bg-indigo-500 text-white font-bold' : 'hover:bg-slate-700 text-slate-300'}`}
+                title="Ocupar la fila completa (100%)"
+            >
+                Completo
+            </button>
+        </div>
+    );
+
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-3 shadow-xs">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50/80 p-2 rounded-lg border border-slate-100">
+        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-2 shadow-xs">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
                 <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    Ficha de Identificación (Maquetación Bento Grid {bentoCols} Col)
+                    Ficha de Identificación del Proyecto (Tabla Institucional Estándar)
                 </span>
-                {customFields.length > 0 && (
-                    <span className="text-[8px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono uppercase">+ {customFields.length} campos extra</span>
-                )}
+                <span className="text-[8px] text-slate-500 font-normal">
+                    Pasa el cursor sobre cualquier etiqueta para cambiar su ancho
+                </span>
             </div>
 
-            {/* Renderizado Estilo Bento Grid */}
-            {tableStyleMode === 'cards' ? (
-                <div className={`grid grid-cols-1 ${bentoCols === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-2 text-[10px]`}>
-                    {items.map((item) => {
-                        const spanClass = item.colSpan === 3 || item.colSpan >= bentoCols
-                            ? 'col-span-1 md:col-span-full'
-                            : item.colSpan === 2
-                            ? 'col-span-1 md:col-span-2'
-                            : 'col-span-1';
+            <table className={`w-full border-collapse text-[10px] ${borderCss}`}>
+                <tbody>
+                    {rows.map((row, rIdx) => {
+                        if (row.type === 'full') {
+                            const item = row.item;
+                            return (
+                                <tr key={`r-${rIdx}`} className="group/cell relative border-b border-slate-200 last:border-0 hover:bg-slate-50/50">
+                                    <td
+                                        className={`p-2 font-bold text-[8.5px] uppercase w-1/4 relative align-top ${cellBorderCss}`}
+                                        style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                                    >
+                                        {item.label} {item.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
+                                        {renderCellControls(item, rawItems.findIndex(x => x.key === item.key))}
+                                    </td>
+                                    <td colSpan={3} className={`p-2 text-slate-800 font-semibold bg-white align-top ${cellBorderCss}`}>
+                                        {item.value}
+                                    </td>
+                                </tr>
+                            );
+                        } else {
+                            const { item1, item2 } = row;
+                            return (
+                                <tr key={`r-${rIdx}`} className="border-b border-slate-200 last:border-0">
+                                    {/* Celda 1 */}
+                                    <td
+                                        className={`group/cell relative p-2 font-bold text-[8.5px] uppercase w-1/5 align-top ${cellBorderCss}`}
+                                        style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                                    >
+                                        {item1.label} {item1.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
+                                        {renderCellControls(item1, rawItems.findIndex(x => x.key === item1.key))}
+                                    </td>
+                                    <td
+                                        colSpan={item2 ? 1 : 3}
+                                        className={`p-2 text-slate-800 font-semibold bg-white align-top ${cellBorderCss} ${item2 ? 'w-3/10' : ''}`}
+                                    >
+                                        {item1.value}
+                                    </td>
 
-                        return (
-                            <div
-                                key={item.id}
-                                className={`${spanClass} group/bento relative p-2.5 border border-slate-200/80 rounded-lg bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-sm transition-all duration-200`}
-                            >
-                                {/* Barra flotante de control de ancho Bento al Hover */}
-                                <div className="absolute top-1 right-1 opacity-0 group-hover/bento:opacity-100 transition-opacity bg-white border border-slate-200 rounded px-1 py-0.5 shadow-xs flex items-center gap-1 text-[7.5px] font-bold text-slate-600 z-10">
-                                    <span className="text-slate-400">Ancho:</span>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 1); }}
-                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 1 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
-                                        title="1/3 o 1/2 Col"
-                                    >
-                                        1/3
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 2); }}
-                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 2 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
-                                        title="2/3 Col"
-                                    >
-                                        2/3
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 3); }}
-                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 3 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
-                                        title="Ancho Completo 100%"
-                                    >
-                                        Full
-                                    </button>
-                                </div>
-
-                                <span className="text-[8px] font-bold block uppercase tracking-wider mb-1 pr-14" style={{ color: headerPair.bg === 'transparent' ? '#1e293b' : headerPair.bg }}>
-                                    {item.label} {item.isCustom && <span className="text-[7px] text-emerald-600 font-mono">(extra)</span>}
-                                </span>
-                                <span className="text-slate-700 font-semibold block leading-tight">{item.value}</span>
-                            </div>
-                        );
+                                    {/* Celda 2 (si existe) */}
+                                    {item2 && (
+                                        <>
+                                            <td
+                                                className={`group/cell relative p-2 font-bold text-[8.5px] uppercase w-1/5 align-top ${cellBorderCss}`}
+                                                style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                                            >
+                                                {item2.label} {item2.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
+                                                {renderCellControls(item2, rawItems.findIndex(x => x.key === item2.key))}
+                                            </td>
+                                            <td className={`p-2 text-slate-800 font-semibold bg-white w-3/10 align-top ${cellBorderCss}`}>
+                                                {item2.value}
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            );
+                        }
                     })}
-                </div>
-            ) : tableStyleMode === 'minimal' ? (
-                <div className="space-y-1 text-[10px]">
-                    {items.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                            <span className="text-[8.5px] font-bold uppercase text-slate-500 w-1/3 truncate pr-2">
-                                {item.label}
-                            </span>
-                            <span className="text-slate-700 font-medium w-2/3 truncate">{item.value}</span>
-                        </div>
-                    ))}
-                </div>
-            ) : tableStyleMode === 'grid' ? (
-                <table className="w-full border-collapse text-[10px] border border-slate-200">
-                    <tbody>
-                        {items.map((item, idx) => (
-                            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
-                                <td className="p-1.5 font-bold border border-slate-200 text-slate-600 w-1/3 text-[8.5px] uppercase">
-                                    {item.label}
-                                </td>
-                                <td className="p-1.5 border border-slate-200 text-slate-700 font-medium">
-                                    {item.value}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                /* Estilo Clásico Institucional (Default) */
-                <table className="w-full border-collapse text-[10px] border border-slate-300">
-                    <tbody>
-                        {items.map((item, idx) => (
-                            <tr key={idx} className="border-b border-slate-200 last:border-0">
-                                <td className="p-2 font-bold text-[8.5px] uppercase w-1/3" style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}>
-                                    {item.label}
-                                </td>
-                                <td className="p-2 text-slate-700 font-semibold bg-white">
-                                    {item.value}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+                </tbody>
+            </table>
         </div>
     );
 };
