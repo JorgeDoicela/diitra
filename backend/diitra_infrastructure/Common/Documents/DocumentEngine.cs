@@ -153,6 +153,22 @@ namespace Diitra.Infrastructure.Common.Documents
                                     if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
                                     {
                                         dataDict[doc.CampoNombre] = doc.ContentHtml;
+
+                                        // Fallbacks para asegurar coincidencia independientemente del casing de la plantilla (Handlebars):
+                                        var key = doc.CampoNombre;
+                                        dataDict[key.ToLower()] = doc.ContentHtml;
+                                        dataDict[key.ToUpper()] = doc.ContentHtml;
+
+                                        if (key.StartsWith("field_", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            var upperField = "FIELD_" + key.Substring(6);
+                                            dataDict[upperField] = doc.ContentHtml;
+                                            var lowerField = "field_" + key.Substring(6);
+                                            dataDict[lowerField] = doc.ContentHtml;
+                                        }
+
+                                        var snakeKey = Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
+                                        dataDict[snakeKey] = doc.ContentHtml;
                                     }
                                 }
                                 renderData = dataDict;

@@ -477,11 +477,21 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
             }
 
             // ── TEXTO ENRIQUECIDO ────────────────────────────────────────────
-            case 'rich_text':
+            // ── TEXTO ENRIQUECIDO ────────────────────────────────────────────
+            case 'rich_text': {
+                const blockId = block.id ? block.id.replace('block-', '') : 'default';
+                let varName = blockId;
+                if (/^\d+$/.test(varName)) {
+                    varName = 'field_' + varName;
+                }
+                const upperVar = (varName.startsWith('field_') ? 'FIELD_' + varName.substring(6) : varName.toUpperCase());
+                const snakeVar = varName.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+
                 html += `
   <!-- BLOQUE: TEXTO ENRIQUECIDO -->
-  <div class="rich-content">${c.html || ''}</div>`;
+  <div class="rich-content">{{{default ${varName} ${upperVar} ${snakeVar}}}}</div>`;
                 break;
+            }
 
             // ── TABLA AVANZADA ───────────────────────────────────────────────
             case 'advanced_table': {
@@ -589,18 +599,31 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
 
             // ── DOS COLUMNAS ─────────────────────────────────────────────────
             case 'two_column': {
+                const blockId = block.id ? block.id.replace('block-', '') : 'default';
+                let varName = blockId;
+                if (/^\d+$/.test(varName)) {
+                    varName = 'field_' + varName;
+                }
+                const leftVar = varName + 'Izquierda';
+                const rightVar = varName + 'Derecha';
+                const leftUpper = (varName.startsWith('field_') ? 'FIELD_' + varName.substring(6) : varName) + 'Izquierda';
+                const rightUpper = (varName.startsWith('field_') ? 'FIELD_' + varName.substring(6) : varName) + 'Derecha';
+                const leftSnake = leftVar.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+                const rightSnake = rightVar.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+
                 const lStyle = headerBg(c.leftHeaderStyle);
                 const rStyle = headerBg(c.rightHeaderStyle);
+
                 html += `
   <!-- BLOQUE: DOS COLUMNAS -->
   <div class="two-col-wrapper">
     <div class="two-col-cell">
       <div class="col-header" style="${lStyle}">${c.leftTitle || 'COLUMNA IZQUIERDA'}</div>
-      <div class="col-body rich-content">${c.leftContent || ''}</div>
+      <div class="col-body rich-content">{{{default ${leftVar} ${leftUpper} ${leftSnake}}}}</div>
     </div>
     <div class="two-col-cell">
       <div class="col-header" style="${rStyle}">${c.rightTitle || 'COLUMNA DERECHA'}</div>
-      <div class="col-body rich-content">${c.rightContent || ''}</div>
+      <div class="col-body rich-content">{{{default ${rightVar} ${rightUpper} ${rightSnake}}}}</div>
     </div>
   </div>`;
                 break;

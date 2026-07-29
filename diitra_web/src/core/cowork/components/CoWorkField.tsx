@@ -293,6 +293,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         } else if (
             historyLoaded &&
             !seededRef.current &&
+            ytext.length === 0 &&
             dbValue !== undefined &&
             dbValue !== null &&
             dbValue !== ''

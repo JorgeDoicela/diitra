@@ -28,21 +28,22 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             _handlebars = Handlebars.Create();
 
-            // Helper: valor por defecto si la variable está vacía
+            // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback)
             _handlebars.RegisterHelper("default", (output, context, arguments) =>
             {
-                var firstArg = arguments.ElementAtOrDefault(0);
-                var secondArg = arguments.ElementAtOrDefault(1);
-
-                var value = (firstArg == null || firstArg.GetType().Name == "UndefinedBindingResult")
-                    ? null
-                    : firstArg.ToString();
-
-                var fallback = (secondArg == null || secondArg.GetType().Name == "UndefinedBindingResult")
-                    ? ""
-                    : secondArg.ToString();
-
-                output.WriteSafeString(string.IsNullOrWhiteSpace(value) ? fallback : value);
+                foreach (var arg in arguments)
+                {
+                    if (arg != null && arg.GetType().Name != "UndefinedBindingResult")
+                    {
+                        var str = arg.ToString();
+                        if (!string.IsNullOrWhiteSpace(str))
+                        {
+                            output.WriteSafeString(str);
+                            return;
+                        }
+                    }
+                }
+                output.WriteSafeString("");
             });
 
             // Helper: sumar múltiples valores numéricos (útil para totalizar rúbricas en el motor Handlebars)
@@ -423,8 +424,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException(
-                        $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
+                    // Resiliencia ante plantillas guardadas previamente en BD con sintaxis anidada legacy (default a (default b c))
+                    try
+                    {
+                        var sanitizedHtml = System.Text.RegularExpressions.Regex.Replace(
+                            templateHtml,
+                            @"\(default\s+([^)]+)\)",
+                            "$1"
+                        );
+                        compiled = _handlebars.Compile(sanitizedHtml);
+                    }
+                    catch
+                    {
+                        throw new InvalidOperationException(
+                            $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
+                    }
                 }
 
                 var context = BuildContext(data, extraVariables, isBlindMode);

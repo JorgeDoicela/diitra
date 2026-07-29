@@ -54,8 +54,10 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
     const ydoc = props.cowork.ydoc;
     const sharedType = ydoc.share.get(field);
     if (sharedType && !(sharedType instanceof Y.XmlFragment)) {
-        console.warn(`[CoWorkEditor] Conflicto de constructor detectado para '${field}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.XmlFragment.`);
-        ydoc.share.delete(field);
+        if (sharedType instanceof Y.Text && sharedType.length === 0) {
+            console.warn(`[CoWorkEditor] Limpiando Y.Text vacío en conflicto para '${field}' para reemplazar con Y.XmlFragment.`);
+            ydoc.share.delete(field);
+        }
     }
     
     const xmlFragment = ydoc.getXmlFragment(field);
@@ -134,7 +136,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
     const editor = useEditor({
         extensions,
-        content: dbValue,
+        content: useCollaboration ? undefined : dbValue,
         editorProps: {
             attributes: { class: 'focus:outline-none' },
             handlePaste: (view, event) => {
@@ -257,36 +259,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             }
         }
     }, [extensions]);
-
-    React.useEffect(() => {
-        if (!editor || !useCollaboration) return;
-        const isReadOnlyMode = readonly || cowork.session.readOnly;
-        if (isReadOnlyMode) return;
-
-        const xmlFragment = ydoc.getXmlFragment(field);
-
-        // Limpieza automática si Yjs heredó fragmentos duplicados de sesiones anteriores
-        if (dbValue && dbValue.trim() !== '') {
-            const cleanDb = dbValue.trim();
-            const currentHtml = editor.getHTML();
-            const normDb = cleanDb.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-            const normEditor = currentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-
-            if (normDb.length >= 3 && normEditor.length > normDb.length) {
-                const parts = normEditor.split(normDb).map(p => p.trim()).filter(Boolean);
-                const isDuplicatedSeed = parts.length === 0;
-
-                if (isDuplicatedSeed) {
-                    coworkLog(`[CoWorkEditor:${field}] Detección de contenido duplicado. Limpiando Yjs a versión semilla única.`);
-                    seededRef.current = true;
-                    ydoc.transact(() => {
-                        xmlFragment.delete(0, xmlFragment.length);
-                    }, 'local-dedup');
-                    editor.commands.setContent(dbValue, { emitUpdate: false });
-                }
-            }
-        }
-    }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly]);
 
     const isEditable = !readonly && !cowork.session.readOnly;
     React.useEffect(() => {

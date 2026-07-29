@@ -105,10 +105,12 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
             const isList = options.lists?.includes(name) || name.startsWith('MultiSec_') || (ydoc && ydoc.share.get(name) instanceof Y.Array);
 
+            const isRichText = options.richTexts?.some(rt => rt.toLowerCase() === name.toLowerCase()) || /^field_\d+/i.test(name) || name.endsWith('Izquierda') || name.endsWith('Derecha');
+
             if (source !== 'remote' &&
                 ydoc &&
                 !isList &&
-                !options.richTexts?.includes(name) &&
+                !isRichText &&
                 !options.nonCollaborative?.includes(name) &&
                 name.toLowerCase() !== 'uuid' &&
                 name.toLowerCase() !== 'entityuuid') {
@@ -274,7 +276,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
         keysToObserve.forEach(key => {
             if (listsToObserve.has(key)) return;
-            if (options.richTexts?.includes(key)) return;
+            const isRichText = options.richTexts?.some(rt => rt.toLowerCase() === key.toLowerCase()) || /^field_\d+/i.test(key) || key.endsWith('Izquierda') || key.endsWith('Derecha');
+            if (isRichText) return;
             if (options.nonCollaborative?.includes(key)) return;
             if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return;
 
