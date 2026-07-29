@@ -1102,39 +1102,102 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }) => {
 
 const RenderProjectTechnicalSection: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
-    const subs = [
-        { key: 'showAntecedentes', title: '3.1 Antecedentes de la Problemática' },
-        { key: 'showDescripcionProyecto', title: '3.2 Descripción General de la Propuesta' },
-        { key: 'showJustificacion', title: '3.3 Justificación e Importancia' },
-        { key: 'showObjetivoGeneral', title: '3.4 Objetivos (General)' },
-        { key: 'showObjetivosEspecificos', title: '3.4 Objetivos (Específicos)' },
-        { key: 'showOds', title: '3.5 Alineación ODS' },
-        { key: 'showMarcoTeorico', title: '3.6 Marco Teórico Científico' },
-        { key: 'showMetodologia', title: '3.7 Enfoque Metodológico' },
-        { key: 'showEvaluacion', title: '3.8 Evaluación Técnica de Resultados' },
-    ].filter(s => (c as any)[s.key] !== false);
+    const layoutMode = c.technicalLayoutMode || 'table_2col';
+    const headerColorKey = c.technicalHeaderColor || 'navy';
+    const resolveHeaderBg = (col: string) => {
+        switch (col) {
+            case 'gold': return '#b8912e';
+            case 'slate': return '#334155';
+            case 'emerald': return '#065f46';
+            case 'navy':
+            default: return '#1e2a4a';
+        }
+    };
+    const headerBg = resolveHeaderBg(headerColorKey);
+
+    let subs: Array<{ key: string; title: string; numberPrefix?: string; requirementText?: string }> = [];
+
+    if (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0) {
+        subs = c.technicalSections
+            .filter((s: any) => s.enabled !== false)
+            .map((s: any) => ({
+                key: s.id || s.fieldKey,
+                title: s.title,
+                numberPrefix: s.numberPrefix,
+                requirementText: s.requirementText,
+            }));
+    } else {
+        subs = [
+            { key: 'showAntecedentes', title: 'ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA', numberPrefix: '3.1', requirementText: 'DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO' },
+            { key: 'showDescripcionProyecto', title: 'DESCRIPCIÓN DEL PROYECTO', numberPrefix: '3.2', requirementText: 'DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO' },
+            { key: 'showJustificacion', title: 'JUSTIFICACIÓN', numberPrefix: '3.3', requirementText: 'CITAR USANDO NORMAS APA 7MA EDICIÓN' },
+            { key: 'showObjetivoGeneral', title: 'OBJETIVO GENERAL', numberPrefix: '3.4', requirementText: 'VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?' },
+            { key: 'showObjetivosEspecificos', title: 'OBJETIVOS ESPECÍFICOS', numberPrefix: '3.4', requirementText: 'INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO' },
+            { key: 'showOds', title: 'OBJETIVOS DE DESARROLLO SOSTENIBLE', numberPrefix: '3.5', requirementText: 'Alineación ODS' },
+            { key: 'showMarcoTeorico', title: 'MARCO TEÓRICO', numberPrefix: '3.6', requirementText: 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN' },
+            { key: 'showMetodologia', title: 'METODOLOGÍA', numberPrefix: '3.7', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS' },
+            { key: 'showEvaluacion', title: 'EVALUACIÓN', numberPrefix: '3.8', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS' },
+        ].filter(s => (c as any)[s.key] !== false);
+    }
 
     return (
-        <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Plan Técnico y Científico ({subs.length} Sub-Secciones Activas)</span>
+        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-2 shadow-xs">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    Plan Técnico ({layoutMode === 'table_2col' ? 'Formato Tabla Institucional 2 Col.' : 'Secciones Consecutivas'})
+                </span>
+                <span className="text-[8px] font-mono text-indigo-500 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">
+                    {subs.length} SUB-SECCIONES ACTIVAS
+                </span>
             </div>
 
-            <div className="space-y-2 text-[9px] text-slate-700">
-                <div className="grid grid-cols-2 gap-2">
+            {layoutMode === 'table_2col' ? (
+                /* Vista Previa de Tabla Institucional 2 Columnas */
+                <div className="overflow-hidden border border-slate-300 rounded-lg">
+                    <table className="w-full border-collapse text-[9px]">
+                        <tbody>
+                            {subs.map(sub => (
+                                <tr key={sub.key} className="border-b border-slate-200 last:border-b-0">
+                                    <td
+                                        className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] leading-snug"
+                                        style={{ backgroundColor: headerBg }}
+                                    >
+                                        {sub.title}
+                                    </td>
+                                    <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px] leading-relaxed">
+                                        {sub.requirementText ? (
+                                            <span className="font-bold text-slate-700 block">
+                                                [{sub.requirementText}]
+                                            </span>
+                                        ) : (
+                                            <span className="italic text-slate-400">[Redacción colaborativa de la sección]</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                /* Vista Previa de Secciones Consecutivas */
+                <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700">
                     {subs.map(sub => (
                         <div key={sub.key} className="p-2 border border-slate-150 rounded bg-white flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
-                            <span className="font-semibold text-slate-600 truncate">{sub.title}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 shrink-0" />
+                            {sub.numberPrefix && (
+                                <span className="font-mono font-bold text-indigo-500 text-[8.5px] shrink-0">{sub.numberPrefix}</span>
+                            )}
+                            <span className="font-semibold text-slate-700 truncate">{sub.title}</span>
                         </div>
                     ))}
                 </div>
+            )}
 
-                <p className="text-[8px] text-pink-600 font-black border-t border-dashed border-pink-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
-                    <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-                    Los investigadores redactarán estas secciones colaborativamente en la pestaña "Plan Técnico" del Workspace.
-                </p>
-            </div>
+            <p className="text-[8px] text-pink-600 font-black border-t border-dashed border-pink-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                Los investigadores redactarán estas secciones colaborativamente en la pestaña "Plan Técnico" del Workspace.
+            </p>
         </div>
     );
 };

@@ -7,6 +7,7 @@ import { SignaturesProperties } from './properties/SignaturesProperties';
 import { TwoColumnProperties } from './properties/TwoColumnProperties';
 import { GanttProperties } from './properties/GanttProperties';
 import { ProjectGeneralProperties } from './properties/ProjectGeneralProperties';
+import { ProjectTechnicalProperties } from './properties/ProjectTechnicalProperties';
 import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme } from '../utils/theme-schema';
 
 
@@ -817,35 +818,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {/* ── PLAN TÉCNICO ────────────────────────────────────────────── */}
                             {activeBlock.type === 'project_technical_section' && (
-                                <div className="space-y-3 border-t border-border-thin/20 pt-4">
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Activa o desactiva qué apartados del plan técnico se mostrarán al docente para redacción:
-                                    </p>
-                                    {[
-                                        { key: 'showAntecedentes', label: 'Mostrar Antecedentes', desc: 'Sección 3.1 Antecedentes de la Problemática.' },
-                                        { key: 'showDescripcionProyecto', label: 'Mostrar Descripción del Proyecto', desc: 'Sección 3.2 Descripción General de la Propuesta.' },
-                                        { key: 'showJustificacion', label: 'Mostrar Justificación', desc: 'Sección 3.3 Justificación e Importancia.' },
-                                        { key: 'showObjetivoGeneral', label: 'Mostrar Objetivo General', desc: 'Sección 3.4 Objetivo General.' },
-                                        { key: 'showObjetivosEspecificos', label: 'Mostrar Objetivos Específicos', desc: 'Sección 3.4 Objetivos Específicos (Lista editable).' },
-                                        { key: 'showOds', label: 'Mostrar Objetivos de Desarrollo Sostenible (ODS)', desc: 'Sección 3.5 Alineación ODS.' },
-                                        { key: 'showMarcoTeorico', label: 'Mostrar Marco Teórico', desc: 'Sección 3.6 Marco Teórico Científico.' },
-                                        { key: 'showMetodologia', label: 'Mostrar Metodología', desc: 'Sección 3.7 Enfoque Metodológico.' },
-                                        { key: 'showEvaluacion', label: 'Mostrar Evaluación de Resultados', desc: 'Sección 3.8 Evaluación Técnica de Resultados.' },
-                                    ].map(({ key, label, desc }) => (
-                                        <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-main block">{label}</label>
-                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={(activeBlock.config as any)[key] !== false}
-                                                onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
-                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <ProjectTechnicalProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}
 
                             {/* ── RECURSOS Y PRESUPUESTO ──────────────────────────────────── */}

@@ -42,7 +42,44 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     ];
 
     const activeSubTabs = React.useMemo(() => {
-        return subTabs.filter(tab => {
+        if (config?.technicalSections && Array.isArray(config.technicalSections) && config.technicalSections.length > 0) {
+            return config.technicalSections
+                .filter((sec: any) => sec.enabled !== false)
+                .map((sec: any) => {
+                    let Icon = BookOpen;
+                    if (sec.fieldKey === 'DescripcionProyecto' || sec.id === 'sec_descripcion') Icon = FileText;
+                    if (sec.fieldKey === 'Justificacion' || sec.id === 'sec_justificacion') Icon = CheckSquare;
+                    if (sec.fieldKey === 'ObjetivoGeneral' || sec.fieldKey === 'ObjetivosEspecificos' || sec.id === 'sec_objetivo_general') Icon = Target;
+                    if (sec.fieldKey === 'ObjetivosDesarrolloSostenible' || sec.id === 'sec_ods') Icon = Globe;
+                    if (sec.fieldKey === 'MarcoTeorico' || sec.id === 'sec_marco_teorico') Icon = Book;
+                    if (sec.fieldKey === 'Metodologia' || sec.id === 'sec_metodologia') Icon = Settings;
+                    if (sec.fieldKey === 'Evaluacion' || sec.id === 'sec_evaluacion') Icon = ClipboardCheck;
+
+                    const labelText = sec.numberPrefix ? `${sec.numberPrefix} ${sec.title}` : sec.title;
+                    return {
+                        id: sec.fieldKey || sec.id,
+                        label: labelText,
+                        rawTitle: sec.title,
+                        numberPrefix: sec.numberPrefix,
+                        fieldKey: sec.fieldKey,
+                        placeholder: sec.placeholder || `Escriba el apartado de ${sec.title}...`,
+                        icon: Icon
+                    };
+                });
+        }
+
+        const legacySubTabs = [
+            { id: 'antecedentes', fieldKey: 'Antecedentes', label: '3.1 Antecedentes', icon: BookOpen, placeholder: 'Escriba los antecedentes del proyecto...' },
+            { id: 'descripcion', fieldKey: 'DescripcionProyecto', label: '3.2 Descripción', icon: FileText, placeholder: 'Definir el propósito del proyecto...' },
+            { id: 'justificacion', fieldKey: 'Justificacion', label: '3.3 Justificación', icon: CheckSquare, placeholder: 'Escriba la justificación del proyecto...' },
+            { id: 'objetivos', fieldKey: 'ObjetivoGeneral', label: '3.4 Objetivos', icon: Target, placeholder: 'Objetivos del proyecto...' },
+            { id: 'ods', fieldKey: 'ObjetivosDesarrolloSostenible', label: '3.5 ODS (Alineación)', icon: Globe, placeholder: 'Ejes y ODS Vinculados...' },
+            { id: 'marco_teorico', fieldKey: 'MarcoTeorico', label: '3.6 Marco Teórico', icon: Book, placeholder: 'Escriba el fundamento teórico...' },
+            { id: 'metodologia', fieldKey: 'Metodologia', label: '3.7 Metodología', icon: Settings, placeholder: 'Describa la metodología...' },
+            { id: 'evaluacion', fieldKey: 'Evaluacion', label: '3.8 Evaluación', icon: ClipboardCheck, placeholder: 'Escriba los criterios de evaluación...' }
+        ];
+
+        return legacySubTabs.filter(tab => {
             if (tab.id === 'antecedentes') return config?.showAntecedentes !== false;
             if (tab.id === 'descripcion') return config?.showDescripcionProyecto !== false;
             if (tab.id === 'justificacion') return config?.showJustificacion !== false;
@@ -365,6 +402,44 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         </div>
                     </SectionBlockGuard>
                 )}
+
+                {/* 9. Renderizado Dinámico para Sub-secciones Personalizadas */}
+                {(() => {
+                    const currentTab = activeSubTabs.find(t => t.id === activeSubTab);
+                    if (!currentTab) return null;
+                    const isLegacyHandled = ['antecedentes', 'descripcion', 'justificacion', 'objetivos', 'ods', 'marco_teorico', 'metodologia', 'evaluacion'].includes(currentTab.id);
+                    if (isLegacyHandled) return null;
+
+                    const Icon = currentTab.icon || BookOpen;
+                    const fieldName = currentTab.fieldKey || currentTab.id;
+
+                    return (
+                        <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="space-y-1">
+                                    <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
+                                        <Icon size={20} /> {currentTab.label}
+                                    </h3>
+                                    <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                        <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                        <p className="leading-relaxed font-medium">
+                                            {currentTab.placeholder}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                    <CoWorkEditor
+                                        field={fieldName}
+                                        cowork={cowork}
+                                        onChange={(html, meta) => onUpdate(fieldName, html, meta)}
+                                        placeholder={currentTab.placeholder}
+                                        className="min-h-[400px] border-none"
+                                    />
+                                </div>
+                            </div>
+                        </SectionBlockGuard>
+                    );
+                })()}
             </div>
         </div>
     );

@@ -961,84 +961,86 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
             }
 
             case 'project_technical_section': {
-                const parts: string[] = [];
-                if (c.showAntecedentes !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.1 Antecedentes Específicos de la Problemática</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default antecedentes "No redactado."}}</div>
-    </div>`);
-                }
-                if (c.showDescripcionProyecto !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.2 Descripción General de la Propuesta</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default descripcion_proyecto "No redactado."}}</div>
-    </div>`);
-                }
-                if (c.showJustificacion !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.3 Justificación e Importancia</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default justificacion "No redactado."}}</div>
-    </div>`);
-                }
-                if (c.showObjetivoGeneral !== false || c.showObjetivosEspecificos !== false) {
-                    let objHtml = `
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.4 Objetivos de Investigación</p>`;
-                    if (c.showObjetivoGeneral !== false) {
-                        objHtml += `
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000; margin-bottom: 8px;">
-        <strong>Objetivo General:</strong>
-        <div style="margin-top: 4px;">{{default objetivo_general "No redactado."}}</div>
-      </div>`;
+                const layoutMode = c.technicalLayoutMode || 'table_2col';
+                const headerColorKey = c.technicalHeaderColor || 'navy';
+                const resolveHeaderBg = (col: string) => {
+                    switch (col) {
+                        case 'gold': return '#b8912e';
+                        case 'slate': return '#334155';
+                        case 'emerald': return '#065f46';
+                        case 'navy':
+                        default: return '#1e2a4a';
                     }
-                    if (c.showObjetivosEspecificos !== false) {
-                        objHtml += `
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">
-        <strong>Objetivos Específicos:</strong>
-        <div style="margin-top: 4px;">{{default objetivos_especificos "No redactado."}}</div>
-      </div>`;
-                    }
-                    objHtml += `\n    </div>`;
-                    parts.push(objHtml);
-                }
-                if (c.showOds !== false) {
-                    parts.push(`
+                };
+                const headerBg = resolveHeaderBg(headerColorKey);
+
+                // Obtener secciones activas (con fallback a presets si no están definidas)
+                const activeSections: any[] = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
+                    ? c.technicalSections.filter((sec: any) => sec.enabled !== false)
+                    : [
+                        { id: 'sec_antecedentes', fieldKey: 'Antecedentes', numberPrefix: '3.1', title: 'ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA', requirementText: 'DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO', scribanVariable: 'antecedentes', enabled: c.showAntecedentes !== false },
+                        { id: 'sec_descripcion', fieldKey: 'DescripcionProyecto', numberPrefix: '3.2', title: 'DESCRIPCIÓN DEL PROYECTO', requirementText: 'DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO', scribanVariable: 'descripcion_proyecto', enabled: c.showDescripcionProyecto !== false },
+                        { id: 'sec_justificacion', fieldKey: 'Justificacion', numberPrefix: '3.3', title: 'JUSTIFICACIÓN', requirementText: 'CITAR USANDO NORMAS APA 7MA EDICIÓN', scribanVariable: 'justificacion', enabled: c.showJustificacion !== false },
+                        { id: 'sec_objetivo_general', fieldKey: 'ObjetivoGeneral', numberPrefix: '3.4', title: 'OBJETIVO GENERAL', requirementText: 'VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?', scribanVariable: 'objetivo_general', enabled: c.showObjetivoGeneral !== false },
+                        { id: 'sec_objetivos_especificos', fieldKey: 'ObjetivosEspecificos', numberPrefix: '3.4', title: 'OBJETIVOS ESPECÍFICOS', requirementText: 'INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO', scribanVariable: 'objetivos_especificos', enabled: c.showObjetivosEspecificos !== false },
+                        { id: 'sec_ods', fieldKey: 'ObjetivosDesarrolloSostenible', numberPrefix: '3.5', title: 'OBJETIVOS DE DESARROLLO SOSTENIBLE', requirementText: 'Alineación con Objetivos de Desarrollo Sostenible ONU', scribanVariable: 'objetivos_desarrollo_sostenible', enabled: c.showOds !== false },
+                        { id: 'sec_marco_teorico', fieldKey: 'MarcoTeorico', numberPrefix: '3.6', title: 'MARCO TEÓRICO', requirementText: 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN', scribanVariable: 'marco_teorico', enabled: c.showMarcoTeorico !== false },
+                        { id: 'sec_metodologia', fieldKey: 'Metodologia', numberPrefix: '3.7', title: 'METODOLOGÍA', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', scribanVariable: 'metodologia', enabled: c.showMetodologia !== false },
+                        { id: 'sec_evaluacion', fieldKey: 'Evaluacion', numberPrefix: '3.8', title: 'EVALUACIÓN', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', scribanVariable: 'evaluacion', enabled: c.showEvaluacion !== false },
+                    ].filter(s => s.enabled);
+
+                if (activeSections.length === 0) break;
+
+                if (layoutMode === 'table_2col') {
+                    // ── MODO TABLA INSTITUCIONAL DE 2 COLUMNAS (Formato Oficial) ──────────────
+                    const tableRows: string[] = [];
+
+                    activeSections.forEach((sec: any) => {
+                        const scriban = sec.scribanVariable || (sec.fieldKey ? sec.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') : 'contenido');
+                        const defaultPlaceholder = sec.requirementText ? `[${sec.requirementText}]` : 'No redactado.';
+                        const titleText = sec.title ? sec.title.toUpperCase() : 'SECCIÓN';
+
+                        tableRows.push(`
+    <tr>
+      <td style="width: 30%; background-color: ${headerBg}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; vertical-align: middle; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+      <td style="width: 70%; font-size: 8.5pt; line-height: 1.4; color: #000000; padding: 8px 10px; border: 1px solid #000000; vertical-align: top; font-family: {{ theme.typography.font_family }};">
+        {{default ${scriban} "${defaultPlaceholder}"}}
+      </td>
+    </tr>`);
+                    });
+
+                    html += `
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (TABLA INSTITUCIONAL) -->
+  <div style="margin-top: 15px; margin-bottom: 20px;">
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000;">
+      <tbody>
+        ${tableRows.join('')}
+      </tbody>
+    </table>
+  </div>`;
+                } else {
+                    // ── MODO SECCIONES CONSECUTIVAS O TARJETAS ──────────────────────────────
+                    const parts: string[] = [];
+                    activeSections.forEach((sec: any) => {
+                        const num = sec.numberPrefix ? `${sec.numberPrefix} ` : '';
+                        const scriban = sec.scribanVariable || (sec.fieldKey ? sec.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') : 'contenido');
+                        const defaultPlaceholder = sec.requirementText ? `[${sec.requirementText}]` : 'No redactado.';
+                        parts.push(`
     <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.5 Alineación de Objetivos de Desarrollo Sostenible (ODS)</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default objetivos_desarrollo_sostenible "No redactado."}}</div>
+      <p style="font-weight: bold; font-size: 9.5pt; color: {{ theme.colors.primary }}; margin-bottom: 4px; text-transform: uppercase;">${num}${sec.title}</p>
+      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default ${scriban} "${defaultPlaceholder}"}}</div>
     </div>`);
-                }
-                if (c.showMarcoTeorico !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.6 Marco Teórico Científico</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default marco_teorico "No redactado."}}</div>
-    </div>`);
-                }
-                if (c.showMetodologia !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.7 Enfoque Metodológico</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default metodologia "No redactado."}}</div>
-    </div>`);
-                }
-                if (c.showEvaluacion !== false) {
-                    parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9pt; color: {{ theme.colors.secondary }}; margin-bottom: 4px;">3.8 Evaluación Técnica de Resultados</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default evaluacion "No redactado."}}</div>
-    </div>`);
-                }
-                if (parts.length === 0) break;
-                html += `
-  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO -->
+                    });
+
+                    html += `
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (SECCIONES) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">3. Plan Técnico del Proyecto</p>
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">Plan Técnico del Proyecto</p>
     ${parts.join('')}
   </div>`;
+                }
                 break;
             }
 
