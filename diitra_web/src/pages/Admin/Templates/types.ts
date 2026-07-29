@@ -201,9 +201,11 @@ export interface DocumentBlock {
         // ── project_general_section ────────────────────────────────────────
         identificationMode?: 'catalogs' | 'fields';
         tableStyle?: 'classic' | 'grid' | 'cards' | 'minimal' | string;
+        borderStyle?: 'solid' | 'none' | string;
         headerColor?: 'navy' | 'primary' | 'emerald' | 'slate' | 'dark' | string;
         bentoColumns?: 2 | 3;
         bentoItems?: BentoGridItem[];
+        fieldsOrder?: string[];
         customFields?: IdentificationField[];
         showTitulo?: boolean;
         showPrograma?: boolean;

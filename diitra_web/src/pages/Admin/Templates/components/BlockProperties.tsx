@@ -473,8 +473,8 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                         type="button"
                                                         onClick={() => onUpdateConfig(activeBlock.id, 'coverLayoutMode', opt.value)}
                                                         className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${(isFreeForm ? 'freeform' : 'zones') === opt.value
-                                                                ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
-                                                                : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
+                                                            ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
+                                                            : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
                                                             }`}
                                                     >
                                                         <div className="text-[10px] font-bold">{opt.label}</div>
@@ -501,8 +501,8 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                             type="button"
                                                             onClick={() => onUpdateConfig(activeBlock.id, 'colorTema', color.hex)}
                                                             className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${isSel
-                                                                    ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105'
-                                                                    : 'hover:scale-105 opacity-80 hover:opacity-100'
+                                                                ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105'
+                                                                : 'hover:scale-105 opacity-80 hover:opacity-100'
                                                                 }`}
                                                             title={color.name}
                                                         >

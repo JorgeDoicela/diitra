@@ -133,21 +133,21 @@ const RenderCover: React.FC<{
 
     // Posiciones actuales (desde config o defaults)
     const positions: Record<CoverElementId, FreeFormPosition> = {
-        institution: { 
-            x: config.xInstitution ?? gCover.xInstitution ?? DEFAULT_POSITIONS.institution.x, 
-            y: config.yInstitution ?? gCover.yInstitution ?? DEFAULT_POSITIONS.institution.y 
+        institution: {
+            x: config.xInstitution ?? gCover.xInstitution ?? DEFAULT_POSITIONS.institution.x,
+            y: config.yInstitution ?? gCover.yInstitution ?? DEFAULT_POSITIONS.institution.y
         },
-        title: { 
-            x: config.xTitle ?? gCover.xTitle ?? DEFAULT_POSITIONS.title.x, 
-            y: config.yTitle ?? gCover.yTitle ?? DEFAULT_POSITIONS.title.y 
+        title: {
+            x: config.xTitle ?? gCover.xTitle ?? DEFAULT_POSITIONS.title.x,
+            y: config.yTitle ?? gCover.yTitle ?? DEFAULT_POSITIONS.title.y
         },
-        carrera: { 
-            x: config.xCarrera ?? gCover.xCarrera ?? DEFAULT_POSITIONS.carrera.x, 
-            y: config.yCarrera ?? gCover.yCarrera ?? DEFAULT_POSITIONS.carrera.y 
+        carrera: {
+            x: config.xCarrera ?? gCover.xCarrera ?? DEFAULT_POSITIONS.carrera.x,
+            y: config.yCarrera ?? gCover.yCarrera ?? DEFAULT_POSITIONS.carrera.y
         },
-        periodo: { 
-            x: config.xPeriodo ?? gCover.xPeriodo ?? DEFAULT_POSITIONS.periodo.x, 
-            y: config.yPeriodo ?? gCover.yPeriodo ?? DEFAULT_POSITIONS.periodo.y 
+        periodo: {
+            x: config.xPeriodo ?? gCover.xPeriodo ?? DEFAULT_POSITIONS.periodo.x,
+            y: config.yPeriodo ?? gCover.yPeriodo ?? DEFAULT_POSITIONS.periodo.y
         },
     };
 
@@ -167,11 +167,11 @@ const RenderCover: React.FC<{
 
     const getAlignStyle = (align: string): React.CSSProperties => {
         const map: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end' };
-        return { 
-            alignItems: map[align] || 'center', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            textAlign: align as any 
+        return {
+            alignItems: map[align] || 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: align as any
         };
     };
 
@@ -198,10 +198,10 @@ const RenderCover: React.FC<{
                 style={style}
                 {...handlers}
                 className={`group/item p-2 rounded-lg ${isFreeForm
-                        ? isThisDragging
-                            ? 'ring-2 ring-indigo-500 bg-indigo-50/20'
-                            : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10 transition-all duration-200'
-                        : 'transition-all duration-200'
+                    ? isThisDragging
+                        ? 'ring-2 ring-indigo-500 bg-indigo-50/20'
+                        : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10 transition-all duration-200'
+                    : 'transition-all duration-200'
                     }`}
                 title={isFreeForm ? `Arrastra para mover ${id}` : undefined}
             >
@@ -767,10 +767,10 @@ const RenderProjectGeneralSection: React.FC<{
         const val = f.fieldType === 'select_inline'
             ? `[Opciones: ${(f.options || []).join(', ')}]`
             : f.fieldType === 'select_catalog'
-            ? `[Catálogo: ${f.catalogUrl || 'sin url'}]`
-            : f.fieldType === 'date'
-            ? '[dd/mm/aaaa 📅]'
-            : `[${f.placeholder || f.label}]`;
+                ? `[Catálogo: ${f.catalogUrl || 'sin url'}]`
+                : f.fieldType === 'date'
+                    ? '[dd/mm/aaaa 📅]'
+                    : `[${f.placeholder || f.label}]`;
         rawItems.push({ id: f.fieldKey, key: f.fieldKey, label: f.label, value: val, isCustom: true, colSpan: (f.colSpan as 1 | 2) || 1 });
     });
 
