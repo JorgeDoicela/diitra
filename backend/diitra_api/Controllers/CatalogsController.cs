@@ -607,5 +607,30 @@ namespace diitra_api.Controllers
                 .ToListAsync();
             return Ok(estados);
         }
+
+        // --- Programas de Investigación ---
+        [HttpGet("programas")]
+        public async Task<IActionResult> GetProgramas()
+        {
+            var data = await _context.InvProgramas
+                .Where(p => p.Activo == true)
+                .OrderBy(p => p.Nombre)
+                .Select(p => new { p.IdPrograma, p.Uuid, p.Nombre, p.Activo })
+                .ToListAsync();
+            return Ok(data);
+        }
+
+        [HttpPost("programas")]
+        public async Task<IActionResult> CreatePrograma([FromBody] InvPrograma model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Nombre)) return BadRequest("Nombre requerido");
+            model.Uuid = Guid.NewGuid().ToString();
+            model.FechaRegistro = DateTime.Now;
+            model.Activo = true;
+            _context.InvProgramas.Add(model);
+            await _context.SaveChangesAsync();
+            return Created($"/api/catalogs/programas/{model.Uuid}", model);
+        }
     }
 }
+

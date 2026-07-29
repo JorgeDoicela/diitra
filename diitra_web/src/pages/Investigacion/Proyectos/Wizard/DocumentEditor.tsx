@@ -123,27 +123,24 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [dominios, setDominios] = useState<any[]>([]);
     const [lineas, setLineas] = useState<any[]>([]);
     const [sublineas, setSublineas] = useState<any[]>([]);
+    const [customCatalogs, setCustomCatalogs] = useState<Record<string, any[]>>({});
 
     // ── Carga paralela: configuración de plantilla + datos de instancia + catálogos ──
-    // Todo en un solo Promise.all para eliminar el waterfall de requests seriales.
     useEffect(() => {
         const loadAll = async () => {
             // 1. Obtener la configuración local de respaldo (fallback)
             const localConfig = DocumentTemplateRegistry[templateCode];
 
-            // 2. Lanzar todas las peticiones de red en paralelo
+            // 2. Lanzar peticiones de red
             const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
             const [configResult, instanceResult, carrerasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
-                // Intentar cargar la configuración dinámica desde la API (de la instancia o global según corresponda)
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}/ui-config`).catch(() => ({ data: null }))
                     : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
-                // Datos de la instancia: siempre fresco desde backend si existe
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
                     : Promise.resolve({ data: null }),
-                // Catálogos institucionales (con cache en memoria para evitar ráfagas duplicadas innecesarias)
                 getCachedOrFetch('carreras', () => api.get('/catalogs/carreras')),
                 getCachedOrFetch('convocatorias', () => api.get('/Convocatorias')),
                 getCachedOrFetch('tipos-producto', () => api.get('/catalogs/tipo-producto')),
@@ -153,11 +150,32 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
-            // Aplicar config de plantilla (prioriza la API, cae en la localConfig si la API no retorna nada o falla)
+            // Aplicar config de plantilla
             const finalConfig = configResult?.data ?? localConfig;
             setTemplateConfig(finalConfig);
             if (!finalConfig) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
+            }
+
+            // Detectar si hay campos personalizados que requieran cargar catálogos dinámicos por URL
+            const templateBlocks = finalConfig?.blocks || finalConfig?.Blocks || [];
+            const genBlock = templateBlocks.find((b: any) => b.type === 'project_general_section');
+            if (genBlock && genBlock.config?.identificationMode === 'fields') {
+                const customFields = genBlock.config.customFields || [];
+                const urlsToFetch = customFields
+                    .filter((f: any) => f.fieldType === 'select_catalog' && f.catalogUrl)
+                    .map((f: any) => f.catalogUrl);
+
+                if (urlsToFetch.length > 0) {
+                    const customFetches = await Promise.all(
+                        urlsToFetch.map((url: string) => getCachedOrFetch(url, () => api.get(url)))
+                    );
+                    const catalogMap: Record<string, any[]> = {};
+                    urlsToFetch.forEach((url: string, idx: number) => {
+                        catalogMap[url] = customFetches[idx]?.data || [];
+                    });
+                    setCustomCatalogs(catalogMap);
+                }
             }
 
             // Aplicar datos de instancia
@@ -167,8 +185,6 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     coworkLog(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
                     setResolvedUuid(realUuid);
                 }
-                // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
-                // para evitar roturas si la serialización de snapshots varía o si la propiedad viene de un DTO mapeado.
                 const snapshotStr = instanceResult.data.data_snapshot_json || instanceResult.data.dataSnapshotJson || instanceResult.data.DataSnapshotJson;
                 if (snapshotStr) {
                     try {
@@ -252,6 +268,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             dominios={dominios}
             lineas={lineas}
             sublineas={sublineas}
+            customCatalogs={customCatalogs}
             onClose={onClose}
             readOnly={readOnly}
             readOnlyReason={readOnlyReason}
@@ -279,6 +296,7 @@ interface DocumentEditorCoreProps {
     dominios: any[];
     lineas: any[];
     sublineas: any[];
+    customCatalogs?: Record<string, any[]>;
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
     readOnlyReason?: string;
@@ -298,6 +316,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     dominios,
     lineas,
     sublineas,
+    customCatalogs = {},
     onClose,
     readOnly = false,
     readOnlyReason,
@@ -666,6 +685,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             dominios={dominios}
                             lineas={lineas}
                             sublineas={sublineas}
+                            customCatalogs={customCatalogs}
                             config={activeSectionConfig.config}
 
                             // Props de listas para compatibilidad con secciones existentes

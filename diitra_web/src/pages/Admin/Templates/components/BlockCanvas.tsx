@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
     Layers, Trash2, Eye, EyeOff, Copy, Move
 } from 'lucide-react';
-import type { DocumentBlock, GanttObjective, TableSection } from '../types';
+import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 
@@ -28,16 +28,33 @@ interface BlockCanvasProps {
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }
 
-const DYN_COLORS = {
-    blue: '#1e2a4a',
-    gold: '#b8912e',
-    gray: '#475569',
-    lightBlue: '#f0f3f9',
+export interface HeaderStylePair {
+    id: string;
+    label: string;
+    bg: string;
+    fg: string;
+}
+
+export const DYN_COLORS: Record<string, string> = {
+    blue: '#1e2a4a',       // Azul Institucional
+    gold: '#b8912e',       // Dorado Acreditación
+    gray: '#475569',       // Gris Neutro
+    none: 'transparent',   // Sin fondo de encabezado
     tableHeaderBg: '#1e2a4a',
     tableHeaderColor: '#ffffff',
-    accent: '#9ad3de',
     fontFamily: "'Calibri', 'Open Sans', Arial, sans-serif",
     baseSize: '10pt',
+};
+
+export const HEADER_STYLE_OPTIONS: HeaderStylePair[] = [
+    { id: 'blue', label: 'Azul Institucional', bg: DYN_COLORS.blue, fg: '#ffffff' },
+    { id: 'gold', label: 'Dorado Acreditación', bg: DYN_COLORS.gold, fg: '#ffffff' },
+    { id: 'gray', label: 'Gris Neutro', bg: DYN_COLORS.gray, fg: '#ffffff' },
+    { id: 'none', label: 'Sin fondo de encabezado', bg: 'transparent', fg: '#1e293b' },
+];
+
+export const getHeaderStylePair = (id: string): HeaderStylePair => {
+    return HEADER_STYLE_OPTIONS.find(opt => opt.id === id) || HEADER_STYLE_OPTIONS[0];
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -689,75 +706,181 @@ const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
     );
 };
 
-const RenderProjectGeneralSection: React.FC<{ config: any }> = ({ config }) => {
+const RenderProjectGeneralSection: React.FC<{
+    config: any;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
+    const customFields: IdentificationField[] = c.customFields || [];
+    const tableStyleMode = c.tableStyle || 'classic';
+    const headerColorMode = c.headerColor || 'blue';
+    const bentoCols = c.bentoColumns || 3;
+
+    const headerPair = getHeaderStylePair(headerColorMode);
+
+    // Mapeo unificado de ítems Bento Grid
+    const items: { id: string; key: string; label: string; value: string; isCustom?: boolean; colSpan: number }[] = [];
+    
+    if (c.showTitulo !== false) {
+        items.push({ id: 'showTitulo', key: 'showTitulo', label: c.customLabel_showTitulo || 'Título del Proyecto', value: '[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]', colSpan: c.colSpan_showTitulo || 3 });
+    }
+    if (c.showDirector !== false) {
+        items.push({ id: 'showDirector', key: 'showDirector', label: c.customLabel_showDirector || 'Director del Proyecto', value: '[Nombre del Director]', colSpan: c.colSpan_showDirector || 1 });
+    }
+    if (c.showCarrera !== false) {
+        items.push({ id: 'showCarrera', key: 'showCarrera', label: c.customLabel_showCarrera || 'Carrera / Unidad Académica', value: '[Carrera del Docente]', colSpan: c.colSpan_showCarrera || 1 });
+    }
+    if (c.showConvocatoria !== false) {
+        items.push({ id: 'showConvocatoria', key: 'showConvocatoria', label: c.customLabel_showConvocatoria || 'Convocatoria', value: '[Convocatoria Activa IST Traversari]', colSpan: c.colSpan_showConvocatoria || 1 });
+    }
+    if (c.showPrograma !== false) {
+        items.push({ id: 'showPrograma', key: 'showPrograma', label: c.customLabel_showPrograma || 'Programa de Investigación', value: '[Programa Institucional]', colSpan: c.colSpan_showPrograma || 1 });
+    }
+    if (c.showGrupo !== false) {
+        items.push({ id: 'showGrupo', key: 'showGrupo', label: c.customLabel_showGrupo || 'Grupo de Investigación', value: '[Grupo Aprobado]', colSpan: c.colSpan_showGrupo || 1 });
+    }
+    if (c.showLinea !== false) {
+        items.push({ id: 'showLinea', key: 'showLinea', label: c.customLabel_showLinea || 'Línea de Investigación', value: '[Dominio, Línea y Sublínea Científica]', colSpan: c.colSpan_showLinea || 1 });
+    }
+    if (c.showTipo !== false) {
+        items.push({ id: 'showTipo', key: 'showTipo', label: c.customLabel_showTipo || 'Tipo de Investigación', value: '[Básica / Aplicada / Experimental]', colSpan: c.colSpan_showTipo || 1 });
+    }
+    if (c.showCaces !== false) {
+        items.push({ id: 'showCaces', key: 'showCaces', label: c.customLabel_showCaces || 'Campo Detallado CACES', value: '[Clasificación CACES de la Carrera]', colSpan: c.colSpan_showCaces || 1 });
+    }
+    if (c.showFechas !== false) {
+        items.push({ id: 'showFechas', key: 'showFechas', label: c.customLabel_showFechas || 'Fechas y Plazos', value: '[Fecha Inicio - Fecha Fin]', colSpan: c.colSpan_showFechas || 1 });
+    }
+
+    customFields.forEach((f) => {
+        const val = f.fieldType === 'select_inline'
+            ? `[Opciones: ${(f.options || []).join(', ')}]`
+            : f.fieldType === 'select_catalog'
+            ? `[Catálogo: ${f.catalogUrl || 'sin url'}]`
+            : f.fieldType === 'date'
+            ? '[dd/mm/aaaa 📅]'
+            : `[${f.placeholder || f.label}]`;
+        items.push({ id: f.fieldKey, key: f.fieldKey, label: f.label, value: val, isCustom: true, colSpan: f.colSpan || 1 });
+    });
+
+    const handleSpanChange = (item: typeof items[0], newSpan: number) => {
+        if (!onUpdateConfig || !blockId) return;
+        if (item.isCustom) {
+            const updated = customFields.map(f => f.fieldKey === item.key ? { ...f, colSpan: newSpan as any } : f);
+            onUpdateConfig(blockId, 'customFields', updated);
+        } else {
+            onUpdateConfig(blockId, `colSpan_${item.key}`, newSpan);
+        }
+    };
+
     return (
-        <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Ficha de Identificación del Proyecto (Metadatos Científicos)</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-[10px] text-slate-700 leading-relaxed">
-                {c.showTitulo !== false && (
-                    <div className="col-span-2">
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Título del Proyecto:</span>
-                        <span className="font-bold text-slate-800">[TEMA / NOMBRE DEL PROYECTO EN MAYÚSCULAS]</span>
-                    </div>
-                )}
-                {c.showDirector !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Director del Proyecto:</span>
-                        <span className="font-semibold text-slate-600">[Nombre del Director]</span>
-                    </div>
-                )}
-                {c.showCarrera !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Carrera / Unidad Académica:</span>
-                        <span className="font-semibold text-slate-600">[Carrera del Docente]</span>
-                    </div>
-                )}
-                {c.showConvocatoria !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Convocatoria:</span>
-                        <span className="font-semibold text-slate-600">[Convocatoria Activa IST Traversari]</span>
-                    </div>
-                )}
-                {c.showPrograma !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Programa de Investigación:</span>
-                        <span className="font-semibold text-slate-600">[Programa Institucional]</span>
-                    </div>
-                )}
-                {c.showGrupo !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Grupo de Investigación:</span>
-                        <span className="font-semibold text-slate-600">[Grupo Aprobado]</span>
-                    </div>
-                )}
-                {c.showLinea !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Línea de Investigación:</span>
-                        <span className="font-semibold text-slate-600">[Dominio, Línea y Sublínea Científica]</span>
-                    </div>
-                )}
-                {c.showTipo !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Tipo de Investigación:</span>
-                        <span className="font-semibold text-slate-600">[Básica / Aplicada / Experimental]</span>
-                    </div>
-                )}
-                {c.showCaces !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Campo Detallado CACES:</span>
-                        <span className="font-semibold text-slate-600">[Clasificación CACES de la Carrera]</span>
-                    </div>
-                )}
-                {c.showFechas !== false && (
-                    <div>
-                        <span className="font-bold block text-slate-500 text-[8px] uppercase tracking-wider">Fechas y Plazos:</span>
-                        <span className="font-semibold text-slate-600">[Fecha Inicio - Fecha Fin]</span>
-                    </div>
+        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-3 shadow-xs">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50/80 p-2 rounded-lg border border-slate-100">
+                <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    Ficha de Identificación (Maquetación Bento Grid {bentoCols} Col)
+                </span>
+                {customFields.length > 0 && (
+                    <span className="text-[8px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono uppercase">+ {customFields.length} campos extra</span>
                 )}
             </div>
+
+            {/* Renderizado Estilo Bento Grid */}
+            {tableStyleMode === 'cards' ? (
+                <div className={`grid grid-cols-1 ${bentoCols === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-2 text-[10px]`}>
+                    {items.map((item) => {
+                        const spanClass = item.colSpan === 3 || item.colSpan >= bentoCols
+                            ? 'col-span-1 md:col-span-full'
+                            : item.colSpan === 2
+                            ? 'col-span-1 md:col-span-2'
+                            : 'col-span-1';
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`${spanClass} group/bento relative p-2.5 border border-slate-200/80 rounded-lg bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-sm transition-all duration-200`}
+                            >
+                                {/* Barra flotante de control de ancho Bento al Hover */}
+                                <div className="absolute top-1 right-1 opacity-0 group-hover/bento:opacity-100 transition-opacity bg-white border border-slate-200 rounded px-1 py-0.5 shadow-xs flex items-center gap-1 text-[7.5px] font-bold text-slate-600 z-10">
+                                    <span className="text-slate-400">Ancho:</span>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 1); }}
+                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 1 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
+                                        title="1/3 o 1/2 Col"
+                                    >
+                                        1/3
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 2); }}
+                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 2 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
+                                        title="2/3 Col"
+                                    >
+                                        2/3
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 3); }}
+                                        className={`px-1 rounded cursor-pointer ${item.colSpan === 3 ? 'bg-indigo-500 text-white font-black' : 'hover:bg-slate-100 text-slate-600'}`}
+                                        title="Ancho Completo 100%"
+                                    >
+                                        Full
+                                    </button>
+                                </div>
+
+                                <span className="text-[8px] font-bold block uppercase tracking-wider mb-1 pr-14" style={{ color: headerPair.bg === 'transparent' ? '#1e293b' : headerPair.bg }}>
+                                    {item.label} {item.isCustom && <span className="text-[7px] text-emerald-600 font-mono">(extra)</span>}
+                                </span>
+                                <span className="text-slate-700 font-semibold block leading-tight">{item.value}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : tableStyleMode === 'minimal' ? (
+                <div className="space-y-1 text-[10px]">
+                    {items.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
+                            <span className="text-[8.5px] font-bold uppercase text-slate-500 w-1/3 truncate pr-2">
+                                {item.label}
+                            </span>
+                            <span className="text-slate-700 font-medium w-2/3 truncate">{item.value}</span>
+                        </div>
+                    ))}
+                </div>
+            ) : tableStyleMode === 'grid' ? (
+                <table className="w-full border-collapse text-[10px] border border-slate-200">
+                    <tbody>
+                        {items.map((item, idx) => (
+                            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
+                                <td className="p-1.5 font-bold border border-slate-200 text-slate-600 w-1/3 text-[8.5px] uppercase">
+                                    {item.label}
+                                </td>
+                                <td className="p-1.5 border border-slate-200 text-slate-700 font-medium">
+                                    {item.value}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                /* Estilo Clásico Institucional (Default) */
+                <table className="w-full border-collapse text-[10px] border border-slate-300">
+                    <tbody>
+                        {items.map((item, idx) => (
+                            <tr key={idx} className="border-b border-slate-200 last:border-0">
+                                <td className="p-2 font-bold text-[8.5px] uppercase w-1/3" style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}>
+                                    {item.label}
+                                </td>
+                                <td className="p-2 text-slate-700 font-semibold bg-white">
+                                    {item.value}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };
@@ -1164,7 +1287,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'researchers_table': return <RenderResearchersTable config={block.config} />;
             case 'rubric_table': return <RenderRubricTable config={block.config} />;
             case 'signatures': return <RenderSignatures config={block.config} />;
-            case 'project_general_section': return <RenderProjectGeneralSection config={block.config} />;
+            case 'project_general_section': return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section': return <RenderProjectTechnicalSection config={block.config} />;
             case 'project_budget_section': return <RenderProjectBudgetSection config={block.config} />;
             case 'project_progress_report': return <RenderProjectProgressReport config={block.config} />;

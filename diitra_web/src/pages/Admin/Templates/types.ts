@@ -22,6 +22,15 @@ export interface TableRow {
     cells: string[];
 }
 
+export interface BentoGridItem {
+    id: string;
+    key: string;
+    label: string;
+    type: 'core' | 'custom';
+    colSpan: 1 | 2 | 3;
+    enabled: boolean;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos de bloque soportados por el constructor visual
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,6 +72,24 @@ export interface Signatory {
     name: string;
     role: string;
 }
+
+export interface IdentificationField {
+    fieldKey: string;
+    label: string;
+    fieldType: 'text' | 'date' | 'textarea' | 'select_inline' | 'select_catalog';
+    options?: string[];
+    catalogUrl?: string;
+    catalogLabelKey?: string;
+    catalogValueKey?: string;
+    colSpan?: 1 | 2;
+    scriptMode?: 'scriban' | 'static';
+    scriptVariable?: string;
+    collaborative?: boolean;
+    uppercase?: boolean;
+    placeholder?: string;
+    required?: boolean;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Gantt
@@ -172,13 +199,18 @@ export interface DocumentBlock {
         textoPieFirma?: string;    // Pie de página institucional
 
         // ── project_general_section ────────────────────────────────────────
+        identificationMode?: 'catalogs' | 'fields';
+        tableStyle?: 'classic' | 'grid' | 'cards' | 'minimal' | string;
+        headerColor?: 'navy' | 'primary' | 'emerald' | 'slate' | 'dark' | string;
+        bentoColumns?: 2 | 3;
+        bentoItems?: BentoGridItem[];
+        customFields?: IdentificationField[];
         showTitulo?: boolean;
         showPrograma?: boolean;
         showGrupo?: boolean;
         showLinea?: boolean;
         showTipo?: boolean;
         showCaces?: boolean;
-        showCarrera?: boolean;
         showConvocatoria?: boolean;
         showDirector?: boolean;
         showFechas?: boolean;

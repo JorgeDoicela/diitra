@@ -1,8 +1,26 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
+import { Calendar } from 'lucide-react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
 import { DocumentDataContext, SectionGuardContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
+
+function isoToDdmmyyyy(isoStr: string): string {
+    if (!isoStr || !isoStr.includes('-')) return isoStr;
+    const parts = isoStr.split('-');
+    if (parts.length < 3) return isoStr;
+    const [year, month, day] = parts;
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+}
+
+function ddmmyyyyToIso(dateStr: string): string {
+    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('/')) return '';
+    const parts = dateStr.split('/');
+    if (parts.length < 3) return '';
+    const [day, month, year] = parts;
+    if (!day || !month || !year || year.length !== 4) return '';
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
 
 interface CoWorkFieldProps {
     name: string;
@@ -426,6 +444,41 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         }
     };
 
+    const datePickerRef = useRef<HTMLInputElement>(null);
+
+    const handleCalendarClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (datePickerRef.current) {
+            try {
+                if ('showPicker' in HTMLInputElement.prototype) {
+                    datePickerRef.current.showPicker();
+                } else {
+                    datePickerRef.current.click();
+                }
+            } catch (err) {
+                datePickerRef.current.click();
+            }
+        }
+    };
+
+    const handleDatePickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const isoVal = e.target.value;
+        if (!isoVal) return;
+        const formatted = isoToDdmmyyyy(isoVal);
+        setDisplayValue(formatted);
+        onValueChange?.(formatted, { source: 'local' });
+
+        if (ydoc) {
+            const ytext = ydoc.getText(name);
+            const current = ytext.toString();
+            if (current !== formatted) {
+                ydoc.transact(() => {
+                    applyMinimalDiff(ytext, current, formatted);
+                }, 'local-input');
+            }
+        }
+    };
+
     const isFieldReadOnly = readOnly || guardContext.readOnly;
     const borderStyle = activeUsersEditing.length > 0 && type !== 'checkbox'
         ? {
@@ -439,7 +492,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         placeholder,
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
-            : `${className} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
+            : `${className} ${mask === 'date' ? 'pr-10' : ''} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
         readOnly: isFieldReadOnly,
         onFocus: handleFocus,
@@ -487,7 +540,31 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                     <input {...commonProps} type="checkbox" checked={displayValue} onChange={handleChange} />
                 )}
                 
-                {type !== 'checkbox' && (
+                {mask === 'date' && (
+                    <>
+                        <input
+                            ref={datePickerRef}
+                            type="date"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            value={ddmmyyyyToIso(displayValue)}
+                            onChange={handleDatePickerChange}
+                            className="sr-only opacity-0 absolute w-0 h-0 pointer-events-none"
+                        />
+                        <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={handleCalendarClick}
+                            disabled={cowork.session.readOnly || isFieldReadOnly}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-emerald-600 hover:text-emerald-500 transition-colors cursor-pointer rounded-md hover:bg-emerald-500/10"
+                            title="Abrir calendario"
+                        >
+                            <Calendar className="w-4.5 h-4.5" />
+                        </button>
+                    </>
+                )}
+
+                {type !== 'checkbox' && mask !== 'date' && (
                     <div className="absolute top-2 right-2 flex gap-1 opacity-40">
                         <div className="w-1.5 h-1.5 rounded-full bg-text-main animate-pulse" />
                     </div>

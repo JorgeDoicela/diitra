@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
+import type { IdentificationField } from '../../../pages/Admin/Templates/types';
 import api from '../../../api/axios_config';
 
 interface GeneralSectionProps {
@@ -13,6 +14,7 @@ interface GeneralSectionProps {
     dominios?: any[];
     lineas?: any[];
     sublineas?: any[];
+    customCatalogs?: Record<string, any[]>;
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
     isAdmin?: boolean;
     config?: any;
@@ -40,6 +42,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     dominios = [],
     lineas = [],
     sublineas = [],
+    customCatalogs = {},
     onUpdate,
     isAdmin = false,
     config
@@ -53,6 +56,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         }
     }, [isAdmin]);
 
+    const customFieldsList: IdentificationField[] = config?.customFields || [];
+
     const showTitulo = config?.showTitulo !== false;
     const showPrograma = config?.showPrograma !== false;
     const showGrupo = config?.showGrupo !== false;
@@ -63,6 +68,15 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     const showConvocatoria = config?.showConvocatoria !== false;
     const showFechas = config?.showFechas !== false;
     const showDirector = config?.showDirector !== false;
+
+    const labelTitulo = config?.customLabel_showTitulo || "Nombre del Proyecto / Tema de Investigación";
+    const labelPrograma = config?.customLabel_showPrograma || "Programa de Investigación";
+    const labelGrupo = config?.customLabel_showGrupo || "Grupo de Investigación vinculante";
+    const labelDirector = config?.customLabel_showDirector || "Director del Proyecto";
+    const labelCarrera = config?.customLabel_showCarrera || "Carrera / Unidad Académica Vinculada";
+    const labelConvocatoria = config?.customLabel_showConvocatoria || "Convocatoria Activa ISTT";
+    const labelTipo = config?.customLabel_showTipo || "Tipo de Investigación";
+    const labelFechas = config?.customLabel_showFechas || "Fechas y Plazos";
 
     const filteredCarreras = React.useMemo(() => {
         if (isAdmin) return carreras;
@@ -317,7 +331,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <CoWorkField 
                         name="Titulo" 
                         cowork={cowork} 
-                        label="TEMA / NOMBRE DEL PROYECTO (ESCRIBIR EN MAYÚSCULAS)" 
+                        label={labelTitulo} 
                         onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
                         className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
                         uppercase={true}
@@ -331,7 +345,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <CoWorkField 
                         name="Programa" 
                         cowork={cowork} 
-                        label="Programa" 
+                        label={labelPrograma} 
                         onValueChange={(v, meta) => onUpdate('Programa', v, meta)}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                     />
@@ -358,7 +372,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 name="GrupoInvestigacionNombre" 
                                 cowork={cowork} 
                                 type="select"
-                                label="Nombre del Grupo de Investigación" 
+                                label={labelGrupo} 
                                 onValueChange={handleGroupChange}
                                 readOnly={true}
                                 className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none transition-all" 
@@ -449,7 +463,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             {showTipo && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
                     <div className="md:col-span-2 space-y-1.5 sm:space-y-3">
-                        <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Tipo de Investigación</label>
+                        <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelTipo}</label>
                         <select 
                             value={(() => {
                                 const raw = formData.TipoInvestigacion || 'APLICADA';
@@ -503,7 +517,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     {showCarrera && (
                         <div className="space-y-1.5 sm:space-y-3">
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Carrera / Unidad</label>
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelCarrera}</label>
                             <select 
                                 value={Number(formData.IdCarrera) || 0}
                                 onChange={(e) => {
@@ -556,7 +570,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 
                     {showConvocatoria && (
                         <div className="space-y-1.5 sm:space-y-3">
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Convocatoria Activa</label>
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelConvocatoria}</label>
                             <select 
                                 value={formData.IdConvocatoria || 0}
                                 onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
@@ -608,7 +622,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <CoWorkField 
                         name="DirectorProyecto" 
                         cowork={cowork} 
-                        label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
+                        label={labelDirector} 
                         onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                     />
@@ -622,7 +636,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         <CoWorkField 
                             name="FechaPresentacion" 
                             cowork={cowork} 
-                            label="Fecha Presentación (día/mes/año)" 
+                            label={`${labelFechas} (Presentación)`} 
                             onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
                             className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
                                 dateErrors.FechaPresentacion 
@@ -678,6 +692,80 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             </p>
                         )}
                     </div>
+                </div>
+            )}
+            {/* Campos Personalizados Adicionales (Composición Unificada) */}
+            {customFieldsList.length > 0 && (
+                <div className="space-y-5 sm:space-y-8 pt-4 border-t border-border-thin/20">
+                    {customFieldsList.map((field) => {
+                        const options = field.fieldType === 'select_catalog'
+                            ? (customCatalogs[field.catalogUrl!] || [])
+                            : (field.options || []);
+
+                        const labelKey = field.catalogLabelKey || 'nombre';
+                        const valueKey = field.catalogValueKey || 'nombre';
+
+                        const colSpanClass = field.colSpan === 2
+                            ? 'grid-cols-1'
+                            : 'grid-cols-1 md:grid-cols-2';
+
+                        if (field.fieldType === 'select_inline' || field.fieldType === 'select_catalog') {
+                            return (
+                                <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
+                                    <CoWorkField
+                                        name={field.fieldKey}
+                                        cowork={cowork}
+                                        type="select"
+                                        label={field.label}
+                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                    >
+                                        <option value="">-- Seleccione {field.label} --</option>
+                                        {options.map((opt: any, optIdx: number) => {
+                                            const val = typeof opt === 'string' ? opt : (opt[valueKey] ?? opt[labelKey] ?? '');
+                                            const lbl = typeof opt === 'string' ? opt : (opt[labelKey] ?? opt[valueKey] ?? '');
+                                            return (
+                                                <option key={val || optIdx} value={val}>
+                                                    {lbl}
+                                                </option>
+                                            );
+                                        })}
+                                    </CoWorkField>
+                                </div>
+                            );
+                        }
+
+                        if (field.fieldType === 'textarea') {
+                            return (
+                                <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
+                                    <CoWorkField
+                                        name={field.fieldKey}
+                                        cowork={cowork}
+                                        type="textarea"
+                                        label={field.label}
+                                        placeholder={field.placeholder}
+                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                    />
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
+                                <CoWorkField
+                                    name={field.fieldKey}
+                                    cowork={cowork}
+                                    label={field.label}
+                                    placeholder={field.placeholder}
+                                    uppercase={field.uppercase}
+                                    mask={field.fieldType === 'date' ? 'date' : undefined}
+                                    onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
