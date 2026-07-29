@@ -382,7 +382,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
         if (templateConfig?.sections) {
             templateConfig.sections.forEach((sec: any) => {
-                const fields = sec.config?.fields || sec.fields;
+                const fields = sec.config?.fields || sec.config?.Fields || sec.Config?.fields || sec.Config?.Fields || sec.fields || sec.Fields;
                 if (Array.isArray(fields)) {
                     fields.forEach((f: any) => {
                         if (f.type === 'rich-text' && !list.includes(f.name)) {
@@ -405,7 +405,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         const list: string[] = [];
         if (templateConfig?.sections) {
             templateConfig.sections.forEach((sec: any) => {
-                const fields = sec.config?.fields || sec.fields;
+                const fields = sec.config?.fields || sec.config?.Fields || sec.Config?.fields || sec.Config?.Fields || sec.fields || sec.Fields;
                 if (Array.isArray(fields)) {
                     fields.forEach((f: any) => {
                         if (f.collaborative === false) {

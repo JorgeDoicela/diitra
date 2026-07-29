@@ -300,20 +300,19 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             seededRef.current = true;
             const isReadOnlyMode = readOnly || guardContext.readOnly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
-                const clientIds = cowork.awareness
-                    ? Array.from(cowork.awareness.getStates().keys()).sort((a, b) => a - b)
-                    : [];
-                const isLeader = clientIds.length === 0 || ydoc.clientID === clientIds[0];
+                const states = cowork.awareness ? Array.from(cowork.awareness.getStates().values()) : [];
+                const otherUsersCount = states.filter((st: any) => st?.user?.id && st?.user?.id !== cowork.user?.id).length;
+                const isLeader = otherUsersCount === 0;
 
                 if (isLeader) {
-                    coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time, leader):`, dbValue);
+                    coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time, sole user):`, dbValue);
                     const stringVal = String(dbValue);
                     ydoc.transact(() => {
                         ytext.delete(0, ytext.length);
                         ytext.insert(0, stringVal);
                     }, 'local-seed');
                 } else {
-                    coworkLog(`[CoWorkField:${name}] Postponing seed, not leader (leader is client ${clientIds[0]})`);
+                    coworkLog(`[CoWorkField:${name}] Postponing seed, active session with ${otherUsersCount} other user(s)`);
                     const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
                     setDisplayValue(parsed);
                 }
