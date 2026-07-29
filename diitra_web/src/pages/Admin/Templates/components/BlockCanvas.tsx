@@ -1288,13 +1288,32 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 };
 
 // Separador visual de hoja A4
-const PageBreakIndicator: React.FC<{ pageNum: number }> = ({ pageNum }) => (
-    <div className="flex items-center gap-3 my-4 pointer-events-none">
-        <div className="flex-1 border-t border-dashed border-slate-300" />
-        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest shrink-0 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
-            Página {pageNum}
-        </span>
-        <div className="flex-1 border-t border-dashed border-slate-300" />
+const PageBreakIndicator: React.FC<{
+    pageNum: number;
+    pageBreakBlockId?: string;
+    onDeleteBlock?: (id: string) => void;
+}> = ({ pageNum, pageBreakBlockId, onDeleteBlock }) => (
+    <div className="group relative flex items-center gap-3 my-4">
+        <div className="flex-1 border-t border-dashed border-slate-300 group-hover:border-slate-400 transition-colors" />
+        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-2xs group-hover:border-slate-300 group-hover:bg-slate-200/80 transition-all">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                Página {pageNum}
+            </span>
+            {pageBreakBlockId && onDeleteBlock && (
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteBlock(pageBreakBlockId);
+                    }}
+                    className="p-1 -mr-1 rounded-full hover:bg-red-500 hover:text-white text-slate-400 transition-colors cursor-pointer flex items-center justify-center"
+                    title="Eliminar este salto de página"
+                >
+                    <Trash2 className="w-3 h-3" />
+                </button>
+            )}
+        </div>
+        <div className="flex-1 border-t border-dashed border-slate-300 group-hover:border-slate-400 transition-colors" />
     </div>
 );
 
@@ -1338,29 +1357,39 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
     // Agrupamos los bloques en páginas lógicas para renderizarlos en hojas A4 independientes.
     // La portada ('cover') siempre fuerza la creación de su propia página exclusiva.
-    const pages: { pageNum: number; blocks: { block: DocumentBlock; originalIndex: number }[] }[] = [];
+    const pages: { pageNum: number; blocks: { block: DocumentBlock; originalIndex: number }[]; pageBreakBlockId?: string }[] = [];
     let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
     let currentPageNum = 1;
+    let pendingPageBreakId: string | undefined = undefined;
 
     blocks.forEach((block, idx) => {
         if (block.type === 'page_break') {
-            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
-            currentPageBlocks = [];
-            currentPageNum++;
+            if (currentPageBlocks.length > 0) {
+                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
+                currentPageBlocks = [];
+                currentPageNum++;
+                pendingPageBreakId = block.id;
+            } else {
+                pages.push({ pageNum: currentPageNum, blocks: [], pageBreakBlockId: block.id });
+                currentPageNum++;
+                pendingPageBreakId = undefined;
+            }
         } else if (block.type === 'cover') {
             if (currentPageBlocks.length > 0) {
-                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
                 currentPageNum++;
+                pendingPageBreakId = undefined;
             }
-            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
+            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }], pageBreakBlockId: pendingPageBreakId });
             currentPageBlocks = [];
             currentPageNum++;
+            pendingPageBreakId = undefined;
         } else {
             currentPageBlocks.push({ block, originalIndex: idx });
         }
     });
     if (currentPageBlocks.length > 0 || pages.length === 0) {
-        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
     }
 
     return (
@@ -1445,7 +1474,13 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
                                 return (
                                     <React.Fragment key={page.pageNum}>
-                                        {page.pageNum > 1 && <PageBreakIndicator pageNum={page.pageNum} />}
+                                        {page.pageNum > 1 && (
+                                            <PageBreakIndicator
+                                                pageNum={page.pageNum}
+                                                pageBreakBlockId={page.pageBreakBlockId}
+                                                onDeleteBlock={onDeleteBlock}
+                                            />
+                                        )}
                                         <div
                                             onClick={e => e.stopPropagation()}
                                             style={{
