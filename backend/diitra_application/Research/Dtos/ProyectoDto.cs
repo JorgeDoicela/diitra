@@ -106,7 +106,19 @@ namespace Diitra.Application.Research.Dtos
                 _objetivosEspecificos = value;
             }
         }
-        public string? Ods { get; set; }
+        private string? _ods;
+        public string? Ods
+        {
+            get => _ods;
+            set => _ods = value;
+        }
+
+        [System.Text.Json.Serialization.JsonPropertyName("ObjetivosDesarrolloSostenible")]
+        public string? ObjetivosDesarrolloSostenible
+        {
+            get => _ods;
+            set => _ods = value;
+        }
         public string? MarcoTeorico { get; set; }
         public string? Metodologia { get; set; }
         public string? Evaluacion { get; set; }

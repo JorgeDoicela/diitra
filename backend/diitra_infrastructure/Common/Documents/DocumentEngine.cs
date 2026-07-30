@@ -121,13 +121,24 @@ namespace Diitra.Infrastructure.Common.Documents
                             if (doc.RootElement.TryGetProperty("Uuid", out var uuidProp) ||
                                 doc.RootElement.TryGetProperty("uuid", out uuidProp) ||
                                 doc.RootElement.TryGetProperty("EntityUuid", out uuidProp) ||
-                                doc.RootElement.TryGetProperty("entityUuid", out uuidProp))
+                                doc.RootElement.TryGetProperty("entityUuid", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("id", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("Id", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("projectUuid", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("project_uuid", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("proyectoId", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("proyecto_id", out uuidProp))
                             {
                                 documentInstanceUuid = uuidProp.GetString();
                             }
                         }
                     }
                     catch { }
+                }
+
+                if (string.IsNullOrEmpty(documentInstanceUuid))
+                {
+                    documentInstanceUuid = request.EntityUuid ?? request.ProjectUuid;
                 }
 
                 if (!string.IsNullOrEmpty(documentInstanceUuid))
@@ -158,6 +169,14 @@ namespace Diitra.Infrastructure.Common.Documents
                                         var key = doc.CampoNombre;
                                         dataDict[key.ToLower()] = doc.ContentHtml;
                                         dataDict[key.ToUpper()] = doc.ContentHtml;
+
+                                        if (key.Equals("ObjetivosDesarrolloSostenible", StringComparison.OrdinalIgnoreCase) || key.Equals("ods", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            dataDict["ods"] = doc.ContentHtml;
+                                            dataDict["ODS"] = doc.ContentHtml;
+                                            dataDict["objetivos_desarrollo_sostenible"] = doc.ContentHtml;
+                                            dataDict["ObjetivosDesarrolloSostenible"] = doc.ContentHtml;
+                                        }
 
                                         if (key.StartsWith("field_", StringComparison.OrdinalIgnoreCase))
                                         {

@@ -56,6 +56,8 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     if (sec.fieldKey === 'Evaluacion' || sec.id === 'sec_evaluacion') Icon = ClipboardCheck;
 
                     const labelText = sec.numberPrefix ? `${sec.numberPrefix} ${sec.title}` : sec.title;
+                    const isGroupHeader = sec.isGroupHeader || sec.hasContent === false || sec.id === 'sec_banner_objetivos' || sec.fieldKey === 'BannerObjetivos';
+                    const parentId = sec.parentId || (sec.fieldKey === 'ObjetivoGeneral' || sec.fieldKey === 'ObjetivosEspecificos' || sec.id === 'sec_objetivo_general' || sec.id === 'sec_objetivos_especificos' ? 'BannerObjetivos' : undefined);
                     return {
                         id: sec.fieldKey || sec.id,
                         label: labelText,
@@ -63,6 +65,10 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         numberPrefix: sec.numberPrefix,
                         fieldKey: sec.fieldKey,
                         placeholder: sec.placeholder || `Escriba el apartado de ${sec.title}...`,
+                        requirementText: sec.requirementText,
+                        hasContent: sec.hasContent !== false && !isGroupHeader,
+                        isGroupHeader,
+                        parentId,
                         icon: Icon
                     };
                 });
@@ -72,7 +78,9 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
             { id: 'antecedentes', fieldKey: 'Antecedentes', label: '3.1 Antecedentes', icon: BookOpen, placeholder: 'Escriba los antecedentes del proyecto...' },
             { id: 'descripcion', fieldKey: 'DescripcionProyecto', label: '3.2 Descripción', icon: FileText, placeholder: 'Definir el propósito del proyecto...' },
             { id: 'justificacion', fieldKey: 'Justificacion', label: '3.3 Justificación', icon: CheckSquare, placeholder: 'Escriba la justificación del proyecto...' },
-            { id: 'objetivos', fieldKey: 'ObjetivoGeneral', label: '3.4 Objetivos', icon: Target, placeholder: 'Objetivos del proyecto...' },
+            { id: 'BannerObjetivos', fieldKey: 'BannerObjetivos', label: '3.4 Objetivos', icon: Target, placeholder: '', isGroupHeader: true, hasContent: false },
+            { id: 'ObjetivoGeneral', fieldKey: 'ObjetivoGeneral', label: 'General', icon: Target, placeholder: 'Formular el objetivo general...', parentId: 'BannerObjetivos', hasContent: true },
+            { id: 'ObjetivosEspecificos', fieldKey: 'ObjetivosEspecificos', label: 'Específicos', icon: Target, placeholder: 'Escriba los objetivos específicos...', parentId: 'BannerObjetivos', hasContent: true },
             { id: 'ods', fieldKey: 'ObjetivosDesarrolloSostenible', label: '3.5 ODS (Alineación)', icon: Globe, placeholder: 'Ejes y ODS Vinculados...' },
             { id: 'marco_teorico', fieldKey: 'MarcoTeorico', label: '3.6 Marco Teórico', icon: Book, placeholder: 'Escriba el fundamento teórico...' },
             { id: 'metodologia', fieldKey: 'Metodologia', label: '3.7 Metodología', icon: Settings, placeholder: 'Describa la metodología...' },
@@ -83,7 +91,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
             if (tab.id === 'antecedentes') return config?.showAntecedentes !== false;
             if (tab.id === 'descripcion') return config?.showDescripcionProyecto !== false;
             if (tab.id === 'justificacion') return config?.showJustificacion !== false;
-            if (tab.id === 'objetivos') return config?.showObjetivoGeneral !== false || config?.showObjetivosEspecificos !== false;
+            if (tab.id === 'BannerObjetivos' || tab.id === 'ObjetivoGeneral' || tab.id === 'ObjetivosEspecificos') return config?.showObjetivoGeneral !== false || config?.showObjetivosEspecificos !== false;
             if (tab.id === 'ods') return config?.showOds !== false;
             if (tab.id === 'marco_teorico') return config?.showMarcoTeorico !== false;
             if (tab.id === 'metodologia') return config?.showMetodologia !== false;
@@ -108,27 +116,38 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
     return (
         <div className="flex flex-col md:flex-row gap-8 animate-fade-in pb-10 min-h-[600px]">
-            {/* Navegación lateral interna */}
+            {/* Navegación lateral interna jerárquica */}
             <div className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 border-b md:border-b-0 md:border-r border-border-thin pr-0 md:pr-4">
                 {activeSubTabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeSubTab === tab.id;
                     const isBlocked = isSubTabBlocked(tab.id);
+                    const isChild = Boolean(tab.parentId);
+
                     return (
                         <button
                             key={tab.id}
                             onClick={() => setActiveSubTab(tab.id)}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap md:whitespace-normal text-left ${isActive
-                                    ? 'bg-text-main text-bg-deep shadow-md'
-                                    : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                }`}
+                            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[11px] uppercase tracking-wider transition-all whitespace-normal text-left w-full min-w-0 ${
+                                isChild ? 'md:ml-4 pl-4 border-l-2 border-border-thin/40 font-bold' : 'font-black'
+                            } ${
+                                isActive
+                                    ? 'bg-text-main text-bg-deep shadow-md font-black'
+                                    : tab.isGroupHeader
+                                        ? 'text-text-main bg-bg-deep/40 hover:bg-surface-hover font-black border border-border-thin/30 mt-1'
+                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
+                            }`}
                         >
-                            <span className="flex items-center gap-3">
-                                <Icon size={16} />
-                                <span>{tab.label}</span>
+                            <span className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+                                {isChild ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 shrink-0" />
+                                ) : (
+                                    <Icon size={16} className="shrink-0" />
+                                )}
+                                <span className="break-words line-clamp-2 leading-tight block flex-1">{tab.label}</span>
                             </span>
                             {isBlocked && (
-                                <Lock size={12} className={isActive ? 'text-bg-deep' : 'text-amber-500'} />
+                                <Lock size={12} className={`shrink-0 ml-1 ${isActive ? 'text-bg-deep' : 'text-amber-500'}`} />
                             )}
                         </button>
                     );
@@ -149,6 +168,82 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     const fieldName = currentTab.fieldKey || currentTab.id;
                     const reqText = currentTab.requirementText;
+
+                    // 0. Renderizado para Encabezado de Categoría / Grupo Unificado (isGroupHeader o hasContent: false)
+                    if (currentTab.isGroupHeader || currentTab.hasContent === false || matchKey(['BannerObjetivos', 'sec_banner_objetivos'])) {
+                        const Icon = currentTab.icon || Target;
+                        return (
+                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                                <div className="space-y-8 animate-fade-in">
+                                    {/* Encabezado del grupo unificado */}
+                                    <div className="p-5 rounded-2xl bg-bg-deep/80 border border-border-thin shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3.5">
+                                            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                                                <Icon size={24} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-base font-black text-text-main uppercase tracking-wider">
+                                                        {currentTab.label}
+                                                    </h3>
+                                                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                        VISTA INTEGRADA
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-text-dim font-medium mt-0.5">
+                                                    Apartado completo de Objetivos. Redacte a continuación el Objetivo General y los Objetivos Específicos del proyecto.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bloque 1: Objetivo General */}
+                                    <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <h4 className="text-sm font-black text-text-main uppercase flex items-center gap-2">
+                                                <Target size={18} className="text-indigo-400" /> 3.4.1 Objetivo General
+                                            </h4>
+                                            <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
+                                                <Info size={14} className="text-text-main shrink-0 mt-0.5" />
+                                                <span className="font-bold">FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?</span>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                            <CoWorkEditor
+                                                field="ObjetivoGeneral"
+                                                cowork={cowork}
+                                                onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
+                                                placeholder="El objetivo general del proyecto de investigación consiste en..."
+                                                className="min-h-[220px] border-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Bloque 2: Objetivos Específicos */}
+                                    <div className="space-y-4 pt-4 border-t border-border-thin/40">
+                                        <div className="space-y-1">
+                                            <h4 className="text-sm font-black text-text-main uppercase flex items-center gap-2">
+                                                <Target size={18} className="text-indigo-400" /> 3.4.2 Objetivos Específicos
+                                            </h4>
+                                            <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
+                                                <Info size={14} className="text-text-main shrink-0 mt-0.5" />
+                                                <span className="font-bold">FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO.</span>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                            <CoWorkEditor
+                                                field="ObjetivosEspecificos"
+                                                cowork={cowork}
+                                                onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
+                                                placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
+                                                className="min-h-[260px] border-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </SectionBlockGuard>
+                        );
+                    }
 
                     // 1. Antecedentes Específicos
                     if (matchKey(['antecedentes', 'sec_antecedentes', 'Antecedentes'])) {
@@ -243,8 +338,68 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         );
                     }
 
-                    // 4. Objetivos
-                    if (matchKey(['objetivos', 'sec_objetivo_general', 'ObjetivoGeneral', 'ObjetivosEspecificos'])) {
+                    // 4a. Objetivo General
+                    if (matchKey(['sec_objetivo_general', 'ObjetivoGeneral'])) {
+                        return (
+                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="space-y-1">
+                                        <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
+                                            <Target size={20} /> Objetivo General
+                                        </h3>
+                                        <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                            <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                            <p className="leading-relaxed font-medium">
+                                                FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                        <CoWorkEditor
+                                            field="ObjetivoGeneral"
+                                            cowork={cowork}
+                                            onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
+                                            placeholder="El objetivo general del proyecto de investigación consiste en..."
+                                            className="min-h-[400px] border-none"
+                                        />
+                                    </div>
+                                </div>
+                            </SectionBlockGuard>
+                        );
+                    }
+
+                    // 4b. Objetivos Específicos
+                    if (matchKey(['sec_objetivos_especificos', 'ObjetivosEspecificos'])) {
+                        return (
+                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="space-y-1">
+                                        <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
+                                            <Target size={20} /> Objetivos Específicos
+                                        </h3>
+                                        <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                            <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                            <p className="leading-relaxed font-medium">
+                                                FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                        <CoWorkEditor
+                                            field="ObjetivosEspecificos"
+                                            cowork={cowork}
+                                            onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
+                                            placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
+                                            className="min-h-[400px] border-none"
+                                        />
+                                    </div>
+                                </div>
+                            </SectionBlockGuard>
+                        );
+                    }
+
+                    // 4c. Objetivos Combinados (Vista Legacy 3.4 Objetivos)
+                    if (matchKey(['objetivos'])) {
                         return (
                             <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
                                 <div className="space-y-8 animate-fade-in">

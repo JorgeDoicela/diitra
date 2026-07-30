@@ -287,6 +287,21 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                             />
                                         </div>
 
+                                        <div className="flex items-center gap-2 py-1 border-t border-border-thin/20">
+                                            <label className="text-[10px] font-bold text-text-main flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editForm.hasContent !== false}
+                                                    onChange={e => setEditForm(prev => ({ ...prev, hasContent: e.target.checked }))}
+                                                    className="w-3.5 h-3.5 text-indigo-500 accent-indigo-500 rounded cursor-pointer"
+                                                />
+                                                <span>¿Tiene Campo Redactable?</span>
+                                            </label>
+                                            <span className="text-[8.5px] text-text-dim">
+                                                (Si desmarca, actuará como banner/encabezado puro)
+                                            </span>
+                                        </div>
+
                                         <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border-thin/20">
                                             <button
                                                 type="button"

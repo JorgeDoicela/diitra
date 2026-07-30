@@ -1026,10 +1026,24 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                         const colSpan = sec.colSpan || 2;
                         const variant = sec.variant || 'standard';
 
-                        if (colSpan === 1) {
+                        const isHeaderOnly = sec.hasContent === false || variant === 'header_only';
+
+                        if (isHeaderOnly) {
+                            // ── ENCABEZADO / BANNER DIVISIONAL PURO (SIN CAMPO REDACTABLE) ──
+                            const bg = variant === 'banner_gold' ? goldColor : headerBg;
+                            const textColor = variant === 'banner_gold' ? '#000000' : '#ffffff';
+                            tableRows.push(`
+    <!-- BANNER DIVISIONAL 100% -->
+    <tr>
+      <td colspan="2" style="background-color: ${bg}; color: ${textColor}; font-weight: bold; font-size: 9pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+    </tr>`);
+                            idx++;
+                        } else if (colSpan === 1) {
                             // ── MODO 50% (MEDIA FILA) ──
                             const nextSec = activeSections[idx + 1];
-                            if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy')) {
+                            if (nextSec && nextSec.colSpan === 1 && nextSec.hasContent !== false) {
                                 const nextScriban = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey);
                                 const nextPlaceholder = nextSec.requirementText ? `[${nextSec.requirementText}]` : 'No redactado.';
                                 const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
@@ -1069,23 +1083,20 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     </tr>`);
                                 idx++;
                             }
-                        } else if (variant === 'banner_gold') {
-                            // ── MODO 100% BANNER DORADO DIVISIONAL ──
+                        } else if (variant === 'banner_gold' || variant === 'banner_navy') {
+                            // ── MODO 100% BANNER CON CONTENIDO REDACTABLE (DESACOPLADO) ──
+                            const bg = variant === 'banner_gold' ? goldColor : headerBg;
+                            const textColor = variant === 'banner_gold' ? '#000000' : '#ffffff';
                             tableRows.push(`
-    <!-- BANNER DIVISIONAL DORADO 100% -->
+    <!-- BANNER CON CELDA DE CONTENIDO REDACTABLE 100% -->
     <tr>
-      <td colspan="2" style="background-color: ${goldColor}; color: #000000; font-weight: bold; font-size: 9pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+      <td colspan="2" style="background-color: ${bg}; color: ${textColor}; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
         ${titleText}
       </td>
-    </tr>`);
-                            idx++;
-                        } else if (variant === 'banner_navy' || variant === 'header_only') {
-                            // ── MODO 100% BANNER AZUL DIVISIONAL ──
-                            tableRows.push(`
-    <!-- BANNER DIVISIONAL AZUL 100% -->
+    </tr>
     <tr>
-      <td colspan="2" style="background-color: ${headerBg}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
-        ${titleText}
+      <td colspan="2" style="font-size: 8.5pt; line-height: 1.4; color: #000000; padding: 8px 10px; border: 1px solid #000000; vertical-align: top; font-family: {{ theme.typography.font_family }};">
+        {{default ${scriban} "${defaultPlaceholder}"}}
       </td>
     </tr>`);
                             idx++;

@@ -28,18 +28,39 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             _handlebars = Handlebars.Create();
 
-            // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback)
+            // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback y colecciones Enumerable)
             _handlebars.RegisterHelper("default", (output, context, arguments) =>
             {
                 foreach (var arg in arguments)
                 {
                     if (arg != null && arg.GetType().Name != "UndefinedBindingResult")
                     {
-                        var str = arg.ToString();
-                        if (!string.IsNullOrWhiteSpace(str))
+                        if (arg is System.Collections.IEnumerable enumerable && !(arg is string))
                         {
-                            output.WriteSafeString(str);
-                            return;
+                            var items = new List<string>();
+                            foreach (var item in enumerable)
+                            {
+                                if (item != null)
+                                {
+                                    var strItem = item.ToString()?.Trim();
+                                    if (!string.IsNullOrWhiteSpace(strItem)) items.Add(strItem);
+                                }
+                            }
+                            var joined = string.Join("<br/>", items);
+                            if (!string.IsNullOrWhiteSpace(joined))
+                            {
+                                output.WriteSafeString(joined);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            var str = arg.ToString();
+                            if (!string.IsNullOrWhiteSpace(str))
+                            {
+                                output.WriteSafeString(str);
+                                return;
+                            }
                         }
                     }
                 }
@@ -572,10 +593,52 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
             }
 
-            // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
-            if (dict.TryGetValue("objetivos_desarrollo_sostenible", out var odsVal) && !dict.ContainsKey("ods"))
+            // Sincronizar alias de claves (PascalCase <-> snake_case) para resiliencia en plantillas Handlebars/Scriban
+            void SyncKeyAlias(string k1, string k2)
             {
-                dict["ods"] = odsVal;
+                object? val = null;
+                if (dict.TryGetValue(k1, out var v1) && v1 != null && !string.IsNullOrWhiteSpace(v1.ToString()))
+                {
+                    val = v1;
+                }
+                else if (dict.TryGetValue(k2, out var v2) && v2 != null && !string.IsNullOrWhiteSpace(v2.ToString()))
+                {
+                    val = v2;
+                }
+
+                if (val != null)
+                {
+                    dict[k1] = val;
+                    dict[k2] = val;
+                }
+            }
+
+            SyncKeyAlias("ObjetivoGeneral", "objetivo_general");
+            SyncKeyAlias("ObjetivosEspecificos", "objetivos_especificos");
+            SyncKeyAlias("Antecedentes", "antecedentes");
+            SyncKeyAlias("DescripcionProyecto", "descripcion_proyecto");
+            SyncKeyAlias("Justificacion", "justificacion");
+            SyncKeyAlias("MarcoTeorico", "marco_teorico");
+            SyncKeyAlias("Metodologia", "metodologia");
+            SyncKeyAlias("Evaluacion", "evaluacion");
+            SyncKeyAlias("ObjetivosDesarrolloSostenible", "objetivos_desarrollo_sostenible");
+            SyncKeyAlias("ods", "objetivos_desarrollo_sostenible");
+
+            // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
+            var ods1 = dict.TryGetValue("objetivos_desarrollo_sostenible", out var v1) ? v1?.ToString() : null;
+            var ods2 = dict.TryGetValue("ods", out var v2) ? v2?.ToString() : null;
+            var ods3 = dict.TryGetValue("ObjetivosDesarrolloSostenible", out var v3) ? v3?.ToString() : null;
+            var ods4 = dict.TryGetValue("ODS", out var v4) ? v4?.ToString() : null;
+            var finalOds = !string.IsNullOrWhiteSpace(ods1) ? ods1 
+                         : (!string.IsNullOrWhiteSpace(ods2) ? ods2 
+                         : (!string.IsNullOrWhiteSpace(ods3) ? ods3 : ods4));
+
+            if (!string.IsNullOrWhiteSpace(finalOds))
+            {
+                dict["ods"] = finalOds;
+                dict["ODS"] = finalOds;
+                dict["objetivos_desarrollo_sostenible"] = finalOds;
+                dict["ObjetivosDesarrolloSostenible"] = finalOds;
             }
 
             // Variables globales del sistema (siempre disponibles en cualquier plantilla)
