@@ -13,6 +13,7 @@ interface SectionsSidebarProps {
     onClose: () => void;
     startDraggingLeft: (e: React.MouseEvent) => void;
     comments: Record<string, SectionComment[]>;
+    templateBlocks?: any[];
 }
 
 export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
@@ -24,7 +25,8 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
     setActiveSection,
     onClose,
     startDraggingLeft,
-    comments
+    comments,
+    templateBlocks
 }) => {
     const hasSectionActiveComments = (secId: string): boolean => {
         if (secId === 'identificacion') {
@@ -42,8 +44,56 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
         } else if (secId === 'bibliografia') {
             return !!(comments.bibliografia && comments.bibliografia.length > 0);
         }
-        return false;
+        return !!(comments[secId] && comments[secId].length > 0);
     };
+
+    // Calcular las secciones visibles
+    const sectionsToDisplay = React.useMemo(() => {
+        if (!templateBlocks || templateBlocks.length === 0) {
+            return SECTIONS;
+        }
+
+        const dynamicList: { id: string; label: string; icon: any }[] = [];
+        templateBlocks.forEach(b => {
+            if (b.type === 'cover' || b.type === 'project_general_section') {
+                if (!dynamicList.some(s => s.id === 'identificacion')) {
+                    dynamicList.push({ id: 'identificacion', label: 'Identificación', icon: SECTIONS[0].icon });
+                }
+            } else if (b.type === 'researchers_table') {
+                if (!dynamicList.some(s => s.id === 'equipo')) {
+                    dynamicList.push({ id: 'equipo', label: 'Equipo Humano', icon: SECTIONS[1].icon });
+                }
+            } else if (b.type === 'project_technical_section' || b.type === 'title') {
+                if (!dynamicList.some(s => s.id === 'plan_tecnico')) {
+                    dynamicList.push({ id: 'plan_tecnico', label: b.title || 'Plan Técnico', icon: SECTIONS[2].icon });
+                }
+            } else if (b.type === 'project_budget_section' || b.type === 'advanced_table' || b.type === 'multi_section_table') {
+                if (!dynamicList.some(s => s.id === 'recursos')) {
+                    dynamicList.push({ id: 'recursos', label: b.title || 'Recursos', icon: SECTIONS[3].icon });
+                }
+            } else if (b.type === 'impacts') {
+                if (!dynamicList.some(s => s.id === 'impacto')) {
+                    dynamicList.push({ id: 'impacto', label: b.title || 'Impacto & Entregables', icon: SECTIONS[4].icon });
+                }
+            } else if (b.type === 'gantt') {
+                if (!dynamicList.some(s => s.id === 'cronograma')) {
+                    dynamicList.push({ id: 'cronograma', label: b.title || 'Cronograma (Gantt)', icon: SECTIONS[5].icon });
+                }
+            } else if (b.type === 'signatures') {
+                if (!dynamicList.some(s => s.id === 'bibliografia')) {
+                    dynamicList.push({ id: 'bibliografia', label: b.title || 'Bibliografía & Firmas', icon: SECTIONS[6].icon });
+                }
+            } else {
+                // Bloques custom creados por el administrador
+                const cleanId = b.id || `custom-${b.type}`;
+                if (!dynamicList.some(s => s.id === cleanId)) {
+                    dynamicList.push({ id: cleanId, label: b.title || 'Sección', icon: SECTIONS[0].icon });
+                }
+            }
+        });
+
+        return dynamicList.length > 0 ? dynamicList : SECTIONS;
+    }, [templateBlocks]);
 
     return (
         <div
@@ -63,7 +113,7 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
                 </button>
             </div>
             <div className="p-4 flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar">
-                {SECTIONS.map((sec) => {
+                {sectionsToDisplay.map((sec) => {
                     const SecIcon = sec.icon;
                     const isActive = activeSection === sec.id;
                     const hasActiveComments = hasSectionActiveComments(sec.id);

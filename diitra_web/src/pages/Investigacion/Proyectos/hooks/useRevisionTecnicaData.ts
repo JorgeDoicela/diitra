@@ -37,6 +37,56 @@ export const useRevisionTecnicaData = ({
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [loadingPdf, setLoadingPdf] = useState(false);
     const [docSnapshot, setDocSnapshot] = useState<any>({});
+    const [templateBlocks, setTemplateBlocks] = useState<any[]>([]);
+
+    const loadTemplateBlocks = useCallback(async (uuid: string) => {
+        try {
+            let loadedBlocks: any[] = [];
+
+            // 1. Anclaje de versión: obtener el snapshot inmutable guardado en la instancia del documento
+            try {
+                const instanceRes = await api.get(`/documents/instances/resolve`, {
+                    params: { templateCode: 'PROTOCOLO_INVESTIGACION', entityUuid: uuid }
+                });
+
+                const snapshotJson = instanceRes.data?.templateConfigSnapshotJson || instanceRes.data?.template_config_snapshot_json;
+                if (snapshotJson) {
+                    const parsed = JSON.parse(snapshotJson);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        loadedBlocks = parsed;
+                    }
+                }
+            } catch (err) {
+                console.warn('[DIITRA] No se pudo obtener snapshot congelado de la instancia, usando fallback.', err);
+            }
+
+            // 2. Fallback: Si es un borrador nuevo sin snapshot congelado, usar la versión activa publicada
+            if (loadedBlocks.length === 0) {
+                const tmplRes = await api.get('/admin/templates/PROTOCOLO_INVESTIGACION');
+                if (tmplRes.data?.htmlContent) {
+                    const match = tmplRes.data.htmlContent.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
+                    if (match && match[1]) {
+                        try {
+                            const decoded = decodeURIComponent(escape(atob(match[1])));
+                            loadedBlocks = JSON.parse(decoded);
+                        } catch {}
+                    }
+                }
+                if (loadedBlocks.length === 0 && tmplRes.data?.collaborativeFieldsJson) {
+                    try {
+                        const parsed = JSON.parse(tmplRes.data.collaborativeFieldsJson);
+                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
+                            loadedBlocks = parsed;
+                        }
+                    } catch {}
+                }
+            }
+
+            setTemplateBlocks(loadedBlocks);
+        } catch (e) {
+            console.error('[DIITRA] Error al cargar bloques de plantilla:', e);
+        }
+    }, []);
 
     const teachersWithExceedingHours = investigadores.filter(inv => {
         const proposed = inv.horasSemanales || 0;
@@ -122,6 +172,7 @@ export const useRevisionTecnicaData = ({
 
             loadPdf(projectUuid);
             await calculateMetrics(projectUuid);
+            await loadTemplateBlocks(projectUuid);
 
             try {
                 const collabRes = await api.get(`/collaboration/${projectUuid}/pulse`);
@@ -342,6 +393,7 @@ export const useRevisionTecnicaData = ({
         pdfUrl,
         loadingPdf,
         docSnapshot,
+        templateBlocks,
         teachersWithExceedingHours,
         isHoursOk,
         handleAprobar,

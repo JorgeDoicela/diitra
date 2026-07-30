@@ -98,6 +98,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 onClose={() => layout.setIsLeftSidebarOpen(false)}
                                 startDraggingLeft={layout.startDraggingLeft}
                                 comments={commentsState.comments}
+                                templateBlocks={data.templateBlocks}
                             />
 
                             <InteractiveSections
@@ -105,6 +106,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 project={data.project}
                                 investigadores={data.investigadores}
                                 docSnapshot={data.docSnapshot}
+                                templateBlocks={data.templateBlocks}
                                 isLeftSidebarOpen={layout.isLeftSidebarOpen}
                                 setIsLeftSidebarOpen={layout.setIsLeftSidebarOpen}
                                 isHoursOk={data.isHoursOk}

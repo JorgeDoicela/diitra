@@ -38,6 +38,7 @@ interface InteractiveSectionsProps {
     project: ProjectDetail;
     investigadores: any[];
     docSnapshot: any;
+    templateBlocks?: any[];
     isLeftSidebarOpen: boolean;
     setIsLeftSidebarOpen: (open: boolean) => void;
     isHoursOk: boolean;
@@ -55,6 +56,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
     project,
     investigadores,
     docSnapshot,
+    templateBlocks,
     isHoursOk,
     teachersWithExceedingHours,
     getFieldCardClasses,
@@ -513,6 +515,43 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* BLOQUES DINÁMICOS PERSONALIZADOS CREADOS DESDE EL ADMIN */}
+            {templateBlocks && templateBlocks.length > 0 && templateBlocks.map((block, bIdx) => {
+                const isStandardBlock = [
+                    'cover', 'project_general_section', 'researchers_table',
+                    'project_technical_section', 'project_budget_section',
+                    'impacts', 'gantt', 'signatures', 'title'
+                ].includes(block.type);
+
+                if (isStandardBlock) return null;
+
+                const fieldKey = block.config?.fieldKey || block.id || `custom_block_${bIdx}`;
+                const blockTitle = block.title || `Bloque Adicional ${bIdx + 1}`;
+                const blockContent = docSnapshot[fieldKey] || docSnapshot[block.id] || block.config?.html;
+
+                if (activeSection !== 'all' && activeSection !== fieldKey && activeSection !== 'identificacion') {
+                    return null;
+                }
+
+                return (
+                    <div 
+                        key={block.id || bIdx}
+                        id={`field-card-${fieldKey}`}
+                        onClick={() => { setActiveCommentField(fieldKey); setIsRightSidebarOpen(true); }}
+                        className={getFieldCardClasses(fieldKey, 'space-y-3 font-sans animate-fade-in')}
+                    >
+                        <div className="flex justify-between items-center border-b border-border-thin/20 pb-1.5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">{blockTitle}</span>
+                                {renderFieldStatusBadge(fieldKey)}
+                            </div>
+                            {renderCommentButton(fieldKey, blockTitle)}
+                        </div>
+                        {renderHtml(blockContent, 'Sin contenido registrado en esta sección personalizada')}
+                    </div>
+                );
+            })}
         </div>
     );
 };
