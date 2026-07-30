@@ -93,7 +93,7 @@ namespace diitra_infrastructure.Research
                 await _classificationSubservice.SyncGroupMembersAndCreatorAsync(project, dto, creatorUserIdRef, isOversightUser);
 
                 // 3. Componentes del Proyecto
-                var objetivosCreadosIds = await _componentsSubservice.SyncObjetivosAsync(project.IdProyecto, dto.ObjetivoGeneral, dto.ObjetivosEspecificos);
+                var objetivosCreadosIds = await _componentsSubservice.SyncObjetivosAsync(project.IdProyecto, dto.ObjetivoGeneral, dto.GetObjetivosEspecificosAsList());
                 await _componentsSubservice.SyncPresupuestoAsync(project.IdProyecto, dto.RecursosNecesarios);
                 await _componentsSubservice.SyncMmlAsync(project.IdProyecto, dto.MatrizMarcoLogico);
                 await _componentsSubservice.SyncImpactosAsync(project.IdProyecto, dto.Impacto);

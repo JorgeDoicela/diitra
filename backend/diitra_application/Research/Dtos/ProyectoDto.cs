@@ -72,11 +72,10 @@ namespace Diitra.Application.Research.Dtos
         public string? ObjetivoGeneral { get; set; }
         private List<string>? _objetivosEspecificos;
 
-        [System.Text.Json.Serialization.JsonPropertyName("ObjetivosEspecificos")]
+        [System.Text.Json.Serialization.JsonPropertyName("ObjetivosEspecificosElement")]
         public System.Text.Json.JsonElement? ObjetivosEspecificosElement { get; set; }
 
-        [System.Text.Json.Serialization.JsonIgnore]
-        public List<string>? ObjetivosEspecificos
+        public object? ObjetivosEspecificos
         {
             get
             {
@@ -96,15 +95,38 @@ namespace Diitra.Application.Research.Dtos
                 else if (element.ValueKind == System.Text.Json.JsonValueKind.String)
                 {
                     var str = element.GetString();
-                    if (string.IsNullOrWhiteSpace(str)) return new List<string>();
-                    return new List<string> { str };
+                    if (string.IsNullOrWhiteSpace(str)) return null;
+                    return str;
                 }
                 return null;
             }
             set
             {
-                _objetivosEspecificos = value;
+                if (value is List<string> list)
+                {
+                    _objetivosEspecificos = list;
+                }
+                else if (value is IEnumerable<string> enumList)
+                {
+                    _objetivosEspecificos = enumList.ToList();
+                }
+                else if (value is string str)
+                {
+                    _objetivosEspecificos = new List<string> { str };
+                }
+                else if (value is System.Text.Json.JsonElement je)
+                {
+                    ObjetivosEspecificosElement = je;
+                }
             }
+        }
+
+        public List<string>? GetObjetivosEspecificosAsList()
+        {
+            if (_objetivosEspecificos != null) return _objetivosEspecificos;
+            if (ObjetivosEspecificos is List<string> l) return l;
+            if (ObjetivosEspecificos is string s) return new List<string> { s };
+            return null;
         }
         private string? _ods;
         public string? Ods
