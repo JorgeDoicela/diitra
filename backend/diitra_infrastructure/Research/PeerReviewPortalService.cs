@@ -270,7 +270,9 @@ namespace diitra_infrastructure.Research
                 
                 EstadoRevision = revision.Estado,
                 ObservacionesGral = revision.ObservacionesGral,
-                PuntajeTotal = revision.PuntajeTotal
+                PuntajeTotal = revision.PuntajeTotal,
+                DataSnapshotJson = docInstance?.DataSnapshotJson,
+                TemplateConfigSnapshotJson = docInstance?.TemplateConfigSnapshotJson
             };
         }
 

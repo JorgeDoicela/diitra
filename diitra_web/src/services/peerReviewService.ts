@@ -96,6 +96,12 @@ export interface RubricaDinamicaDto {
     observaciones_gral?: string;
     estado_revision?: string;
     puntaje_total?: number;
+
+    // Motor de plantillas dinámicas
+    data_snapshot_json?: string;
+    template_config_snapshot_json?: string;
+    dataSnapshotJson?: string;
+    templateConfigSnapshotJson?: string;
 }
 
 export interface RevisorDisponibleDto {

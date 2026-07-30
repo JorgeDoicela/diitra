@@ -99,6 +99,10 @@ public class RubricaDinamicaDto
     public string? ObservacionesGral { get; set; }
     public string? EstadoRevision { get; set; }
     public decimal? PuntajeTotal { get; set; }
+
+    // Snapshots del motor de plantillas dinámicas
+    public string? DataSnapshotJson { get; set; }
+    public string? TemplateConfigSnapshotJson { get; set; }
 }
 
 public class CriterioRubricaDto
