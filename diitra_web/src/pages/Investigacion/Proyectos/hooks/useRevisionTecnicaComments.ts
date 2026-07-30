@@ -6,7 +6,7 @@ import api from '../../../../api/axios_config';
 interface UseRevisionTecnicaCommentsParams {
     projectUuid: string | undefined;
     activeCommentField: string;
-    addToast: (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+    addToast: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
 }
 
 export const useRevisionTecnicaComments = ({
@@ -91,7 +91,7 @@ export const useRevisionTecnicaComments = ({
         if (!contextualInput.trim()) return;
         const newStatus = 'Corregir';
         const label = FIELD_LABELS[activeCommentField] || activeCommentField.toUpperCase();
-        const content = `[${label}] (Observación): ${contextualInput.trim()}`;
+        const content = `[KEY:${activeCommentField}] [${label}] (Observación): ${contextualInput.trim()}`;
 
         try {
             if (editingCommentId) {

@@ -29,9 +29,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     {title}
                 </h1>
                 {description && (
-                    <p className="text-xs text-text-dim font-medium leading-relaxed">
+                    <div className="text-xs text-text-dim font-medium leading-relaxed">
                         {description}
-                    </p>
+                    </div>
                 )}
             </div>
             {children && (

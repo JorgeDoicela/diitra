@@ -39,7 +39,7 @@ namespace diitra_infrastructure.Collaboration
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
 
-            // 1.1 SEGURIDAD PLATINUM: Control de Acceso por Defensa en Profundidad
+            // 1.1 SEGURIDAD: Control de Acceso por Defensa en Profundidad
             var isHubAdmin = Context.User?.FindFirst("es_admin")?.Value == "true" ||
                              Context.User?.IsInRole("DIITRA_ADMIN") == true;
 
@@ -289,7 +289,7 @@ namespace diitra_infrastructure.Collaboration
         }
 
         /// <summary>
-        /// ESTRATEGIA DE COMPACTACIÓN (Nivel Platinum):
+        /// ESTRATEGIA DE COMPACTACIÓN:
         /// El cliente envía el estado completo ya fusionado. El servidor reemplaza el snapshot
         /// y limpia el historial de deltas para mantener la base de datos esbelta y rápida.
         /// </summary>

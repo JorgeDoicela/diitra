@@ -14,13 +14,13 @@ import { FIELD_LABELS } from './types/revisionTecnicaTypes';
 export const RevisionTecnicaPage: React.FC = () => {
     const {
         projectUuid,
-        navigate,
         layout,
         commentsState,
         data,
         getSafeArray,
         getFieldCardClasses,
-        renderFieldStatusBadge
+        renderFieldStatusBadge,
+        handleNavigateBack
     } = useRevisionTecnica();
 
     if (data.loading || !data.project) {
@@ -60,7 +60,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                 projectUuid={projectUuid}
                 viewMode={layout.viewMode}
                 setViewMode={layout.setViewMode}
-                onNavigateBack={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                onNavigateBack={handleNavigateBack}
                 onOpenFinalizeModal={() => layout.setIsFinalizeModalOpen(true)}
             />
 
@@ -156,6 +156,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                     handleStartListening={commentsState.handleStartListening}
                     removeCommentLocal={commentsState.removeCommentLocal}
                     FIELD_LABELS={FIELD_LABELS}
+                    templateBlocks={data.templateBlocks}
                 />
             </div>
 

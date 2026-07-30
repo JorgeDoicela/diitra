@@ -29,6 +29,7 @@ interface ObservationsSidebarProps {
     handleStartListening: () => void;
     removeCommentLocal: (section: string, id: number) => void;
     FIELD_LABELS: Record<string, string>;
+    templateBlocks?: any[];
 }
 
 export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
@@ -49,11 +50,34 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
     saveContextualComment,
     handleStartListening,
     removeCommentLocal,
-    FIELD_LABELS
+    FIELD_LABELS,
+    templateBlocks
 }) => {
     const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
     const [isDraggingPanel, setIsDraggingPanel] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
+
+    const availableFields = React.useMemo(() => {
+        const fields: Record<string, string> = { ...FIELD_LABELS };
+        if (templateBlocks && Array.isArray(templateBlocks)) {
+            templateBlocks.forEach((block, bIdx) => {
+                const isStandardBlock = [
+                    'cover', 'project_general_section', 'researchers_table',
+                    'project_technical_section', 'project_budget_section',
+                    'impacts', 'gantt', 'signatures', 'title'
+                ].includes(block.type);
+
+                if (!isStandardBlock) {
+                    const fieldKey = block.config?.fieldKey || block.id || `custom_block_${bIdx}`;
+                    const blockTitle = block.title || `Sección ${bIdx + 1}`;
+                    if (!fields[fieldKey]) {
+                        fields[fieldKey] = blockTitle;
+                    }
+                }
+            });
+        }
+        return fields;
+    }, [FIELD_LABELS, templateBlocks]);
 
     const handlePanelDragStart = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('button, select, input, textarea')) {
@@ -127,7 +151,7 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
                         backgroundRepeat: 'no-repeat'
                     }}
                 >
-                    {Object.entries(FIELD_LABELS).map(([key, label]) => (
+                    {Object.entries(availableFields).map(([key, label]) => (
                         <option key={key} value={key} className="bg-bg-deep text-text-main py-1">
                             {label}
                         </option>

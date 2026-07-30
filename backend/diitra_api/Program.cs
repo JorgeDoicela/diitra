@@ -300,6 +300,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
     // Use Global Exception Middleware
@@ -325,6 +328,8 @@ var app = builder.Build();
 
     app.MapGet("/api/ping", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
+app.UseSwagger();
+app.UseSwaggerUI();
 
 
 app.Run();

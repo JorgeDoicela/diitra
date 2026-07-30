@@ -9,6 +9,7 @@ import {
     Layers, Trash2, Eye, EyeOff, Copy, Move, ArrowUp, ArrowDown
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
+import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../types';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 

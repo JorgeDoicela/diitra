@@ -6,7 +6,7 @@ import api from '../../../../api/axios_config';
 interface UseRevisionTecnicaDataParams {
     projectUuid: string | undefined;
     navigate: (path: string) => void;
-    addToast: (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number, onUndo?: () => void) => void;
+    addToast: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
     confirm: (options: { title: string; message: string; confirmText?: string; cancelText?: string; variant?: 'primary' | 'destructive' | 'warning' }) => Promise<boolean>;
     comments: Record<string, SectionComment[]>;
     setComments: React.Dispatch<React.SetStateAction<Record<string, SectionComment[]>>>;
@@ -180,13 +180,28 @@ export const useRevisionTecnicaData = ({
                     const backendComments: Record<string, SectionComment[]> = {};
                     collabRes.data.comments.forEach((c: any) => {
                         const content = c.contenido || '';
-                        const match = content.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
-                        if (match) {
-                            const label = match[1];
-                            const statusStr = match[2];
-                            const text = match[3];
-                            const fieldKey = Object.keys(FIELD_LABELS).find(k => FIELD_LABELS[k] === label);
-                            if (fieldKey) {
+                        const keyMatch = content.match(/^\[KEY:(.*?)\]\s*\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
+                        if (keyMatch) {
+                            const fieldKey = keyMatch[1];
+                            const statusStr = keyMatch[3];
+                            const text = keyMatch[4];
+                            if (!backendComments[fieldKey]) {
+                                backendComments[fieldKey] = [];
+                            }
+                            backendComments[fieldKey].push({
+                                id: c.idComentario || c.id,
+                                status: statusStr === 'Aprobado' ? 'Aprobado' : 'Corregir',
+                                text: text,
+                                creadoEn: c.creadoEn,
+                                nombreUsuario: c.nombreUsuario
+                            });
+                        } else {
+                            const match = content.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
+                            if (match) {
+                                const label = match[1];
+                                const statusStr = match[2];
+                                const text = match[3];
+                                const fieldKey = Object.keys(FIELD_LABELS).find(k => FIELD_LABELS[k] === label) || label;
                                 if (!backendComments[fieldKey]) {
                                     backendComments[fieldKey] = [];
                                 }
@@ -229,8 +244,8 @@ export const useRevisionTecnicaData = ({
         loadProjectData();
     }, [loadProjectData]);
 
-    const handleAprobar = async (generalFeedback: string) => {
-        if (!project) return;
+    const handleAprobar = async (generalFeedback: string): Promise<boolean> => {
+        if (!project) return false;
 
         const isBudgetOk = project.convocatoriaMontoMaximo ? project.presupuesto <= project.convocatoriaMontoMaximo : true;
         const hasTeam = investigadores.length > 0;
@@ -246,7 +261,7 @@ export const useRevisionTecnicaData = ({
                 confirmText: "Aprobar de todos modos",
                 cancelText: "Cancelar",
                 variant: "warning"
-            })) return;
+            })) return false;
         } else {
             if (!await confirm({
                 title: "Aprobar Revisión Técnica",
@@ -254,7 +269,7 @@ export const useRevisionTecnicaData = ({
                 confirmText: "Aprobar y Enviar",
                 cancelText: "Cancelar",
                 variant: "primary"
-            })) return;
+            })) return false;
         }
 
         setSubmitting(true);
@@ -304,21 +319,23 @@ export const useRevisionTecnicaData = ({
                 }
             );
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
+            return true;
         } catch (err: any) {
             console.error(err);
             addToast("Error", err.response?.data?.error ?? "No se pudo realizar la transición del estado.", "error");
+            return false;
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDevolver = async (generalFeedback: string) => {
-        if (!project) return;
+    const handleDevolver = async (generalFeedback: string): Promise<boolean> => {
+        if (!project) return false;
 
         const hasContextualComments = Object.values(comments).some(list => list && list.length > 0);
         if (!generalFeedback.trim() && !hasContextualComments) {
             addToast("Justificación Requerida", "Por favor redacte observaciones generales o específicas con las correcciones para el docente.", "warning");
-            return;
+            return false;
         }
 
         if (!await confirm({
@@ -327,7 +344,7 @@ export const useRevisionTecnicaData = ({
             confirmText: "Devolver",
             cancelText: "Cancelar",
             variant: "destructive"
-        })) return;
+        })) return false;
 
         setSubmitting(true);
         try {
@@ -377,9 +394,11 @@ export const useRevisionTecnicaData = ({
                 }
             );
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
+            return true;
         } catch (err: any) {
             console.error(err);
             addToast("Error", err.response?.data?.error ?? "No se pudo realizar la devolución del proyecto.", "error");
+            return false;
         } finally {
             setSubmitting(false);
         }

@@ -7,8 +7,8 @@ interface FinalizeAuditModalProps {
     generalFeedback: string;
     setGeneralFeedback: (val: string) => void;
     submitting: boolean;
-    onAprobar: () => Promise<void>;
-    onDevolver: () => Promise<void>;
+    onAprobar: () => Promise<boolean>;
+    onDevolver: () => Promise<boolean>;
 }
 
 export const FinalizeAuditModal: React.FC<FinalizeAuditModalProps> = ({
@@ -53,8 +53,8 @@ export const FinalizeAuditModal: React.FC<FinalizeAuditModalProps> = ({
                 <div className="grid grid-cols-2 gap-3 border-t border-border-thin/50 pt-4">
                     <button
                         onClick={async () => {
-                            await onAprobar();
-                            onClose();
+                            const success = await onAprobar();
+                            if (success) onClose();
                         }}
                         disabled={submitting}
                         className="flex items-center justify-center gap-1.5 btn-vercel-primary py-3 text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 cursor-pointer active:scale-95 transition-all"
@@ -65,8 +65,8 @@ export const FinalizeAuditModal: React.FC<FinalizeAuditModalProps> = ({
 
                     <button
                         onClick={async () => {
-                            await onDevolver();
-                            onClose();
+                            const success = await onDevolver();
+                            if (success) onClose();
                         }}
                         disabled={submitting}
                         className="flex items-center justify-center gap-1.5 bg-transparent hover:bg-error/10 text-error border border-error/20 hover:border-error/40 rounded-xl py-3 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer active:scale-95"

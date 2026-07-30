@@ -139,7 +139,8 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                     {renderFieldStatusBadge('dominio_linea')}
                                 </div>
                                 {renderCommentButton('dominio_linea', 'Dominio y Líneas')}
-                                                    <div className="grid grid-cols-3 gap-3 select-text">
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 select-text">
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Dominio Académico</span>
                                     <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(project.dominio) || 'Tecnologías de la Información'}</p>
@@ -150,7 +151,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Sublínea</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.SublineaInvestigacion) || 'Desarrollo de Software Multiplataforma'}</p>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.SublineaInvestigacion) || stripHtml(docSnapshot.Sublinea) || 'No registrada'}</p>
                                 </div>
                             </div>
                         </div>
@@ -175,16 +176,16 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Amplio</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoAmplio) || 'TI'}</p>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoAmplio) || '-'}</p>
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Específico</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoEspecifico) || 'SOFTWARE'}</p>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoEspecifico) || '-'}</p>
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Campo Detallado</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoDetallado) || 'INGENIERÍA'}</p>
-                                </div>              </div>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(docSnapshot.CampoDetallado) || '-'}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -337,11 +338,15 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-brand uppercase tracking-widest block font-mono mb-1">Objetivos Específicos</span>
-                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-text-main font-medium">
-                                        {getSafeArray(docSnapshot.ObjetivosEspecificos).map((obj: any, idx: number) => (
-                                            <li key={idx} className="leading-relaxed">{stripHtml(obj.descripcion || obj)}</li>
-                                        ))}
-                                    </ul>
+                                    {typeof docSnapshot.ObjetivosEspecificos === 'string' && docSnapshot.ObjetivosEspecificos.trim() ? (
+                                        renderHtml(docSnapshot.ObjetivosEspecificos, 'No registrados')
+                                    ) : (
+                                        <ul className="list-disc pl-4 space-y-1.5 text-xs text-text-main font-medium">
+                                            {getSafeArray(docSnapshot.ObjetivosEspecificos).map((obj: any, idx: number) => (
+                                                <li key={idx} className="leading-relaxed">{stripHtml(obj.descripcion || obj)}</li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -436,15 +441,34 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 select-none">
+                        {/* El Impacto se guarda como objeto {social, cientifico, economico, politico, ambiental, otro} */}
                         <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3">
-                            <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Descripción del Impacto</span>
-                            {renderHtml(docSnapshot.ImpactoEsperado, 'No descrito')}
+                            <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Impacto Esperado</span>
+                            {(() => {
+                                const imp = docSnapshot.Impacto || docSnapshot.ImpactoEsperado;
+                                if (!imp) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
+                                if (typeof imp === 'string') return renderHtml(imp, 'No descrito');
+                                // Es un objeto con claves por categoría
+                                const impEntries = Object.entries(imp).filter(([, v]) => v && String(v).trim());
+                                if (impEntries.length === 0) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
+                                return (
+                                    <div className="space-y-2 mt-2 select-text">
+                                        {impEntries.map(([tipo, valor]) => (
+                                            <div key={tipo}>
+                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">{tipo.charAt(0).toUpperCase() + tipo.slice(1)}</span>
+                                                <div className="text-xs font-mono font-medium text-text-main mt-0.5" dangerouslySetInnerHTML={{ __html: String(valor) }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
                         </div>
                         <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3">
                             <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Productos / Entregables Planificados</span>
                             <ul className="list-disc pl-4 space-y-1.5 text-xs text-text-main font-medium select-text">
-                                {getSafeArray(docSnapshot.Entregables).map((e: any, idx: number) => (
-                                    <li key={idx} className="leading-relaxed">{stripHtml(e.descripcion || e)}</li>
+                                {/* El workspace lo guarda como ProductosEsperados, con fallback a Entregables */}
+                                {getSafeArray(docSnapshot.ProductosEsperados || docSnapshot.Entregables).map((e: any, idx: number) => (
+                                    <li key={idx} className="leading-relaxed">{stripHtml(e.tipo || e.descripcion || e)}</li>
                                 ))}
                             </ul>
                         </div>
@@ -530,7 +554,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                 const blockTitle = block.title || `Bloque Adicional ${bIdx + 1}`;
                 const blockContent = docSnapshot[fieldKey] || docSnapshot[block.id] || block.config?.html;
 
-                if (activeSection !== 'all' && activeSection !== fieldKey && activeSection !== 'identificacion') {
+                if (activeSection !== 'all' && activeSection !== fieldKey) {
                     return null;
                 }
 

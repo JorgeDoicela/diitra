@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
@@ -60,8 +60,26 @@ export const useRevisionTecnica = () => {
         return `p-4 rounded-xl border ${extraClasses} relative cursor-pointer hover:bg-surface-hover/80 active:scale-[0.99] transition-all duration-200 ${borderClass} ${activeClass}`;
     };
 
-    const renderFieldStatusBadge = (_fieldKey: string) => {
+    const renderFieldStatusBadge = (fieldKey: string) => {
+        const fieldComments = commentsState.comments[fieldKey];
+        if (fieldComments && fieldComments.length > 0) {
+            return React.createElement(
+                'span',
+                { className: 'inline-flex items-center gap-1 text-[8px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-mono uppercase tracking-wider' },
+                React.createElement('span', { className: 'w-1 h-1 rounded-full bg-amber-500 animate-pulse' }),
+                `Con Observaciones (${fieldComments.length})`
+            );
+        }
         return null;
+    };
+
+    const handleNavigateBack = () => {
+        if (commentsState.contextualInput.trim()) {
+            if (!window.confirm('Tiene una observación en borrador sin enviar en el panel lateral. ¿Desea salir sin guardar?')) {
+                return;
+            }
+        }
+        navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
     };
 
     return {
@@ -72,6 +90,7 @@ export const useRevisionTecnica = () => {
         data,
         getSafeArray,
         getFieldCardClasses,
-        renderFieldStatusBadge
+        renderFieldStatusBadge,
+        handleNavigateBack
     };
 };
