@@ -37,9 +37,9 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://192.168.7.187:3000'
-        : window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '');
+    const baseUrl = import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/'
+        ? window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
+        : window.location.origin;
 
     const pinPageUrl = `${baseUrl}/auth/pin`;
 

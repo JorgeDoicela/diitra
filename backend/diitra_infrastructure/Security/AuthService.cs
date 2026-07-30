@@ -51,14 +51,13 @@ public class AuthService : IAuthService
 
     private string GetFrontendUrl()
     {
-        var configuredUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var configuredUrl = _configuration["Email:FrontendUrl"] ?? _configuration["FrontendUrl"] ?? "http://localhost:3000";
         var httpContext = _httpContextAccessor?.HttpContext;
         if (httpContext != null)
         {
             var request = httpContext.Request;
             var host = request.Host.Value;
-            if ((host.Contains("localhost") || host.Contains("127.0.0.1")) && 
-                (configuredUrl.Contains("localhost:3000") || configuredUrl.Contains("localhost:5173")))
+            if (host.Contains(":5175") || host.Contains(":5000") || host.Contains("localhost") || host.Contains("127.0.0.1"))
             {
                 return configuredUrl;
             }
