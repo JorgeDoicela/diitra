@@ -974,6 +974,27 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 };
                 const headerBg = resolveHeaderBg(headerColorKey);
 
+                // Funciones auxiliares para desduplicar prefijos y sanitizar variables Scriban/Handlebars
+                const sanitizeScribanVar = (rawVar?: string, fallbackKey?: string) => {
+                    let raw = (rawVar || fallbackKey || 'contenido').trim();
+                    let clean = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    clean = clean.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+                    clean = clean.replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+                    if (!clean || /^[0-9]/.test(clean)) {
+                        clean = `sec_${clean}`;
+                    }
+                    return clean;
+                };
+
+                const formatDisplayTitle = (prefix?: string, title?: string) => {
+                    const p = (prefix || '').trim();
+                    let t = (title || '').trim();
+                    if (p && t.toLowerCase().startsWith(p.toLowerCase())) {
+                        t = t.substring(p.length).trim();
+                    }
+                    return p ? `${p} ${t}`.trim().toUpperCase() : t.toUpperCase();
+                };
+
                 // Obtener secciones activas (con fallback a presets si no están definidas)
                 const activeSections: any[] = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
                     ? c.technicalSections.filter((sec: any) => sec.enabled !== false)
@@ -992,15 +1013,85 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 if (activeSections.length === 0) break;
 
                 if (layoutMode === 'table_2col') {
-                    // ── MODO TABLA INSTITUCIONAL DE 2 COLUMNAS (Formato Oficial) ──────────────
+                    // ── MODO 1: TABLA INSTITUCIONAL RETICULAR (Metadata-Driven Matrix) ──────────────
                     const tableRows: string[] = [];
+                    const goldColor = '#b8912e';
+                    let idx = 0;
 
-                    activeSections.forEach((sec: any) => {
-                        const scriban = sec.scribanVariable || (sec.fieldKey ? sec.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') : 'contenido');
+                    while (idx < activeSections.length) {
+                        const sec = activeSections[idx];
+                        const scriban = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey);
                         const defaultPlaceholder = sec.requirementText ? `[${sec.requirementText}]` : 'No redactado.';
-                        const titleText = sec.title ? sec.title.toUpperCase() : 'SECCIÓN';
+                        const titleText = formatDisplayTitle(sec.numberPrefix, sec.title);
+                        const colSpan = sec.colSpan || 2;
+                        const variant = sec.variant || 'standard';
 
-                        tableRows.push(`
+                        if (colSpan === 1) {
+                            // ── MODO 50% (MEDIA FILA) ──
+                            const nextSec = activeSections[idx + 1];
+                            if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy')) {
+                                const nextScriban = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey);
+                                const nextPlaceholder = nextSec.requirementText ? `[${nextSec.requirementText}]` : 'No redactado.';
+                                const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
+
+                                const bg1 = sec.variant === 'banner_gold' ? goldColor : headerBg;
+                                const bg2 = nextSec.variant === 'banner_gold' ? goldColor : headerBg;
+
+                                tableRows.push(`
+    <!-- FILA DOBLE COLUMNA AL 50% -->
+    <tr>
+      <td style="width: 50%; background-color: ${bg1}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+      <td style="width: 50%; background-color: ${bg2}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+        ${nextTitle}
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 50%; font-size: 8.5pt; line-height: 1.4; color: #000000; padding: 8px 10px; border: 1px solid #000000; vertical-align: top; font-family: {{ theme.typography.font_family }};">
+        {{default ${scriban} "${defaultPlaceholder}"}}
+      </td>
+      <td style="width: 50%; font-size: 8.5pt; line-height: 1.4; color: #000000; padding: 8px 10px; border: 1px solid #000000; vertical-align: top; font-family: {{ theme.typography.font_family }};">
+        {{default ${nextScriban} "${nextPlaceholder}"}}
+      </td>
+    </tr>`);
+                                idx += 2;
+                            } else {
+                                const bg1 = sec.variant === 'banner_gold' ? goldColor : headerBg;
+                                tableRows.push(`
+    <tr>
+      <td style="width: 30%; background-color: ${bg1}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; vertical-align: middle; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+      <td style="width: 70%; font-size: 8.5pt; line-height: 1.4; color: #000000; padding: 8px 10px; border: 1px solid #000000; vertical-align: top; font-family: {{ theme.typography.font_family }};">
+        {{default ${scriban} "${defaultPlaceholder}"}}
+      </td>
+    </tr>`);
+                                idx++;
+                            }
+                        } else if (variant === 'banner_gold') {
+                            // ── MODO 100% BANNER DORADO DIVISIONAL ──
+                            tableRows.push(`
+    <!-- BANNER DIVISIONAL DORADO 100% -->
+    <tr>
+      <td colspan="2" style="background-color: ${goldColor}; color: #000000; font-weight: bold; font-size: 9pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+    </tr>`);
+                            idx++;
+                        } else if (variant === 'banner_navy' || variant === 'header_only') {
+                            // ── MODO 100% BANNER AZUL DIVISIONAL ──
+                            tableRows.push(`
+    <!-- BANNER DIVISIONAL AZUL 100% -->
+    <tr>
+      <td colspan="2" style="background-color: ${headerBg}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; padding: 6px 10px; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </td>
+    </tr>`);
+                            idx++;
+                        } else {
+                            // ── MODO 100% ESTÁNDAR (ENCABEZADO LATERAL 30% / CONTENIDO 70%) ──
+                            tableRows.push(`
     <tr>
       <td style="width: 30%; background-color: ${headerBg}; color: #ffffff; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; vertical-align: middle; font-family: {{ theme.typography.font_family }};">
         ${titleText}
@@ -1009,10 +1100,12 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         {{default ${scriban} "${defaultPlaceholder}"}}
       </td>
     </tr>`);
-                    });
+                            idx++;
+                        }
+                    }
 
                     html += `
-  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (TABLA INSTITUCIONAL) -->
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (TABLA INSTITUCIONAL RETICULAR) -->
   <div style="margin-top: 15px; margin-bottom: 20px;">
     <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000;">
       <tbody>
@@ -1020,25 +1113,57 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
       </tbody>
     </table>
   </div>`;
-                } else {
-                    // ── MODO SECCIONES CONSECUTIVAS O TARJETAS ──────────────────────────────
-                    const parts: string[] = [];
+                } else if (layoutMode === 'cards') {
+                    // ── MODO 3: TARJETAS DINÁMICAS INDEPENDIENTES (Diseño Modular) ──────────────
+                    const cardBlocks: string[] = [];
+
                     activeSections.forEach((sec: any) => {
-                        const num = sec.numberPrefix ? `${sec.numberPrefix} ` : '';
-                        const scriban = sec.scribanVariable || (sec.fieldKey ? sec.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') : 'contenido');
+                        const scriban = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey);
                         const defaultPlaceholder = sec.requirementText ? `[${sec.requirementText}]` : 'No redactado.';
-                        parts.push(`
-    <div style="margin-bottom: 15px;">
-      <p style="font-weight: bold; font-size: 9.5pt; color: {{ theme.colors.primary }}; margin-bottom: 4px; text-transform: uppercase;">${num}${sec.title}</p>
-      <div style="font-size: 9pt; line-height: 1.5; color: #000000;">{{default ${scriban} "${defaultPlaceholder}"}}</div>
+                        const titleText = formatDisplayTitle(sec.numberPrefix, sec.title);
+
+                        cardBlocks.push(`
+    <div style="margin-bottom: 14px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="background-color: ${headerBg}; color: #ffffff; padding: 7px 12px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.5px; font-family: {{ theme.typography.font_family }};">
+        ${titleText}
+      </div>
+      <div style="padding: 10px 12px; font-size: 8.5pt; line-height: 1.5; color: #000000; font-family: {{ theme.typography.font_family }}; background-color: #ffffff;">
+        {{default ${scriban} "${defaultPlaceholder}"}}
+      </div>
     </div>`);
                     });
 
                     html += `
-  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (SECCIONES) -->
-  <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 10px;">Plan Técnico del Proyecto</p>
-    ${parts.join('')}
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (TARJETAS MODULARES) -->
+  <div style="margin-top: 15px; margin-bottom: 20px;">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerBg}; margin-bottom: 12px; font-family: {{ theme.typography.font_family }};">PLAN TÉCNICO Y CIENTÍFICO</p>
+    ${cardBlocks.join('')}
+  </div>`;
+                } else {
+                    // ── MODO 2: SECCIONES CONSECUTIVAS (Informe Ejecutivo Continuo) ──────────────
+                    const sectionBlocks: string[] = [];
+
+                    activeSections.forEach((sec: any) => {
+                        const scriban = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey);
+                        const defaultPlaceholder = sec.requirementText ? `[${sec.requirementText}]` : 'No redactado.';
+                        const titleText = formatDisplayTitle(sec.numberPrefix, sec.title);
+
+                        sectionBlocks.push(`
+    <div style="margin-bottom: 18px; page-break-inside: avoid;">
+      <div style="padding: 5px 10px; background-color: #f1f5f9; border-left: 4px solid ${headerBg}; border-radius: 0 4px 4px 0; margin-bottom: 6px;">
+        <p style="margin: 0; font-weight: bold; font-size: 9pt; color: ${headerBg}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${titleText}</p>
+      </div>
+      <div style="padding-left: 4px; font-size: 8.5pt; line-height: 1.5; color: #000000; font-family: {{ theme.typography.font_family }};">
+        {{default ${scriban} "${defaultPlaceholder}"}}
+      </div>
+    </div>`);
+                    });
+
+                    html += `
+  <!-- BLOQUE: PLAN TÉCNICO Y CIENTÍFICO (SECCIONES CONSECUTIVAS) -->
+  <div style="margin-top: 15px; margin-bottom: 20px;">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerBg}; margin-bottom: 12px; font-family: {{ theme.typography.font_family }};">PLAN TÉCNICO Y CIENTÍFICO</p>
+    ${sectionBlocks.join('')}
   </div>`;
                 }
                 break;

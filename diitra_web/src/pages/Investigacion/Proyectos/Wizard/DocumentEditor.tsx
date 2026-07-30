@@ -388,14 +388,28 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     // ── 4. Resolver campos de texto enriquecido (Rich-Text) para evitar colisión de constructores Yjs ──
     const richTexts = React.useMemo(() => {
         const list: string[] = [];
-        const hasTechnicalSection = templateConfig?.sections?.some((s: any) => s.componentName === "TechnicalSection" || s.component_name === "TechnicalSection");
-        if (templateCode === 'PROTOCOLO_INVESTIGACION' && hasTechnicalSection) {
-            list.push(
-                'Antecedentes', 'DescripcionProyecto', 'Justificacion',
-                'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico',
-                'Metodologia', 'Evaluacion', 'Bibliografia'
-            );
-        } else if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some(s => s.id === "edicion_colaborativa")) {
+        const techSection = templateConfig?.sections?.find((s: any) => s.componentName === "TechnicalSection" || s.component_name === "TechnicalSection" || s.id === "tecnico");
+
+        if (techSection) {
+            const techSecs = techSection.config?.technicalSections || techSection.config?.TechnicalSections;
+            if (Array.isArray(techSecs) && techSecs.length > 0) {
+                techSecs.filter((s: any) => s.enabled !== false).forEach((s: any) => {
+                    const key = s.fieldKey || s.id;
+                    if (key && !list.includes(key)) {
+                        list.push(key);
+                    }
+                });
+            } else {
+                // Fallback institucional por defecto
+                ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion', 'Bibliografia'].forEach(k => {
+                    if (!list.includes(k)) list.push(k);
+                });
+            }
+        } else if (templateCode === 'PROTOCOLO_INVESTIGACION') {
+            ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion', 'Bibliografia'].forEach(k => {
+                if (!list.includes(k)) list.push(k);
+            });
+        } else if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some((s: any) => s.id === "edicion_colaborativa")) {
             list.push('ConclusionesParciales');
         }
 

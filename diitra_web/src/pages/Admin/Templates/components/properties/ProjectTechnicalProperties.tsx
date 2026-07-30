@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, ArrowUp, ArrowDown, RotateCcw, Pencil, Check, X, Layers, Layout, Palette, FileText, Table } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, ArrowUp, ArrowDown, RotateCcw, Pencil, Check, X, Layers, Palette, FileText, Sparkles, Landmark } from 'lucide-react';
 import type { DocumentBlock, TechnicalSubsection } from '../../types';
 import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../../types';
 
@@ -12,39 +12,44 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
     const config = block.config || {};
     const layoutMode = config.technicalLayoutMode || 'table_2col';
     const headerColor = config.technicalHeaderColor || 'navy';
-    
-    // Obtener sub-secciones actuales o inicializar con presets
+
     const getActiveSections = (): TechnicalSubsection[] => {
         if (config.technicalSections && Array.isArray(config.technicalSections) && config.technicalSections.length > 0) {
             return config.technicalSections;
         }
 
-        // Si existen banderas legadas, mapear según banderas
         return DEFAULT_TECHNICAL_SUBSECTIONS.map(def => {
             const legacyVal = def.legacyKey ? (config as any)[def.legacyKey] : undefined;
             return {
                 ...def,
-                enabled: legacyVal !== false
+                enabled: legacyVal !== undefined ? Boolean(legacyVal) : def.enabled,
             };
         });
     };
 
-    const sections = getActiveSections();
+    const [sections, setSections] = useState<TechnicalSubsection[]>(getActiveSections);
+
+    useEffect(() => {
+        setSections(getActiveSections());
+    }, [config.technicalSections]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<TechnicalSubsection>>({});
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [newForm, setNewForm] = useState<Partial<TechnicalSubsection>>({
-        numberPrefix: '3.9',
+        numberPrefix: `3.${sections.length + 1}`,
         title: '',
         fieldKey: '',
         scribanVariable: '',
         placeholder: 'Redactar apartado...',
         requirementText: '',
         enabled: true,
+        colSpan: 2,
+        variant: 'standard',
     });
 
-    const updateSections = (newSections: TechnicalSubsection[]) => {
-        onUpdateConfig(block.id, 'technicalSections', newSections);
+    const updateSections = (newSecs: TechnicalSubsection[]) => {
+        setSections(newSecs);
+        onUpdateConfig(block.id, 'technicalSections', newSecs);
     };
 
     const handleToggleEnabled = (id: string, enabled: boolean) => {
@@ -53,38 +58,44 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
     };
 
     const handleMove = (index: number, direction: 'up' | 'down') => {
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        if (targetIndex < 0 || targetIndex >= sections.length) return;
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= sections.length) return;
         const updated = [...sections];
         const [moved] = updated.splice(index, 1);
-        updated.splice(targetIndex, 0, moved);
+        updated.splice(newIndex, 0, moved);
         updateSections(updated);
+    };
+
+    const cleanAutoKeyAndScriban = (rawTitle: string, inputFieldKey?: string, inputScriban?: string) => {
+        let titleClean = rawTitle.trim();
+        const numMatch = titleClean.match(/^(\d+(\.\d+)*)\s+(.*)/);
+        if (numMatch) {
+            titleClean = numMatch[3].trim();
+        }
+
+        const autoKey = inputFieldKey?.trim() || titleClean.replace(/[^a-zA-Z0-9]/g, '');
+
+        let autoScriban = inputScriban?.trim();
+        if (!autoScriban) {
+            autoScriban = titleClean
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "_")
+                .replace(/_+/g, "_")
+                .replace(/^_+|_+$/g, "");
+
+            if (!autoScriban || /^\d/.test(autoScriban)) {
+                autoScriban = `sec_${autoScriban || 'custom'}`;
+            }
+        }
+
+        return { autoKey, autoScriban };
     };
 
     const handleStartEdit = (sec: TechnicalSubsection) => {
         setEditingId(sec.id);
         setEditForm({ ...sec });
-    };
-
-    const handleSaveEdit = () => {
-        if (!editingId || !editForm.title?.trim()) return;
-        const updated = sections.map(s => {
-            if (s.id === editingId) {
-                const titleClean = editForm.title!.trim();
-                const keyGenerated = editForm.fieldKey?.trim() || titleClean.replace(/[^a-zA-Z0-9]/g, '');
-                const scribanGenerated = editForm.scribanVariable?.trim() || keyGenerated.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-                return {
-                    ...s,
-                    ...editForm,
-                    title: titleClean,
-                    fieldKey: keyGenerated,
-                    scribanVariable: scribanGenerated,
-                } as TechnicalSubsection;
-            }
-            return s;
-        });
-        updateSections(updated);
-        setEditingId(null);
     };
 
     const handleDelete = (id: string) => {
@@ -96,11 +107,31 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
         updateSections(DEFAULT_TECHNICAL_SUBSECTIONS);
     };
 
+    const handleSaveEdit = () => {
+        if (!editingId) return;
+        const titleClean = editForm.title?.trim() || '';
+        const { autoKey, autoScriban } = cleanAutoKeyAndScriban(titleClean, editForm.fieldKey, editForm.scribanVariable);
+
+        const updated = sections.map(s => {
+            if (s.id === editingId) {
+                return {
+                    ...s,
+                    ...editForm,
+                    title: titleClean,
+                    fieldKey: autoKey,
+                    scribanVariable: autoScriban,
+                } as TechnicalSubsection;
+            }
+            return s;
+        });
+        updateSections(updated);
+        setEditingId(null);
+    };
+
     const handleAddNew = () => {
         if (!newForm.title?.trim()) return;
         const titleClean = newForm.title.trim();
-        const autoKey = newForm.fieldKey?.trim() || titleClean.replace(/[^a-zA-Z0-9]/g, '');
-        const autoScriban = newForm.scribanVariable?.trim() || autoKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+        const { autoKey, autoScriban } = cleanAutoKeyAndScriban(titleClean, newForm.fieldKey, newForm.scribanVariable);
 
         const newSec: TechnicalSubsection = {
             id: `sec_${Date.now()}`,
@@ -111,6 +142,8 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
             placeholder: newForm.placeholder || 'Redactar apartado...',
             requirementText: newForm.requirementText || '',
             enabled: true,
+            colSpan: newForm.colSpan || 2,
+            variant: newForm.variant || 'standard',
         };
 
         updateSections([...sections, newSec]);
@@ -123,50 +156,42 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
             placeholder: 'Redactar apartado...',
             requirementText: '',
             enabled: true,
+            colSpan: 2,
+            variant: 'standard',
         });
+    };
+
+    const handleToggleColSpan = (id: string) => {
+        const updated = sections.map(s => {
+            if (s.id === id) {
+                return { ...s, colSpan: (s.colSpan === 1 ? 2 : 1) } as TechnicalSubsection;
+            }
+            return s;
+        });
+        updateSections(updated);
+    };
+
+    const handleCycleVariant = (id: string) => {
+        const variants: TechnicalSubsection['variant'][] = ['standard', 'banner_gold', 'banner_navy'];
+        const updated = sections.map(s => {
+            if (s.id === id) {
+                const currentIdx = variants.indexOf(s.variant || 'standard');
+                const nextVariant = variants[(currentIdx + 1) % variants.length];
+                return { ...s, variant: nextVariant } as TechnicalSubsection;
+            }
+            return s;
+        });
+        updateSections(updated);
     };
 
     return (
         <div className="space-y-5 border-t border-border-thin/20 pt-4 font-sans">
-            {/* 1. MODO DE DISPOSICIÓN VISUAL (PDF / DOCUMENTO) */}
-            <div className="space-y-2">
-                <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
-                    <Layout className="w-3.5 h-3.5 text-indigo-400" />
-                    Formato de Presentación en PDF
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                    {[
-                        { id: 'table_2col', label: 'Tabla 2 Col.', desc: 'Encabezado lateral oscuro (Oficial)', icon: Table },
-                        { id: 'consecutive_sections', label: 'Secciones', desc: 'Títulos consecutivos en bloque', icon: FileText },
-                        { id: 'cards', label: 'Tarjetas', desc: 'Cajas dinámicas independientes', icon: Layers },
-                    ].map(opt => {
-                        const Icon = opt.icon;
-                        const isSel = layoutMode === opt.id;
-                        return (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => onUpdateConfig(block.id, 'technicalLayoutMode', opt.id)}
-                                className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
-                                    isSel
-                                        ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/40 text-text-main ring-1 ring-indigo-500'
-                                        : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
-                                }`}
-                            >
-                                <Icon className={`w-3.5 h-3.5 mb-1 ${isSel ? 'text-indigo-500' : 'text-text-dim'}`} />
-                                <div className="text-[10px] font-bold">{opt.label}</div>
-                                <div className="text-[8.5px] opacity-70 mt-0.5 leading-tight">{opt.desc}</div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
 
-            {/* 2. PALETA DE COLOR PARA ENCABEZADOS */}
+
             <div className="space-y-2">
                 <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
                     <Palette className="w-3.5 h-3.5 text-indigo-400" />
-                    Color de Celda Lateral / Encabezado
+                    Color de Celda / Encabezado Temático
                 </label>
                 <div className="flex items-center gap-3 bg-surface border border-border-thin rounded-md p-2 w-max">
                     {[
@@ -180,9 +205,8 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                 key={c.id}
                                 type="button"
                                 onClick={() => onUpdateConfig(block.id, 'technicalHeaderColor', c.id)}
-                                className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${
-                                    isSel ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-surface scale-105' : 'hover:scale-105 opacity-80 hover:opacity-100'
-                                }`}
+                                className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${isSel ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-surface scale-105' : 'hover:scale-105 opacity-80 hover:opacity-100'
+                                    }`}
                                 title={c.name}
                             >
                                 <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: c.hex }} />
@@ -193,43 +217,39 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                 </div>
             </div>
 
-            {/* 3. GESTIÓN DE SUBSECCIONES Y REQUISITOS */}
+            {/* 3. GESTIÓN DIRECTA DE SUB-SECCIONES */}
             <div className="space-y-3 pt-2 border-t border-border-thin/20">
                 <div className="flex items-center justify-between">
                     <div>
                         <h5 className="text-[11px] font-bold text-text-main uppercase tracking-wider flex items-center gap-1.5">
                             <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                            Sub-secciones & Requisitos Institucionales
+                            Sub-secciones de la Matriz
                         </h5>
-                        <p className="text-[9.5px] text-text-dim mt-0.5">
-                            Edita títulos, requisitos, texto instructivo u orden de cada apartado.
-                        </p>
                     </div>
                     <button
                         type="button"
                         onClick={handleResetPresets}
                         className="text-[9px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 px-2 py-1 bg-indigo-500/10 rounded border border-indigo-500/20 transition-colors"
-                        title="Restablecer al formato estándar del ISTPET"
+                        title="Restablecer al formato estándar oficial"
                     >
                         <RotateCcw className="w-3 h-3" />
-                        Reset Presets
+                        Reset
                     </button>
                 </div>
 
-                {/* Lista de Subsecciones */}
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                {/* Lista de Subsecciones con Controles Pills Directos */}
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
                     {sections.map((sec, idx) => {
                         const isEditing = editingId === sec.id;
                         return (
                             <div
                                 key={sec.id}
-                                className={`p-2.5 rounded-lg border transition-all ${
-                                    isEditing
-                                        ? 'border-indigo-500 bg-indigo-500/10'
-                                        : sec.enabled
+                                className={`p-2.5 rounded-lg border transition-all ${isEditing
+                                    ? 'border-indigo-500 bg-indigo-500/10'
+                                    : sec.enabled
                                         ? 'border-border-thin/40 bg-surface-hover/20 hover:border-border-thin'
                                         : 'border-border-thin/20 bg-surface/30 opacity-60'
-                                }`}
+                                    }`}
                             >
                                 {isEditing ? (
                                     <div className="space-y-2">
@@ -257,37 +277,14 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                         </div>
 
                                         <div>
-                                            <label className="text-[9px] font-bold text-text-dim block mb-0.5">Texto de Requisito / Guía Visible en Tabla</label>
+                                            <label className="text-[9px] font-bold text-text-dim block mb-0.5">Texto de Requisito / Guía Visible</label>
                                             <textarea
                                                 rows={2}
                                                 value={editForm.requirementText || ''}
                                                 onChange={e => setEditForm(prev => ({ ...prev, requirementText: e.target.value }))}
                                                 className="w-full text-[10px] px-2 py-1 bg-surface border border-border-thin rounded focus:outline-none focus:border-indigo-500 text-text-main"
-                                                placeholder="Ej: DETALLAR EN DOS PÁRRAFOS DE 8 A 12 LÍNEAS MÍNIMO..."
+                                                placeholder="Ej: DETALLAR EN DOS PÁRRAFOS..."
                                             />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-[9px] font-bold text-text-dim block mb-0.5">Clave de Campo (Yjs)</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.fieldKey || ''}
-                                                    onChange={e => setEditForm(prev => ({ ...prev, fieldKey: e.target.value }))}
-                                                    className="w-full text-[10px] font-mono px-2 py-1 bg-surface border border-border-thin rounded focus:outline-none focus:border-indigo-500 text-text-main"
-                                                    placeholder="Antecedentes"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[9px] font-bold text-text-dim block mb-0.5">Variable Scriban (PDF)</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.scribanVariable || ''}
-                                                    onChange={e => setEditForm(prev => ({ ...prev, scribanVariable: e.target.value }))}
-                                                    className="w-full text-[10px] font-mono px-2 py-1 bg-surface border border-border-thin rounded focus:outline-none focus:border-indigo-500 text-text-main"
-                                                    placeholder="antecedentes"
-                                                />
-                                            </div>
                                         </div>
 
                                         <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border-thin/20">
@@ -316,9 +313,11 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                                 onChange={e => handleToggleEnabled(sec.id, e.target.checked)}
                                                 className="w-4 h-4 text-indigo-500 accent-indigo-500 bg-surface border-border-thin rounded cursor-pointer"
                                             />
-                                            <span className="text-[10px] font-mono font-bold text-indigo-400 shrink-0">
-                                                {sec.numberPrefix}
-                                            </span>
+                                            {sec.numberPrefix && (
+                                                <span className="text-[10px] font-mono font-bold text-indigo-400 shrink-0">
+                                                    {sec.numberPrefix}
+                                                </span>
+                                            )}
                                             <div className="min-w-0 flex-1">
                                                 <span className="text-xs font-semibold text-text-main truncate block" title={sec.title}>
                                                     {sec.title}
@@ -329,36 +328,15 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[9px] font-mono text-text-dim bg-surface px-1.5 py-0.5 rounded border border-border-thin/30 shrink-0">
-                                                {sec.fieldKey}
-                                            </span>
                                         </div>
 
-                                        {/* Botones de acción */}
+                                        {/* Botones de acción limpia (Editar y Eliminar) */}
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleMove(idx, 'up')}
-                                                disabled={idx === 0}
-                                                className="p-1 text-text-dim hover:text-text-main disabled:opacity-20 cursor-pointer"
-                                                title="Mover arriba"
-                                            >
-                                                <ArrowUp className="w-3 h-3" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleMove(idx, 'down')}
-                                                disabled={idx === sections.length - 1}
-                                                className="p-1 text-text-dim hover:text-text-main disabled:opacity-20 cursor-pointer"
-                                                title="Mover abajo"
-                                            >
-                                                <ArrowDown className="w-3 h-3" />
-                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleStartEdit(sec)}
                                                 className="p-1 text-text-dim hover:text-indigo-400 cursor-pointer"
-                                                title="Editar subsección"
+                                                title="Editar texto de requisito"
                                             >
                                                 <Pencil className="w-3 h-3" />
                                             </button>
@@ -415,6 +393,32 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                 className="w-full text-[10px] px-2 py-1 bg-surface-hover border border-border-thin rounded focus:outline-none text-text-main"
                                 placeholder="Ej: DETALLAR EN 2 PÁRRAFOS..."
                             />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-[9px] font-bold text-text-dim block mb-0.5">Ancho de Columna (PDF)</label>
+                                <select
+                                    value={newForm.colSpan || 2}
+                                    onChange={e => setNewForm(prev => ({ ...prev, colSpan: Number(e.target.value) as 1 | 2 }))}
+                                    className="w-full text-[10px] px-2 py-1 bg-surface-hover border border-border-thin rounded focus:outline-none text-text-main"
+                                >
+                                    <option value={2}>100% Ancho Completo (1 Fila)</option>
+                                    <option value={1}>50% Media Fila (2 Columnas)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold text-text-dim block mb-0.5">Estilo de Encabezado</label>
+                                <select
+                                    value={newForm.variant || 'standard'}
+                                    onChange={e => setNewForm(prev => ({ ...prev, variant: e.target.value as any }))}
+                                    className="w-full text-[10px] px-2 py-1 bg-surface-hover border border-border-thin rounded focus:outline-none text-text-main"
+                                >
+                                    <option value="standard">Encabezado Lateral Tradicional</option>
+                                    <option value="banner_gold">Banner Dorado Divisional (Institucional)</option>
+                                    <option value="banner_navy">Sub-encabezado Azul Marino (General/Esp.)</option>
+                                    <option value="header_only">Separador (Solo Título)</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="flex justify-end gap-1.5 pt-1">
                             <button

@@ -6,7 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Trash2, Eye, EyeOff, Copy, Move
+    Layers, Trash2, Eye, EyeOff, Copy, Move, ArrowUp, ArrowDown
 } from 'lucide-react';
 import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
@@ -1100,7 +1100,7 @@ const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }) => {
     );
 };
 
-const RenderProjectTechnicalSection: React.FC<{ config: any }> = ({ config }) => {
+const RenderProjectTechnicalSection: React.FC<{ config: any; blockId?: string; onUpdateConfig?: (blockId: string, key: string, value: any) => void }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const layoutMode = c.technicalLayoutMode || 'table_2col';
     const headerColorKey = c.technicalHeaderColor || 'navy';
@@ -1114,8 +1114,68 @@ const RenderProjectTechnicalSection: React.FC<{ config: any }> = ({ config }) =>
         }
     };
     const headerBg = resolveHeaderBg(headerColorKey);
+    const [editingKey, setEditingKey] = React.useState<string | null>(null);
+    const [editingTitleText, setEditingTitleText] = React.useState<string>('');
 
-    let subs: Array<{ key: string; title: string; numberPrefix?: string; requirementText?: string }> = [];
+    const handleToggleColSpanDirect = (subKey: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!onUpdateConfig || !blockId) return;
+        const rawSections = c.technicalSections && c.technicalSections.length > 0 ? c.technicalSections : DEFAULT_TECHNICAL_SUBSECTIONS;
+        const updated = rawSections.map((s: any) => {
+            if ((s.id || s.fieldKey) === subKey) {
+                return { ...s, colSpan: (s.colSpan === 1 ? 2 : 1) };
+            }
+            return s;
+        });
+        onUpdateConfig(blockId, 'technicalSections', updated);
+    };
+
+    const handleCycleVariantDirect = (subKey: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!onUpdateConfig || !blockId) return;
+        const rawSections = c.technicalSections && c.technicalSections.length > 0 ? c.technicalSections : DEFAULT_TECHNICAL_SUBSECTIONS;
+        const variants = ['standard', 'banner_gold', 'banner_navy'];
+        const updated = rawSections.map((s: any) => {
+            if ((s.id || s.fieldKey) === subKey) {
+                const currentIdx = variants.indexOf(s.variant || 'standard');
+                const nextVariant = variants[(currentIdx + 1) % variants.length];
+                return { ...s, variant: nextVariant };
+            }
+            return s;
+        });
+        onUpdateConfig(blockId, 'technicalSections', updated);
+    };
+
+    const handleMoveDirect = (subKey: string, direction: 'up' | 'down', e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!onUpdateConfig || !blockId) return;
+        const rawSections = c.technicalSections && c.technicalSections.length > 0 ? c.technicalSections : DEFAULT_TECHNICAL_SUBSECTIONS;
+        const index = rawSections.findIndex((s: any) => (s.id || s.fieldKey) === subKey);
+        if (index === -1) return;
+
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= rawSections.length) return;
+
+        const updated = [...rawSections];
+        const [moved] = updated.splice(index, 1);
+        updated.splice(newIndex, 0, moved);
+        onUpdateConfig(blockId, 'technicalSections', updated);
+    };
+
+    const handleSaveTitleDirect = (subKey: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        const rawSections = c.technicalSections && c.technicalSections.length > 0 ? c.technicalSections : DEFAULT_TECHNICAL_SUBSECTIONS;
+        const updated = rawSections.map((s: any) => {
+            if ((s.id || s.fieldKey) === subKey) {
+                return { ...s, title: editingTitleText };
+            }
+            return s;
+        });
+        onUpdateConfig(blockId, 'technicalSections', updated);
+        setEditingKey(null);
+    };
+
+    let subs: Array<{ key: string; title: string; numberPrefix?: string; requirementText?: string; colSpan?: 1 | 2; variant?: string }> = [];
 
     if (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0) {
         subs = c.technicalSections
@@ -1125,72 +1185,297 @@ const RenderProjectTechnicalSection: React.FC<{ config: any }> = ({ config }) =>
                 title: s.title,
                 numberPrefix: s.numberPrefix,
                 requirementText: s.requirementText,
+                colSpan: s.colSpan || 2,
+                variant: s.variant || 'standard',
             }));
     } else {
-        subs = [
-            { key: 'showAntecedentes', title: 'ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA', numberPrefix: '3.1', requirementText: 'DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO' },
-            { key: 'showDescripcionProyecto', title: 'DESCRIPCIÓN DEL PROYECTO', numberPrefix: '3.2', requirementText: 'DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO' },
-            { key: 'showJustificacion', title: 'JUSTIFICACIÓN', numberPrefix: '3.3', requirementText: 'CITAR USANDO NORMAS APA 7MA EDICIÓN' },
-            { key: 'showObjetivoGeneral', title: 'OBJETIVO GENERAL', numberPrefix: '3.4', requirementText: 'VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?' },
-            { key: 'showObjetivosEspecificos', title: 'OBJETIVOS ESPECÍFICOS', numberPrefix: '3.4', requirementText: 'INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO' },
-            { key: 'showOds', title: 'OBJETIVOS DE DESARROLLO SOSTENIBLE', numberPrefix: '3.5', requirementText: 'Alineación ODS' },
-            { key: 'showMarcoTeorico', title: 'MARCO TEÓRICO', numberPrefix: '3.6', requirementText: 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN' },
-            { key: 'showMetodologia', title: 'METODOLOGÍA', numberPrefix: '3.7', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS' },
-            { key: 'showEvaluacion', title: 'EVALUACIÓN', numberPrefix: '3.8', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS' },
-        ].filter(s => (c as any)[s.key] !== false);
+        subs = DEFAULT_TECHNICAL_SUBSECTIONS.filter(s => s.enabled).map(s => ({
+            key: s.id || s.fieldKey,
+            title: s.title,
+            numberPrefix: s.numberPrefix,
+            requirementText: s.requirementText,
+            colSpan: s.colSpan || 2,
+            variant: s.variant || 'standard',
+        }));
     }
 
+    const renderDirectControlsPill = (sub: any, isFirst: boolean, isLast: boolean) => (
+        <div className="inline-flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto bg-slate-900/90 px-1.5 py-0.5 rounded-md shadow-md backdrop-blur-xs font-sans text-white border border-slate-700/50">
+            <button
+                type="button"
+                onClick={(e) => handleMoveDirect(sub.key, 'up', e)}
+                disabled={isFirst}
+                className="p-0.5 rounded hover:bg-white/20 text-white disabled:opacity-20 cursor-pointer"
+                title="Mover subsección arriba"
+            >
+                <ArrowUp className="w-2.5 h-2.5" />
+            </button>
+            <button
+                type="button"
+                onClick={(e) => handleMoveDirect(sub.key, 'down', e)}
+                disabled={isLast}
+                className="p-0.5 rounded hover:bg-white/20 text-white disabled:opacity-20 cursor-pointer"
+                title="Mover subsección abajo"
+            >
+                <ArrowDown className="w-2.5 h-2.5" />
+            </button>
+            <span className="w-px h-2.5 bg-white/20 my-auto" />
+            <button
+                type="button"
+                onClick={(e) => handleToggleColSpanDirect(sub.key, e)}
+                className="px-1.5 py-0.5 text-[7.5px] font-black rounded bg-amber-500/30 text-amber-300 border border-amber-500/40 hover:bg-amber-500/50 transition-all cursor-pointer"
+                title="Hacer clic directo para cambiar ancho (50% / 100%)"
+            >
+                {sub.colSpan === 1 ? '50%' : '100%'}
+            </button>
+            <button
+                type="button"
+                onClick={(e) => handleCycleVariantDirect(sub.key, e)}
+                className="px-1.5 py-0.5 text-[7.5px] font-black rounded bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 hover:bg-indigo-500/50 transition-all cursor-pointer"
+                title="Hacer clic directo para cambiar estilo (Dorado / Azul / Normal)"
+            >
+                {sub.variant === 'banner_gold' ? 'Dorado' : sub.variant === 'banner_navy' ? 'Azul' : 'Estándar'}
+            </button>
+        </div>
+    );
+
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-2 shadow-xs">
+        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-2 shadow-xs">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
                 <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    Plan Técnico ({layoutMode === 'table_2col' ? 'Formato Tabla Institucional 2 Col.' : 'Secciones Consecutivas'})
+                    Plan Técnico ({layoutMode === 'table_2col' ? 'Matriz Reticular Interactiva' : 'Secciones Consecutivas'})
                 </span>
                 <span className="text-[8px] font-mono text-indigo-500 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">
-                    {subs.length} SUB-SECCIONES ACTIVAS
+                    {subs.length} SUB-SECCIONES (EDICIÓN EN CANVAS)
                 </span>
             </div>
 
             {layoutMode === 'table_2col' ? (
-                /* Vista Previa de Tabla Institucional 2 Columnas */
-                <div className="overflow-hidden border border-slate-300 rounded-lg">
+                <div className="overflow-hidden border border-slate-300 rounded-lg shadow-xs">
                     <table className="w-full border-collapse text-[9px]">
                         <tbody>
-                            {subs.map(sub => (
-                                <tr key={sub.key} className="border-b border-slate-200 last:border-b-0">
-                                    <td
-                                        className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] leading-snug"
-                                        style={{ backgroundColor: headerBg }}
-                                    >
-                                        {sub.title}
-                                    </td>
-                                    <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px] leading-relaxed">
-                                        {sub.requirementText ? (
-                                            <span className="font-bold text-slate-700 block">
-                                                [{sub.requirementText}]
-                                            </span>
-                                        ) : (
-                                            <span className="italic text-slate-400">[Redacción colaborativa de la sección]</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
+                            {(() => {
+                                const rows: React.ReactNode[] = [];
+                                const goldColor = '#b8912e';
+                                let idx = 0;
+
+                                while (idx < subs.length) {
+                                    const sub = subs[idx];
+                                    const num = (sub.numberPrefix || '').trim();
+                                    let titleClean = (sub.title || '').trim();
+                                    if (num && titleClean.toLowerCase().startsWith(num.toLowerCase())) {
+                                        titleClean = titleClean.substring(num.length).trim();
+                                    }
+                                    const displayTitle = num ? `${num} ${titleClean}` : titleClean;
+                                    const variant = sub.variant || 'standard';
+                                    const colSpan = sub.colSpan || 2;
+                                    const isEditingThis = editingKey === sub.key;
+
+                                    if (colSpan === 1) {
+                                        const nextSub = subs[idx + 1];
+                                        if (nextSub && (nextSub.colSpan === 1 || nextSub.variant === 'banner_navy')) {
+                                            const nextNum = (nextSub.numberPrefix || '').trim();
+                                            let nextTitleClean = (nextSub.title || '').trim();
+                                            if (nextNum && nextTitleClean.toLowerCase().startsWith(nextNum.toLowerCase())) {
+                                                nextTitleClean = nextTitleClean.substring(nextNum.length).trim();
+                                            }
+                                            const nextDisplayTitle = nextNum ? `${nextNum} ${nextTitleClean}` : nextTitleClean;
+
+                                            const bg1 = sub.variant === 'banner_gold' ? goldColor : headerBg;
+                                            const bg2 = nextSub.variant === 'banner_gold' ? goldColor : headerBg;
+
+                                            rows.push(
+                                                <React.Fragment key={sub.key}>
+                                                    <tr className="border-b border-slate-300">
+                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer" style={{ backgroundColor: bg1 }}>
+                                                            <span className="flex items-center justify-center gap-1">
+                                                                {displayTitle}
+                                                                {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-slate-300 text-[8.5px] cursor-pointer" style={{ backgroundColor: bg2 }}>
+                                                            <span className="flex items-center justify-center gap-1">
+                                                                {nextDisplayTitle}
+                                                                {renderDirectControlsPill(nextSub, idx + 1 === 0, idx + 1 === subs.length - 1)}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="border-b border-slate-200">
+                                                        <td className="p-2 w-1/2 text-slate-600 bg-white border-r border-slate-200 align-top text-[8.5px]">
+                                                            {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
+                                                        </td>
+                                                        <td className="p-2 w-1/2 text-slate-600 bg-white align-top text-[8.5px]">
+                                                            {nextSub.requirementText ? <span className="font-bold text-slate-700 block">[{nextSub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
+                                                        </td>
+                                                    </tr>
+                                                </React.Fragment>
+                                            );
+                                            idx += 2;
+                                        } else {
+                                            const bg1 = sub.variant === 'banner_gold' ? goldColor : headerBg;
+                                            rows.push(
+                                                <tr key={sub.key} className="border-b border-slate-200">
+                                                    <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px]" style={{ backgroundColor: bg1 }}>
+                                                        <span className="flex items-center justify-between gap-1">
+                                                            <span>{displayTitle}</span>
+                                                            {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
+                                                        {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
+                                                    </td>
+                                                </tr>
+                                            );
+                                            idx++;
+                                        }
+                                    } else if (variant === 'banner_gold') {
+                                        rows.push(
+                                            <tr key={sub.key} className="border-b border-slate-300">
+                                                <td
+                                                    colSpan={2}
+                                                    className="p-1.5 text-center font-bold text-slate-900 uppercase text-[9px] tracking-wider cursor-pointer"
+                                                    style={{ backgroundColor: goldColor }}
+                                                    onClick={() => {
+                                                        setEditingKey(sub.key);
+                                                        setEditingTitleText(sub.title);
+                                                    }}
+                                                >
+                                                    {isEditingThis ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editingTitleText}
+                                                            onChange={e => setEditingTitleText(e.target.value)}
+                                                            onBlur={() => handleSaveTitleDirect(sub.key)}
+                                                            onKeyDown={e => e.key === 'Enter' && handleSaveTitleDirect(sub.key)}
+                                                            autoFocus
+                                                            className="w-full px-2 py-0.5 bg-white text-slate-900 font-bold border rounded focus:outline-none text-center"
+                                                        />
+                                                    ) : (
+                                                        <span className="flex items-center justify-center gap-1">
+                                                            {displayTitle}
+                                                            {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                        idx++;
+                                    } else if (variant === 'banner_navy' || variant === 'header_only') {
+                                        rows.push(
+                                            <tr key={sub.key} className="border-b border-slate-300">
+                                                <td
+                                                    colSpan={2}
+                                                    className="p-1.5 text-center font-bold text-white uppercase text-[8.5px] tracking-wider cursor-pointer"
+                                                    style={{ backgroundColor: headerBg }}
+                                                    onClick={() => {
+                                                        setEditingKey(sub.key);
+                                                        setEditingTitleText(sub.title);
+                                                    }}
+                                                >
+                                                    {isEditingThis ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editingTitleText}
+                                                            onChange={e => setEditingTitleText(e.target.value)}
+                                                            onBlur={() => handleSaveTitleDirect(sub.key)}
+                                                            onKeyDown={e => e.key === 'Enter' && handleSaveTitleDirect(sub.key)}
+                                                            autoFocus
+                                                            className="w-full px-2 py-0.5 bg-slate-900 text-white font-bold border rounded focus:outline-none text-center"
+                                                        />
+                                                    ) : (
+                                                        <span className="flex items-center justify-center gap-1">
+                                                            {displayTitle}
+                                                            {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                        idx++;
+                                    } else {
+                                        rows.push(
+                                            <tr key={sub.key} className="border-b border-slate-200 last:border-b-0">
+                                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] leading-snug cursor-pointer" style={{ backgroundColor: headerBg }}>
+                                                    <span className="flex items-center justify-between gap-1">
+                                                        <span>{displayTitle}</span>
+                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                    </span>
+                                                </td>
+                                                <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px] leading-relaxed">
+                                                    {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa de la sección]</span>}
+                                                </td>
+                                            </tr>
+                                        );
+                                        idx++;
+                                    }
+                                }
+                                return rows;
+                            })()}
                         </tbody>
                     </table>
                 </div>
+            ) : layoutMode === 'cards' ? (
+                /* Vista Previa: Modo 3 - Tarjetas Dinámicas Modulares */
+                <div className="space-y-2">
+                    {subs.map(sub => {
+                        const num = (sub.numberPrefix || '').trim();
+                        let titleClean = (sub.title || '').trim();
+                        if (num && titleClean.toLowerCase().startsWith(num.toLowerCase())) {
+                            titleClean = titleClean.substring(num.length).trim();
+                        }
+                        const displayTitle = num ? `${num} ${titleClean}` : titleClean;
+
+                        return (
+                            <div key={sub.key} className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-xs">
+                                <div
+                                    className="px-2.5 py-1 text-white font-bold text-[8.5px] uppercase tracking-wider flex items-center justify-between"
+                                    style={{ backgroundColor: headerBg }}
+                                >
+                                    <span>{displayTitle}</span>
+                                    <span className="text-[7.5px] opacity-75 font-mono">TARJETA MODULAR</span>
+                                </div>
+                                <div className="p-2 text-[8.5px] text-slate-600 bg-slate-50/30">
+                                    {sub.requirementText ? (
+                                        <span className="font-bold text-slate-700 block">
+                                            [{sub.requirementText}]
+                                        </span>
+                                    ) : (
+                                        <span className="italic text-slate-400">[Contenido editable colaborativamente en la tarjeta]</span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             ) : (
-                /* Vista Previa de Secciones Consecutivas */
-                <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700">
-                    {subs.map(sub => (
-                        <div key={sub.key} className="p-2 border border-slate-150 rounded bg-white flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 shrink-0" />
-                            {sub.numberPrefix && (
-                                <span className="font-mono font-bold text-indigo-500 text-[8.5px] shrink-0">{sub.numberPrefix}</span>
-                            )}
-                            <span className="font-semibold text-slate-700 truncate">{sub.title}</span>
-                        </div>
-                    ))}
+                /* Vista Previa: Modo 2 - Secciones Consecutivas */
+                <div className="space-y-2">
+                    {subs.map(sub => {
+                        const num = (sub.numberPrefix || '').trim();
+                        let titleClean = (sub.title || '').trim();
+                        if (num && titleClean.toLowerCase().startsWith(num.toLowerCase())) {
+                            titleClean = titleClean.substring(num.length).trim();
+                        }
+                        const displayTitle = num ? `${num} ${titleClean}` : titleClean;
+
+                        return (
+                            <div key={sub.key} className="border-l-4 rounded-r-lg bg-slate-50/80 p-2 border-y border-r border-slate-200" style={{ borderLeftColor: headerBg }}>
+                                <div className="font-bold text-[8.5px] uppercase tracking-wider" style={{ color: headerBg }}>
+                                    {displayTitle}
+                                </div>
+                                <div className="text-[8.5px] text-slate-600 mt-1">
+                                    {sub.requirementText ? (
+                                        <span className="font-bold text-slate-700 block">
+                                            [{sub.requirementText}]
+                                        </span>
+                                    ) : (
+                                        <span className="italic text-slate-400">[Párrafo continuo redactado por investigadores]</span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
@@ -1427,7 +1712,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'rubric_table': return <RenderRubricTable config={block.config} />;
             case 'signatures': return <RenderSignatures config={block.config} />;
             case 'project_general_section': return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
-            case 'project_technical_section': return <RenderProjectTechnicalSection config={block.config} />;
+            case 'project_technical_section': return <RenderProjectTechnicalSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_budget_section': return <RenderProjectBudgetSection config={block.config} />;
             case 'project_progress_report': return <RenderProjectProgressReport config={block.config} />;
             case 'project_ethics_report': return <RenderProjectEthicsReport config={block.config} />;
