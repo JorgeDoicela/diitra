@@ -12,6 +12,10 @@ export function useVoiceRecorder() {
 
     const startRecording = async () => {
         try {
+            if (!navigator?.mediaDevices?.getUserMedia) {
+                alert("El acceso al micrófono requiere una conexión segura (HTTPS) o acceder desde localhost.");
+                return;
+            }
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
@@ -36,9 +40,9 @@ export function useVoiceRecorder() {
             timerRef.current = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error starting voice recorder:", err);
-            alert("No se pudo acceder al micrófono. Verifique los permisos.");
+            alert("No se pudo acceder al micrófono. Verifique que la conexión sea HTTPS y los permisos del navegador.");
         }
     };
 

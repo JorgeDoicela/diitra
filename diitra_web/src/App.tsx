@@ -184,6 +184,11 @@ const NavigateToResearchProjects = () => {
     return <Navigate to={target} replace />;
 };
 
+const NavigateToArbitrajeProyecto = () => {
+    const { projectUuid } = useParams();
+    return <Navigate to={`/evaluacion-pares/proyecto/${projectUuid}`} replace />;
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -299,6 +304,9 @@ function App() {
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
                             <Route path="/evaluacion-pares" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
                             <Route path="/evaluacion-pares/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
+                            <Route path="/arbitraje/proyecto/:projectUuid" element={<NavigateToArbitrajeProyecto />} />
+                            <Route path="/arbitraje" element={<Navigate to="/evaluacion-pares" replace />} />
+                            <Route path="/investigacion/arbitraje" element={<Navigate to="/evaluacion-pares" replace />} />
                             <Route path="/verificacion" element={<VerifyDocument />} />
                             <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>

@@ -283,7 +283,7 @@ namespace Diitra.Infrastructure.Research
                         "Proyecto Postulado",
                         $"El proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido postulado y requiere revisión.",
                         new[] { "DIITRA_ADMIN" },
-                        $"/arbitraje/proyecto/{proyecto.Uuid}"
+                        $"/investigacion/revision-tecnica/{proyecto.Uuid}"
                     );
                 }
                 catch (Exception ex)

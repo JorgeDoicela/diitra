@@ -423,7 +423,7 @@ namespace diitra_infrastructure.Research
                         "Evaluación de Par Completada",
                         $"El evaluador {nombreRevisor} ha completado la revisión del proyecto '{project.Titulo}'.",
                         new[] { "DIITRA_ADMIN" },
-                        $"/arbitraje/proyecto/{project.Uuid}"
+                        $"/evaluacion-pares/proyecto/{project.Uuid}"
                     );
 
                     var allProjectRevisions = await _context.Set<InvRevisionesPares>()
@@ -437,7 +437,7 @@ namespace diitra_infrastructure.Research
                             "Desempate pendiente",
                             $"\"{project.Titulo}\" tiene dictámenes divididos. Se requiere un tercer árbitro.",
                             new[] { "DIITRA_ADMIN" },
-                            $"/arbitraje/proyecto/{project.Uuid}"
+                            $"/evaluacion-pares/proyecto/{project.Uuid}"
                         );
                     }
                 }
