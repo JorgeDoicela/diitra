@@ -15,6 +15,8 @@ namespace Diitra.Infrastructure.Common.Storage
         
         Task<byte[]> GetFileAsync(string filePath);
         
+        bool FileExists(string filePath);
+        
         Task DeleteFileAsync(string filePath);
     }
 
@@ -54,11 +56,37 @@ namespace Diitra.Infrastructure.Common.Storage
 
         public async Task<byte[]> GetFileAsync(string filePath)
         {
-            var fullPath = Path.Combine(_basePath, filePath);
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new FileNotFoundException("La ruta del archivo especificada está vacía.");
+
+            var cleanPath = filePath.Replace('\\', '/').TrimStart('/');
+            var baseFolderName = Path.GetFileName(_basePath.TrimEnd('/', '\\'));
+
+            if (!string.IsNullOrEmpty(baseFolderName) && cleanPath.StartsWith(baseFolderName + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanPath = cleanPath.Substring(baseFolderName.Length + 1);
+            }
+
+            var fullPath = Path.Combine(_basePath, cleanPath);
             if (!File.Exists(fullPath))
-                throw new FileNotFoundException("El archivo no existe en el almacenamiento.");
+                throw new FileNotFoundException($"El archivo '{cleanPath}' no existe en el almacenamiento.");
 
             return await File.ReadAllBytesAsync(fullPath);
+        }
+
+        public bool FileExists(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            var cleanPath = filePath.Replace('\\', '/').TrimStart('/');
+            var baseFolderName = Path.GetFileName(_basePath.TrimEnd('/', '\\'));
+
+            if (!string.IsNullOrEmpty(baseFolderName) && cleanPath.StartsWith(baseFolderName + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanPath = cleanPath.Substring(baseFolderName.Length + 1);
+            }
+
+            var fullPath = Path.Combine(_basePath, cleanPath);
+            return File.Exists(fullPath);
         }
 
         public async Task DeleteFileAsync(string filePath)

@@ -721,8 +721,8 @@ namespace diitra_api.Controllers
             {
                 var userUuid = User.Identity?.Name ?? "anon";
 
-                // 1. Orquestar los datos (Investigación + CoWork)
-                var docRequest = await _orchestrator.PrepareRequestAsync(uuid, userUuid, ct);
+                // 1. Orquestar los datos (Investigación + CoWork) en modo oficial (sin marca borrador)
+                var docRequest = await _orchestrator.PrepareRequestAsync(uuid, userUuid, forceDraftMode: false, ct: ct);
 
                 // 2. Generar el PDF oficial usando el Motor de Documentos (DIITRA Builder)
                 var buildResult = await _documentEngine.GenerateAsync(docRequest, ct);

@@ -112,9 +112,9 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         var nombreUsuario = user.Nombre ?? user.IdSigafi ?? "Usuario DIITRA";
         var cedulaUsuario = user.IdSigafi;
 
-        // 2. Verificar que el documento existe y es accesible
+        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad)
         var instancia = await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.Uuid == dto.DocumentoUuid)
+            .FirstOrDefaultAsync(d => d.Uuid == dto.DocumentoUuid || d.EntityUuid == dto.DocumentoUuid)
             ?? throw new KeyNotFoundException($"Documento '{dto.DocumentoUuid}' no encontrado.");
 
         // 3. Verificar que el perfil de firma está configurado
@@ -140,29 +140,47 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             throw new InvalidOperationException("El usuario no tiene un perfil de firma institucional configurado. Configure su cargo y trazo antes de firmar.");
         }
 
-        // 4. Verificar que no está ya firmado por este usuario con DIITRA
-        var existingFirma = await _context.InvDocumentoFirmas
-            .AnyAsync(f => f.DocumentoUuid == dto.DocumentoUuid
-                        && (f.FirmanteId == idUsuario.ToString() || f.FirmanteId == $"USR-{idUsuario}")
-                        && f.TipoFirma == "DIITRA"
-                        && f.EsValida);
-        if (existingFirma)
-        {
-            var failAudit = new InvAuditAdmin
-            {
-                IdUsuarioAdmin = idUsuario,
-                IdUsuarioAfectado = idUsuario,
-                Accion = SignatureAuditEvent.SignatureFailed.ToString(),
-                Modulo = "Signatures",
-                Detalle = $"Intento de firma fallido para el documento {dto.DocumentoUuid}: ya existe una firma activa de este usuario.",
-                IpOrigen = ipAddress,
-                UserAgent = userAgent,
-                Fecha = DateTime.UtcNow
-            };
-            _context.InvAuditAdmin.Add(failAudit);
-            await _context.SaveChangesAsync();
+        // 4. Verificar firma existente o permitir re-firma si el proyecto fue devuelto a corrección
+        var existingFirmas = await _context.InvDocumentoFirmas
+            .Where(f => (f.DocumentoUuid == instancia.Uuid || f.DocumentoUuid == instancia.EntityUuid)
+                     && (f.FirmanteId == idUsuario.ToString() || f.FirmanteId == $"USR-{idUsuario}")
+                     && f.TipoFirma == "DIITRA"
+                     && f.EsValida)
+            .ToListAsync();
 
-            throw new InvalidOperationException("Ya existe una firma DIITRA válida de este usuario en el documento.");
+        if (existingFirmas.Any())
+        {
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instancia.EntityUuid);
+            var stateLower = project?.Estado?.ToLower().Trim() ?? "";
+            var isFinalLockedState = stateLower == "enviado" || stateLower == "aprobado" || stateLower == "en ejecución" || stateLower == "en ejecucion" || stateLower == "finalizado";
+            var isCorrectionMode = !isFinalLockedState || stateLower.Contains("devuelt") || stateLower.Contains("correc") || stateLower.Contains("observac") || stateLower.Contains("edici");
+
+            if (isCorrectionMode)
+            {
+                foreach (var f in existingFirmas)
+                {
+                    f.EsValida = false;
+                }
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var failAudit = new InvAuditAdmin
+                {
+                    IdUsuarioAdmin = idUsuario,
+                    IdUsuarioAfectado = idUsuario,
+                    Accion = SignatureAuditEvent.SignatureFailed.ToString(),
+                    Modulo = "Signatures",
+                    Detalle = $"Intento de firma fallido para el documento {dto.DocumentoUuid}: ya existe una firma activa de este usuario.",
+                    IpOrigen = ipAddress,
+                    UserAgent = userAgent,
+                    Fecha = DateTime.UtcNow
+                };
+                _context.InvAuditAdmin.Add(failAudit);
+                await _context.SaveChangesAsync();
+
+                throw new InvalidOperationException("Ya existe una firma DIITRA válida de este usuario en el documento.");
+            }
         }
 
         // 5. Obtener el PDF actual del documento
@@ -186,8 +204,8 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         var firmaImagenB64 = await GetFirmaBase64Async(perfil?.FirmaImagenB64);
 
         // 9. Estampar el bloque visual en el PDF
-        var verificationBaseUrl = _config["FrontendUrl"] ?? "https://diitra.ist.edu.ec";
-        var verificationUrl = $"{verificationBaseUrl}/verificar-firma/{firmaCode}";
+        var verificationBaseUrl = _config["FrontendUrl"] ?? _config["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var verificationUrl = $"{verificationBaseUrl.TrimEnd('/')}/verificacion/{firmaCode}";
 
         var pdfFirmado = _stamper.StampSignatureBlock(
             pdfBytes: pdfBytes,
@@ -210,11 +228,15 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             // 11. Guardar el PDF firmado físicamente
             pdfPath = await SaveSignedPdfAsync(pdfFirmado, dto.DocumentoUuid, firmaCode);
 
-            // 12. Actualizar DocumentInstance
-            instancia.Finalize(
-                pdfPath: pdfPath,
-                hash: docHash,
-                traceabilityCode: firmaCode);
+            // 12. Actualizar todas las instancias relacionales del documento
+            var instanciasRelacionadas = await _context.DocumentInstances
+                .Where(d => d.Uuid == instancia.Uuid || (instancia.EntityUuid != null && d.EntityUuid == instancia.EntityUuid))
+                .ToListAsync();
+
+            foreach (var inst in instanciasRelacionadas)
+            {
+                inst.Finalize(pdfPath: pdfPath, hash: docHash, traceabilityCode: firmaCode);
+            }
 
             // 13. Persistir el registro de firma
             var snapshotJson = JsonSerializer.Serialize(new
@@ -307,25 +329,13 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
 
     private async Task<byte[]> GetPdfBytesFromInstanceAsync(Diitra.Domain.Common.Documents.DocumentInstance instancia)
     {
-        if (string.IsNullOrWhiteSpace(instancia.FinalPdfPath))
-        {
-            _logger.LogInformation("[DIITRA Firma] El documento '{Uuid}' no tiene PDF generado. Generándolo temporalmente en memoria...", instancia.Uuid);
+        var dataOrchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentDataOrchestrator>();
+        var documentEngine = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentEngine>();
 
-            var dataOrchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentDataOrchestrator>();
-            var documentEngine = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentEngine>();
+        var docRequest = await dataOrchestrator.PrepareRequestAsync(instancia.Uuid, "sistema", forceDraftMode: false);
+        var buildResult = await documentEngine.GenerateAsync(docRequest);
 
-            var docRequest = await dataOrchestrator.PrepareRequestAsync(instancia.Uuid, "sistema");
-            var buildResult = await documentEngine.GenerateAsync(docRequest);
-
-            return buildResult.PdfBytes;
-        }
-
-        if (Path.IsPathRooted(instancia.FinalPdfPath) && File.Exists(instancia.FinalPdfPath))
-        {
-            return await File.ReadAllBytesAsync(instancia.FinalPdfPath);
-        }
-
-        return await _storageService.GetFileAsync(instancia.FinalPdfPath);
+        return buildResult.PdfBytes;
     }
 
     private async Task<string> SaveSignedPdfAsync(byte[] pdfBytes, string documentoUuid, string firmaCode)

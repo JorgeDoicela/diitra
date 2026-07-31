@@ -552,7 +552,7 @@ export function useProjectTeam(
         }
     };
 
-    const populateTeamFromProject = (data: any) => {
+    const populateTeamFromProject = useCallback((data: any) => {
         if (!data) return;
         setInvestigadores((data.investigadores || []).map(mapInvestigador));
         const groupUuid = data.grupo_investigacion_uuid ?? data.grupoInvestigacionUuid ?? data.grupo_invest_uuid ?? data.grupoInvestigacion ?? '';
@@ -562,7 +562,7 @@ export function useProjectTeam(
         if (data.estado !== 'Prepropuesta' && data.estado !== 'Prepropuesta Rechazada') {
             fetchTeamChangeRequests(data.uuid);
         }
-    };
+    }, [fetchTeamChangeRequests]);
 
     return {
         investigadores,

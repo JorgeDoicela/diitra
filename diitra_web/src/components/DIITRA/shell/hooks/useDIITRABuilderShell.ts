@@ -1,4 +1,4 @@
-import type { CoWorkHandle } from '../../../../../core/cowork/types';
+import type { CoWorkHandle } from '../../../../core/cowork/types';
 import { useBuilderLayout } from './useBuilderLayout';
 import type { BuilderSection } from './useBuilderLayout';
 import { useBuilderAutoSave } from './useBuilderAutoSave';
@@ -50,6 +50,7 @@ export const useDIITRABuilderShell = (props: UseDIITRABuilderShellProps) => {
         templateCode: props.templateCode,
         formData: props.formData,
         documentUuid: props.documentUuid,
+        entityUuid: props.entityUuid,
         projectStatus: props.projectStatus,
         signatureType: props.signatureType,
         addAudit: autoSave.addAudit

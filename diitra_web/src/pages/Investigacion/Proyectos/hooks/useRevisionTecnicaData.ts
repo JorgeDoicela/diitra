@@ -106,17 +106,25 @@ export const useRevisionTecnicaData = ({
 
             if (finalPath) {
                 const cleanPath = finalPath.replace(/\\/g, '/');
-                const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
-                const blobUrl = URL.createObjectURL(new Blob([fileRes.data], { type: 'application/pdf' }));
-                setPdfUrl(blobUrl);
-            } else {
-                const projectRes = await api.get(`/projects/${uuid}/detail`);
-                const pdfRes = await api.post(`/projects/generate-pdf?isDraft=true`, projectRes.data, { responseType: 'blob' });
-                const blobUrl = URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
-                setPdfUrl(blobUrl);
+                try {
+                    const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
+                    const blobUrl = URL.createObjectURL(new Blob([fileRes.data], { type: 'application/pdf' }));
+                    setPdfUrl(blobUrl);
+                } catch (storageErr) {
+                    console.error('[DIITRA] El documento final/firmado registrado no se encuentra en el almacenamiento del servidor:', storageErr);
+                    setPdfUrl(null);
+                }
+                return;
             }
+
+            // Solo si no existe finalPath (instancia en borrador), se genera la previsualización de borrador
+            const projectRes = await api.get(`/projects/${uuid}/detail`);
+            const pdfRes = await api.post(`/projects/generate-pdf?isDraft=true`, projectRes.data, { responseType: 'blob' });
+            const blobUrl = URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
+            setPdfUrl(blobUrl);
         } catch (err) {
             console.error('[DIITRA] Error al cargar PDF:', err);
+            setPdfUrl(null);
         } finally {
             setLoadingPdf(false);
         }

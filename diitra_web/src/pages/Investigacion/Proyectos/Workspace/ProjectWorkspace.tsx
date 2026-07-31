@@ -10,7 +10,7 @@
 //
 // ══════════════════════════════════════════════════════════════════════════════
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -91,29 +91,58 @@ export const ProjectWorkspace: React.FC = () => {
     const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
     const preloadedData = React.useMemo(() => ({ Uuid: editorUuid }), [editorUuid]);
 
+    const handleProjectsChanged = useCallback(() => {
+        console.log("[DIITRA] Recargando datos del proyecto por evento, enfoque de ventana o polling...");
+        fetchProject((data) => {
+            if (data) team.populateTeamFromProject(data);
+        });
+        preproposal.fetchTrazabilidad();
+    }, [fetchProject, team.populateTeamFromProject, preproposal.fetchTrazabilidad]);
+
     useEffect(() => {
         if (resolvedProjectUuid) {
-            fetchProject((data) => {
-                if (data) team.populateTeamFromProject(data);
-            });
+            handleProjectsChanged();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [resolvedProjectUuid, activeDocument]);
+    }, [resolvedProjectUuid, activeDocument, handleProjectsChanged]);
 
     useEffect(() => {
-        const handleProjectsChanged = () => {
-            console.log("[DIITRA] Evento diitra-projects-changed capturado. Recargando datos del proyecto y trazabilidad...");
-            fetchProject((data) => {
-                if (data) team.populateTeamFromProject(data);
-            });
-            preproposal.fetchTrazabilidad();
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        const handleFocus = () => {
+            handleProjectsChanged();
         };
 
-        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                handleProjectsChanged();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
             window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [fetchProject, preproposal, team]);
+    }, [handleProjectsChanged]);
+
+    // Polling en segundo plano cuando el proyecto está en un estado activo o pendiente de revisión
+    useEffect(() => {
+        if (!currentProject?.status) return;
+
+        const isPendingState = ['Enviado', 'Prepropuesta', 'Prepropuesta Rechazada', 'En Revisión', 'En Corrección'].includes(currentProject.status);
+        if (!isPendingState) return;
+
+        const intervalId = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                handleProjectsChanged();
+            }
+        }, 15000); // Polling suave cada 15 segundos
+
+        return () => clearInterval(intervalId);
+    }, [currentProject?.status, handleProjectsChanged]);
 
     if (isLoading || !resolvedProjectUuid) {
         return <FullscreenLoader message="Cargando proyecto..." />;

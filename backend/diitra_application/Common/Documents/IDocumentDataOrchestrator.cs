@@ -17,6 +17,6 @@ namespace Diitra.Application.Common.Documents
         /// </summary>
         /// <param name="documentInstanceUuid">UUID de la instancia de documento a generar.</param>
         /// <param name="requestedBy">Email/UUID del usuario que solicita la generación.</param>
-        Task<DocumentRequest> PrepareRequestAsync(string documentInstanceUuid, string requestedBy, CancellationToken ct = default);
+        Task<DocumentRequest> PrepareRequestAsync(string documentInstanceUuid, string requestedBy, bool? forceDraftMode = null, CancellationToken ct = default);
     }
 }

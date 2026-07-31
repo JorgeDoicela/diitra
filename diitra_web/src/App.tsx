@@ -308,11 +308,13 @@ function App() {
                             <Route path="/arbitraje" element={<Navigate to="/evaluacion-pares" replace />} />
                             <Route path="/investigacion/arbitraje" element={<Navigate to="/evaluacion-pares" replace />} />
                             <Route path="/verificacion" element={<VerifyDocument />} />
+                            <Route path="/verificar-firma" element={<RedirectPreserveSearch to="/verificacion" />} />
                             <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>
 
                         {/* Public Verification Page (Accessible without authentication) */}
                         <Route path="/verificacion/:code" element={<VerifyDocument />} />
+                        <Route path="/verificar-firma/:code" element={<RedirectVerifyCode />} />
                         <Route path="/verify/:code" element={<RedirectVerifyCode />} />
 
                         {/* Public Groups Page */}

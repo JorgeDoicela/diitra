@@ -96,54 +96,72 @@ namespace diitra_api.Controllers
         {
             _logger.LogInformation("[DIITRA CORE] Solicitud de verificación pública de trazabilidad para código: {Code}", code);
 
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return BadRequest(new { error = "El código de verificación es requerido." });
+            }
+
+            code = code.Trim();
+
             // 1. Intentar buscar por código de trazabilidad del documento original
             var auditEntry = await auditRepository.FindByTraceabilityCodeAsync(code, ct);
             
             // 2. Si no se encuentra, intentar buscar por un código de firma (DFRM-*)
+            diitra_infrastructure.data.models.InvDocumentoFirma? firmaBusqueda = null;
             if (auditEntry == null)
             {
-                var firma = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+                firmaBusqueda = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
                     context.InvDocumentoFirmas, f => f.FirmaCode == code, ct);
 
-                if (firma != null)
+                if (firmaBusqueda != null && !string.IsNullOrWhiteSpace(firmaBusqueda.DocumentoUuid))
                 {
                     auditEntry = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-                        context.DocumentAuditEntries, e => e.EntityUuid == firma.DocumentoUuid, ct);
+                        context.DocumentAuditEntries, e => e.EntityUuid == firmaBusqueda.DocumentoUuid, ct);
                 }
             }
 
-            if (auditEntry == null)
+            if (auditEntry == null && firmaBusqueda == null)
             {
                 return NotFound(new { error = "El código de trazabilidad o firma no es válido, o el documento no ha sido emitido oficialmente." });
             }
 
-            string templateName = "Documento Oficial DIITRA";
-            try 
+            string templateName = auditEntry != null ? "Documento Oficial DIITRA" : "Firma Institucional DIITRA";
+            if (auditEntry != null)
             {
-                var template = await templateRepository.FindByCodeAsync(auditEntry.TemplateCode, ct);
-                if (template != null)
+                try 
                 {
-                    templateName = template.Name;
+                    var template = await templateRepository.FindByCodeAsync(auditEntry.TemplateCode, ct);
+                    if (template != null)
+                    {
+                        templateName = template.Name;
+                    }
                 }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogWarning(ex, "[DIITRA CORE] No se pudo obtener el nombre de la plantilla {Code}", auditEntry.TemplateCode);
+                catch (System.Exception ex)
+                {
+                    _logger.LogWarning(ex, "[DIITRA CORE] No se pudo obtener el nombre de la plantilla {Code}", auditEntry.TemplateCode);
+                }
             }
 
             // 3. Obtener todas las firmas asociadas a este documento ordenadas por fecha (cascada de firmas)
             var firmasDb = new System.Collections.Generic.List<diitra_infrastructure.data.models.InvDocumentoFirma>();
-            if (!string.IsNullOrWhiteSpace(auditEntry.EntityUuid))
+            string docUuidToSearch = auditEntry?.EntityUuid ?? firmaBusqueda?.DocumentoUuid ?? "";
+
+            if (!string.IsNullOrWhiteSpace(docUuidToSearch))
             {
                 firmasDb = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync(
                     Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AsNoTracking(
                         System.Linq.Queryable.OrderBy(
-                            System.Linq.Queryable.Where(context.InvDocumentoFirmas, f => f.DocumentoUuid == auditEntry.EntityUuid),
+                            System.Linq.Queryable.Where(context.InvDocumentoFirmas, f => f.DocumentoUuid == docUuidToSearch),
                             f => f.FechaFirma
                         )
                     ),
                     ct
                 );
+            }
+
+            if (firmasDb.Count == 0 && firmaBusqueda != null)
+            {
+                firmasDb.Add(firmaBusqueda);
             }
 
             var firmasList = System.Linq.Enumerable.ToList(
@@ -171,16 +189,22 @@ namespace diitra_api.Controllers
                 })
             );
 
+            string generatedBy = auditEntry?.GeneratedBy ?? "Sistema DIITRA";
+            if (auditEntry == null && firmaBusqueda != null && firmasList.Count > 0)
+            {
+                generatedBy = firmasList[0].FirmanteNombre;
+            }
+
             return Ok(new
             {
-                TemplateCode = auditEntry.TemplateCode,
+                TemplateCode = auditEntry?.TemplateCode ?? "DFRM-VERIFY",
                 TemplateName = templateName,
-                TemplateVersion = auditEntry.TemplateVersion,
-                Category = auditEntry.Category.ToString(),
-                GeneratedBy = auditEntry.GeneratedBy ?? "Sistema DIITRA",
-                GeneratedAt = auditEntry.GeneratedAt,
-                FileHash = auditEntry.FileHash ?? "N/A",
-                FileName = auditEntry.FileName,
+                TemplateVersion = auditEntry != null ? auditEntry.TemplateVersion.ToString() : "1.0",
+                Category = auditEntry != null ? auditEntry.Category.ToString() : "SignatureVerification",
+                GeneratedBy = generatedBy,
+                GeneratedAt = auditEntry?.GeneratedAt ?? firmaBusqueda?.FechaFirma ?? System.DateTime.UtcNow,
+                FileHash = auditEntry?.FileHash ?? firmaBusqueda?.DocHash ?? "N/A",
+                FileName = auditEntry?.FileName ?? $"Firma_{firmaBusqueda?.FirmaCode}.pdf",
                 Signatures = firmasList
             });
         }

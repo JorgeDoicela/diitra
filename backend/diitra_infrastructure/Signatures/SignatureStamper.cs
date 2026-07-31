@@ -205,18 +205,16 @@ public class SignatureStamper
             var page = pdf.GetPage(totalPages);
             var pdfCanvas = new iText.Kernel.Pdf.Canvas.PdfCanvas(page);
 
-            // Intentar encontrar las coordenadas del nombre del firmante en la página para estampar encima
-            float canvasX;
-            float canvasY = 135f; // Fallback estimado a nivel del recuadro de firmas si no se encuentra nada
-
+            // Intentar encontrar las coordenadas del nombre o rol del firmante en la página para estampar encima
             bool esDirector = string.IsNullOrWhiteSpace(rolEnDocumento) || 
                               rolEnDocumento.Contains("Director", StringComparison.OrdinalIgnoreCase) || 
                               rolEnDocumento.Contains("Elaborado", StringComparison.OrdinalIgnoreCase);
 
-            canvasX = esDirector ? 60f : 320f;
+            string roleTarget1 = esDirector ? "Director del Proyecto" : "Coordinador de Carrera";
+            string roleTarget2 = esDirector ? "Director de Proyecto" : "Coordinador";
+            string roleLabelTarget = esDirector ? "Elaborado por:" : "Aprobado por:";
 
-            // 1. Intentar buscar por el nombre completo
-            var finder = new TextLocationFinder(nombreFirmante);
+            var finder = new TextLocationFinder(roleTarget1);
             bool found = false;
             try
             {
@@ -226,29 +224,9 @@ public class SignatureStamper
             }
             catch {}
 
-            // 2. Fallback: buscar por apellidos del firmante (los últimos dos elementos)
             if (!found)
             {
-                var nameParts = nombreFirmante.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (nameParts.Length > 2)
-                {
-                    var apellidos = string.Join(" ", nameParts.Skip(nameParts.Length / 2));
-                    finder = new TextLocationFinder(apellidos);
-                    try
-                    {
-                        var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
-                        processor.ProcessPageContent(page);
-                        if (finder.Y.HasValue) found = true;
-                    }
-                    catch {}
-                }
-            }
-
-            // 3. Fallback: buscar la etiqueta de rol fija de la tabla
-            if (!found)
-            {
-                string fallbackRole = esDirector ? "Director del Proyecto" : "Coordinador de Carrera";
-                finder = new TextLocationFinder(fallbackRole);
+                finder = new TextLocationFinder(roleTarget2);
                 try
                 {
                     var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
@@ -258,11 +236,9 @@ public class SignatureStamper
                 catch {}
             }
 
-            // 4. Fallback secundario de rol
             if (!found)
             {
-                string fallbackRole2 = esDirector ? "Director de Proyecto" : "Coordinador";
-                finder = new TextLocationFinder(fallbackRole2);
+                finder = new TextLocationFinder(roleLabelTarget);
                 try
                 {
                     var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
@@ -271,14 +247,45 @@ public class SignatureStamper
                 }
                 catch {}
             }
+
+            if (!found && !string.IsNullOrWhiteSpace(nombreFirmante))
+            {
+                finder = new TextLocationFinder(nombreFirmante);
+                try
+                {
+                    var processor = new iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor(finder);
+                    processor.ProcessPageContent(page);
+                    if (finder.Y.HasValue) found = true;
+                }
+                catch {}
+            }
+
+            float canvasWidth = 210f; // Ancho del sello de firma
+            float canvasHeight = 65f;  // Altura del sello de firma
+            float canvasX;
+            float canvasY;
 
             if (found && finder.Y.HasValue)
             {
-                canvasY = finder.Y.Value + 15f;
-            }
+                // Situar el sello MÁS ARRIBA (por encima del texto del rol y sobre la línea de firma)
+                canvasY = finder.Y.Value + 12f;
 
-            float canvasWidth = 210f; // Ancho súper compacto para eliminar vacíos de los lados
-            float canvasHeight = 72f; // Altura correspondiente a la celda vacía superior
+                if (finder.X.HasValue)
+                {
+                    // Alinear X dinámicamente según la posición del texto en la página
+                    canvasX = Math.Max(20f, Math.Min(360f, finder.X.Value - 40f));
+                }
+                else
+                {
+                    canvasX = esDirector ? 70f : 315f;
+                }
+            }
+            else
+            {
+                // Fallback si no se encuentra la posición en el canvas
+                canvasY = 160f;
+                canvasX = esDirector ? 70f : 315f;
+            }
 
             var canvasArea = new iText.Kernel.Geom.Rectangle(canvasX, canvasY, canvasWidth, canvasHeight);
             using (var canvas = new Canvas(page, canvasArea))

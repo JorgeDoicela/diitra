@@ -122,6 +122,7 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                 }
             );
             onStatusChanged('En Revisión', obs);
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             console.error(err);
             addToast("Error al transicionar", err.response?.data?.error ?? "No se pudo realizar la transición de estado.", "error");
@@ -174,6 +175,7 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                 }
             );
             onStatusChanged('En Corrección', feedback.trim());
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             console.error(err);
             addToast("Error al devolver", err.response?.data?.error ?? "No se pudo realizar la transición de estado.", "error");

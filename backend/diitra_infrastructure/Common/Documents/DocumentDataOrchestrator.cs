@@ -25,7 +25,7 @@ namespace Diitra.Infrastructure.Common.Documents
             _providers = providers;
         }
 
-        public async Task<DocumentRequest> PrepareRequestAsync(string documentInstanceUuid, string requestedBy, CancellationToken ct = default)
+        public async Task<DocumentRequest> PrepareRequestAsync(string documentInstanceUuid, string requestedBy, bool? forceDraftMode = null, CancellationToken ct = default)
         {
             // 1. Obtener la instancia del documento
             var instance = await _db.DocumentInstances
@@ -65,13 +65,13 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
             };
 
-            // 7. Devolver Request con bandera de Draft Mode si no ha sido finalizado
+            // 7. Devolver Request con bandera de Draft Mode si no ha sido finalizado (o forzado vía parámetro)
             return new DocumentRequest
             {
                 TemplateCode = instance.TemplateCode,
                 Data = masterData,
                 RequestedBy = requestedBy,
-                IsDraftMode = instance.State != DocumentState.Signed,
+                IsDraftMode = forceDraftMode ?? (instance.State != DocumentState.Signed),
                 IsBlindMode = false
             };
         }

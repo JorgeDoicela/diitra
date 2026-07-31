@@ -71,11 +71,14 @@ namespace Diitra.Domain.Common.Documents
 
         public void TransitionTo(DocumentState newState)
         {
-            // Lógica de protección: Un documento firmado o archivado ya no puede volver a borrador
-            if (State == DocumentState.Signed && newState == DocumentState.Draft)
-                throw new InvalidOperationException("No se puede volver a borrador un documento ya firmado legalmente.");
-
             State = newState;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void ReopenForRevision()
+        {
+            State = DocumentState.Draft;
+            FinalPdfPath = null;
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -85,6 +88,12 @@ namespace Diitra.Domain.Common.Documents
             FileHash = hash;
             TraceabilityCode = traceabilityCode;
             State = DocumentState.Signed;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void SetFinalPdfPath(string? pdfPath)
+        {
+            FinalPdfPath = pdfPath;
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -99,8 +108,8 @@ namespace Diitra.Domain.Common.Documents
 
         public void UpdateDataSnapshot(string? json)
         {
-            if (State == DocumentState.Signed || State == DocumentState.Archived)
-                throw new InvalidOperationException("No se puede modificar la data de un documento inmutable.");
+            if (State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede modificar la data de un documento archivado.");
 
             DataSnapshotJson = json;
             UpdatedAt = DateTime.UtcNow;

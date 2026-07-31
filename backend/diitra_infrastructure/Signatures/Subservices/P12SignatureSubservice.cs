@@ -94,20 +94,38 @@ public class P12SignatureSubservice : IP12SignatureSubservice
             throw new InvalidOperationException("Debe adjuntar su archivo de firma digital (.p12) en cada solicitud de firma.");
         }
 
-        // 2. Verificar que el documento existe y es accesible
+        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad)
         var instancia = await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.Uuid == documentoUuid)
+            .FirstOrDefaultAsync(d => d.Uuid == documentoUuid || d.EntityUuid == documentoUuid)
             ?? throw new KeyNotFoundException($"Documento '{documentoUuid}' no encontrado.");
 
-        // 3. Verificar que no está ya firmado por este usuario con FirmaEC
-        var existingFirma = await _context.InvDocumentoFirmas
-            .AnyAsync(f => f.DocumentoUuid == documentoUuid
-                        && (f.FirmanteId == idUsuario.ToString() || f.FirmanteId == $"USR-{idUsuario}")
-                        && f.TipoFirma == "FirmaEC"
-                        && f.EsValida);
-        if (existingFirma)
+        // 3. Verificar firma existente o permitir re-firma si el proyecto fue devuelto a corrección
+        var existingFirmas = await _context.InvDocumentoFirmas
+            .Where(f => (f.DocumentoUuid == instancia.Uuid || f.DocumentoUuid == instancia.EntityUuid)
+                     && (f.FirmanteId == idUsuario.ToString() || f.FirmanteId == $"USR-{idUsuario}")
+                     && f.TipoFirma == "FirmaEC"
+                     && f.EsValida)
+            .ToListAsync();
+
+        if (existingFirmas.Any())
         {
-            throw new InvalidOperationException("Ya existe una firma digital (FirmaEC) válida de este usuario en el documento.");
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instancia.EntityUuid);
+            var stateLower = project?.Estado?.ToLower().Trim() ?? "";
+            var isFinalLockedState = stateLower == "enviado" || stateLower == "aprobado" || stateLower == "en ejecución" || stateLower == "en ejecucion" || stateLower == "finalizado";
+            var isCorrectionMode = !isFinalLockedState || stateLower.Contains("devuelt") || stateLower.Contains("correc") || stateLower.Contains("observac") || stateLower.Contains("edici");
+
+            if (isCorrectionMode)
+            {
+                foreach (var f in existingFirmas)
+                {
+                    f.EsValida = false;
+                }
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new InvalidOperationException("Ya existe una firma digital (FirmaEC) válida de este usuario en el documento.");
+            }
         }
 
         // 4. Obtener PDF actual del documento
@@ -208,8 +226,8 @@ public class P12SignatureSubservice : IP12SignatureSubservice
             throw;
         }
 
-        var verificationBaseUrl = _config["FrontendUrl"] ?? "https://diitra.ist.edu.ec";
-        var verificationUrl = $"{verificationBaseUrl}/verificar-firma/{firmaCode}";
+        var verificationBaseUrl = _config["FrontendUrl"] ?? _config["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var verificationUrl = $"{verificationBaseUrl.TrimEnd('/')}/verificacion/{firmaCode}";
 
         return new SignatureResultDto
         {
@@ -223,25 +241,13 @@ public class P12SignatureSubservice : IP12SignatureSubservice
 
     private async Task<byte[]> GetPdfBytesFromInstanceAsync(Diitra.Domain.Common.Documents.DocumentInstance instancia)
     {
-        if (string.IsNullOrWhiteSpace(instancia.FinalPdfPath))
-        {
-            _logger.LogInformation("[DIITRA Firma] El documento '{Uuid}' no tiene PDF generado. Generándolo temporalmente en memoria...", instancia.Uuid);
+        var dataOrchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentDataOrchestrator>();
+        var documentEngine = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentEngine>();
 
-            var dataOrchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentDataOrchestrator>();
-            var documentEngine = _serviceProvider.GetRequiredService<Diitra.Application.Common.Documents.IDocumentEngine>();
+        var docRequest = await dataOrchestrator.PrepareRequestAsync(instancia.Uuid, "sistema", forceDraftMode: false);
+        var buildResult = await documentEngine.GenerateAsync(docRequest);
 
-            var docRequest = await dataOrchestrator.PrepareRequestAsync(instancia.Uuid, "sistema");
-            var buildResult = await documentEngine.GenerateAsync(docRequest);
-
-            return buildResult.PdfBytes;
-        }
-
-        if (Path.IsPathRooted(instancia.FinalPdfPath) && File.Exists(instancia.FinalPdfPath))
-        {
-            return await File.ReadAllBytesAsync(instancia.FinalPdfPath);
-        }
-
-        return await _storageService.GetFileAsync(instancia.FinalPdfPath);
+        return buildResult.PdfBytes;
     }
 
     private async Task<string> SaveSignedPdfAsync(byte[] pdfBytes, string documentoUuid, string firmaCode)

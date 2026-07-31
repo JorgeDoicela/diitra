@@ -6,6 +6,7 @@ export interface UseBuilderPdfAndSignProps {
     templateCode: string;
     formData: any;
     documentUuid?: string;
+    entityUuid?: string;
     projectStatus?: string;
     signatureType?: string;
     addAudit: (msg: string, type?: string) => void;
@@ -15,8 +16,8 @@ export const useBuilderPdfAndSign = ({
     templateCode,
     formData,
     documentUuid,
+    entityUuid,
     projectStatus,
-    signatureType = 'DIITRA',
     addAudit
 }: UseBuilderPdfAndSignProps) => {
     const { addToast } = useNotifications();
@@ -68,37 +69,69 @@ export const useBuilderPdfAndSign = ({
         }
     }, [templateCode, isDraftMode, formData, addAudit]);
 
-    // Autocargar PDF firmado desde el storage si el documento ya está emitido/enviado
+    // ── Cargar PDF firmado u oficial ──
+    const fetchSignedPdf = useCallback(async (): Promise<boolean> => {
+        const targetUuid = entityUuid || documentUuid || formData.Uuid || formData.uuid;
+        if (!targetUuid || targetUuid.startsWith('temp_')) return false;
+
+        try {
+            const instanceRes = await api.get(`/documents/instances/resolve`, {
+                params: { templateCode, entityUuid: targetUuid }
+            });
+            const finalPath = instanceRes.data?.finalPdfPath || instanceRes.data?.final_pdf_path || instanceRes.data?.FinalPdfPath;
+
+            if (finalPath) {
+                const cleanPath = finalPath.replace(/\\/g, '/');
+                const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
+                setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
+                setIsDraftMode(false);
+                return true;
+            }
+        } catch (err) {
+            console.error('[DIITRA] Error al consultar/cargar el PDF oficial firmado:', err);
+        }
+        return false;
+    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, templateCode]);
+
+    // ── Verificar si el proyecto está en fase de edición o corrección activa ──
+    const isEditingOrCorrectionState = useCallback(() => {
+        if (!projectStatus) return true;
+        const normalized = projectStatus.toLowerCase().trim();
+        return (
+            normalized === 'borrador' ||
+            normalized === 'en edición' ||
+            normalized === 'en edicion' ||
+            normalized === 'en corrección' ||
+            normalized === 'en correccion' ||
+            normalized === 'corregir' ||
+            normalized === 'con observaciones' ||
+            normalized === 'devuelto' ||
+            normalized === 'rechazado' ||
+            normalized.includes('edici') ||
+            normalized.includes('correc')
+        );
+    }, [projectStatus]);
+
+    // Autocargar PDF firmado únicamente si el proyecto está emitido u oficial.
+    // Si está en borrador o corrección activa, mantenemos el estado inicial "Listo para generar" hasta que el usuario presione la vista previa.
     useEffect(() => {
-        const loadSignedPdf = async () => {
-            const uuid = documentUuid || formData.Uuid || formData.uuid;
-            if (!uuid || uuid.startsWith('temp_')) return;
+        let isMounted = true;
+        const initPdf = async () => {
+            if (isEditingOrCorrectionState()) {
+                setIsDraftMode(true);
+                setPdfBlob(null);
+                return;
+            }
 
-            const isSigned = projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución';
-            if (!isSigned) return;
-
-            setIsGenerating(true);
-            try {
-                const instanceRes = await api.get(`/documents/instances/${uuid}`);
-                const finalPath = instanceRes.data?.finalPdfPath || instanceRes.data?.final_pdf_path || instanceRes.data?.FinalPdfPath;
-                
-                if (finalPath) {
-                    const cleanPath = finalPath.replace(/\\/g, '/');
-                    const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
-                    setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
-                } else {
-                    await handleGeneratePdf(false);
-                }
-            } catch (err) {
-                console.error('[DIITRA] Error al cargar el PDF firmado:', err);
-                await handleGeneratePdf(false);
-            } finally {
-                setIsGenerating(false);
+            // Si el proyecto se encuentra emitido u oficial (Enviado, Aprobado, etc.), cargamos el PDF oficial firmado.
+            const hasSigned = await fetchSignedPdf();
+            if (!hasSigned && isMounted) {
+                setPdfBlob(null);
             }
         };
-
-        loadSignedPdf();
-    }, [documentUuid, formData.Uuid, formData.uuid, projectStatus, handleGeneratePdf]);
+        initPdf();
+        return () => { isMounted = false; };
+    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, projectStatus, isEditingOrCorrectionState, fetchSignedPdf]);
 
     // ── Firma Electrónica PAdES — Upload-on-Demand ──
     const handleSign = async () => {
@@ -130,7 +163,11 @@ export const useBuilderPdfAndSign = ({
                 }
             );
 
-            await handleGeneratePdf(false);
+            setIsDraftMode(false);
+            const loaded = await fetchSignedPdf();
+            if (!loaded) {
+                await handleGeneratePdf(false);
+            }
 
             setSignatureCertFile(null);
             setSignaturePassword('');
@@ -191,9 +228,13 @@ export const useBuilderPdfAndSign = ({
             };
 
             await api.post('/signatures/sign', dto);
-            
-            await handleGeneratePdf(false);
-            
+
+            setIsDraftMode(false);
+            const loaded = await fetchSignedPdf();
+            if (!loaded) {
+                await handleGeneratePdf(false);
+            }
+
             setInstitutionalPassword('');
             addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
 
