@@ -227,13 +227,13 @@ namespace Diitra.Infrastructure.Common.Documents
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                var htmlToRender = !string.IsNullOrWhiteSpace(template.HtmlContent)
-                    ? template.HtmlContent
-                    : fileHtml;
+                var htmlToRender = !string.IsNullOrWhiteSpace(fileHtml)
+                    ? fileHtml
+                    : template.HtmlContent;
 
-                var cssToUse = !string.IsNullOrWhiteSpace(template.CustomCss)
-                    ? template.CustomCss
-                    : fileCss;
+                var cssToUse = !string.IsNullOrWhiteSpace(fileCss)
+                    ? fileCss
+                    : template.CustomCss;
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.

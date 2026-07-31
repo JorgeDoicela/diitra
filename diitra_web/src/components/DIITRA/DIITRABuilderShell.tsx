@@ -1,5 +1,5 @@
-import React from 'react';
-import { Lock, Unlock, Shield, Award, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, Unlock, Shield, Award, Loader2, RefreshCw, X } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
@@ -64,6 +64,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
     } = props;
 
     const { layout, autoSave, pdfAndSign, network } = useDIITRABuilderShell(props);
+    const [showUpdateModal, setShowUpdateModal] = useState<boolean>(hasTemplateUpdate);
+
+    useEffect(() => {
+        if (hasTemplateUpdate) {
+            setShowUpdateModal(true);
+        }
+    }, [hasTemplateUpdate]);
 
     return (
         <DocumentDataContext.Provider value={formData}>
@@ -190,7 +197,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                     )}
                                                 </div>
 
-                                                {hasTemplateUpdate && !readOnly && onUpgradeTemplate && (
+                                                {hasTemplateUpdate && !readOnly && onUpgradeTemplate && !showUpdateModal && (
                                                     <div className="callout-vercel callout-vercel-info mb-8 animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                         <div className="flex gap-3">
                                                             <Award size={16} className="text-info mt-0.5 shrink-0" />
@@ -320,6 +327,76 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                             </div>
                         </div>
                     </div>
+
+                    {/* ── Modal de Alerta Centrado: Nueva Versión de Plantilla ── */}
+                    {hasTemplateUpdate && !readOnly && onUpgradeTemplate && showUpdateModal && (
+                        <div className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+                            <div className="bg-surface border border-border-thin rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative flex flex-col gap-6 animate-scale-in">
+                                {/* Botón cerrar X */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUpdateModal(false)}
+                                    className="absolute top-4 right-4 text-text-dim hover:text-text-main p-1.5 rounded-full hover:bg-border-thin/30 transition-all cursor-pointer"
+                                    title="Cerrar (Mantener versión actual arriba)"
+                                >
+                                    <X size={18} />
+                                </button>
+
+                                {/* Encabezado */}
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-info/10 text-info rounded-xl shrink-0">
+                                        <Award size={28} />
+                                    </div>
+                                    <div className="space-y-1 pr-6">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-info bg-info/10 px-2.5 py-0.5 rounded-full">
+                                            Actualización disponible
+                                        </span>
+                                        <h3 className="text-xl sm:text-2xl font-black text-text-main tracking-tight mt-1">
+                                            Nueva versión de plantilla disponible
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                {/* Descripción */}
+                                <div className="text-sm text-text-dim leading-relaxed bg-bg-deep/50 p-4 rounded-xl border border-border-thin/50">
+                                    El administrador ha actualizado el formato oficial de esta plantilla a la versión <strong className="text-text-main font-bold">{templateVersion}</strong>. Tu borrador actual utiliza la versión <strong className="text-text-main font-bold">{instanceVersion}</strong>. Puedes actualizar para aplicar las últimas secciones y formatos. Tus datos actuales se conservarán.
+                                </div>
+
+                                {/* Acciones */}
+                                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowUpdateModal(false)}
+                                        className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-text-dim hover:text-text-main hover:bg-border-thin/20 rounded-xl transition-all cursor-pointer"
+                                    >
+                                        Continuar con versión {instanceVersion}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            await onUpgradeTemplate();
+                                            setShowUpdateModal(false);
+                                        }}
+                                        disabled={isUpgrading}
+                                        className="w-full sm:w-auto px-5 py-2.5 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                                    >
+                                        {isUpgrading ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin shrink-0" />
+                                                <span>Actualizando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <RefreshCw size={16} className="shrink-0" />
+                                                <span>Actualizar Formato</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </SectionLockContext.Provider>
             </DocumentMetadataContext.Provider>
         </DocumentDataContext.Provider>

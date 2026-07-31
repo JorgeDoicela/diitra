@@ -160,24 +160,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Helper auxiliar para contar semanas
             int GetWeeksCount(object? cronogramaObj)
             {
-                if (cronogramaObj is System.Collections.IEnumerable enumerable)
+                var cronogramaList = GetEnumerableProperty(cronogramaObj, "Cronograma", "cronograma") ?? cronogramaObj as System.Collections.IEnumerable;
+                if (cronogramaList != null)
                 {
-                    foreach (var item in enumerable)
+                    int maxWeeks = 0;
+                    foreach (var item in cronogramaList)
                     {
-                        if (item is Dictionary<string, object?> dict)
+                        var semanasList = GetEnumerableProperty(item, "Semanas", "semanas");
+                        if (semanasList != null)
                         {
-                            object? semanasVal = null;
-                            if (dict.TryGetValue("semanas", out var val)) semanasVal = val;
-                            else if (dict.TryGetValue("Semanas", out var val2)) semanasVal = val2;
-
-                            if (semanasVal is System.Collections.IEnumerable semanasList && !(semanasVal is string))
-                            {
-                                int count = 0;
-                                foreach (var _ in semanasList) count++;
-                                if (count > 0) return count;
-                            }
+                            int count = 0;
+                            foreach (var _ in semanasList) count++;
+                            if (count > maxWeeks) maxWeeks = count;
                         }
                     }
+                    if (maxWeeks > 0) return maxWeeks;
                 }
                 return 12; // Fallback
             }
@@ -325,20 +322,22 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 output.WriteSafeString(sb.ToString());
             });
 
-            // Helper: generar las 48 columnas de la tabla de cronograma basadas en la lista de semanas activa
+            // Helper: generar las columnas de la tabla de cronograma basadas en la lista de semanas activa
             _handlebars.RegisterHelper("columnas_gantt", (output, context, arguments) =>
             {
                 var semanasObj = arguments.ElementAtOrDefault(0);
                 var rowIndexObj = arguments.ElementAtOrDefault(1);
+                var cronogramaRoot = arguments.ElementAtOrDefault(2);
 
                 int rowIndex = 0;
                 if (rowIndexObj is int r) rowIndex = r;
                 else if (rowIndexObj != null) int.TryParse(rowIndexObj.ToString(), out rowIndex);
 
                 var semanas = new List<bool>();
-                if (semanasObj is System.Collections.IEnumerable enumerable)
+                var semanasEnum = GetEnumerableProperty(semanasObj, "Semanas", "semanas") ?? GetEnumerableProperty(context.Value, "Semanas", "semanas");
+                if (semanasEnum != null)
                 {
-                    foreach (var item in enumerable)
+                    foreach (var item in semanasEnum)
                     {
                         if (item is bool b) semanas.Add(b);
                         else if (item != null && bool.TryParse(item.ToString(), out var bParsed)) semanas.Add(bParsed);
@@ -346,7 +345,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     }
                 }
 
-                int weeks = semanas.Count > 0 ? semanas.Count : 12;
+                int totalWeeks = GetWeeksCount(cronogramaRoot);
+                int weeks = Math.Max(semanas.Count, totalWeeks);
+                if (weeks <= 0) weeks = 12;
 
                 var sb = new System.Text.StringBuilder();
                 string[] ganttColors = { "#9ad3de", "#f9cb9c", "#ea9999", "#4f81bd", "#0f243e", "#595959", "#ffc000", "#7030a0" };
@@ -623,6 +624,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("Evaluacion", "evaluacion");
             SyncKeyAlias("ObjetivosDesarrolloSostenible", "objetivos_desarrollo_sostenible");
             SyncKeyAlias("ods", "objetivos_desarrollo_sostenible");
+            SyncKeyAlias("Cronograma", "cronograma");
+            SyncKeyAlias("FechaInicio", "fecha_inicio");
+            SyncKeyAlias("FechaFin", "fecha_fin");
 
             // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
             var ods1 = dict.TryGetValue("objetivos_desarrollo_sostenible", out var v1) ? v1?.ToString() : null;
@@ -816,14 +820,85 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             }
         }
 
+        private static System.Collections.IEnumerable? GetEnumerableProperty(object? item, params string[] keys)
+        {
+            if (item == null || item.GetType().Name == "UndefinedBindingResult") return null;
+
+            if (item is System.Collections.IEnumerable directEnum && !(item is string) && !(item is System.Collections.IDictionary))
+            {
+                return directEnum;
+            }
+
+            if (item is Dictionary<string, object?> dict)
+            {
+                foreach (var k in keys)
+                {
+                    if (dict.TryGetValue(k, out var val) && val is System.Collections.IEnumerable en && !(val is string))
+                        return en;
+                    var lowerK = k.ToLower();
+                    if (dict.TryGetValue(lowerK, out var valLower) && valLower is System.Collections.IEnumerable enLower && !(valLower is string))
+                        return enLower;
+                }
+            }
+            else if (item is System.Collections.IDictionary idict)
+            {
+                foreach (var k in keys)
+                {
+                    if (idict.Contains(k) && idict[k] is System.Collections.IEnumerable en && !(idict[k] is string))
+                        return en;
+                    var lowerK = k.ToLower();
+                    if (idict.Contains(lowerK) && idict[lowerK] is System.Collections.IEnumerable enLower && !(idict[lowerK] is string))
+                        return enLower;
+                }
+            }
+            else if (item is JsonElement elem && elem.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var k in keys)
+                {
+                    if (elem.TryGetProperty(k, out var prop) && prop.ValueKind == JsonValueKind.Array)
+                        return prop.EnumerateArray().Select(ToNativeType).ToList();
+                    if (elem.TryGetProperty(k.ToLower(), out var propLower) && propLower.ValueKind == JsonValueKind.Array)
+                        return propLower.EnumerateArray().Select(ToNativeType).ToList();
+                }
+            }
+            else
+            {
+                var type = item.GetType();
+                foreach (var k in keys)
+                {
+                    var prop = type.GetProperty(k, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+                    if (prop != null)
+                    {
+                        var val = prop.GetValue(item);
+                        if (val is System.Collections.IEnumerable en && !(val is string))
+                            return en;
+                    }
+                }
+            }
+            return null;
+        }
+
         private static string GetProperty(object? item, string key)
         {
+            if (item == null || item.GetType().Name == "UndefinedBindingResult") return string.Empty;
             if (item is Dictionary<string, object?> dict)
             {
                 if (dict.TryGetValue(key, out var val))
                     return val?.ToString() ?? string.Empty;
                 if (dict.TryGetValue(key.ToLower(), out var valLower))
                     return valLower?.ToString() ?? string.Empty;
+            }
+            if (item is System.Collections.IDictionary idict)
+            {
+                if (idict.Contains(key)) return idict[key]?.ToString() ?? string.Empty;
+                var lowerKey = key.ToLower();
+                if (idict.Contains(lowerKey)) return idict[lowerKey]?.ToString() ?? string.Empty;
+            }
+            var type = item.GetType();
+            var prop = type.GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop != null)
+            {
+                return prop.GetValue(item)?.ToString() ?? string.Empty;
             }
             return string.Empty;
         }

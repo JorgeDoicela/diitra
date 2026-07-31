@@ -63,9 +63,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                                            template.UpdatedBy != "system" && 
                                            template.UpdatedBy != "seeder";
 
-                    if (versionBumped || (!isUserCustomized && contentDiffers))
+                    if (versionBumped || contentDiffers)
                     {
-                        var reason = versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización inicial de archivos físicos";
+                        var reason = versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización de archivos físicos";
                         logger.LogInformation("DIITRA DocumentSeeder: Actualizando plantilla [{Code}] ({Reason})...", seed.Code, reason);
 
                         if (fileHtml != null) template.UpdateHtmlContentOnly(fileHtml);

@@ -57,3 +57,12 @@ pnpm-debug.log*
 backend/publish/
 scripts/despliegue/backups/
 
+# Archivos subidos y generados (PDFs, PNGs)
+backend/diitra_api/uploads/firmas/*
+!backend/diitra_api/uploads/firmas/.gitkeep
+backend/diitra_api/uploads/signatures/*
+!backend/diitra_api/uploads/signatures/.gitkeep
+
+# Backups locales (archivos .sql, .zip, etc.)
+backend/diitra_api/backups/*
+!backend/diitra_api/backups/.gitkeep
