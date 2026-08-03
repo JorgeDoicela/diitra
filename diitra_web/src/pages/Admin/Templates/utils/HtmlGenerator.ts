@@ -12,6 +12,11 @@ import {
     generateProjectTechnicalHtml,
     generateImpactsHtml,
 } from './htmlGenerators/sectionsGenerator';
+import {
+    generateResourcesHtml,
+    generateProjectProgressHtml,
+    generateProjectEthicsHtml,
+} from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
     generateTitleHtml,
@@ -73,6 +78,16 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'project_technical_section':
                 html += generateProjectTechnicalHtml(block);
+                break;
+            case 'project_budget_section':
+            case 'resources':
+                html += generateResourcesHtml(block);
+                break;
+            case 'project_progress_report':
+                html += generateProjectProgressHtml(block);
+                break;
+            case 'project_ethics_report':
+                html += generateProjectEthicsHtml(block);
                 break;
             case 'impacts':
                 html += generateImpactsHtml(block);

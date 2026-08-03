@@ -327,7 +327,7 @@ export const useDocumentMaintenance = () => {
             return b.estado === 'Exitoso' && b.isFilePresent !== false;
         }
         if (filterStatusBackups === 'PURGADOS') {
-            return b.estado === 'Exitoso' && b.isFilePresent === false;
+            return b.isFilePresent === false || b.estado === 'Purgado';
         }
         return true;
     });

@@ -99,27 +99,39 @@ export const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) =
 export const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) => {
     return (
         <div className="overflow-x-auto my-2">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
+                <span>Tabla de Participantes (Investigadores del Proyecto)</span>
+            </div>
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
-                    <tr className="bg-[#1e2a4a] text-white">
-                        <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Nombre Completo</th>
-                        <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Rol en Proyecto</th>
-                        {config.mostrarCedula !== false && <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Cédula</th>}
-                        {config.mostrarEmail !== false && <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Email</th>}
-                        {config.mostrarTelefono !== false && <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Teléfono</th>}
-                        {config.mostrarNivelAcademico !== false && <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Nivel Académico</th>}
-                        {config.mostrarHoras !== false && <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Horas</th>}
+                    <tr>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nombre Completo</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Rol en Proyecto</th>
+                        {config.mostrarCedula !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Cédula</th>}
+                        {config.mostrarEmail !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Email</th>}
+                        {config.mostrarTelefono !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Teléfono</th>}
+                        {config.mostrarNivelAcademico !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nivel Académico</th>}
+                        {config.mostrarHoras !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Horas</th>}
                     </tr>
                 </thead>
                 <tbody>
-                    <tr className="bg-slate-50/40">
-                        <td className="border border-slate-200 p-1.5 text-slate-700 font-semibold">[Nombre del Investigador]</td>
-                        <td className="border border-slate-200 p-1.5 text-slate-600">Director / Co-investigador</td>
-                        {config.mostrarCedula !== false && <td className="border border-slate-200 p-1.5 text-slate-500 font-mono">17XXXXXX-X</td>}
-                        {config.mostrarEmail !== false && <td className="border border-slate-200 p-1.5 text-slate-500">investigador@istt.edu.ec</td>}
-                        {config.mostrarTelefono !== false && <td className="border border-slate-200 p-1.5 text-slate-500">099XXXXXXX</td>}
-                        {config.mostrarNivelAcademico !== false && <td className="border border-slate-200 p-1.5 text-slate-500">Tercer / Cuarto Nivel</td>}
-                        {config.mostrarHoras !== false && <td className="border border-slate-200 p-1.5 text-slate-500 font-mono">10 hs/sem</td>}
+                    <tr className="hover:bg-slate-50/50">
+                        <td className="border border-slate-200 p-2 text-slate-800 font-semibold">[Nombre del Director]</td>
+                        <td className="border border-slate-200 p-2 text-slate-600">Director de Proyecto</td>
+                        {config.mostrarCedula !== false && <td className="border border-slate-200 p-2 text-slate-500">17XXXXXX89</td>}
+                        {config.mostrarEmail !== false && <td className="border border-slate-200 p-2 text-slate-500">director@istpet.edu.ec</td>}
+                        {config.mostrarTelefono !== false && <td className="border border-slate-200 p-2 text-slate-500">0987654321</td>}
+                        {config.mostrarNivelAcademico !== false && <td className="border border-slate-200 p-2 text-slate-500">Magíster / PhD</td>}
+                        {config.mostrarHoras !== false && <td className="border border-slate-200 p-2 text-slate-600 font-bold">20 hs</td>}
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                        <td className="border border-slate-200 p-2 text-slate-800 font-semibold">[Nombre de Docente]</td>
+                        <td className="border border-slate-200 p-2 text-slate-600">Docente Colaborador</td>
+                        {config.mostrarCedula !== false && <td className="border border-slate-200 p-2 text-slate-500">17XXXXXX75</td>}
+                        {config.mostrarEmail !== false && <td className="border border-slate-200 p-2 text-slate-500">docente@istpet.edu.ec</td>}
+                        {config.mostrarTelefono !== false && <td className="border border-slate-200 p-2 text-slate-500">0981234567</td>}
+                        {config.mostrarNivelAcademico !== false && <td className="border border-slate-200 p-2 text-slate-500">Magíster</td>}
+                        {config.mostrarHoras !== false && <td className="border border-slate-200 p-2 text-slate-600 font-bold">10 hs</td>}
                     </tr>
                 </tbody>
             </table>
@@ -134,27 +146,51 @@ export const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) =>
 export const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
     return (
         <div className="overflow-x-auto my-2">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
+                <span>Rúbrica de Evaluación del Documento</span>
+            </div>
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
-                    <tr className="bg-[#1e2a4a] text-white">
-                        <th className="border border-slate-300 p-1.5 text-left font-bold text-[9px] uppercase">Criterio Evaluado</th>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold text-[9px] uppercase w-20">Máximo</th>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold text-[9px] uppercase w-24">Calificación</th>
+                    <tr>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Criterio Evaluado</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-20" style={{ backgroundColor: DYN_COLORS.blue }}>Máximo</th>
+                        <th className="border border-slate-300 p-2 text-white font-bold text-center uppercase text-[9px] w-28" style={{ backgroundColor: DYN_COLORS.blue }}>Calificación</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr className="bg-slate-50/40">
-                        <td className="border border-slate-200 p-1.5 text-slate-700">
-                            <strong className="block text-slate-800 font-bold">1. Pertinencia del Problema de Investigación</strong>
+                    <tr className="hover:bg-slate-50/50">
+                        <td className="border border-slate-200 p-2 text-slate-800">
+                            <strong className="block text-[10px] text-slate-800">Coherencia Metodológica</strong>
                             {config.mostrarDescripcionCriterio !== false && (
-                                <span className="text-[8.5px] text-slate-500 leading-tight block mt-0.5">Evalúa la coherencia institucional, impacto social y justificación técnica.</span>
+                                <span className="block text-[8.5px] text-slate-400 leading-relaxed mt-0.5">
+                                    Define la correspondencia lógica entre objetivos, metodología y resultados planteados en el proyecto.
+                                </span>
                             )}
                             {config.mostrarObservacionesCriterio !== false && (
-                                <span className="text-[8px] text-amber-600 italic block mt-1">Obs: Comentario cualitativo del evaluador par...</span>
+                                <span className="block text-[8.5px] text-slate-500 font-semibold italic mt-1 text-amber-600">
+                                    Obs: Se sugiere detallar el marco analítico.
+                                </span>
                             )}
                         </td>
-                        <td className="border border-slate-200 p-1.5 text-center font-mono font-bold text-slate-600">25 pts</td>
-                        <td className="border border-slate-200 p-1.5 text-center font-mono font-bold text-emerald-600 bg-emerald-50/30">25 / 25</td>
+                        <td className="border border-slate-200 p-2 text-center text-slate-600 font-bold">40</td>
+                        <td className="border border-slate-200 p-2 text-center text-slate-600 italic">[Pendiente]</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                        <td className="border border-slate-200 p-2 text-slate-800">
+                            <strong className="block text-[10px] text-slate-800">Viabilidad del Proyecto</strong>
+                            {config.mostrarDescripcionCriterio !== false && (
+                                <span className="block text-[8.5px] text-slate-400 leading-relaxed mt-0.5">
+                                    Análisis del presupuesto, cronograma y recursos humanos disponibles para su finalización.
+                                </span>
+                            )}
+                        </td>
+                        <td className="border border-slate-200 p-2 text-center text-slate-600 font-bold">60</td>
+                        <td className="border border-slate-200 p-2 text-center text-slate-600 italic">[Pendiente]</td>
+                    </tr>
+                    <tr className="bg-slate-50 font-bold">
+                        <td className="border border-slate-300 p-2 text-right text-slate-700 uppercase text-[9px]">Puntaje Total Consolidado:</td>
+                        <td className="border border-slate-300 p-2 text-center text-slate-800 font-black">100</td>
+                        <td className="border border-slate-300 p-2 text-center bg-slate-100 text-brand font-black text-xs">[Por calificar]</td>
                     </tr>
                 </tbody>
             </table>

@@ -4,7 +4,7 @@ import { DYN_COLORS } from './RenderCover';
 
 export const RenderTitle: React.FC<{ config: any; themeConfig?: any }> = ({ config, themeConfig }) => {
     const text = config.text || 'TÍTULO DE SECCIÓN';
-    const fontSize = config.fontSize || 'H2';
+    const fontSize = (config.fontSize || config.level || 'H2').toUpperCase();
     const align = config.alignment || 'left';
 
     const pTheme = themeConfig?.colors?.primary;

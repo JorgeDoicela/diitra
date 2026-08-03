@@ -14,8 +14,12 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Layers, Trash2 } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { SortableBlockItem } from './SortableBlockItem';
-import { DYN_COLORS } from './canvasRenderers/RenderCover';
+import { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair } from './canvasRenderers/RenderCover';
+import type { HeaderStylePair } from './canvasRenderers/RenderCover';
 import { mergeWithDefaults } from '../utils/theme-schema';
+
+export { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair };
+export type { HeaderStylePair };
 
 interface BlockCanvasProps {
     blocks: DocumentBlock[];

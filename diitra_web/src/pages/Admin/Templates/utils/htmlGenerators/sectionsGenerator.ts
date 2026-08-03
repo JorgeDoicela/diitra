@@ -1,6 +1,6 @@
 import type { DocumentBlock, IdentificationField, ImpactCategory } from '../../types';
 import { DEFAULT_IMPACT_CATEGORIES } from '../../types';
-import { COLORS } from './generatorStyles';
+import { COLORS, headerBg } from './generatorStyles';
 
 export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
     const c: any = block.config;
@@ -278,16 +278,38 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 };
 
 export const generateImpactsHtml = (block: DocumentBlock): string => {
-    const c: any = block.config;
-    const layoutMode = c.impactsLayoutMode || 'table';
+    const c: any = block.config || {};
+    const productosTitle = c.productosTitle || '5. Productos Esperados';
+    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
     const parts: string[] = [];
+
+    if (c.showProductosEsperados !== false) {
+        parts.push(`
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')}">Tipo de Producto</th>
+          <th style="${headerBg('blue')} width: 100px; text-align: center;">Cantidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each productos_esperados}}
+        <tr>
+          <td>{{this.tipo}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>`);
+    }
 
     const getImpactCategories = (): ImpactCategory[] => {
         if (c.impactCategories && Array.isArray(c.impactCategories) && c.impactCategories.length > 0) {
             return c.impactCategories;
         }
         return DEFAULT_IMPACT_CATEGORIES.map(def => {
-            const legacyVal = c[def.legacyConfigKey];
+            const legacyVal = def.legacyKey ? c[def.legacyKey] : undefined;
             return {
                 ...def,
                 enabled: legacyVal !== undefined ? Boolean(legacyVal) : def.enabled,
@@ -297,12 +319,11 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
 
     const activeCats = getImpactCategories().filter(cat => cat.enabled !== false);
 
-    if (activeCats.length === 0) return '';
-
-    if (layoutMode === 'cards') {
-        const cardHtmlList = activeCats.map(cat => {
-            const scr = cat.scribanVariable || `impacto.${cat.key}`;
-            return `
+    if (activeCats.length > 0) {
+        if (layoutMode === 'cards') {
+            const cardHtmlList = activeCats.map(cat => {
+                const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                return `
       <div style="margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
         <div style="background-color: ${COLORS.blue}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
           ${cat.title}
@@ -311,17 +332,17 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
           {{default ${scr} "Sin descripción."}}
         </div>
       </div>`;
-        });
+            });
 
-        parts.push(`
+            parts.push(`
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
     <div style="margin-bottom: 15px;">
       ${cardHtmlList.join('')}
     </div>`);
-    } else if (layoutMode === 'sections') {
-        const secHtmlList = activeCats.map(cat => {
-            const scr = cat.scribanVariable || `impacto.${cat.key}`;
-            return `
+        } else if (layoutMode === 'sections') {
+            const secHtmlList = activeCats.map(cat => {
+                const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                return `
       <div style="margin-bottom: 12px; page-break-inside: avoid;">
         <div style="padding: 4px 8px; background-color: #f1f5f9; border-left: 3px solid ${COLORS.blue}; margin-bottom: 4px;">
           <p style="margin: 0; font-weight: bold; font-size: 8.5pt; color: ${COLORS.blue}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${cat.title}</p>
@@ -330,28 +351,31 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
           {{default ${scr} "Sin descripción."}}
         </div>
       </div>`;
-        });
+            });
 
-        parts.push(`
+            parts.push(`
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
     <div style="margin-bottom: 15px;">
       ${secHtmlList.join('')}
     </div>`);
-    } else {
-        const impactRows = activeCats.map((cat, idx) => {
-            const scr = cat.scribanVariable || `impacto.${cat.key}`;
-            const wStyle = idx === 0 ? ' style="width: 28%;"' : '';
-            return `<tr><td class="label-cell"${wStyle}>${cat.title}</td><td>{{default ${scr} "Sin descripción."}}</td></tr>`;
-        });
+        } else {
+            const impactRows = activeCats.map((cat, idx) => {
+                const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                const wStyle = idx === 0 ? ' style="width: 28%;"' : '';
+                return `<tr><td class="label-cell"${wStyle}>${cat.title}</td><td>{{default ${scr} "Sin descripción."}}</td></tr>`;
+            });
 
-        parts.push(`
+            parts.push(`
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 6px;">6. Matriz de Impacto</p>
     <table class="info-table">
       <tbody>
         ${impactRows.join('\n        ')}
       </tbody>
     </table>`);
+        }
     }
+
+    if (parts.length === 0) return '';
 
     return `
   <!-- BLOQUE: MATRIZ DE IMPACTOS Y PRODUCTOS -->

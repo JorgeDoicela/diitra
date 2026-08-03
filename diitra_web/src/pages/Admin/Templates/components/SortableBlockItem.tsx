@@ -22,6 +22,11 @@ import {
     RenderProjectTechnicalSection,
     RenderImpacts,
 } from './canvasRenderers/RenderSections';
+import {
+    RenderProjectBudgetSection,
+    RenderProjectProgressReport,
+    RenderProjectEthicsReport,
+} from './canvasRenderers/RenderReports';
 
 /** Tipos de bloques de los que solo se permite una única instancia */
 const UNIQUE_BLOCK_TYPES: BlockType[] = [
@@ -112,6 +117,13 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section':
                 return <RenderProjectTechnicalSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'project_budget_section':
+            case 'resources':
+                return <RenderProjectBudgetSection config={block.config} />;
+            case 'project_progress_report':
+                return <RenderProjectProgressReport config={block.config} />;
+            case 'project_ethics_report':
+                return <RenderProjectEthicsReport config={block.config} />;
             case 'impacts':
                 return <RenderImpacts config={block.config} />;
             default:

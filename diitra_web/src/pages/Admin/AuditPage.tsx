@@ -114,13 +114,37 @@ const AuditPage: React.FC = () => {
 
                         <div className="relative group">
                             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Filtrar por Acción..."
+                            <select
                                 className="input-vercel !pl-10 !py-2.5 !text-sm"
                                 value={action}
                                 onChange={(e) => setAction(e.target.value)}
-                            />
+                            >
+                                <option value="">Todas las Acciones</option>
+                                <option value="ASIGNAR_ROL">Asignar Rol</option>
+                                <option value="REVOCAR_ROL">Revocar Rol</option>
+                                <option value="REGISTRO_EXTERNO">Registro Externo</option>
+                                <option value="ACTUALIZAR_METADATA">Actualizar datos del documento</option>
+                                <option value="LOGIN">Inicio de Sesión</option>
+                                <option value="CREAR_GRUPO">Crear Grupo</option>
+                                <option value="EDITAR_GRUPO">Editar Grupo</option>
+                                <option value="APROBAR_GRUPO">Aprobar Grupo</option>
+                                <option value="RECHAZAR_GRUPO">Rechazar Grupo</option>
+                                <option value="DESACTIVAR_GRUPO">Desactivar Grupo</option>
+                                <option value="AGREGAR_MIEMBRO_GRUPO">Agregar Miembro</option>
+                                <option value="REMOVER_MIEMBRO_GRUPO">Remover Miembro</option>
+                                <option value="CREAR_PROYECTO">Crear Proyecto</option>
+                                <option value="ACTUALIZAR_PROYECTO">Actualizar Proyecto</option>
+                                <option value="ELIMINAR_PROYECTO">Eliminar Proyecto</option>
+                                <option value="TRANSICIONAR_PROYECTO">Transicionar Proyecto</option>
+                                <option value="ASIGNAR_REVISOR">Asignar Revisor</option>
+                                <option value="EVALUAR_PROYECTO">Evaluar Proyecto</option>
+                                <option value="ACTUALIZAR_EQUIPO_PROYECTO">Actualizar Equipo</option>
+                                <option value="TRANSFERIR_DIRECCION">Transferir Dirección</option>
+                                <option value="CREAR_CONVOCATORIA">Crear Convocatoria</option>
+                                <option value="EDITAR_CONVOCATORIA">Editar Convocatoria</option>
+                                <option value="CAMBIAR_ESTADO_CONVOCATORIA">Cambiar Estado Convocatoria</option>
+                                <option value="ELIMINAR_CONVOCATORIA">Eliminar Convocatoria</option>
+                            </select>
                         </div>
 
                         <div className="relative group">
