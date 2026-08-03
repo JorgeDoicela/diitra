@@ -12,6 +12,7 @@ interface ExpectedProductsSectionProps {
     onAddProducto?: () => void;
     onRemoveProducto?: (index: number) => void;
     onUpdateProducto?: (index: number, field: string, value: any) => void;
+    formData?: any;
     readOnly?: boolean;
     config?: any;
 }
@@ -23,12 +24,17 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
     onAddProducto,
     onRemoveProducto,
     onUpdateProducto,
+    formData,
     readOnly = false,
     config
 }) => {
     const title = config?.productosTitle || '5. Productos Esperados';
     const { readOnly: blockReadOnly } = useContext(SectionGuardContext);
     const effectiveReadOnly = readOnly || blockReadOnly;
+
+    const listToRender = (productosEsperados && productosEsperados.length > 0)
+        ? productosEsperados
+        : (formData?.ProductosEsperados || []);
 
     return (
         <SectionBlockGuard id="productos_esperados" title={title} showInlineLock={true}>
@@ -48,7 +54,7 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                     )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {productosEsperados.map((_p, i) => (
+                    {listToRender.map((_p: any, i: number) => (
                         <div key={_p.id || i} className="p-4 bg-bg-deep border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
                             <div className="flex-1">
                                 <label className="text-[9px] font-black uppercase text-text-dim mb-1 block ml-1">Tipo de Producto</label>

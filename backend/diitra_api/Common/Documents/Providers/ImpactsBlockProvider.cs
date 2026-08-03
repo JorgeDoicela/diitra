@@ -20,8 +20,6 @@ namespace diitra_api.Controllers
             ref int premiumFieldsCount,
             string templateCode)
         {
-            schemaDict["ProductosEsperados"] = new object[] { };
-            
             var impactoDict = new Dictionary<string, string>();
 
             // Verificar si el bloque posee categorías de impacto personalizadas en su config

@@ -429,62 +429,70 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                 </div>
             )}
 
-            {/* 5. IMPACTO Y PRODUCTOS ESPERADOS */}
-            {activeSection === 'impacto' && (
+            {/* 5. PRODUCTOS ESPERADOS */}
+            {(activeSection === 'productos_esperados' || activeSection === 'productos') && (
+                <div className="space-y-6 animate-fade-in font-sans" id="field-card-productos_esperados">
+                    <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">5. Productos Esperados</h3>
+                            {renderFieldStatusBadge('productos_esperados')}
+                        </div>
+                        {renderCommentButton('productos_esperados', 'Productos Esperados')}
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3 select-none">
+                        <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Entregables Planificados del Proyecto</span>
+                        <ul className="list-disc pl-4 space-y-1.5 text-xs text-text-main font-medium select-text">
+                            {getSafeArray(docSnapshot.ProductosEsperados || docSnapshot.Entregables).map((e: any, idx: number) => (
+                                <li key={idx} className="leading-relaxed">{stripHtml(e.tipo || e.descripcion || e)}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
+
+            {/* 6. MATRIZ DE IMPACTO */}
+            {(activeSection === 'impacto' || activeSection === 'impactos') && (
                 <div className="space-y-6 animate-fade-in font-sans" id="field-card-impacto">
                     <div className="border-b border-border-thin/60 pb-3 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">5. Impacto y Entregables del Proyecto</h3>
+                            <h3 className="text-xs font-bold text-text-main uppercase tracking-widest font-mono">6. Matriz de Impacto</h3>
                             {renderFieldStatusBadge('impacto')}
                         </div>
-                        {renderCommentButton('impacto', 'Impacto & Entregables')}
+                        {renderCommentButton('impacto', 'Matriz de Impacto')}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 select-none">
-                        {/* El Impacto se guarda como objeto {social, cientifico, economico, politico, ambiental, otro} */}
-                        <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3">
-                            <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Impacto Esperado</span>
-                            {(() => {
-                                const imp = docSnapshot.Impacto || docSnapshot.ImpactoEsperado;
-                                if (!imp) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
-                                if (typeof imp === 'string') return renderHtml(imp, 'No descrito');
-                                // Es un objeto con claves por categoría
-                                const impEntries = Object.entries(imp).filter(([, v]) => v && String(v).trim());
-                                if (impEntries.length === 0) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
+                    <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3 select-none">
+                        <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Impactos Esperados del Proyecto</span>
+                        {(() => {
+                            const imp = docSnapshot.Impacto || docSnapshot.ImpactoEsperado;
+                            if (!imp) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
+                            if (typeof imp === 'string') return renderHtml(imp, 'No descrito');
+                            const impEntries = Object.entries(imp).filter(([, v]) => v && String(v).trim());
+                            if (impEntries.length === 0) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
 
-                                // Intentar mapear títulos bonitos desde las categorías configuradas en la plantilla
-                                const impactBlock = (templateBlocks || []).find((b: any) => b.type === 'impacts');
-                                const customCatMap: Record<string, string> = {};
-                                if (impactBlock?.config?.impactCategories && Array.isArray(impactBlock.config.impactCategories)) {
-                                    impactBlock.config.impactCategories.forEach((c: any) => {
-                                        if (c.key && c.title) customCatMap[c.key.toLowerCase()] = c.title;
-                                    });
-                                }
+                            const impactBlock = (templateBlocks || []).find((b: any) => b.type === 'impacts');
+                            const customCatMap: Record<string, string> = {};
+                            if (impactBlock?.config?.impactCategories && Array.isArray(impactBlock.config.impactCategories)) {
+                                impactBlock.config.impactCategories.forEach((c: any) => {
+                                    if (c.key && c.title) customCatMap[c.key.toLowerCase()] = c.title;
+                                });
+                            }
 
-                                return (
-                                    <div className="space-y-3 mt-2 select-text">
-                                        {impEntries.map(([tipo, valor]) => {
-                                            const displayLabel = customCatMap[tipo.toLowerCase()] || `Impacto ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
-                                            return (
-                                                <div key={tipo} className="border-l-2 border-brand/40 pl-2.5 py-0.5">
-                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block">{displayLabel}</span>
-                                                    <div className="text-xs font-mono font-medium text-text-main mt-0.5" dangerouslySetInnerHTML={{ __html: String(valor) }} />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                        <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-3">
-                            <span className="text-[8px] font-bold text-brand uppercase tracking-widest font-mono">Productos / Entregables Planificados</span>
-                            <ul className="list-disc pl-4 space-y-1.5 text-xs text-text-main font-medium select-text">
-                                {/* El workspace lo guarda como ProductosEsperados, con fallback a Entregables */}
-                                {getSafeArray(docSnapshot.ProductosEsperados || docSnapshot.Entregables).map((e: any, idx: number) => (
-                                    <li key={idx} className="leading-relaxed">{stripHtml(e.tipo || e.descripcion || e)}</li>
-                                ))}
-                            </ul>
-                        </div>
+                            return (
+                                <div className="space-y-3 mt-2 select-text">
+                                    {impEntries.map(([tipo, valor]) => {
+                                        const displayLabel = customCatMap[tipo.toLowerCase()] || `Impacto ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+                                        return (
+                                            <div key={tipo} className="border-l-2 border-brand/40 pl-2.5 py-0.5">
+                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block">{displayLabel}</span>
+                                                <div className="text-xs font-mono font-medium text-text-main mt-0.5" dangerouslySetInnerHTML={{ __html: String(valor) }} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}

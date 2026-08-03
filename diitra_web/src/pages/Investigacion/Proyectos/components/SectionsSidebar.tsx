@@ -71,9 +71,13 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
                 if (!dynamicList.some(s => s.id === 'recursos')) {
                     dynamicList.push({ id: 'recursos', label: b.title || 'Recursos', icon: SECTIONS[3].icon });
                 }
+            } else if (b.type === 'expected_products') {
+                if (!dynamicList.some(s => s.id === 'productos_esperados')) {
+                    dynamicList.push({ id: 'productos_esperados', label: b.title || 'Productos Esperados', icon: SECTIONS[4].icon });
+                }
             } else if (b.type === 'impacts') {
                 if (!dynamicList.some(s => s.id === 'impacto')) {
-                    dynamicList.push({ id: 'impacto', label: b.title || 'Impacto & Entregables', icon: SECTIONS[4].icon });
+                    dynamicList.push({ id: 'impacto', label: b.title || 'Matriz de Impactos', icon: SECTIONS[4].icon });
                 }
             } else if (b.type === 'gantt') {
                 if (!dynamicList.some(s => s.id === 'cronograma')) {

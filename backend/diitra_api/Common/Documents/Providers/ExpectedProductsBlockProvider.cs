@@ -54,8 +54,8 @@ namespace diitra_api.Controllers
                 sectionsList.Add(new UiSectionDto {
                     Id = "productos_esperados",
                     Label = string.IsNullOrEmpty(title) ? "Productos Esperados" : title,
-                    IconName = "Package",
-                    ComponentName = "ImpactSection",
+                    IconName = "Target",
+                    ComponentName = "ExpectedProductsSection",
                     Config = configDict
                 });
             }
