@@ -8,8 +8,8 @@ import { CSS } from '@dnd-kit/utilities';
 import {
     Layers, Trash2, Eye, EyeOff, Copy, Move, ArrowUp, ArrowDown
 } from 'lucide-react';
-import type { DocumentBlock, GanttObjective, TableSection, IdentificationField } from '../types';
-import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../types';
+import type { DocumentBlock, GanttObjective, TableSection, IdentificationField, ImpactCategory } from '../types';
+import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES } from '../types';
 import { useFreeFormDrag } from '../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../hooks/useFreeFormDrag';
 
@@ -962,61 +962,7 @@ const RenderProjectGeneralSection: React.FC<{
     );
 };
 
-const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
-    const c = config || {};
-    const impactList = [
-        { key: 'showImpactoSocial', label: 'Social' },
-        { key: 'showImpactoCientifico', label: 'Científico' },
-        { key: 'showImpactoEconomico', label: 'Económico' },
-        { key: 'showImpactoPolitico', label: 'Político' },
-        { key: 'showImpactoAmbiental', label: 'Ambiental' },
-        { key: 'showImpactoOtro', label: 'Otro' },
-    ].filter(i => (c as any)[i.key] !== false);
 
-    return (
-        <div className="my-2 p-4 border border-slate-200 rounded-lg bg-slate-50/50 select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Matriz de Impactos y Productos Esperados</span>
-            </div>
-
-            <div className="space-y-4">
-                {c.showProductosEsperados !== false && (
-                    <div>
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Productos Esperados:</span>
-                        <table className="w-full border-collapse text-[10px] border border-slate-200 bg-white">
-                            <thead>
-                                <tr>
-                                    <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-left uppercase text-[8px] text-slate-600">Tipo de Producto</th>
-                                    <th className="border border-slate-300 p-1.5 bg-slate-100 font-bold text-center uppercase text-[8px] text-slate-600 w-16">Cantidad</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td className="border border-slate-200 p-1.5 text-slate-800">[Tipo de Producto de Investigación]</td>
-                                    <td className="border border-slate-200 p-1.5 text-center font-bold text-slate-600">1</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {impactList.length > 0 && (
-                    <div>
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Áreas de Impacto Mapeadas:</span>
-                        <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700 leading-normal">
-                            {impactList.map(item => (
-                                <div key={item.label} className="p-2 border border-slate-150 rounded bg-white flex justify-between gap-4">
-                                    <strong className="text-[8px] uppercase text-slate-400 w-16 text-left">{item.label}</strong>
-                                    <span className="text-slate-600 italic font-medium flex-1 text-right">[Descripción de Impacto]</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
@@ -1483,6 +1429,143 @@ const RenderProjectTechnicalSection: React.FC<{ config: any; blockId?: string; o
             <p className="text-[8px] text-pink-600 font-black border-t border-dashed border-pink-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
                 <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
                 Los investigadores redactarán estas secciones colaborativamente en la pestaña "Plan Técnico" del Workspace.
+            </p>
+        </div>
+    );
+};
+
+const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
+    const layoutMode = c.impactLayoutMode || 'table';
+    const productosTitle = c.productosTitle || '5. Productos Esperados';
+
+    const getCategories = (): ImpactCategory[] => {
+        if (c.impactCategories && Array.isArray(c.impactCategories) && c.impactCategories.length > 0) {
+            return c.impactCategories;
+        }
+
+        return DEFAULT_IMPACT_CATEGORIES.map(def => {
+            const legacyVal = def.legacyKey ? c[def.legacyKey] : undefined;
+            return {
+                ...def,
+                enabled: legacyVal !== undefined ? Boolean(legacyVal) : def.enabled,
+            };
+        });
+    };
+
+    const activeCategories = getCategories().filter(cat => cat.enabled !== false);
+    const headerBg = DYN_COLORS.blue;
+
+    return (
+        <div className="my-2 p-4 border border-slate-200 rounded-lg bg-white select-none space-y-4 shadow-xs">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Matriz de Impactos y Entregables Esperados
+                </span>
+                <span className="text-[8px] text-slate-500 font-medium uppercase tracking-wider">
+                    {activeCategories.length} Áreas de Impacto {layoutMode === 'table' ? '(Tabla Reticular)' : layoutMode === 'cards' ? '(Tarjetas Bento)' : '(Consecutivo)'}
+                </span>
+            </div>
+
+            {/* PRODUCTOS ESPERADOS */}
+            {c.showProductosEsperados !== false && (
+                <div className="space-y-1.5">
+                    <p className="font-bold text-[9px] uppercase tracking-wider text-slate-800 flex items-center gap-1">
+                        <span>{productosTitle}</span>
+                    </p>
+                    <table className="w-full border-collapse text-[10px] border border-slate-300">
+                        <thead>
+                            <tr>
+                                <th className="border border-slate-300 p-1.5 text-white font-bold text-left uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>
+                                    Tipo de Producto / Entregable
+                                </th>
+                                <th className="border border-slate-300 p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-24" style={{ backgroundColor: headerBg }}>
+                                    Cantidad
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="hover:bg-slate-50/50">
+                                <td className="border border-slate-200 p-2 text-slate-800 font-semibold">[Artículo Científico / Ponencia en Congreso / Prototipo]</td>
+                                <td className="border border-slate-200 p-2 text-center text-slate-700 font-bold">1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* MATRIZ DE IMPACTO */}
+            {activeCategories.length > 0 && (
+                <div className="space-y-1.5">
+                    <p className="font-bold text-[9px] uppercase tracking-wider text-slate-800">
+                        Matriz de Impacto del Proyecto
+                    </p>
+
+                    {layoutMode === 'table' ? (
+                        /* Vista 1: Tabla Institucional Clásica Reticular */
+                        <table className="w-full border-collapse text-[10px] border border-slate-300">
+                            <tbody>
+                                {activeCategories.map((cat) => (
+                                    <tr key={cat.key} className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50/50">
+                                        <td
+                                            className="p-2 w-[28%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] leading-snug"
+                                            style={{ backgroundColor: headerBg }}
+                                        >
+                                            {cat.title}
+                                        </td>
+                                        <td className="p-2 w-[72%] text-slate-600 bg-white align-top text-[8.5px] leading-relaxed">
+                                            <span className="italic text-slate-400">
+                                                [{cat.placeholder || `Redacción del ${cat.title}`}]
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : layoutMode === 'cards' ? (
+                        /* Vista 2: Tarjetas Bento Modulares */
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {activeCategories.map((cat) => (
+                                <div key={cat.key} className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs">
+                                    <div
+                                        className="px-2.5 py-1 text-white font-bold text-[8.5px] uppercase tracking-wider flex items-center justify-between"
+                                        style={{ backgroundColor: headerBg }}
+                                    >
+                                        <span>{cat.title}</span>
+                                        <span className="text-[7px] opacity-75 font-mono">{cat.key}</span>
+                                    </div>
+                                    <div className="p-2 text-[8.5px] text-slate-600 bg-slate-50/30">
+                                        <span className="italic text-slate-400">
+                                            [{cat.placeholder || `Descripción del ${cat.title}`}]
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        /* Vista 3: Secciones Consecutivas */
+                        <div className="space-y-2">
+                            {activeCategories.map((cat) => (
+                                <div key={cat.key} className="border-l-4 rounded-r-lg bg-slate-50/80 p-2 border-y border-r border-slate-200" style={{ borderLeftColor: headerBg }}>
+                                    <div className="font-bold text-[8.5px] uppercase tracking-wider" style={{ color: headerBg }}>
+                                        {cat.title}
+                                    </div>
+                                    <div className="text-[8.5px] text-slate-600 mt-1">
+                                        <span className="italic text-slate-400">
+                                            [{cat.placeholder || `Descripción del ${cat.title}`}]
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Los investigadores redactarán el impacto y los entregables en la pestaña "Impacto & Entregables" del Workspace.
             </p>
         </div>
     );

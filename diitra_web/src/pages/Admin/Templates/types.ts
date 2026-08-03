@@ -104,6 +104,27 @@ export const DEFAULT_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
     { id: 'sec_evaluacion', fieldKey: 'Evaluacion', numberPrefix: '3.8', title: 'EVALUACIÓN', placeholder: 'Describir los criterios e indicadores...', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', enabled: true, scribanVariable: 'evaluacion', legacyKey: 'showEvaluacion', colSpan: 2, variant: 'standard', hasContent: true }
 ];
 
+export interface ImpactCategory {
+    id: string;
+    key: string;               // p. ej. 'social', 'cientifico', 'tecnologico'
+    title: string;             // p. ej. 'Impacto Social', 'Impacto Tecnológico'
+    placeholder?: string;      // Guía o ayuda visual de redacción
+    enabled: boolean;
+    scribanVariable?: string;  // p. ej. 'impacto.social'
+    colSpan?: 1 | 2;           // 1 = 50%, 2 = 100%
+    legacyKey?: string;        // p. ej. 'showImpactoSocial'
+}
+
+export const DEFAULT_IMPACT_CATEGORIES: ImpactCategory[] = [
+    { id: 'imp_social', key: 'social', title: 'Impacto Social', placeholder: 'Descripción del impacto positivo en la comunidad o grupo beneficiario...', enabled: true, scribanVariable: 'impacto.social', legacyKey: 'showImpactoSocial', colSpan: 2 },
+    { id: 'imp_cientifico', key: 'cientifico', title: 'Impacto Científico', placeholder: 'Aporte al estado del arte, desarrollo tecnológico o nuevo conocimiento...', enabled: true, scribanVariable: 'impacto.cientifico', legacyKey: 'showImpactoCientifico', colSpan: 2 },
+    { id: 'imp_economico', key: 'economico', title: 'Impacto Económico', placeholder: 'Optimización de recursos, retorno de inversión o reactivación productiva...', enabled: true, scribanVariable: 'impacto.economico', legacyKey: 'showImpactoEconomico', colSpan: 2 },
+    { id: 'imp_politico', key: 'politico', title: 'Impacto Político', placeholder: 'Aporte a políticas públicas, regulación, normativas o gobernanza...', enabled: true, scribanVariable: 'impacto.politico', legacyKey: 'showImpactoPolitico', colSpan: 2 },
+    { id: 'imp_ambiental', key: 'ambiental', title: 'Impacto Ambiental', placeholder: 'Mitigación de huella ecológica, conservación o desarrollo sostenible...', enabled: true, scribanVariable: 'impacto.ambiental', legacyKey: 'showImpactoAmbiental', colSpan: 2 },
+    { id: 'imp_otro', key: 'otro', title: 'Otro Impacto', placeholder: 'Cualquier otro impacto institucional o transferible no clasificado...', enabled: true, scribanVariable: 'impacto.otro', legacyKey: 'showImpactoOtro', colSpan: 2 }
+];
+
+
 export interface IdentificationField {
     fieldKey: string;
     label: string;
@@ -165,10 +186,10 @@ export interface DocumentBlock {
         textoInstitucion?: string;
         coverImage?: string;
         // posicionamiento libre (% relativo al canvas A4 210×297mm)
-        xInstitution?: number;     yInstitution?: number;  // default: x=10, y=4
-        xTitle?: number;           yTitle?: number;         // default: x=10, y=35
-        xCarrera?: number;         yCarrera?: number;       // default: x=10, y=70
-        xPeriodo?: number;         yPeriodo?: number;       // default: x=10, y=80
+        xInstitution?: number; yInstitution?: number;  // default: x=10, y=4
+        xTitle?: number; yTitle?: number;         // default: x=10, y=35
+        xCarrera?: number; yCarrera?: number;       // default: x=10, y=70
+        xPeriodo?: number; yPeriodo?: number;       // default: x=10, y=80
         alignInstitution?: string;
         showTitle?: boolean;
         alignTitle?: string;
@@ -267,6 +288,10 @@ export interface DocumentBlock {
         showFinanciamiento?: boolean;
 
         // ── impacts ────────────────────────────────────────────────────────
+        impactCategories?: ImpactCategory[];
+        impactLayoutMode?: 'table' | 'cards' | 'sections';
+        impactHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        productosTitle?: string;
         showImpactoSocial?: boolean;
         showImpactoCientifico?: boolean;
         showImpactoEconomico?: boolean;

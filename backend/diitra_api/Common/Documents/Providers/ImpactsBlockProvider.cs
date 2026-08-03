@@ -21,14 +21,51 @@ namespace diitra_api.Controllers
             string templateCode)
         {
             schemaDict["ProductosEsperados"] = new object[] { };
-            schemaDict["Impacto"] = new Dictionary<string, string> { 
-                { "social", "" }, 
-                { "cientifico", "" }, 
-                { "economico", "" }, 
-                { "politico", "" }, 
-                { "ambiental", "" }, 
-                { "otro", "" } 
-            };
+            
+            var impactoDict = new Dictionary<string, string>();
+
+            // Verificar si el bloque posee categorías de impacto personalizadas en su config
+            bool loadedFromConfig = false;
+            if (block.TryGetProperty("config", out var configProp) && configProp.ValueKind == JsonValueKind.Object)
+            {
+                if (configProp.TryGetProperty("impactCategories", out var catsProp) && catsProp.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var cat in catsProp.EnumerateArray())
+                    {
+                        if (cat.ValueKind == JsonValueKind.Object && cat.TryGetProperty("key", out var keyProp))
+                        {
+                            var keyStr = keyProp.GetString();
+                            if (!string.IsNullOrWhiteSpace(keyStr))
+                            {
+                                bool enabled = true;
+                                if (cat.TryGetProperty("enabled", out var enabledProp) && enabledProp.ValueKind == JsonValueKind.False)
+                                {
+                                    enabled = false;
+                                }
+
+                                if (enabled)
+                                {
+                                    impactoDict[keyStr.Trim()] = "";
+                                    loadedFromConfig = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fallback institucional por defecto si no hay categorías personalizadas definidas
+            if (!loadedFromConfig || impactoDict.Count == 0)
+            {
+                impactoDict["social"] = "";
+                impactoDict["cientifico"] = "";
+                impactoDict["economico"] = "";
+                impactoDict["politico"] = "";
+                impactoDict["ambiental"] = "";
+                impactoDict["otro"] = "";
+            }
+
+            schemaDict["Impacto"] = impactoDict;
 
             if (!listsList.Contains("ProductosEsperados")) listsList.Add("ProductosEsperados");
         }

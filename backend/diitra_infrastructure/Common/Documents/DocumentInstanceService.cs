@@ -642,7 +642,7 @@ namespace Diitra.Infrastructure.Common.Documents
                                 cargo: cargo,
                                 departamento: departamento,
                                 rolEnDocumento: firma.FirmanteRol,
-                                firmaCode: firma.FirmaCode,
+                                firmaCode: firma.FirmaCode ?? "",
                                 firmaImagenB64: null,
                                 verificationUrl: verificationUrl,
                                 firmadoEn: firma.FechaFirma

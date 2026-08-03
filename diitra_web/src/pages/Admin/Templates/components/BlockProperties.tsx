@@ -8,6 +8,7 @@ import { TwoColumnProperties } from './properties/TwoColumnProperties';
 import { GanttProperties } from './properties/GanttProperties';
 import { ProjectGeneralProperties } from './properties/ProjectGeneralProperties';
 import { ProjectTechnicalProperties } from './properties/ProjectTechnicalProperties';
+import { ImpactsProperties } from './properties/ImpactsProperties';
 import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme } from '../utils/theme-schema';
 
 
@@ -850,33 +851,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {/* ── IMPACTO Y PRODUCTOS ─────────────────────────────────────── */}
                             {activeBlock.type === 'impacts' && (
-                                <div className="space-y-3 border-t border-border-thin/20 pt-4">
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Activa o desactiva qué áreas de impacto y productos esperados se solicitarán:
-                                    </p>
-                                    {[
-                                        { key: 'showProductosEsperados', label: 'Mostrar Productos Esperados', desc: 'Tabla de entregables/artículos/patentes a generar.' },
-                                        { key: 'showImpactoSocial', label: 'Mostrar Impacto Social', desc: 'Descripción del impacto en la comunidad.' },
-                                        { key: 'showImpactoCientifico', label: 'Mostrar Impacto Científico', desc: 'Aporte a la literatura o conocimiento.' },
-                                        { key: 'showImpactoEconomico', label: 'Mostrar Impacto Económico', desc: 'Impacto productivo o financiero.' },
-                                        { key: 'showImpactoPolitico', label: 'Mostrar Impacto Político', desc: 'Influencia en políticas públicas o normas.' },
-                                        { key: 'showImpactoAmbiental', label: 'Mostrar Impacto Ambiental', desc: 'Sustentabilidad y mitigación ecológica.' },
-                                        { key: 'showImpactoOtro', label: 'Mostrar Otros Impactos', desc: 'Cualquier otro impacto relevante.' },
-                                    ].map(({ key, label, desc }) => (
-                                        <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-main block">{label}</label>
-                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={(activeBlock.config as any)[key] !== false}
-                                                onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
-                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <ImpactsProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}
 
                             {/* ── AVANCE DE EJECUCIÓN ──────────────────────────────────────── */}

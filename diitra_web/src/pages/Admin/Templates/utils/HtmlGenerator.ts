@@ -1,4 +1,5 @@
-import type { DocumentBlock, TableSection, GanttObjective, IdentificationField } from '../types';
+import type { DocumentBlock, TableSection, GanttObjective, IdentificationField, ImpactCategory } from '../types';
+import { DEFAULT_IMPACT_CATEGORIES } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de estilo institucional
@@ -1366,9 +1367,12 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
             // ── MATRIZ DE IMPACTOS ───────────────────────────────────────────
             case 'impacts': {
                 const parts: string[] = [];
+                const productosTitle = c.productosTitle || '5. Productos Esperados';
+                const layoutMode = c.impactLayoutMode || 'table';
+
                 if (c.showProductosEsperados !== false) {
                     parts.push(`
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">5. Productos Esperados</p>
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
     <table class="info-table">
       <thead>
         <tr>
@@ -1387,22 +1391,78 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     </table>`);
                 }
 
-                const impactRows: string[] = [];
-                if (c.showImpactoSocial !== false) impactRows.push(`<tr><td class="label-cell" style="width: 25%;">Impacto Social</td><td>{{default impacto.social "Sin descripción."}}</td></tr>`);
-                if (c.showImpactoCientifico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Científico</td><td>{{default impacto.cientifico "Sin descripción."}}</td></tr>`);
-                if (c.showImpactoEconomico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Económico</td><td>{{default impacto.economico "Sin descripción."}}</td></tr>`);
-                if (c.showImpactoPolitico !== false) impactRows.push(`<tr><td class="label-cell">Impacto Político</td><td>{{default impacto.politico "Sin descripción."}}</td></tr>`);
-                if (c.showImpactoAmbiental !== false) impactRows.push(`<tr><td class="label-cell">Impacto Ambiental</td><td>{{default impacto.ambiental "Sin descripción."}}</td></tr>`);
-                if (c.showImpactoOtro !== false) impactRows.push(`<tr><td class="label-cell">Otro Impacto</td><td>{{default impacto.otro "Sin descripción."}}</td></tr>`);
+                const getImpactCategories = (): ImpactCategory[] => {
+                    if (c.impactCategories && Array.isArray(c.impactCategories) && c.impactCategories.length > 0) {
+                        return c.impactCategories;
+                    }
+                    return DEFAULT_IMPACT_CATEGORIES.map(def => {
+                        const legacyVal = def.legacyKey ? c[def.legacyKey] : undefined;
+                        return {
+                            ...def,
+                            enabled: legacyVal !== undefined ? Boolean(legacyVal) : def.enabled,
+                        };
+                    });
+                };
 
-                if (impactRows.length > 0) {
-                    parts.push(`
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 25px 0 6px;">6. Matriz de Impacto</p>
+                const activeCats = getImpactCategories().filter(cat => cat.enabled !== false);
+
+                if (activeCats.length > 0) {
+                    if (layoutMode === 'cards') {
+                        // Modo 2: Tarjetas Bento Modulares en PDF
+                        const cardHtmlList = activeCats.map(cat => {
+                            const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                            return `
+      <div style="margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
+        <div style="background-color: ${COLORS.blue}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
+          ${cat.title}
+        </div>
+        <div style="padding: 8px 10px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }}; bg-color: #ffffff;">
+          {{default ${scr} "Sin descripción."}}
+        </div>
+      </div>`;
+                        });
+
+                        parts.push(`
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
+    <div style="margin-bottom: 15px;">
+      ${cardHtmlList.join('')}
+    </div>`);
+                    } else if (layoutMode === 'sections') {
+                        // Modo 3: Secciones Consecutivas
+                        const secHtmlList = activeCats.map(cat => {
+                            const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                            return `
+      <div style="margin-bottom: 12px; page-break-inside: avoid;">
+        <div style="padding: 4px 8px; background-color: #f1f5f9; border-left: 3px solid ${COLORS.blue}; margin-bottom: 4px;">
+          <p style="margin: 0; font-weight: bold; font-size: 8.5pt; color: ${COLORS.blue}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${cat.title}</p>
+        </div>
+        <div style="padding-left: 4px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
+          {{default ${scr} "Sin descripción."}}
+        </div>
+      </div>`;
+                        });
+
+                        parts.push(`
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
+    <div style="margin-bottom: 15px;">
+      ${secHtmlList.join('')}
+    </div>`);
+                    } else {
+                        // Modo 1: Tabla Institucional Clásica Reticular
+                        const impactRows = activeCats.map((cat, idx) => {
+                            const scr = cat.scribanVariable || `impacto.${cat.key}`;
+                            const wStyle = idx === 0 ? ' style="width: 28%;"' : '';
+                            return `<tr><td class="label-cell"${wStyle}>${cat.title}</td><td>{{default ${scr} "Sin descripción."}}</td></tr>`;
+                        });
+
+                        parts.push(`
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 6px;">6. Matriz de Impacto</p>
     <table class="info-table">
       <tbody>
         ${impactRows.join('\n        ')}
       </tbody>
     </table>`);
+                    }
                 }
 
                 if (parts.length === 0) break;

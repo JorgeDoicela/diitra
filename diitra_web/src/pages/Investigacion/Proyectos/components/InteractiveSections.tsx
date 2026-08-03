@@ -451,14 +451,27 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 // Es un objeto con claves por categoría
                                 const impEntries = Object.entries(imp).filter(([, v]) => v && String(v).trim());
                                 if (impEntries.length === 0) return <p className="text-xs text-text-dim/60 italic mt-2">No descrito</p>;
+
+                                // Intentar mapear títulos bonitos desde las categorías configuradas en la plantilla
+                                const impactBlock = (templateBlocks || []).find((b: any) => b.type === 'impacts');
+                                const customCatMap: Record<string, string> = {};
+                                if (impactBlock?.config?.impactCategories && Array.isArray(impactBlock.config.impactCategories)) {
+                                    impactBlock.config.impactCategories.forEach((c: any) => {
+                                        if (c.key && c.title) customCatMap[c.key.toLowerCase()] = c.title;
+                                    });
+                                }
+
                                 return (
-                                    <div className="space-y-2 mt-2 select-text">
-                                        {impEntries.map(([tipo, valor]) => (
-                                            <div key={tipo}>
-                                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">{tipo.charAt(0).toUpperCase() + tipo.slice(1)}</span>
-                                                <div className="text-xs font-mono font-medium text-text-main mt-0.5" dangerouslySetInnerHTML={{ __html: String(valor) }} />
-                                            </div>
-                                        ))}
+                                    <div className="space-y-3 mt-2 select-text">
+                                        {impEntries.map(([tipo, valor]) => {
+                                            const displayLabel = customCatMap[tipo.toLowerCase()] || `Impacto ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+                                            return (
+                                                <div key={tipo} className="border-l-2 border-brand/40 pl-2.5 py-0.5">
+                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block">{displayLabel}</span>
+                                                    <div className="text-xs font-mono font-medium text-text-main mt-0.5" dangerouslySetInnerHTML={{ __html: String(valor) }} />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 );
                             })()}
