@@ -185,7 +185,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
             >
                 <GuideGrid />
-                <div className="absolute top-2 right-2 z-50 bg-indigo-600/80 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 pointer-events-none">
+                <div className="absolute top-2 left-2 z-50 bg-indigo-600/80 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 pointer-events-none">
                     <Move className="w-2.5 h-2.5" />
                     Canvas Libre
                 </div>

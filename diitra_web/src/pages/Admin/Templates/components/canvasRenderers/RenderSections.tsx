@@ -560,7 +560,13 @@ export const RenderProjectTechnicalSection: React.FC<{
 
 export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
-    const categories: ImpactCategory[] = c.categories && c.categories.length > 0 ? c.categories : DEFAULT_IMPACT_CATEGORIES;
+    const rawCats = c.impactCategories || c.categories;
+    const categories: ImpactCategory[] = (Array.isArray(rawCats) && rawCats.length > 0)
+        ? rawCats.filter((cat: any) => cat.enabled !== false)
+        : DEFAULT_IMPACT_CATEGORIES;
+    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
+    const showProductos = c.showProductosEsperados !== false;
+    const productosTitle = c.productosTitle || '5. Productos Esperados';
 
     return (
         <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
@@ -570,34 +576,79 @@ export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
                     MATRIZ DE IMPACTOS Y PRODUCTOS ESPERADOS DEL PROYECTO
                 </span>
                 <span className="text-[8px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {categories.length} CATEGORÍAS
+                    MODO: {layoutMode === 'cards' ? 'TARJETAS BENTO' : layoutMode === 'sections' ? 'CONSECUTIVO' : 'TABLA CLÁSICA'}
                 </span>
             </div>
 
-            <div className="space-y-3">
-                {categories.map((cat, idx) => (
-                    <div key={cat.id || idx} className="border border-slate-200 rounded-lg overflow-hidden">
-                        <div className="p-2 bg-slate-800 text-white font-bold text-[9px] uppercase tracking-wider flex items-center justify-between">
-                            <span>{cat.title}</span>
-                            <span className="text-[8px] text-slate-300 font-mono">{(cat.items || []).length} ÍTEMS</span>
-                        </div>
-                        <div className="p-2 bg-white space-y-1.5">
-                            {(cat.items || []).length === 0 ? (
-                                <p className="text-[8.5px] text-slate-400 italic">Sin impactos definidos en esta categoría</p>
-                            ) : (
-                                (cat.items || []).map((item, itemIdx) => (
-                                    <div key={item.id || itemIdx} className="text-[8.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-100 flex items-start gap-2">
-                                        <span className="font-bold text-slate-500 shrink-0">{itemIdx + 1}.</span>
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-slate-800">{item.description}</p>
-                                            {item.indicator && <p className="text-[7.5px] text-slate-500 mt-0.5 font-mono">Indicador: {item.indicator}</p>}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+            {/* PRODUCTOS ESPERADOS PREVIEW */}
+            {showProductos && (
+                <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
+                    <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
+                    <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
+                        <thead>
+                            <tr className="bg-[#1e2a4a] text-white">
+                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
+                                <th className="p-1.5 text-center font-bold border border-slate-200 w-28">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="bg-white text-slate-700">
+                                <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
+                                <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* MATRIZ DE IMPACTOS SEGÚN LAYOUT MODE */}
+            <div className="space-y-2">
+                <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">6. Matriz de Impactos</h5>
+
+                {layoutMode === 'cards' ? (
+                    /* MODO TARJETAS BENTO */
+                    <div className="grid grid-cols-2 gap-2">
+                        {categories.map((cat, idx) => (
+                            <div key={cat.id || idx} className={`border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs ${cat.colSpan === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                                <div className="p-1.5 bg-[#1e2a4a] text-white font-bold text-[9px] uppercase tracking-wider flex items-center justify-between">
+                                    <span>{cat.title}</span>
+                                    <span className="text-[7.5px] font-mono opacity-70">{cat.scribanVariable || `impacto.${cat.key}`}</span>
+                                </div>
+                                <div className="p-2 text-[9px] text-slate-600 bg-slate-50/50 leading-relaxed italic">
+                                    {cat.placeholder || 'Descripción del impacto asignado al proyecto...'}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                ) : layoutMode === 'sections' ? (
+                    /* MODO CONSECUTIVO (PÁRRAFOS) */
+                    <div className="space-y-2.5">
+                        {categories.map((cat, idx) => (
+                            <div key={cat.id || idx} className="border-l-4 border-[#1e2a4a] pl-3 py-1 bg-slate-50/40 rounded-r-md">
+                                <h6 className="text-[9.5px] font-bold uppercase text-[#1e2a4a] tracking-wide">{cat.title}</h6>
+                                <p className="text-[9px] text-slate-600 mt-0.5 leading-relaxed italic">
+                                    {cat.placeholder || 'Descripción del impacto asignado al proyecto...'}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    /* MODO TABLA CLÁSICA (RETICULAR) */
+                    <table className="w-full border-collapse border border-slate-300 text-[9.5px]">
+                        <tbody>
+                            {categories.map((cat, idx) => (
+                                <tr key={cat.id || idx} className="border-b border-slate-200 last:border-0">
+                                    <td className="p-2 bg-[#1e2a4a] text-white font-bold text-[8.5px] uppercase w-1/4 align-top border border-slate-300">
+                                        {cat.title}
+                                    </td>
+                                    <td className="p-2 text-slate-700 bg-white align-top border border-slate-300 leading-relaxed italic text-[9px]">
+                                        {cat.placeholder || `{{default ${cat.scribanVariable || `impacto.${cat.key}`} "Descripción del impacto..."}}`}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Settings, Palette, Layout, Plus, Trash2 } from 'lucide-react';
-import type { DocumentBlock } from '../types';
+import type { DocumentBlock, DocumentTemplateDto } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
@@ -13,6 +13,7 @@ import { ThemeEditorTab } from './ThemeEditorTab';
 
 
 interface BlockPropertiesProps {
+    selectedTemplate?: DocumentTemplateDto | null;
     activeBlock: DocumentBlock | undefined;
     onUpdateConfig: (blockId: string, key: string, value: any) => void;
     onCellChange: (blockId: string, rowIndex: number, cellIndex: number, val: string) => void;
@@ -41,6 +42,7 @@ const inputCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/
 const selectCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 
 export const BlockProperties: React.FC<BlockPropertiesProps> = ({
+    selectedTemplate,
     activeBlock,
     onUpdateConfig,
     onCellChange,
@@ -106,7 +108,15 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
             {/* CUERPO DEL PANEL: PESTAÑA PROPIEDADES */}
             {activeTab === 'properties' && (
                 <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-                    {!activeBlock ? (
+                    {!selectedTemplate ? (
+                        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none bg-surface-hover/5">
+                            <Settings className="w-10 h-10 text-text-dim/30 mb-3 animate-pulse" />
+                            <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Sin formato seleccionado</h4>
+                            <p className="text-[10px] text-text-dim/80 max-w-xs mt-1 leading-normal">
+                                Selecciona un documento del <strong>Catálogo (izquierda)</strong> para cargar sus bloques y propiedades, o cambia a la pestaña de <strong>Estilos</strong> para editar el diseño visual general.
+                            </p>
+                        </div>
+                    ) : !activeBlock ? (
                         <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none bg-surface-hover/5">
                             <Settings className="w-10 h-10 text-text-dim/30 mb-3 animate-pulse" />
                             <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Ningún bloque seleccionado</h4>
@@ -604,7 +614,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             )}
 
                             {/* ── RECURSOS Y PRESUPUESTO ──────────────────────────────────── */}
-                            {activeBlock.type === 'project_budget_section' && (
+                            {(activeBlock.type === 'project_budget_section' || activeBlock.type === 'resources') && (
                                 <div className="space-y-3 border-t border-border-thin/20 pt-4">
                                     <p className="text-[10px] text-text-dim leading-relaxed">
                                         Activa o desactiva las tablas de recursos y financiamiento:

@@ -40,7 +40,8 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'gantt',
     'signatures',
     'impacts',
-    'rubric_table'
+    'rubric_table',
+    'resources'
 ];
 
 interface SortableBlockItemProps {
@@ -149,27 +150,27 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 }`}
         >
             {/* Toolbar flotante superior Notion-style para reordenamiento y acciones */}
-            <div className="absolute top-1 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white rounded-md px-2 py-1 shadow-lg flex items-center gap-1.5 text-[10px]">
+            <div className="absolute top-1 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity bg-white text-slate-800 border border-slate-200/80 rounded-md px-2 py-1 shadow-lg flex items-center gap-1.5 text-[10px] dark:bg-slate-900 dark:text-white dark:border-slate-800">
                 <div
-                    className="p-1 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing flex items-center justify-center"
+                    className="p-1 text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white cursor-grab active:cursor-grabbing flex items-center justify-center"
                     title="Arrastra para reordenar este bloque arriba o abajo"
                 >
                     <GripVertical className="w-3.5 h-3.5" />
                 </div>
-                <div className="w-px h-3 bg-slate-700" />
+                <div className="w-px h-3 bg-slate-200 dark:bg-slate-700" />
                 <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onToggleActive(index); }}
-                    className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
                     title={block.isActive ? "Ocultar bloque en PDF" : "Mostrar bloque en PDF"}
                 >
-                    {block.isActive ? <Eye className="w-3 h-3 text-emerald-400" /> : <EyeOff className="w-3 h-3 text-amber-400" />}
+                    {block.isActive ? <Eye className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> : <EyeOff className="w-3 h-3 text-amber-500 dark:text-amber-400" />}
                 </button>
                 {!UNIQUE_BLOCK_TYPES.includes(block.type) && (
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onDuplicateBlock(block.id); }}
-                        className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
                         title="Duplicar bloque"
                     >
                         <Copy className="w-3 h-3" />
@@ -178,7 +179,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                    className="p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                    className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors cursor-pointer"
                     title="Eliminar bloque"
                 >
                     <Trash2 className="w-3 h-3" />

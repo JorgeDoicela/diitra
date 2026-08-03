@@ -134,22 +134,7 @@ export const useDocumentTemplatesPage = () => {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    const fetchTemplates = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/admin/templates');
-            setTemplates(res.data || []);
-        } catch (err: any) {
-            console.error(err);
-            addToast("Error al Cargar", "No se pudo obtener el catálogo de plantillas.", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchTemplates();
-    }, []);
+    // El catálogo se carga mediante fetchTemplates definido después de handleSelectTemplate
 
     const handleSelectTemplate = async (tmpl: DocumentTemplateDto) => {
         try {
@@ -379,6 +364,28 @@ export const useDocumentTemplatesPage = () => {
         }
     };
 
+    const fetchTemplates = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/admin/templates');
+            const data = res.data || [];
+            setTemplates(data);
+            if (data.length > 0 && !selectedTemplate) {
+                // Auto-seleccionar el primer formato por defecto para cargar lienzo y panel derecho
+                await handleSelectTemplate(data[0]);
+            }
+        } catch (err: any) {
+            console.error(err);
+            addToast("Error al Cargar", "No se pudo obtener el catálogo de plantillas.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTemplates();
+    }, []);
+
     const handleAddBlock = (type: BlockType) => {
         const newId = `block-${Date.now()}`;
         let newBlock: DocumentBlock;
@@ -485,6 +492,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = { id: newId, type, title: 'Plan Técnico de Redacción', isActive: true, config: {} };
                 break;
             case 'project_budget_section':
+            case 'resources':
                 newBlock = { id: newId, type, title: 'Recursos y Financiamiento del Proyecto', isActive: true, config: {} };
                 break;
             case 'project_progress_report':

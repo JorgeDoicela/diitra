@@ -53,7 +53,8 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'gantt',
     'signatures',
     'impacts',
-    'rubric_table'
+    'rubric_table',
+    'resources'
 ];
 
 const DocumentTemplatesPage: React.FC = () => {
@@ -395,6 +396,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     {/* Columna Derecha: Panel de Propiedades y Tema */}
                     <div className={`w-96 shrink-0 md:flex flex-col min-h-0 ${activeMobileTab === 'properties' ? 'flex w-full' : 'hidden'}`}>
                         <BlockProperties
+                            selectedTemplate={selectedTemplate}
                             activeBlock={activeBlock}
                             onUpdateConfig={handleUpdateConfig}
                             onCellChange={handleCellChange}
