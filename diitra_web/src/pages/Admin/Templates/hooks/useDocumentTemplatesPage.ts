@@ -501,8 +501,11 @@ export const useDocumentTemplatesPage = () => {
             case 'project_ethics_report':
                 newBlock = { id: newId, type, title: 'Acta del Comité de Ética', isActive: true, config: {} };
                 break;
+            case 'expected_products':
+                newBlock = { id: newId, type, title: 'Productos Esperados', isActive: true, config: { productosTitle: '5. Productos Esperados' } };
+                break;
             case 'impacts':
-                newBlock = { id: newId, type, title: 'Matriz de Impactos y Productos Esperados', isActive: true, config: {} };
+                newBlock = { id: newId, type, title: 'Matriz de Impactos', isActive: true, config: {} };
                 break;
             default:
                 return;

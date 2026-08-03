@@ -21,6 +21,7 @@ import {
     RenderProjectGeneralSection,
     RenderProjectTechnicalSection,
     RenderImpacts,
+    RenderExpectedProducts,
 } from './canvasRenderers/RenderSections';
 import {
     RenderProjectBudgetSection,
@@ -125,6 +126,8 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProjectProgressReport config={block.config} />;
             case 'project_ethics_report':
                 return <RenderProjectEthicsReport config={block.config} />;
+            case 'expected_products':
+                return <RenderExpectedProducts config={block.config} />;
             case 'impacts':
                 return <RenderImpacts config={block.config} />;
             default:

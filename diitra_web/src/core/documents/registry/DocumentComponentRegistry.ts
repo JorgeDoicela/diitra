@@ -28,6 +28,7 @@ import { TeamSection }            from '../../../components/DIITRA/sections/Team
 import { BudgetSection }          from '../../../components/DIITRA/sections/BudgetSection';
 import { TimelineSection }        from '../../../components/DIITRA/sections/TimelineSection';
 import { ImpactSection }          from '../../../components/DIITRA/sections/ImpactSection';
+import { ExpectedProductsSection } from '../../../components/DIITRA/sections/ExpectedProductsSection';
 import { BibliographySection }    from '../../../components/DIITRA/sections/BibliographySection';
 import { ProgressReportSection }  from '../../../components/DIITRA/sections/ProgressReportSection';
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
@@ -42,6 +43,7 @@ export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
     'TechnicalSection': TechnicalSection,
     'BudgetSection': BudgetSection,
     'ImpactSection': ImpactSection,
+    'ExpectedProductsSection': ExpectedProductsSection,
     'TimelineSection': TimelineSection,
     'BibliographySection': BibliographySection,
     'ProgressReportSection': ProgressReportSection,
@@ -61,6 +63,7 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'tecnico':        TechnicalSection,
     'recursos':       BudgetSection,
     'impactos':       ImpactSection,
+    'productos_esperados': ExpectedProductsSection,
     'cronograma':     TimelineSection,
     'bibliografia':   BibliographySection,
 

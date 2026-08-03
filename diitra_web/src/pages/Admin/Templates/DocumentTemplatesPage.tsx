@@ -51,10 +51,10 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'project_ethics_report',
     'researchers_table',
     'gantt',
-    'signatures',
     'impacts',
     'rubric_table',
-    'resources'
+    'resources',
+    'expected_products'
 ];
 
 const DocumentTemplatesPage: React.FC = () => {
@@ -172,6 +172,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                                     { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'project_ethics_report' as const, icon: Award, label: 'Acta del Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                    { type: 'expected_products' as const, icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
@@ -282,7 +283,8 @@ const DocumentTemplatesPage: React.FC = () => {
                                                 { type: 'project_budget_section' as const, icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_progress_report' as const, icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_ethics_report' as const, icon: Award, label: 'Acta del Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
-                                                { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'expected_products' as const, icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                             ]).map(item => {

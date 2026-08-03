@@ -277,14 +277,13 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
   ${bodyHtml}`;
 };
 
-export const generateImpactsHtml = (block: DocumentBlock): string => {
+export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const productosTitle = c.productosTitle || '5. Productos Esperados';
-    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
-    const parts: string[] = [];
 
-    if (c.showProductosEsperados !== false) {
-        parts.push(`
+    return `
+  <!-- BLOQUE: PRODUCTOS ESPERADOS -->
+  <div style="margin-top: 20px;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
     <table class="info-table">
       <thead>
@@ -301,8 +300,14 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
         </tr>
         {{/each}}
       </tbody>
-    </table>`);
-    }
+    </table>
+  </div>`;
+};
+
+export const generateImpactsHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
+    const parts: string[] = [];
 
     const getImpactCategories = (): ImpactCategory[] => {
         if (c.impactCategories && Array.isArray(c.impactCategories) && c.impactCategories.length > 0) {
@@ -378,7 +383,7 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
     if (parts.length === 0) return '';
 
     return `
-  <!-- BLOQUE: MATRIZ DE IMPACTOS Y PRODUCTOS -->
+  <!-- BLOQUE: MATRIZ DE IMPACTOS -->
   <div style="margin-top: 20px;">
     ${parts.join('')}
   </div>`;

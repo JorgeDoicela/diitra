@@ -52,6 +52,7 @@ export type BlockType =
     | 'project_progress_report'
     | 'project_ethics_report'
     | 'resources'
+    | 'expected_products'
     | 'impacts';
 
 // ─────────────────────────────────────────────────────────────────────────────

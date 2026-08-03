@@ -11,6 +11,7 @@ import {
     generateProjectGeneralHtml,
     generateProjectTechnicalHtml,
     generateImpactsHtml,
+    generateExpectedProductsHtml,
 } from './htmlGenerators/sectionsGenerator';
 import {
     generateResourcesHtml,
@@ -88,6 +89,9 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'project_ethics_report':
                 html += generateProjectEthicsHtml(block);
+                break;
+            case 'expected_products':
+                html += generateExpectedProductsHtml(block);
                 break;
             case 'impacts':
                 html += generateImpactsHtml(block);

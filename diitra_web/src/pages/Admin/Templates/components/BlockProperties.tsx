@@ -9,6 +9,7 @@ import { GanttProperties } from './properties/GanttProperties';
 import { ProjectGeneralProperties } from './properties/ProjectGeneralProperties';
 import { ProjectTechnicalProperties } from './properties/ProjectTechnicalProperties';
 import { ImpactsProperties } from './properties/ImpactsProperties';
+import { ExpectedProductsProperties } from './properties/ExpectedProductsProperties';
 import { ThemeEditorTab } from './ThemeEditorTab';
 
 
@@ -640,7 +641,12 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 </div>
                             )}
 
-                            {/* ── IMPACTO Y PRODUCTOS ─────────────────────────────────────── */}
+                            {/* ── PRODUCTOS ESPERADOS ─────────────────────────────────────── */}
+                            {activeBlock.type === 'expected_products' && (
+                                <ExpectedProductsProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                            )}
+
+                            {/* ── MATRIZ DE IMPACTO ───────────────────────────────────────── */}
                             {activeBlock.type === 'impacts' && (
                                 <ImpactsProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}

@@ -558,14 +558,8 @@ export const RenderProjectTechnicalSection: React.FC<{
     );
 };
 
-export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
+export const RenderExpectedProducts: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
-    const rawCats = c.impactCategories || c.categories;
-    const categories: ImpactCategory[] = (Array.isArray(rawCats) && rawCats.length > 0)
-        ? rawCats.filter((cat: any) => cat.enabled !== false)
-        : DEFAULT_IMPACT_CATEGORIES;
-    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
-    const showProductos = c.showProductosEsperados !== false;
     const productosTitle = c.productosTitle || '5. Productos Esperados';
 
     return (
@@ -573,33 +567,50 @@ export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
                 <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    MATRIZ DE IMPACTOS Y PRODUCTOS ESPERADOS DEL PROYECTO
+                    PRODUCTOS Y ENTREGABLES ESPERADOS DEL PROYECTO
+                </span>
+            </div>
+
+            <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
+                <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
+                <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
+                    <thead>
+                        <tr className="bg-[#1e2a4a] text-white">
+                            <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
+                            <th className="p-1.5 text-center font-bold border border-slate-200 w-28">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="bg-white text-slate-700">
+                            <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
+                            <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
+    const c = config || {};
+    const rawCats = c.impactCategories || c.categories;
+    const categories: ImpactCategory[] = (Array.isArray(rawCats) && rawCats.length > 0)
+        ? rawCats.filter((cat: any) => cat.enabled !== false)
+        : DEFAULT_IMPACT_CATEGORIES;
+    const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
+
+    return (
+        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    MATRIZ DE IMPACTOS DEL PROYECTO
                 </span>
                 <span className="text-[8px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
                     MODO: {layoutMode === 'cards' ? 'TARJETAS BENTO' : layoutMode === 'sections' ? 'CONSECUTIVO' : 'TABLA CLÁSICA'}
                 </span>
             </div>
-
-            {/* PRODUCTOS ESPERADOS PREVIEW */}
-            {showProductos && (
-                <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
-                    <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
-                    <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
-                        <thead>
-                            <tr className="bg-[#1e2a4a] text-white">
-                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
-                                <th className="p-1.5 text-center font-bold border border-slate-200 w-28">Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-white text-slate-700">
-                                <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
-                                <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            )}
 
             {/* MATRIZ DE IMPACTOS SEGÚN LAYOUT MODE */}
             <div className="space-y-2">

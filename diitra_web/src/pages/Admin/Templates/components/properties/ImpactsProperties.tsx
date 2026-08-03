@@ -131,40 +131,6 @@ export const ImpactsProperties: React.FC<ImpactsPropertiesProps> = ({ block, onU
 
     return (
         <div className="space-y-4 border-t border-border-thin/20 pt-4 text-left">
-            {/* OPCIONES DE PRODUCTOS Y ENTREGABLES */}
-            <div className="p-3 bg-surface-hover/30 border border-border-thin rounded-xl space-y-3">
-                <h5 className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
-                    <Target size={13} className="text-brand" />
-                    Productos y Entregables Esperados
-                </h5>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <label className="text-xs font-semibold text-text-main block">Mostrar Productos Esperados</label>
-                        <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">
-                            Tabla de artículos, patentes, prototipos o ponencias a generar.
-                        </span>
-                    </div>
-                    <input
-                        type="checkbox"
-                        checked={config.showProductosEsperados !== false}
-                        onChange={e => onUpdateConfig(block.id, 'showProductosEsperados', e.target.checked)}
-                        className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
-                    />
-                </div>
-                {config.showProductosEsperados !== false && (
-                    <div className="space-y-1 pt-1">
-                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Título de la Sección de Entregables</label>
-                        <input
-                            type="text"
-                            className={inputCls}
-                            value={config.productosTitle || '5. Productos Esperados'}
-                            onChange={e => onUpdateConfig(block.id, 'productosTitle', e.target.value)}
-                            placeholder="Ej: 5. Productos y Entregables del Proyecto"
-                        />
-                    </div>
-                )}
-            </div>
-
             {/* MODO DE PRESENTACIÓN VISUAL */}
             <div className="p-3 bg-surface-hover/30 border border-border-thin rounded-xl space-y-3">
                 <h5 className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
