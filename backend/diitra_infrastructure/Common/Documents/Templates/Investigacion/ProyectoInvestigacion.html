@@ -1,4 +1,4 @@
-﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg1MzU1MTEwODQ3IiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyAyMDI1LTIwMjYiLCJjb2xvclRlbWEiOiIjMWUyYTRhIiwiY292ZXJJbWFnZSI6IiIsInhUaXRsZSI6NDYsInlUaXRsZSI6NTYuMiwieENhcnJlcmEiOjQxLjgsInlDYXJyZXJhIjo0Mi45LCJ4UGVyaW9kbyI6NTMuOCwieVBlcmlvZG8iOjUxLjMsInNob3dDYXJyZXJhIjp0cnVlLCJzaG93SW5zdGl0dXRpb24iOmZhbHNlfX0seyJpZCI6ImJsb2NrLTE3ODU3OTI4ODU4NDAiLCJ0eXBlIjoiZXhwZWN0ZWRfcHJvZHVjdHMiLCJ0aXRsZSI6IlByb2R1Y3RvcyBFc3BlcmFkb3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InByb2R1Y3Rvc1RpdGxlIjoiNS4gUHJvZHVjdG9zIEVzcGVyYWRvcyJ9fSx7ImlkIjoiYmxvY2stMTc4NTc5MjkyNjY4OCIsInR5cGUiOiJpbXBhY3RzIiwidGl0bGUiOiJNYXRyaXogZGUgSW1wYWN0b3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7fX1d -->
+﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg1MzU1MTEwODQ3IiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyAyMDI1LTIwMjYiLCJjb2xvclRlbWEiOiIjMWUyYTRhIiwiY292ZXJJbWFnZSI6IiIsInhUaXRsZSI6NDYsInlUaXRsZSI6NTYuMiwieENhcnJlcmEiOjQxLjgsInlDYXJyZXJhIjo0Mi45LCJ4UGVyaW9kbyI6NTMuOCwieVBlcmlvZG8iOjUxLjMsInNob3dDYXJyZXJhIjp0cnVlLCJzaG93SW5zdGl0dXRpb24iOmZhbHNlfX0seyJpZCI6ImJsb2NrLTE3ODU3OTI4ODU4NDAiLCJ0eXBlIjoiZXhwZWN0ZWRfcHJvZHVjdHMiLCJ0aXRsZSI6IlByb2R1Y3RvcyBFc3BlcmFkb3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InByb2R1Y3Rvc1RpdGxlIjoiNS4gUHJvZHVjdG9zIEVzcGVyYWRvcyIsInByb2R1Y3RzTGF5b3V0TW9kZSI6InRhYmxlX3NpbXBsZSIsInByb2R1Y3RDb2x1bW5zIjp7InNob3dDYXRlZ29yeSI6ZmFsc2UsInNob3dTdWJ0eXBlIjpmYWxzZSwic2hvd1Byb2R1Y3ROYW1lIjpmYWxzZSwic2hvd0luZGljYXRvciI6ZmFsc2UsInNob3dWZXJpZmljYXRpb25NZWFucyI6ZmFsc2UsInNob3dRdWFudGl0eSI6ZmFsc2UsInNob3dEZWFkbGluZSI6ZmFsc2V9fX1d -->
 <style>
   * { box-sizing: border-box; }
   
@@ -263,7 +263,7 @@
           </div>
         </div>
   </div>
-  <!-- BLOQUE: PRODUCTOS ESPERADOS -->
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (SIMPLE) -->
   <div style="margin-top: 20px;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">5. Productos Esperados</p>
     <table class="info-table">
@@ -276,25 +276,10 @@
       <tbody>
         {{#each productos_esperados}}
         <tr>
-          <td>{{this.tipo}}</td>
+          <td>{{this.tipo_producto_nombre}}</td>
           <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
         </tr>
         {{/each}}
-      </tbody>
-    </table>
-  </div>
-  <!-- BLOQUE: MATRIZ DE IMPACTOS -->
-  <div style="margin-top: 20px;">
-    
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin: 20px 0 6px;">6. Matriz de Impacto</p>
-    <table class="info-table">
-      <tbody>
-        <tr><td class="label-cell" style="width: 28%;">Impacto Social</td><td>{{default impacto.social "Sin descripción."}}</td></tr>
-        <tr><td class="label-cell">Impacto Científico</td><td>{{default impacto.cientifico "Sin descripción."}}</td></tr>
-        <tr><td class="label-cell">Impacto Económico</td><td>{{default impacto.economico "Sin descripción."}}</td></tr>
-        <tr><td class="label-cell">Impacto Político</td><td>{{default impacto.politico "Sin descripción."}}</td></tr>
-        <tr><td class="label-cell">Impacto Ambiental</td><td>{{default impacto.ambiental "Sin descripción."}}</td></tr>
-        <tr><td class="label-cell">Otro Impacto</td><td>{{default impacto.otro "Sin descripción."}}</td></tr>
       </tbody>
     </table>
   </div>

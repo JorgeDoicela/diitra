@@ -558,35 +558,212 @@ export const RenderProjectTechnicalSection: React.FC<{
     );
 };
 
-export const RenderExpectedProducts: React.FC<{ config: any }> = ({ config }) => {
+export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; onUpdateConfig?: (blockId: string, key: string, value: any) => void }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
-    const productosTitle = c.productosTitle || '5. Productos Esperados';
+    const productosTitle = c.productosTitle || '5. Productos y Entregables Esperados';
+    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_detailed';
+
+    const cols = c.productColumns || {
+        showCategory: true,
+        showSubtype: true,
+        showProductName: true,
+        showIndicator: true,
+        showVerificationMeans: true,
+        showQuantity: true,
+        showDeadline: false,
+    };
+
+    const DEFAULT_CATS = [
+        { id: 'cat_cientifico', name: 'Productos Científico-Tecnológicos', enabled: true },
+        { id: 'cat_rrhh', name: 'Formación de Recursos Humanos', enabled: true },
+        { id: 'cat_divulgacion', name: 'Divulgación y Vinculación', enabled: true },
+        { id: 'cat_senadi', name: 'Propiedad Intelectual / SENADI', enabled: true },
+    ];
+
+    const rawCats = c.productCategories || c.categories;
+    const categories = (Array.isArray(rawCats) && rawCats.length > 0)
+        ? rawCats.filter((cat: any) => cat.enabled !== false)
+        : DEFAULT_CATS;
+
+    const handleSelectLayout = (newMode: string) => {
+        if (blockId && onUpdateConfig) {
+            onUpdateConfig(blockId, 'productsLayoutMode', newMode);
+        }
+    };
+
+    const handleToggleColumn = (colKey: string) => {
+        if (blockId && onUpdateConfig) {
+            const updatedCols = { ...cols, [colKey]: cols[colKey] === false ? true : false };
+            onUpdateConfig(blockId, 'productColumns', updatedCols);
+        }
+    };
 
     return (
         <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
+            {/* Cabecera del Lienzo con Selector Directo de Layout */}
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex flex-wrap items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100 gap-2">
+                <span className="flex items-center gap-1.5 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    PRODUCTOS Y ENTREGABLES ESPERADOS DEL PROYECTO
+                    PRODUCTOS Y ENTREGABLES ESPERADOS
                 </span>
+
+                {/* PILLS INTERACTIVAS DE CAMBIO DE LAYOUT DIRECTO EN LIENZO */}
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-md border border-slate-200 shadow-2xs shrink-0">
+                    <span className="text-[8px] font-bold text-slate-400 uppercase px-1">Layout:</span>
+                    {[
+                        { id: 'table_detailed', label: 'Tabla CACES' },
+                        { id: 'table_simple', label: 'Tabla Simple' },
+                        { id: 'cards_by_category', label: 'Bento Cards' },
+                        { id: 'grouped_sections', label: 'Secciones' },
+                    ].map(mode => (
+                        <button
+                            key={mode.id}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleSelectLayout(mode.id); }}
+                            className={`px-2 py-0.5 rounded text-[8.5px] font-bold transition-all cursor-pointer ${layoutMode === mode.id
+                                ? 'bg-emerald-600 text-white shadow-xs scale-102'
+                                : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                        >
+                            <span>{mode.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
-                <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
-                <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
-                    <thead>
-                        <tr className="bg-[#1e2a4a] text-white">
-                            <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
-                            <th className="p-1.5 text-center font-bold border border-slate-200 w-28">Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className="bg-white text-slate-700">
-                            <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
-                            <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
-                        </tr>
-                    </tbody>
-                </table>
+            {/* BARRA DE BOTONES CHIP EN LIENZO PARA TOGGLE DIRECTO DE COLUMNAS */}
+            {onUpdateConfig && blockId && (layoutMode === 'table_detailed' || layoutMode === 'grouped_sections') && (
+                <div className="flex flex-wrap items-center gap-1 p-1.5 bg-emerald-50/50 border border-emerald-100 rounded-md text-[8.5px]">
+                    <span className="font-bold text-emerald-800 uppercase tracking-wider shrink-0 mr-1">Columnas en Lienzo:</span>
+                    {[
+                        { key: 'showCategory', label: 'Categoría' },
+                        { key: 'showSubtype', label: 'Subtipo' },
+                        { key: 'showProductName', label: 'Nombre' },
+                        { key: 'showIndicator', label: 'Indicador' },
+                        { key: 'showVerificationMeans', label: 'Medio Verif.' },
+                        { key: 'showQuantity', label: 'Cantidad' },
+                        { key: 'showDeadline', label: 'Plazo' },
+                    ].map(({ key, label }) => {
+                        const active = cols[key] !== false;
+                        return (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleToggleColumn(key); }}
+                                className={`px-1.5 py-0.5 rounded border transition-all cursor-pointer font-medium ${active
+                                    ? 'bg-emerald-600 text-white border-emerald-700 font-bold'
+                                    : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 line-through'
+                                    }`}
+                            >
+                                {active ? '✓ ' : '+ '}{label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* ÁREA PRINCIPAL DEL LIENZO A4 */}
+            <div className="space-y-2 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
+                {/* Título Editable Directamente en el Lienzo */}
+                {onUpdateConfig && blockId ? (
+                    <input
+                        type="text"
+                        value={productosTitle}
+                        onChange={e => onUpdateConfig(blockId, 'productosTitle', e.target.value)}
+                        className="text-[10px] font-black uppercase text-slate-800 tracking-wide bg-transparent border-b border-dashed border-slate-300 focus:border-emerald-600 focus:outline-none w-full py-0.5"
+                    />
+                ) : (
+                    <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
+                )}
+
+                {/* MODO TARJETAS BENTO */}
+                {layoutMode === 'cards_by_category' ? (
+                    <div className="grid grid-cols-2 gap-2">
+                        {categories.map((cat: any) => (
+                            <div key={cat.id || cat.name} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-1">
+                                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-wider block">{cat.name}</span>
+                                <div className="text-[9px] text-slate-700 font-medium space-y-1">
+                                    <div className="flex justify-between items-center bg-slate-50 p-1 rounded border border-slate-100">
+                                        <span>Entregable planificado</span>
+                                        <span className="font-mono font-bold text-emerald-600">1</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : layoutMode === 'grouped_sections' ? (
+                    /* MODO SECCIONES CONSECUTIVAS */
+                    <div className="space-y-3">
+                        {categories.map((cat: any) => (
+                            <div key={cat.id || cat.name} className="space-y-1">
+                                <h6 className="text-[8.5px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                                    {cat.name}
+                                </h6>
+                                <table className="w-full border-collapse border border-slate-200 text-[9px]">
+                                    <thead>
+                                        <tr className="bg-[#1e2a4a] text-white">
+                                            <th className="p-1 text-left border border-slate-200">Producto</th>
+                                            {cols.showIndicator !== false && <th className="p-1 text-left border border-slate-200">Indicador</th>}
+                                            {cols.showVerificationMeans !== false && <th className="p-1 text-left border border-slate-200">Medio Verificación</th>}
+                                            {cols.showQuantity !== false && <th className="p-1 text-center border border-slate-200 w-16">Cant.</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="bg-white text-slate-700">
+                                            <td className="p-1 border border-slate-200 font-medium">Entregable técnico / borrador</td>
+                                            {cols.showIndicator !== false && <td className="p-1 border border-slate-200">1 Documento final</td>}
+                                            {cols.showVerificationMeans !== false && <td className="p-1 border border-slate-200">Acta / Informe</td>}
+                                            {cols.showQuantity !== false && <td className="p-1 border border-slate-200 text-center font-bold text-emerald-600">1</td>}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        ))}
+                    </div>
+                ) : layoutMode === 'table_simple' ? (
+                    /* MODO TABLA SIMPLE */
+                    <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
+                        <thead>
+                            <tr className="bg-[#1e2a4a] text-white">
+                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
+                                <th className="p-1.5 text-center font-bold border border-slate-200 w-24">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="bg-white text-slate-700">
+                                <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
+                                <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                ) : (
+                    /* MODO TABLA DETALLADA CACES (DEFAULT) */
+                    <table className="w-full border-collapse border border-slate-200 text-[9px]">
+                        <thead>
+                            <tr className="bg-[#1e2a4a] text-white">
+                                {cols.showCategory !== false && <th className="p-1.5 text-left border border-slate-200">Categoría</th>}
+                                {cols.showSubtype !== false && <th className="p-1.5 text-left border border-slate-200">Subtipo / Entregable</th>}
+                                {cols.showProductName !== false && <th className="p-1.5 text-left border border-slate-200">Nombre del Producto</th>}
+                                {cols.showIndicator !== false && <th className="p-1.5 text-left border border-slate-200">Indicador Verificable</th>}
+                                {cols.showVerificationMeans !== false && <th className="p-1.5 text-left border border-slate-200">Medio de Verificación</th>}
+                                {cols.showQuantity !== false && <th className="p-1.5 text-center border border-slate-200 w-16">Cant.</th>}
+                                {cols.showDeadline !== false && <th className="p-1.5 text-center border border-slate-200 w-20">Plazo</th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="bg-white text-slate-700">
+                                {cols.showCategory !== false && <td className="p-1.5 border border-slate-200 font-semibold text-emerald-700">Científico-Tecnológico</td>}
+                                {cols.showSubtype !== false && <td className="p-1.5 border border-slate-200 font-medium">Artículo Scopus / Latindex</td>}
+                                {cols.showProductName !== false && <td className="p-1.5 border border-slate-200">Análisis comparativo de algoritmos...</td>}
+                                {cols.showIndicator !== false && <td className="p-1.5 border border-slate-200">1 Artículo indexado aceptado</td>}
+                                {cols.showVerificationMeans !== false && <td className="p-1.5 border border-slate-200">Certificado de aceptación / DOI</td>}
+                                {cols.showQuantity !== false && <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>}
+                                {cols.showDeadline !== false && <td className="p-1.5 border border-slate-200 text-center">Trimestre 4</td>}
+                            </tr>
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

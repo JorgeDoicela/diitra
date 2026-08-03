@@ -127,7 +127,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'project_ethics_report':
                 return <RenderProjectEthicsReport config={block.config} />;
             case 'expected_products':
-                return <RenderExpectedProducts config={block.config} />;
+                return <RenderExpectedProducts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':
                 return <RenderImpacts config={block.config} />;
             default:

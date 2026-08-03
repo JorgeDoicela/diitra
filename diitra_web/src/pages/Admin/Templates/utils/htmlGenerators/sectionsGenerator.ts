@@ -279,10 +279,22 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 
 export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const productosTitle = c.productosTitle || '5. Productos Esperados';
+    const productosTitle = c.productosTitle || '5. Productos y Entregables Esperados';
+    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_detailed';
 
-    return `
-  <!-- BLOQUE: PRODUCTOS ESPERADOS -->
+    const cols = c.productColumns || {
+        showCategory: true,
+        showSubtype: true,
+        showProductName: true,
+        showIndicator: true,
+        showVerificationMeans: true,
+        showQuantity: true,
+        showDeadline: false,
+    };
+
+    if (layoutMode === 'table_simple') {
+        return `
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (SIMPLE) -->
   <div style="margin-top: 20px;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
     <table class="info-table">
@@ -295,8 +307,49 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
       <tbody>
         {{#each productos_esperados}}
         <tr>
-          <td>{{this.tipo}}</td>
+          <td>{{this.tipo_producto_nombre}}</td>
           <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+    }
+
+    // Encabezados de tabla dinámicos
+    const tableHeaders: string[] = [];
+    if (cols.showCategory !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Categoría</th>`);
+    if (cols.showSubtype !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Subtipo / Entregable</th>`);
+    if (cols.showProductName !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Nombre del Producto</th>`);
+    if (cols.showIndicator !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Indicador Verificable</th>`);
+    if (cols.showVerificationMeans !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Medio de Verificación</th>`);
+    if (cols.showQuantity !== false) tableHeaders.push(`<th style="${headerBg('blue')} width: 60px; text-align: center;">Cant.</th>`);
+    if (cols.showDeadline !== false) tableHeaders.push(`<th style="${headerBg('blue')} width: 80px; text-align: center;">Plazo</th>`);
+
+    // Celdas Handlebars correspondientes
+    const tableCells: string[] = [];
+    if (cols.showCategory !== false) tableCells.push(`<td>{{#if this.categoria}}{{this.categoria}}{{else}}General{{/if}}</td>`);
+    if (cols.showSubtype !== false) tableCells.push(`<td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>`);
+    if (cols.showProductName !== false) tableCells.push(`<td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>`);
+    if (cols.showIndicator !== false) tableCells.push(`<td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>`);
+    if (cols.showVerificationMeans !== false) tableCells.push(`<td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>`);
+    if (cols.showQuantity !== false) tableCells.push(`<td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>`);
+    if (cols.showDeadline !== false) tableCells.push(`<td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>`);
+
+    return `
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (DETALLADO CACES) -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          ${tableHeaders.join('\n          ')}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each productos_esperados}}
+        <tr>
+          ${tableCells.join('\n          ')}
         </tr>
         {{/each}}
       </tbody>
