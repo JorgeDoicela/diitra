@@ -1,8 +1,8 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Eye, EyeOff, Copy, Trash2 } from 'lucide-react';
-import type { DocumentBlock } from '../types';
+import { Eye, EyeOff, Copy, Trash2, GripVertical } from 'lucide-react';
+import type { DocumentBlock, BlockType } from '../types';
 import { RenderCover } from './canvasRenderers/RenderCover';
 import {
     RenderAdvancedTable,
@@ -22,6 +22,21 @@ import {
     RenderProjectTechnicalSection,
     RenderImpacts,
 } from './canvasRenderers/RenderSections';
+
+/** Tipos de bloques de los que solo se permite una única instancia */
+const UNIQUE_BLOCK_TYPES: BlockType[] = [
+    'cover',
+    'project_general_section',
+    'project_technical_section',
+    'project_budget_section',
+    'project_progress_report',
+    'project_ethics_report',
+    'researchers_table',
+    'gantt',
+    'signatures',
+    'impacts',
+    'rubric_table'
+];
 
 interface SortableBlockItemProps {
     block: DocumentBlock;
@@ -60,10 +75,18 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.4 : block.isActive ? 1 : 0.45,
+        opacity: isDragging ? 0.45 : block.isActive ? 1 : 0.45,
     };
 
     const renderContent = () => {
+        if (!block.isActive) {
+            return (
+                <div className="py-3 px-4 border border-dashed border-slate-200 bg-slate-50/50 rounded text-center text-slate-400 italic text-[10px]">
+                    Bloque "{block.title}" oculto en la generación del PDF
+                </div>
+            );
+        }
+
         switch (block.type) {
             case 'cover':
                 return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} themeConfig={themeConfig} />;
@@ -88,7 +111,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'project_general_section':
                 return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section':
-                return <RenderProjectTechnicalSection config={block.config} />;
+                return <RenderProjectTechnicalSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':
                 return <RenderImpacts config={block.config} />;
             default:
@@ -96,69 +119,64 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         }
     };
 
+    const isCover = block.type === 'cover';
+
     return (
         <div
             ref={setNodeRef}
             style={style}
-            onClick={(e) => {
-                e.stopPropagation();
-                onSelectBlock(block.id);
-            }}
-            className={`group relative rounded-xs transition-all duration-200 ${isActive
-                ? 'ring-2 ring-blue-500/80 bg-blue-500/5 shadow-xs'
-                : 'hover:ring-1 hover:ring-slate-300'
+            {...attributes}
+            {...listeners}
+            onClick={() => onSelectBlock(block.id)}
+            className={`group relative cursor-grab active:cursor-grabbing rounded-xs transition-all ${isCover ? 'p-0 border-none w-full flex-1 flex flex-col' : 'p-2 border border-slate-200 bg-white hover:border-slate-300'
+                } ${isDragging
+                    ? 'shadow-[0_20px_40px_rgba(0,0,0,0.12)] border-slate-300 opacity-80 scale-[0.97] rotate-[-0.5deg] z-[999]'
+                    : isActive
+                        ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/10'
+                        : 'hover:ring-1 hover:ring-indigo-300/40'
                 }`}
         >
-            {/* Barra flotante de acciones (drag, visible, copiar, eliminar) */}
-            <div className="absolute -top-3.5 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-30 flex items-center gap-1 bg-slate-900/90 text-white text-[9px] px-2 py-0.5 rounded-md shadow-md backdrop-blur-xs">
-                <button
-                    type="button"
-                    {...attributes}
-                    {...listeners}
-                    className="p-1 hover:bg-white/20 rounded cursor-grab active:cursor-grabbing text-slate-300 hover:text-white"
-                    title="Arrastrar para reordenar"
+            {/* Toolbar flotante superior Notion-style para reordenamiento y acciones */}
+            <div className="absolute top-1 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white rounded-md px-2 py-1 shadow-lg flex items-center gap-1.5 text-[10px]">
+                <div
+                    className="p-1 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing flex items-center justify-center"
+                    title="Arrastra para reordenar este bloque arriba o abajo"
                 >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                    </svg>
-                </button>
-                <div className="w-px h-3 bg-white/20 my-auto" />
+                    <GripVertical className="w-3.5 h-3.5" />
+                </div>
+                <div className="w-px h-3 bg-slate-700" />
                 <button
                     type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleActive(index);
-                    }}
-                    className="p-1 hover:bg-white/20 rounded text-slate-300 hover:text-white cursor-pointer"
-                    title={block.isActive ? "Ocultar en PDF" : "Mostrar en PDF"}
+                    onClick={(e) => { e.stopPropagation(); onToggleActive(index); }}
+                    className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title={block.isActive ? "Ocultar bloque en PDF" : "Mostrar bloque en PDF"}
                 >
-                    {block.isActive ? <Eye className="w-3 h-3 text-emerald-400" /> : <EyeOff className="w-3 h-3 text-slate-400" />}
+                    {block.isActive ? <Eye className="w-3 h-3 text-emerald-400" /> : <EyeOff className="w-3 h-3 text-amber-400" />}
                 </button>
+                {!UNIQUE_BLOCK_TYPES.includes(block.type) && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onDuplicateBlock(block.id); }}
+                        className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        title="Duplicar bloque"
+                    >
+                        <Copy className="w-3 h-3" />
+                    </button>
+                )}
                 <button
                     type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDuplicateBlock(block.id);
-                    }}
-                    className="p-1 hover:bg-white/20 rounded text-slate-300 hover:text-white cursor-pointer"
-                    title="Duplicar bloque"
-                >
-                    <Copy className="w-3 h-3" />
-                </button>
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteBlock(block.id);
-                    }}
-                    className="p-1 hover:bg-red-500/40 rounded text-slate-300 hover:text-red-300 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                     title="Eliminar bloque"
                 >
                     <Trash2 className="w-3 h-3" />
                 </button>
             </div>
 
-            {renderContent()}
+            {/* Contenido del bloque */}
+            <div className={`relative ${isCover ? 'flex-1 flex flex-col' : 'pt-5'}`}>
+                {renderContent()}
+            </div>
         </div>
     );
 };

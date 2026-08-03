@@ -20,6 +20,47 @@ namespace diitra_api.Controllers
     public partial class DocumentInstancesController : ControllerBase
     {
         /// <summary>
+        /// RETORNA LA CONFIGURACIÓN DINÁMICA DE LA INTERFAZ DE USUARIO (Metadata-Driven UI).
+        /// Si la plantilla es una de las oficiales, retorna su estructura premium pre-mapeada.
+        /// Si es una nueva plantilla creada por base de datos, auto-genera la UI en caliente
+        /// basada en sus CollaborativeFieldsJson.
+        /// </summary>
+        [HttpGet("templates/{code}/ui-config")]
+        public async Task<IActionResult> GetUiConfig(string code, CancellationToken ct)
+        {
+            var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
+            var template = templates.FirstOrDefault(t => t.Code == code);
+
+            if (template == null)
+            {
+                return NotFound(new { message = $"La plantilla '{code}' no está activa o no existe en la base de datos." });
+            }
+
+            var blocksJson = "";
+            if (!string.IsNullOrEmpty(template.HtmlContent))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    try
+                    {
+                        var base64 = match.Groups[1].Value;
+                        var bytes = System.Convert.FromBase64String(base64);
+                        blocksJson = System.Text.Encoding.UTF8.GetString(bytes);
+                    }
+                    catch { }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(blocksJson))
+            {
+                var result = await BuildUiConfigResponseAsync(blocksJson, template, null, ct);
+                if (result != null) return result;
+            }
+
+            return BadRequest(new { message = $"No se pudo generar la configuración de la interfaz para la plantilla '{code}'." });
+        }
+        /// <summary>
         /// RETORNA LA CONFIGURACIÓN DE LA INTERFAZ DE USUARIO BASADA EN EL SNAPSHOT DE LA INSTANCIA.
         /// Si la instancia posee un snapshot guardado, se utiliza para asegurar retrocompatibilidad.
         /// De lo contrario, cae en la configuración activa de la plantilla actual.

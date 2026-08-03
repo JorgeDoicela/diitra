@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Database, Sliders, ChevronDown, ChevronUp, Pencil, Palette } from 'lucide-react';
 import type { DocumentBlock, IdentificationField } from '../../types';
-import { HEADER_STYLE_OPTIONS } from '../BlockCanvas';
+import { HEADER_STYLE_OPTIONS } from '../canvasRenderers/RenderCover';
 
 interface ProjectGeneralPropertiesProps {
     block: DocumentBlock;

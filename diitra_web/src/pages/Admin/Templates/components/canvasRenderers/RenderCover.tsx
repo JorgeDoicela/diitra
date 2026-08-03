@@ -60,6 +60,8 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const color = config.colorTema || gCover.colorTema || DYN_COLORS.blue;
     const isFreeForm = (config.coverLayoutMode !== undefined ? config.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
 
+    const activeCoverImage = coverImage || config.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
+
     const showInst = config.showInstitution !== undefined ? config.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
     const showTitle = config.showTitle !== undefined ? config.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
     const showCarrera = config.showCarrera !== undefined ? config.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
@@ -179,7 +181,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         return (
             <div
                 ref={containerRef}
-                style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                style={activeCoverImage ? { backgroundImage: `url(${activeCoverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                 className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
             >
                 <GuideGrid />
@@ -277,7 +279,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
 
     return (
         <div
-            style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+            style={activeCoverImage ? { backgroundImage: `url(${activeCoverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
             className="relative w-full min-h-[1123px] flex-1 flex flex-col justify-between items-center py-16 bg-white border border-gray-200 select-none overflow-hidden"
         >
             {renderZoneSection('top', 'mt-4')}

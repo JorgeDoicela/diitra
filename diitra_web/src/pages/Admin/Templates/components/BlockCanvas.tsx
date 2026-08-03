@@ -9,12 +9,13 @@
  * e integra la lista ordenable mediante `SortableBlockItem` y `@dnd-kit/sortable`.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Layers, Trash2 } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { SortableBlockItem } from './SortableBlockItem';
 import { DYN_COLORS } from './canvasRenderers/RenderCover';
+import { mergeWithDefaults } from '../utils/theme-schema';
 
 interface BlockCanvasProps {
     blocks: DocumentBlock[];
@@ -80,11 +81,21 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     onToggleHeader,
     onToggleHeaderCollapse,
     rightActions,
-    themeConfig,
+    themeConfig: propsThemeConfig,
     onUpdateConfig,
+    selectedTemplate,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
     const toggleHeaderFn = onToggleHeader || onToggleHeaderCollapse;
+
+    // Obtener la configuración del tema visual unificada (prop directa o extraída de selectedTemplate)
+    const themeConfig = useMemo(() => {
+        if (propsThemeConfig) return propsThemeConfig;
+        if (selectedTemplate?.themeConfigJson) {
+            return mergeWithDefaults(selectedTemplate.themeConfigJson);
+        }
+        return mergeWithDefaults(null);
+    }, [propsThemeConfig, selectedTemplate?.themeConfigJson]);
 
     // Actualización de colores e identidad tipográfica del canvas en base a themeConfig
     if (themeConfig?.colors) {
