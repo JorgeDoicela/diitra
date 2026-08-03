@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal } from 'lucide-react';
+import { CheckCircle2, Terminal } from 'lucide-react';
+import { ROLES_DATA } from './roles/rolesData';
+import { InvestigadorConsole } from './roles/InvestigadorConsole';
+import { DirectorConsole } from './roles/DirectorConsole';
+import { ComiteConsole } from './roles/ComiteConsole';
+import { AdminConsole } from './roles/AdminConsole';
 
 const Roles: React.FC = () => {
     const [activeRole, setActiveRole] = useState<number>(0);
@@ -33,33 +38,6 @@ const Roles: React.FC = () => {
 
     // Estado de interacción de la Cascada (Tooltip al pasar el mouse, null por defecto)
     const [hoveredStep, setHoveredStep] = useState<number | null>(null);
-
-    const rolesData = [
-        { 
-            role: 'Investigador', 
-            desc: 'Docentes y estudiantes que postulan proyectos, coordinan avances y cargan entregables.', 
-            icon: Users,
-            permissions: ['Crear propuestas de proyecto', 'Planificar presupuestos e hitos', 'Cargar evidencias de avance']
-        },
-        { 
-            role: 'Director de Investigación', 
-            desc: 'Gestiona convocatorias, asigna pares evaluadores y supervisa presupuestos globales.', 
-            icon: LayoutDashboard,
-            permissions: ['Apertura de convocatorias', 'Asignación de pares doble ciego', 'Supervisión presupuestaria']
-        },
-        { 
-            role: 'Comité de Ética / Revisores', 
-            desc: 'Evalúan de forma ciega y anónima la calidad metodológica y ética de las propuestas.', 
-            icon: Scale,
-            permissions: ['Evaluación anónima doble ciego', 'Emisión de actas de dictamen', 'Firma electrónica de resoluciones']
-        },
-        { 
-            role: 'Administrador', 
-            desc: 'Configuración de períodos académicos, líneas de investigación e integraciones de API externas.', 
-            icon: ShieldCheck,
-            permissions: ['Configuración del sistema', 'Gestión de distributivos docentes', 'Integración y API (SIIES / DSpace)']
-        },
-    ];
 
     const runAssignSimulation = () => {
         if (assignState !== 'idle') return;
@@ -301,7 +279,7 @@ const Roles: React.FC = () => {
                 
                 {/* Lateral: Selector de Roles */}
                 <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border-thin bg-surface/50 p-2.5 flex flex-col gap-1.5 shrink-0">
-                    {rolesData.map((item, idx) => {
+                    {ROLES_DATA.map((item, idx) => {
                         const Icon = item.icon;
                         const isSelected = activeRole === idx;
                         return (
@@ -309,7 +287,6 @@ const Roles: React.FC = () => {
                                 key={idx}
                                 onClick={() => {
                                     setActiveRole(idx);
-                                    // Resetear estados al cambiar de rol
                                     setInvSigned(false);
                                     setHitoProgress(50);
                                     setAssignState('idle');
@@ -351,21 +328,21 @@ const Roles: React.FC = () => {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <h3 className="text-[13px] md:text-[14px] font-bold text-text-main">
-                                    {rolesData[activeRole].role}
+                                    {ROLES_DATA[activeRole].role}
                                 </h3>
                                 <span className="text-[8.5px] md:text-[9px] font-mono px-1.5 py-0.5 border border-brand/20 bg-brand-subtle text-brand rounded-full uppercase font-bold">
                                     Nivel 0{activeRole + 1}
                                 </span>
                             </div>
                             <p className="text-[11px] md:text-[11.5px] text-text-dim leading-relaxed max-w-2xl">
-                                {rolesData[activeRole].desc}
+                                {ROLES_DATA[activeRole].desc}
                             </p>
                         </div>
 
                         {/* Acciones/Permisos en formato Badges */}
                         <div className="space-y-1">
                             <div className="flex flex-wrap gap-1.5">
-                                {rolesData[activeRole].permissions.map((perm, pIdx) => (
+                                {ROLES_DATA[activeRole].permissions.map((perm, pIdx) => (
                                     <div key={pIdx} className="flex items-center gap-1 text-[8px] md:text-[9px] text-text-main font-sans border border-border-thin bg-surface/50 px-2 py-0.5 rounded">
                                         <CheckCircle2 size={10} className="text-brand shrink-0" />
                                         <span>{perm}</span>
@@ -417,7 +394,7 @@ const Roles: React.FC = () => {
                             ))}
                         </div>
 
-                        {/* Detalle interactivo del paso actual (Altamente estable y libre de Layout Shift) */}
+                        {/* Detalle interactivo del paso actual */}
                         <div className={`transition-all duration-300 rounded px-2.5 py-1 min-h-[30px] flex items-center justify-center border ${
                             hoveredStep !== null 
                                 ? 'border-border-thin bg-surface/20 opacity-100' 
@@ -443,392 +420,53 @@ const Roles: React.FC = () => {
                         </div>
 
                         <div className="min-h-[70px] flex flex-col justify-center">
-                            {/* Consola: Investigador */}
                             {activeRole === 0 && (
-                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5">
-                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Proyecto actual</span>
-                                            <div className="flex flex-col gap-1.5 mt-1">
-                                                {[
-                                                    { value: 'riego', label: '01/ Riego IoT' },
-                                                    { value: 'robot', label: '02/ Limpieza Solar' },
-                                                    { value: 'plagas', label: '03/ Visión Artificial' }
-                                                ].map((proj) => (
-                                                    <button
-                                                        key={proj.value}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSelectedProject(proj.value as any);
-                                                            setInvSigned(false);
-                                                            setHitoProgress(50);
-                                                        }}
-                                                        className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
-                                                            selectedProject === proj.value
-                                                                ? 'bg-brand border-brand text-white shadow-sm font-semibold'
-                                                                : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                        }`}
-                                                    >
-                                                        {proj.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <span className="text-[8px] md:text-[8.5px] text-warning font-semibold block mt-0.5">Hito 2 en Proceso</span>
-                                        </div>
-                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5">
-                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Progreso de evidencias: {hitoProgress}%</span>
-                                            <div className="w-full bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-brand transition-all duration-300" 
-                                                    style={{ width: `${hitoProgress}%` }} 
-                                                />
-                                            </div>
-                                            <div className="flex gap-2 items-center justify-between mt-1">
-                                                <button 
-                                                    onClick={() => setHitoProgress(prev => Math.min(prev + 25, 100))}
-                                                    disabled={hitoProgress === 100 || invSigned}
-                                                    className="px-1.5 py-0.5 border border-border-thin rounded bg-surface hover:bg-surface-hover text-[8.5px] md:text-[9px] text-text-main cursor-pointer disabled:opacity-40"
-                                                >
-                                                    Avanzar (+25%)
-                                                </button>
-                                                {hitoProgress === 100 && (
-                                                    <span className="text-success text-[8.5px] md:text-[9px] font-sans font-semibold">✓ Listo</span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2">
-                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Firma de entregable (.p12)</span>
-                                            {isSigning ? (
-                                                <div className="w-full py-1.5 bg-brand-subtle border border-brand/20 text-brand rounded font-bold text-[9.5px] md:text-[10px] flex items-center justify-center gap-1.5 flex-1 animate-pulse">
-                                                    <Loader2 size={10} className="animate-spin" />
-                                                    Firmando...
-                                                </div>
-                                            ) : invSigned ? (
-                                                <div className="space-y-0.5 text-left font-mono text-[8px] md:text-[8.5px] leading-tight">
-                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] md:text-[9px] py-0.5 rounded font-bold text-center">
-                                                        ✓ FIRMADO CON EXITO
-                                                    </div>
-                                                    <div className="text-text-dim space-y-0.5 bg-bg-deep/50 p-1 rounded border border-border-thin/50 text-[7.5px] md:text-[8px]">
-                                                        <p>Autoridad: BCE Ecuador</p>
-                                                        <p className="truncate">Sello: ECDSA_256_FirmaEC</p>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => {
-                                                            setInvSigned(false);
-                                                            setHitoProgress(50);
-                                                        }}
-                                                        className="w-full text-center text-text-dim hover:text-text-main text-[8px] md:text-[8.5px] underline cursor-pointer inline-block"
-                                                    >
-                                                        Reiniciar
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button 
-                                                    onClick={handleSignProposal}
-                                                    disabled={hitoProgress < 100}
-                                                    className={`w-full py-1.5 rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer text-center transition-all ${
-                                                        hitoProgress === 100 
-                                                            ? 'bg-brand text-white hover:opacity-90 active:scale-95' 
-                                                            : 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                    }`}
-                                                    title={hitoProgress < 100 ? "Completa el progreso antes de firmar" : ""}
-                                                >
-                                                    Firmar
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <InvestigadorConsole 
+                                    selectedProject={selectedProject}
+                                    setSelectedProject={setSelectedProject}
+                                    hitoProgress={hitoProgress}
+                                    setHitoProgress={setHitoProgress}
+                                    invSigned={invSigned}
+                                    setInvSigned={setInvSigned}
+                                    isSigning={isSigning}
+                                    handleSignProposal={handleSignProposal}
+                                />
                             )}
-
-                            {/* Consola: Director */}
                             {activeRole === 1 && (
-                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5">
-                                            <div>
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Criterio de coincidencia científica</span>
-                                                <div className="flex flex-col gap-1.5 mt-1.5">
-                                                    {[
-                                                        { value: 'linea', label: 'Por Línea de Investigación' },
-                                                        { value: 'carga', label: 'Por Menor Carga Docente (SIGAFI)' },
-                                                        { value: 'aleatorio', label: 'Asignación Aleatoria' }
-                                                    ].map((crit) => (
-                                                        <button
-                                                            key={crit.value}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setAssignmentCriteria(crit.value as any);
-                                                                setAssignState('idle');
-                                                                setAssignLog('Esperando asignación de pares evaluadores...');
-                                                            }}
-                                                            className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
-                                                                assignmentCriteria === crit.value
-                                                                    ? 'bg-brand border-brand text-white shadow-sm font-semibold'
-                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                            }`}
-                                                        >
-                                                            {crit.label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <button 
-                                                onClick={runAssignSimulation}
-                                                disabled={assignState !== 'idle'}
-                                                className={`w-full py-1.5 rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer transition-all ${
-                                                    assignState === 'assigning'
-                                                        ? 'bg-surface border border-border-thin text-text-dim'
-                                                        : assignState === 'assigned'
-                                                            ? 'bg-success/15 border border-success/30 text-success'
-                                                            : 'bg-text-main text-bg-deep hover:opacity-95'
-                                                }`}
-                                            >
-                                                {assignState === 'assigning' ? 'Asignando...' : assignState === 'assigned' ? 'Pares Asignados ✓' : 'Asignar Pares'}
-                                            </button>
-                                        </div>
-                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-center min-h-[70px] space-y-1 text-[8.5px] md:text-[9px]">
-                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Registro de auditoría (CACES B.1.1)</span>
-                                            <p className={`text-[8.5px] md:text-[9px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success font-semibold' : 'text-text-dim'}`}>
-                                                {assignLog}
-                                            </p>
-                                            {assignState === 'assigned' && (
-                                                <div className="space-y-0.5 mt-0.5 animate-fade-in text-[8px] md:text-[8.5px]">
-                                                    <p className="text-[8px] text-text-dim uppercase tracking-wider">// REVISORES DOBLE CIEGO ASIGNADOS</p>
-                                                    <div className="flex flex-wrap gap-1.5 font-mono text-[7.5px] md:text-[8px]">
-                                                        {assignmentCriteria === 'linea' && (
-                                                            <>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Dr. Anon_#184b</span>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Dra. Anon_#92df</span>
-                                                            </>
-                                                        )}
-                                                        {assignmentCriteria === 'carga' && (
-                                                            <>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Par A: Anon_#048f</span>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Par B: Anon_#3382</span>
-                                                            </>
-                                                        )}
-                                                        {assignmentCriteria === 'aleatorio' && (
-                                                            <>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
-                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <DirectorConsole 
+                                    assignmentCriteria={assignmentCriteria}
+                                    setAssignmentCriteria={setAssignmentCriteria}
+                                    assignState={assignState}
+                                    setAssignState={setAssignState}
+                                    assignLog={assignLog}
+                                    setAssignLog={setAssignLog}
+                                    runAssignSimulation={runAssignSimulation}
+                                />
                             )}
-
-                            {/* Consola: Comité */}
                             {activeRole === 2 && (
-                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-                                        <div className="sm:col-span-5 border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5 text-left">
-                                            <div>
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">1. Calidad Metodológica (1-5)</span>
-                                                <div className="flex gap-1.5 mt-1.5">
-                                                    {[1, 2, 3, 4, 5].map((val) => (
-                                                        <button
-                                                            key={val}
-                                                            onClick={() => {
-                                                                setGradeMetodologia(val);
-                                                                setVoteState('idle');
-                                                            }}
-                                                            className={`w-6.5 h-6.5 rounded flex items-center justify-center font-bold text-[10.5px] cursor-pointer transition-all border ${
-                                                                gradeMetodologia === val 
-                                                                    ? 'bg-brand border-brand text-white shadow-sm' 
-                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main'
-                                                            }`}
-                                                        >
-                                                            {val}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">2. Aspectos Éticos & LOPDP</span>
-                                                <button
-                                                    onClick={() => {
-                                                        setGradeEtica(!gradeEtica);
-                                                        setVoteState('idle');
-                                                    }}
-                                                    className={`w-full py-1.5 mt-1.5 text-[9.5px] md:text-[10px] font-semibold border rounded cursor-pointer text-center transition-all ${
-                                                        gradeEtica 
-                                                            ? 'bg-success/15 border-success/35 text-success' 
-                                                            : 'bg-error/15 border-error/35 text-error'
-                                                    }`}
-                                                >
-                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Dictamen Ético'}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-7 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
-                                            <div className="space-y-0.5">
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Simulación de dictamen previo</span>
-                                                <div className="flex flex-wrap items-center gap-1.5">
-                                                    <span className="text-[8.5px] md:text-[9px] text-text-main font-sans font-medium">Puntos: {gradeMetodologia}/5</span>
-                                                    <span className="text-text-dim opacity-50">•</span>
-                                                    {gradeMetodologia >= 4 && gradeEtica ? (
-                                                        <span className="text-success font-bold text-[8px] md:text-[9px] flex items-center gap-1">
-                                                            <span className="w-1 h-1 rounded-full bg-success" />
-                                                            Aprobación viable
-                                                        </span>
-                                                    ) : gradeMetodologia < 4 && gradeEtica ? (
-                                                        <span className="text-warning font-bold text-[8px] md:text-[9px] flex items-center gap-1">
-                                                            <span className="w-1 h-1 rounded-full bg-warning" />
-                                                            Requiere correcciones
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-error font-bold text-[8px] md:text-[9px] flex items-center gap-1">
-                                                            <span className="w-1 h-1 rounded-full bg-error" />
-                                                            Rechazo ético inmediato
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                {isVoting ? (
-                                                    <button disabled className="flex-1 py-1.5 bg-text-main/80 text-bg-deep rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
-                                                        <Loader2 size={10} className="animate-spin" />
-                                                        Emitiendo...
-                                                    </button>
-                                                ) : (
-                                                    <button 
-                                                        onClick={() => handleCastVote(gradeMetodologia >= 4 && gradeEtica)}
-                                                        disabled={voteState !== 'idle'}
-                                                        className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
-                                                    >
-                                                        Emitir Dictamen
-                                                    </button>
-                                                )}
-                                                {voteState !== 'idle' && (
-                                                    <button 
-                                                        onClick={() => setVoteState('idle')}
-                                                        className="px-1.5 py-1 border border-border-thin rounded text-text-dim hover:text-text-main text-[8px] md:text-[8.5px] font-mono cursor-pointer"
-                                                    >
-                                                        Reset
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {voteState === 'approved' && (
-                                                <div className="space-y-0.5 bg-success/10 border border-success/30 p-1 rounded text-success text-[8.5px] md:text-[9px] leading-tight font-sans animate-fade-in">
-                                                    <p className="font-bold">✓ DICTAMEN APROBADO EMITIDO</p>
-                                                    <p className="text-[7.5px] md:text-[8px] opacity-90">Resolución firmada y enviada a DSpace.</p>
-                                                </div>
-                                            )}
-                                            {voteState === 'rejected' && (
-                                                <div className={`space-y-0.5 p-1 rounded text-[8.5px] md:text-[9px] leading-tight font-sans animate-fade-in border ${
-                                                    gradeEtica === false 
-                                                        ? 'bg-error/10 border-error/30 text-error' 
-                                                        : 'bg-warning/10 border-warning/30 text-warning'
-                                                }`}>
-                                                    <p className="font-bold">
-                                                        {gradeEtica === false ? '✗ DICTAMEN DE RECHAZO EMITIDO' : '⚠ RETORNADO PARA CORRECCIONES'}
-                                                    </p>
-                                                    <p className="text-[7.5px] md:text-[8px] opacity-90">
-                                                        {gradeEtica === false 
-                                                            ? 'No cumple con criterios bioéticos mínimos o LOPDP.' 
-                                                            : 'Puntuación metodológica inferior a 4.0/5.0.'}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <ComiteConsole 
+                                    gradeMetodologia={gradeMetodologia}
+                                    setGradeMetodologia={setGradeMetodologia}
+                                    gradeEtica={gradeEtica}
+                                    setGradeEtica={setGradeEtica}
+                                    voteState={voteState}
+                                    setVoteState={setVoteState}
+                                    isVoting={isVoting}
+                                    handleCastVote={handleCastVote}
+                                />
                             )}
-
-                            {/* Consola: Administrador */}
                             {activeRole === 3 && (
-                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch">
-                                        <div className="sm:col-span-5 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
-                                            <div>
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Pasarela externa de sincronización</span>
-                                                <div className="flex flex-col gap-1.5 mt-1.5">
-                                                    {[
-                                                        { value: 'siies', label: 'SIIES API (CACES)' },
-                                                        { value: 'dspace', label: 'DSpace (Repositorio)' },
-                                                        { value: 'senadi', label: 'SENADI (Propiedad Int.)' }
-                                                    ].map((apiOpt) => (
-                                                        <button
-                                                            key={apiOpt.value}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedApi(apiOpt.value as any);
-                                                                setApiResult('');
-                                                            }}
-                                                            className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
-                                                                selectedApi === apiOpt.value
-                                                                    ? 'bg-brand border-brand text-white shadow-sm font-semibold'
-                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                            }`}
-                                                        >
-                                                            {apiOpt.label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button 
-                                                    onClick={runApiTest}
-                                                    disabled={apiTesting}
-                                                    className="w-full py-1.5 bg-brand text-white rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
-                                                >
-                                                    {apiTesting && <Loader2 size={10} className="animate-spin" />}
-                                                    {!apiTesting && <Cpu size={10} />}
-                                                    Probar Conexión
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-7 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 min-h-[70px] text-left">
-                                            <div>
-                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Respuesta de latencia de red</span>
-                                                <div className="min-h-[22px] flex items-center mt-0.5">
-                                                    {apiTesting ? (
-                                                        <p className="text-brand animate-pulse text-[8.5px] md:text-[9px] font-sans">Realizando diagnóstico...</p>
-                                                    ) : apiResult ? (
-                                                        <p className="text-success text-[8.5px] md:text-[9px] leading-tight font-sans">{apiResult}</p>
-                                                    ) : (
-                                                        <p className="text-text-dim text-[8.5px] md:text-[9px] font-sans">Haz clic en probar para conectarte al gateway.</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="border-t border-border-thin/20 pt-1.5 space-y-1">
-                                                <div className="flex justify-between items-center text-[8px] md:text-[8.5px] text-text-dim uppercase">
-                                                    <span>Sincronizar base de datos general</span>
-                                                    <span>{syncProgress}%</span>
-                                                </div>
-                                                <div className="flex gap-2 items-center">
-                                                    <div className="flex-1 bg-border-thin/50 h-1 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full bg-success transition-all duration-150" 
-                                                            style={{ width: `${syncProgress}%` }} 
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={runSyncSimulation}
-                                                        disabled={syncState === 'syncing'}
-                                                        className="px-1.5 py-0.5 bg-text-main text-bg-deep rounded font-semibold text-[8px] md:text-[8.5px] uppercase cursor-pointer hover:opacity-90 disabled:opacity-50"
-                                                    >
-                                                        {syncState === 'syncing' ? '...' : syncState === 'completed' ? '✓' : 'Sincronizar'}
-                                                    </button>
-                                                </div>
-                                                {syncState === 'completed' && (
-                                                    <p className="text-success text-[7.5px] md:text-[8px] font-sans leading-none">✓ Evidencias y distributivos sincronizados con SIGAFI.</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <AdminConsole 
+                                    selectedApi={selectedApi}
+                                    setSelectedApi={setSelectedApi}
+                                    apiTesting={apiTesting}
+                                    apiResult={apiResult}
+                                    setApiResult={setApiResult}
+                                    runApiTest={runApiTest}
+                                    syncProgress={syncProgress}
+                                    syncState={syncState}
+                                    runSyncSimulation={runSyncSimulation}
+                                />
                             )}
                         </div>
                     </div>
