@@ -1,24 +1,30 @@
 ---
-name: desarrollo-frontend
-description: Activa esta skill para tareas relacionadas con la interfaz de usuario de DIITRA (React, TypeScript, Vite, CSS, componentes UI, formularios colaborativos o integraciones del cliente).
+name: diitra-frontend
+description: Extiende la skill global de frontend con convenciones y patrones específicos de DIITRA (Yjs, CoWorkField, snake_case, Axios). Activa esta skill para tareas de UI, componentes React, estilos o integraciones del cliente en DIITRA.
 ---
-# Skill de Desarrollo Frontend (DIITRA)
+# Extensión de Frontend — DIITRA
 
-Esta habilidad regula y optimiza el flujo de trabajo para el desarrollo del frontend en la aplicación web DIITRA.
+Esta skill **complementa** las directrices globales de `desarrollo-frontend` con reglas exclusivas del proyecto DIITRA. No duplica principios generales (estética premium, micro-animaciones, tipografía, tipado estricto) ya cubiertos por la skill global.
 
-## Directrices de Desarrollo
-1. **Rol de Experto en UI/UX y Diseño Web:**
-   * **Estética Premium y Moderna**: Diseña interfaces que asombren al usuario visualmente. Usa paletas de colores armónicas (fondos oscuros, bordes ultradelgados en `border-border-thin`, contrastes altos con el brand color) y tipografías consistentes (ej. fuentes monoespaciadas para códigos/IDs y sans-serif limpias para el resto).
-   * **Micro-interacciones y Feedback Activo**: Agrega transiciones suaves (`duration-200`), efectos hover, estados activos al hacer clic, indicadores animados de carga (`Loader2` animado), y ondas de sonido dinámicas cuando el dictado por voz esté activo.
-   * **Layouts Flexibles y Limpios**: Diseña páginas que se adapten a distintos anchos (sidebars colapsables y arrastrables con local storage). El contenido central debe tener scroll independiente y barras de scroll discretas (`custom-scrollbar`).
-2. **Modularización y Arquitectura del Componente:**
-   * **Evitar Componentes Gigantes**: Si una página supera las 800 líneas de código, extrae inmediatamente sus sub-paneles, formularios, modales o secciones interactivas a componentes hijos en una subcarpeta `components/`.
-   * **Paso Limpio de Props**: Delega la lógica de llamadas API y mutación de estado a la página contenedora (Smart Component) y mantén los componentes hijos tan puros y enfocados en renderizado como sea posible (Dumb Components).
-3. **Colaboración en Tiempo Real (Yjs):**
-   * En los formularios editables, encapsula siempre los campos de entrada utilizando el componente `<CoWorkField>` configurado con su correspondiente `name` y el manejador `cowork`.
-   * Asegura que los nombres de los campos coincidan exactamente con la estructura definida en `DocumentTemplateRegistry.ts` (ej. `LineaInvestigacion`, `SublineaInvestigacion`).
-4. **Peticiones a la API:**
-   * Utiliza el cliente Axios configurado (`api`) para comunicarse con el backend.
-   * **Casing y Serialización:** El backend de DIITRA tiene una política de serialización global que transforma todas las propiedades a `snake_case` (por ejemplo, `hasTemplateUpdate` se convierte en `has_template_update`). Por lo tanto, al consumir servicios de la API en el frontend (React), siempre se deben mapear las propiedades esperando `snake_case` (o proveer fallbacks locales como `has_template_update || hasTemplateUpdate` para evitar fallos si el frontend espera camelCase).
-5. **Mapeo de Catálogos:**
-   * Al mapear datos en selects o dropdowns, verifica que la variable contenga tanto el identificador local como las claves de vinculación externa (ej: para vincular líneas y sublíneas de forma reactiva, busca `l.id` y `s.id_linea`).
+## 1. Colaboración en Tiempo Real (Yjs / CoWorkField)
+
+* En formularios editables, encapsula los campos de entrada con el componente `<CoWorkField>` configurado con su `name` y el manejador `cowork`.
+* Los nombres de campo **deben coincidir exactamente** con la estructura definida en `DocumentTemplateRegistry.ts` (ej: `LineaInvestigacion`, `SublineaInvestigacion`). Un nombre incorrecto rompe la sincronización en tiempo real entre usuarios.
+
+## 2. Serialización API — snake_case
+
+* El backend de DIITRA transforma globalmente todas las propiedades a `snake_case` en la serialización. Al consumir la API desde React, mapea siempre esperando `snake_case` y provee fallbacks duales para evitar fallos de tipado:
+  ```ts
+  const value = response.has_template_update ?? response.hasTemplateUpdate;
+  ```
+* Usa **siempre** el cliente Axios configurado (`api`) para todas las llamadas al backend. No uses `fetch` nativo.
+
+## 3. Modularización — Umbral DIITRA
+
+* El umbral de extracción de subcomponentes en DIITRA es de **700 líneas** (más permisivo que el estándar global de 400-500, dado el alto acoplamiento de contexto compartido). Si una página o componente supera las 700 líneas, extrae inmediatamente sus secciones a componentes hijos en una subcarpeta `components/`.
+
+## 4. Convenciones UI — DIITRA
+
+* Usa `custom-scrollbar` como clase CSS estándar del proyecto para barras de scroll discretas.
+* Los sidebars colapsables y arrastrables deben persistir su estado de visibilidad con `localStorage`.
+* En selects/dropdowns con catálogos relacionales, verifica que cada opción exponga el `id` local y las claves de vinculación externa necesarias (ej: `l.id` y `s.id_linea` para vincular líneas y sublíneas de forma reactiva).
