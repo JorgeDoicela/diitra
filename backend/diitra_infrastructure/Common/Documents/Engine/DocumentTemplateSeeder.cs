@@ -32,6 +32,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             var dbSet = context.Set<DocumentTemplate>();
 
+            // Limpieza automática de plantilla obsoleta previa en MySQL
+            try
+            {
+                var obsoleteActa = await dbSet.FirstOrDefaultAsync(t => t.Code == "ACTA_APROBACION_PROYECTO");
+                if (obsoleteActa != null)
+                {
+                    logger.LogInformation("DIITRA DocumentSeeder: Removiendo registro obsoleto 'ACTA_APROBACION_PROYECTO' de la base de datos.");
+                    dbSet.Remove(obsoleteActa);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "DIITRA DocumentSeeder: No se pudo eliminar registro obsoleto 'ACTA_APROBACION_PROYECTO'. Continuando...");
+            }
+
             foreach (var seed in seedTemplates)
             {
                 var template = await dbSet.FirstOrDefaultAsync(t => t.Code == seed.Code);
@@ -50,6 +65,11 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
                 else
                 {
+                    // Comprobar si el HTML en BD está corrupto o vacío (e.g. <div class="doc-container"></div> sin hijos)
+                    bool dbHtmlIsEmptyOrCorrupt = string.IsNullOrWhiteSpace(template.HtmlContent) || 
+                                                 template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") ||
+                                                 template.HtmlContent.Contains("<div class=\"doc-container\"></div>");
+
                     // Comprobar si el contenido en disco difiere del almacenado en MySQL
                     bool htmlDiffers = fileHtml != null && template.HtmlContent != fileHtml;
                     bool cssDiffers  = fileCss  != null && template.CustomCss   != fileCss;
@@ -58,14 +78,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     // Comprobar si la versión de fábrica es mayor (semilla en código)
                     bool versionBumped = seed.Version > template.Version;
 
-                    // No sobreescribir si un usuario/admin personalizó la plantilla desde la interfaz web, a menos que la semilla tenga versión mayor
+                    // No sobreescribir si un usuario/admin personalizó la plantilla desde la interfaz web, a menos que esté corrupta o la semilla tenga versión mayor
                     bool isUserCustomized = !string.IsNullOrEmpty(template.UpdatedBy) && 
                                            template.UpdatedBy != "system" && 
                                            template.UpdatedBy != "seeder";
 
-                    if (versionBumped || contentDiffers)
+                    if (dbHtmlIsEmptyOrCorrupt || versionBumped || (contentDiffers && !isUserCustomized))
                     {
-                        var reason = versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización de archivos físicos";
+                        var reason = dbHtmlIsEmptyOrCorrupt 
+                            ? "Reparación de HTML incompleto en BD" 
+                            : (versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización de archivos físicos");
+                        
                         logger.LogInformation("DIITRA DocumentSeeder: Actualizando plantilla [{Code}] ({Reason})...", seed.Code, reason);
 
                         if (fileHtml != null) template.UpdateHtmlContentOnly(fileHtml);

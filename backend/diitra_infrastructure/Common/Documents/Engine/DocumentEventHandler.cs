@@ -34,6 +34,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly int _cronogramaPage;
         private readonly int _pageOffset;
         private readonly bool _isBlindMode;
+        private readonly bool _hasCoverPage;
 
         public DocumentEventHandler(
             string traceabilityCode,
@@ -45,7 +46,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             string? verificationBaseUrl = null,
             int cronogramaPage = 5,
             int pageOffset = 0,
-            bool isBlindMode = false)
+            bool isBlindMode = false,
+            bool hasCoverPage = true)
         {
             _pageOffset = pageOffset;
             _traceabilityCode = traceabilityCode;
@@ -53,6 +55,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _lopdpClause = lopdpClause;
             _isDraft = isDraft;
             _isBlindMode = isBlindMode;
+            _hasCoverPage = hasCoverPage;
             _verificationBaseUrl = string.IsNullOrWhiteSpace(verificationBaseUrl)
                 ? "https://diitra.ist.edu.ec"
                 : verificationBaseUrl.TrimEnd('/');
@@ -139,7 +142,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 Console.WriteLine($"[DIITRA EVENT DEBUG] Page: {pageNumber} (Logical: {logicalPageNumber}), Width: {width}, Height: {height}, Rotation: {rotation}, IsLandscape: {isLandscape}");
 
                 // 0.1 Fondo Institucional (Papel Membretado)
-                if (logicalPageNumber > 1 && _stationaryImage != null)
+                if ((logicalPageNumber > 1 || !_hasCoverPage) && _stationaryImage != null)
                 {
                     try
                     {
@@ -158,8 +161,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
                 Canvas canvas = new Canvas(pdfCanvas, pageSize);
 
-                // 0. Omitir en la primera página (Portada)
-                if (logicalPageNumber == 1)
+                // 0. Omitir en la primera página solo si tiene portada explícita
+                if (_hasCoverPage && logicalPageNumber == 1)
                 {
                     canvas.Close();
                     return;

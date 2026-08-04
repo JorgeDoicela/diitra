@@ -203,3 +203,106 @@ export const generateProjectEthicsHtml = (block: DocumentBlock): string => {
     </div>
   </div>`;
 };
+
+/**
+ * Genera el HTML del Oficio de Aprobación de Proyecto (Bloque: project_approval_notice)
+ */
+export const generateProjectApprovalNoticeHtml = (block: DocumentBlock): string => {
+    return `
+  <!-- CABECERA: Logo + Número y Fecha del Oficio -->
+  <div class="oficio-header" style="display: table; width: 100%; margin-bottom: 24px;">
+    <div class="oficio-header-logo" style="display: table-cell; vertical-align: top; width: 50%; padding-top: 4px;">
+      {{#if mostrar_logo_header}}
+        {{#if logo_base64}}
+          <img src="data:image/png;base64,{{logo_base64}}" alt="ISTPET Logo" style="width: 180px; max-width: 100%;" />
+        {{/if}}
+      {{/if}}
+    </div>
+    <div class="oficio-header-meta" style="display: table-cell; vertical-align: top; text-align: right; width: 50%; padding-top: 8px;">
+      <div class="oficio-numero" style="font-size: 11pt; font-weight: bold; color: #000000; margin-bottom: 6px;">Oficio Nro. {{default oficio_numero "01-ISTPET-INV-2026"}}</div>
+      <br/>
+      <div class="oficio-fecha" style="font-size: 11pt; font-weight: bold; color: #000000;">{{default ciudad_emision ciudad "Quito"}} D.M., {{default oficio_fecha fecha_emision}}</div>
+    </div>
+  </div>
+
+  <!-- BLOQUE DESTINATARIO -->
+  <div class="destinatario-block" style="margin-top: 28px; margin-bottom: 20px; line-height: 1.55;">
+    <div class="destinatario-titulo" style="font-size: 11pt;">{{default director_titulo "Tecnólogo/a"}}</div>
+    <div class="destinatario-nombre" style="font-size: 11pt; font-weight: normal;">{{default director_nombre "[Nombre del Director del Proyecto]"}}</div>
+    <div class="destinatario-cargo" style="font-size: 11pt; text-transform: uppercase;">DOCENTE DE LA CARRERA DE {{default director_carrera "[CARRERA]"}}</div>
+    <div class="destinatario-inst" style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
+    <div class="destinatario-presente" style="font-size: 11pt;">Presente. -</div>
+  </div>
+
+  <!-- SALUDO -->
+  <div class="saludo" style="margin-bottom: 14px; font-size: 11pt;">De mis consideraciones</div>
+
+  <!-- PÁRRAFO 1: Aprobación -->
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
+    {{#if parrafo_aprobacion}}
+      {{{parrafo_aprobacion}}}
+    {{else}}
+      Reciba un cordial saludo y por medio del presente, es un placer informarle que, tras la evaluación correspondiente, su proyecto de investigación titulado <strong><em>"{{default proyecto_titulo "[Título del Proyecto de Investigación]"}}"</em></strong> ha sido aprobado por la Coordinación de la Unidad de Investigación.
+    {{/if}}
+  </div>
+
+  <!-- PÁRRAFO 2: Base de la aprobación -->
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
+    {{default parrafo_fundamento "La aprobación se basa en la relevancia y viabilidad del proyecto, así como en su alineación con los objetivos académicos de nuestra institución, quedando establecidos la siguiente información:"}}
+  </div>
+
+  <!-- TABLA DE DATOS DEL PROYECTO -->
+  <table class="proyecto-table" style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10.5pt;">
+    <tbody>
+      <tr>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; width: 38%;">NOMBRE DEL PROYECTO:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default proyecto_titulo "[Nombre del Proyecto]"}}</td>
+      </tr>
+      <tr>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase;">LÍNEA DE INVESTIGACIÓN:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default linea_investigacion "[Línea de Investigación Vinculada]"}}</td>
+      </tr>
+      <tr>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase;">MESES DE EJECUCIÓN:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default duracion_meses "12"}} meses</td>
+      </tr>
+      {{#if (eq mostrar_tabla_fechas false)}}
+      {{else}}
+      <tr>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE INICIO DE PROYECTO</td>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE FINALIZACIÓN O FECHA PREVISTA DEL PROYECTO</td>
+      </tr>
+      <tr>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_presentacion "[Fecha de Presentación]"}}</td>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_inicio "[Fecha de Inicio]"}}</td>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_fin "[Fecha de Finalización]"}}</td>
+      </tr>
+      {{/if}}
+    </tbody>
+  </table>
+
+  <!-- PÁRRAFO 3: Compromisos CACES -->
+  {{#if (eq mostrar_compromisos_caces false)}}
+  {{else}}
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
+    {{default texto_caces "Las actividades complementarias al desarrollo del proyecto son los Informes de Seguimiento mensuales, con sus respectivos anexos que respalden las actividades ejecutadas, además de, el Plan de Aprendizaje y Evaluación del Plan de Aprendizaje por cada estudiante que forme parte del grupo de investigación y culminando con la Difusión de Resultados obtenidos del proyecto ejecutado."}}
+  </div>
+  {{/if}}
+
+  <!-- PÁRRAFO 4: Invitación a proceder -->
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
+    {{default parrafo_invitacion "Le animamos a proceder con la ejecución del proyecto, manteniendo los estándares de calidad y ética que nos caracterizan. Asimismo, quedamos a su disposición para brindarle el apoyo necesario durante el desarrollo de su investigación."}}
+  </div>
+
+  <!-- CIERRE -->
+  <div class="oficio-cierre" style="font-size: 11pt; margin-top: 10px; margin-bottom: 6px;">{{default frase_cierre "Con sentimientos de distinguida consideración."}}</div>
+  <div class="oficio-atentamente" style="font-size: 11pt; margin-bottom: 60px;">{{default frase_despedida "Atentamente,"}}</div>
+
+  <!-- BLOQUE DE FIRMA -->
+  <div class="firma-block" style="font-size: 10.5pt; line-height: 1.6;">
+    <div class="firma-nombre" style="font-size: 11pt;">{{default coordinador_nombre "Ing. Estefani Sánchez Mgtr."}}</div>
+    <div class="firma-cargo" style="font-weight: bold; font-size: 10.5pt;">{{default coordinador_cargo "Coordinadora de la Unidad de Investigación e Innovación"}}</div>
+    <div class="firma-inst" style="font-weight: bold; font-size: 10.5pt; text-transform: uppercase;">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
+  </div>`;
+};

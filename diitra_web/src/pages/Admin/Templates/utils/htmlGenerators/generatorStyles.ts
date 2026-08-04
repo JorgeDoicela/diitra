@@ -27,13 +27,10 @@ export const BASE_STYLES = `
   * { box-sizing: border-box; }
   
   @page {
-      margin-top: {{ theme.layout.margin_top }};
-      margin-bottom: {{ theme.layout.margin_bottom }};
-      margin-left: {{ theme.layout.margin_left }};
-      margin-right: {{ theme.layout.margin_right }};
-  }
-  @page:first {
-      margin: 0 !important;
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
   }
 
   /* Reset y Core del Documento con Tematización Dinámica */

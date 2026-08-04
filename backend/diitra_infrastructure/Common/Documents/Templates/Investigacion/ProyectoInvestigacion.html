@@ -1,15 +1,12 @@
-﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg1MzU1MTEwODQ3IiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyAyMDI1LTIwMjYiLCJjb2xvclRlbWEiOiIjMWUyYTRhIiwiY292ZXJJbWFnZSI6IiIsInhUaXRsZSI6NDYsInlUaXRsZSI6NTYuMiwieENhcnJlcmEiOjQxLjgsInlDYXJyZXJhIjo0Mi45LCJ4UGVyaW9kbyI6NTMuOCwieVBlcmlvZG8iOjUxLjMsInNob3dDYXJyZXJhIjp0cnVlLCJzaG93SW5zdGl0dXRpb24iOmZhbHNlfX0seyJpZCI6ImJsb2NrLTE3ODU4NTM0OTgwODUiLCJ0eXBlIjoiZXhwZWN0ZWRfcHJvZHVjdHMiLCJ0aXRsZSI6IlByb2R1Y3RvcyBFc3BlcmFkb3MiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InByb2R1Y3Rvc1RpdGxlIjoiNS4gUHJvZHVjdG9zIEVzcGVyYWRvc3MiLCJwcm9kdWN0Q29sdW1ucyI6eyJzaG93Q2F0ZWdvcnkiOnRydWUsInNob3dTdWJ0eXBlIjp0cnVlLCJzaG93UHJvZHVjdE5hbWUiOnRydWUsInNob3dTZW5hZGkiOnRydWUsInNob3dUcmwiOnRydWUsInNob3dJbmRpY2F0b3IiOnRydWUsInNob3dWZXJpZmljYXRpb25NZWFucyI6dHJ1ZSwic2hvd1F1YW50aXR5Ijp0cnVlLCJzaG93RGVhZGxpbmUiOnRydWV9LCJwcm9kdWN0c0xheW91dE1vZGUiOiJncm91cGVkX3NlY3Rpb25zIiwiaGVhZGVyQ29sb3IiOiJibHVlIn19XQ== -->
+﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg1MzU1MTEwODQ3IiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5WRVNUSUdBQ0nDk04iLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyAyMDI1LTIwMjYiLCJjb2xvclRlbWEiOiIjMWUyYTRhIiwiY292ZXJJbWFnZSI6IiIsInhUaXRsZSI6NDYsInlUaXRsZSI6NTYuMiwieENhcnJlcmEiOjQxLjgsInlDYXJyZXJhIjo0Mi45LCJ4UGVyaW9kbyI6NTMuOCwieVBlcmlvZG8iOjUxLjMsInNob3dDYXJyZXJhIjp0cnVlLCJzaG93SW5zdGl0dXRpb24iOmZhbHNlfX0seyJpZCI6ImJsb2NrLTE3ODU4NjY3NTY2MzEiLCJ0eXBlIjoicHJvamVjdF90ZWNobmljYWxfc2VjdGlvbiIsInRpdGxlIjoiUGxhbiBUw6ljbmljbyBkZSBSZWRhY2Npw7NuIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6e319LHsiaWQiOiJibG9jay0xNzg1ODY2ODIxMzk5IiwidHlwZSI6InByb2plY3RfcHJvZ3Jlc3NfcmVwb3J0IiwidGl0bGUiOiJBdmFuY2UgZGUgRWplY3VjacOzbiB5IE1vbml0b3JlbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnt9fV0= -->
 <style>
   * { box-sizing: border-box; }
   
   @page {
-      margin-top: {{ theme.layout.margin_top }};
-      margin-bottom: {{ theme.layout.margin_bottom }};
-      margin-left: {{ theme.layout.margin_left }};
-      margin-right: {{ theme.layout.margin_right }};
-  }
-  @page:first {
-      margin: 0 !important;
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
   }
 
   /* Reset y Core del Documento con Tematización Dinámica */
@@ -263,31 +260,48 @@
           </div>
         </div>
   </div>
-  <!-- BLOQUE: PRODUCTOS ESPERADOS (POR SECCIONES) -->
-  <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">5. Productos Esperadoss</p>
+  <!-- BLOQUE: INFORME DE AVANCES -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 8px;">Informe Parcial de Avances & Resultados</p>
+    
+    <div style="margin-bottom: 15px;">
+      <strong style="font-size: 8.5pt; color: {{ theme.colors.text }}; display: block; margin-bottom: 4px;">Bitácora Científica & Conclusiones Parciales:</strong>
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default conclusiones_parciales "Sin registros de bitácora."}}</div>
+    </div>
+    <p style="font-weight: bold; font-size: 8.5pt; color: {{ theme.colors.text }}; margin: 15px 0 4px;">Hitos & Entregables Completados</p>
     <table class="info-table">
       <thead>
         <tr>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Categoría</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Subtipo / Entregable</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Nombre del Producto</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Indicador Verificable</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Medio de Verificación</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 60px; text-align: center;">Cant.</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 80px; text-align: center;">Plazo</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Actividad / Hito</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 80px; text-align: center;">% Avance</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 90px; text-align: center;">Completado</th>
         </tr>
       </thead>
       <tbody>
-        {{#each productos_esperados}}
+        {{#each hitos_completados}}
         <tr>
-          <td>{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>
-          <td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>
-          <td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>
-          <td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>
-          <td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>
-          <td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>
-          <td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>
+          <td>{{this.actividad}}</td>
+          <td style="text-align: center; font-weight: bold;">{{this.avance}} %</td>
+          <td style="text-align: center; font-weight: bold; color: #10b981;">{{#if this.hito_completado}}SÍ{{else}}NO{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <p style="font-weight: bold; font-size: 8.5pt; color: {{ theme.colors.text }}; margin: 15px 0 4px;">Presupuesto de Gasto Ejecutado</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Partida</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 90px; text-align: right;">Presupuestado</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 90px; text-align: right;">Ejecutado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each presupuesto_ejecutado}}
+        <tr>
+          <td>{{this.partida}}</td>
+          <td style="text-align: right;">$ {{this.presupuestado}}</td>
+          <td style="text-align: right; font-weight: bold;">$ {{this.ejecutado}}</td>
         </tr>
         {{/each}}
       </tbody>

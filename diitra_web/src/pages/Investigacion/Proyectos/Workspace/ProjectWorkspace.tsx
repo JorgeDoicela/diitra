@@ -212,6 +212,9 @@ export const ProjectWorkspace: React.FC = () => {
         } else if (activeDocument === 'INFORME_FINAL_INVESTIGACION') {
             isReadOnly = currentProject.status !== 'En Ejecución' && currentProject.status !== 'Aprobado';
             readOnlyReason = 'state';
+        } else if (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'ACTA_APROBACION_PROYECTO') {
+            isReadOnly = !isAdmin && currentProject.status !== 'Aprobado' && currentProject.status !== 'En Ejecución' && currentProject.status !== 'Finalizado';
+            readOnlyReason = 'state';
         } else {
             isReadOnly = currentProject.status === 'Finalizado';
             readOnlyReason = 'state';

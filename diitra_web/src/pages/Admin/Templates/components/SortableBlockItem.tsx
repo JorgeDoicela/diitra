@@ -27,6 +27,7 @@ import {
     RenderProjectBudgetSection,
     RenderProjectProgressReport,
     RenderProjectEthicsReport,
+    RenderProjectApprovalNotice,
 } from './canvasRenderers/RenderReports';
 
 /** Tipos de bloques de los que solo se permite una única instancia */
@@ -126,6 +127,8 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProjectProgressReport config={block.config} />;
             case 'project_ethics_report':
                 return <RenderProjectEthicsReport config={block.config} />;
+            case 'project_approval_notice':
+                return <RenderProjectApprovalNotice config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'expected_products':
                 return <RenderExpectedProducts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':

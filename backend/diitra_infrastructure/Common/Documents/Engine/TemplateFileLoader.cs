@@ -123,6 +123,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 ["INFORME_AVANCE"]                = "Investigacion/InformeAvance.html",
                 ["REPORTE_ANALITICAS"]            = "Investigacion/ReporteAnaliticas.html",
                 ["DICTAMEN_ARBITRAJE"]            = "Investigacion/DictamenArbitraje.html",
+                ["OFICIO_APROBACION"]             = "Investigacion/OficioAprobacion.html",
+                ["ACTA_APROBACION_PROYECTO"]      = "Investigacion/OficioAprobacion.html",
             };
 
             if (map.TryGetValue(templateCode, out var relativePath))

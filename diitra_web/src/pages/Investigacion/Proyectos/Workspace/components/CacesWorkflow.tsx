@@ -241,6 +241,16 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 Código: {currentProject.codigoInstitucional}
                                             </span>
                                         )}
+                                        <Link 
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                            }}
+                                            className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                        >
+                                            <FileSignature size={14} />
+                                            <span>Ver Oficio de Aprobación</span>
+                                        </Link>
                                         {currentProject.status === 'Aprobado' && isAdmin && (
                                             <button
                                                 type="button"
@@ -249,7 +259,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                     handleIniciarEjecucion();
                                                 }}
                                                 disabled={iniciandoEjecucion}
-                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
                                             >
                                                 <Settings size={14} className={iniciandoEjecucion ? 'animate-spin' : ''} />
                                                 <span>{iniciandoEjecucion ? 'Iniciando...' : 'Iniciar Ejecución'}</span>

@@ -44,16 +44,16 @@ namespace Diitra.Infrastructure.Common.Documents
             // ══════════════════════════════════════════════════════════════
 
             yield return DocumentTemplate.Create(
-                code: "ACTA_APROBACION_PROYECTO",
-                name: "Acta de Aprobación de Proyecto",
-                description: "Resolución oficial del Comité de Investigación.",
+                code: "OFICIO_APROBACION",
+                name: "Formato Oficio de Aprobación de Proyecto",
+                description: "Oficio formal emitido por la Coordinación de Investigación para aprobación legal previa a ejecución.",
                 category: DocumentCategory.ActaAprobacion,
-                htmlContent: "<h1>Acta de Aprobación</h1>",
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/OficioAprobacion.html -->",
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: true,
-                version: 10);
+                version: 20);
 
             yield return DocumentTemplate.Create(
                 code: InformeFinalTemplate.CODE,

@@ -689,6 +689,54 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                 </div>
                             )}
+
+                            {/* ── OFICIO DE APROBACIÓN DE PROYECTO ─────────────────────────── */}
+                            {activeBlock.type === 'project_approval_notice' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Opciones de Visibilidad y Estructura</h5>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
+                                            <div>
+                                                <label className="text-xs font-semibold text-text-main block">Mostrar Logo en Encabezado</label>
+                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">Desactivar si el papel membretado de fondo ya incluye el logo.</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.mostrarLogoHeader === true}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'mostrarLogoHeader', e.target.checked)}
+                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
+                                            <div>
+                                                <label className="text-xs font-semibold text-text-main block">Mostrar Compromisos CACES</label>
+                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">Incluye o remueve el recuadro normativo del oficio.</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.mostrarCompromisosCACES !== false}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'mostrarCompromisosCACES', e.target.checked)}
+                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
+                                            <div>
+                                                <label className="text-xs font-semibold text-text-main block">Mostrar Fila de Fechas</label>
+                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">Muestra presentación, inicio y finalización en la tabla.</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.mostrarTablaFechas !== false}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'mostrarTablaFechas', e.target.checked)}
+                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

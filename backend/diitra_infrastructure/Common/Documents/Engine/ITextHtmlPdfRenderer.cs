@@ -292,6 +292,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             using var pdfDocument = new PdfDocument(pdfWriter);
             pdfDocument.SetDefaultPageSize(PageSize.A4);
 
+            bool hasCoverPage = cleanedHtmlContent.Contains("class=\"cover-page\"") || cleanedHtmlContent.Contains("class='cover-page'") || cleanedHtmlContent.Contains("class=\"cover-page ");
+
             // ── NUEVO: Registro de Eventos Globales (Encabezados/Pies/Marcas de Agua) ──
             var handler = new DocumentEventHandler(
                 metadata.TraceabilityCode,
@@ -300,7 +302,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 stationaryImageData: metadata.StationaryImageData,
                 verificationBaseUrl: metadata.VerificationBaseUrl,
                 cronogramaPage: cronogramaPage,
-                isBlindMode: metadata.IsBlindMode
+                isBlindMode: metadata.IsBlindMode,
+                hasCoverPage: hasCoverPage
             );
 
             try 
@@ -412,15 +415,14 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 return string.Empty;
             }, System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-            // Eliminar comentarios HTML y espacio en blanco antes de .cover-page si está al inicio para evitar que un nodo de texto inline desplace la portada a la página 2
-            if (cleanBody.Contains("cover-page"))
+            bool hasCoverPage = cleanBody.Contains("class=\"cover-page\"") || cleanBody.Contains("class='cover-page'") || cleanBody.Contains("class=\"cover-page ");
+
+            if (hasCoverPage)
             {
                 cleanBody = System.Text.RegularExpressions.Regex.Replace(cleanBody, @"^(\s*<!--.*?-->\s*)*", string.Empty, System.Text.RegularExpressions.RegexOptions.Singleline);
             }
 
             // Regla maestra de gobernanza de maquetación (máxima prioridad CSS):
-            // Garantiza que la portada ocupe exactamente 210mm x 296.5mm en la primera página sin márgenes,
-            // recortando elementos flotantes que desborden y evitando hojas en blanco intermedias.
             stylesBuilder.AppendLine(@"
                 html, body {
                     margin: 0 !important;
@@ -436,28 +438,34 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     margin-left: 2cm;
                     margin-right: 2cm;
                 }
-                @page:first {
-                    margin: 0 !important;
-                }
-                .cover-page {
-                    position: relative !important;
-                    display: block !important;
-                    width: 210mm !important;
-                    height: 296.5mm !important;
-                    min-height: 296.5mm !important;
-                    max-height: 296.5mm !important;
-                    box-sizing: border-box !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
-                    overflow: hidden !important;
-                    page-break-inside: avoid !important;
-                    page-break-after: always !important;
-                }
-                .cover-page > div {
-                    max-height: 270mm !important;
-                    overflow: hidden !important;
-                }
             ");
+
+            if (hasCoverPage)
+            {
+                stylesBuilder.AppendLine(@"
+                    @page:first {
+                        margin: 0 !important;
+                    }
+                    .cover-page {
+                        position: relative !important;
+                        display: block !important;
+                        width: 210mm !important;
+                        height: 296.5mm !important;
+                        min-height: 296.5mm !important;
+                        max-height: 296.5mm !important;
+                        box-sizing: border-box !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        overflow: hidden !important;
+                        page-break-inside: avoid !important;
+                        page-break-after: always !important;
+                    }
+                    .cover-page > div {
+                        max-height: 270mm !important;
+                        overflow: hidden !important;
+                    }
+                ");
+            }
 
             return $@"<!DOCTYPE html>
 <html lang=""es"">

@@ -53,7 +53,8 @@ export type BlockType =
     | 'project_ethics_report'
     | 'resources'
     | 'expected_products'
-    | 'impacts';
+    | 'impacts'
+    | 'project_approval_notice';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos

@@ -270,5 +270,65 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
                 }
             }
         ]
+    },
+
+    OFICIO_APROBACION: {
+        title: "Formato Oficio de Aprobación de Proyecto",
+        subtitle: "Oficio formal emitido por la Coordinación de Investigación para aprobación legal previa a ejecución",
+        schema: {
+            oficio_numero: "01-ISTPET-INV-2026",
+            oficio_fecha: "27 de marzo de 2026",
+            director_titulo: "Tecnólogo",
+            director_nombre: "Anthony Paredes",
+            director_carrera: "TECNOLOGÍA SUPERIOR EN MECÁNICA AUTOMOTRIZ",
+            coordinador_nombre: "Ing. Estefani Sánchez Mgtr."
+        },
+        lists: [],
+        sections: [
+            {
+                id: 'oficio_aprobacion',
+                label: 'Oficio de Aprobación',
+                iconName: 'FileText',
+                config: {
+                    fields: [
+                        { name: 'oficio_numero', label: 'Número de Oficio', type: 'text', collaborative: false, placeholder: '01-ISTPET-INV-2026' },
+                        { name: 'oficio_fecha', label: 'Fecha de Emisión', type: 'text', collaborative: false, placeholder: '27 de marzo de 2026' },
+                        { name: 'director_nombre', label: 'Director del Proyecto (Destinatario)', type: 'text', collaborative: false, placeholder: 'Nombre del docente director' },
+                        { name: 'director_carrera', label: 'Carrera del Director', type: 'text', collaborative: false, placeholder: 'Tecnología Superior en...' },
+                        { name: 'coordinador_nombre', label: 'Coordinador/a de Investigación (Firmante)', type: 'text', collaborative: false, placeholder: 'Ing. Estefani Sánchez Mgtr.' }
+                    ]
+                }
+            }
+        ]
+    },
+
+    ACTA_APROBACION_PROYECTO: {
+        title: "Formato Oficio de Aprobación de Proyecto",
+        subtitle: "Oficio formal emitido por la Coordinación de Investigación para aprobación legal previa a ejecución",
+        schema: {
+            oficio_numero: "01-ISTPET-INV-2026",
+            oficio_fecha: "27 de marzo de 2026",
+            director_titulo: "Tecnólogo",
+            director_nombre: "Anthony Paredes",
+            director_carrera: "TECNOLOGÍA SUPERIOR EN MECÁNICA AUTOMOTRIZ",
+            coordinador_nombre: "Ing. Estefani Sánchez Mgtr."
+        },
+        lists: [],
+        sections: [
+            {
+                id: 'oficio_aprobacion',
+                label: 'Oficio de Aprobación',
+                iconName: 'FileText',
+                config: {
+                    fields: [
+                        { name: 'oficio_numero', label: 'Número de Oficio', type: 'text', collaborative: false, placeholder: '01-ISTPET-INV-2026' },
+                        { name: 'oficio_fecha', label: 'Fecha de Emisión', type: 'text', collaborative: false, placeholder: '27 de marzo de 2026' },
+                        { name: 'director_nombre', label: 'Director del Proyecto (Destinatario)', type: 'text', collaborative: false, placeholder: 'Nombre del docente director' },
+                        { name: 'director_carrera', label: 'Carrera del Director', type: 'text', collaborative: false, placeholder: 'Tecnología Superior en...' },
+                        { name: 'coordinador_nombre', label: 'Coordinador/a de Investigación (Firmante)', type: 'text', collaborative: false, placeholder: 'Ing. Estefani Sánchez Mgtr.' }
+                    ]
+                }
+            }
+        ]
     }
 };

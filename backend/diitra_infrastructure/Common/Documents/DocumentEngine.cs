@@ -227,13 +227,17 @@ namespace Diitra.Infrastructure.Common.Documents
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                var htmlToRender = !string.IsNullOrWhiteSpace(fileHtml)
-                    ? fileHtml
-                    : template.HtmlContent;
+                bool isDbHtmlValid = !string.IsNullOrWhiteSpace(template.HtmlContent) && 
+                                     !template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") &&
+                                     !template.HtmlContent.Contains("<div class=\"doc-container\"></div>");
 
-                var cssToUse = !string.IsNullOrWhiteSpace(fileCss)
-                    ? fileCss
-                    : template.CustomCss;
+                var htmlToRender = isDbHtmlValid 
+                    ? template.HtmlContent 
+                    : (!string.IsNullOrWhiteSpace(fileHtml) ? fileHtml : template.HtmlContent);
+
+                var cssToUse = !string.IsNullOrWhiteSpace(template.CustomCss)
+                    ? template.CustomCss
+                    : (!string.IsNullOrWhiteSpace(fileCss) ? fileCss : "");
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
@@ -502,6 +506,226 @@ namespace Diitra.Infrastructure.Common.Documents
                         extraImageVars["investigadores_docentes"] = docentes;
                         extraImageVars["investigadores_estudiantes"] = estudiantes;
                         extraImageVars["carreras_coejecutoras"] = coejecutorasSet.ToList();
+                    }
+                }
+                else if (template.Code == "OFICIO_APROBACION" || template.Code == "ACTA_APROBACION_PROYECTO")
+                {
+                    var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
+                    if (logoBase64 != null)
+                    {
+                        extraImageVars["logo_base64"] = logoBase64;
+                    }
+
+                    // 1. Intentar resolver UUID del proyecto desde la solicitud o payload
+                    string? targetProjectUuid = !string.IsNullOrEmpty(request.EntityUuid) && !request.EntityUuid.StartsWith("temp_")
+                        ? request.EntityUuid
+                        : (!string.IsNullOrEmpty(request.ProjectUuid) && !request.ProjectUuid.StartsWith("temp_") ? request.ProjectUuid : null);
+
+                    if (string.IsNullOrEmpty(targetProjectUuid) && renderData != null)
+                    {
+                        try
+                        {
+                            var rawText = renderData is System.Text.Json.JsonElement je 
+                                ? je.GetRawText() 
+                                : System.Text.Json.JsonSerializer.Serialize(renderData);
+
+                            using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                            var root = doc.RootElement;
+                            if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                                (root.TryGetProperty("Data", out var dProp) || root.TryGetProperty("data", out dProp)) &&
+                                dProp.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            {
+                                root = dProp;
+                            }
+
+                            string[] possibleKeys = new[] { "Uuid", "uuid", "EntityUuid", "entity_uuid", "entityUuid", "ProyectoUuid", "proyectoUuid", "projectUuid", "DocumentUuid", "documentUuid" };
+                            foreach (var key in possibleKeys)
+                            {
+                                if (root.TryGetProperty(key, out var val) && val.ValueKind == System.Text.Json.JsonValueKind.String)
+                                {
+                                    var strVal = val.GetString()?.Trim();
+                                    if (!string.IsNullOrEmpty(strVal) && !strVal.StartsWith("temp_"))
+                                    {
+                                        targetProjectUuid = strVal;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+
+                    // 2. Consultar directamente a la base de datos MySQL (inv_proyectos) para obtener datos oficiales y frescos
+                    if (!string.IsNullOrEmpty(targetProjectUuid))
+                    {
+                        try
+                        {
+                            var dbProject = await _db.InvProyectos
+                                .AsNoTracking()
+                                .Include(p => p.IdSublineaNavigation)
+                                    .ThenInclude(s => s != null ? s.IdLineaNavigation : null)
+                                .Include(p => p.InvProyectoParticipantes)
+                                    .ThenInclude(part => part.IdUsuarioNavigation)
+                                .Include(p => p.InvProyectosCarreras)
+                                    .ThenInclude(pc => pc.IdCarreraNavigation)
+                                .FirstOrDefaultAsync(p => p.Uuid == targetProjectUuid, cancellationToken);
+
+                            if (dbProject != null)
+                            {
+                                if (!string.IsNullOrEmpty(dbProject.Titulo))
+                                    extraImageVars["proyecto_titulo"] = dbProject.Titulo;
+
+                                var lineaNombre = dbProject.IdSublineaNavigation?.IdLineaNavigation?.NombreLinea 
+                                    ?? dbProject.IdSublineaNavigation?.Nombre;
+                                if (!string.IsNullOrEmpty(lineaNombre))
+                                    extraImageVars["linea_investigacion"] = lineaNombre;
+
+                                if (!string.IsNullOrEmpty(dbProject.TiempoEjecucion))
+                                    extraImageVars["duracion_meses"] = dbProject.TiempoEjecucion;
+
+                                if (dbProject.FechaPresentacion.HasValue)
+                                    extraImageVars["fecha_presentacion"] = dbProject.FechaPresentacion.Value.ToString("dd/MM/yyyy");
+                                if (dbProject.FechaInicio.HasValue)
+                                    extraImageVars["fecha_inicio"] = dbProject.FechaInicio.Value.ToString("dd/MM/yyyy");
+                                if (dbProject.FechaFin.HasValue)
+                                    extraImageVars["fecha_fin"] = dbProject.FechaFin.Value.ToString("dd/MM/yyyy");
+
+                                var directorPart = dbProject.InvProyectoParticipantes?.FirstOrDefault(p => p.EsDirector == true)
+                                    ?? dbProject.InvProyectoParticipantes?.FirstOrDefault(p => p.Rol != null && p.Rol.Contains("Director", StringComparison.OrdinalIgnoreCase));
+
+                                if (directorPart?.IdUsuarioNavigation != null)
+                                {
+                                    var directorUser = directorPart.IdUsuarioNavigation;
+                                    if (!string.IsNullOrEmpty(directorUser.Nombre))
+                                        extraImageVars["director_nombre"] = directorUser.Nombre;
+                                }
+
+                                var carreraObj = dbProject.InvProyectosCarreras?.FirstOrDefault()?.IdCarreraNavigation;
+                                if (carreraObj != null && !string.IsNullOrEmpty(carreraObj.Carrera1))
+                                {
+                                    extraImageVars["director_carrera"] = carreraObj.Carrera1;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al consultar proyecto en MySQL para {Uuid}", targetProjectUuid);
+                        }
+                    }
+
+                    // 3. Fallback de DTO o JSON inline
+                    ProyectoDto? projectDto = renderData as ProyectoDto;
+                    if (projectDto == null && renderData != null)
+                    {
+                        try
+                        {
+                            var rawText = renderData is System.Text.Json.JsonElement je 
+                                ? je.GetRawText() 
+                                : System.Text.Json.JsonSerializer.Serialize(renderData);
+
+                            using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                                (doc.RootElement.TryGetProperty("Data", out var dataProp) || 
+                                 doc.RootElement.TryGetProperty("data", out dataProp)))
+                            {
+                                var nestedRaw = dataProp.GetRawText();
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(nestedRaw, ProyectoDto.DefaultDeserializerOptions);
+                            }
+                            else
+                            {
+                                var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(rawText);
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedRaw, ProyectoDto.DefaultDeserializerOptions);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "DIITRA DocumentEngine: No se pudo deserializar request.Data a ProyectoDto para {Code}", template.Code);
+                        }
+                    }
+
+                    if (projectDto != null)
+                    {
+                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
+                                      ?? projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
+
+                        if (!extraImageVars.ContainsKey("proyecto_titulo") && !string.IsNullOrEmpty(projectDto.Titulo))
+                            extraImageVars["proyecto_titulo"] = projectDto.Titulo;
+                        if (!extraImageVars.ContainsKey("linea_investigacion") && !string.IsNullOrEmpty(projectDto.LineaInvestigacion))
+                            extraImageVars["linea_investigacion"] = projectDto.LineaInvestigacion;
+                        if (!extraImageVars.ContainsKey("duracion_meses") && !string.IsNullOrEmpty(projectDto.TiempoEjecucion))
+                            extraImageVars["duracion_meses"] = projectDto.TiempoEjecucion;
+                        if (!extraImageVars.ContainsKey("director_nombre"))
+                        {
+                            if (director != null && !string.IsNullOrEmpty(director.Nombre)) extraImageVars["director_nombre"] = director.Nombre;
+                            else if (!string.IsNullOrEmpty(projectDto.DirectorProyecto)) extraImageVars["director_nombre"] = projectDto.DirectorProyecto;
+                        }
+                        if (!extraImageVars.ContainsKey("director_carrera") && !string.IsNullOrEmpty(projectDto.Carrera))
+                            extraImageVars["director_carrera"] = projectDto.Carrera;
+                        if (!extraImageVars.ContainsKey("fecha_presentacion") && !string.IsNullOrEmpty(projectDto.FechaPresentacion))
+                            extraImageVars["fecha_presentacion"] = projectDto.FechaPresentacion;
+                        if (!extraImageVars.ContainsKey("fecha_inicio") && !string.IsNullOrEmpty(projectDto.FechaInicio))
+                            extraImageVars["fecha_inicio"] = projectDto.FechaInicio;
+                        if (!extraImageVars.ContainsKey("fecha_fin") && !string.IsNullOrEmpty(projectDto.FechaFin))
+                            extraImageVars["fecha_fin"] = projectDto.FechaFin;
+                    }
+
+                    if (!string.IsNullOrEmpty(htmlToRender) && htmlToRender.Contains("DIITRA_SECTIONS_JSON:"))
+                    {
+                        try
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(htmlToRender, @"<!--\s*DIITRA_SECTIONS_JSON:\s*([A-Za-z0-9+/=]+)\s*-->");
+                            if (match.Success)
+                            {
+                                var base64 = match.Groups[1].Value;
+                                var jsonBytes = Convert.FromBase64String(base64);
+                                var jsonStr = System.Text.Encoding.UTF8.GetString(jsonBytes);
+                                using var doc = System.Text.Json.JsonDocument.Parse(jsonStr);
+                                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    foreach (var element in doc.RootElement.EnumerateArray())
+                                    {
+                                        if (element.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "project_approval_notice")
+                                        {
+                                            if (element.TryGetProperty("config", out var configProp) && configProp.ValueKind == System.Text.Json.JsonValueKind.Object)
+                                            {
+                                                if (configProp.TryGetProperty("coordinador_nombre", out var cNom) && !string.IsNullOrEmpty(cNom.GetString()))
+                                                    extraImageVars["coordinador_nombre"] = cNom.GetString();
+                                                if (configProp.TryGetProperty("coordinador_cargo", out var cCar) && !string.IsNullOrEmpty(cCar.GetString()))
+                                                    extraImageVars["coordinador_cargo"] = cCar.GetString();
+                                                if (configProp.TryGetProperty("firmante_institucion", out var fInst) && !string.IsNullOrEmpty(fInst.GetString()))
+                                                    extraImageVars["firmante_institucion"] = fInst.GetString();
+                                                if (configProp.TryGetProperty("ciudad_emision", out var cCiu) && !string.IsNullOrEmpty(cCiu.GetString()))
+                                                    extraImageVars["ciudad_emision"] = cCiu.GetString();
+
+                                                if (configProp.TryGetProperty("parrafo_aprobacion", out var pApr) && !string.IsNullOrEmpty(pApr.GetString()))
+                                                    extraImageVars["parrafo_aprobacion"] = pApr.GetString();
+                                                if (configProp.TryGetProperty("parrafo_fundamento", out var pFun) && !string.IsNullOrEmpty(pFun.GetString()))
+                                                    extraImageVars["parrafo_fundamento"] = pFun.GetString();
+                                                if (configProp.TryGetProperty("textoCACES", out var cTxt) && !string.IsNullOrEmpty(cTxt.GetString()))
+                                                    extraImageVars["texto_caces"] = cTxt.GetString();
+                                                if (configProp.TryGetProperty("parrafo_invitacion", out var pInv) && !string.IsNullOrEmpty(pInv.GetString()))
+                                                    extraImageVars["parrafo_invitacion"] = pInv.GetString();
+                                                if (configProp.TryGetProperty("frase_cierre", out var fCie) && !string.IsNullOrEmpty(fCie.GetString()))
+                                                    extraImageVars["frase_cierre"] = fCie.GetString();
+                                                if (configProp.TryGetProperty("frase_despedida", out var fDes) && !string.IsNullOrEmpty(fDes.GetString()))
+                                                    extraImageVars["frase_despedida"] = fDes.GetString();
+
+                                                if (configProp.TryGetProperty("mostrarLogoHeader", out var mLogo))
+                                                    extraImageVars["mostrar_logo_header"] = mLogo.GetBoolean();
+                                                if (configProp.TryGetProperty("mostrarCompromisosCACES", out var mCaces))
+                                                    extraImageVars["mostrar_compromisos_caces"] = mCaces.GetBoolean();
+                                                if (configProp.TryGetProperty("mostrarTablaFechas", out var mFech))
+                                                    extraImageVars["mostrar_tabla_fechas"] = mFech.GetBoolean();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "DIITRA DocumentEngine: No se pudo parsear DIITRA_SECTIONS_JSON para {Code}", template.Code);
+                        }
                     }
                 }
 

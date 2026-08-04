@@ -351,6 +351,40 @@ export const useDocumentTemplatesPage = () => {
                         },
                         baseSignatures
                     ];
+                } else if (tmpl.code === "OFICIO_APROBACION" || tmpl.code === "ACTA_APROBACION_PROYECTO") {
+                    loadedBlocks = [
+                        {
+                            id: "block-1", type: "title", title: "Encabezado del Oficio", isActive: true,
+                            config: { text: "OFICIO DE APROBACIÓN DE PROYECTO DE INVESTIGACIÓN", fontSize: "H1", color: "#1b263b", alignment: "center" }
+                        },
+                        {
+                            id: "block-2", type: "project_approval_notice", title: "Resumen y Dictamen del Proyecto", isActive: true,
+                            config: {
+                                ciudad_emision: "Quito",
+                                mostrarLogoHeader: false,
+                                parrafo_aprobacion: 'Reciba un cordial saludo y por medio del presente, es un placer informarle que, tras la evaluación correspondiente, su proyecto de investigación titulado "{{proyecto_titulo}}" ha sido aprobado por la Coordinación de la Unidad de Investigación.',
+                                parrafo_fundamento: 'La aprobación se basa en la relevancia y viabilidad del proyecto, así como en su alineación con los objetivos académicos de nuestra institución, quedando establecidos la siguiente información:',
+                                textoCACES: "Las actividades complementarias al desarrollo del proyecto son los Informes de Seguimiento mensuales, con sus respectivos anexos que respalden las actividades ejecutadas, además de, el Plan de Aprendizaje y Evaluación del Plan de Aprendizaje por cada estudiante que forme parte del grupo de investigación y culminando con la Difusión de Resultados obtenidos del proyecto ejecutado.",
+                                parrafo_invitacion: "Le animamos a proceder con la ejecución del proyecto, manteniendo los estándares de calidad y ética que nos caracterizan. Asimismo, quedamos a su disposición para brindarle el apoyo necesario durante el desarrollo de su investigación.",
+                                frase_cierre: "Con sentimientos de distinguida consideración.",
+                                frase_despedida: "Atentamente,",
+                                coordinador_nombre: "Ing. Estefani Sánchez Mgtr.",
+                                coordinador_cargo: "Coordinadora de la Unidad de Investigación e Innovación",
+                                firmante_institucion: "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI",
+                                mostrarCompromisosCACES: true,
+                                mostrarTablaFechas: true
+                            }
+                        },
+                        {
+                            id: "block-3", type: "signatures", title: "Firma Electrónica de la Coordinación", isActive: true,
+                            config: {
+                                signatories: [
+                                    { label: "Atentamente,", name: "Ing. Estefani Sánchez Mgtr.", role: "Coordinadora de la Unidad de Investigación e Innovación" }
+                                ],
+                                textoPieFirma: "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"
+                            }
+                        }
+                    ];
                 } else {
                     loadedBlocks = [
                         baseCover,
@@ -520,6 +554,9 @@ export const useDocumentTemplatesPage = () => {
                 break;
             case 'impacts':
                 newBlock = { id: newId, type, title: 'Matriz de Impactos', isActive: true, config: {} };
+                break;
+            case 'project_approval_notice':
+                newBlock = { id: newId, type, title: 'Oficio de Aprobación de Proyecto', isActive: true, config: {} };
                 break;
             default:
                 return;

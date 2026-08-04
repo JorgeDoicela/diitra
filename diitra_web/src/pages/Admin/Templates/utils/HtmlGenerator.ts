@@ -17,6 +17,7 @@ import {
     generateResourcesHtml,
     generateProjectProgressHtml,
     generateProjectEthicsHtml,
+    generateProjectApprovalNoticeHtml,
 } from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
@@ -95,6 +96,9 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'impacts':
                 html += generateImpactsHtml(block);
+                break;
+            case 'project_approval_notice':
+                html += generateProjectApprovalNoticeHtml(block);
                 break;
             default:
                 break;

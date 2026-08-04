@@ -54,7 +54,8 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'impacts',
     'rubric_table',
     'resources',
-    'expected_products'
+    'expected_products',
+    'project_approval_notice'
 ];
 
 const DocumentTemplatesPage: React.FC = () => {
@@ -177,6 +178,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                                     { type: 'expected_products' as const, icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                    { type: 'project_approval_notice' as const, icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 ]).map(item => {
                                                     const ItemIcon = item.icon;
@@ -289,6 +291,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                                 { type: 'expected_products' as const, icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'project_approval_notice' as const, icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;
