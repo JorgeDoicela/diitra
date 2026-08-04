@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare, 
-    AlertCircle, BarChart, Activity, Shield 
+    AlertCircle, BarChart, Activity, Shield, FileCheck
 } from 'lucide-react';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
@@ -12,6 +12,7 @@ const WorkflowPhases = [
     { id: 'En Revisión', label: 'Evaluación Pares', icon: CheckCircle2 },
     { id: 'Aprobado', label: 'Aprobación Legal', icon: FileSignature },
     { id: 'En Ejecución', label: 'Ejecución y Avance', icon: Settings },
+    { id: 'Finalizado', label: 'Informe Final', icon: FileCheck },
 ];
 
 const getPhaseIndex = (status: string) => {
@@ -19,7 +20,8 @@ const getPhaseIndex = (status: string) => {
     if (status === 'Enviado') return 1;
     if (status === 'En Revisión') return 2;
     if (status === 'Aprobado') return 3;
-    if (status === 'En Ejecución' || status === 'Finalizado') return 4;
+    if (status === 'En Ejecución') return 4;
+    if (status === 'Finalizado') return 5;
     return -1;
 };
 
@@ -96,7 +98,9 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     ? 'bg-success/15 border-success text-success' 
                                     : isCurrentActive 
                                         ? 'bg-text-main border-text-main text-bg-deep ring-4 ring-text-main/10 shadow-[0_0_12px_rgba(0,0,0,0.08)] animate-pulse' 
-                                        : 'bg-surface border-border-thin text-text-dim'
+                                        : (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución')
+                                            ? 'bg-surface border-text-dim/40 text-text-main'
+                                            : 'bg-surface border-border-thin text-text-dim'
                             }`}>
                                 {showChecked ? (
                                     <CheckCircle2 size={16} className="stroke-[2.5]" />
@@ -108,36 +112,39 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                             {/* Card Content */}
                             <div 
                                 onClick={() => {
-                                    if (!isCurrentActive) return;
-                                    if (phase.id === 'Borrador') {
+                                    if (phase.id === 'Borrador' && isCurrentActive) {
                                         if (templateCode === 'PROTOCOLO_INVESTIGACION') {
                                             setActiveDocument('PROTOCOLO_INVESTIGACION');
                                         } else {
                                             resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                         }
-                                    } else if (phase.id === 'Enviado') {
+                                    } else if (phase.id === 'Enviado' && isCurrentActive) {
                                         if (isAdmin) {
                                             navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
                                         }
-                                    } else if (phase.id === 'En Revisión') {
+                                    } else if (phase.id === 'En Revisión' && isCurrentActive) {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
                                         } else if (isAdmin) {
                                             navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`);
                                         }
-                                    } else if (phase.id === 'Aprobado' && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {
+                                    } else if (phase.id === 'Aprobado' && isCurrentActive && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {
                                         handleIniciarEjecucion();
+                                    } else if (phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado')) {
+                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix));
                                     }
                                 }}
                                 className={`p-4 rounded-xl border transition-all duration-300 ${
                                     isCurrentActive 
                                         ? 'bg-surface-hover/50 border-text-dim/30 shadow-[0_4px_24px_rgba(0,0,0,0.03)] cursor-pointer hover:border-text-main/40 hover:bg-surface-hover/80' 
-                                        : isFuture
-                                            ? 'bg-transparent border-transparent opacity-40 select-none'
-                                            : 'bg-transparent border-transparent hover:border-border-thin/40 hover:bg-surface-hover/10'
+                                        : (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución')
+                                            ? 'bg-surface/30 border-border-thin cursor-pointer hover:border-text-main/30 hover:bg-surface-hover/40'
+                                            : isFuture
+                                                ? 'bg-transparent border-transparent opacity-40 select-none'
+                                                : 'bg-transparent border-transparent hover:border-border-thin/40 hover:bg-surface-hover/10'
                                 }`}
                             >
-                                <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrentActive ? 'text-text-main font-bold' : 'text-text-dim'}`}>
+                                <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrentActive || (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución') ? 'text-text-main font-bold' : 'text-text-dim'}`}>
                                     {phase.label}
                                 </h3>
                                 <p className="text-[11px] text-text-dim mt-1.5 leading-relaxed">
@@ -150,6 +157,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
+                                    {phase.id === 'Finalizado' && 'Elaboración, consolidación de resultados y presentación del informe final de investigación.'}
                                 </p>
                                 
                                 {phase.id === 'Borrador' && (
@@ -281,16 +289,6 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             <span>Informes de Avance</span>
                                         </Link>
                                         <Link 
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix)}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                            }}
-                                            className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === 'INFORME_FINAL_INVESTIGACION' ? 'pointer-events-none opacity-50' : ''}`}
-                                        >
-                                            <FileSignature size={14} />
-                                            <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
-                                        </Link>
-                                        <Link 
                                             to={`${urlPrefix}/monitoreo/${currentProject.uuid}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -299,6 +297,21 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         >
                                             <Activity size={14} className="text-brand animate-pulse" />
                                             <span>Ver Monitoreo Financiero</span>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
+                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                        <Link 
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                            }}
+                                            className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === 'INFORME_FINAL_INVESTIGACION' ? 'pointer-events-none opacity-50' : ''}`}
+                                        >
+                                            <FileSignature size={14} />
+                                            <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
                                         </Link>
                                     </div>
                                 )}
@@ -312,3 +325,4 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 };
 
 export default CacesWorkflow;
+

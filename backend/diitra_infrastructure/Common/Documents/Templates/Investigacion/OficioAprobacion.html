@@ -1,7 +1,7 @@
-<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0yIiwidHlwZSI6InByb2plY3RfYXBwcm92YWxfbm90aWNlIiwidGl0bGUiOiJPZmljaW8gZGUgQXByb2JhY2lvbiBkZSBQcm95ZWN0byIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiY29vcmRpbmFkb3Jfbm9tYnJlIjoiSW5nLiBFc3RlZmFuaSBTYW5jaGV6IE1ndHIuIiwiY29vcmRpbmFkb3JfY2FyZ28iOiJDb29yZGluYWRvcmEgZGUgbGEgVW5pZGFkIGRlIEludmVzdGlnYWNpb24gZSBJbm5vdmFjaW9uIiwidGV4dG9DQUNFUyI6IkxhcyBhY3RpdmlkYWRlcyBjb21wbGVtZW50YXJpYXMgYWwgZGVzYXJyb2xsbyBkZWwgcHJveWVjdG8gc29uIGxvcyBJbmZvcm1lcyBkZSBTZWd1aW1pZW50byBtZW5zdWFsZXMsIGNvbiBzdXMgcmVzcGVjdGl2b3MgYW5leG9zIHF1ZSByZXNwYWxkZW4gbGFzIGFjdGl2aWRhZGVzIGVqZWN1dGFkYXMsIGFkZW1hcyBkZSwgZWwgUGxhbiBkZSBBcHJlbmRpemFqZSB5IEV2YWx1YWNpb24gZGVsIFBsYW4gZGUgQXByZW5kaXphamUgcG9yIGNhZGEgZXN0dWRpYW50ZSBxdWUgZm9ybWUgcGFydGUgZGVsIGdydXBvIGRlIGludmVzdGlnYWNpb24geSBjdWxtaW5hbmRvIGNvbiBsYSBEaWZ1c2lvbiBkZSBSZXN1bHRhZG9zIG9idGVuaWRvcyBkZWwgcHJveWVjdG8gZWplY3V0YWRvLiIsIm1vc3RyYXJDb21wcm9taXNvc0NBQ0VTIjp0cnVlLCJtb3N0cmFyVGFibGFGZWNoYXMiOnRydWV9fV0= -->
+﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0yIiwidHlwZSI6InByb2plY3RfYXBwcm92YWxfbm90aWNlIiwidGl0bGUiOiJPZmljaW8gZGUgQXByb2JhY2lvbiBkZSBQcm95ZWN0byIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiY29vcmRpbmFkb3Jfbm9tYnJlIjoiSW5nLiBFc3RlZmFuaSBTYW5jaGV6IE1ndHIuIiwiY29vcmRpbmFkb3JfY2FyZ28iOiJDb29yZGluYWRvcmEgZGUgbGEgVW5pZGFkIGRlIEludmVzdGlnYWNpb24gZSBJbm5vdmFjaW9uIiwidGV4dG9DQUNFUyI6IkxhcyBhY3RpdmlkYWRlcyBjb21wbGVtZW50YXJpYXMgYWwgZGVzYXJyb2xsbyBkZWwgcHJveWVjdG8gc29uIGxvcyBJbmZvcm1lcyBkZSBTZWd1aW1pZW50byBtZW5zdWFsZXMsIGNvbiBzdXMgcmVzcGVjdGl2b3MgYW5leG9zIHF1ZSByZXNwYWxkZW4gbGFzIGFjdGl2aWRhZGVzIGVqZWN1dGFkYXMsIGFkZW1hcyBkZSwgZWwgUGxhbiBkZSBBcHJlbmRpemFqZSB5IEV2YWx1YWNpb24gZGVsIFBsYW4gZGUgQXByZW5kaXphamUgcG9yIGNhZGEgZXN0dWRpYW50ZSBxdWUgZm9ybWUgcGFydGUgZGVsIGdydXBvIGRlIGludmVzdGlnYWNpb24geSBjdWxtaW5hbmRvIGNvbiBsYSBEaWZ1c2lvbiBkZSBSZXN1bHRhZG9zIG9idGVuaWRvcyBkZWwgcHJveWVjdG8gZWplY3V0YWRvLiIsIm1vc3RyYXJDb21wcm9taXNvc0NBQ0VTIjp0cnVlLCJtb3N0cmFyVGFibGFGZWNoYXMiOnRydWUsIm1vc3RyYXJMb2dvSGVhZGVyIjpmYWxzZX19XQ== -->
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
+  * { box-sizing: border-box; }
+  
   @page {
       margin-top: {{default theme.layout.margin_top "2.5cm"}};
       margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
@@ -9,165 +9,260 @@
       margin-right: {{default theme.layout.margin_right "2cm"}};
   }
 
-  body {
-      font-family: {{default theme.typography.font_family "Calibri, Arial, sans-serif"}};
-      font-size: {{default theme.typography.base_size "11pt"}};
-      color: #000000;
-      line-height: 1.45;
-      background: transparent;
+  /* Reset y Core del Documento con Tematización Dinámica */
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+  
+  /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
+  .doc-watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 210mm;
+      height: 0;
+      line-height: 0;
+      font-size: 0;
+      z-index: -1;
+      pointer-events: none;
+      {{#if theme.brand.background_image}}
+      background-image: url('{{ theme.brand.background_image }}');
+      background-size: {{default theme.brand.background_fit "contain"}};
+      background-position: center center;
+      background-repeat: no-repeat;
+      opacity: {{default theme.brand.background_opacity "0.12"}};
+      {{/if}}
+  }
+  
+  /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      max-height: 296.5mm;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      {{#if portada_base64}}
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      {{/if}}
+      color: {{ theme.colors.primary }};
+      z-index: 1000;
+      overflow: hidden;
+      page-break-inside: avoid;
+      page-break-after: always;
   }
 
-  .doc-container {
-      font-family: {{default theme.typography.font_family "Calibri, Arial, sans-serif"}};
-      font-size: {{default theme.typography.base_size "11pt"}};
-      color: #000000;
-      line-height: 1.45;
+  .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 3cm 2cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: space-around;
   }
 
-  /* ── Cabecera del Oficio ── */
-  .oficio-header {
-      display: table;
-      width: 100%;
-      margin-bottom: 24px;
-  }
-  .oficio-header-logo {
-      display: table-cell;
-      vertical-align: top;
-      width: 50%;
-      padding-top: 4px;
-  }
-  .oficio-header-logo img {
-      width: 180px;
-      max-width: 100%;
-  }
-  .oficio-header-meta {
-      display: table-cell;
-      vertical-align: top;
-      text-align: right;
-      width: 50%;
-      padding-top: 8px;
-  }
-  .oficio-numero {
-      font-size: 11pt;
+  .main-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 24pt;
       font-weight: bold;
-      color: #000000;
-      margin-bottom: 6px;
-  }
-  .oficio-fecha {
-      font-size: 11pt;
-      font-weight: bold;
-      color: #000000;
-  }
-
-  /* ── Destinatario ── */
-  .destinatario-block {
-      margin-top: 28px;
-      margin-bottom: 20px;
-      line-height: 1.55;
-  }
-  .destinatario-titulo  { font-size: 11pt; }
-  .destinatario-nombre  { font-size: 11pt; font-weight: normal; }
-  .destinatario-cargo   { font-size: 11pt; text-transform: uppercase; }
-  .destinatario-inst    { font-size: 11pt; font-weight: bold; text-transform: uppercase; }
-  .destinatario-presente{ font-size: 11pt; }
-
-  /* ── Saludo ── */
-  .saludo {
-      margin-bottom: 14px;
-      font-size: 11pt;
-  }
-
-  /* ── Párrafos del cuerpo ── */
-  .oficio-parrafo {
-      font-size: 11pt;
-      text-align: justify;
-      margin-bottom: 14px;
-      line-height: 1.5;
-  }
-
-  /* ── Tabla de Datos del Proyecto ── */
-  .proyecto-table {
+      color: {{ theme.colors.secondary }};
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0;
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-      font-size: 10.5pt;
   }
-  .proyecto-table td {
-      border: 1px solid #000000;
-      padding: 6px 10px;
-      vertical-align: middle;
+
+  .project-theme {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 16pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin: 1.5cm 0;
+      line-height: 1.3;
+      width: 100%;
+      word-wrap: break-word;
   }
-  .proyecto-table .cell-label {
+
+  .career-container {
+      margin: 1cm 0;
+      text-align: center;
+      width: 100%;
+  }
+
+  .career-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+  }
+
+  .career-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: normal;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin-top: 4px;
+  }
+
+  .period-container {
+      width: 100%;
+      margin-top: 1cm;
+      text-align: center;
+  }
+
+  .period-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
       font-weight: bold;
       text-transform: uppercase;
-      width: 38%;
-      background: #ffffff;
+      color: {{ theme.colors.primary }};
   }
-  .proyecto-table .cell-dates-header {
-      font-weight: bold;
+
+  .period-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
+      font-weight: normal;
       text-transform: uppercase;
-      text-align: center;
-      background: #ffffff;
-      vertical-align: middle;
-  }
-  .proyecto-table .cell-dates-value {
-      text-align: center;
-      vertical-align: middle;
+      color: {{ theme.colors.primary }};
+      margin-top: 2px;
   }
 
-  /* ── Cierre y Atentamente ── */
-  .oficio-cierre {
-      font-size: 11pt;
-      margin-top: 10px;
-      margin-bottom: 6px;
+  /* Títulos de sección */
+  .title-h1 { 
+      font-size: 16pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.primary "#222c57"}}; 
+      margin-top: 35px; 
+      text-transform: uppercase; 
   }
-  .oficio-atentamente {
-      font-size: 11pt;
-      margin-bottom: 60px;
+  .title-h2 { 
+      font-size: 10pt; 
+      font-weight: 800; 
+      background: {{default theme.colors.table_header_bg "#222c57"}}; 
+      color: {{default theme.colors.table_header_color "#ffffff"}} !important; 
+      padding: 6px 12px; 
+      margin-top: 25px; 
+      text-transform: uppercase; 
   }
-
-  /* ── Firma ── */
-  .firma-block {
-      font-size: 10.5pt;
-      line-height: 1.6;
+  .title-h3 { 
+      font-size: 9.5pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.secondary "#c4a857"}}; 
+      margin-top: 15px; 
+      text-transform: uppercase; 
   }
-  .firma-nombre   { font-size: 11pt; }
-  .firma-cargo    { font-weight: bold; font-size: 10.5pt; }
-  .firma-inst     { font-weight: bold; font-size: 10.5pt; text-transform: uppercase; }
+  
+  /* Tablas generales compactas con bordes negros (formato premium original) */
+  .info-table, .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 12px; 
+      font-size: 9pt; 
+      background: #ffffff; 
+  }
+  .info-table td, .info-table th, .data-table td, .data-table th { 
+      border: 1px solid #000000; 
+      padding: 0 8px; 
+      height: 0.6cm;
+      vertical-align: middle; 
+      color: #000000;
+  }
+  .info-table th, .data-table th { 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+      background: {{ theme.colors.table_header_bg }};
+      color: {{ theme.colors.table_header_color }};
+      text-align: center;
+  }
+  .label-cell { 
+      font-weight: bold; 
+      background: {{ theme.colors.table_header_bg }}; 
+      color: {{ theme.colors.table_header_color }};
+      width: 35%; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+  }
+  
+  /* Texto enriquecido */
+  .rich-content { 
+      font-size: 9.5pt; 
+      text-align: justify; 
+      color: #000000; 
+      margin-top: 10px; 
+      line-height: 1.4; 
+  }
+  .rich-content p { margin: 6px 0; }
+  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
+  .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
+  .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
+  
+  /* Dos columnas */
+  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
+  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
+  
+  /* Salto de página */
+  .page-break { page-break-after: always; height: 0; }
+  
+  /* Firmas y Trazabilidad */
+  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
+  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+  .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
+  .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
 </style>
 
 <div class="doc-container">
-
   <!-- CABECERA: Logo + Número y Fecha del Oficio -->
-  <div class="oficio-header">
-    <div class="oficio-header-logo">
+  <div class="oficio-header" style="display: table; width: 100%; margin-bottom: 24px;">
+    <div class="oficio-header-logo" style="display: table-cell; vertical-align: top; width: 50%; padding-top: 4px;">
       {{#if mostrar_logo_header}}
         {{#if logo_base64}}
-          <img src="data:image/png;base64,{{logo_base64}}" alt="ISTPET Logo" />
+          <img src="data:image/png;base64,{{logo_base64}}" alt="ISTPET Logo" style="width: 180px; max-width: 100%;" />
         {{/if}}
       {{/if}}
     </div>
-    <div class="oficio-header-meta">
-      <div class="oficio-numero">Oficio Nro. {{default oficio_numero "01-ISTPET-INV-2026"}}</div>
+    <div class="oficio-header-meta" style="display: table-cell; vertical-align: top; text-align: right; width: 50%; padding-top: 8px;">
+      <div class="oficio-numero" style="font-size: 11pt; font-weight: bold; color: #000000; margin-bottom: 6px;">Oficio Nro. {{default oficio_numero "01-ISTPET-INV-2026"}}</div>
       <br/>
-      <div class="oficio-fecha">{{default ciudad_emision ciudad "Quito"}} D.M., {{default oficio_fecha fecha_emision}}</div>
+      <div class="oficio-fecha" style="font-size: 11pt; font-weight: bold; color: #000000;">{{default ciudad_emision ciudad "Quito"}} D.M., {{default oficio_fecha fecha_emision}}</div>
     </div>
   </div>
 
   <!-- BLOQUE DESTINATARIO -->
-  <div class="destinatario-block">
-    <div class="destinatario-titulo">{{default director_titulo "Tecnólogo/a"}}</div>
-    <div class="destinatario-nombre">{{default director_nombre "[Nombre del Director del Proyecto]"}}</div>
-    <div class="destinatario-cargo">DOCENTE DE LA CARRERA DE {{default director_carrera "[CARRERA]"}}</div>
-    <div class="destinatario-inst">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
-    <div class="destinatario-presente">Presente. -</div>
+  <div class="destinatario-block" style="margin-top: 28px; margin-bottom: 20px; line-height: 1.55;">
+    <div class="destinatario-titulo" style="font-size: 11pt;">{{default director_titulo "Tecnólogo/a"}}</div>
+    <div class="destinatario-nombre" style="font-size: 11pt; font-weight: normal;">{{default director_nombre "[Nombre del Director del Proyecto]"}}</div>
+    <div class="destinatario-cargo" style="font-size: 11pt; text-transform: uppercase;">DOCENTE DE LA CARRERA DE {{default director_carrera "[CARRERA]"}}</div>
+    <div class="destinatario-inst" style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
+    <div class="destinatario-presente" style="font-size: 11pt;">Presente. -</div>
   </div>
 
   <!-- SALUDO -->
-  <div class="saludo">De mis consideraciones</div>
+  <div class="saludo" style="margin-bottom: 14px; font-size: 11pt;">De mis consideraciones</div>
 
   <!-- PÁRRAFO 1: Aprobación -->
-  <div class="oficio-parrafo">
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
     {{#if parrafo_aprobacion}}
       {{{parrafo_aprobacion}}}
     {{else}}
@@ -176,36 +271,36 @@
   </div>
 
   <!-- PÁRRAFO 2: Base de la aprobación -->
-  <div class="oficio-parrafo">
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
     {{default parrafo_fundamento "La aprobación se basa en la relevancia y viabilidad del proyecto, así como en su alineación con los objetivos académicos de nuestra institución, quedando establecidos la siguiente información:"}}
   </div>
 
   <!-- TABLA DE DATOS DEL PROYECTO -->
-  <table class="proyecto-table">
+  <table class="proyecto-table" style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10.5pt;">
     <tbody>
       <tr>
-        <td class="cell-label">NOMBRE DEL PROYECTO:</td>
-        <td>{{default proyecto_titulo "[Nombre del Proyecto]"}}</td>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; width: 38%;">NOMBRE DEL PROYECTO:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default proyecto_titulo "[Nombre del Proyecto]"}}</td>
       </tr>
       <tr>
-        <td class="cell-label">LÍNEA DE INVESTIGACIÓN:</td>
-        <td>{{default linea_investigacion "[Línea de Investigación Vinculada]"}}</td>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase;">LÍNEA DE INVESTIGACIÓN:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default linea_investigacion "[Línea de Investigación Vinculada]"}}</td>
       </tr>
       <tr>
-        <td class="cell-label">MESES DE EJECUCIÓN:</td>
-        <td>{{default duracion_meses "12"}} meses</td>
+        <td class="cell-label" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase;">MESES DE EJECUCIÓN:</td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;">{{default duracion_meses "12"}} meses</td>
       </tr>
       {{#if (eq mostrar_tabla_fechas false)}}
       {{else}}
       <tr>
-        <td class="cell-dates-header">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
-        <td class="cell-dates-header">FECHA DE INICIO DE PROYECTO</td>
-        <td class="cell-dates-header">FECHA DE FINALIZACIÓN O FECHA PREVISTA DEL PROYECTO</td>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE INICIO DE PROYECTO</td>
+        <td class="cell-dates-header" style="border: 1px solid #000000; padding: 6px 10px; font-weight: bold; text-transform: uppercase; text-align: center;">FECHA DE FINALIZACIÓN O FECHA PREVISTA DEL PROYECTO</td>
       </tr>
       <tr>
-        <td class="cell-dates-value">{{default fecha_presentacion "[Fecha de Presentación]"}}</td>
-        <td class="cell-dates-value">{{default fecha_inicio "[Fecha de Inicio]"}}</td>
-        <td class="cell-dates-value">{{default fecha_fin "[Fecha de Finalización]"}}</td>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_presentacion "[Fecha de Presentación]"}}</td>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_inicio "[Fecha de Inicio]"}}</td>
+        <td class="cell-dates-value" style="border: 1px solid #000000; padding: 6px 10px; text-align: center;">{{default fecha_fin "[Fecha de Finalización]"}}</td>
       </tr>
       {{/if}}
     </tbody>
@@ -214,25 +309,24 @@
   <!-- PÁRRAFO 3: Compromisos CACES -->
   {{#if (eq mostrar_compromisos_caces false)}}
   {{else}}
-  <div class="oficio-parrafo">
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
     {{default texto_caces "Las actividades complementarias al desarrollo del proyecto son los Informes de Seguimiento mensuales, con sus respectivos anexos que respalden las actividades ejecutadas, además de, el Plan de Aprendizaje y Evaluación del Plan de Aprendizaje por cada estudiante que forme parte del grupo de investigación y culminando con la Difusión de Resultados obtenidos del proyecto ejecutado."}}
   </div>
   {{/if}}
 
   <!-- PÁRRAFO 4: Invitación a proceder -->
-  <div class="oficio-parrafo">
+  <div class="oficio-parrafo" style="font-size: 11pt; text-align: justify; margin-bottom: 14px; line-height: 1.5;">
     {{default parrafo_invitacion "Le animamos a proceder con la ejecución del proyecto, manteniendo los estándares de calidad y ética que nos caracterizan. Asimismo, quedamos a su disposición para brindarle el apoyo necesario durante el desarrollo de su investigación."}}
   </div>
 
   <!-- CIERRE -->
-  <div class="oficio-cierre">{{default frase_cierre "Con sentimientos de distinguida consideración."}}</div>
-  <div class="oficio-atentamente">{{default frase_despedida "Atentamente,"}}</div>
+  <div class="oficio-cierre" style="font-size: 11pt; margin-top: 10px; margin-bottom: 6px;">{{default frase_cierre "Con sentimientos de distinguida consideración."}}</div>
+  <div class="oficio-atentamente" style="font-size: 11pt; margin-bottom: 60px;">{{default frase_despedida "Atentamente,"}}</div>
 
   <!-- BLOQUE DE FIRMA -->
-  <div class="firma-block">
-    <div class="firma-nombre">{{default coordinador_nombre "Ing. Estefani Sánchez Mgtr."}}</div>
-    <div class="firma-cargo">{{default coordinador_cargo "Coordinadora de la Unidad de Investigación e Innovación"}}</div>
-    <div class="firma-inst">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
+  <div class="firma-block" style="font-size: 10.5pt; line-height: 1.6;">
+    <div class="firma-nombre" style="font-size: 11pt;">{{default coordinador_nombre "Ing. Estefani Sánchez Mgtr."}}</div>
+    <div class="firma-cargo" style="font-weight: bold; font-size: 10.5pt;">{{default coordinador_cargo "Coordinadora de la Unidad de Investigación e Innovación"}}</div>
+    <div class="firma-inst" style="font-weight: bold; font-size: 10.5pt; text-transform: uppercase;">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
   </div>
-
 </div>
