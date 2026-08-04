@@ -328,13 +328,35 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
 
     // Celdas Handlebars correspondientes
     const tableCells: string[] = [];
-    if (cols.showCategory !== false) tableCells.push(`<td>{{#if this.categoria}}{{this.categoria}}{{else}}General{{/if}}</td>`);
+    if (cols.showCategory !== false) tableCells.push(`<td>{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>`);
     if (cols.showSubtype !== false) tableCells.push(`<td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>`);
     if (cols.showProductName !== false) tableCells.push(`<td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>`);
     if (cols.showIndicator !== false) tableCells.push(`<td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>`);
     if (cols.showVerificationMeans !== false) tableCells.push(`<td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>`);
     if (cols.showQuantity !== false) tableCells.push(`<td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>`);
     if (cols.showDeadline !== false) tableCells.push(`<td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>`);
+
+    if (layoutMode === 'grouped_sections') {
+        return `
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (POR SECCIONES) -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          ${tableHeaders.join('\n          ')}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each productos_esperados}}
+        <tr>
+          ${tableCells.join('\n          ')}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+    }
 
     return `
   <!-- BLOQUE: PRODUCTOS ESPERADOS (DETALLADO CACES) -->

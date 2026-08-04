@@ -117,7 +117,10 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
     };
 
     const getAvailableSubtypes = (catObj: any) => {
-        const catId = catObj.id || '';
+        if (Array.isArray(catObj?.subtypes) && catObj.subtypes.length > 0) {
+            return catObj.subtypes;
+        }
+        const catId = catObj?.id || '';
         const listFromCat = SUBTYPES_BY_CATEGORY[catId];
         if (listFromCat && listFromCat.length > 0) {
             return listFromCat;

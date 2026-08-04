@@ -596,7 +596,6 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     {[
                         { id: 'table_detailed', label: 'Tabla CACES' },
                         { id: 'table_simple', label: 'Tabla Simple' },
-                        { id: 'cards_by_category', label: 'Bento Cards' },
                         { id: 'grouped_sections', label: 'Secciones' },
                     ].map(mode => (
                         <button
@@ -661,28 +660,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
                 )}
 
-                {/* MODO TARJETAS BENTO */}
-                {layoutMode === 'cards_by_category' ? (
-                    <div className="grid grid-cols-2 gap-2">
-                        {categories.map((cat: any) => (
-                            <div key={cat.id || cat.name} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-1.5">
-                                <span className="text-[8px] font-bold text-emerald-700 uppercase tracking-wider block leading-tight">{cat.name}</span>
-                                <div className="text-[9px] text-slate-700 font-medium space-y-1">
-                                    <div className="flex justify-between items-center bg-slate-50 p-1 rounded border border-slate-100">
-                                        <span>Prototipo / Entregable IST</span>
-                                        <span className="font-mono font-bold text-emerald-600">1</span>
-                                    </div>
-                                    {cols.showSenadi !== false && (
-                                        <div className="flex items-center justify-between text-[7.5px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
-                                            <span>Registro SENADI</span>
-                                            <span>En trámite</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : layoutMode === 'grouped_sections' ? (
+                {layoutMode === 'grouped_sections' ? (
                     /* MODO SECCIONES CONSECUTIVAS */
                     <div className="space-y-3">
                         {categories.map((cat: any) => (
