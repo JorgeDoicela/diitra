@@ -49,11 +49,27 @@ namespace diitra_api.Controllers
                     configDict = new Dictionary<string, object>();
                 }
 
+                if (!configDict.ContainsKey("productColumns"))
+                {
+                    configDict["productColumns"] = new Dictionary<string, bool>
+                    {
+                        { "showCategory", true },
+                        { "showSubtype", true },
+                        { "showProductName", true },
+                        { "showSenadi", true },
+                        { "showTrl", true },
+                        { "showIndicator", true },
+                        { "showVerificationMeans", true },
+                        { "showQuantity", true },
+                        { "showDeadline", false }
+                    };
+                }
+
                 configDict["completionFields"] = new[] { "ProductosEsperados" };
 
                 sectionsList.Add(new UiSectionDto {
                     Id = "productos_esperados",
-                    Label = string.IsNullOrEmpty(title) ? "Productos Esperados" : title,
+                    Label = string.IsNullOrEmpty(title) ? "Productos y Entregables Esperados" : title,
                     IconName = "Target",
                     ComponentName = "ExpectedProductsSection",
                     Config = configDict
@@ -63,3 +79,4 @@ namespace diitra_api.Controllers
         }
     }
 }
+

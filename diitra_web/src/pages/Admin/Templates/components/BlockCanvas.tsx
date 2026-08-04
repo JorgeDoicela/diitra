@@ -11,7 +11,7 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Layers, Trash2 } from 'lucide-react';
+import { Layers, Trash2, FileText } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { SortableBlockItem } from './SortableBlockItem';
 import { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair } from './canvasRenderers/RenderCover';
@@ -216,8 +216,16 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                 className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep cursor-default"
                 style={{ scrollbarWidth: 'thin' }}
             >
-                {blocks.length === 0 ? (
-                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-center items-center text-center">
+                {!selectedTemplate ? (
+                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
+                        <FileText className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
+                        <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">Sin plantilla seleccionada</h3>
+                        <p className="text-[10px] text-slate-400 max-w-[230px] mt-1.5 leading-normal">
+                            Selecciona una plantilla o el "Diseño Global Institucional" del Catálogo (izquierda) para comenzar a trabajar.
+                        </p>
+                    </div>
+                ) : blocks.length === 0 ? (
+                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
                         <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">El documento está vacío</h3>
                         <p className="text-[10px] text-slate-400 max-w-[200px] mt-1 leading-normal">

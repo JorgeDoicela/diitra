@@ -723,7 +723,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: '1', CostoUnitario: 0, CostoTotal: 0 })}
                             onRemoveNecesario={(i: number) => removeItem('RecursosNecesarios', i)}
                             onUpdateNecesario={(i: number, f: string, v: any) => updateItem('RecursosNecesarios', i, f, v)}
-                            onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: '1' })}
+                            onAddProducto={() => addItem('ProductosEsperados', { categoria: '', tipo: '', titulo: '', requiere_senadi: false, registro_senadi: '', trl: '', indicador: '', medio_verificacion: '', cantidad: '1', plazo: '' })}
                             onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
                             onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
                             onUpdateImpacto={(t: string, v: any) => updateField('Impacto', (prev: any) => ({ ...(prev || {}), [t.toLowerCase()]: v }))}

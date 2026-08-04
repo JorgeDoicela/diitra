@@ -1,4 +1,5 @@
-import { Users, LayoutDashboard, Scale, ShieldCheck, LucideIcon } from 'lucide-react';
+import { Users, LayoutDashboard, Scale, ShieldCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface RoleInfo {
     role: string;

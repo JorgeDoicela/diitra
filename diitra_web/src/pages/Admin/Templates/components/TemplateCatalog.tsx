@@ -1,25 +1,43 @@
 import React from 'react';
-import { FileText, Palette } from 'lucide-react';
+import { FileText, Palette, PanelLeft } from 'lucide-react';
 import type { DocumentTemplateDto } from '../types';
 
 interface TemplateCatalogProps {
     templates: DocumentTemplateDto[];
     selectedTemplate: DocumentTemplateDto | null;
     onSelectTemplate: (tmpl: DocumentTemplateDto) => void;
+    isSidebarCollapsed?: boolean;
+    onToggleSidebar?: () => void;
+    headerCollapsed?: boolean;
 }
 
 export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
     templates,
     selectedTemplate,
-    onSelectTemplate
+    onSelectTemplate,
+    isSidebarCollapsed,
+    onToggleSidebar,
+    headerCollapsed
 }) => {
     return (
         <div className="w-full border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
             {/* Header del panel */}
-            <div className="p-3 border-b border-border-thin bg-surface shrink-0">
-                <span className="text-xs font-semibold text-text-main">
-                    Catálogo de Documentos ({templates.length})
-                </span>
+            <div className="p-3 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 h-10">
+                <div className="flex items-center gap-2 min-w-0">
+                    {onToggleSidebar && headerCollapsed && isSidebarCollapsed && (
+                        <button
+                            type="button"
+                            onClick={onToggleSidebar}
+                            title={isSidebarCollapsed ? "Mostrar panel lateral" : "Ocultar panel lateral"}
+                            className="p-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer shrink-0"
+                        >
+                            <PanelLeft className="w-4 h-4" />
+                        </button>
+                    )}
+                    <span className="text-xs font-semibold text-text-main truncate">
+                        Catálogo de Documentos ({templates.length})
+                    </span>
+                </div>
             </div>
             
             {/* Lista unificada sin separaciones toscas */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Layout, Columns, CheckSquare, Plus, Trash2, Layers } from 'lucide-react';
+import { Target, Columns, Plus, Trash2, Layers } from 'lucide-react';
 import type { DocumentBlock } from '../../types';
 
 interface ExpectedProductsPropertiesProps {
@@ -14,12 +14,46 @@ export interface ExpectedProductCategory {
     enabled: boolean;
 }
 
+export const DEFAULT_PRODUCT_COLUMNS: Record<string, boolean> = {
+    showCategory: true,
+    showSubtype: true,
+    showProductName: true,
+    showSenadi: true,
+    showTrl: true,
+    showIndicator: true,
+    showVerificationMeans: true,
+    showQuantity: true,
+    showDeadline: false,
+};
+
 export const DEFAULT_EXPECTED_PRODUCT_CATEGORIES: ExpectedProductCategory[] = [
-    { id: 'cat_cientifico', name: 'Productos Científico-Tecnológicos (Artículos, Libros, Patentes)', code: 'CIENTIFICO', enabled: true },
-    { id: 'cat_rrhh', name: 'Formación de Recursos Humanos (Tesis Grado / Posgrado)', code: 'RRHH', enabled: true },
-    { id: 'cat_divulgacion', name: 'Divulgación y Vinculación (Ponencias, Congresos, Comunidades)', code: 'DIVULGACION', enabled: true },
-    { id: 'cat_senadi', name: 'Propiedad Intelectual y Registro SENADI', code: 'SENADI', enabled: true },
+    { id: 'cat_idi', name: 'I+D+i Aplicada (Prototipos Funcionales, Modelos de Utilidad, Plantas Piloto)', code: 'IDI_APLICADA', enabled: true },
+    { id: 'cat_senadi', name: 'Desarrollo de Software y Registro SENADI (Aplicaciones, Algoritmos, Derechos de Autor)', code: 'SOFTWARE_SENADI', enabled: true },
+    { id: 'cat_transferencia', name: 'Transferencia Tecnológica y Vinculación (Manuales Técnicos, Guías, Kits)', code: 'TRANSFERENCIA', enabled: true },
+    { id: 'cat_divulgacion', name: 'Divulgación Técnica y Publicaciones (Ponencias, Artículos Latindex, Guías)', code: 'DIVULGACION_TECNICA', enabled: true },
+    { id: 'cat_titulacion', name: 'Titulación & PIS (Proyectos Integradores de Saberes, Trabajos Prácticos)', code: 'TITULACION_PIS', enabled: true },
 ];
+
+export function getNormalizedColumns(configCols?: any): Record<string, boolean> {
+    if (!configCols || typeof configCols !== 'object') {
+        return { ...DEFAULT_PRODUCT_COLUMNS };
+    }
+    return {
+        ...DEFAULT_PRODUCT_COLUMNS,
+        ...configCols,
+    };
+}
+
+export function getNormalizedCategories(rawCategories?: any[]): ExpectedProductCategory[] {
+    if (!Array.isArray(rawCategories) || rawCategories.length === 0) {
+        return DEFAULT_EXPECTED_PRODUCT_CATEGORIES;
+    }
+    const hasOldCategories = rawCategories.some(c => ['cat_cientifico', 'cat_rrhh'].includes(c.id));
+    if (hasOldCategories) {
+        return DEFAULT_EXPECTED_PRODUCT_CATEGORIES;
+    }
+    return rawCategories;
+}
 
 const inputCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 
@@ -28,24 +62,13 @@ export const ExpectedProductsProperties: React.FC<ExpectedProductsPropertiesProp
     const [newCatName, setNewCatName] = useState('');
 
     const productosTitle = config.productosTitle || '5. Productos y Entregables Esperados';
-    const layoutMode = config.productsLayoutMode || config.layoutMode || 'table_detailed';
 
-    // Obtener columnas con defaults
-    const cols = config.productColumns || {
-        showCategory: true,
-        showSubtype: true,
-        showProductName: true,
-        showIndicator: true,
-        showVerificationMeans: true,
-        showQuantity: true,
-        showDeadline: false,
-    };
+    // Obtener columnas con normalización garantizada
+    const cols = getNormalizedColumns(config.productColumns);
 
-    // Obtener categorías con defaults
+    // Obtener categorías con normalización garantizada
     const rawCategories = config.productCategories || config.categories;
-    const categories: ExpectedProductCategory[] = (Array.isArray(rawCategories) && rawCategories.length > 0)
-        ? rawCategories
-        : DEFAULT_EXPECTED_PRODUCT_CATEGORIES;
+    const categories = getNormalizedCategories(rawCategories);
 
     const handleColumnToggle = (colKey: string, checked: boolean) => {
         const updatedCols = { ...cols, [colKey]: checked };
@@ -95,38 +118,22 @@ export const ExpectedProductsProperties: React.FC<ExpectedProductsPropertiesProp
                 </div>
             </div>
 
-            {/* Modo de Maquetación */}
-            <div className="p-3 bg-surface-hover/30 border border-border-thin rounded-xl space-y-3">
-                <h5 className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
-                    <Layout size={13} className="text-brand" />
-                    Modo de Visualización / Layout
-                </h5>
-                <select
-                    value={layoutMode}
-                    onChange={e => onUpdateConfig(block.id, 'productsLayoutMode', e.target.value)}
-                    className={inputCls}
-                >
-                    <option value="table_detailed">Tabla Detallada CACES (Categorías + Indicadores)</option>
-                    <option value="table_simple">Tabla Simple (Tipo de Producto + Cantidad)</option>
-                    <option value="cards_by_category">Tarjetas Bento por Categoría</option>
-                    <option value="grouped_sections">Secciones Consecutivas por Categoría</option>
-                </select>
-            </div>
-
             {/* Configuración de Columnas Visibles */}
             <div className="p-3 bg-surface-hover/30 border border-border-thin rounded-xl space-y-3">
                 <h5 className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
                     <Columns size={13} className="text-brand" />
-                    Columnas Visibles en Tabla
+                    Campos Visibles en Formulario & Tabla
                 </h5>
                 <div className="space-y-2">
                     {[
-                        { key: 'showCategory', label: 'Categoría CACES / Tipo', desc: 'Muestra la categoría principal del producto.' },
-                        { key: 'showSubtype', label: 'Subtipo de Entregable', desc: 'Ej: Artículo Scopus Q1, Ponencia, Registro SENADI.' },
-                        { key: 'showProductName', label: 'Nombre del Producto', desc: 'Título o descripción corta del entregable.' },
-                        { key: 'showIndicator', label: 'Indicador Verificable', desc: 'Métrica de cumplimiento (ej: 1 Artículo Aceptado).' },
-                        { key: 'showVerificationMeans', label: 'Medio de Verificación', desc: 'Evidencia (Certificado, DOI, Acta SENADI).' },
-                        { key: 'showQuantity', label: 'Cantidad Planeada', desc: 'Número total de productos a entregar.' },
+                        { key: 'showCategory', label: 'Categoría IST / CACES', desc: 'Clasificación por familia de entregable tecnológico.' },
+                        { key: 'showSubtype', label: 'Subtipo de Entregable', desc: 'Ej: Prototipo, Software SENADI, Manual Técnico, Ponencia.' },
+                        { key: 'showProductName', label: 'Nombre del Producto', desc: 'Título o descripción del resultado esperado.' },
+                        { key: 'showSenadi', label: 'Propiedad Intelectual SENADI', desc: 'Registro de derecho de autor o modelo de utilidad.' },
+                        { key: 'showTrl', label: 'Nivel TRL (Madurez Técnica)', desc: 'Escala TRL 1 al TRL 9 de desarrollo tecnológico.' },
+                        { key: 'showIndicator', label: 'Indicador Verificable CACES', desc: 'Métrica de auditoría e impacto.' },
+                        { key: 'showVerificationMeans', label: 'Medio de Verificación', desc: 'Evidencia (Certificado SENADI, Acta, Repositorio DSpace).' },
+                        { key: 'showQuantity', label: 'Cantidad Planeada', desc: 'Número total de entregables a generar.' },
                         { key: 'showDeadline', label: 'Plazo / Trimestre', desc: 'Mes o trimestre programado de entrega.' },
                     ].map(({ key, label, desc }) => (
                         <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-2 last:border-0 last:pb-0">

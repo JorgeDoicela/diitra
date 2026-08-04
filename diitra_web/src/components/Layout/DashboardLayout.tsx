@@ -242,7 +242,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Desktop TopBar */}
                 {!isWorkspace && (
-                    <header className={`hidden lg:flex items-center justify-between bg-bg-deep border-b border-border-thin sticky top-0 z-[40] transition-all duration-300 ease-in-out ${topBarCollapsed
+                    <header className={`hidden lg:flex items-center justify-between bg-bg-deep border-b border-border-thin sticky top-0 z-[40] transition-[max-height,opacity] duration-150 ease-out ${topBarCollapsed
                             ? 'max-h-0 opacity-0 overflow-hidden border-b-0 pointer-events-none'
                             : 'max-h-14 h-14 opacity-100'
                         }`}>

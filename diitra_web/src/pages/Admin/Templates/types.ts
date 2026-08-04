@@ -302,6 +302,22 @@ export interface DocumentBlock {
         showImpactoOtro?: boolean;
         showProductosEsperados?: boolean;
 
+        // ── expected_products ─────────────────────────────────────────────
+        productsLayoutMode?: string;
+        layoutMode?: string;
+        productColumns?: {
+            showCategory?: boolean;
+            showSubtype?: boolean;
+            showProductName?: boolean;
+            showIndicator?: boolean;
+            showVerificationMeans?: boolean;
+            showQuantity?: boolean;
+            showDeadline?: boolean;
+            [key: string]: boolean | undefined;
+        };
+        productCategories?: any[];
+        categories?: any[];
+
         // ── project_progress_report ────────────────────────────────────────
         showHitosCompletados?: boolean;
         showEvidencias?: boolean;

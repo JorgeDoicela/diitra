@@ -68,6 +68,24 @@ export const useDocumentTemplatesPage = () => {
     const [activeMobileTab, setActiveMobileTab] = useState<'catalog' | 'canvas' | 'properties'>('catalog');
     const paletteRef = useRef<HTMLDivElement>(null);
     const [headerCollapsed, setHeaderCollapsed] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+        return localStorage.getItem('sidebar_collapsed') === 'true';
+    });
+
+    useEffect(() => {
+        const handleStateChange = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail && typeof customEvent.detail.isCollapsed === 'boolean') {
+                setIsSidebarCollapsed(customEvent.detail.isCollapsed);
+            }
+        };
+        window.addEventListener('diitra-sidebar-state-change', handleStateChange);
+        return () => window.removeEventListener('diitra-sidebar-state-change', handleStateChange);
+    }, []);
+
+    const toggleSidebar = () => {
+        window.dispatchEvent(new CustomEvent('diitra-toggle-sidebar'));
+    };
 
     const { addToast } = useNotifications();
     const confirm = useConfirm();
@@ -370,10 +388,6 @@ export const useDocumentTemplatesPage = () => {
             const res = await api.get('/admin/templates');
             const data = res.data || [];
             setTemplates(data);
-            if (data.length > 0 && !selectedTemplate) {
-                // Auto-seleccionar el primer formato por defecto para cargar lienzo y panel derecho
-                await handleSelectTemplate(data[0]);
-            }
         } catch (err: any) {
             console.error(err);
             addToast("Error al Cargar", "No se pudo obtener el catálogo de plantillas.", "error");
@@ -772,6 +786,8 @@ export const useDocumentTemplatesPage = () => {
         paletteRef,
         headerCollapsed,
         setHeaderCollapsed,
+        isSidebarCollapsed,
+        toggleSidebar,
         sensors,
         activeBlock,
         fetchTemplates,

@@ -110,7 +110,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
             {activeTab === 'properties' && (
                 <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
                     {!selectedTemplate ? (
-                        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none bg-surface-hover/5">
+                        <div className="flex flex-col items-center justify-start pt-[220px] flex-1 p-6 text-center select-none bg-surface-hover/5">
                             <Settings className="w-10 h-10 text-text-dim/30 mb-3 animate-pulse" />
                             <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Sin formato seleccionado</h4>
                             <p className="text-[10px] text-text-dim/80 max-w-xs mt-1 leading-normal">
@@ -118,7 +118,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             </p>
                         </div>
                     ) : !activeBlock ? (
-                        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center select-none bg-surface-hover/5">
+                        <div className="flex flex-col items-center justify-start pt-[220px] flex-1 p-6 text-center select-none bg-surface-hover/5">
                             <Settings className="w-10 h-10 text-text-dim/30 mb-3 animate-pulse" />
                             <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Ningún bloque seleccionado</h4>
                             <p className="text-[10px] text-text-dim/80 max-w-xs mt-1 leading-normal">

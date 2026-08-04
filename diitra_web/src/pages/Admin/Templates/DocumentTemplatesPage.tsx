@@ -1,12 +1,12 @@
 /**
  * @file DocumentTemplatesPage.tsx
  * @description Vista principal de la consola de administración de plantillas de documentos en DIITRA.
- * 
+ *
  * @architecture
  * Implementa un diseño de maquetación interactivo en 3 columnas (Catálogo, Lienzo A4 y Propiedades).
  * Utiliza el custom hook `useDocumentTemplatesPage` para la gestión centralizada de estado y API,
  * reduciendo la responsabilidad de este componente a la maquetación y estructura visual.
- * 
+ *
  * @pattern Custom Hook + Sub-componentes Modularizados
  */
 
@@ -74,6 +74,8 @@ const DocumentTemplatesPage: React.FC = () => {
         paletteRef,
         headerCollapsed,
         setHeaderCollapsed,
+        isSidebarCollapsed,
+        toggleSidebar,
         sensors,
         activeBlock,
         handleSelectTemplate,
@@ -91,12 +93,12 @@ const DocumentTemplatesPage: React.FC = () => {
     } = useDocumentTemplatesPage();
 
     return (
-        <main className={`flex-1 bg-bg-deep p-4 md:px-10 md:pb-4 flex flex-col h-full overflow-hidden relative transition-all duration-300 ease-in-out ${headerCollapsed
+        <main className={`flex-1 bg-bg-deep p-4 md:px-10 md:pb-4 flex flex-col h-full overflow-hidden relative transition-[padding] duration-150 ease-out ${headerCollapsed
             ? 'md:pt-3'
             : 'md:pt-10'
             }`}>
             {/* Cabecera Principal Colapsable */}
-            <div className={`transition-all duration-300 ease-in-out origin-top shrink-0 relative ${headerCollapsed
+            <div className={`transition-[max-height,opacity,margin,padding] duration-150 ease-out origin-top shrink-0 relative ${headerCollapsed
                 ? 'max-h-0 opacity-0 mb-0 pb-0 pointer-events-none overflow-hidden'
                 : 'max-h-[170px] opacity-100 pb-5 mb-1 overflow-visible'
                 }`}>
@@ -218,6 +220,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
 
             {/* Botones Flotantes Circulares cuando la Cabecera está Colapsada */}
             {selectedTemplate && headerCollapsed && (
@@ -364,16 +367,19 @@ const DocumentTemplatesPage: React.FC = () => {
             <div className="flex-1 flex gap-4 min-h-0 overflow-hidden relative">
                 <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
                     {/* Columna Izquierda: Catálogo */}
-                    <div className={`w-80 shrink-0 md:flex flex-col min-h-0 ${activeMobileTab === 'catalog' ? 'flex w-full' : 'hidden'}`}>
+                    <div className={`w-80 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'catalog' ? 'flex w-full md:w-80' : 'hidden'}`}>
                         <TemplateCatalog
                             templates={templates}
                             selectedTemplate={selectedTemplate}
                             onSelectTemplate={handleSelectTemplate}
+                            isSidebarCollapsed={isSidebarCollapsed}
+                            onToggleSidebar={toggleSidebar}
+                            headerCollapsed={headerCollapsed}
                         />
                     </div>
 
                     {/* Columna Central: Lienzo Interactivo A4 */}
-                    <div className={`flex-1 min-w-0 md:flex flex-col min-h-0 ${activeMobileTab === 'canvas' ? 'flex w-full' : 'hidden'}`}>
+                    <div className={`flex-1 min-w-0 flex-col min-h-0 md:flex ${activeMobileTab === 'canvas' ? 'flex w-full md:w-auto' : 'hidden'}`}>
                         <BlockCanvas
                             selectedTemplate={selectedTemplate}
                             blocks={blocks}
@@ -396,7 +402,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     </div>
 
                     {/* Columna Derecha: Panel de Propiedades y Tema */}
-                    <div className={`w-96 shrink-0 md:flex flex-col min-h-0 ${activeMobileTab === 'properties' ? 'flex w-full' : 'hidden'}`}>
+                    <div className={`w-96 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'properties' ? 'flex w-full md:w-96' : 'hidden'}`}>
                         <BlockProperties
                             selectedTemplate={selectedTemplate}
                             activeBlock={activeBlock}

@@ -3,6 +3,7 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 import type { IdentificationField, ImpactCategory } from '../../types';
 import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES } from '../../types';
 import { getHeaderStylePair } from './RenderCover';
+import { getNormalizedColumns, getNormalizedCategories } from '../properties/ExpectedProductsProperties';
 
 export const RenderProjectGeneralSection: React.FC<{
     config: any;
@@ -563,27 +564,9 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
     const productosTitle = c.productosTitle || '5. Productos y Entregables Esperados';
     const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_detailed';
 
-    const cols = c.productColumns || {
-        showCategory: true,
-        showSubtype: true,
-        showProductName: true,
-        showIndicator: true,
-        showVerificationMeans: true,
-        showQuantity: true,
-        showDeadline: false,
-    };
-
-    const DEFAULT_CATS = [
-        { id: 'cat_cientifico', name: 'Productos Científico-Tecnológicos', enabled: true },
-        { id: 'cat_rrhh', name: 'Formación de Recursos Humanos', enabled: true },
-        { id: 'cat_divulgacion', name: 'Divulgación y Vinculación', enabled: true },
-        { id: 'cat_senadi', name: 'Propiedad Intelectual / SENADI', enabled: true },
-    ];
-
+    const cols = getNormalizedColumns(c.productColumns);
     const rawCats = c.productCategories || c.categories;
-    const categories = (Array.isArray(rawCats) && rawCats.length > 0)
-        ? rawCats.filter((cat: any) => cat.enabled !== false)
-        : DEFAULT_CATS;
+    const categories = getNormalizedCategories(rawCats).filter((cat: any) => cat.enabled !== false);
 
     const handleSelectLayout = (newMode: string) => {
         if (blockId && onUpdateConfig) {
@@ -593,7 +576,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
 
     const handleToggleColumn = (colKey: string) => {
         if (blockId && onUpdateConfig) {
-            const updatedCols = { ...cols, [colKey]: cols[colKey] === false ? true : false };
+            const updatedCols = { ...cols, [colKey]: !cols[colKey] };
             onUpdateConfig(blockId, 'productColumns', updatedCols);
         }
     };
@@ -634,12 +617,14 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
             {/* BARRA DE BOTONES CHIP EN LIENZO PARA TOGGLE DIRECTO DE COLUMNAS */}
             {onUpdateConfig && blockId && (layoutMode === 'table_detailed' || layoutMode === 'grouped_sections') && (
                 <div className="flex flex-wrap items-center gap-1 p-1.5 bg-emerald-50/50 border border-emerald-100 rounded-md text-[8.5px]">
-                    <span className="font-bold text-emerald-800 uppercase tracking-wider shrink-0 mr-1">Columnas en Lienzo:</span>
+                    <span className="font-bold text-emerald-800 uppercase tracking-wider shrink-0 mr-1">Campos en Lienzo:</span>
                     {[
-                        { key: 'showCategory', label: 'Categoría' },
+                        { key: 'showCategory', label: 'Categoría IST' },
                         { key: 'showSubtype', label: 'Subtipo' },
                         { key: 'showProductName', label: 'Nombre' },
-                        { key: 'showIndicator', label: 'Indicador' },
+                        { key: 'showSenadi', label: 'SENADI' },
+                        { key: 'showTrl', label: 'TRL' },
+                        { key: 'showIndicator', label: 'Indicador CACES' },
                         { key: 'showVerificationMeans', label: 'Medio Verif.' },
                         { key: 'showQuantity', label: 'Cantidad' },
                         { key: 'showDeadline', label: 'Plazo' },
@@ -680,13 +665,19 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                 {layoutMode === 'cards_by_category' ? (
                     <div className="grid grid-cols-2 gap-2">
                         {categories.map((cat: any) => (
-                            <div key={cat.id || cat.name} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-1">
-                                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-wider block">{cat.name}</span>
+                            <div key={cat.id || cat.name} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-1.5">
+                                <span className="text-[8px] font-bold text-emerald-700 uppercase tracking-wider block leading-tight">{cat.name}</span>
                                 <div className="text-[9px] text-slate-700 font-medium space-y-1">
                                     <div className="flex justify-between items-center bg-slate-50 p-1 rounded border border-slate-100">
-                                        <span>Entregable planificado</span>
+                                        <span>Prototipo / Entregable IST</span>
                                         <span className="font-mono font-bold text-emerald-600">1</span>
                                     </div>
+                                    {cols.showSenadi !== false && (
+                                        <div className="flex items-center justify-between text-[7.5px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                                            <span>Registro SENADI</span>
+                                            <span>En trámite</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -697,23 +688,27 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                         {categories.map((cat: any) => (
                             <div key={cat.id || cat.name} className="space-y-1">
                                 <h6 className="text-[8.5px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
-                                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                     {cat.name}
                                 </h6>
                                 <table className="w-full border-collapse border border-slate-200 text-[9px]">
                                     <thead>
                                         <tr className="bg-[#1e2a4a] text-white">
-                                            <th className="p-1 text-left border border-slate-200">Producto</th>
-                                            {cols.showIndicator !== false && <th className="p-1 text-left border border-slate-200">Indicador</th>}
+                                            <th className="p-1 text-left border border-slate-200">Entregable Tecnológico</th>
+                                            {cols.showSenadi !== false && <th className="p-1 text-center border border-slate-200 w-16">SENADI</th>}
+                                            {cols.showTrl !== false && <th className="p-1 text-center border border-slate-200 w-14">TRL</th>}
+                                            {cols.showIndicator !== false && <th className="p-1 text-left border border-slate-200">Indicador CACES</th>}
                                             {cols.showVerificationMeans !== false && <th className="p-1 text-left border border-slate-200">Medio Verificación</th>}
-                                            {cols.showQuantity !== false && <th className="p-1 text-center border border-slate-200 w-16">Cant.</th>}
+                                            {cols.showQuantity !== false && <th className="p-1 text-center border border-slate-200 w-12">Cant.</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr className="bg-white text-slate-700">
-                                            <td className="p-1 border border-slate-200 font-medium">Entregable técnico / borrador</td>
-                                            {cols.showIndicator !== false && <td className="p-1 border border-slate-200">1 Documento final</td>}
-                                            {cols.showVerificationMeans !== false && <td className="p-1 border border-slate-200">Acta / Informe</td>}
+                                            <td className="p-1 border border-slate-200 font-medium">Prototipo funcional / Software de gestión</td>
+                                            {cols.showSenadi !== false && <td className="p-1 border border-slate-200 text-center font-bold text-emerald-600 text-[8px]">Sí</td>}
+                                            {cols.showTrl !== false && <td className="p-1 border border-slate-200 text-center font-mono text-amber-600 font-bold text-[8px]">TRL 6</td>}
+                                            {cols.showIndicator !== false && <td className="p-1 border border-slate-200">1 Prototipo operativo en laboratorio</td>}
+                                            {cols.showVerificationMeans !== false && <td className="p-1 border border-slate-200">Certificado SENADI / Acta de entrega</td>}
                                             {cols.showQuantity !== false && <td className="p-1 border border-slate-200 text-center font-bold text-emerald-600">1</td>}
                                         </tr>
                                     </tbody>
@@ -726,13 +721,13 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
                         <thead>
                             <tr className="bg-[#1e2a4a] text-white">
-                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Producto</th>
+                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Entregable Tecnológico (IST)</th>
                                 <th className="p-1.5 text-center font-bold border border-slate-200 w-24">Cantidad</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr className="bg-white text-slate-700">
-                                <td className="p-1.5 border border-slate-200 font-medium">Artículos Científicos / Ponencias</td>
+                                <td className="p-1.5 border border-slate-200 font-medium">Prototipos Funcionales / Software SENADI</td>
                                 <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
                             </tr>
                         </tbody>
@@ -742,22 +737,26 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     <table className="w-full border-collapse border border-slate-200 text-[9px]">
                         <thead>
                             <tr className="bg-[#1e2a4a] text-white">
-                                {cols.showCategory !== false && <th className="p-1.5 text-left border border-slate-200">Categoría</th>}
+                                {cols.showCategory !== false && <th className="p-1.5 text-left border border-slate-200">Categoría IST</th>}
                                 {cols.showSubtype !== false && <th className="p-1.5 text-left border border-slate-200">Subtipo / Entregable</th>}
                                 {cols.showProductName !== false && <th className="p-1.5 text-left border border-slate-200">Nombre del Producto</th>}
-                                {cols.showIndicator !== false && <th className="p-1.5 text-left border border-slate-200">Indicador Verificable</th>}
+                                {cols.showSenadi !== false && <th className="p-1.5 text-center border border-slate-200 w-16">SENADI</th>}
+                                {cols.showTrl !== false && <th className="p-1.5 text-center border border-slate-200 w-14">TRL</th>}
+                                {cols.showIndicator !== false && <th className="p-1.5 text-left border border-slate-200">Indicador CACES</th>}
                                 {cols.showVerificationMeans !== false && <th className="p-1.5 text-left border border-slate-200">Medio de Verificación</th>}
-                                {cols.showQuantity !== false && <th className="p-1.5 text-center border border-slate-200 w-16">Cant.</th>}
+                                {cols.showQuantity !== false && <th className="p-1.5 text-center border border-slate-200 w-14">Cant.</th>}
                                 {cols.showDeadline !== false && <th className="p-1.5 text-center border border-slate-200 w-20">Plazo</th>}
                             </tr>
                         </thead>
                         <tbody>
                             <tr className="bg-white text-slate-700">
-                                {cols.showCategory !== false && <td className="p-1.5 border border-slate-200 font-semibold text-emerald-700">Científico-Tecnológico</td>}
-                                {cols.showSubtype !== false && <td className="p-1.5 border border-slate-200 font-medium">Artículo Scopus / Latindex</td>}
-                                {cols.showProductName !== false && <td className="p-1.5 border border-slate-200">Análisis comparativo de algoritmos...</td>}
-                                {cols.showIndicator !== false && <td className="p-1.5 border border-slate-200">1 Artículo indexado aceptado</td>}
-                                {cols.showVerificationMeans !== false && <td className="p-1.5 border border-slate-200">Certificado de aceptación / DOI</td>}
+                                {cols.showCategory !== false && <td className="p-1.5 border border-slate-200 font-semibold text-emerald-700">I+D+i Aplicada</td>}
+                                {cols.showSubtype !== false && <td className="p-1.5 border border-slate-200 font-medium">Prototipo / Software SENADI</td>}
+                                {cols.showProductName !== false && <td className="p-1.5 border border-slate-200">Prototipo de banco de pruebas automatizado...</td>}
+                                {cols.showSenadi !== false && <td className="p-1.5 border border-slate-200 text-center font-bold text-emerald-600 text-[8.5px]">Depósito Legal</td>}
+                                {cols.showTrl !== false && <td className="p-1.5 border border-slate-200 text-center font-mono text-amber-600 font-bold text-[8.5px]">TRL 6</td>}
+                                {cols.showIndicator !== false && <td className="p-1.5 border border-slate-200">1 Prototipo validado en laboratorio</td>}
+                                {cols.showVerificationMeans !== false && <td className="p-1.5 border border-slate-200">Certificado SENADI / Acta de entrega</td>}
                                 {cols.showQuantity !== false && <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>}
                                 {cols.showDeadline !== false && <td className="p-1.5 border border-slate-200 text-center">Trimestre 4</td>}
                             </tr>
