@@ -351,7 +351,7 @@ export const useDocumentTemplatesPage = () => {
                         },
                         baseSignatures
                     ];
-                } else if (tmpl.code === "OFICIO_APROBACION" || tmpl.code === "ACTA_APROBACION_PROYECTO") {
+                } else if (tmpl.code === "OFICIO_APROBACION") {
                     loadedBlocks = [
                         {
                             id: "block-1", type: "title", title: "Encabezado del Oficio", isActive: true,

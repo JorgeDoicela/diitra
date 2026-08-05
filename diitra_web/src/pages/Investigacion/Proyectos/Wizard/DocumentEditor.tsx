@@ -128,7 +128,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [isInstanceSigned, setIsInstanceSigned] = useState<boolean>(false);
 
     const isSignedDocumentReadOnly = useMemo(() => {
-        if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+        if (templateCode === 'OFICIO_APROBACION') {
             if (!isAdmin) return true;
             return isInstanceSigned;
         }
@@ -137,7 +137,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
 
     const effectiveConfig = useMemo(() => {
         if (!templateConfig) return null;
-        if (isSignedDocumentReadOnly && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
+        if (isSignedDocumentReadOnly && templateCode === 'OFICIO_APROBACION') {
             return {
                 ...templateConfig,
                 sections: []
@@ -255,7 +255,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             }
 
             // Auto-completar metadatos del proyecto para oficio de aprobación si faltan valores iniciales
-            if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
+            if (entityUuid && entityUuid !== 'GLOBAL' && templateCode === 'OFICIO_APROBACION') {
                 try {
                     const projRes = await api.get(`/projects/${entityUuid}/detail`);
                     if (projRes.data) {

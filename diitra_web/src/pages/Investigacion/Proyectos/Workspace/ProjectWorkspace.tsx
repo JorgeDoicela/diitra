@@ -212,7 +212,7 @@ export const ProjectWorkspace: React.FC = () => {
         } else if (activeDocument === 'INFORME_FINAL_INVESTIGACION') {
             isReadOnly = currentProject.status !== 'En Ejecución' && currentProject.status !== 'Aprobado';
             readOnlyReason = 'state';
-        } else if (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'ACTA_APROBACION_PROYECTO') {
+        } else if (activeDocument === 'OFICIO_APROBACION') {
             isReadOnly = !isAdmin;
             readOnlyReason = !isAdmin ? 'membership' : 'state';
         } else {
@@ -220,7 +220,7 @@ export const ProjectWorkspace: React.FC = () => {
             readOnlyReason = 'state';
         }
 
-        const canSignDocument = (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'ACTA_APROBACION_PROYECTO')
+        const canSignDocument = (activeDocument === 'OFICIO_APROBACION')
             ? isAdmin
             : currentProject.puedeFirmar;
 

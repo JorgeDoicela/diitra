@@ -58,7 +58,7 @@ namespace diitra_api.Controllers
                 if (result != null) return result;
             }
 
-            if (code == "OFICIO_APROBACION" || code == "ACTA_APROBACION_PROYECTO")
+            if (code == "OFICIO_APROBACION")
             {
                 return Ok(new
                 {
@@ -271,7 +271,7 @@ namespace diitra_api.Controllers
                 });
             }
 
-            if (code == "OFICIO_APROBACION" || code == "ACTA_APROBACION_PROYECTO")
+            if (code == "OFICIO_APROBACION")
             {
                 return Ok(new
                 {

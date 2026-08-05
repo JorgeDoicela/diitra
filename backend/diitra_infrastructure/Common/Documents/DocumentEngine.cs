@@ -508,7 +508,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         extraImageVars["carreras_coejecutoras"] = coejecutorasSet.ToList();
                     }
                 }
-                else if (template.Code == "OFICIO_APROBACION" || template.Code == "ACTA_APROBACION_PROYECTO")
+                else if (template.Code == "OFICIO_APROBACION")
                 {
                     var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
                     if (logoBase64 != null)

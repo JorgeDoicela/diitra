@@ -143,7 +143,7 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica...');
         try {
-            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')
+            const calculatedRol = templateCode === 'OFICIO_APROBACION'
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 
@@ -177,7 +177,7 @@ export const useBuilderPdfAndSign = ({
             setSignaturePassword('');
             addAudit('Firma digital avanzada (.p12) aplicada exitosamente.', 'success');
 
-            if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+            if (templateCode === 'OFICIO_APROBACION') {
                 const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
                 if (pUuid && !pUuid.startsWith('temp_')) {
                     try {
@@ -237,7 +237,7 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma institucional DIITRA...');
         try {
-            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')
+            const calculatedRol = templateCode === 'OFICIO_APROBACION'
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 
@@ -258,7 +258,7 @@ export const useBuilderPdfAndSign = ({
             setInstitutionalPassword('');
             addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
 
-            if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+            if (templateCode === 'OFICIO_APROBACION') {
                 const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
                 if (pUuid && !pUuid.startsWith('temp_')) {
                     try {

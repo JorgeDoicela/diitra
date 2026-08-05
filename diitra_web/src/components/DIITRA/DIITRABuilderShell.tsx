@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lock, Unlock, Shield, Award, Loader2, RefreshCw, X } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -44,6 +44,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
     const {
         title,
         subtitle,
+        templateCode,
         sections,
         formData,
         cowork,
@@ -65,6 +66,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
 
     const { layout, autoSave, pdfAndSign, network } = useDIITRABuilderShell(props);
     const [showUpdateModal, setShowUpdateModal] = useState<boolean>(hasTemplateUpdate);
+
+    const showRightSidebar = useMemo(() => {
+        return templateCode !== 'OFICIO_APROBACION';
+    }, [templateCode]);
 
     useEffect(() => {
         if (hasTemplateUpdate) {
@@ -114,7 +119,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                 )}
 
                                 {/* Pestaña de reabrir Actividad (Derecha) */}
-                                {!layout.isSidebarOpen && (
+                                {!layout.isSidebarOpen && showRightSidebar && (
                                     <BuilderFloatingTab
                                         position="right"
                                         topPercent={layout.chatTopPercent}
@@ -279,7 +284,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                 </div>
 
                                 {/* Drag Handle Right */}
-                                {layout.isSidebarOpen && (
+                                {layout.isSidebarOpen && showRightSidebar && (
                                     <div
                                         onMouseDown={layout.startDraggingRight}
                                         className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
@@ -287,43 +292,46 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                 )}
 
                                 {/* ── Collaboration Sidebar (Derecha) ── */}
-                                <div
-                                    ref={layout.rightSidebarRef}
-                                    style={{
-                                        '--right-sidebar-width': `${layout.rightSidebarWidth}px`,
-                                        width: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? undefined
-                                            : (layout.isSidebarOpen ? `${layout.rightSidebarWidth}px` : '0px'),
-                                        transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (layout.isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
-                                            : undefined,
-                                        transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
-                                            : 'width 300ms ease-in-out',
-                                        visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                            ? (layout.isSidebarOpen ? 'visible' : 'hidden')
-                                            : 'visible'
-                                    } as React.CSSProperties}
-                                    className={`
-                                        overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
-                                        ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                            ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
-                                            : (layout.isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
-                                        }
-                                    `}
-                                >
-                                    <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
-                                        <CollaborationSidebar
-                                            instanceUuid={cowork.session.documentId}
-                                            sectionName={layout.activeTab}
-                                            cowork={cowork}
-                                            allSections={sections.map(s => s.id)}
-                                            entityUuid={entityUuid}
-                                            projectStatus={projectStatus}
-                                            onClose={() => layout.setIsSidebarOpen(false)}
-                                        />
+                                {showRightSidebar && (
+                                    <div
+                                        ref={layout.rightSidebarRef}
+                                        style={{
+                                            '--right-sidebar-width': `${layout.rightSidebarWidth}px`,
+                                            width: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                                ? undefined
+                                                : (layout.isSidebarOpen ? `${layout.rightSidebarWidth}px` : '0px'),
+                                            transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                                ? (layout.isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
+                                                : undefined,
+                                            transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                                ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
+                                                : 'width 300ms ease-in-out',
+                                            visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                                ? (layout.isSidebarOpen ? 'visible' : 'hidden')
+                                                : 'visible'
+                                        } as React.CSSProperties}
+                                        className={`
+                                            overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
+                                            ${typeof window !== 'undefined' && window.innerWidth < 1024
+                                                ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
+                                                : (layout.isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
+                                            }
+                                        `}
+                                    >
+                                        <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
+                                            <CollaborationSidebar
+                                                instanceUuid={cowork.session.documentId}
+                                                sectionName={layout.activeTab}
+                                                cowork={cowork}
+                                                allSections={sections.map(s => s.id)}
+                                                entityUuid={entityUuid}
+                                                projectStatus={projectStatus}
+                                                templateCode={templateCode}
+                                                onClose={() => layout.setIsSidebarOpen(false)}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>

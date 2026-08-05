@@ -30,6 +30,7 @@ interface CollaborationSidebarProps {
     allSections: string[];
     entityUuid?: string;
     projectStatus?: string;
+    templateCode?: string;
     onClose: () => void;
 }
 
@@ -40,6 +41,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     allSections,
     entityUuid,
     projectStatus,
+    templateCode,
     onClose
 }) => {
     const { user } = useAuth();
@@ -57,9 +59,14 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         return null;
     };
 
+    const isProtocolDocument = useMemo(() => {
+        return !templateCode || templateCode === 'PROTOCOLO_INVESTIGACION' || templateCode === 'PROTOCOLO_PEER_REVIEW';
+    }, [templateCode]);
+
     const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity' | 'correcciones'>(() => {
-        if (projectStatus === 'En Corrección') return 'correcciones';
+        if (isProtocolDocument && projectStatus === 'En Corrección') return 'correcciones';
         const saved = localStorage.getItem('document_sidebar_tab');
+        if (saved === 'correcciones' && !isProtocolDocument) return 'comments';
         return (saved === 'comments' || saved === 'status' || saved === 'activity' || saved === 'correcciones') ? saved : 'comments';
     });
 
@@ -425,7 +432,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
             {/* Tabs */}
             <div className="flex border-b border-border-thin bg-surface-hover/30">
-                {(projectStatus === 'En Corrección' || comments.some(c => parseAuditComment(c.contenido) !== null)) && (
+                {isProtocolDocument && (projectStatus === 'En Corrección' || comments.some(c => parseAuditComment(c.contenido) !== null)) && (
                     <button
                         onClick={() => setActiveTab('correcciones')}
                         className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'correcciones' ? 'border-text-main text-text-main bg-text-main/5' : 'border-transparent text-text-dim hover:text-text-main'
