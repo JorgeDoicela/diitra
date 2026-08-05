@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
@@ -36,8 +36,25 @@ const parseLocalDate = (dateStr: string) => {
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+
+    const fromWorkspace = (location.state as { fromWorkspace?: boolean })?.fromWorkspace;
+
+    const handleBack = () => {
+        if (fromWorkspace) {
+            if (window.history.length > 2) {
+                navigate(-1);
+            } else if (projectUuid) {
+                navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
+            } else {
+                navigate('/investigacion/mis-proyectos');
+            }
+        } else {
+            navigate('/evaluacion-pares');
+        }
+    };
 
     const [arbitraje, setArbitraje] = useState<ArbitrajeProyectoDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -196,8 +213,8 @@ const ArbitrajeProyecto: React.FC = () => {
     if (!arbitraje) {
         return (
             <main className="flex-1 bg-bg-deep p-10">
-                <button onClick={() => navigate('/evaluacion-pares')} className="btn-vercel-secondary flex items-center gap-2 mb-6">
-                    <ArrowLeft size={14} /> Volver
+                <button onClick={handleBack} className="btn-vercel-secondary flex items-center gap-2 mb-6">
+                    <ArrowLeft size={14} /> {fromWorkspace ? 'Volver al Proyecto' : 'Volver'}
                 </button>
                 <div className="empty-state py-20">
                     <p className="text-text-dim font-semibold">Proyecto no encontrado.</p>
@@ -385,10 +402,10 @@ const ArbitrajeProyecto: React.FC = () => {
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* Header */}
             <button
-                onClick={() => navigate('/evaluacion-pares')}
+                onClick={handleBack}
                 className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
             >
-                <ArrowLeft size={12} /> Volver al Panel de Evaluación
+                <ArrowLeft size={12} /> {fromWorkspace ? 'Volver al Proyecto' : 'Volver al Panel de Evaluación'}
             </button>
 
             <PageHeader

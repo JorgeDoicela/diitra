@@ -79,7 +79,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     const isPast = currentIdx > idx;
                     const isFuture = idx > currentIdx;
                     
-                    const isRevisionDone = phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada';
+                    const isRevisionDone = phase.id === 'En Revisión' && (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
                     const showChecked = isPast || isRevisionDone;
                     const isCurrentActive = isCurrent && !isRevisionDone;
 
@@ -128,14 +128,18 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                             }
                                         }
-                                    } else if (phase.id === 'En Revisión' && isCurrentActive) {
+                                    } else if (phase.id === 'En Revisión' && (isCurrent || isPast)) {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
                                         } else if (isAdmin) {
-                                            navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`);
+                                            navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`, { state: { fromWorkspace: true } });
                                         }
-                                    } else if (phase.id === 'Aprobado' && isCurrentActive && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {
-                                        handleIniciarEjecucion();
+                                    } else if (phase.id === 'Aprobado' && (isCurrent || isPast)) {
+                                        if (isCurrentActive && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {
+                                            handleIniciarEjecucion();
+                                        } else {
+                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix));
+                                        }
                                     } else if (phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado')) {
                                         navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix));
                                     }
@@ -143,7 +147,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 className={`p-4 rounded-xl border transition-all duration-300 ${
                                     isCurrentActive 
                                         ? 'bg-surface-hover/50 border-text-dim/30 shadow-[0_4px_24px_rgba(0,0,0,0.03)] cursor-pointer hover:border-text-main/40 hover:bg-surface-hover/80' 
-                                        : (((phase.id === 'Borrador' || phase.id === 'Enviado') && isPast) || (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución'))
+                                        : (isPast || (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución'))
                                             ? 'bg-surface/30 border-border-thin cursor-pointer hover:border-text-main/30 hover:bg-surface-hover/40'
                                             : isFuture
                                                 ? 'bg-transparent border-transparent opacity-40 select-none'
@@ -235,7 +239,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                     }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)] flex items-center gap-1.5"
+                                                    className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${
+                                                        (isPast || assignedRevisionStatus === 'Completada')
+                                                            ? 'btn-vercel-secondary'
+                                                            : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    }`}
                                                 >
                                                     <CheckSquare size={14} />
                                                     <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
@@ -243,13 +251,27 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             ) : isAdmin ? (
                                                 <Link 
                                                     to={`/evaluacion-pares/proyecto/${resolvedProjectUuid}`}
+                                                    state={{ fromWorkspace: true }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                     }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold shadow-[0_4px_12px_rgba(0,112,243,0.1)] flex items-center gap-1.5"
+                                                    className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${
+                                                        (isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null)
+                                                            ? 'btn-vercel-secondary'
+                                                            : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    }`}
                                                 >
-                                                    <Settings size={14} />
-                                                    <span>Gestionar Evaluación por Pares</span>
+                                                    {(isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null) ? (
+                                                        <>
+                                                            <CheckSquare size={14} />
+                                                            <span>Ver Evaluación por Pares</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Settings size={14} />
+                                                            <span>Gestionar Evaluación por Pares</span>
+                                                        </>
+                                                    )}
                                                 </Link>
                                             ) : isCurrent ? (
                                                 <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
@@ -286,7 +308,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                             }}
-                                            className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                            className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${
+                                                isCurrentActive 
+                                                    ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]' 
+                                                    : 'btn-vercel-secondary'
+                                            }`}
                                         >
                                             <FileSignature size={14} />
                                             <span>Ver Oficio de Aprobación</span>

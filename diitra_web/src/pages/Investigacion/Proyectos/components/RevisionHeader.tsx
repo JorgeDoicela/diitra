@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, FileText, Eye, Scale } from 'lucide-react';
+import { ArrowLeft, FileText, Eye, Scale, History } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 
 interface RevisionHeaderProps {
@@ -10,6 +10,7 @@ interface RevisionHeaderProps {
     setViewMode: (mode: 'interactive' | 'pdf') => void;
     onNavigateBack: () => void;
     onOpenFinalizeModal: () => void;
+    isReadonly?: boolean;
 }
 
 export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
@@ -18,7 +19,8 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
     viewMode,
     setViewMode,
     onNavigateBack,
-    onOpenFinalizeModal
+    onOpenFinalizeModal,
+    isReadonly = false
 }) => {
     const { isAdmin } = useAuth();
     const isAuditActive = isAdmin && (projectStatus === 'Enviado' || projectStatus === 'En Corrección');
@@ -54,32 +56,39 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
-                {/* Selector de Vista */}
-                <div className="flex items-center gap-1.5 border border-border-thin bg-surface-hover/30 p-1 rounded-xl">
-                    <button
-                        onClick={() => setViewMode('pdf')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'pdf'
-                            ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
-                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                            }`}
-                    >
-                        <FileText size={12} />
-                        Vista PDF
-                    </button>
-                    <button
-                        onClick={() => setViewMode('interactive')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'interactive'
-                            ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
-                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                            }`}
-                    >
-                        <Eye size={12} />
-                        Revisión Contextual
-                    </button>
-                </div>
+                {/* Selector de Vista — solo en modo auditoría activo */}
+                {!isReadonly && (
+                    <div className="flex items-center gap-1.5 border border-border-thin bg-surface-hover/30 p-1 rounded-xl">
+                        <button
+                            onClick={() => setViewMode('pdf')}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'pdf'
+                                ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
+                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                }`}
+                        >
+                            <FileText size={12} />
+                            Vista PDF
+                        </button>
+                        <button
+                            onClick={() => setViewMode('interactive')}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${viewMode === 'interactive'
+                                ? 'bg-text-main text-bg-deep font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
+                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                }`}
+                        >
+                            <Eye size={12} />
+                            Revisión Contextual
+                        </button>
+                    </div>
+                )}
 
-                {/* Botón de Finalizar Auditoría o Badge de Consulta */}
-                {isAuditActive ? (
+                {/* Badge o botón según modo */}
+                {isReadonly ? (
+                    <span className="px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-surface border border-border-thin text-text-dim flex items-center gap-1.5">
+                        <History size={11} />
+                        Historial de Revisión
+                    </span>
+                ) : isAuditActive ? (
                     <button
                         onClick={onOpenFinalizeModal}
                         className="px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-brand text-white hover:bg-brand/90 shadow-sm transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 duration-150"

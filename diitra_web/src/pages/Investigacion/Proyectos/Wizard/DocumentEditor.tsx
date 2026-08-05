@@ -125,16 +125,26 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [sublineas, setSublineas] = useState<any[]>([]);
     const [customCatalogs, setCustomCatalogs] = useState<Record<string, any[]>>({});
 
+    const [isInstanceSigned, setIsInstanceSigned] = useState<boolean>(false);
+
+    const isSignedDocumentReadOnly = useMemo(() => {
+        if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+            if (!isAdmin) return true;
+            return isInstanceSigned;
+        }
+        return readOnly;
+    }, [readOnly, isInstanceSigned, templateCode, isAdmin]);
+
     const effectiveConfig = useMemo(() => {
         if (!templateConfig) return null;
-        if (readOnly && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
+        if (isSignedDocumentReadOnly && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
             return {
                 ...templateConfig,
                 sections: []
             };
         }
         return templateConfig;
-    }, [templateConfig, readOnly, templateCode]);
+    }, [templateConfig, isSignedDocumentReadOnly, templateCode]);
 
     // ── Carga paralela: configuración de plantilla + datos de instancia + catálogos ──
     useEffect(() => {
@@ -193,6 +203,20 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
 
             // Aplicar datos de instancia
             if (instanceResult.data) {
+                const hasSignedPdf = !!(
+                    instanceResult.data.final_pdf_path ||
+                    instanceResult.data.finalPdfPath ||
+                    instanceResult.data.FinalPdfPath ||
+                    instanceResult.data.is_signed ||
+                    instanceResult.data.isSigned ||
+                    instanceResult.data.IsSigned ||
+                    instanceResult.data.signed_at ||
+                    instanceResult.data.signedAt ||
+                    instanceResult.data.estado === 'Firmado' ||
+                    instanceResult.data.estado === 'Finalizado'
+                );
+                setIsInstanceSigned(hasSignedPdf);
+
                 const realUuid = instanceResult.data.uuid || instanceResult.data.Uuid;
                 if (realUuid) {
                     coworkLog(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
