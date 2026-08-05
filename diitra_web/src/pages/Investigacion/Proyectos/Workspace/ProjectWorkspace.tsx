@@ -213,12 +213,16 @@ export const ProjectWorkspace: React.FC = () => {
             isReadOnly = currentProject.status !== 'En Ejecución' && currentProject.status !== 'Aprobado';
             readOnlyReason = 'state';
         } else if (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'ACTA_APROBACION_PROYECTO') {
-            isReadOnly = !isAdmin && currentProject.status !== 'Aprobado' && currentProject.status !== 'En Ejecución' && currentProject.status !== 'Finalizado';
-            readOnlyReason = 'state';
+            isReadOnly = !isAdmin;
+            readOnlyReason = !isAdmin ? 'membership' : 'state';
         } else {
             isReadOnly = currentProject.status === 'Finalizado';
             readOnlyReason = 'state';
         }
+
+        const canSignDocument = (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'ACTA_APROBACION_PROYECTO')
+            ? isAdmin
+            : currentProject.puedeFirmar;
 
         return (
             <DocumentEditor
@@ -229,7 +233,7 @@ export const ProjectWorkspace: React.FC = () => {
                 readOnly={isReadOnly}
                 readOnlyReason={readOnlyReason}
                 projectStatus={currentProject.status}
-                canSign={currentProject.puedeFirmar}
+                canSign={canSignDocument}
             />
         );
     }

@@ -1,9 +1,11 @@
 import React from 'react';
 import { ArrowLeft, FileText, Eye, Scale } from 'lucide-react';
+import { useAuth } from '../../../../api/AuthContext';
 
 interface RevisionHeaderProps {
     projectTitle: string;
     projectUuid: string | undefined;
+    projectStatus?: string;
     viewMode: 'interactive' | 'pdf';
     setViewMode: (mode: 'interactive' | 'pdf') => void;
     onNavigateBack: () => void;
@@ -12,11 +14,15 @@ interface RevisionHeaderProps {
 
 export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
     projectTitle,
+    projectStatus,
     viewMode,
     setViewMode,
     onNavigateBack,
     onOpenFinalizeModal
 }) => {
+    const { isAdmin } = useAuth();
+    const isAuditActive = isAdmin && (projectStatus === 'Enviado' || projectStatus === 'En Corrección');
+
     return (
         <div className="px-4 md:px-8 py-3 border-b border-border-thin bg-bg-deep/75 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-[50] shrink-0">
             <div className="flex items-center justify-between w-full md:w-auto gap-4">
@@ -25,7 +31,7 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
                     <button
                         onClick={onNavigateBack}
                         className="flex items-center gap-2 py-1.5 text-text-dim hover:text-text-main transition-all duration-200 group cursor-pointer text-[10px] md:text-xs font-bold uppercase tracking-wider bg-transparent border-0 active:scale-95"
-                        title="Salir del documento y guardar cambios"
+                        title="Salir del documento"
                         aria-label="Salir del documento"
                     >
                         <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
@@ -72,14 +78,20 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
                     </button>
                 </div>
 
-                {/* Botón de Finalizar Auditoría */}
-                <button
-                    onClick={onOpenFinalizeModal}
-                    className="px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-brand text-white hover:bg-brand/90 shadow-sm transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 duration-150"
-                >
-                    <Scale size={12} />
-                    Finalizar Auditoría
-                </button>
+                {/* Botón de Finalizar Auditoría o Badge de Consulta */}
+                {isAuditActive ? (
+                    <button
+                        onClick={onOpenFinalizeModal}
+                        className="px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-brand text-white hover:bg-brand/90 shadow-sm transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 duration-150"
+                    >
+                        <Scale size={12} />
+                        Finalizar Auditoría
+                    </button>
+                ) : (
+                    <span className="px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest bg-surface border border-border-thin text-text-dim flex items-center gap-1.5">
+                        Vista de Consulta
+                    </span>
+                )}
             </div>
         </div>
     );

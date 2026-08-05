@@ -112,9 +112,11 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         var nombreUsuario = user.Nombre ?? user.IdSigafi ?? "Usuario DIITRA";
         var cedulaUsuario = user.IdSigafi;
 
-        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad)
+        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad + TemplateCode)
         var instancia = await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.Uuid == dto.DocumentoUuid || d.EntityUuid == dto.DocumentoUuid)
+            .FirstOrDefaultAsync(d => d.Uuid == dto.DocumentoUuid)
+            ?? await _context.DocumentInstances
+            .FirstOrDefaultAsync(d => d.EntityUuid == dto.DocumentoUuid && d.TemplateCode == "PROTOCOLO_INVESTIGACION")
             ?? throw new KeyNotFoundException($"Documento '{dto.DocumentoUuid}' no encontrado.");
 
         // 3. Verificar que el perfil de firma está configurado
@@ -228,15 +230,8 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             // 11. Guardar el PDF firmado físicamente
             pdfPath = await SaveSignedPdfAsync(pdfFirmado, dto.DocumentoUuid, firmaCode);
 
-            // 12. Actualizar todas las instancias relacionales del documento
-            var instanciasRelacionadas = await _context.DocumentInstances
-                .Where(d => d.Uuid == instancia.Uuid || (instancia.EntityUuid != null && d.EntityUuid == instancia.EntityUuid))
-                .ToListAsync();
-
-            foreach (var inst in instanciasRelacionadas)
-            {
-                inst.Finalize(pdfPath: pdfPath, hash: docHash, traceabilityCode: firmaCode);
-            }
+            // 12. Actualizar la instancia del documento firmado
+            instancia.Finalize(pdfPath: pdfPath, hash: docHash, traceabilityCode: firmaCode);
 
             // 13. Persistir el registro de firma
             var snapshotJson = JsonSerializer.Serialize(new

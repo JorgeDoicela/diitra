@@ -596,12 +596,37 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             if (string.IsNullOrWhiteSpace(instance.FinalPdfPath)) return;
 
+            // 0. Detectar contaminación cruzada: Si otra instancia de diferente plantilla para la misma entidad tiene exactamente la misma ruta de PDF
+            if (!string.IsNullOrWhiteSpace(instance.EntityUuid))
+            {
+                var contaminatedByOther = await _context.DocumentInstances
+                    .AnyAsync(other => other.EntityUuid == instance.EntityUuid
+                                    && other.TemplateCode != instance.TemplateCode
+                                    && other.FinalPdfPath == instance.FinalPdfPath, ct);
+
+                if (contaminatedByOther)
+                {
+                    Console.WriteLine($"[DIITRA Autosanación] Contaminación cruzada detectada en instancia '{instance.Uuid}' ({instance.TemplateCode}). Limpiando ruta compartida errónea '{instance.FinalPdfPath}'...");
+                    instance.SetFinalPdfPath(null);
+                    await _context.SaveChangesAsync(ct);
+
+                    // Si no tiene firmas propias en InvDocumentoFirmas, la limpieza termina aquí
+                    var tieneFirmasPropias = await _context.InvDocumentoFirmas
+                        .AnyAsync(f => f.DocumentoUuid == instance.Uuid, ct);
+
+                    if (!tieneFirmasPropias)
+                    {
+                        return;
+                    }
+                }
+            }
+
             if (!_storageService.FileExists(instance.FinalPdfPath))
             {
                 Console.WriteLine($"[DIITRA Autosanación] Archivo faltante detectado en storage: '{instance.FinalPdfPath}'. Verificando firmas en BD...");
 
                 var firmasDb = await _context.InvDocumentoFirmas
-                    .Where(f => f.DocumentoUuid == instance.Uuid || f.DocumentoUuid == instance.EntityUuid)
+                    .Where(f => f.DocumentoUuid == instance.Uuid || (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" && f.DocumentoUuid == instance.EntityUuid))
                     .OrderBy(f => f.FechaFirma)
                     .ToListAsync(ct);
 

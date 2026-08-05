@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, BarChart, FileSignature, CheckCircle2 } from 'lucide-react';
+import { Shield, BarChart, FileSignature, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
 interface WorkspaceSidebarProps {
@@ -50,6 +50,34 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                         >
                             <Shield size={12} />
                             <span>Iniciar Revisión Técnica</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Banner de Correcciones Requeridas para el Docente/Investigador */}
+            {!isAdmin && currentProject.status === 'En Corrección' && (
+                <div className="bento-card static p-5 flex flex-col justify-between border border-amber-500/40 bg-amber-500/[0.02] shadow-md animate-fade-in relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
+                    <div>
+                        <div className="flex items-center gap-2.5 mb-2">
+                            <AlertCircle size={16} className="text-amber-500 animate-pulse" />
+                            <h3 className="text-xs font-black tracking-widest text-amber-500 uppercase">Correcciones Requeridas</h3>
+                        </div>
+                        <p className="text-[10px] text-text-dim leading-relaxed mt-1">
+                            El administrador ha retornado el proyecto con observaciones técnicas que deben ser atendidas en su protocolo.
+                        </p>
+                    </div>
+                    <div className="mt-4">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (setActiveDocument) setActiveDocument('PROTOCOLO_INVESTIGACION');
+                            }}
+                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm !bg-amber-500 hover:!bg-amber-600 !text-white"
+                        >
+                            <FileText size={12} />
+                            <span>Atender Observaciones</span>
                         </button>
                     </div>
                 </div>

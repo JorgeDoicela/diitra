@@ -560,6 +560,13 @@ namespace Diitra.Infrastructure.Common.Documents
                     {
                         try
                         {
+                            // Si targetProjectUuid es el UUID de una instancia de documento, resolver el EntityUuid del proyecto vinculado
+                            var inst = await _db.DocumentInstances.AsNoTracking().FirstOrDefaultAsync(i => i.Uuid == targetProjectUuid, cancellationToken);
+                            if (inst != null && !string.IsNullOrEmpty(inst.EntityUuid))
+                            {
+                                targetProjectUuid = inst.EntityUuid;
+                            }
+
                             var dbProject = await _db.InvProyectos
                                 .AsNoTracking()
                                 .Include(p => p.IdSublineaNavigation)
@@ -572,6 +579,35 @@ namespace Diitra.Infrastructure.Common.Documents
 
                             if (dbProject != null)
                             {
+                                // Extraer metadatos desde MetadataCacesJson si existen
+                                if (!string.IsNullOrEmpty(dbProject.MetadataCacesJson))
+                                {
+                                    try
+                                    {
+                                        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(dbProject.MetadataCacesJson);
+                                        using var metaDoc = System.Text.Json.JsonDocument.Parse(cleanedJson);
+                                        var rootMeta = metaDoc.RootElement;
+
+                                        if (rootMeta.TryGetProperty("Titulo", out var tProp) || rootMeta.TryGetProperty("titulo", out tProp))
+                                            extraImageVars["proyecto_titulo"] = tProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("LineaInvestigacion", out var lProp) || rootMeta.TryGetProperty("linea_investigacion", out lProp))
+                                            extraImageVars["linea_investigacion"] = lProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("TiempoEjecucion", out var durProp) || rootMeta.TryGetProperty("tiempo_ejecucion", out durProp) || rootMeta.TryGetProperty("duracion_meses", out durProp))
+                                            extraImageVars["duracion_meses"] = durProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("FechaPresentacion", out var fpProp) || rootMeta.TryGetProperty("fecha_presentacion", out fpProp))
+                                            extraImageVars["fecha_presentacion"] = fpProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("FechaInicio", out var fiProp) || rootMeta.TryGetProperty("fecha_inicio", out fiProp))
+                                            extraImageVars["fecha_inicio"] = fiProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("FechaFin", out var ffProp) || rootMeta.TryGetProperty("fecha_fin", out ffProp))
+                                            extraImageVars["fecha_fin"] = ffProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("DirectorProyecto", out var dirProp) || rootMeta.TryGetProperty("director_nombre", out dirProp))
+                                            extraImageVars["director_nombre"] = dirProp.GetString() ?? "";
+                                        if (rootMeta.TryGetProperty("Carrera", out var carProp) || rootMeta.TryGetProperty("director_carrera", out carProp))
+                                            extraImageVars["director_carrera"] = carProp.GetString() ?? "";
+                                    }
+                                    catch { }
+                                }
+
                                 if (!string.IsNullOrEmpty(dbProject.Titulo))
                                     extraImageVars["proyecto_titulo"] = dbProject.Titulo;
 

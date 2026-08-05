@@ -94,9 +94,11 @@ public class P12SignatureSubservice : IP12SignatureSubservice
             throw new InvalidOperationException("Debe adjuntar su archivo de firma digital (.p12) en cada solicitud de firma.");
         }
 
-        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad)
+        // 2. Verificar que el documento existe y es accesible (buscando por Uuid de Instancia o Uuid de Entidad + TemplateCode)
         var instancia = await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.Uuid == documentoUuid || d.EntityUuid == documentoUuid)
+            .FirstOrDefaultAsync(d => d.Uuid == documentoUuid)
+            ?? await _context.DocumentInstances
+            .FirstOrDefaultAsync(d => d.EntityUuid == documentoUuid && d.TemplateCode == "PROTOCOLO_INVESTIGACION")
             ?? throw new KeyNotFoundException($"Documento '{documentoUuid}' no encontrado.");
 
         // 3. Verificar firma existente o permitir re-firma si el proyecto fue devuelto a corrección

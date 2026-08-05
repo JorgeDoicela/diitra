@@ -43,9 +43,10 @@ export const useBuilderLayout = ({
 
     // ── Navegación de Secciones y URL ──
     const sectionParam = queryParams.get('section');
-    const activeTab = sectionParam || sections[0]?.id || 'general';
+    const defaultTab = (sections && sections.length > 0 && !readOnly) ? sections[0].id : 'output';
+    const activeTab = (readOnly && (sections.length === 0 || !sections.some(s => s.id === sectionParam))) ? 'output' : (sectionParam || defaultTab);
     const activeSection = sections.find(s => s.id === activeTab);
-    const activeSectionLabel = activeSection?.label || 'General';
+    const activeSectionLabel = activeSection?.label || (activeTab === 'output' ? 'Vista Previa & Firmas' : 'General');
     const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
     const isDirectorOrAdmin = !!canSign;
 

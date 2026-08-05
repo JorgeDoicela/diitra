@@ -143,11 +143,15 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica...');
         try {
+            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')
+                ? 'Coordinador de Investigación'
+                : 'Director de Proyecto';
+
             const formDataObj = new FormData();
             formDataObj.append('certificate', signatureCertFile);
             formDataObj.append('password', signaturePassword || '');
             formDataObj.append('documentoUuid', documentUuid || formData.Uuid || formData.uuid || '');
-            formDataObj.append('rolFirmante', 'Director de Proyecto');
+            formDataObj.append('rolFirmante', calculatedRol);
 
             await api.post(
                 '/signatures/sign-p12',
@@ -172,6 +176,18 @@ export const useBuilderPdfAndSign = ({
             setSignatureCertFile(null);
             setSignaturePassword('');
             addAudit('Firma digital avanzada (.p12) aplicada exitosamente.', 'success');
+
+            if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+                const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
+                if (pUuid && !pUuid.startsWith('temp_')) {
+                    try {
+                        await api.post(`/PeerReviews/project/${pUuid}/iniciar-ejecucion`);
+                        addAudit('Proyecto promovido oficialmente a la fase "En Ejecución".', 'success');
+                    } catch (e) {
+                        console.warn('[DIITRA] Transición a En Ejecución tras firma:', e);
+                    }
+                }
+            }
 
             setSignatureRefreshTrigger(prev => prev + 1);
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
@@ -221,9 +237,13 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma institucional DIITRA...');
         try {
+            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')
+                ? 'Coordinador de Investigación'
+                : 'Director de Proyecto';
+
             const dto = {
                 documento_uuid: documentUuid || formData.Uuid || formData.uuid || '',
-                rol_firmante: 'Director de Proyecto',
+                rol_firmante: calculatedRol,
                 password: institutionalPassword
             };
 
@@ -237,6 +257,18 @@ export const useBuilderPdfAndSign = ({
 
             setInstitutionalPassword('');
             addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
+
+            if (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO') {
+                const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
+                if (pUuid && !pUuid.startsWith('temp_')) {
+                    try {
+                        await api.post(`/PeerReviews/project/${pUuid}/iniciar-ejecucion`);
+                        addAudit('Proyecto promovido oficialmente a la fase "En Ejecución".', 'success');
+                    } catch (e) {
+                        console.warn('[DIITRA] Transición a En Ejecución tras firma:', e);
+                    }
+                }
+            }
 
             setSignatureRefreshTrigger(prev => prev + 1);
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));

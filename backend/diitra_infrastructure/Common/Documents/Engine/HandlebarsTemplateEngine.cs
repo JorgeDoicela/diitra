@@ -230,6 +230,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("Cronograma", "cronograma");
             SyncKeyAlias("FechaInicio", "fecha_inicio");
             SyncKeyAlias("FechaFin", "fecha_fin");
+            SyncKeyAlias("FechaPresentacion", "fecha_presentacion");
+            SyncKeyAlias("Titulo", "proyecto_titulo");
+            SyncKeyAlias("titulo", "proyecto_titulo");
+            SyncKeyAlias("title", "proyecto_titulo");
+            SyncKeyAlias("DirectorProyecto", "director_nombre");
+            SyncKeyAlias("director_proyecto", "director_nombre");
+            SyncKeyAlias("Carrera", "director_carrera");
+            SyncKeyAlias("carrera", "director_carrera");
+            SyncKeyAlias("LineaInvestigacion", "linea_investigacion");
+            SyncKeyAlias("TiempoEjecucion", "duracion_meses");
+            SyncKeyAlias("tiempo_ejecucion", "duracion_meses");
 
             // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
             var ods1 = dict.TryGetValue("objetivos_desarrollo_sostenible", out var v1) ? v1?.ToString() : null;

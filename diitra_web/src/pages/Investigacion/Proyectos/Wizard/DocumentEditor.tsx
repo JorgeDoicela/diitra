@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Library, Award, Shield } from 'lucide-react';
 
@@ -125,6 +125,17 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [sublineas, setSublineas] = useState<any[]>([]);
     const [customCatalogs, setCustomCatalogs] = useState<Record<string, any[]>>({});
 
+    const effectiveConfig = useMemo(() => {
+        if (!templateConfig) return null;
+        if (readOnly && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
+            return {
+                ...templateConfig,
+                sections: []
+            };
+        }
+        return templateConfig;
+    }, [templateConfig, readOnly, templateCode]);
+
     // ── Carga paralela: configuración de plantilla + datos de instancia + catálogos ──
     useEffect(() => {
         const loadAll = async () => {
@@ -150,8 +161,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
-            // Aplicar config de plantilla
-            const finalConfig = configResult?.data ?? localConfig;
+            // Aplicar config de plantilla (prioriza backend, pero cae en localConfig si el backend retorna 0 secciones)
+            const rawConfig = configResult?.data;
+            const hasValidSections = Array.isArray(rawConfig?.sections) && rawConfig.sections.length > 0;
+            const finalConfig = (hasValidSections ? rawConfig : (localConfig || rawConfig));
             setTemplateConfig(finalConfig);
             if (!finalConfig) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
@@ -217,6 +230,34 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 setDocInstanceData({});
             }
 
+            // Auto-completar metadatos del proyecto para oficio de aprobación si faltan valores iniciales
+            if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'OFICIO_APROBACION' || templateCode === 'ACTA_APROBACION_PROYECTO')) {
+                try {
+                    const projRes = await api.get(`/projects/${entityUuid}/detail`);
+                    if (projRes.data) {
+                        const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
+                            inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
+                        );
+                        const directorNombre = directorObj
+                            ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
+                            : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
+                        const directorCarrera = projRes.data.carrera || '';
+                        const todaySpanish = new Date().toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                        setDocInstanceData((prev: any) => ({
+                            oficio_numero: prev?.oficio_numero || `01-ISTPET-INV-${new Date().getFullYear()}`,
+                            oficio_fecha: prev?.oficio_fecha || todaySpanish,
+                            director_nombre: prev?.director_nombre || directorNombre,
+                            director_carrera: prev?.director_carrera || directorCarrera,
+                            coordinador_nombre: prev?.coordinador_nombre || 'Ing. Estefani Sánchez Mgtr.',
+                            ...prev
+                        }));
+                    }
+                } catch (e) {
+                    console.warn('[DIITRA] No se pudo autocompletar metadatos del proyecto:', e);
+                }
+            }
+
             // Aplicar catálogos
             setCarreras(carrerasRes.data || []);
             const allConvs = convsRes.data || [];
@@ -239,7 +280,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         return <FullscreenLoader message="Cargando editor colaborativo..." />;
     }
 
-    if (!templateConfig) {
+    if (!effectiveConfig) {
         return (
             <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-8 text-center">
                 <div className="bg-surface border border-red-500/30 p-8 rounded-3xl max-w-md shadow-2xl">
@@ -258,7 +299,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     return (
         <DocumentEditorCore
             templateCode={templateCode}
-            templateConfig={templateConfig}
+            templateConfig={effectiveConfig}
             initialData={{ ...docInstanceData, Uuid: resolvedUuid || initialData?.Uuid }}
             entityUuid={entityUuid}
             carreras={carreras}

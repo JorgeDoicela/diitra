@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, FileText, Users, Shield, CheckCircle, Clock } from 'lucide-react';
 import { FullscreenLoader } from '../../../Common/FullscreenLoader';
+import { getDocumentSignatures } from '../../../../services/signaturesService';
 import { SignatureBlock } from '../../SignatureBlock';
 
 export interface OutputSectionProps {
@@ -50,6 +51,31 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     handleSign,
     signatureRefreshTrigger
 }) => {
+    const [signatures, setSignatures] = React.useState<any[]>([]);
+    const [hasLoadedSigs, setHasLoadedSigs] = React.useState(false);
+
+    React.useEffect(() => {
+        let isMounted = true;
+        const docId = documentUuid || formData.Uuid || formData.uuid;
+        if (docId && !docId.startsWith('temp_')) {
+            getDocumentSignatures(docId)
+                .then(data => {
+                    if (isMounted) {
+                        setSignatures(data || []);
+                        setHasLoadedSigs(true);
+                    }
+                })
+                .catch(() => {
+                    if (isMounted) setHasLoadedSigs(true);
+                });
+        } else {
+            setHasLoadedSigs(true);
+        }
+        return () => { isMounted = false; };
+    }, [documentUuid, formData.Uuid, formData.uuid, signatureRefreshTrigger]);
+
+    const isDocumentSigned = signatures.length > 0;
+
     return (
         <div className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-y-auto lg:overflow-hidden custom-scrollbar">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 md:gap-5 flex-1 min-h-0 lg:overflow-hidden p-0.5">
@@ -98,7 +124,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                             />
                         ) : (
                             <div className="flex flex-col gap-4">
-                            {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
+                            {isDocumentSigned ? (
                                 <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
                                     <div className="flex justify-center">
                                         <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
@@ -106,9 +132,9 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-sm font-semibold text-text-main">Documento Firmado</p>
+                                        <p className="text-sm font-semibold text-text-main">Documento Firmado Oficialmente</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
-                                            Este documento ya ha sido firmado y emitido oficialmente en estado <span className="text-green-500 font-bold">"{projectStatus}"</span>.
+                                            Este documento ya ha sido firmado electrónicamente y cuenta con registro inmutable.
                                         </p>
                                     </div>
                                 </div>
@@ -122,7 +148,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-text-main">Firma restringida</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
-                                            Solo el Director de Proyecto está autorizado para firmar digitalmente este protocolo.
+                                            Solo el Administrador / Coordinación de Investigación está autorizado/a para firmar digitalmente este documento.
                                         </p>
                                     </div>
                                 </div>

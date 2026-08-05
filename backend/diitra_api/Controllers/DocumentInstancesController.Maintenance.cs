@@ -58,6 +58,46 @@ namespace diitra_api.Controllers
                 if (result != null) return result;
             }
 
+            if (code == "OFICIO_APROBACION" || code == "ACTA_APROBACION_PROYECTO")
+            {
+                return Ok(new
+                {
+                    title = "Formato Oficio de Aprobación de Proyecto",
+                    subtitle = "Oficio formal emitido por la Coordinación de Investigación para aprobación legal previa a ejecución",
+                    signatureType = template.SignatureType,
+                    schema = new Dictionary<string, object>
+                    {
+                        { "oficio_numero", "" },
+                        { "oficio_fecha", "" },
+                        { "director_titulo", "Tecnólogo/a" },
+                        { "director_nombre", "" },
+                        { "director_carrera", "" },
+                        { "coordinador_nombre", "Ing. Estefani Sánchez Mgtr." }
+                    },
+                    lists = new string[] { },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "oficio_aprobacion",
+                            label = "Oficio de Aprobación",
+                            iconName = "FileText",
+                            config = new
+                            {
+                                fields = new[]
+                                {
+                                    new { name = "oficio_numero", label = "Número de Oficio", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"01-ISTPET-INV-2026" },
+                                    new { name = "oficio_fecha", label = "Fecha de Emisión", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"27 de marzo de 2026" },
+                                    new { name = "director_nombre", label = "Director del Proyecto (Destinatario)", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Nombre del docente director" },
+                                    new { name = "director_carrera", label = "Carrera del Director", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Tecnología Superior en..." },
+                                    new { name = "coordinador_nombre", label = "Coordinador/a de Investigación (Firmante)", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Ing. Estefani Sánchez Mgtr." }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             return BadRequest(new { message = $"No se pudo generar la configuración de la interfaz para la plantilla '{code}'." });
         }
         /// <summary>
@@ -224,6 +264,46 @@ namespace diitra_api.Controllers
                                     new { name = "MetodoConsentimiento", label = "Mecanismo de Consentimiento Informado", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Detalle cómo se obtendrá el consentimiento firmado de los participantes..." },
                                     new { name = "DictamenComite", label = "Dictamen Final de Comisión de Ética", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin observaciones", "Aprobado con sugerencias", "Rechazado" }, placeholder = (string?)null },
                                     new { name = "ObservacionesEspecificas", label = "Observaciones y Requerimientos de Enmienda", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar..." }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (code == "OFICIO_APROBACION" || code == "ACTA_APROBACION_PROYECTO")
+            {
+                return Ok(new
+                {
+                    title = "Formato Oficio de Aprobación de Proyecto",
+                    subtitle = "Oficio formal emitido por la Coordinación de Investigación para aprobación legal previa a ejecución",
+                    signatureType = template.SignatureType,
+                    schema = new Dictionary<string, object>
+                    {
+                        { "oficio_numero", "" },
+                        { "oficio_fecha", "" },
+                        { "director_titulo", "Tecnólogo/a" },
+                        { "director_nombre", "" },
+                        { "director_carrera", "" },
+                        { "coordinador_nombre", "Ing. Estefani Sánchez Mgtr." }
+                    },
+                    lists = new string[] { },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "oficio_aprobacion",
+                            label = "Oficio de Aprobación",
+                            iconName = "FileText",
+                            config = new
+                            {
+                                fields = new[]
+                                {
+                                    new { name = "oficio_numero", label = "Número de Oficio", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"01-ISTPET-INV-2026" },
+                                    new { name = "oficio_fecha", label = "Fecha de Emisión", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"27 de marzo de 2026" },
+                                    new { name = "director_nombre", label = "Director del Proyecto (Destinatario)", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Nombre del docente director" },
+                                    new { name = "director_carrera", label = "Carrera del Director", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Tecnología Superior en..." },
+                                    new { name = "coordinador_nombre", label = "Coordinador/a de Investigación (Firmante)", type = "text", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Ing. Estefani Sánchez Mgtr." }
                                 }
                             }
                         }

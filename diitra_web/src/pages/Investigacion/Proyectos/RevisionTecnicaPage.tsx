@@ -58,6 +58,7 @@ export const RevisionTecnicaPage: React.FC = () => {
             <RevisionHeader
                 projectTitle={data.project.title}
                 projectUuid={projectUuid}
+                projectStatus={data.project.status}
                 viewMode={layout.viewMode}
                 setViewMode={layout.setViewMode}
                 onNavigateBack={handleNavigateBack}
