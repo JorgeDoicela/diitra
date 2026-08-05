@@ -123,6 +123,7 @@ const InformesAvancePage: React.FC = () => {
                     templateCode: 'INFORME_AVANCE',
                     // Vinculamos por UUID del informe para que cada informe tenga su propio documento
                     entityUuid: informe.uuid,
+                    entityType: 'InformeAvance',
                     title: `Informe de Avance #${informe.numero_informe} — ${projectTitle || 'Proyecto'}`,
                 },
             });

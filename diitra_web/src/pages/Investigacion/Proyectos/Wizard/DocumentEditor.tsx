@@ -737,6 +737,12 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                         onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v),
                         onReorder: (fromIdx: number, toIdx: number) => reorderItem('Cronograma', fromIdx, toIdx)
                     };
+                } else {
+                    listProps = {
+                        onAdd: (listName: string, templateObj: any) => addItem(listName, templateObj),
+                        onRemove: (listName: string, i: number) => removeItem(listName, i),
+                        onUpdateItem: (listName: string, i: number, f: string, v: any) => updateItem(listName, i, f, v)
+                    };
                 }
 
                 // Determinar si esta sección específica está bloqueada por el director

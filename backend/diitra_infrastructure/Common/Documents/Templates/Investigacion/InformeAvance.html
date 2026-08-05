@@ -1,109 +1,345 @@
-﻿<style>
-    .doc-container { font-family: {{ theme.typography.font_family }}; color: {{ theme.colors.text }}; line-height: {{default theme.typography.line_height "1.6"}}; padding: 30px; }
-    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; color: {{ theme.colors.primary }}; }
-    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: {{ theme.colors.secondary }}; text-transform: uppercase; margin-bottom: 20px; }
-    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; color: {{ theme.colors.primary }}; }
-    .section-title { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
-    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; }
-    .info-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; }
-    .info-table .label { font-weight: bold; background: #f1f5f9; width: 30%; text-transform: uppercase; font-size: 8pt; color: #475569; }
-    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9.5pt; }
-    .data-table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; padding: 8px; text-align: left; text-transform: uppercase; font-size: 8.5pt; border: 1px solid {{ theme.colors.primary }}; }
-    .data-table td { border: 1px solid #cbd5e1; padding: 8px; }
-    .content-box { border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 20px; text-align: justify; min-height: 80px; background: #fff; border-radius: 4px; font-size: 9.5pt; }
-    .firma-box { border-top: 1px solid {{ theme.colors.primary }}; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
+<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1wcm9ncmVzcy0yIiwidHlwZSI6InByb2dyZXNzX2FjdGl2aXR5X3NlY3Rpb24iLCJ0aXRsZSI6IjIuIE1hdHJpeiBkZSBBY3RpdmlkYWRlcyBFamVjdXRhZGFzIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJhY3Rpdml0eVZhcmlhbnQiOiJlamVjdXRhZGFzIiwiYWN0aXZpdHlUYWJsZVRpdGxlIjoiTUFUUklaIERFIEFDVElWSURBREVTIEVKRUNVVEFEQVMiLCJhY3Rpdml0eUhlYWRlckNvbG9yIjoibmF2eSJ9fSx7ImlkIjoiYmxvY2stcHJvZ3Jlc3MtMyIsInR5cGUiOiJwcm9ncmVzc19hY3Rpdml0eV9zZWN0aW9uIiwidGl0bGUiOiIzLiBBY3RpdmlkYWRlcyBObyBQcmV2aXN0YXMgKE5QKSIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiYWN0aXZpdHlWYXJpYW50Ijoibm9fcHJldmlzdGFzIiwiYWN0aXZpdHlUYWJsZVRpdGxlIjoiQUNUSVZJREFERVMgTk8gUFJFVklTVEFTIChOUCkiLCJhY3Rpdml0eUhlYWRlckNvbG9yIjoibmF2eSJ9fSx7ImlkIjoiYmxvY2stcHJvZ3Jlc3MtNCIsInR5cGUiOiJwcm9ncmVzc19hY3Rpdml0eV9zZWN0aW9uIiwidGl0bGUiOiI0LiBPYnN0w6FjdWxvcyB5IEFjY2lvbmVzIENvcnJlY3RpdmFzIChPQlMpIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJhY3Rpdml0eVZhcmlhbnQiOiJvYnN0YWN1bG9zIiwiYWN0aXZpdHlUYWJsZVRpdGxlIjoiT0JTVMOBQ1VMT1MgWSBBQ1RJVklEQURFUyBDT1JSRUNUSVZBUyAoT0JTKSIsImFjdGl2aXR5SGVhZGVyQ29sb3IiOiJnb2xkIn19LHsiaWQiOiJibG9jay1wcm9ncmVzcy01IiwidHlwZSI6InByb2dyZXNzX3N0YXR1c19zZWN0aW9uIiwidGl0bGUiOiI1LiBFc3RhZG8gZGUgRWplY3VjacOzbiB5IE9ic2VydmFjaW9uZXMiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InByb2dyZXNzU3RhdHVzSGVhZGVyQ29sb3IiOiJuYXZ5In19LHsiaWQiOiJibG9jay04IiwidHlwZSI6InNpZ25hdHVyZXMiLCJ0aXRsZSI6IkJsb3F1ZSBkZSBGaXJtYXMgeSBUcmF6YWJpbGlkYWQiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRleHRvUGllRmlybWEiOiJDb21pc2nDs24gZGUgQWNyZWRpdGFjacOzbiBlIEludmVzdGlnYWNpw7NuIElTVCBUcmF2ZXJzYXJpIn19XQ== -->
+<style>
+  * { box-sizing: border-box; }
+  
+  @page {
+      margin-top: 2.5cm;
+      margin-bottom: 1.5cm;
+      margin-left: 2cm;
+      margin-right: 2cm;
+  }
+
+  .doc-container { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      font-size: 9.5pt;
+      color: #1e293b; 
+      line-height: 1.5;
+      padding: 0; 
+  }
+
+  .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border: 1px solid #1e2a4a;
+  }
+  .header-table td {
+      border: 1px solid #1e2a4a;
+      padding: 8px 12px;
+      vertical-align: middle;
+  }
+  .header-title {
+      font-size: 13pt;
+      font-weight: 800;
+      color: #1e2a4a;
+      text-transform: uppercase;
+      text-align: center;
+      margin: 0;
+  }
+  .header-subtitle {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #b8912e;
+      text-transform: uppercase;
+      text-align: center;
+      margin-top: 2px;
+  }
+
+  .section-title { 
+      font-size: 10pt; 
+      font-weight: 800; 
+      background: #1e2a4a; 
+      color: #ffffff !important; 
+      padding: 6px 12px; 
+      margin-top: 20px;
+      margin-bottom: 10px;
+      text-transform: uppercase; 
+      letter-spacing: 0.5px;
+  }
+
+  .info-table, .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 15px; 
+      font-size: 9pt; 
+      background: #ffffff; 
+  }
+  .info-table td, .info-table th, .data-table td, .data-table th { 
+      border: 1px solid #000000; 
+      padding: 6px 8px; 
+      vertical-align: middle; 
+      color: #000000;
+  }
+  .info-table th, .data-table th { 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+      background: #1e2a4a;
+      color: #ffffff;
+      text-align: center;
+  }
+  .label-cell { 
+      font-weight: bold; 
+      background: #f1f5f9; 
+      color: #1e2a4a;
+      width: 30%; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+  }
+
+  .rich-content { 
+      font-size: 9.5pt; 
+      text-align: justify; 
+      color: #000000; 
+      margin-top: 6px;
+      margin-bottom: 12px;
+      line-height: 1.5; 
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+  }
+  .rich-content p { margin: 4px 0; }
+  
+  .badge-status {
+      display: inline-block;
+      padding: 4px 10px;
+      font-weight: 800;
+      font-size: 8.5pt;
+      border-radius: 4px;
+      text-transform: uppercase;
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+  }
+
+  .signatures-row { 
+      display: flex; 
+      justify-content: space-around; 
+      margin-top: 60px; 
+      flex-wrap: wrap; 
+      gap: 20px; 
+      page-break-inside: avoid; 
+  }
+  .sig-box { 
+      text-align: center; 
+      min-width: 200px; 
+      padding-top: 12px; 
+      border-top: 1px solid #000000; 
+      font-size: 9pt; 
+      line-height: 1.5; 
+  }
+  .sig-label { 
+      font-weight: bold; 
+      font-size: 8pt; 
+      color: #475569; 
+      text-transform: uppercase; 
+      margin-bottom: 6px; 
+  }
+  .sig-footer { 
+      text-align: center; 
+      font-size: 8pt; 
+      color: #94a3b8; 
+      margin-top: 24px; 
+      border-top: 1px dashed #e2e8f0; 
+      padding-top: 8px; 
+  }
 </style>
 
 <div class="doc-container">
-    <div style="text-align:center">
-        <h1 class="main-title">INFORME DE AVANCE DE PROYECTO</h1>
-        <div class="report-type">EjecuciÃ³n, Monitoreo e Hitos Parciales â€” Fase 3</div>
+
+  <!-- ENCABEZADO INSTITUCIONAL -->
+  <table class="header-table">
+    <tr>
+      <td style="width: 20%; text-align: center;">
+        <strong style="color: #1e2a4a; font-size: 11pt;">ISTPET</strong>
+      </td>
+      <td style="width: 60%; text-align: center;">
+        <div class="header-title">INFORME DE AVANCE DE INVESTIGACIÓN</div>
+        <div class="header-subtitle">Informe N° {{#if Data.NumeroInforme}}{{Data.NumeroInforme}}{{else}}1{{/if}} · Modelo de Acreditación CACES</div>
+      </td>
+      <td style="width: 20%; text-align: center; font-size: 8pt;">
+        <div><strong>Fecha:</strong> {{Data.FechaReporte}}</div>
+        <div><strong>Estado:</strong> {{Data.Estado}}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- SECCIÓN 1: DATOS DEL PROYECTO -->
+  <div class="section-title">1. Ficha de Identificación del Proyecto</div>
+  <table class="info-table">
+    <tr>
+      <td class="label-cell">Título del Proyecto:</td>
+      <td colspan="3"><strong>{{Data.Titulo}}</strong></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Código / Convocatoria:</td>
+      <td>{{Data.CodigoInstitucional}} — {{Data.PeriodoConvocatoria}}</td>
+      <td class="label-cell">Carrera:</td>
+      <td>{{Data.Carrera}}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Programa de Inv.:</td>
+      <td>{{Data.Programa}}</td>
+      <td class="label-cell">Grupo de Inv.:</td>
+      <td>{{Data.GrupoInvestigacion}}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Línea / Sublínea:</td>
+      <td>{{Data.LineaInvestigacion}} / {{Data.SublineaInvestigacion}}</td>
+      <td class="label-cell">Director del Proyecto:</td>
+      <td><strong>{{Data.DirectorProyecto}}</strong></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Período de Ejecución:</td>
+      <td colspan="3">{{Data.FechaInicio}} hasta {{Data.FechaFin}}</td>
+    </tr>
+  </table>
+
+  <!-- SECCIÓN 2: ACTIVIDADES EJECUTADAS -->
+  <div class="section-title">2. Matriz de Actividades Ejecutadas</div>
+  {{#if Data.ActividadesEjecutadas}}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%;">N°</th>
+        <th style="width: 35%;">Actividades Ejecutadas</th>
+        <th style="width: 27%;">Resultados Obtenidos</th>
+        <th style="width: 10%;">% Avance</th>
+        <th style="width: 20%;">Participantes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each Data.ActividadesEjecutadas}}
+      <tr>
+        <td style="text-align: center; font-weight: bold;">{{this.NumeroActividad}}</td>
+        <td>{{{this.ActividadesEjecutadas}}}</td>
+        <td>{{{this.ResultadosObtenidos}}}</td>
+        <td style="text-align: center; font-weight: bold;">{{this.PorcentajeAvance}}%</td>
+        <td>{{this.Participantes}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{else}}
+  <div class="rich-content">
+    <em>{{#if Data.ResumenActividades}}{{Data.ResumenActividades}}{{else}}No se han registrado actividades ejecutadas en esta matriz.{{/if}}</em>
+  </div>
+  {{/if}}
+
+  <!-- SECCIÓN 3: ACTIVIDADES NO PREVISTAS -->
+  {{#if Data.ActividadesNoPrevistas}}
+  <div class="section-title">3. Actividades No Previstas (NP)</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%;">N°</th>
+        <th style="width: 40%;">Justificación / Descripción</th>
+        <th style="width: 32%;">Resultados Alcanzados</th>
+        <th style="width: 20%;">Fechas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each Data.ActividadesNoPrevistas}}
+      <tr>
+        <td style="text-align: center; font-weight: bold;">{{this.NumeroActividad}}</td>
+        <td>{{{this.ActividadesEjecutadas}}}</td>
+        <td>{{{this.ResultadosObtenidos}}}</td>
+        <td>{{this.FechaInicio}} - {{this.FechaFin}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/if}}
+
+  <!-- SECCIÓN 4: OBSTÁCULOS Y ACCIONES CORRECTIVAS -->
+  {{#if Data.Obstaculos}}
+  <div class="section-title">4. Obstáculos y Acciones Correctivas (OBS)</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%;">N°</th>
+        <th style="width: 42%;">Limitación / Obstáculo Detectado</th>
+        <th style="width: 50%;">Acción Correctiva Implementada</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each Data.Obstaculos}}
+      <tr>
+        <td style="text-align: center; font-weight: bold;">{{this.NumeroActividad}}</td>
+        <td>{{{this.Limitacion}}}</td>
+        <td>{{{this.ActividadesEjecutadas}}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/if}}
+
+  <!-- SECCIÓN 5: ESTADO DE EJECUCIÓN Y FASE ACTUAL -->
+  <div class="section-title">5. Estado de Ejecución del Proyecto</div>
+  <table class="info-table">
+    <tr>
+      <td class="label-cell">Estado Actual de Ejecución:</td>
+      <td>
+        <span class="badge-status">{{Data.EstadoEjecucion}}</span>
+      </td>
+    </tr>
+    {{#if Data.DescripcionFaseActual}}
+    <tr>
+      <td class="label-cell">Descripción de Fase Actual:</td>
+      <td>{{{Data.DescripcionFaseActual}}}</td>
+    </tr>
+    {{/if}}
+  </table>
+
+  <!-- SECCIÓN 6: CONCLUSIONES PARCIALES -->
+  {{#if Data.ConclusionesParciales}}
+  <div class="section-title">6. Conclusiones Parciales y Bitácora Científica</div>
+  <div class="rich-content">
+    {{{Data.ConclusionesParciales}}}
+  </div>
+  {{else}}
+  {{#if ContenidoColaborativo.ConclusionesParciales}}
+  <div class="section-title">6. Conclusiones Parciales y Bitácora Científica</div>
+  <div class="rich-content">
+    {{{ContenidoColaborativo.ConclusionesParciales}}}
+  </div>
+  {{/if}}
+  {{/if}}
+
+  <!-- SECCIÓN 7: OBSERVACIONES DE VALIDACIÓN -->
+  {{#if Data.ObservacionesDirector}}
+  <div class="section-title">7. Observaciones del Director del Proyecto</div>
+  <div class="rich-content">
+    {{{Data.ObservacionesDirector}}}
+  </div>
+  {{/if}}
+
+  {{#if Data.ObservacionesCoordinador}}
+  <div class="section-title">8. Observaciones de la Coordinación de Investigación</div>
+  <div class="rich-content">
+    {{{Data.ObservacionesCoordinador}}}
+  </div>
+  {{/if}}
+
+  <!-- BLOQUE DE FIRMAS Y TRAZABILIDAD -->
+  <div class="signatures-row">
+    <div class="sig-box">
+      <div class="sig-label">Elaborado por:</div>
+      <div>&nbsp;</div>
+      <div style="margin-top: 30px;"><strong>{{Data.DirectorProyecto}}</strong></div>
+      <div style="color: #64748b; font-size: 8.5pt;">Director de Proyecto</div>
     </div>
-
-    <div class="project-name">{{default titulo 'PROYECTO EN EJECUCIÃ“N'}}</div>
-
-    <div class="section-title">1. Datos Generales del Monitoreo</div>
-    <table class="info-table">
-        <tr><td class="label">CÃ³digo de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
-        <tr><td class="label">Periodo Evaluado:</td><td>{{default periodo '2026-05-22'}}</td></tr>
-        <tr><td class="label">Director del Proyecto:</td><td>{{default nombre_director '...'}}</td></tr>
-    </table>
-
-    <div class="section-title">2. Hitos y Actividades Completadas</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>DescripciÃ³n del Hito / Actividad</th>
-                <th style="width: 120px; text-align: center;">Porcentaje Avance</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each HitosCompletados}}
-            <tr>
-                <td>{{this.descripcion}}</td>
-                <td style="text-align: center; font-weight: bold;">{{this.avance}}%</td>
-            </tr>
-            {{else}}
-            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran hitos especÃ­ficos en este avance.</td></tr>
-            {{/each}}
-        </tbody>
-    </table>
-
-    <div class="section-title">3. Evidencias Generadas</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>DescripciÃ³n de la Evidencia</th>
-                <th style="width: 150px;">Tipo de Archivo / Enlace</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each Evidencias}}
-            <tr>
-                <td>{{this.descripcion}}</td>
-                <td>{{this.tipo}}</td>
-            </tr>
-            {{else}}
-            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran evidencias en este avance.</td></tr>
-            {{/each}}
-        </tbody>
-    </table>
-
-    <div class="section-title">4. Presupuesto Ejecutado</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Concepto / Rubro de Gasto</th>
-                <th style="width: 150px; text-align: right;">Monto Ejecutado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each PresupuestoEjecutado}}
-            <tr>
-                <td>{{this.descripcion}}</td>
-                <td style="text-align: right; font-weight: bold;">{{moneda this.monto}}</td>
-            </tr>
-            {{else}}
-            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registra ejecuciÃ³n presupuestaria en este periodo.</td></tr>
-            {{/each}}
-        </tbody>
-    </table>
-
-    <div class="section-title">5. Conclusiones y Logros Parciales</div>
-    <div class="content-box">
-        {{default ConclusionesParciales 'Pendiente de redacciÃ³n o sin conclusiones parciales registradas.'}}
+    <div class="sig-box">
+      <div class="sig-label">Aprobado por:</div>
+      <div>&nbsp;</div>
+      <div style="margin-top: 30px;"><strong>Coordinación de Investigación</strong></div>
+      <div style="color: #64748b; font-size: 8.5pt;">ISTPET / CACES</div>
     </div>
+  </div>
 
-    <div style="display:flex; justify-content:space-between; margin-top:80px">
-        <div class="firma-box">
-            <strong>Director / Investigador Principal</strong><br/>
-            DIITRA Leader<br/>
-            Responsable del Proyecto
-        </div>
-        <div class="firma-box">
-            <strong>ComisiÃ³n de AcompaÃ±amiento</strong><br/>
-            DIITRA Monitor<br/>
-            AprobaciÃ³n de Avance
-        </div>
-    </div>
+  <div class="sig-footer">
+    Comisión de Investigación ISTPET · Trazabilidad: {{#if Emision.TraceCode}}{{Emision.TraceCode}}{{else}}DIITRA-CACES{{/if}}
+  </div>
+
 </div>

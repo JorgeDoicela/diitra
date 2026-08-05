@@ -32,6 +32,8 @@ import {
     Target,
     DollarSign,
     FileText,
+    Table,
+    Layout,
     RefreshCw
 } from 'lucide-react';
 import { DndContext, rectIntersection } from '@dnd-kit/core';
@@ -126,7 +128,7 @@ const DocumentTemplatesPage: React.FC = () => {
                                 </button>
 
                                 {showPalette && (
-                                    <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
+                                    <div className="absolute top-full right-0 mt-2 z-[100] bg-surface border border-border-thin rounded-xl shadow-2xl p-4 w-[520px] max-h-[72vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
                                         <div>
                                             <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
                                             <div className="grid grid-cols-2 gap-2">
@@ -179,6 +181,9 @@ const DocumentTemplatesPage: React.FC = () => {
                                                     { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Impactos y productos esperados.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                     { type: 'project_approval_notice' as const, icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                    { type: 'progress_header_section' as const, icon: FileText, label: 'Encabezado Informe Avance', desc: 'Datos generales auto-poblados del proyecto (ISTPET).', color: 'text-blue-500 bg-blue-500/5' },
+                                                    { type: 'progress_activity_section' as const, icon: Table, label: 'Matriz Actividades Avance', desc: 'Tabla configurable (Ejecutadas, NP u Obstáculos).', color: 'text-amber-500 bg-amber-500/5' },
+                                                    { type: 'progress_status_section' as const, icon: Layout, label: 'Estado y Observaciones', desc: 'Estado del proyecto y redacción con permisos de rol.', color: 'text-indigo-500 bg-indigo-500/5' },
                                                     { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 ]).map(item => {
                                                     const ItemIcon = item.icon;
@@ -239,7 +244,7 @@ const DocumentTemplatesPage: React.FC = () => {
                             </button>
 
                             {showPalette && (
-                                <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border-thin rounded-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] p-4 w-[520px] max-h-[80vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
+                                <div className="absolute top-full right-0 mt-2 z-[100] bg-surface border border-border-thin rounded-xl shadow-2xl p-4 w-[520px] max-h-[72vh] overflow-y-auto animate-fade-in-up flex flex-col gap-4">
                                     <div>
                                         <p className="text-[9px] font-semibold text-text-dim/80 uppercase tracking-wider px-1 mb-2">Bloques Estructurales & Contenido</p>
                                         <div className="grid grid-cols-2 gap-2">
@@ -292,6 +297,9 @@ const DocumentTemplatesPage: React.FC = () => {
                                                 { type: 'impacts' as const, icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'rubric_table' as const, icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                                                 { type: 'project_approval_notice' as const, icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
+                                                { type: 'progress_header_section' as const, icon: FileText, label: 'Encabezado Informe Avance', desc: 'Datos generales auto-poblados del proyecto (ISTPET).', color: 'text-blue-500 bg-blue-500/5' },
+                                                { type: 'progress_activity_section' as const, icon: Table, label: 'Matriz Actividades Avance', desc: 'Tabla configurable (Ejecutadas, NP u Obstáculos).', color: 'text-amber-500 bg-amber-500/5' },
+                                                { type: 'progress_status_section' as const, icon: Layout, label: 'Estado y Observaciones', desc: 'Estado del proyecto y redacción con permisos de rol.', color: 'text-indigo-500 bg-indigo-500/5' },
                                                 { type: 'signatures' as const, icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                                             ]).map(item => {
                                                 const ItemIcon = item.icon;

@@ -54,7 +54,10 @@ export type BlockType =
     | 'resources'
     | 'expected_products'
     | 'impacts'
-    | 'project_approval_notice';
+    | 'project_approval_notice'
+    | 'progress_header_section'
+    | 'progress_activity_section'
+    | 'progress_status_section';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos
@@ -323,5 +326,104 @@ export interface DocumentBlock {
         showHitosCompletados?: boolean;
         showEvidencias?: boolean;
         showPresupuestoEjecutado?: boolean;
+
+        // ── progress_header_section ────────────────────────────────────────
+        progressHeaderFields?: ProgressHeaderField[];
+        progressHeaderColor?: 'navy' | 'gold' | 'slate' | string;
+        progressHeaderBorder?: 'solid' | 'none' | string;
+
+        // ── progress_activity_section ──────────────────────────────────────
+        activityVariant?: ProgressActivityVariant;
+        activityColumns?: ProgressActivityColumn[];
+        activityTableTitle?: string;
+        activityHeaderColor?: 'navy' | 'gold' | 'slate' | string;
+        activityAllowDynamicRows?: boolean;
+
+        // ── progress_status_section ────────────────────────────────────────
+        progressStatusSections?: ProgressStatusSubsection[];
+        progressStatusHeaderColor?: 'navy' | 'gold' | 'slate' | string;
+        statusOptions?: string[];
     };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interfaces del Informe de Avance (Subsecciones configurables)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ProgressHeaderField {
+    id: string;
+    fieldKey: string;
+    label: string;
+    scribanVariable?: string;
+    enabled: boolean;
+    colSpan: 1 | 2;
+    fieldType: 'text' | 'date' | 'checkbox_group' | 'computed';
+    options?: string[];
+    placeholder?: string;
+    readOnly?: boolean;
+}
+
+export const DEFAULT_PROGRESS_HEADER_FIELDS: ProgressHeaderField[] = [
+    { id: 'ph_numero', fieldKey: 'NumeroInforme', label: 'Número de Informe', scribanVariable: 'numero_informe', enabled: true, colSpan: 1, fieldType: 'text', readOnly: true },
+    { id: 'ph_titulo', fieldKey: 'Titulo', label: 'Nombre del Proyecto', scribanVariable: 'titulo', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
+    { id: 'ph_programa', fieldKey: 'Programa', label: 'Programa', scribanVariable: 'programa', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_grupo', fieldKey: 'GrupoInvestigacion', label: 'Grupo de Investigación', scribanVariable: 'grupo', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_linea', fieldKey: 'Linea', label: 'Línea / Sublínea', scribanVariable: 'linea', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
+    { id: 'ph_tipo', fieldKey: 'TipoInvestigacion', label: 'Tipo de Investigación', scribanVariable: 'tipo_investigacion', enabled: true, colSpan: 1, fieldType: 'checkbox_group', options: ['BÁSICA', 'APLICADA', 'EXPERIMENTAL'] },
+    { id: 'ph_carrera', fieldKey: 'Carrera', label: 'Carrera', scribanVariable: 'carrera', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_periodo', fieldKey: 'PeriodoAcademico', label: 'Período Académico', scribanVariable: 'periodo_academico', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_director', fieldKey: 'Director', label: 'Director del Proyecto', scribanVariable: 'director', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_fechas', fieldKey: 'Fechas', label: 'Fechas (Inicio → Fin)', scribanVariable: 'fechas', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
+];
+
+export type ProgressActivityVariant = 'ejecutadas' | 'no_previstas' | 'obstaculos';
+
+export interface ProgressActivityColumn {
+    id: string;
+    fieldKey: string;
+    label: string;
+    scribanVariable?: string;
+    enabled: boolean;
+    colSpan: 1 | 2;
+    colWidthPct?: number;
+    fieldType: 'text' | 'rich_text' | 'number_pct' | 'date' | 'textarea';
+    placeholder?: string;
+    requirementText?: string;
+    variant?: 'standard' | 'banner_gold' | 'banner_navy';
+    headerColor?: 'navy' | 'gold' | 'slate';
+}
+
+export const DEFAULT_ACTIVITY_COLUMNS: ProgressActivityColumn[] = [
+    { id: 'col_num', fieldKey: 'NumeroActividad', label: 'N° Actividad', scribanVariable: 'numero_actividad', enabled: true, colSpan: 1, colWidthPct: 10, fieldType: 'text', placeholder: 'Actividad 1' },
+    { id: 'col_objetivo', fieldKey: 'ObjetivoAsociado', label: 'Objetivo Específico', scribanVariable: 'objetivo_asociado', enabled: false, colSpan: 2, colWidthPct: 20, fieldType: 'textarea', placeholder: 'Objetivo al que se asocia...' },
+    { id: 'col_limitacion', fieldKey: 'Limitacion', label: 'Limitación / Obstáculo', scribanVariable: 'limitacion', enabled: false, colSpan: 2, colWidthPct: 20, fieldType: 'textarea', placeholder: 'Describir el obstáculo encontrado...' },
+    { id: 'col_actividades', fieldKey: 'ActividadesEjecutadas', label: 'Actividades Ejecutadas', scribanVariable: 'actividades_ejecutadas', enabled: true, colSpan: 2, colWidthPct: 35, fieldType: 'rich_text', placeholder: 'Describir las actividades realizadas...', requirementText: 'DETALLAR POR CADA ACTIVIDAD REALIZADA' },
+    { id: 'col_resultados', fieldKey: 'ResultadosObtenidos', label: 'Resultados Obtenidos', scribanVariable: 'resultados_obtenidos', enabled: true, colSpan: 2, colWidthPct: 25, fieldType: 'rich_text', placeholder: 'Resultados alcanzados...', requirementText: 'INCLUIR EVIDENCIAS EN ANEXOS' },
+    { id: 'col_pct', fieldKey: 'PorcentajeAvance', label: '% Avance', scribanVariable: 'porcentaje_avance', enabled: true, colSpan: 1, colWidthPct: 8, fieldType: 'number_pct', placeholder: '0' },
+    { id: 'col_participantes', fieldKey: 'Participantes', label: 'Participantes', scribanVariable: 'participantes', enabled: true, colSpan: 1, colWidthPct: 12, fieldType: 'text', placeholder: 'Director + Investigadores' },
+    { id: 'col_inicio', fieldKey: 'FechaInicio', label: 'Fecha Inicio', scribanVariable: 'fecha_inicio', enabled: true, colSpan: 1, colWidthPct: 10, fieldType: 'date' },
+    { id: 'col_fin', fieldKey: 'FechaFin', label: 'Fecha Fin', scribanVariable: 'fecha_fin', enabled: true, colSpan: 1, colWidthPct: 10, fieldType: 'date' },
+    { id: 'col_obs', fieldKey: 'Observaciones', label: 'Observaciones', scribanVariable: 'observaciones', enabled: true, colSpan: 2, colWidthPct: 15, fieldType: 'textarea', placeholder: 'Ver Anexo N°...' },
+];
+
+export interface ProgressStatusSubsection {
+    id: string;
+    fieldKey: string;
+    title: string;
+    enabled: boolean;
+    colSpan: 1 | 2;
+    fieldType: 'status_table' | 'rich_text' | 'readonly_text';
+    placeholder?: string;
+    requirementText?: string;
+    scribanVariable?: string;
+    accessRole?: 'all' | 'director' | 'admin';
+    variant?: 'standard' | 'banner_gold' | 'banner_navy' | 'header_only';
+}
+
+export const DEFAULT_PROGRESS_STATUS_SUBSECTIONS: ProgressStatusSubsection[] = [
+    { id: 'ps_estado', fieldKey: 'EstadoEjecucion', title: 'ESTADO DE EJECUCIÓN DEL PROYECTO', enabled: true, colSpan: 2, fieldType: 'status_table', scribanVariable: 'estado_ejecucion', accessRole: 'all', variant: 'banner_navy', requirementText: 'MARCAR CON X EL ESTADO ACTUAL' },
+    { id: 'ps_descripcion', fieldKey: 'DescripcionFaseActual', title: 'DESCRIPCIÓN DE LA FASE ACTUAL', enabled: true, colSpan: 2, fieldType: 'rich_text', scribanVariable: 'descripcion_fase_actual', accessRole: 'all', variant: 'standard', placeholder: 'Describir brevemente el estado actual del proyecto...', requirementText: 'DETALLAR EN 3 A 6 LÍNEAS' },
+    { id: 'ps_obs_director', fieldKey: 'ObservacionesDirector', title: 'OBSERVACIONES DEL DIRECTOR', enabled: true, colSpan: 2, fieldType: 'rich_text', scribanVariable: 'observaciones_director', accessRole: 'director', variant: 'banner_gold', placeholder: 'Observaciones del Director del Proyecto...' },
+    { id: 'ps_obs_coord', fieldKey: 'ObservacionesCoordinador', title: 'OBSERVACIONES DEL COORDINADOR DIITRA', enabled: true, colSpan: 2, fieldType: 'rich_text', scribanVariable: 'observaciones_coordinador', accessRole: 'admin', variant: 'banner_gold', placeholder: 'Revisión y observaciones del Coordinador de Investigación...' },
+];
+

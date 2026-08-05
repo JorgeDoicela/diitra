@@ -68,7 +68,8 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'bibliografia':   BibliographySection,
 
     // ── INFORME DE AVANCE ─────────────────────────────────────────
-    'ejecucion':      ProgressReportSection,
+    'ejecucion':           ProgressReportSection,
+    'edicion_colaborativa': ProgressReportSection,   // alias legacy (BD)
 };
 
 /**

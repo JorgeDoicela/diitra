@@ -201,11 +201,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             void SyncKeyAlias(string k1, string k2)
             {
                 object? val = null;
-                if (dict.TryGetValue(k1, out var v1) && v1 != null && !string.IsNullOrWhiteSpace(v1.ToString()))
+                bool IsValid(object? o) => o switch {
+                    null => false,
+                    string s => !string.IsNullOrWhiteSpace(s),
+                    System.Collections.ICollection c => c.Count > 0,
+                    _ => true
+                };
+
+                if (dict.TryGetValue(k1, out var v1) && IsValid(v1))
                 {
                     val = v1;
                 }
-                else if (dict.TryGetValue(k2, out var v2) && v2 != null && !string.IsNullOrWhiteSpace(v2.ToString()))
+                else if (dict.TryGetValue(k2, out var v2) && IsValid(v2))
                 {
                     val = v2;
                 }
@@ -241,6 +248,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("LineaInvestigacion", "linea_investigacion");
             SyncKeyAlias("TiempoEjecucion", "duracion_meses");
             SyncKeyAlias("tiempo_ejecucion", "duracion_meses");
+            SyncKeyAlias("ActividadesEjecutadas", "actividades_ejecutadas");
+            SyncKeyAlias("ActividadesNoPrevistas", "actividades_no_previstas");
+            SyncKeyAlias("Obstaculos", "obstaculos");
+            SyncKeyAlias("EstadoEjecucion", "estado_ejecucion");
+            SyncKeyAlias("DescripcionFaseActual", "descripcion_fase_actual");
+            SyncKeyAlias("ObservacionesDirector", "observaciones_director");
+            SyncKeyAlias("ObservacionesCoordinador", "observaciones_coordinador");
 
             // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
             var ods1 = dict.TryGetValue("objetivos_desarrollo_sostenible", out var v1) ? v1?.ToString() : null;

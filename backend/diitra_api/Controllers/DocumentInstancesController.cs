@@ -82,12 +82,13 @@ namespace diitra_api.Controllers
             [FromQuery] string templateCode,
             [FromQuery] string entityUuid,
             [FromQuery] string? title = null,
+            [FromQuery] string entityType = "Proyecto",
             CancellationToken ct = default)
         {
             try
             {
                 var userUuid = User.Identity?.Name ?? "anon";
-                var instance = await _instanceService.ResolveAsync(templateCode, entityUuid, userUuid, title, ct: ct);
+                var instance = await _instanceService.ResolveAsync(templateCode, entityUuid, userUuid, title, entityType, ct: ct);
                 return Ok(instance);
             }
             catch (KeyNotFoundException ex)

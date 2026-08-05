@@ -155,33 +155,32 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         title: "Informe de Avance de Proyecto",
         subtitle: "Ejecución y Monitoreo (Fase 3)",
         schema: {
-            // Sección 1: Bitácora Científica (rich-text colaborativo)
+            // Sección 1: Bitácora Científica & Actividades Ejecutadas
             ConclusionesParciales: '',
-            // Sección 2: Actividades del Cronograma (hitos CACES con % avance)
+            ActividadesEjecutadas: [],
+            ActividadesNoPrevistas: [],
+            Obstaculos: [],
+            
+            // Sección 2: Estado de Ejecución
+            EstadoEjecucion: 'EN AVANCE',
+            DescripcionFaseActual: '',
+            
+            // Sección 3: Observaciones y Roles
+            ObservacionesDirector: '',
+            ObservacionesCoordinador: '',
+            
+            // Legacy / Compatibilidad
             HitosCompletados: [],
-            // Sección 3: Evidencias Físicas (bitácoras de campo y laboratorio)
             Evidencias: [],
-            // Sección 4: Ejecución Presupuestaria (libro contable por partidas)
             PresupuestoEjecutado: [],
         },
-        lists: ['HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
-        // Una sola sección que renderiza ProgressReportSection con las 4 sub-secciones CACES
+        lists: ['ActividadesEjecutadas', 'ActividadesNoPrevistas', 'Obstaculos', 'HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
         sections: [
             {
                 id: 'ejecucion',
-                label: 'Avance de Ejecución',
-                iconName: 'BarChart',
-                config: {
-                    fields: [
-                        {
-                            name: 'ConclusionesParciales',
-                            label: 'Bitácora Científica & Conclusiones Parciales',
-                            type: 'rich-text',
-                            collaborative: true,
-                            placeholder: 'Documenta el progreso experimental, hallazgos y avances teórico-prácticos del período...'
-                        }
-                    ]
-                }
+                label: 'Edición Colaborativa',
+                iconName: 'Activity',
+                componentName: 'ProgressReportSection'
             }
         ]
     },

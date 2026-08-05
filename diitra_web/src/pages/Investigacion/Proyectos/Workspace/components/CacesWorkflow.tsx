@@ -132,7 +132,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
                                         } else if (isAdmin) {
-                                            navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`, { state: { fromWorkspace: true } });
+                                            navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`);
                                         }
                                     } else if (phase.id === 'Aprobado' && (isCurrent || isPast)) {
                                         if (isCurrentActive && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {

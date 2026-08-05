@@ -29,6 +29,11 @@ import {
     RenderProjectEthicsReport,
     RenderProjectApprovalNotice,
 } from './canvasRenderers/RenderReports';
+import {
+    RenderProgressHeaderSection,
+    RenderProgressActivitySection,
+    RenderProgressStatusSection,
+} from './canvasRenderers/RenderProgressSections';
 
 /** Tipos de bloques de los que solo se permite una única instancia */
 const UNIQUE_BLOCK_TYPES: BlockType[] = [
@@ -43,7 +48,9 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'signatures',
     'impacts',
     'rubric_table',
-    'resources'
+    'resources',
+    'progress_header_section',
+    'progress_status_section',
 ];
 
 interface SortableBlockItemProps {
@@ -133,6 +140,12 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderExpectedProducts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':
                 return <RenderImpacts config={block.config} />;
+            case 'progress_header_section':
+                return <RenderProgressHeaderSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'progress_activity_section':
+                return <RenderProgressActivitySection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'progress_status_section':
+                return <RenderProgressStatusSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             default:
                 return null;
         }

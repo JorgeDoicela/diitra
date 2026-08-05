@@ -176,6 +176,7 @@ builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstance
 builder.Services.AddScoped<IDocumentDataOrchestrator, DocumentDataOrchestrator>();
 builder.Services.AddScoped<IDocumentDataProvider, ProjectDocumentDataProvider>();
 builder.Services.AddScoped<IDocumentDataProvider, FinalReportDataProvider>();
+builder.Services.AddScoped<IDocumentDataProvider, Diitra.Infrastructure.Common.Documents.Providers.InformeAvanceDataProvider>();
 builder.Services.AddHttpClient<IRepositoryConnector, DSpaceRepositoryConnector>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(5); // Resiliencia: Timeout estricto de 5s para evitar congelación de hebras

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, BarChart, FileSignature, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
+import { Shield, FileSignature, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
 interface WorkspaceSidebarProps {
@@ -147,36 +147,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                 </div>
             </div>
 
-            {/* Metadata */}
-            <div className="bento-card static p-5 flex flex-col justify-between group">
-                <div>
-                    <div className="flex items-center gap-2.5 mb-3">
-                        <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                        <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Datos normativos CACES</h3>
-                    </div>
-                </div>
-                <div className="divide-y divide-border-thin/40 mt-2">
-                    {currentProject.dominio && (
-                        <div className="py-3 space-y-1 first:pt-0">
-                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Dominio Académico</span>
-                            <span className="text-xs font-medium text-text-main leading-relaxed">{currentProject.dominio}</span>
-                        </div>
-                    )}
-                    <div className="py-3 space-y-1">
-                        <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Línea de Investigación</span>
-                        <span className="text-xs font-medium text-text-main leading-relaxed">{currentProject.linea || 'No definida'}</span>
-                    </div>
-                    <div className="py-3 flex items-center justify-between last:pb-0">
-                        <div className="space-y-0.5">
-                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Presupuesto Aprobado</span>
-                            <span className={`text-sm font-bold font-mono ${Number(currentProject.presupuesto) > 0 ? 'text-success' : 'text-text-main'}`}>
-                                ${Number(currentProject.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                        </div>
-                        <span className={`text-[8px] font-bold uppercase tracking-wider ${Number(currentProject.presupuesto) > 0 ? 'text-success' : 'text-text-dim'}`}>USD</span>
-                    </div>
-                </div>
-            </div>
+
 
             {/* Panel de Actividad Reciente */}
             {resolvedProjectUuid && (

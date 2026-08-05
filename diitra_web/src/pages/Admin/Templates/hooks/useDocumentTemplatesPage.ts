@@ -311,7 +311,32 @@ export const useDocumentTemplatesPage = () => {
                     }
                 };
 
-                if (tmpl.code === "DICTAMEN_ARBITRAJE") {
+                if (tmpl.code === "INFORME_AVANCE") {
+                    loadedBlocks = [
+                        baseCover,
+                        {
+                            id: "block-progress-1", type: "progress_header_section", title: "1. Encabezado e Identificación", isActive: true,
+                            config: { progressHeaderColor: "navy", progressHeaderBorder: "solid" }
+                        },
+                        {
+                            id: "block-progress-2", type: "progress_activity_section", title: "2. Matriz de Actividades Ejecutadas", isActive: true,
+                            config: { activityVariant: "ejecutadas", activityTableTitle: "MATRIZ DE ACTIVIDADES EJECUTADAS", activityHeaderColor: "navy" }
+                        },
+                        {
+                            id: "block-progress-3", type: "progress_activity_section", title: "3. Actividades No Previstas (NP)", isActive: true,
+                            config: { activityVariant: "no_previstas", activityTableTitle: "ACTIVIDADES NO PREVISTAS (NP)", activityHeaderColor: "navy" }
+                        },
+                        {
+                            id: "block-progress-4", type: "progress_activity_section", title: "4. Obstáculos y Acciones Correctivas (OBS)", isActive: true,
+                            config: { activityVariant: "obstaculos", activityTableTitle: "OBSTÁCULOS Y ACTIVIDADES CORRECTIVAS (OBS)", activityHeaderColor: "gold" }
+                        },
+                        {
+                            id: "block-progress-5", type: "progress_status_section", title: "5. Estado de Ejecución y Observaciones", isActive: true,
+                            config: { progressStatusHeaderColor: "navy" }
+                        },
+                        baseSignatures
+                    ];
+                } else if (tmpl.code === "DICTAMEN_ARBITRAJE") {
                     loadedBlocks = [
                         baseCover,
                         {

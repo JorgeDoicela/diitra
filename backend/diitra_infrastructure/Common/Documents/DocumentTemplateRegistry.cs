@@ -91,7 +91,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: true,
-                collaborativeFields: "[\"HitosCompletados\", \"Evidencias\", \"PresupuestoEjecutado\", \"ConclusionesParciales\"]",
+                collaborativeFields: "[\"ActividadesEjecutadas\", \"ActividadesNoPrevistas\", \"Obstaculos\", \"ConclusionesParciales\", \"EstadoEjecucion\", \"DescripcionFaseActual\", \"ObservacionesDirector\", \"ObservacionesCoordinador\", \"HitosCompletados\", \"Evidencias\", \"PresupuestoEjecutado\"]",
                 version: 20);
 
             yield return DocumentTemplate.Create(

@@ -10,6 +10,9 @@ import { ProjectGeneralProperties } from './properties/ProjectGeneralProperties'
 import { ProjectTechnicalProperties } from './properties/ProjectTechnicalProperties';
 import { ImpactsProperties } from './properties/ImpactsProperties';
 import { ExpectedProductsProperties } from './properties/ExpectedProductsProperties';
+import { ProgressHeaderProperties } from './properties/ProgressHeaderProperties';
+import { ProgressActivityProperties } from './properties/ProgressActivityProperties';
+import { ProgressStatusProperties } from './properties/ProgressStatusProperties';
 import { ThemeEditorTab } from './ThemeEditorTab';
 
 
@@ -649,6 +652,18 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             {/* ── MATRIZ DE IMPACTO ───────────────────────────────────────── */}
                             {activeBlock.type === 'impacts' && (
                                 <ImpactsProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                            )}
+
+                            {activeBlock.type === 'progress_header_section' && (
+                                <ProgressHeaderProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                            )}
+
+                            {activeBlock.type === 'progress_activity_section' && (
+                                <ProgressActivityProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                            )}
+
+                            {activeBlock.type === 'progress_status_section' && (
+                                <ProgressStatusProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}
 
                             {/* ── AVANCE DE EJECUCIÓN ──────────────────────────────────────── */}
