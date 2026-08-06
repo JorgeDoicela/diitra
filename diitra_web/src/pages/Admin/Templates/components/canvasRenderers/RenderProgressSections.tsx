@@ -36,7 +36,7 @@ export const RenderProgressHeaderSection: React.FC<{
                 {/* Header principal del bloque */}
                 <div
                     className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
-                    style={{ backgroundColor: headerPair.bg, color: headerPair.color }}
+                    style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
                 >
                     <span>1. DATOS GENERALES DEL PROYECTO (AUTO-POBLADOS)</span>
                     <span className="text-[9px] opacity-80 font-normal">Identificación Institucional ISTPET</span>
@@ -119,13 +119,316 @@ export const RenderProgressActivitySection: React.FC<{
         }
     };
 
+    if (variant === 'ejecutadas') {
+        return (
+            <div className="w-full text-slate-900 font-sans my-2">
+                <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white">
+                    {/* Header del bloque */}
+                    <div
+                        className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
+                        style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                    >
+                        <span>{getVariantTitle()}</span>
+                        <span className="text-[9px] opacity-80 font-normal">
+                            Variante: <strong className="uppercase">Ejecutadas (Vertical CACES)</strong>
+                        </span>
+                    </div>
+
+                    <div className="p-2">
+                        <table className="w-full text-left border-collapse border border-slate-400 text-[9pt]">
+                            <tbody>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold w-[32%] p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        NÚMERO DE ACTIVIDAD
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [El número de actividad es, en referencia al número de actividades planteadas en la matriz del proyecto aprobado]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        ACTIVIDADES EJECUTADAS
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [De acuerdo a la matriz de actividades presentadas en el proyecto]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        RESULTADOS OBTENIDOS
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir de manera concreta, coherente y fluida lo que obtuvo al realizar la actividad ejecutada o en ejecución]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PORCENTAJE DE AVANCE (%)
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [El porcentaje de avance de la actividad]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PARTICIPANTES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Director del Proyecto e Investigadores]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA DE INICIO DE LA ACTIVIDAD
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA FIN DE LA ACTIVIDAD
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año] [si aún no termina la actividad, colocar las palabras “En ejecución”]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#b8860b] text-slate-900 font-bold p-1.5 border border-amber-600 uppercase text-[8.5pt] align-top">
+                                        OBSERVACIONES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8pt] leading-tight align-top bg-amber-50/20">
+                                        <p>- De ser necesario, describir algún tipo de particularidad relevante en la ejecución de la actividad.</p>
+                                        <p className="mt-1">- Cuando la actividad se encuentra concluida, es decir, con el 100% en el porcentaje de avance, colocar aquí, el número de anexo al que corresponde donde se encuentran los respaldos de su ejecución. Recordando que la numeración de los anexos va igual que el número de actividad asignado en la matriz de actividades presentadas en el proyecto aprobado.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (variant === 'no_previstas') {
+        return (
+            <div className="w-full text-slate-900 font-sans my-2">
+                <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white">
+                    <div
+                        className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
+                        style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                    >
+                        <span>{getVariantTitle()}</span>
+                        <span className="text-[9px] opacity-80 font-normal">
+                            Variante: <strong className="uppercase">No Previstas (Vertical CACES)</strong>
+                        </span>
+                    </div>
+
+                    <div className="p-2">
+                        <table className="w-full text-left border-collapse border border-slate-400 text-[9pt]">
+                            <tbody>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold w-[35%] p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        NÚMERO DE ACTIVIDAD
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Se numera en orden sucesivo, pero con las letras “NP” al final, es decir: Actividad 1NP, Actividad 2NP, etc.]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        OBJETIVO DEL PROYECTO DE INVESTIGACIÓN
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Colocar el objetivo específico al que se asocia la actividad NO prevista]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        ACTIVIDAD EJECUTADA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir la actividad NO prevista ejecutada o en ejecución]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        RESULTADOS OBTENIDOS
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir de manera concreta, coherente y fluida lo que obtuvo al realizar la actividad ejecutada o en ejecución]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PORCENTAJE DE AVANCE (%)
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [El porcentaje de avance de la actividad NO prevista]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PARTICIPANTES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Director del Proyecto, Investigadores]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA DE INICIO DE LA ACTIVIDAD NO PREVISTA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA FIN DE LA ACTIVIDAD NO PREVISTA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año] [si aún no termina la actividad, colocar las palabras “En ejecución”]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#b8860b] text-slate-900 font-bold p-1.5 border border-amber-600 uppercase text-[8.5pt] align-top">
+                                        OBSERVACIONES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8pt] leading-tight align-top bg-amber-50/20">
+                                        <p>- De ser necesario, describir algún tipo de particularidad relevante en la ejecución de la actividad.</p>
+                                        <p className="mt-1">- Cuando la actividad se encuentra concluida... anexo numerado en orden sucesivo, pero con las letras “NP” al final, es decir: Anexo 1NP, Anexo 2NP, etc.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div className="mt-2 text-[8pt] text-slate-600 font-bold text-center space-y-0.5">
+                            <p>[En caso de reportar más de 1 actividad NO prevista ejecutada o en ejecución, se debe replicar el cuadro, con la finalidad que cada actividad NO prevista tenga su propio cuadro con su detalle correspondiente]</p>
+                            <p>[En caso de no tener que reportar ninguna actividad NO prevista, se debe colocar las siglas “N/A”, en cada casillero del cuadro]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (variant === 'obstaculos') {
+        return (
+            <div className="w-full text-slate-900 font-sans my-2">
+                <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white">
+                    <div
+                        className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
+                        style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
+                    >
+                        <span>{getVariantTitle()}</span>
+                        <span className="text-[9px] opacity-80 font-normal">
+                            Variante: <strong className="uppercase">Obstáculos (Vertical CACES)</strong>
+                        </span>
+                    </div>
+
+                    <div className="p-2">
+                        <table className="w-full text-left border-collapse border border-slate-400 text-[9pt]">
+                            <tbody>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold w-[35%] p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        NÚMERO DE ACTIVIDAD
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Se numera en orden sucesivo, pero con las letras “OBS” al final, es decir: Actividad 1 OBS, Actividad 2 OBS, etc.]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        OBJETIVO DEL PROYECTO DE INVESTIGACIÓN
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Colocar el objetivo específico al que se asocia el obstáculo o limitación]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        LIMITACIÓN
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir la limitación que se presentó o se mantiene presente que genera inconveniente en la correcta ejecución del proyecto de investigación]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        ACTIVIDAD CORRECTIVA DESARROLLADA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir de manera concreta, coherente y fluida la actividad o actividades correctivas que fueron desarrolladas para solventar la limitación que se presentó]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        RESULTADOS OBTENIDOS
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Describir de manera concreta, coherente y fluida lo que obtuvo al realizar la actividad correctiva ejecutada o en ejecución]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PORCENTAJE DE AVANCE (%)
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [El porcentaje de avance de la actividad correctiva]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        PARTICIPANTES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [Director del Proyecto, Investigadores]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA DE INICIO DE LA ACTIVIDAD CORRECTIVA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#1e293b] text-white font-bold p-1.5 border border-slate-400 uppercase text-[8.5pt]">
+                                        FECHA FIN DE LA ACTIVIDAD CORRECTIVA
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8.5pt]">
+                                        [día/mes/año] [si aún no termina la actividad, colocar las palabras “En ejecución”]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="bg-[#b8860b] text-slate-900 font-bold p-1.5 border border-amber-600 uppercase text-[8.5pt] align-top">
+                                        OBSERVACIONES
+                                    </td>
+                                    <td className="p-1.5 border border-slate-300 font-medium text-slate-700 text-[8pt] leading-tight align-top bg-amber-50/20">
+                                        <p>- De ser necesario, describir algún tipo de particularidad relevante en la ejecución de la actividad correctiva.</p>
+                                        <p className="mt-1">- Cuando la actividad correctiva se encuentra concluida, es decir, con el 100% en el porcentaje de avance, colocar aquí, el número de anexo al que corresponde donde se encuentran los respaldos de su ejecución. El anexo será numerado en orden sucesivo, pero con las letras “OBS” al final, es decir: Anexo 1 OBS, Anexo 2 OBS, etc.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div className="mt-2 text-[8pt] text-slate-600 font-bold text-center space-y-0.5">
+                            <p>[En caso de reportar más de 1 actividad correctiva ejecutada o en ejecución, se debe replicar el cuadro, con la finalidad que cada actividad correctiva tenga su propio cuadro con su detalle correspondiente]</p>
+                            <p>[En caso de no tener que reportar ninguna actividad correctiva, se debe colocar las siglas “N/A”, en cada casillero del cuadro]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full text-slate-900 font-sans my-2">
             <div className="w-full border border-slate-300 overflow-hidden rounded-xs">
                 {/* Header del bloque */}
                 <div
                     className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
-                    style={{ backgroundColor: headerPair.bg, color: headerPair.color }}
+                    style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
                 >
                     <span>{getVariantTitle()}</span>
                     <span className="text-[9px] opacity-80 font-normal">
@@ -193,79 +496,57 @@ export const RenderProgressStatusSection: React.FC<{
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }> = ({ config }) => {
     const c = config || {};
-    const sections: ProgressStatusSubsection[] = (c.progressStatusSections && Array.isArray(c.progressStatusSections) && c.progressStatusSections.length > 0)
-        ? c.progressStatusSections
-        : DEFAULT_PROGRESS_STATUS_SUBSECTIONS;
-
-    const activeSections = sections.filter(s => s.enabled);
-    const headerColorMode = c.progressStatusHeaderColor || 'navy';
-    const headerPair = getHeaderStylePair(headerColorMode);
+    const title = c.statusTableTitle || 'ESTADO DE EJECUCIÓN DEL PROYECTO';
     const options = c.statusOptions || ['INICIADO', 'EN AVANCE', 'SUSPENDIDO', 'POR FINALIZAR', 'FINALIZADO'];
 
     return (
         <div className="w-full text-slate-900 font-sans my-2">
-            <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white space-y-3 p-3">
-                {activeSections.map((sec) => {
-                    const isBanner = sec.variant?.startsWith('banner');
-                    const isGold = sec.variant === 'banner_gold';
+            <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white p-4 space-y-4">
+                <p className="font-bold text-[11pt] uppercase tracking-wider text-center text-slate-900">{title}</p>
+                <p className="text-[8.5pt] font-semibold text-slate-900 uppercase">MARQUE CON UNA (X) EL ESTADO ACTUAL DEL PROYECTO DE INVESTIGACIÓN:</p>
+                
+                <table className="w-full text-center border-collapse border border-slate-900 text-[8.5pt]">
+                    <thead>
+                        <tr className="bg-[#1e2a4a] text-white font-bold">
+                            {options.map((opt: string) => (
+                                <th key={opt} className="p-1.5 border border-slate-900 w-[20%] uppercase text-[8.5pt]">{opt}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {options.map((opt: string) => (
+                                <td key={opt} className="p-2 border border-slate-900 font-black text-[10pt] text-slate-900">
+                                    {opt === 'EN AVANCE' ? '(X)' : ''}
+                                </td>
+                            ))}
+                        </tr>
+                        <tr className="bg-[#1e2a4a] text-white font-bold text-left">
+                            <td colSpan={5} className="p-1.5 border border-slate-900 text-[8.5pt] uppercase">
+                                EXPLIQUE BREVEMENTE LA FASE DE EJECUCIÓN EN QUE SE ENCUENTRA SU PROYECTO:
+                            </td>
+                        </tr>
+                        <tr className="text-left">
+                            <td colSpan={5} className="p-2 border border-slate-900 min-h-[50px] text-[8pt] text-slate-600 font-medium italic bg-white">
+                                [Describir de 3 a 6 líneas, de manera coherente, fluida y concreta, el estado actual del proyecto de investigación en donde se mencione las actividades realizadas, resultados obtenidos y objetivos del proyecto de investigación relacionados]
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                    return (
-                        <div key={sec.id} className="w-full border border-slate-200 rounded-xs overflow-hidden">
-                            {/* Cabecera de la sub-sección */}
-                            <div
-                                className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between ${
-                                    isGold ? 'bg-amber-600 text-white' : isBanner ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'
-                                }`}
-                            >
-                                <span>{sec.title}</span>
-                                {sec.accessRole && sec.accessRole !== 'all' && (
-                                    <span className="text-[8.5px] px-1.5 py-0.5 rounded bg-white/20 font-mono text-white">
-                                        Acceso: {sec.accessRole.toUpperCase()}
-                                    </span>
-                                )}
-                            </div>
+                <div className="space-y-1 pt-1">
+                    <p className="font-bold text-[8.5pt] text-slate-900 uppercase">OBSERVACIONES GENERALES DEL DIRECTOR DEL PROYECTO:</p>
+                    <div className="border border-slate-900 p-2 min-h-[50px] text-[8pt] text-slate-600 font-medium italic bg-white">
+                        [Redactar el punto de vista del Director del Proyecto de manera general de la ejecución del proyecto hasta la entrega de la presente Ficha de Seguimiento, en un párrafo de 4 a 6 líneas]
+                    </div>
+                </div>
 
-                            {/* Contenido según tipo */}
-                            <div className="p-2.5 bg-white">
-                                {sec.fieldType === 'status_table' ? (
-                                    <div className="w-full">
-                                        {sec.requirementText && (
-                                            <p className="text-[8.5px] font-bold text-amber-700 uppercase mb-1.5">
-                                                Requisito: {sec.requirementText}
-                                            </p>
-                                        )}
-                                        <div className="grid grid-cols-5 gap-1 text-center">
-                                            {options.map((opt: string, idx: number) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`p-1.5 border text-[9px] font-bold rounded ${
-                                                        opt === 'EN AVANCE'
-                                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-900 ring-1 ring-indigo-400'
-                                                            : 'border-slate-200 text-slate-500 bg-slate-50'
-                                                    }`}
-                                                >
-                                                    <div>{opt}</div>
-                                                    <div className="text-[11px] mt-0.5">
-                                                        {opt === 'EN AVANCE' ? '☑' : '☐'}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="min-h-[40px] text-[10px] text-slate-500 italic flex flex-col justify-between">
-                                        <span>{sec.placeholder || 'Redacción en workspace por el rol correspondiente...'}</span>
-                                        {sec.requirementText && (
-                                            <span className="text-[8.5px] text-slate-400 font-semibold uppercase mt-1">
-                                                Guía: {sec.requirementText}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="space-y-1 pt-1">
+                    <p className="font-bold text-[8.5pt] text-slate-900 uppercase">OBSERVACIONES GENERALES DEL COORDINADOR DE LA UNIDAD DE INVESTIGACIÓN:</p>
+                    <div className="border border-slate-900 p-2 min-h-[40px] text-[8pt] text-slate-600 font-medium italic bg-white">
+                        [Esta parte es redactada por la coordinación del Departamento de Investigación e Innovación]
+                    </div>
+                </div>
             </div>
         </div>
     );

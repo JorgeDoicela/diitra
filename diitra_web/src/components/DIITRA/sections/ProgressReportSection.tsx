@@ -504,41 +504,105 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                     ) : (
                         <div className="space-y-4">
                             {actividadesNoPrevistas.map((item: any, idx: number) => (
-                                <div key={idx} className="p-4 border border-amber-500/20 rounded-2xl bg-amber-500/5 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-black uppercase text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
-                                            {item.NumeroActividad || `Actividad ${idx + 1} NP`}
+                                <div key={idx} className="p-4 border border-amber-500/20 rounded-2xl bg-amber-500/5 space-y-4 relative group">
+                                    <div className="flex justify-between items-center border-b border-amber-500/20 pb-2">
+                                        <span className="text-xs font-black uppercase text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg">
+                                            {item.NumeroActividad || `Actividad ${idx + 1}NP`}
                                         </span>
                                         {!isReadOnly && (
-                                            <button type="button" onClick={() => onRemove('ActividadesNoPrevistas', idx)} className="text-red-400 p-1">
+                                            <button type="button" onClick={() => onRemove('ActividadesNoPrevistas', idx)} className="text-red-400 p-1 hover:bg-red-500/10 rounded">
                                                 <Trash2 size={14} />
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Objetivo Específico Asociado</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Objetivo del Proyecto de Investigación</label>
                                             <input
                                                 type="text"
                                                 disabled={isReadOnly}
                                                 value={item.ObjetivoAsociado || ''}
                                                 onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'ObjetivoAsociado', e.target.value)}
-                                                placeholder="Objetivo del proyecto al que se asocia..."
+                                                placeholder="Objetivo específico al que se asocia..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Actividad No Prevista Ejecutada</label>
+                                            <textarea
+                                                disabled={isReadOnly}
+                                                value={item.ActividadesEjecutadas || ''}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'ActividadesEjecutadas', e.target.value)}
+                                                placeholder="Describir la actividad NO prevista..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500 min-h-[60px]"
+                                            />
+                                        </div>
+                                        <div className="space-y-1 md:col-span-2">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Resultados Obtenidos</label>
+                                            <textarea
+                                                disabled={isReadOnly}
+                                                value={item.ResultadosObtenidos || ''}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'ResultadosObtenidos', e.target.value)}
+                                                placeholder="Describir resultados alcanzados de forma concreta..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500 min-h-[60px]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-amber-500/20">
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">% Avance</label>
+                                            <input
+                                                type="number"
+                                                min={0} max={100}
+                                                disabled={isReadOnly}
+                                                value={item.PorcentajeAvance ?? 100}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'PorcentajeAvance', Number(e.target.value))}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs font-bold text-amber-400"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Participantes</label>
+                                            <input
+                                                type="text"
+                                                disabled={isReadOnly}
+                                                value={item.Participantes || 'Director del Proyecto, Investigadores'}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'Participantes', e.target.value)}
                                                 className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Actividad No Prevista Ejecutada</label>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Inicio NP</label>
                                             <input
-                                                type="text"
+                                                type="date"
                                                 disabled={isReadOnly}
-                                                value={item.ActividadesEjecutadas || ''}
-                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'ActividadesEjecutadas', e.target.value)}
-                                                placeholder="Descripción de la actividad realizada..."
+                                                value={item.FechaInicio || ''}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaInicio', e.target.value)}
                                                 className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
                                             />
                                         </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Fin NP</label>
+                                            <input
+                                                type="date"
+                                                disabled={isReadOnly}
+                                                value={item.FechaFin || ''}
+                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaFin', e.target.value)}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-amber-500/20 space-y-1">
+                                        <label className="text-[9px] font-bold uppercase text-amber-400">Observaciones (Particularidades / Respaldo Anexos NP)</label>
+                                        <textarea
+                                            disabled={isReadOnly}
+                                            value={item.Observaciones || ''}
+                                            onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'Observaciones', e.target.value)}
+                                            placeholder="Particularidades o anexo correspondiente (ej: Anexo 1NP)..."
+                                            className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500 min-h-[60px]"
+                                        />
                                     </div>
                                 </div>
                             ))}
@@ -579,39 +643,115 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                     ) : (
                         <div className="space-y-4">
                             {obstaculos.map((item: any, idx: number) => (
-                                <div key={idx} className="p-4 border border-red-500/20 rounded-2xl bg-red-500/5 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-black uppercase text-red-400 bg-red-500/10 px-2 py-0.5 rounded">
+                                <div key={idx} className="p-4 border border-red-500/20 rounded-2xl bg-red-500/5 space-y-4 relative group">
+                                    <div className="flex justify-between items-center border-b border-red-500/20 pb-2">
+                                        <span className="text-xs font-black uppercase text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg">
                                             {item.NumeroActividad || `Actividad ${idx + 1} OBS`}
                                         </span>
                                         {!isReadOnly && (
-                                            <button type="button" onClick={() => onRemove('Obstaculos', idx)} className="text-red-400 p-1">
+                                            <button type="button" onClick={() => onRemove('Obstaculos', idx)} className="text-red-400 p-1 hover:bg-red-500/10 rounded">
                                                 <Trash2 size={14} />
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Limitación u Obstáculo Encontrado</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Objetivo del Proyecto de Investigación</label>
+                                            <input
+                                                type="text"
+                                                disabled={isReadOnly}
+                                                value={item.ObjetivoAsociado || ''}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'ObjetivoAsociado', e.target.value)}
+                                                placeholder="Objetivo específico al que se asocia..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-red-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Limitación / Obstáculo Presentado</label>
                                             <textarea
                                                 disabled={isReadOnly}
                                                 value={item.Limitacion || ''}
                                                 onChange={(e) => onUpdateItem('Obstaculos', idx, 'Limitacion', e.target.value)}
-                                                placeholder="Describir el problema o imprevisto..."
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main min-h-[60px]"
+                                                placeholder="Describir la limitación o problema..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-red-500 min-h-[60px]"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Actividad Correctiva Realizada</label>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Actividad Correctiva Desarrollada</label>
                                             <textarea
                                                 disabled={isReadOnly}
                                                 value={item.ActividadesEjecutadas || ''}
                                                 onChange={(e) => onUpdateItem('Obstaculos', idx, 'ActividadesEjecutadas', e.target.value)}
-                                                placeholder="Describir cómo se resolvió el obstáculo..."
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main min-h-[60px]"
+                                                placeholder="Describir actividades correctivas desarrolladas..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-red-500 min-h-[60px]"
                                             />
                                         </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block">Resultados Obtenidos</label>
+                                            <textarea
+                                                disabled={isReadOnly}
+                                                value={item.ResultadosObtenidos || ''}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'ResultadosObtenidos', e.target.value)}
+                                                placeholder="Resultados tras aplicar la medida correctiva..."
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-red-500 min-h-[60px]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-red-500/20">
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">% Avance</label>
+                                            <input
+                                                type="number"
+                                                min={0} max={100}
+                                                disabled={isReadOnly}
+                                                value={item.PorcentajeAvance ?? 100}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'PorcentajeAvance', Number(e.target.value))}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs font-bold text-red-400"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Participantes</label>
+                                            <input
+                                                type="text"
+                                                disabled={isReadOnly}
+                                                value={item.Participantes || 'Director del Proyecto, Investigadores'}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'Participantes', e.target.value)}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Inicio Correctiva</label>
+                                            <input
+                                                type="date"
+                                                disabled={isReadOnly}
+                                                value={item.FechaInicio || ''}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'FechaInicio', e.target.value)}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Fin Correctiva</label>
+                                            <input
+                                                type="date"
+                                                disabled={isReadOnly}
+                                                value={item.FechaFin || ''}
+                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'FechaFin', e.target.value)}
+                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-red-500/20 space-y-1">
+                                        <label className="text-[9px] font-bold uppercase text-red-400">Observaciones (Particularidades / Respaldo Anexos OBS)</label>
+                                        <textarea
+                                            disabled={isReadOnly}
+                                            value={item.Observaciones || ''}
+                                            onChange={(e) => onUpdateItem('Obstaculos', idx, 'Observaciones', e.target.value)}
+                                            placeholder="Particularidades o anexo correspondiente (ej: Anexo 1 OBS)..."
+                                            className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-red-500 min-h-[60px]"
+                                        />
                                     </div>
                                 </div>
                             ))}

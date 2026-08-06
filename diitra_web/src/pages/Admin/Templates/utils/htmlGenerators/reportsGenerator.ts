@@ -164,7 +164,7 @@ export const generateProjectProgressHtml = (block: DocumentBlock): string => {
 /**
  * Genera el HTML de Pertinencia Ética y Bioética (Bloque: project_ethics_report)
  */
-export const generateProjectEthicsHtml = (block: DocumentBlock): string => {
+export const generateProjectEthicsHtml = (_block: DocumentBlock): string => {
     return `
   <!-- BLOQUE: EVALUACIÓN DE ÉTICA -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
@@ -207,7 +207,7 @@ export const generateProjectEthicsHtml = (block: DocumentBlock): string => {
 /**
  * Genera el HTML del Oficio de Aprobación de Proyecto (Bloque: project_approval_notice)
  */
-export const generateProjectApprovalNoticeHtml = (block: DocumentBlock): string => {
+export const generateProjectApprovalNoticeHtml = (_block: DocumentBlock): string => {
     return `
   <!-- CABECERA: Logo + Número y Fecha del Oficio -->
   <div class="oficio-header" style="display: table; width: 100%; margin-bottom: 24px;">
@@ -316,93 +316,155 @@ export const generateProgressActivityHtml = (block: DocumentBlock): string => {
     const customTitle = c.activityTableTitle;
 
     if (variant === 'no_previstas') {
-        const title = customTitle || 'MATRIZ DE ACTIVIDADES NO PREVISTAS (NP)';
+        const title = customTitle || 'ACTIVIDADES NO PREVISTAS INICIALMENTE QUE HAN SIDO REALIZADAS DURANTE LA EJECUCIÓN DEL PROYECTO';
         return `
   <!-- BLOQUE: MATRIZ DE ACTIVIDADES NO PREVISTAS -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
-    <table class="info-table">
-      <thead>
-        <tr>
-          <th style="${headerBg('blue')} width: 12%;">N° Actividad</th>
-          <th style="${headerBg('blue')} width: 25%;">Objetivo Específico</th>
-          <th style="${headerBg('blue')} width: 35%;">Actividades No Previstas Ejecutadas</th>
-          <th style="${headerBg('blue')} width: 28%;">Resultados Obtenidos</th>
-        </tr>
-      </thead>
+    {{#each ActividadesNoPrevistas}}
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px;">
       <tbody>
-        {{#each ActividadesNoPrevistas}}
         <tr>
-          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
-          <td>{{default this.ObjetivoAsociado this.objetivo_asociado}}</td>
-          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
-          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; width: 35%; padding: 5px 8px; border: 1px solid #334155;">NÚMERO DE ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">{{default this.NumeroActividad this.numero_actividad ""}}</td>
         </tr>
-        {{/each}}
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">OBJETIVO DEL PROYECTO DE INVESTIGACIÓN</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ObjetivoAsociado this.objetivo_asociado ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">ACTIVIDAD EJECUTADA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ActividadesEjecutadas this.actividades_ejecutadas ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">RESULTADOS OBTENIDOS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ResultadosObtenidos this.resultados_obtenidos ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PORCENTAJE DE AVANCE (%)</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold;">{{default this.PorcentajeAvance this.porcentaje_avance "100"}}%</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PARTICIPANTES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.Participantes this.participantes "Director del Proyecto, Investigadores"}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA DE INICIO DE LA ACTIVIDAD NO PREVISTA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaInicio this.fecha_inicio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA FIN DE LA ACTIVIDAD NO PREVISTA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaFin this.fecha_fin ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; vertical-align: top;">OBSERVACIONES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; min-height: 40px; vertical-align: top;">{{default this.Observaciones this.observaciones ""}}</td>
+        </tr>
       </tbody>
     </table>
+    {{/each}}
   </div>`;
     }
 
     if (variant === 'obstaculos') {
-        const title = customTitle || 'MATRIZ DE OBSTÁCULOS Y ACCIONES CORRECTIVAS (OBS)';
+        const title = customTitle || 'OBSTÁCULOS QUE SE HAN PRESENTADO PARA LA EJECUCIÓN DEL PROYECTO';
         return `
   <!-- BLOQUE: MATRIZ DE OBSTÁCULOS -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
-    <table class="info-table">
-      <thead>
-        <tr>
-          <th style="${headerBg('blue')} width: 10%;">N° Actividad</th>
-          <th style="${headerBg('blue')} width: 20%;">Objetivo Específico</th>
-          <th style="${headerBg('blue')} width: 25%;">Limitación / Obstáculo</th>
-          <th style="${headerBg('blue')} width: 25%;">Actividades Correctivas</th>
-          <th style="${headerBg('blue')} width: 20%;">Resultados Obtenidos</th>
-        </tr>
-      </thead>
+    {{#each Obstaculos}}
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px;">
       <tbody>
-        {{#each Obstaculos}}
         <tr>
-          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
-          <td>{{default this.ObjetivoAsociado this.objetivo_asociado}}</td>
-          <td>{{default this.Limitacion this.limitacion}}</td>
-          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
-          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; width: 35%; padding: 5px 8px; border: 1px solid #334155;">NÚMERO DE ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">{{default this.NumeroActividad this.numero_actividad ""}}</td>
         </tr>
-        {{/each}}
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">OBJETIVO DEL PROYECTO DE INVESTIGACIÓN</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ObjetivoAsociado this.objetivo_asociado ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">LIMITACIÓN</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.Limitacion this.limitacion ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">ACTIVIDAD CORRECTIVA DESARROLLADA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ActividadesEjecutadas this.actividades_ejecutadas ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">RESULTADOS OBTENIDOS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ResultadosObtenidos this.resultados_obtenidos ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PORCENTAJE DE AVANCE (%)</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold;">{{default this.PorcentajeAvance this.porcentaje_avance "100"}}%</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PARTICIPANTES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.Participantes this.participantes "Director del Proyecto, Investigadores"}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA DE INICIO DE LA ACTIVIDAD CORRECTIVA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaInicio this.fecha_inicio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA FIN DE LA ACTIVIDAD CORRECTIVA</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaFin this.fecha_fin ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; vertical-align: top;">OBSERVACIONES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; min-height: 40px; vertical-align: top;">{{default this.Observaciones this.observaciones ""}}</td>
+        </tr>
       </tbody>
     </table>
+    {{/each}}
   </div>`;
     }
 
     // Default: ejecutadas
-    const title = customTitle || 'MATRIZ DE ACTIVIDADES EJECUTADAS';
+    const title = customTitle || '2. MATRIZ DE ACTIVIDADES EJECUTADAS';
     return `
   <!-- BLOQUE: MATRIZ DE ACTIVIDADES EJECUTADAS -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
     <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
-    <table class="info-table">
-      <thead>
-        <tr>
-          <th style="${headerBg('blue')} width: 10%;">N° Actividad</th>
-          <th style="${headerBg('blue')} width: 35%;">Actividades Ejecutadas</th>
-          <th style="${headerBg('blue')} width: 25%;">Resultados Obtenidos</th>
-          <th style="${headerBg('blue')} width: 10%; text-align: center;">% Avance</th>
-          <th style="${headerBg('blue')} width: 20%;">Participantes</th>
-        </tr>
-      </thead>
+    {{#each ActividadesEjecutadas}}
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px;">
       <tbody>
-        {{#each ActividadesEjecutadas}}
         <tr>
-          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
-          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
-          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
-          <td style="text-align: center; font-weight: bold; color: #10b981;">{{default this.PorcentajeAvance this.porcentaje_avance}}%</td>
-          <td>{{default this.Participantes this.participantes}}</td>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; width: 32%; padding: 5px 8px; border: 1px solid #334155;">NÚMERO DE ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">{{default this.NumeroActividad this.numero_actividad ""}}</td>
         </tr>
-        {{/each}}
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">ACTIVIDADES EJECUTADAS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ActividadesEjecutadas this.actividades_ejecutadas ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">RESULTADOS OBTENIDOS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.ResultadosObtenidos this.resultados_obtenidos ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PORCENTAJE DE AVANCE (%)</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold;">{{default this.PorcentajeAvance this.porcentaje_avance "100"}}%</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PARTICIPANTES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.Participantes this.participantes "Director del Proyecto e Investigadores"}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA DE INICIO DE LA ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaInicio this.fecha_inicio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA FIN DE LA ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default this.FechaFin this.fecha_fin ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; vertical-align: top;">OBSERVACIONES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; min-height: 40px; vertical-align: top;">{{default this.Observaciones this.observaciones ""}}</td>
+        </tr>
       </tbody>
     </table>
+    {{/each}}
   </div>`;
 };
 
@@ -411,18 +473,56 @@ export const generateProgressActivityHtml = (block: DocumentBlock): string => {
  */
 export const generateProgressStatusHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const title = c.statusTableTitle || 'ESTADO DE EJECUCIÓN Y DICTAMEN DE FASE';
+    const title = c.statusTableTitle || 'ESTADO DE EJECUCIÓN DEL PROYECTO';
     return `
   <!-- BLOQUE: ESTADO DE EJECUCIÓN -->
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
-    <div style="margin-bottom: 10px; padding: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
-      <strong>Estado Actual del Proyecto:</strong> 
-      <span style="font-weight: bold; color: ${COLORS.blue}; font-size: 10pt; text-transform: uppercase;">{{default EstadoEjecucion estado_ejecucion "EN AVANCE"}}</span>
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; text-align: center; color: #000000; margin-bottom: 12px;">${title}</p>
+    <p style="font-size: 8.5pt; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: #000000;">MARQUE CON UNA (X) EL ESTADO ACTUAL DEL PROYECTO DE INVESTIGACIÓN:</p>
+    
+    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 0px;">
+      <thead>
+        <tr style="background-color: #1e2a4a; color: white; font-weight: bold;">
+          <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">INICIADO</th>
+          <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">EN AVANCE</th>
+          <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">SUSPENDIDO</th>
+          <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">POR FINALIZAR</th>
+          <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">FINALIZADO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "INICIADO"}}(X){{else}}{{#if_eq estado_ejecucion "INICIADO"}}(X){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "EN AVANCE"}}(X){{else}}{{#if_eq estado_ejecucion "EN AVANCE"}}(X){{else}}{{#unless EstadoEjecucion}}{{#unless estado_ejecucion}}(X){{/unless}}{{/unless}}{{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "SUSPENDIDO"}}(X){{else}}{{#if_eq estado_ejecucion "SUSPENDIDO"}}(X){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "POR FINALIZAR"}}(X){{else}}{{#if_eq estado_ejecucion "POR FINALIZAR"}}(X){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "FINALIZADO"}}(X){{else}}{{#if_eq estado_ejecucion "FINALIZADO"}}(X){{/if_eq}}{{/if_eq}}</td>
+        </tr>
+        <tr style="background-color: #1e2a4a; color: white; font-weight: bold; text-align: left;">
+          <td colspan="5" style="padding: 6px 8px; border: 1px solid #000000; font-size: 8.5pt; text-transform: uppercase;">
+            EXPLIQUE BREVEMENTE LA FASE DE EJECUCIÓN EN QUE SE ENCUENTRA SU PROYECTO:
+          </td>
+        </tr>
+        <tr style="text-align: left;">
+          <td colspan="5" style="padding: 8px; border: 1px solid #000000; font-size: 8.5pt; min-height: 50px; vertical-align: top; color: #000000;">
+            {{{default DescripcionFaseActual descripcion_fase_actual ""}}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 18px;">
+      <p style="font-weight: bold; font-size: 8.5pt; text-transform: uppercase; margin-bottom: 6px; color: #000000;">OBSERVACIONES GENERALES DEL DIRECTOR DEL PROYECTO:</p>
+      <div style="padding: 8px; border: 1px solid #000000; font-size: 8.5pt; min-height: 50px; color: #000000;">
+        {{{default ObservacionesDirector observaciones_director ""}}}
+      </div>
     </div>
-    <div style="margin-bottom: 12px;">
-      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 4px;">Descripción Breve de la Fase Actual:</strong>
-      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{{default DescripcionFaseActual descripcion_fase_actual}}}</div>
+
+    <div style="margin-top: 18px;">
+      <p style="font-weight: bold; font-size: 8.5pt; text-transform: uppercase; margin-bottom: 6px; color: #000000;">OBSERVACIONES GENERALES DEL COORDINADOR DE LA UNIDAD DE INVESTIGACIÓN:</p>
+      <div style="padding: 8px; border: 1px solid #000000; font-size: 8.5pt; min-height: 45px; color: #000000;">
+        {{{default ObservacionesCoordinador observaciones_coordinador ""}}}
+      </div>
     </div>
   </div>`;
 };
@@ -514,6 +614,52 @@ export const generateProgressHeaderHtml = (block: DocumentBlock): string => {
         </tr>
       </tbody>
     </table>
-  </div>`;
+  </div>
+
+  <!-- BLOQUE: 2. MATRIZ DE ACTIVIDADES EJECUTADAS -->
+  {{#if ActividadesEjecutadas}}
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">2. MATRIZ DE ACTIVIDADES EJECUTADAS</p>
+    {{#each ActividadesEjecutadas}}
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 15px;">
+      <tbody>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; width: 32%; padding: 5px 8px; border: 1px solid #334155;">NÚMERO DE ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">{{default NumeroActividad ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">ACTIVIDADES EJECUTADAS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default ActividadesEjecutadas ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">RESULTADOS OBTENIDOS</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default ResultadosObtenidos ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PORCENTAJE DE AVANCE (%)</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold;">{{default PorcentajeAvance "100"}}%</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PARTICIPANTES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default Participantes "Director del Proyecto e Investigadores"}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA DE INICIO DE LA ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default FechaInicio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">FECHA FIN DE LA ACTIVIDAD</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{default FechaFin ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; vertical-align: top;">OBSERVACIONES</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; min-height: 40px; vertical-align: top;">{{default Observaciones ""}}</td>
+        </tr>
+      </tbody>
+    </table>
+    {{/each}}
+  </div>
+  {{/if}}
+</div>`;
 };
 
