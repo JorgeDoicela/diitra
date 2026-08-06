@@ -93,6 +93,7 @@ const DocumentTemplatesPage: React.FC = () => {
         handleAddRow,
         handleRemoveRow,
         handleDragEnd,
+        handleReorderTemplates,
     } = useDocumentTemplatesPage();
 
     return (
@@ -386,6 +387,7 @@ const DocumentTemplatesPage: React.FC = () => {
                             isSidebarCollapsed={isSidebarCollapsed}
                             onToggleSidebar={toggleSidebar}
                             headerCollapsed={headerCollapsed}
+                            onReorderTemplates={handleReorderTemplates}
                         />
                     </div>
 

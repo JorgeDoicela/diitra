@@ -37,7 +37,38 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
-            return Ok(templates.Select(t => new
+            
+            // Intentar cargar el orden personalizado guardado en BD
+            List<string>? customOrder = null;
+            try
+            {
+                var config = await _db.InvConfigsGenerales
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Clave == "Templates.OrderConfigJson", ct);
+
+                if (config != null && !string.IsNullOrEmpty(config.Valor))
+                {
+                    customOrder = System.Text.Json.JsonSerializer.Deserialize<List<string>>(config.Valor);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al leer Templates.OrderConfigJson: {ex.Message}");
+            }
+
+            var orderedTemplates = templates.ToList();
+            if (customOrder != null && customOrder.Any())
+            {
+                orderedTemplates = templates
+                    .OrderBy(t => {
+                        var idx = customOrder.IndexOf(t.Code);
+                        return idx >= 0 ? idx : int.MaxValue;
+                    })
+                    .ThenBy(t => t.Category)
+                    .ToList();
+            }
+
+            return Ok(orderedTemplates.Select(t => new
             {
                 t.Id,
                 t.Code,
@@ -276,6 +307,39 @@ namespace diitra_api.Controllers
             await _db.SaveChangesAsync(ct);
             return Ok(new { message = "Tema global institucional actualizado correctamente." });
         }
+
+        /// <summary>
+        /// Actualiza el orden de las plantillas en el catálogo.
+        /// </summary>
+        [HttpPut("order")]
+        public async Task<IActionResult> UpdateOrder([FromBody] UpdateTemplatesOrderRequest request, CancellationToken ct)
+        {
+            if (request == null || request.Codes == null)
+                return BadRequest(new { error = "El cuerpo de la solicitud no puede estar vacío." });
+
+            var config = await _db.InvConfigsGenerales
+                .FirstOrDefaultAsync(c => c.Clave == "Templates.OrderConfigJson", ct);
+
+            var jsonValue = System.Text.Json.JsonSerializer.Serialize(request.Codes);
+
+            if (config == null)
+            {
+                config = new InvConfigGeneral
+                {
+                    Clave = "Templates.OrderConfigJson",
+                    Valor = jsonValue,
+                    Descripcion = "Arreglo ordenado JSON con los códigos de las plantillas para visualización en el catálogo."
+                };
+                _db.InvConfigsGenerales.Add(config);
+            }
+            else
+            {
+                config.Valor = jsonValue;
+            }
+
+            await _db.SaveChangesAsync(ct);
+            return Ok(new { message = "Orden de plantillas guardado correctamente." });
+        }
     }
 
     public class UpdateTemplateRequest
@@ -306,5 +370,11 @@ namespace diitra_api.Controllers
     {
         [JsonPropertyName("themeConfigJson")]
         public string? ThemeConfigJson { get; set; }
+    }
+
+    public class UpdateTemplatesOrderRequest
+    {
+        [JsonPropertyName("codes")]
+        public List<string> Codes { get; set; } = new();
     }
 }

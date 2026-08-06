@@ -421,7 +421,9 @@ namespace Diitra.Infrastructure.Common.Documents
             "MarcoTeorico", "Metodologia", "Evaluacion", "Bibliografia", "Investigadores", 
             "RecursosDisponibles", "RecursosNecesarios", "Cronograma", "ProductosEsperados",
             // INFORME_AVANCE
-            "HitosCompletados", "Evidencias", "PresupuestoEjecutado", "ConclusionesParciales",
+            "HitosCompletados", "Evidencias", "PresupuestoEjecutado", "ConclusionesParciales", 
+            "ActividadesEjecutadas", "ActividadesNoPrevistas", "Obstaculos", "DescripcionFaseActual", 
+            "EstadoEjecucion", "ObservacionesDirector", "ObservacionesCoordinador",
             // INFORME_FINAL_INVESTIGACION
             "resumen_ejecutivo", "cumplimiento_objetivos", "resultados", "discusion", 
             "impacto_final", "transferencia_conocimiento", "conclusiones", "recomendaciones", "bibliografia_final",

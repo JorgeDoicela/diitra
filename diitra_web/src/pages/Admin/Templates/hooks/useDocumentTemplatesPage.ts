@@ -829,6 +829,17 @@ export const useDocumentTemplatesPage = () => {
 
     const activeBlock = blocks.find(b => b.id === activeBlockId);
 
+    const handleReorderTemplates = async (newTemplates: DocumentTemplateDto[]) => {
+        setTemplates(newTemplates);
+        try {
+            const codes = newTemplates.map(t => t.code);
+            await api.put('/admin/templates/order', { codes });
+        } catch (err: any) {
+            console.error(err);
+            addToast("Error al Reordenar", "No se pudo guardar el orden personalizado de las plantillas.", "error");
+        }
+    };
+
     return {
         templates,
         selectedTemplate,
@@ -865,5 +876,6 @@ export const useDocumentTemplatesPage = () => {
         handleAddRow,
         handleRemoveRow,
         handleDragEnd,
+        handleReorderTemplates,
     };
 };

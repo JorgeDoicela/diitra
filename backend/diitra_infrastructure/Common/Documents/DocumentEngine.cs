@@ -227,9 +227,14 @@ namespace Diitra.Infrastructure.Common.Documents
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                bool isDbHtmlValid = !string.IsNullOrWhiteSpace(template.HtmlContent) && 
-                                     !template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") &&
-                                     !template.HtmlContent.Contains("<div class=\"doc-container\"></div>");
+                bool isPlaceholderDbHtml = string.IsNullOrWhiteSpace(template.HtmlContent) ||
+                                           template.HtmlContent.TrimStart().StartsWith("<!-- Cargado desde") ||
+                                           template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") ||
+                                           template.HtmlContent.Contains("<div class=\"doc-container\">\r\n</div>") ||
+                                           template.HtmlContent.Contains("<div class=\"doc-container\"></div>") ||
+                                           template.HtmlContent.Trim() == "<div class=\"doc-container\"></div>";
+
+                bool isDbHtmlValid = !isPlaceholderDbHtml;
 
                 var htmlToRender = isDbHtmlValid 
                     ? template.HtmlContent 
@@ -649,7 +654,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         }
                     }
 
-                    // 3. Fallback de DTO o JSON inline
+                    // 3. Fallback de DTO o JSON inline de metadatos genéricos
                     ProyectoDto? projectDto = renderData as ProyectoDto;
                     if (projectDto == null && renderData != null)
                     {
@@ -660,22 +665,42 @@ namespace Diitra.Infrastructure.Common.Documents
                                 : System.Text.Json.JsonSerializer.Serialize(renderData);
 
                             using var doc = System.Text.Json.JsonDocument.Parse(rawText);
-                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
-                                (doc.RootElement.TryGetProperty("Data", out var dataProp) || 
-                                 doc.RootElement.TryGetProperty("data", out dataProp)))
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
                             {
-                                var nestedRaw = dataProp.GetRawText();
-                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(nestedRaw, ProyectoDto.DefaultDeserializerOptions);
-                            }
-                            else
-                            {
-                                var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(rawText);
+                                var root = doc.RootElement;
+                                if (root.TryGetProperty("Data", out var dataProp) || root.TryGetProperty("data", out dataProp))
+                                {
+                                    root = dataProp;
+                                }
+
+                                var cleanedRaw = Diitra.Infrastructure.Common.Documents.Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(root.GetRawText());
                                 projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedRaw, ProyectoDto.DefaultDeserializerOptions);
+
+                                // Inyectar propiedades dinámicas de snapshot genérico si no estaban en extraImageVars
+                                Action<string, string> addIfPresent = (jsonProp, varName) => {
+                                    if (!extraImageVars.ContainsKey(varName)) {
+                                        if (root.TryGetProperty(jsonProp, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(v.GetString()))
+                                            extraImageVars[varName] = v.GetString();
+                                    }
+                                };
+
+                                addIfPresent("Titulo", "proyecto_titulo");
+                                addIfPresent("titulo", "proyecto_titulo");
+                                addIfPresent("LineaInvestigacion", "linea_investigacion");
+                                addIfPresent("linea_investigacion", "linea_investigacion");
+                                addIfPresent("DirectorProyecto", "director_nombre");
+                                addIfPresent("director_proyecto", "director_nombre");
+                                addIfPresent("Carrera", "director_carrera");
+                                addIfPresent("carrera", "director_carrera");
+                                addIfPresent("FechaInicio", "fecha_inicio");
+                                addIfPresent("fecha_inicio", "fecha_inicio");
+                                addIfPresent("FechaFin", "fecha_fin");
+                                addIfPresent("fecha_fin", "fecha_fin");
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "DIITRA DocumentEngine: No se pudo deserializar request.Data a ProyectoDto para {Code}", template.Code);
+                            _logger.LogWarning(ex, "DIITRA DocumentEngine: No se pudo deserializar request.Data a metadatos extendidos para {Code}", template.Code);
                         }
                     }
 

@@ -171,10 +171,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
-            // Aplicar config de plantilla (prioriza backend, pero cae en localConfig si el backend retorna 0 secciones)
+            // Aplicar config de plantilla (prioriza backend si retornó respuesta válida, de lo contrario cae en localConfig)
             const rawConfig = configResult?.data;
-            const hasValidSections = Array.isArray(rawConfig?.sections) && rawConfig.sections.length > 0;
-            const finalConfig = (hasValidSections ? rawConfig : (localConfig || rawConfig));
+            const isApiSuccess = rawConfig && typeof rawConfig === 'object' && ('sections' in rawConfig || 'title' in rawConfig);
+            const finalConfig = isApiSuccess ? rawConfig : (localConfig || rawConfig);
             setTemplateConfig(finalConfig);
             if (!finalConfig) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
