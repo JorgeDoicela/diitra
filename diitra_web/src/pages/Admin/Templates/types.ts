@@ -57,7 +57,9 @@ export type BlockType =
     | 'project_approval_notice'
     | 'progress_header_section'
     | 'progress_activity_section'
-    | 'progress_status_section';
+    | 'progress_status_section'
+    | 'final_report_header_section'
+    | 'final_report_writing_section';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos
@@ -108,6 +110,39 @@ export const DEFAULT_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
     { id: 'sec_marco_teorico', fieldKey: 'MarcoTeorico', numberPrefix: '3.6', title: 'MARCO TEÓRICO', placeholder: 'Describir los conceptos clave...', requirementText: 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN', enabled: true, scribanVariable: 'marco_teorico', legacyKey: 'showMarcoTeorico', colSpan: 2, variant: 'standard', hasContent: true },
     { id: 'sec_metodologia', fieldKey: 'Metodologia', numberPrefix: '3.7', title: 'METODOLOGÍA', placeholder: 'Describir el enfoque metodológico...', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', enabled: true, scribanVariable: 'metodologia', legacyKey: 'showMetodologia', colSpan: 2, variant: 'standard', hasContent: true },
     { id: 'sec_evaluacion', fieldKey: 'Evaluacion', numberPrefix: '3.8', title: 'EVALUACIÓN', placeholder: 'Describir los criterios e indicadores...', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', enabled: true, scribanVariable: 'evaluacion', legacyKey: 'showEvaluacion', colSpan: 2, variant: 'standard', hasContent: true }
+];
+
+export interface FinalReportWritingSubsection {
+    id: string;
+    fieldKey: string;
+    numberPrefix?: string;
+    title: string;
+    placeholder?: string;
+    requirementText?: string;
+    enabled: boolean;
+    colSpan?: 1 | 2;
+    variant?: 'standard' | 'banner_navy' | 'banner_gold' | string;
+    hasContent?: boolean;
+    isGroupHeader?: boolean;
+    parentId?: string;
+}
+
+export const DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS: FinalReportWritingSubsection[] = [
+    { id: 'sec_indice', fieldKey: 'Indice', numberPrefix: '2.', title: 'ÍNDICE', placeholder: 'Elaborar un índice detallado con los títulos y subtítulos del informe, numerando cada sección de acuerdo con el formato del documento.\nIncluir las páginas correspondientes a cada sección.\nIncluir el índice de tablas.\nIncluir el índice de imágenes.', requirementText: 'DETALLAR ÍNDICE DE CONTENIDO, TABLAS E IMÁGENES', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_resumen', fieldKey: 'Resumen', numberPrefix: '3.', title: 'RESUMEN', placeholder: '(250-300 palabras, 3-4 párrafos)\nPresentar una síntesis clara del proyecto, destacando el problema abordado, los objetivos, la metodología, los principales resultados y conclusiones.\nDebe redactarse en tercera persona y sin incluir citas.', requirementText: '250-300 PALABRAS, 3-4 PÁRRAFOS - TERCERA PERSONA SIN CITAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_introduccion', fieldKey: 'Introduccion', numberPrefix: '4.', title: 'INTRODUCCIÓN', placeholder: '(500-700 palabras, 5-7 párrafos)\nExplicar el contexto y la relevancia del proyecto de investigación.\nDefinir el problema central y justificar su importancia.\nDescribir brevemente el enfoque metodológico utilizado.\nMencionar el impacto esperado del proyecto.\nIncluir citas según normas APA 7ª edición.', requirementText: '500-700 PALABRAS, 5-7 PÁRRAFOS - NORMAS APA 7ª EDICIÓN', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_objetivos', fieldKey: 'Objetivos', numberPrefix: '5.', title: 'OBJETIVO GENERAL Y OBJETIVOS ESPECÍFICOS', placeholder: 'Escriba su objetivo general.\nEscriba sus objetivos específicos, en forma de lista, orientados a la consecución del objetivo general.', requirementText: 'OBJETIVO GENERAL + LISTA DE OBJETIVOS ESPECÍFICOS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_fundamentos', fieldKey: 'Fundamentos', numberPrefix: '6.', title: 'FUNDAMENTOS', placeholder: '(EXTENSIÓN VARIABLE)\nDescribir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto.\nIncluir referencias a estudios previos, normativas o metodologías relacionadas.\nCITAR USANDO normas APA 7ª edición.\nPuede extenderse según la necesidad del tema.', requirementText: 'EXTENSIÓN VARIABLE - CITAR USANDO NORMAS APA 7ª EDICIÓN', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_metodos', fieldKey: 'Metodos', numberPrefix: '7.', title: 'MÉTODOS', placeholder: '(700-900 palabras, 5-8 párrafos)\nExplicar detalladamente la metodología utilizada en la investigación.\nDescribir las técnicas, herramientas e instrumentos empleados para la recolección y análisis de datos.\nJustificar la elección de métodos y procedimientos.\nIncluir un cuadro o esquema si es necesario.', requirementText: '700-900 PALABRAS, 5-8 PÁRRAFOS - TÉCNICAS E INSTRUMENTOS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_resultados', fieldKey: 'Resultados', numberPrefix: '8.', title: 'RESULTADOS', placeholder: '(800-1200 palabras, 6-12 párrafos)\nExponer los hallazgos obtenidos en la investigación.\nPresentar datos relevantes a través de gráficos, tablas o figuras si es necesario.\nInterpretar los resultados de manera objetiva.\nComparar con investigaciones previas si aplica.', requirementText: '800-1200 PALABRAS, 6-12 PÁRRAFOS - GRÁFICOS, TABLAS O FIGURAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_productos', fieldKey: 'Productos', numberPrefix: '9.', title: 'PRODUCTOS', placeholder: '(400-600 palabras, 4-6 párrafos)\nDescribir los productos generados a partir del proyecto (publicaciones, prototipos, software, modelos, documentos técnicos, etc.).\nIncluir evidencia tangible de estos productos si aplica.', requirementText: '400-600 PALABRAS, 4-6 PÁRRAFOS - PUBLICACIONES Y SOFTWARE', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_impactos', fieldKey: 'Impactos', numberPrefix: '10.', title: 'IMPACTOS', placeholder: '(500-800 palabras, 5-8 párrafos)\nExplicar los impactos generados por el proyecto en términos científicos, tecnológicos, sociales, económicos o educativos.\nPresentar evidencia de la aplicación práctica de los resultados.', requirementText: '500-800 PALABRAS, 5-8 PÁRRAFOS - IMPACTOS CIENTÍFICOS Y SOCIALES', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_transferencia', fieldKey: 'Transferencia', numberPrefix: '11.', title: 'TRANSFERENCIA DE RESULTADOS', placeholder: '(400-600 palabras, 4-6 párrafos)\nDescribir cómo se han compartido o aplicado los resultados del proyecto en otros ámbitos.\nMencionar convenios, publicaciones, capacitaciones o implementaciones en organizaciones externas.', requirementText: '400-600 PALABRAS, 4-6 PÁRRAFOS - CONVENIOS Y APLICACIONES', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_informe_financiero', fieldKey: 'InformeFinanciero', numberPrefix: '12.', title: 'INFORME FINANCIERO DE GASTOS', placeholder: '(Extensión variable)\nPresentar un desglose detallado de los recursos utilizados en el proyecto.\nIncluir tablas que especifiquen montos, conceptos y justificaciones de los gastos.', requirementText: 'EXTENSIÓN VARIABLE - TABLAS Y JUSTIFICACIÓN DE GASTOS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_conclusiones', fieldKey: 'Conclusiones', numberPrefix: '13.', title: 'CONCLUSIONES', placeholder: '(500-700 palabras, 5-7 párrafos)\nResumir los principales hallazgos del proyecto.\nExplicar si los objetivos planteados fueron alcanzados.\nMencionar limitaciones y posibles mejoras futuras.', requirementText: '500-700 PALABRAS, 5-7 PÁRRAFOS - LOGRO DE OBJETIVOS Y LIMITACIONES', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_recomendaciones', fieldKey: 'Recomendaciones', numberPrefix: '14.', title: 'RECOMENDACIONES', placeholder: '(500-700 palabras, 5-7 párrafos)\nProponer acciones concretas basadas en los hallazgos del proyecto.\nSugerir mejoras en la metodología, implementación o futuras líneas de investigación.\nIndicar estrategias para la aplicación práctica de los resultados en contextos académicos, industriales o sociales.\nConsiderar limitaciones detectadas y cómo superarlas en investigaciones futuras.\nLas recomendaciones deben ser viables, realistas y alineadas con los objetivos del proyecto.', requirementText: '500-700 PALABRAS, 5-7 PÁRRAFOS - ACCIONES VIABLES Y MEJORAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_bibliografia', fieldKey: 'Bibliografia', numberPrefix: '15.', title: 'BIBLIOGRAFÍA', placeholder: '(Extensión variable)\nListar fuentes adicionales que hayan sido consultadas, tanto las usadas como aquellas que no necesariamente han sido citadas en el texto.', requirementText: 'NORMAS APA 7ª EDICIÓN', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
+    { id: 'sec_anexos', fieldKey: 'Anexos', numberPrefix: '16.', title: 'ANEXOS', placeholder: '(Extensión variable)\nIncluir documentos complementarios como cuestionarios, encuestas, imágenes, gráficos, diagramas, o capturas de pantalla de herramientas utilizadas.', requirementText: 'DOCUMENTOS COMPLEMENTARIOS Y CAPTURAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true }
 ];
 
 export interface ImpactCategory {
@@ -218,6 +253,7 @@ export interface DocumentBlock {
         // ── rich_text ──────────────────────────────────────────────────────
         html?: string;             // Contenido HTML serializado por Tiptap
         title?: string;            // Título opcional de sección para bloque rich_text
+        placeholder?: string;      // Placeholder o guía de redacción institucional
 
         // ── advanced_table ─────────────────────────────────────────────────
         headerStyle?: 'blue' | 'gold' | 'gray' | 'none';
@@ -359,6 +395,19 @@ export interface DocumentBlock {
         parrafo_invitacion?: string;
         frase_cierre?: string;
         frase_despedida?: string;
+
+        // ── final_report_header_section ────────────────────────────────────
+        finalReportTitle?: string;
+        finalReportHeaderColor?: 'navy' | 'gold' | 'slate' | string;
+        showTipoInvestigacion?: boolean;
+        showAlcanceProyecto?: boolean;
+        showFechasProyecto?: boolean;
+        showTablaInvestigadores?: boolean;
+
+        // ── final_report_writing_section ───────────────────────────────────
+        writingSections?: FinalReportWritingSubsection[];
+        writingLayoutMode?: 'table_2col' | 'stacked' | string;
+        writingHeaderColor?: 'navy' | 'gold' | 'slate' | string;
         coordinador_nombre?: string;
         coordinador_cargo?: string;
         firmante_institucion?: string;

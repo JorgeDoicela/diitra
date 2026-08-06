@@ -340,32 +340,68 @@ export const useDocumentTemplatesPage = () => {
                     loadedBlocks = [
                         baseCover,
                         {
-                            id: "block-final-1", type: "progress_header_section", title: "1. Datos Generales del Proyecto", isActive: true,
-                            config: { progressHeaderColor: "navy", progressHeaderBorder: "solid", headerTitle: "1. DATOS GENERALES DEL PROYECTO" }
+                            id: "block-final-1", type: "final_report_header_section", title: "1. Datos del Proyecto de Investigación", isActive: true,
+                            config: { finalReportTitle: "DATOS DEL PROYECTO DE INVESTIGACIÓN", finalReportHeaderColor: "navy", showTipoInvestigacion: true, showAlcanceProyecto: true, showFechasProyecto: true, showTablaInvestigadores: true }
                         },
                         {
-                            id: "block-resumen_ejecutivo", type: "rich_text", title: "2. Resumen Ejecutivo", isActive: true,
-                            config: { title: "2. RESUMEN EJECUTIVO" }
+                            id: "block-indice", type: "rich_text", title: "ÍNDICE", isActive: true,
+                            config: { title: "ÍNDICE", placeholder: "Elaborar un índice detallado con los títulos y subtítulos del informe, numerando cada sección de acuerdo con el formato del documento.\nIncluir las páginas correspondientes a cada sección.\nIncluir el índice de tablas.\nIncluir el índice de imágenes." }
                         },
                         {
-                            id: "block-cumplimiento_objetivos", type: "rich_text", title: "3. Logro de Objetivos", isActive: true,
-                            config: { title: "3. LOGRO DE OBJETIVOS" }
+                            id: "block-resumen", type: "rich_text", title: "RESUMEN", isActive: true,
+                            config: { title: "RESUMEN", placeholder: "(250-300 palabras, 3-4 párrafos)\nPresentar una síntesis clara del proyecto, destacando el problema abordado, los objetivos, la metodología, los principales resultados y conclusiones.\nDebe redactarse en tercera persona y sin incluir citas." }
                         },
                         {
-                            id: "block-resultados_discusion", type: "rich_text", title: "4. Resultados y Discusión", isActive: true,
-                            config: { title: "4. RESULTADOS Y DISCUSIÓN" }
+                            id: "block-introduccion", type: "rich_text", title: "INTRODUCCIÓN", isActive: true,
+                            config: { title: "INTRODUCCIÓN", placeholder: "(500-700 palabras, 5-7 párrafos)\nExplicar el contexto y la relevancia del proyecto de investigación.\nDefinir el problema central y justificar su importancia.\nDescribir brevemente el enfoque metodológico utilizado.\nMencionar el impacto esperado del proyecto.\nIncluir citas según normas APA 7ª edición." }
                         },
                         {
-                            id: "block-impacto_innovacion", type: "rich_text", title: "5. Impacto e Innovación", isActive: true,
-                            config: { title: "5. IMPACTO E INNOVACIÓN" }
+                            id: "block-objetivos", type: "rich_text", title: "OBJETIVO GENERAL Y OBJETIVOS ESPECÍFICOS", isActive: true,
+                            config: { title: "OBJETIVO GENERAL Y OBJETIVOS ESPECÍFICOS", placeholder: "Escriba su objetivo general.\nEscriba sus objetivos específicos, en forma de lista, orientados a la consecución del objetivo general." }
                         },
                         {
-                            id: "block-conclusiones_recomendaciones", type: "rich_text", title: "6. Conclusiones y Recomendaciones", isActive: true,
-                            config: { title: "6. CONCLUSIONES Y RECOMENDACIONES" }
+                            id: "block-fundamentos", type: "rich_text", title: "FUNDAMENTOS", isActive: true,
+                            config: { title: "FUNDAMENTOS", placeholder: "(EXTENSIÓN VARIABLE)\nDescribir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto.\nIncluir referencias a estudios previos, normativas o metodologías relacionadas.\nCITAR USANDO normas APA 7ª edición.\nPuede extenderse según la necesidad del tema." }
                         },
                         {
-                            id: "block-bibliografia_final", type: "rich_text", title: "7. Bibliografía Actualizada (APA)", isActive: true,
-                            config: { title: "7. BIBLIOGRAFÍA ACTUALIZADA (APA)" }
+                            id: "block-metodos", type: "rich_text", title: "MÉTODOS", isActive: true,
+                            config: { title: "MÉTODOS", placeholder: "(700-900 palabras, 5-8 párrafos)\nExplicar detalladamente la metodología utilizada en la investigación.\nDescribir las técnicas, herramientas e instrumentos empleados para la recolección y análisis de datos.\nJustificar la elección de métodos y procedimientos.\nIncluir un cuadro o esquema si es necesario." }
+                        },
+                        {
+                            id: "block-resultados", type: "rich_text", title: "RESULTADOS", isActive: true,
+                            config: { title: "RESULTADOS", placeholder: "(800-1200 palabras, 6-12 párrafos)\nExponer los hallazgos obtenidos en la investigación.\nPresentar datos relevantes a través de gráficos, tablas o figuras si es necesario.\nInterpretar los resultados de manera objetiva.\nComparar con investigaciones previas si aplica." }
+                        },
+                        {
+                            id: "block-productos", type: "rich_text", title: "PRODUCTOS", isActive: true,
+                            config: { title: "PRODUCTOS", placeholder: "(400-600 palabras, 4-6 párrafos)\nDescribir los productos generados a partir del proyecto (publicaciones, prototipos, software, modelos, documentos técnicos, etc.).\nIncluir evidencia tangible de estos productos si aplica." }
+                        },
+                        {
+                            id: "block-impactos", type: "rich_text", title: "IMPACTOS", isActive: true,
+                            config: { title: "IMPACTOS", placeholder: "(500-800 palabras, 5-8 párrafos)\nExplicar los impactos generados por el proyecto en términos científicos, tecnológicos, sociales, económicos o educativos.\nPresentar evidencia de la aplicación práctica de los resultados." }
+                        },
+                        {
+                            id: "block-transferencia", type: "rich_text", title: "TRANSFERENCIA DE RESULTADOS", isActive: true,
+                            config: { title: "TRANSFERENCIA DE RESULTADOS", placeholder: "(400-600 palabras, 4-6 párrafos)\nDescribir cómo se han compartido o aplicado los resultados del proyecto en otros ámbitos.\nMencionar convenios, publicaciones, capacitaciones o implementaciones en organizaciones externas." }
+                        },
+                        {
+                            id: "block-informe_financiero", type: "rich_text", title: "INFORME FINANCIERO DE GASTOS", isActive: true,
+                            config: { title: "INFORME FINANCIERO DE GASTOS", placeholder: "(Extensión variable)\nPresentar un desglose detallado de los recursos utilizados en el proyecto.\nIncluir tablas que especifiquen montos, conceptos y justificaciones de los gastos." }
+                        },
+                        {
+                            id: "block-conclusiones", type: "rich_text", title: "CONCLUSIONES", isActive: true,
+                            config: { title: "CONCLUSIONES", placeholder: "(500-700 palabras, 5-7 párrafos)\nResumir los principales hallazgos del proyecto.\nExplicar si los objetivos planteados fueron alcanzados.\nMencionar limitaciones y posibles mejoras futuras." }
+                        },
+                        {
+                            id: "block-recomendaciones", type: "rich_text", title: "RECOMENDACIONES", isActive: true,
+                            config: { title: "RECOMENDACIONES", placeholder: "(500-700 palabras, 5-7 párrafos)\nProponer acciones concretas basadas en los hallazgos del proyecto.\nSugerir mejoras en la metodología, implementación o futuras líneas de investigación.\nIndicar estrategias para la aplicación práctica de los resultados en contextos académicos, industriales o sociales.\nConsiderar limitaciones detectadas y cómo superarlas en investigaciones futuras.\nLas recomendaciones deben ser viables, realistas y alineadas con los objetivos del proyecto." }
+                        },
+                        {
+                            id: "block-bibliografia", type: "rich_text", title: "BIBLIOGRAFÍA", isActive: true,
+                            config: { title: "BIBLIOGRAFÍA", placeholder: "(Extensión variable)\nListar fuentes adicionales que hayan sido consultadas, tanto las usadas como aquellas que no necesariamente han sido citadas en el texto." }
+                        },
+                        {
+                            id: "block-anexos", type: "rich_text", title: "ANEXOS", isActive: true,
+                            config: { title: "ANEXOS", placeholder: "(Extensión variable)\nIncluir documentos complementarios como cuestionarios, encuestas, imágenes, gráficos, diagramas, o capturas de pantalla de herramientas utilizadas." }
                         },
                         baseSignatures
                     ];
@@ -624,6 +660,12 @@ export const useDocumentTemplatesPage = () => {
                 break;
             case 'progress_status_section':
                 newBlock = { id: newId, type, title: 'Estado y Observaciones', isActive: true, config: { statusTitle: 'ESTADO Y OBSERVACIONES' } };
+                break;
+            case 'final_report_header_section':
+                newBlock = { id: newId, type, title: 'Encabezado Informe Final', isActive: true, config: { finalReportTitle: 'DATOS DEL PROYECTO DE INVESTIGACIÓN', finalReportHeaderColor: 'navy', showTipoInvestigacion: true, showAlcanceProyecto: true, showFechasProyecto: true, showTablaInvestigadores: true } };
+                break;
+            case 'final_report_writing_section':
+                newBlock = { id: newId, type, title: 'Plan de Redacción Informe Final', isActive: true, config: { writingHeaderColor: 'navy', writingLayoutMode: 'table_2col' } };
                 break;
             default:
                 return;

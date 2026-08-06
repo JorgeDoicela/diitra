@@ -551,3 +551,163 @@ export const RenderProgressStatusSection: React.FC<{
         </div>
     );
 };
+
+export const RenderFinalReportHeaderSection: React.FC<{
+    config: any;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config }) => {
+    const c = config || {};
+    const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
+    const headerColorKey = c.finalReportHeaderColor || 'navy';
+    const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
+
+    return (
+        <div className="w-full text-slate-900 font-sans my-2">
+            <div className="w-full border border-slate-900 overflow-hidden rounded-xs bg-white p-3 space-y-3">
+                <div
+                    className="p-2 font-bold text-[11pt] uppercase tracking-wider text-center"
+                    style={{ backgroundColor: headerBg, color: '#ffffff' }}
+                >
+                    {title}
+                </div>
+
+                <table className="w-full border-collapse border border-slate-900 text-[8.5pt]">
+                    <tbody>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase w-[30%]">NOMBRE DEL PROYECTO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[TÍTULO DEL PROYECTO]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">PROGRAMA:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[NOMBRE DEL PROGRAMA]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">GRUPO DE INVESTIGACIÓN:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[GRUPO DE INVESTIGACIÓN]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">DOMINIO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[DOMINIO INSTITUCIONAL]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">LÍNEA DE INVESTIGACIÓN:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[LÍNEA PRINCIPAL]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">SUBLÍNEA DE INVESTIGACIÓN:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[SUBLÍNEA ESPECÍFICA]</td>
+                        </tr>
+                        {c.showTipoInvestigacion !== false && (
+                            <tr>
+                                <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">TIPO DE INVESTIGACIÓN (X):</td>
+                                <td className="p-1.5 border border-slate-900 text-center font-bold" colSpan={3}>
+                                    <div className="flex items-center justify-around text-[8pt]">
+                                        <span>BÁSICA ( )</span>
+                                        <span>APLICADA ( X )</span>
+                                        <span>DESARROLLO EXPERIMENTAL ( )</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">CAMPO AMPLIO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[CAMPO AMPLIO CACES]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">CAMPO ESPECÍFICO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[CAMPO ESPECÍFICO CACES]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">CAMPO DETALLADO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[CAMPO DETALLADO CACES]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">CARRERA:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 font-medium" colSpan={3}>Tecnología Superior en [CARRERA]</td>
+                        </tr>
+                        <tr>
+                            <td className="p-1.5 border border-slate-900 font-bold bg-slate-100 uppercase">PERIODO ACADÉMICO:</td>
+                            <td className="p-1.5 border border-slate-900 text-slate-700 italic" colSpan={3}>[PERIODO ACADÉMICO]</td>
+                        </tr>
+
+                        {c.showAlcanceProyecto !== false && (
+                            <>
+                                <tr className="text-center font-bold uppercase text-[#ffffff]" style={{ backgroundColor: headerBg }}>
+                                    <td colSpan={4} className="p-1 border border-slate-900 text-[8.5pt]">ALCANCE DEL PROYECTO (X)</td>
+                                </tr>
+                                <tr className="text-center text-[7.5pt] font-bold uppercase bg-slate-100">
+                                    <td className="p-1 border border-slate-900 w-[20%]">INSTITUCIONAL</td>
+                                    <td className="p-1 border border-slate-900 w-[20%]">PARROQUIAL</td>
+                                    <td className="p-1 border border-slate-900 w-[20%]">CANTONAL</td>
+                                    <td className="p-1 border border-slate-900 w-[20%]">PROVINCIAL / NACIONAL</td>
+                                </tr>
+                                <tr className="text-center font-bold text-[9pt]">
+                                    <td className="p-1 border border-slate-900">( X )</td>
+                                    <td className="p-1 border border-slate-900">( )</td>
+                                    <td className="p-1 border border-slate-900">( )</td>
+                                    <td className="p-1 border border-slate-900">( )</td>
+                                </tr>
+                            </>
+                        )}
+
+                        {c.showFechasProyecto !== false && (
+                            <>
+                                <tr className="text-center font-bold uppercase text-[7.5pt] bg-slate-100">
+                                    <td className="p-1 border border-slate-900">FECHA PRESENTACIÓN</td>
+                                    <td className="p-1 border border-slate-900">FECHA INICIO</td>
+                                    <td className="p-1 border border-slate-900">FECHA FIN PRESENTADA</td>
+                                    <td className="p-1 border border-slate-900">FECHA FIN REAL</td>
+                                </tr>
+                                <tr className="text-center text-[8pt] text-slate-700">
+                                    <td className="p-1 border border-slate-900">[DD/MM/AAAA]</td>
+                                    <td className="p-1 border border-slate-900">[DD/MM/AAAA]</td>
+                                    <td className="p-1 border border-slate-900">[DD/MM/AAAA]</td>
+                                    <td className="p-1 border border-slate-900">[DD/MM/AAAA]</td>
+                                </tr>
+                            </>
+                        )}
+                    </tbody>
+                </table>
+
+                {c.showTablaInvestigadores !== false && (
+                    <div className="space-y-1 pt-1">
+                        <div
+                            className="p-1 font-bold text-[8.5pt] uppercase tracking-wider text-center"
+                            style={{ backgroundColor: headerBg, color: '#ffffff' }}
+                        >
+                            INVESTIGADORES
+                        </div>
+                        <table className="w-full border-collapse border border-slate-900 text-[8pt] text-center">
+                            <thead>
+                                <tr className="bg-slate-100 font-bold uppercase">
+                                    <th className="p-1 border border-slate-900 w-[30%]">NOMBRE</th>
+                                    <th className="p-1 border border-slate-900 w-[18%]">CÉDULA</th>
+                                    <th className="p-1 border border-slate-900 w-[22%]">EMAIL</th>
+                                    <th className="p-1 border border-slate-900 w-[15%]">TELÉFONO</th>
+                                    <th className="p-1 border border-slate-900 w-[15%]">ROL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="p-1 border border-slate-900 text-left font-medium">[NOMBRE DEL DIRECTOR]</td>
+                                    <td className="p-1 border border-slate-900">[CÉDULA]</td>
+                                    <td className="p-1 border border-slate-900">[EMAIL]</td>
+                                    <td className="p-1 border border-slate-900">[TELÉFONO]</td>
+                                    <td className="p-1 border border-slate-900 font-bold">DIRECTOR</td>
+                                </tr>
+                                <tr>
+                                    <td className="p-1 border border-slate-900 text-left font-medium">[INVESTIGADOR DOCENTE 1]</td>
+                                    <td className="p-1 border border-slate-900">[CÉDULA]</td>
+                                    <td className="p-1 border border-slate-900">[EMAIL]</td>
+                                    <td className="p-1 border border-slate-900">[TELÉFONO]</td>
+                                    <td className="p-1 border border-slate-900">INVESTIGADOR</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

@@ -1,4 +1,5 @@
 import type { DocumentBlock } from '../../types';
+import { DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS } from '../../types';
 import { COLORS, headerBg } from './generatorStyles';
 
 /**
@@ -661,5 +662,190 @@ export const generateProgressHeaderHtml = (block: DocumentBlock): string => {
   </div>
   {{/if}}
 </div>`;
+};
+
+export const generateFinalReportHeaderHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
+    const headerColorKey = c.finalReportHeaderColor || 'navy';
+    const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
+
+    const showTipo = c.showTipoInvestigacion !== false;
+    const showAlcance = c.showAlcanceProyecto !== false;
+    const showFechas = c.showFechasProyecto !== false;
+    const showInvestigadores = c.showTablaInvestigadores !== false;
+
+    return `
+  <!-- BLOQUE: ENCABEZADO INFORME FINAL -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <div style="background-color: ${headerBg}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 11pt; text-transform: uppercase; text-align: center; margin-bottom: 6px;">
+      ${title}
+    </div>
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+      <tbody>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; width: 30%; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">NOMBRE DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #000000;" colspan="3">{{{default Titulo titulo_proyecto TituloProyecto "[TÍTULO DEL PROYECTO]"}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">PROGRAMA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default Programa programa ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">GRUPO DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default GrupoInvestigacionNombre grupo_investigacion GrupoInvestigacion ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">DOMINIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default Dominio dominio ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">LÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default LineaInvestigacion linea_investigacion ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">SUBLÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default SublineaInvestigacion sublinea_investigacion ""}}}</td>
+        </tr>
+        ${showTipo ? `
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">TIPO DE INVESTIGACIÓN (X):</td>
+          <td style="padding: 4px; border: 1px solid #000000;" colspan="3">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8pt;">
+              <tr>
+                <td style="width: 20%; font-weight: bold;">BÁSICA</td>
+                <td style="width: 13%;">{{#if_eq TipoInvestigacion "BASICA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 20%; font-weight: bold;">APLICADA</td>
+                <td style="width: 13%;">{{#if_eq TipoInvestigacion "APLICADA"}}(X){{else}}{{#if_eq tipo_investigacion "APLICADA"}}(X){{else}}( X ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 24%; font-weight: bold;">DESARROLLO EXPERIMENTAL</td>
+                <td style="width: 10%;">{{#if_eq TipoInvestigacion "EXPERIMENTAL"}}(X){{else}}{{#if_eq tipo_investigacion "EXPERIMENTAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>` : ''}
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO AMPLIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default CampoAmplio campo_amplio ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO ESPECÍFICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default CampoEspecifico campo_especifico ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO DETALLADO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default CampoDetallado campo_detallado ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CARRERA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">Tecnología Superior en {{{default Carrera carrera "TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE"}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #f1f5f9; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">PERIODO ACADÉMICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="3">{{{default Periodo periodo "PERIODO ACADÉMICO MARZO 2025 - SEPTIEMBRE 2025"}}}</td>
+        </tr>
+        ${showAlcance ? `
+        <tr style="background-color: ${headerBg}; color: #ffffff; font-weight: bold; text-align: center;">
+          <td colspan="4" style="padding: 5px; border: 1px solid #000000; text-transform: uppercase;">ALCANCE DEL PROYECTO (X)</td>
+        </tr>
+        <tr style="background-color: #f1f5f9; text-align: center; font-weight: bold; font-size: 8pt; text-transform: uppercase;">
+          <td style="padding: 4px; border: 1px solid #000000; width: 20%;">INSTITUCIONAL</td>
+          <td style="padding: 4px; border: 1px solid #000000; width: 20%;">PARROQUIAL</td>
+          <td style="padding: 4px; border: 1px solid #000000; width: 20%;">CANTONAL</td>
+          <td style="padding: 4px; border: 1px solid #000000; width: 40%;" colspan="2">PROVINCIAL / NACIONAL</td>
+        </tr>
+        <tr style="text-align: center; font-weight: bold;">
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "INSTITUCIONAL"}}(X){{else}}{{#if_eq alcance_proyecto "INSTITUCIONAL"}}(X){{else}}( X ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "PARROQUIAL"}}(X){{else}}{{#if_eq alcance_proyecto "PARROQUIAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "CANTONAL"}}(X){{else}}{{#if_eq alcance_proyecto "CANTONAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">{{#if_eq AlcanceProyecto "NACIONAL"}}(X){{else}}{{#if_eq alcance_proyecto "NACIONAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+        </tr>` : ''}
+        ${showFechas ? `
+        <tr style="background-color: #f1f5f9; text-align: center; font-weight: bold; font-size: 8pt; text-transform: uppercase;">
+          <td style="padding: 4px; border: 1px solid #000000;">FECHA DE PRESENTACIÓN</td>
+          <td style="padding: 4px; border: 1px solid #000000;">FECHA DE INICIO</td>
+          <td style="padding: 4px; border: 1px solid #000000;">FECHA FIN PRESENTADA</td>
+          <td style="padding: 4px; border: 1px solid #000000;">FECHA FIN REAL</td>
+        </tr>
+        <tr style="text-align: center;">
+          <td style="padding: 5px; border: 1px solid #000000;">{{{default FechaPresentacion fecha_presentacion "N/A"}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{{default FechaInicio fecha_inicio "N/A"}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{{default FechaFinPresentada fecha_fin_presentada "N/A"}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{{default FechaFinReal fecha_fin_real "N/A"}}}</td>
+        </tr>` : ''}
+      </tbody>
+    </table>
+
+    ${showInvestigadores ? `
+    <div style="margin-top: 12px; page-break-inside: avoid;">
+      <div style="background-color: ${headerBg}; color: #ffffff; padding: 5px 10px; font-weight: bold; font-size: 9.5pt; text-transform: uppercase; text-align: center;">
+        INVESTIGADORES
+      </div>
+      <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8pt; text-align: center;">
+        <thead>
+          <tr style="background-color: #f1f5f9; font-weight: bold; text-transform: uppercase;">
+            <th style="padding: 5px; border: 1px solid #000000; width: 30%;">NOMBRE</th>
+            <th style="padding: 5px; border: 1px solid #000000; width: 18%;">NÚMERO DE CÉDULA</th>
+            <th style="padding: 5px; border: 1px solid #000000; width: 22%;">EMAIL</th>
+            <th style="padding: 5px; border: 1px solid #000000; width: 15%;">TELÉFONO</th>
+            <th style="padding: 5px; border: 1px solid #000000; width: 15%;">ROL EN LA INSTITUCIÓN</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#if Investigadores}}
+            {{#each Investigadores}}
+            <tr>
+              <td style="padding: 5px; border: 1px solid #000000; text-align: left; font-weight: bold;">{{{default Nombre nombre "N/A"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default Cedula cedula "N/A"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default Email email "N/A"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default Telefono telefono "N/A"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default Rol rol "INVESTIGADOR"}}}</td>
+            </tr>
+            {{/each}}
+          {{else}}
+            <tr>
+              <td style="padding: 5px; border: 1px solid #000000; text-align: left; font-weight: bold;">{{{default DirectorProyecto NombreDirector "DIRECTOR DEL PROYECTO"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default CedulaDirector cedula_director "__________"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default EmailDirector email_director "director@istpet.edu.ec"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000;">{{{default TelefonoDirector telefono_director "N/A"}}}</td>
+              <td style="padding: 5px; border: 1px solid #000000; font-weight: bold;">DIRECTOR DE PROYECTO</td>
+            </tr>
+          {{/if}}
+        </tbody>
+      </table>
+    </div>` : ''}
+  </div>`;
+};
+
+export const generateFinalReportWritingHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const headerColorKey = c.writingHeaderColor || 'navy';
+    const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
+
+    const rawSections = (c.writingSections && Array.isArray(c.writingSections) && c.writingSections.length > 0)
+        ? c.writingSections
+        : DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS;
+
+    const activeSubs = rawSections.filter((s: any) => s.enabled !== false);
+
+    let html = `<!-- BLOQUE: PLAN DE REDACCIÓN INFORME FINAL -->\n`;
+
+    activeSubs.forEach((sub: any) => {
+        const key = sub.fieldKey || sub.id;
+        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+        const title = sub.title || key;
+        const prefix = sub.numberPrefix ? `${sub.numberPrefix} ` : '';
+
+        html += `
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <div style="background-color: ${headerBg}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+      ${prefix}${title}
+    </div>
+    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+      {{{default ${key} ${snakeKey} ""}}}
+    </div>
+  </div>\n`;
+    });
+
+    return html;
 };
 

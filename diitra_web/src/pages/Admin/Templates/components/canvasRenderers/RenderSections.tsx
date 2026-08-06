@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import type { IdentificationField, ImpactCategory } from '../../types';
-import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES } from '../../types';
+import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES, DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS } from '../../types';
 import { getHeaderStylePair } from './RenderCover';
 import { getNormalizedColumns, getNormalizedCategories } from '../properties/ExpectedProductsProperties';
 
@@ -555,6 +555,71 @@ export const RenderProjectTechnicalSection: React.FC<{
                     ))}
                 </div>
             )}
+        </div>
+    );
+};
+
+export const RenderFinalReportWritingSection: React.FC<{
+    config: any;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config }) => {
+    const c = config || {};
+    const headerColorKey = c.writingHeaderColor || 'navy';
+    const resolveHeaderBg = (col: string) => {
+        switch (col) {
+            case 'gold': return '#b8912e';
+            case 'slate': return '#334155';
+            case 'emerald': return '#065f46';
+            case 'navy':
+            default: return '#1e2a4a';
+        }
+    };
+    const headerBg = resolveHeaderBg(headerColorKey);
+    const goldColor = '#b8912e';
+
+    const rawSections = (c.writingSections && Array.isArray(c.writingSections) && c.writingSections.length > 0)
+        ? c.writingSections
+        : DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS;
+
+    const subs = rawSections.filter((s: any) => s.enabled !== false).map((s: any) => ({
+        key: s.id || s.fieldKey,
+        title: s.title,
+        numberPrefix: s.numberPrefix || '',
+        requirementText: s.requirementText || s.placeholder || '',
+        colSpan: s.colSpan || 2,
+        variant: s.variant || 'standard'
+    }));
+
+    return (
+        <div className="w-full text-slate-900 font-sans my-2">
+            <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white">
+                <div
+                    className="px-3 py-2 font-bold text-[11px] uppercase tracking-wider text-center text-white"
+                    style={{ backgroundColor: headerBg }}
+                >
+                    PLAN DE REDACCIÓN INFORME FINAL (15 SUBSECCIONES CIENTÍFICAS)
+                </div>
+
+                <table className="w-full border-collapse border border-slate-300 text-[8.5pt]">
+                    <tbody>
+                        {subs.map((sub: any) => (
+                            <tr key={sub.key} className="border-b border-slate-200">
+                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px]" style={{ backgroundColor: sub.variant === 'banner_gold' ? goldColor : headerBg }}>
+                                    {sub.numberPrefix ? `${sub.numberPrefix} ${sub.title}` : sub.title}
+                                </td>
+                                <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
+                                    {sub.requirementText ? (
+                                        <span className="font-bold text-slate-700 block whitespace-pre-line">[{sub.requirementText}]</span>
+                                    ) : (
+                                        <span className="italic text-slate-400">[Redacción colaborativa en Tiptap / Yjs]</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

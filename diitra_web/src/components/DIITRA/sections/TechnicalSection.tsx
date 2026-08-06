@@ -42,8 +42,9 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     ];
 
     const activeSubTabs = React.useMemo(() => {
-        if (config?.technicalSections && Array.isArray(config.technicalSections) && config.technicalSections.length > 0) {
-            return config.technicalSections
+        const rawSections = config?.writingSections || config?.technicalSections;
+        if (rawSections && Array.isArray(rawSections) && rawSections.length > 0) {
+            return rawSections
                 .filter((sec: any) => sec.enabled !== false)
                 .map((sec: any) => {
                     let Icon = BookOpen;

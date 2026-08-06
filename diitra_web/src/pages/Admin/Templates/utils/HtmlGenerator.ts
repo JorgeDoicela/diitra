@@ -21,6 +21,8 @@ import {
     generateProgressActivityHtml,
     generateProgressStatusHtml,
     generateProgressHeaderHtml,
+    generateFinalReportHeaderHtml,
+    generateFinalReportWritingHtml,
 } from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
@@ -111,6 +113,12 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'project_approval_notice':
                 html += generateProjectApprovalNoticeHtml(block);
+                break;
+            case 'final_report_header_section':
+                html += generateFinalReportHeaderHtml(block);
+                break;
+            case 'final_report_writing_section':
+                html += generateFinalReportWritingHtml(block);
                 break;
             default:
                 break;
