@@ -10,6 +10,7 @@ export const generateTitleHtml = (block: DocumentBlock): string => {
 };
 
 export const generateRichTextHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
     const blockId = block.id ? block.id.replace('block-', '') : 'default';
     let varName = blockId;
     if (/^\d+$/.test(varName)) {
@@ -18,8 +19,10 @@ export const generateRichTextHtml = (block: DocumentBlock): string => {
     const upperVar = (varName.startsWith('field_') ? 'FIELD_' + varName.substring(6) : varName.toUpperCase());
     const snakeVar = varName.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
 
+    const titleHtml = c.title ? `\n  <div class="title-h2">${c.title}</div>` : '';
+
     return `
-  <!-- BLOQUE: TEXTO ENRIQUECIDO -->
+  <!-- BLOQUE: TEXTO ENRIQUECIDO -->${titleHtml}
   <div class="rich-content">{{{default ${varName} ${upperVar} ${snakeVar}}}}</div>`;
 };
 

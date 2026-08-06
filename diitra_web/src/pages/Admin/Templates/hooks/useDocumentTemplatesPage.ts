@@ -336,6 +336,39 @@ export const useDocumentTemplatesPage = () => {
                         },
                         baseSignatures
                     ];
+                } else if (tmpl.code === "INFORME_FINAL_INVESTIGACION") {
+                    loadedBlocks = [
+                        baseCover,
+                        {
+                            id: "block-final-1", type: "progress_header_section", title: "1. Datos Generales del Proyecto", isActive: true,
+                            config: { progressHeaderColor: "navy", progressHeaderBorder: "solid", headerTitle: "1. DATOS GENERALES DEL PROYECTO" }
+                        },
+                        {
+                            id: "block-resumen_ejecutivo", type: "rich_text", title: "2. Resumen Ejecutivo", isActive: true,
+                            config: { title: "2. RESUMEN EJECUTIVO" }
+                        },
+                        {
+                            id: "block-cumplimiento_objetivos", type: "rich_text", title: "3. Logro de Objetivos", isActive: true,
+                            config: { title: "3. LOGRO DE OBJETIVOS" }
+                        },
+                        {
+                            id: "block-resultados_discusion", type: "rich_text", title: "4. Resultados y Discusión", isActive: true,
+                            config: { title: "4. RESULTADOS Y DISCUSIÓN" }
+                        },
+                        {
+                            id: "block-impacto_innovacion", type: "rich_text", title: "5. Impacto e Innovación", isActive: true,
+                            config: { title: "5. IMPACTO E INNOVACIÓN" }
+                        },
+                        {
+                            id: "block-conclusiones_recomendaciones", type: "rich_text", title: "6. Conclusiones y Recomendaciones", isActive: true,
+                            config: { title: "6. CONCLUSIONES Y RECOMENDACIONES" }
+                        },
+                        {
+                            id: "block-bibliografia_final", type: "rich_text", title: "7. Bibliografía Actualizada (APA)", isActive: true,
+                            config: { title: "7. BIBLIOGRAFÍA ACTUALIZADA (APA)" }
+                        },
+                        baseSignatures
+                    ];
                 } else if (tmpl.code === "DICTAMEN_ARBITRAJE") {
                     loadedBlocks = [
                         baseCover,

@@ -43,6 +43,7 @@ Este directorio constituye la fuente centralizada de conocimiento técnico y fun
 * [01. Arquitectura Frontend Web (React SPA + Vite)](./05-frontend-web/01-arquitectura-react-vite.md): Estructura de carpetas `src/`, React Router, rutas protegidas y gestión de estado.
 * [02. Componentes UI Especializados y Shell del Constructor (DIITRABuilder)](./05-frontend-web/02-componentes-ui-y-builder-shell.md): Shell (`DIITRABuilderShell`), `SectionBlockGuard`, `CollaborationSidebar` y modales de firma.
 * [03. Integración con API, Resiliencia y Tolerancia a Discrepancias](./05-frontend-web/03-integracion-api-y-resiliencia.md): Cliente Axios, interceptores JWT, *Local Fallback Pattern* (`||`) y `ErrorBoundary`.
+* [04. Guía de Extensibilidad y Creación de Nuevos Bloques Documentales](./05-frontend-web/04-creacion-y-extensibilidad-de-bloques.md): Guía de integración de bloques modulares (TypeScript, Catálogo, Lienzo A4, Workspace Yjs y Motor Handlebars PDF).
 
 ### Sección 06: Aplicación Móvil
 * [01. Arquitectura de Aplicación Móvil Docente](./06-aplicacion-movil/01-arquitectura-movil-docente.md): Arquitectura de `diitra_mobile`, integración REST, almacenamiento seguro de tokens y escáner de códigos QR.

@@ -217,6 +217,7 @@ export interface DocumentBlock {
 
         // ── rich_text ──────────────────────────────────────────────────────
         html?: string;             // Contenido HTML serializado por Tiptap
+        title?: string;            // Título opcional de sección para bloque rich_text
 
         // ── advanced_table ─────────────────────────────────────────────────
         headerStyle?: 'blue' | 'gold' | 'gray' | 'none';
@@ -327,7 +328,9 @@ export interface DocumentBlock {
         showEvidencias?: boolean;
         showPresupuestoEjecutado?: boolean;
 
+
         // ── progress_header_section ────────────────────────────────────────
+        headerTitle?: string;
         progressHeaderFields?: ProgressHeaderField[];
         progressHeaderColor?: 'navy' | 'gold' | 'slate' | string;
         progressHeaderBorder?: 'solid' | 'none' | string;
@@ -340,9 +343,25 @@ export interface DocumentBlock {
         activityAllowDynamicRows?: boolean;
 
         // ── progress_status_section ────────────────────────────────────────
+        statusTitle?: string;
         progressStatusSections?: ProgressStatusSubsection[];
         progressStatusHeaderColor?: 'navy' | 'gold' | 'slate' | string;
         statusOptions?: string[];
+
+        // ── project_approval_notice ────────────────────────────────────────
+        ciudad_emision?: string;
+        mostrarLogoHeader?: boolean;
+        mostrarCompromisosCACES?: boolean;
+        mostrarTablaFechas?: boolean;
+        parrafo_aprobacion?: string;
+        parrafo_fundamento?: string;
+        textoCACES?: string;
+        parrafo_invitacion?: string;
+        frase_cierre?: string;
+        frase_despedida?: string;
+        coordinador_nombre?: string;
+        coordinador_cargo?: string;
+        firmante_institucion?: string;
     };
 }
 

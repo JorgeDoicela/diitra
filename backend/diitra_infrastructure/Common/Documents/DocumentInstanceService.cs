@@ -425,8 +425,9 @@ namespace Diitra.Infrastructure.Common.Documents
             "ActividadesEjecutadas", "ActividadesNoPrevistas", "Obstaculos", "DescripcionFaseActual", 
             "EstadoEjecucion", "ObservacionesDirector", "ObservacionesCoordinador",
             // INFORME_FINAL_INVESTIGACION
-            "resumen_ejecutivo", "cumplimiento_objetivos", "resultados", "discusion", 
-            "impacto_final", "transferencia_conocimiento", "conclusiones", "recomendaciones", "bibliografia_final",
+            "ResumenEjecutivo", "CumplimientoObjetivos", "ResultadosDiscusion", "ImpactoInnovacion", "ConclusionesRecomendaciones", "BibliografiaFinal",
+            "resumen_ejecutivo", "cumplimiento_objetivos", "resultados_discusion", "impacto_innovacion", "conclusiones_recomendaciones", "bibliografia_final",
+            "resultados", "discusion", "impacto_final", "transferencia_conocimiento", "conclusiones", "recomendaciones",
             // ACTA_COMITE_ETICA
             "JustificacionEtica", "RiesgosIdentificados", "MetodoConsentimiento", "MiembrosFirmantes"
         };
