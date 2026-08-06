@@ -67,9 +67,6 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'cronograma':     TimelineSection,
     'bibliografia':   BibliographySection,
 
-    // ── INFORME DE AVANCE ─────────────────────────────────────────
-    'ejecucion':           ProgressReportSection,
-    'edicion_colaborativa': ProgressReportSection,   // alias legacy (BD)
 };
 
 /**

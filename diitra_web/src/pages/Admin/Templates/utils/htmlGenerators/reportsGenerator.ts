@@ -306,3 +306,124 @@ export const generateProjectApprovalNoticeHtml = (block: DocumentBlock): string 
     <div class="firma-inst" style="font-weight: bold; font-size: 10.5pt; text-transform: uppercase;">{{default firmante_institucion "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
   </div>`;
 };
+
+/**
+ * Genera el HTML Handlebars para la Matriz de Actividades de Avance (Bloque: progress_activity_section)
+ */
+export const generateProgressActivityHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const variant = c.activityVariant || 'ejecutadas';
+    const customTitle = c.activityTableTitle;
+
+    if (variant === 'no_previstas') {
+        const title = customTitle || 'MATRIZ DE ACTIVIDADES NO PREVISTAS (NP)';
+        return `
+  <!-- BLOQUE: MATRIZ DE ACTIVIDADES NO PREVISTAS -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')} width: 12%;">N° Actividad</th>
+          <th style="${headerBg('blue')} width: 25%;">Objetivo Específico</th>
+          <th style="${headerBg('blue')} width: 35%;">Actividades No Previstas Ejecutadas</th>
+          <th style="${headerBg('blue')} width: 28%;">Resultados Obtenidos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each ActividadesNoPrevistas}}
+        <tr>
+          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
+          <td>{{default this.ObjetivoAsociado this.objetivo_asociado}}</td>
+          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
+          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+    }
+
+    if (variant === 'obstaculos') {
+        const title = customTitle || 'MATRIZ DE OBSTÁCULOS Y ACCIONES CORRECTIVAS (OBS)';
+        return `
+  <!-- BLOQUE: MATRIZ DE OBSTÁCULOS -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')} width: 10%;">N° Actividad</th>
+          <th style="${headerBg('blue')} width: 20%;">Objetivo Específico</th>
+          <th style="${headerBg('blue')} width: 25%;">Limitación / Obstáculo</th>
+          <th style="${headerBg('blue')} width: 25%;">Actividades Correctivas</th>
+          <th style="${headerBg('blue')} width: 20%;">Resultados Obtenidos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each Obstaculos}}
+        <tr>
+          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
+          <td>{{default this.ObjetivoAsociado this.objetivo_asociado}}</td>
+          <td>{{default this.Limitacion this.limitacion}}</td>
+          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
+          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+    }
+
+    // Default: ejecutadas
+    const title = customTitle || 'MATRIZ DE ACTIVIDADES EJECUTADAS';
+    return `
+  <!-- BLOQUE: MATRIZ DE ACTIVIDADES EJECUTADAS -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="${headerBg('blue')} width: 10%;">N° Actividad</th>
+          <th style="${headerBg('blue')} width: 35%;">Actividades Ejecutadas</th>
+          <th style="${headerBg('blue')} width: 25%;">Resultados Obtenidos</th>
+          <th style="${headerBg('blue')} width: 10%; text-align: center;">% Avance</th>
+          <th style="${headerBg('blue')} width: 20%;">Participantes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each ActividadesEjecutadas}}
+        <tr>
+          <td style="font-weight: bold; text-align: center;">{{default this.NumeroActividad this.numero_actividad}}</td>
+          <td>{{default this.ActividadesEjecutadas this.actividades_ejecutadas}}</td>
+          <td>{{default this.ResultadosObtenidos this.resultados_obtenidos}}</td>
+          <td style="text-align: center; font-weight: bold; color: #10b981;">{{default this.PorcentajeAvance this.porcentaje_avance}}%</td>
+          <td>{{default this.Participantes this.participantes}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>`;
+};
+
+/**
+ * Genera el HTML Handlebars para el Estado de Ejecución del Proyecto (Bloque: progress_status_section)
+ */
+export const generateProgressStatusHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const title = c.statusTableTitle || 'ESTADO DE EJECUCIÓN Y DICTAMEN DE FASE';
+    return `
+  <!-- BLOQUE: ESTADO DE EJECUCIÓN -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">${title}</p>
+    <div style="margin-bottom: 10px; padding: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+      <strong>Estado Actual del Proyecto:</strong> 
+      <span style="font-weight: bold; color: ${COLORS.blue}; font-size: 10pt; text-transform: uppercase;">{{default EstadoEjecucion estado_ejecucion "EN AVANCE"}}</span>
+    </div>
+    <div style="margin-bottom: 12px;">
+      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 4px;">Descripción Breve de la Fase Actual:</strong>
+      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{{default DescripcionFaseActual descripcion_fase_actual}}}</div>
+    </div>
+  </div>`;
+};
+

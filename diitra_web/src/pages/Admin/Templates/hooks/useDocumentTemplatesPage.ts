@@ -583,6 +583,15 @@ export const useDocumentTemplatesPage = () => {
             case 'project_approval_notice':
                 newBlock = { id: newId, type, title: 'Oficio de Aprobación de Proyecto', isActive: true, config: {} };
                 break;
+            case 'progress_header_section':
+                newBlock = { id: newId, type, title: 'Encabezado Informe Avance', isActive: true, config: { headerTitle: '1. DATOS GENERALES DEL INFORME DE AVANCE' } };
+                break;
+            case 'progress_activity_section':
+                newBlock = { id: newId, type, title: 'Matriz Actividades Avance', isActive: true, config: { activityVariant: 'ejecutadas', activityTableTitle: 'MATRIZ DE ACTIVIDADES EJECUTADAS', activityHeaderColor: 'navy' } };
+                break;
+            case 'progress_status_section':
+                newBlock = { id: newId, type, title: 'Estado y Observaciones', isActive: true, config: { statusTitle: 'ESTADO Y OBSERVACIONES' } };
+                break;
             default:
                 return;
         }

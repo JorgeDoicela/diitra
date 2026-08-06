@@ -175,14 +175,7 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
             PresupuestoEjecutado: [],
         },
         lists: ['ActividadesEjecutadas', 'ActividadesNoPrevistas', 'Obstaculos', 'HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
-        sections: [
-            {
-                id: 'ejecucion',
-                label: 'Edición Colaborativa',
-                iconName: 'Activity',
-                componentName: 'ProgressReportSection'
-            }
-        ]
+        sections: []
     },
 
     INFORME_FINAL_INVESTIGACION: {

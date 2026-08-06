@@ -58,11 +58,19 @@ namespace diitra_api.Controllers
                 variant = vObj.ToString() ?? "ejecutadas";
             }
 
-            string secId = block.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? $"actividades_{variant}" : $"actividades_{variant}";
+            string customTitle = "";
+            if (configDict.TryGetValue("activityTableTitle", out var tObj) && tObj != null)
+            {
+                customTitle = tObj.ToString() ?? "";
+            }
+
+            string labelText = !string.IsNullOrEmpty(title) 
+                ? title 
+                : (!string.IsNullOrEmpty(customTitle) ? customTitle : $"Matriz de Actividades ({variant})");
 
             sectionsList.Add(new UiSectionDto {
                 Id = secId,
-                Label = string.IsNullOrEmpty(title) ? $"Matriz de Actividades ({variant})" : title,
+                Label = labelText,
                 IconName = "Activity",
                 ComponentName = "ProgressReportSection",
                 Config = configDict

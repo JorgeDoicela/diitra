@@ -146,6 +146,16 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProgressActivitySection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'progress_status_section':
                 return <RenderProgressStatusSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'page_break':
+                return (
+                    <div className="w-full flex items-center justify-between py-2 select-none">
+                        <div className="flex-1 border-t-2 border-dashed border-indigo-400 dark:border-indigo-600" />
+                        <div className="mx-3 flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-bold shadow-md">
+                            <span className="uppercase tracking-wider">Salto de Página A4</span>
+                        </div>
+                        <div className="flex-1 border-t-2 border-dashed border-indigo-400 dark:border-indigo-600" />
+                    </div>
+                );
             default:
                 return null;
         }

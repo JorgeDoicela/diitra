@@ -125,36 +125,26 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     const pages: { pageNum: number; blocks: { block: DocumentBlock; originalIndex: number }[]; pageBreakBlockId?: string }[] = [];
     let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
     let currentPageNum = 1;
-    let pendingPageBreakId: string | undefined = undefined;
 
     blocks.forEach((block, idx) => {
         if (block.type === 'page_break') {
-            if (currentPageBlocks.length > 0) {
-                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
-                currentPageBlocks = [];
-                currentPageNum++;
-                pendingPageBreakId = block.id;
-            } else {
-                pages.push({ pageNum: currentPageNum, blocks: [], pageBreakBlockId: block.id });
-                currentPageNum++;
-                pendingPageBreakId = undefined;
-            }
-        } else if (block.type === 'cover') {
-            if (currentPageBlocks.length > 0) {
-                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
-                currentPageNum++;
-                pendingPageBreakId = undefined;
-            }
-            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }], pageBreakBlockId: pendingPageBreakId });
+            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: block.id });
             currentPageBlocks = [];
             currentPageNum++;
-            pendingPageBreakId = undefined;
+        } else if (block.type === 'cover') {
+            if (currentPageBlocks.length > 0) {
+                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+                currentPageNum++;
+            }
+            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
+            currentPageBlocks = [];
+            currentPageNum++;
         } else {
             currentPageBlocks.push({ block, originalIndex: idx });
         }
     });
     if (currentPageBlocks.length > 0 || pages.length === 0) {
-        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: pendingPageBreakId });
+        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
     }
 
     return (
@@ -235,7 +225,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                 ) : (
                     <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-8 flex flex-col items-center">
-                            {pages.map((page) => {
+                            {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
                                 const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
@@ -246,11 +236,11 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                 const marginRight = themeConfig?.layout?.marginRight || '2cm';
 
                                 return (
-                                    <React.Fragment key={page.pageNum}>
-                                        {page.pageNum > 1 && (
+                                    <React.Fragment key={pIdx}>
+                                        {pIdx > 0 && (
                                             <PageBreakIndicator
                                                 pageNum={page.pageNum}
-                                                pageBreakBlockId={page.pageBreakBlockId}
+                                                pageBreakBlockId={pages[pIdx - 1]?.pageBreakBlockId}
                                                 onDeleteBlock={onDeleteBlock}
                                             />
                                         )}

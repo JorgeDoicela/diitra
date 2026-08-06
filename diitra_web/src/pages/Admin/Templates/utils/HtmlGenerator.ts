@@ -18,6 +18,8 @@ import {
     generateProjectProgressHtml,
     generateProjectEthicsHtml,
     generateProjectApprovalNoticeHtml,
+    generateProgressActivityHtml,
+    generateProgressStatusHtml,
 } from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
@@ -87,6 +89,12 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'project_progress_report':
                 html += generateProjectProgressHtml(block);
+                break;
+            case 'progress_activity_section':
+                html += generateProgressActivityHtml(block);
+                break;
+            case 'progress_status_section':
+                html += generateProgressStatusHtml(block);
                 break;
             case 'project_ethics_report':
                 html += generateProjectEthicsHtml(block);
