@@ -24,29 +24,32 @@ interface TechnicalSectionProps {
     config?: any;
 }
 
+interface TechnicalSubTab {
+    id: string;
+    label: string;
+    rawTitle?: string;
+    numberPrefix?: string;
+    fieldKey?: string;
+    placeholder?: string;
+    requirementText?: string;
+    hasContent?: boolean;
+    isGroupHeader?: boolean;
+    parentId?: string;
+    icon: React.ComponentType<any>;
+}
+
 export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     cowork,
     onUpdate,
     formData,
     config
 }) => {
-    const subTabs = [
-        { id: 'antecedentes', label: '3.1 Antecedentes', icon: BookOpen },
-        { id: 'descripcion', label: '3.2 Descripción', icon: FileText },
-        { id: 'justificacion', label: '3.3 Justificación', icon: CheckSquare },
-        { id: 'objetivos', label: '3.4 Objetivos', icon: Target },
-        { id: 'ods', label: '3.5 ODS (Alineación)', icon: Globe },
-        { id: 'marco_teorico', label: '3.6 Marco Teórico', icon: Book },
-        { id: 'metodologia', label: '3.7 Metodología', icon: Settings },
-        { id: 'evaluacion', label: '3.8 Evaluación', icon: ClipboardCheck }
-    ];
-
-    const activeSubTabs = React.useMemo(() => {
+    const activeSubTabs = React.useMemo<TechnicalSubTab[]>(() => {
         const rawSections = config?.writingSections || config?.technicalSections;
         if (rawSections && Array.isArray(rawSections) && rawSections.length > 0) {
             return rawSections
                 .filter((sec: any) => sec.enabled !== false)
-                .map((sec: any) => {
+                .map((sec: any): TechnicalSubTab => {
                     let Icon = BookOpen;
                     if (sec.fieldKey === 'DescripcionProyecto' || sec.id === 'sec_descripcion') Icon = FileText;
                     if (sec.fieldKey === 'Justificacion' || sec.id === 'sec_justificacion') Icon = CheckSquare;
@@ -75,7 +78,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                 });
         }
 
-        const legacySubTabs = [
+        const legacySubTabs: TechnicalSubTab[] = [
             { id: 'antecedentes', fieldKey: 'Antecedentes', label: '3.1 Antecedentes', icon: BookOpen, placeholder: 'Escriba los antecedentes del proyecto...' },
             { id: 'descripcion', fieldKey: 'DescripcionProyecto', label: '3.2 Descripción', icon: FileText, placeholder: 'Definir el propósito del proyecto...' },
             { id: 'justificacion', fieldKey: 'Justificacion', label: '3.3 Justificación', icon: CheckSquare, placeholder: 'Escriba la justificación del proyecto...' },
