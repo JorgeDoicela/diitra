@@ -469,6 +469,35 @@ namespace diitra_api.Controllers
                     }
                 }
 
+                // Auto-poblar el esquema inicial con datos reales del proyecto vinculado desde el Orquestador de Datos
+                if (instance != null && !string.IsNullOrEmpty(instance.Uuid))
+                {
+                    try
+                    {
+                        var docReq = await _orchestrator.PrepareRequestAsync(instance.Uuid, "sistema", true, ct);
+                        if (docReq?.Data != null)
+                        {
+                            var dataJson = System.Text.Json.JsonSerializer.Serialize(docReq.Data);
+                            using var doc = System.Text.Json.JsonDocument.Parse(dataJson);
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            {
+                                foreach (var prop in doc.RootElement.EnumerateObject())
+                                {
+                                    var valStr = prop.Value.ValueKind == System.Text.Json.JsonValueKind.String ? prop.Value.GetString() : prop.Value.ToString();
+                                    if (!string.IsNullOrWhiteSpace(valStr))
+                                    {
+                                        schemaDict[prop.Name] = valStr;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DIITRA] Warning auto-poblando esquema para la instancia {instance.Uuid}: {ex.Message}");
+                    }
+                }
+
                 var orderedSections = sectionsList.ToArray();
 
                 bool hasTemplateUpdate = instance != null 

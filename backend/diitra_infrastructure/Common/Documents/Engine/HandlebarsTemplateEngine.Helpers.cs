@@ -52,6 +52,28 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 output.WriteSafeString("");
             });
 
+            // Helper: if_eq (comparación de igualdad de bloque para resiliencia con plantillas legacy)
+            handlebars.RegisterHelper("if_eq", (output, options, context, arguments) =>
+            {
+                if (arguments.Length >= 2)
+                {
+                    var val1 = arguments[0]?.ToString() ?? "";
+                    var val2 = arguments[1]?.ToString() ?? "";
+                    if (string.Equals(val1, val2, StringComparison.OrdinalIgnoreCase))
+                    {
+                        options.Template(output, context);
+                    }
+                    else
+                    {
+                        options.Inverse(output, context);
+                    }
+                }
+                else
+                {
+                    options.Inverse(output, context);
+                }
+            });
+
             // Helper: sumar múltiples valores numéricos (útil para totalizar rúbricas en el motor Handlebars)
             handlebars.RegisterHelper("sum", (output, context, arguments) =>
             {

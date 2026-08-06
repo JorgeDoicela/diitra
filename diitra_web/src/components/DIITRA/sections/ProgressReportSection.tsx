@@ -34,13 +34,23 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
     const isReadOnly = cowork?.session?.readOnly;
 
     // Configuración dinámica enviada desde la maquetación (Plantilla Admin)
+    const sectionType = config?.sectionType;
     const variant = config?.activityVariant;
     const customTitle = config?.activityTableTitle;
-    const showAll = !variant;
 
-    const showEjecutadas = showAll || variant === 'ejecutadas';
-    const showNoPrevistas = showAll || variant === 'no_previstas';
-    const showObstaculos = showAll || variant === 'obstaculos';
+    // Control de visibilidad aislado por bloque
+    const isHeaderSection = sectionType === 'progress_header_section';
+    const isStatusSection = sectionType === 'progress_status_section';
+    const isActivitySection = sectionType === 'progress_activity_section' || !!variant;
+    const isLegacyFull = !sectionType && !variant;
+
+    const showHeader = isHeaderSection || isLegacyFull;
+    const showActivities = isActivitySection || isLegacyFull;
+    const showStatus = isStatusSection || isLegacyFull;
+
+    const showEjecutadas = showActivities && (!variant || variant === 'ejecutadas');
+    const showNoPrevistas = showActivities && (!variant || variant === 'no_previstas');
+    const showObstaculos = showActivities && (!variant || variant === 'obstaculos');
 
     // Listas colaborativas
     const actividadesEjecutadas = formData.ActividadesEjecutadas || [];
@@ -94,6 +104,245 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
 
     return (
         <div className="space-y-10 animate-fade-in pb-10 text-white">
+
+            {/* 0. SECCIÓN: DATOS GENERALES DEL PROYECTO (ENCABEZADO INFORME AVANCE) */}
+            {showHeader && (
+                <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+                    <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
+                                <FileText size={18} />
+                                1. DATOS GENERALES DEL PROYECTO (AUTO-POBLADOS)
+                            </h3>
+                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold mt-0.5">
+                                Identificación Institucional ISTPET — Datos heredados de la propuesta aprobada
+                            </p>
+                        </div>
+                        <span className="text-[10px] font-black text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full uppercase border border-amber-500/30">
+                            Oficial ISTPET
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Número de Informe</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.NumeroInforme || formData.IdInforme || 'N° 01'}
+                                onChange={(e) => onUpdate('NumeroInforme', e.target.value)}
+                                placeholder="Ej: Informe N° 01"
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-bold text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Nombre del Proyecto</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.NombreProyecto ?? formData.nombre_proyecto ?? formData.Titulo ?? formData.titulo ?? formData.title ?? config?.schema?.NombreProyecto ?? ''}
+                                onChange={(e) => onUpdate('NombreProyecto', e.target.value)}
+                                placeholder="Escribir o corregir nombre del proyecto..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-bold text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Programa</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.Programa ?? formData.programa ?? config?.schema?.Programa ?? ''}
+                                onChange={(e) => onUpdate('Programa', e.target.value)}
+                                placeholder="Escribir o corregir programa..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Grupo de Investigación</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.GrupoInvestigacion ?? formData.grupo_investigacion ?? formData.GrupoInvestigacionNombre ?? config?.schema?.GrupoInvestigacion ?? ''}
+                                onChange={(e) => onUpdate('GrupoInvestigacion', e.target.value)}
+                                placeholder="Escribir o corregir grupo de investigación..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1 md:col-span-2">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Dominio</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.Dominio ?? formData.dominio ?? config?.schema?.Dominio ?? ''}
+                                onChange={(e) => onUpdate('Dominio', e.target.value)}
+                                placeholder="Escribir o corregir dominio de investigación..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Línea de Investigación</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.LineaInvestigacion ?? formData.linea_investigacion ?? config?.schema?.LineaInvestigacion ?? ''}
+                                onChange={(e) => onUpdate('LineaInvestigacion', e.target.value)}
+                                placeholder="Escribir o corregir línea de investigación..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Sublínea de Investigación</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.SublineaInvestigacion ?? formData.sublinea_investigacion ?? config?.schema?.SublineaInvestigacion ?? ''}
+                                onChange={(e) => onUpdate('SublineaInvestigacion', e.target.value)}
+                                placeholder="Escribir o corregir sublínea..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Campo Amplio</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.CampoAmplio ?? formData.campo_amplio ?? config?.schema?.CampoAmplio ?? ''}
+                                onChange={(e) => onUpdate('CampoAmplio', e.target.value)}
+                                placeholder="Escribir o corregir campo amplio UNESCO..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Campo Específico</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.CampoEspecifico ?? formData.campo_especifico ?? config?.schema?.CampoEspecifico ?? ''}
+                                onChange={(e) => onUpdate('CampoEspecifico', e.target.value)}
+                                placeholder="Escribir o corregir campo específico..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1 md:col-span-2">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Campo Detallado</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.CampoDetallado ?? formData.campo_detallado ?? config?.schema?.CampoDetallado ?? ''}
+                                onChange={(e) => onUpdate('CampoDetallado', e.target.value)}
+                                placeholder="Escribir o corregir campo detallado..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Carrera</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.Carrera ?? formData.carrera ?? config?.schema?.Carrera ?? ''}
+                                onChange={(e) => onUpdate('Carrera', e.target.value)}
+                                placeholder="Escribir o corregir carrera..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Tipo de Investigación</label>
+                            <div className="flex items-center gap-3 pt-1">
+                                {['BÁSICA', 'APLICADA', 'DESARROLLO EXPERIMENTAL'].map((tipo) => {
+                                    const currentTipo = (formData.TipoInvestigacion || formData.tipo_investigacion || config?.schema?.TipoInvestigacion || 'APLICADA').toString().toUpperCase();
+                                    const isChecked = currentTipo.includes(tipo.substring(0, 5));
+                                    return (
+                                        <label key={tipo} className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tipo_inv"
+                                                checked={isChecked}
+                                                onChange={() => onUpdate('TipoInvestigacion', tipo)}
+                                                disabled={isReadOnly}
+                                                className="accent-amber-500"
+                                            />
+                                            <span className={isChecked ? 'font-bold text-text-main' : ''}>{tipo}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Período Académico</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.Periodo ?? formData.periodo ?? formData.PeriodoConvocatoria ?? config?.schema?.Periodo ?? ''}
+                                onChange={(e) => onUpdate('Periodo', e.target.value)}
+                                placeholder="Escribir o corregir período académico..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Director del Proyecto</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.DirectorProyecto ?? formData.director_proyecto ?? formData.NombreDirectorFirma ?? config?.schema?.DirectorProyecto ?? ''}
+                                onChange={(e) => onUpdate('DirectorProyecto', e.target.value)}
+                                placeholder="Escribir o corregir director del proyecto..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-bold text-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1 md:col-span-2">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Investigadores Activos en el Período</label>
+                            <textarea
+                                disabled={isReadOnly}
+                                rows={2}
+                                value={formData.InvestigadoresTexto ?? formData.investigadores_texto ?? (Array.isArray(formData.Investigadores) && formData.Investigadores.length > 0
+                                    ? formData.Investigadores.map((i: any) => i?.Nombre || `${i?.Nombres || ''} ${i?.Apellidos || ''}`.trim()).filter(Boolean).join(', ')
+                                    : (config?.schema?.InvestigadoresTexto ?? ''))}
+                                onChange={(e) => onUpdate('InvestigadoresTexto', e.target.value)}
+                                placeholder="Apellidos y nombres de los investigadores activos..."
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar resize-none"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Fecha Inicio del Proyecto</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.FechaInicio ?? formData.fecha_inicio ?? config?.schema?.FechaInicio ?? ''}
+                                onChange={(e) => onUpdate('FechaInicio', e.target.value)}
+                                placeholder="Ej: 01/01/2026"
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+
+                        <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
+                            <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Fecha Fin Prevista del Proyecto</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                value={formData.FechaFin ?? formData.fecha_fin ?? config?.schema?.FechaFin ?? ''}
+                                onChange={(e) => onUpdate('FechaFin', e.target.value)}
+                                placeholder="Ej: 31/12/2026"
+                                className="w-full bg-surface-hover/30 border border-border-thin rounded-xl p-2.5 text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 1. SECCIÓN: MATRIZ DE ACTIVIDADES EJECUTADAS */}
             {showEjecutadas && (
@@ -371,86 +620,90 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                 </div>
             )}
 
-            {/* 4. SECCIÓN: ESTADO DE EJECUCIÓN DEL PROYECTO */}
-            <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
-                <div className="flex items-center gap-3 border-b border-border-thin pb-4">
-                    <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400">
-                        <TrendingUp size={20} />
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-black uppercase tracking-widest text-text-main">5. Estado de Ejecución del Proyecto</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Dictamen del estado del proyecto e informe de fase</p>
-                    </div>
-                </div>
+            {/* 4. SECCIÓN: ESTADO DE EJECUCIÓN Y OBSERVACIONES DEL PROYECTO */}
+            {showStatus && (
+                <>
+                    <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+                        <div className="flex items-center gap-3 border-b border-border-thin pb-4">
+                            <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400">
+                                <TrendingUp size={20} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black uppercase tracking-widest text-text-main">5. Estado de Ejecución del Proyecto</h4>
+                                <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Dictamen del estado del proyecto e informe de fase</p>
+                            </div>
+                        </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-[9px] font-bold uppercase text-text-dim block mb-2">Estado Actual Seleccionado</label>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {statusOptions.map((opt) => (
-                                <button
-                                    key={opt}
-                                    type="button"
-                                    disabled={isReadOnly}
-                                    onClick={() => onUpdate('EstadoEjecucion', opt)}
-                                    className={`p-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${(formData.EstadoEjecucion || 'EN AVANCE') === opt
-                                            ? 'border-indigo-500 bg-indigo-500/20 text-white ring-1 ring-indigo-500'
-                                            : 'border-border-thin bg-surface-hover/20 text-text-dim hover:text-text-main'
-                                        }`}
-                                >
-                                    {opt}
-                                </button>
-                            ))}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-text-dim block mb-2">Estado Actual Seleccionado</label>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                    {statusOptions.map((opt) => (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            disabled={isReadOnly}
+                                            onClick={() => onUpdate('EstadoEjecucion', opt)}
+                                            className={`p-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${(formData.EstadoEjecucion || 'EN AVANCE') === opt
+                                                    ? 'border-indigo-500 bg-indigo-500/20 text-white ring-1 ring-indigo-500'
+                                                    : 'border-border-thin bg-surface-hover/20 text-text-dim hover:text-text-main'
+                                                }`}
+                                        >
+                                            {opt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                                <label className="text-[9px] font-bold uppercase text-text-dim block">
+                                    Descripción Breve de la Fase Actual (3 a 6 líneas)
+                                </label>
+                                <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep">
+                                    <CoWorkEditor
+                                        field="DescripcionFaseActual"
+                                        cowork={cowork}
+                                        onChange={(html, meta) => onUpdate('DescripcionFaseActual', html, meta)}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2 pt-2">
-                        <label className="text-[9px] font-bold uppercase text-text-dim block">
-                            Descripción Breve de la Fase Actual (3 a 6 líneas)
-                        </label>
-                        <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep">
-                            <CoWorkEditor
-                                field="DescripcionFaseActual"
-                                cowork={cowork}
-                                onChange={(html, meta) => onUpdate('DescripcionFaseActual', html, meta)}
-                            />
+                    {/* 5. SECCIÓN: OBSERVACIONES DEL DIRECTOR Y DEL COORDINADOR */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Observaciones del Director */}
+                        <div className="bg-bg-deep border border-border-thin p-6 rounded-3xl space-y-4">
+                            <div className="flex items-center gap-2 border-b border-border-thin pb-3">
+                                <Shield className="w-4 h-4 text-amber-400" />
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-text-main">Observaciones del Director de Proyecto</h4>
+                            </div>
+                            <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep min-h-[100px]">
+                                <CoWorkEditor
+                                    field="ObservacionesDirector"
+                                    cowork={cowork}
+                                    onChange={(html, meta) => onUpdate('ObservacionesDirector', html, meta)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Observaciones del Coordinador DIITRA */}
+                        <div className="bg-bg-deep border border-border-thin p-6 rounded-3xl space-y-4">
+                            <div className="flex items-center gap-2 border-b border-border-thin pb-3">
+                                <FileText className="w-4 h-4 text-indigo-400" />
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-text-main">Observaciones del Coordinador DIITRA</h4>
+                            </div>
+                            <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep min-h-[100px]">
+                                <CoWorkEditor
+                                    field="ObservacionesCoordinador"
+                                    cowork={cowork}
+                                    onChange={(html, meta) => onUpdate('ObservacionesCoordinador', html, meta)}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* 5. SECCIÓN: OBSERVACIONES DEL DIRECTOR Y DEL COORDINADOR */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Observaciones del Director */}
-                <div className="bg-bg-deep border border-border-thin p-6 rounded-3xl space-y-4">
-                    <div className="flex items-center gap-2 border-b border-border-thin pb-3">
-                        <Shield className="w-4 h-4 text-amber-400" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-text-main">Observaciones del Director de Proyecto</h4>
-                    </div>
-                    <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep min-h-[100px]">
-                        <CoWorkEditor
-                            field="ObservacionesDirector"
-                            cowork={cowork}
-                            onChange={(html, meta) => onUpdate('ObservacionesDirector', html, meta)}
-                        />
-                    </div>
-                </div>
-
-                {/* Observaciones del Coordinador DIITRA */}
-                <div className="bg-bg-deep border border-border-thin p-6 rounded-3xl space-y-4">
-                    <div className="flex items-center gap-2 border-b border-border-thin pb-3">
-                        <FileText className="w-4 h-4 text-indigo-400" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-text-main">Observaciones del Coordinador DIITRA</h4>
-                    </div>
-                    <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep min-h-[100px]">
-                        <CoWorkEditor
-                            field="ObservacionesCoordinador"
-                            cowork={cowork}
-                            onChange={(html, meta) => onUpdate('ObservacionesCoordinador', html, meta)}
-                        />
-                    </div>
-                </div>
-            </div>
+                </>
+            )}
 
         </div>
     );

@@ -52,6 +52,8 @@ namespace diitra_api.Controllers
                 configDict = new Dictionary<string, object>();
             }
 
+            configDict["sectionType"] = "progress_activity_section";
+
             string variant = "ejecutadas";
             if (configDict.TryGetValue("activityVariant", out var vObj) && vObj != null)
             {
@@ -67,6 +69,8 @@ namespace diitra_api.Controllers
             string labelText = !string.IsNullOrEmpty(title) 
                 ? title 
                 : (!string.IsNullOrEmpty(customTitle) ? customTitle : $"Matriz de Actividades ({variant})");
+
+            string secId = block.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? $"actividades_{variant}" : $"actividades_{variant}";
 
             sectionsList.Add(new UiSectionDto {
                 Id = secId,

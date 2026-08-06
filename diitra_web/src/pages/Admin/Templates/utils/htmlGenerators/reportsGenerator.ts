@@ -427,3 +427,93 @@ export const generateProgressStatusHtml = (block: DocumentBlock): string => {
   </div>`;
 };
 
+/**
+ * Genera el HTML Handlebars para los Datos Generales del Proyecto (Bloque: progress_header_section)
+ */
+export const generateProgressHeaderHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const title = c.headerTitle || '1. DATOS GENERALES DEL PROYECTO';
+    return `
+  <!-- BLOQUE: DATOS GENERALES DEL PROYECTO (ENCABEZADO INFORME AVANCE) -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${title}</p>
+    <table class="info-table" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+      <tbody>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; width: 32%; padding: 5px 8px; border: 1px solid #334155;">NOMBRE DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;" colspan="3">{{default NombreProyecto Titulo title ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PROGRAMA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default Programa ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">GRUPO DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default GrupoInvestigacion GrupoInvestigacionNombre ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">DOMINIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default Dominio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">LÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default LineaInvestigacion ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">SUBLÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default SublineaInvestigacion ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">CAMPO AMPLIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default CampoAmplio ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">CAMPO ESPECÍFICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default CampoEspecifico ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">CAMPO DETALLADO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default CampoDetallado ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">CARRERA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default Carrera ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">TIPO DE INVESTIGACIÓN:</td>
+          <td style="padding: 0; border: 1px solid #cbd5e1;" colspan="3">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8pt;">
+              <tr>
+                <td style="width: 25%; padding: 4px; font-weight: bold;">BÁSICA</td>
+                <td style="width: 8%; border-right: 1px solid #cbd5e1;">[ &nbsp; ]</td>
+                <td style="width: 25%; padding: 4px; font-weight: bold;">APLICADA</td>
+                <td style="width: 8%; border-right: 1px solid #cbd5e1;">[ X ]</td>
+                <td style="width: 26%; padding: 4px; font-weight: bold;">DESARROLLO EXPERIMENTAL</td>
+                <td style="width: 8%;">[ &nbsp; ]</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">PERIODO ACADÉMICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default Periodo PeriodoConvocatoria ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">DIRECTOR DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b;" colspan="3">{{default DirectorProyecto NombreDirectorFirma ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #1e293b; color: white; font-weight: bold; padding: 5px 8px; border: 1px solid #334155;">INVESTIGADORES:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1;" colspan="3">{{default InvestigadoresTexto ""}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; width: 32%;">FECHA INICIO DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; width: 18%;">{{default FechaInicio ""}}</td>
+          <td style="background-color: #b8860b; color: black; font-weight: bold; padding: 5px 8px; border: 1px solid #996515; width: 32%;">FECHA FIN PREVISTA DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; width: 18%;">{{default FechaFin ""}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+};
+

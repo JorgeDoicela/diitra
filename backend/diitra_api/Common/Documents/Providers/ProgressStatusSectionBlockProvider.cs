@@ -50,6 +50,8 @@ namespace diitra_api.Controllers
                 configDict = new Dictionary<string, object>();
             }
 
+            configDict["sectionType"] = "progress_status_section";
+
             string secId = block.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "estado_ejecucion" : "estado_ejecucion";
 
             sectionsList.Add(new UiSectionDto {

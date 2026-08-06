@@ -365,14 +365,20 @@ export interface ProgressHeaderField {
 
 export const DEFAULT_PROGRESS_HEADER_FIELDS: ProgressHeaderField[] = [
     { id: 'ph_numero', fieldKey: 'NumeroInforme', label: 'Número de Informe', scribanVariable: 'numero_informe', enabled: true, colSpan: 1, fieldType: 'text', readOnly: true },
-    { id: 'ph_titulo', fieldKey: 'Titulo', label: 'Nombre del Proyecto', scribanVariable: 'titulo', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
+    { id: 'ph_titulo', fieldKey: 'NombreProyecto', label: 'Nombre del Proyecto', scribanVariable: 'nombre_proyecto', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
     { id: 'ph_programa', fieldKey: 'Programa', label: 'Programa', scribanVariable: 'programa', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
-    { id: 'ph_grupo', fieldKey: 'GrupoInvestigacion', label: 'Grupo de Investigación', scribanVariable: 'grupo', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
-    { id: 'ph_linea', fieldKey: 'Linea', label: 'Línea / Sublínea', scribanVariable: 'linea', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
-    { id: 'ph_tipo', fieldKey: 'TipoInvestigacion', label: 'Tipo de Investigación', scribanVariable: 'tipo_investigacion', enabled: true, colSpan: 1, fieldType: 'checkbox_group', options: ['BÁSICA', 'APLICADA', 'EXPERIMENTAL'] },
+    { id: 'ph_grupo', fieldKey: 'GrupoInvestigacion', label: 'Grupo de Investigación', scribanVariable: 'grupo_investigacion', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_dominio', fieldKey: 'Dominio', label: 'Dominio', scribanVariable: 'dominio', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
+    { id: 'ph_linea', fieldKey: 'LineaInvestigacion', label: 'Línea de Investigación', scribanVariable: 'linea_investigacion', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_sublinea', fieldKey: 'SublineaInvestigacion', label: 'Sublínea de Investigación', scribanVariable: 'sublinea_investigacion', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_campo_amplio', fieldKey: 'CampoAmplio', label: 'Campo Amplio', scribanVariable: 'campo_amplio', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_campo_especifico', fieldKey: 'CampoEspecifico', label: 'Campo Específico', scribanVariable: 'campo_especifico', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_campo_detallado', fieldKey: 'CampoDetallado', label: 'Campo Detallado', scribanVariable: 'campo_detallado', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
     { id: 'ph_carrera', fieldKey: 'Carrera', label: 'Carrera', scribanVariable: 'carrera', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
-    { id: 'ph_periodo', fieldKey: 'PeriodoAcademico', label: 'Período Académico', scribanVariable: 'periodo_academico', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
-    { id: 'ph_director', fieldKey: 'Director', label: 'Director del Proyecto', scribanVariable: 'director', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_tipo', fieldKey: 'TipoInvestigacion', label: 'Tipo de Investigación', scribanVariable: 'tipo_investigacion', enabled: true, colSpan: 1, fieldType: 'checkbox_group', options: ['BÁSICA', 'APLICADA', 'DESARROLLO EXPERIMENTAL'] },
+    { id: 'ph_periodo', fieldKey: 'Periodo', label: 'Período Académico', scribanVariable: 'periodo', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_director', fieldKey: 'DirectorProyecto', label: 'Director del Proyecto', scribanVariable: 'director_proyecto', enabled: true, colSpan: 1, fieldType: 'computed', readOnly: true },
+    { id: 'ph_investigadores', fieldKey: 'InvestigadoresTexto', label: 'Investigadores Activos', scribanVariable: 'investigadores_texto', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
     { id: 'ph_fechas', fieldKey: 'Fechas', label: 'Fechas (Inicio → Fin)', scribanVariable: 'fechas', enabled: true, colSpan: 2, fieldType: 'computed', readOnly: true },
 ];
 

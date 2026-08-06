@@ -20,6 +20,7 @@ import {
     generateProjectApprovalNoticeHtml,
     generateProgressActivityHtml,
     generateProgressStatusHtml,
+    generateProgressHeaderHtml,
 } from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
@@ -89,6 +90,9 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'project_progress_report':
                 html += generateProjectProgressHtml(block);
+                break;
+            case 'progress_header_section':
+                html += generateProgressHeaderHtml(block);
                 break;
             case 'progress_activity_section':
                 html += generateProgressActivityHtml(block);

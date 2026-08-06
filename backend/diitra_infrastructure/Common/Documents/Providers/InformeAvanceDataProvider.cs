@@ -128,18 +128,28 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 HashFirma = informe?.HashFirma ?? "",
                 FechaFirma = informe?.FechaFirma?.ToString("dd/MM/yyyy HH:mm") ?? "",
 
-                // Datos del proyecto vinculado
-                Titulo = projectDto?.Titulo ?? "PROYECTO DE INVESTIGACIÓN",
+                // Datos del proyecto vinculado (Mapeados desde el Protocolo de Investigación)
+                NombreProyecto = projectDto?.Titulo ?? "",
+                Titulo = projectDto?.Titulo ?? "",
                 CodigoInstitucional = projectDto?.CodigoInstitucional ?? "",
                 Programa = projectDto?.Programa ?? "",
-                GrupoInvestigacion = projectDto?.GrupoInvestigacion ?? "",
+                GrupoInvestigacion = projectDto?.GrupoInvestigacion ?? projectDto?.GrupoInvestigacionNombre ?? "",
+                Dominio = projectDto?.Dominio ?? "",
                 LineaInvestigacion = projectDto?.LineaInvestigacion ?? "",
                 SublineaInvestigacion = projectDto?.SublineaInvestigacion ?? "",
+                CampoAmplio = projectDto?.CampoAmplio ?? "",
+                CampoEspecifico = projectDto?.CampoEspecifico ?? "",
+                CampoDetallado = projectDto?.CampoDetallado ?? "",
                 Carrera = projectDto?.Carrera ?? "",
+                TipoInvestigacion = !string.IsNullOrWhiteSpace(projectDto?.TipoInvestigacion) ? projectDto.TipoInvestigacion : "APLICADA",
+                Periodo = projectDto?.Periodo ?? projectDto?.PeriodoConvocatoria ?? "",
                 PeriodoConvocatoria = projectDto?.PeriodoConvocatoria ?? "",
-                DirectorProyecto = projectDto?.DirectorProyecto ?? "DIRECTOR DE PROYECTO",
-                FechaInicio = projectDto?.FechaInicio ?? "",
-                FechaFin = projectDto?.FechaFin ?? "",
+                DirectorProyecto = projectDto?.DirectorProyecto ?? "",
+                InvestigadoresTexto = projectDto?.Investigadores != null && projectDto.Investigadores.Any()
+                    ? string.Join(", ", projectDto.Investigadores.Where(i => i.Activo != false).Select(i => i.Nombre).Where(n => !string.IsNullOrWhiteSpace(n)))
+                    : "",
+                FechaInicio = projectDto?.FechaInicio ?? projectDto?.FechaInicioEstimada ?? "",
+                FechaFin = projectDto?.FechaFin ?? projectDto?.FechaFinEstimada ?? "",
 
                 // Bloques de desarrollo CACES
                 ConclusionesParciales = conclusionesParciales,

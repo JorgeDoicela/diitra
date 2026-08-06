@@ -38,6 +38,28 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             Dictionary<string, object?>? extraVariables = null,
             bool isBlindMode = false)
         {
+            if (!string.IsNullOrEmpty(templateHtml))
+            {
+                if (templateHtml.Contains("#if_eq"))
+                {
+                    templateHtml = templateHtml
+                        .Replace("{{#if_eq", "{{#if (eq")
+                        .Replace("{{/if_eq}}", "{{/if}}");
+                }
+
+                // Aplanar sub-expresiones anidadas de default (ej: {{default A (default B "fallback")}})
+                while (templateHtml.Contains("(default "))
+                {
+                    var cleaned = System.Text.RegularExpressions.Regex.Replace(
+                        templateHtml,
+                        @"\(default\s+([^)]+)\)",
+                        "$1"
+                    );
+                    if (cleaned == templateHtml) break;
+                    templateHtml = cleaned;
+                }
+            }
+
             HandlebarsTemplate<object, object> compiled;
             string rendered;
 
