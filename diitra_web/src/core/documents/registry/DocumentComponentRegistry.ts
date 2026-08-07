@@ -31,6 +31,7 @@ import { ImpactSection }          from '../../../components/DIITRA/sections/Impa
 import { ExpectedProductsSection } from '../../../components/DIITRA/sections/ExpectedProductsSection';
 import { BibliographySection }    from '../../../components/DIITRA/sections/BibliographySection';
 import { ProgressReportSection }  from '../../../components/DIITRA/sections/ProgressReportSection';
+import { FinalReportHeaderSection } from '../../../components/DIITRA/sections/FinalReportHeaderSection';
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
 import { MultiSectionTableSection } from '../../../components/DIITRA/sections/MultiSectionTableSection';
 
@@ -47,6 +48,7 @@ export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
     'TimelineSection': TimelineSection,
     'BibliographySection': BibliographySection,
     'ProgressReportSection': ProgressReportSection,
+    'FinalReportHeaderSection': FinalReportHeaderSection,
     'AgnosticSection': AgnosticSection,
     'MultiSectionTableSection': MultiSectionTableSection
 };
@@ -59,6 +61,7 @@ export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
 export const DocumentComponentRegistry: Record<string, React.ComponentType<any>> = {
     // ── PROTOCOLO DE INVESTIGACIÓN ─────────────────────────────────
     'identificacion': GeneralSection,
+    'datos_generales_informe_final': FinalReportHeaderSection,
     'equipo':         TeamSection,
     'tecnico':        TechnicalSection,
     'recursos':       BudgetSection,

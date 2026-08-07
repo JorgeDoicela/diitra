@@ -42,9 +42,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 if (templateHtml.Contains("#if_eq"))
                 {
-                    templateHtml = templateHtml
-                        .Replace("{{#if_eq", "{{#if (eq")
-                        .Replace("{{/if_eq}}", "{{/if}}");
+                    templateHtml = System.Text.RegularExpressions.Regex.Replace(
+                        templateHtml,
+                        @"\{\{\#if_eq\s+([^}]+)\}\}",
+                        "{{#if (eq $1)}}"
+                    );
+                    templateHtml = templateHtml.Replace("{{/if_eq}}", "{{/if}}");
                 }
 
                 // Aplanar sub-expresiones anidadas de default (ej: {{default A (default B "fallback")}})

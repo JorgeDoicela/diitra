@@ -76,7 +76,7 @@ namespace diitra_api.Controllers
                     Id = "datos_generales_informe_final",
                     Label = string.IsNullOrEmpty(title) ? "1. Datos del Proyecto" : title,
                     IconName = "BookOpen",
-                    ComponentName = "GeneralSection",
+                    ComponentName = "FinalReportHeaderSection",
                     Config = configDict
                 });
             }

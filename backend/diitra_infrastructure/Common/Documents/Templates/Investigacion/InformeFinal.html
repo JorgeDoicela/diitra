@@ -1,4 +1,4 @@
-﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg2MDUzMjY0NTY2IiwidHlwZSI6ImZpbmFsX3JlcG9ydF93cml0aW5nX3NlY3Rpb24iLCJ0aXRsZSI6IlBsYW4gZGUgUmVkYWNjacOzbiBJbmZvcm1lIEZpbmFsIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ3cml0aW5nSGVhZGVyQ29sb3IiOiJuYXZ5Iiwid3JpdGluZ0xheW91dE1vZGUiOiJ0YWJsZV8yY29sIn19XQ== -->
+﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg2MTExMDM0ODAzIiwidHlwZSI6ImZpbmFsX3JlcG9ydF9oZWFkZXJfc2VjdGlvbiIsInRpdGxlIjoiRW5jYWJlemFkbyBJbmZvcm1lIEZpbmFsIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJmaW5hbFJlcG9ydFRpdGxlIjoiREFUT1MgREVMIFBST1lFQ1RPIERFIElOVkVTVElHQUNJw5NOIiwiZmluYWxSZXBvcnRIZWFkZXJDb2xvciI6Im5hdnkiLCJzaG93VGlwb0ludmVzdGlnYWNpb24iOnRydWUsInNob3dBbGNhbmNlUHJveWVjdG8iOnRydWUsInNob3dGZWNoYXNQcm95ZWN0byI6dHJ1ZSwic2hvd1RhYmxhSW52ZXN0aWdhZG9yZXMiOnRydWV9fSx7ImlkIjoiYmxvY2stMTc4NjExMTAzODU4NyIsInR5cGUiOiJmaW5hbF9yZXBvcnRfd3JpdGluZ19zZWN0aW9uIiwidGl0bGUiOiJQbGFuIGRlIFJlZGFjY2nDs24gSW5mb3JtZSBGaW5hbCIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsid3JpdGluZ0hlYWRlckNvbG9yIjoibmF2eSIsIndyaXRpbmdMYXlvdXRNb2RlIjoidGFibGVfMmNvbCJ9fV0= -->
 <style>
   * { box-sizing: border-box; }
   
@@ -232,141 +232,289 @@
   .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
 </style>
 
-<div class="doc-container"><!-- BLOQUE: PLAN DE REDACCIÓN INFORME FINAL -->
+<div class="doc-container">
+  <!-- BLOQUE: ENCABEZADO INFORME FINAL -->
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; color: #000000; border: 1px solid #000000;">
+      <tbody>
+        <tr style="text-align: center; font-weight: bold; background-color: #ffffff;">
+          <td colspan="6" style="padding: 7px; border: 1px solid #000000; font-size: 10pt; text-transform: uppercase; color: #000000;">DATOS DEL PROYECTO DE INVESTIGACIÓN</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; width: 32%; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">NOMBRE DEL PROYECTO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #000000;" colspan="5">{{{default Titulo titulo_proyecto TituloProyecto "[TÍTULO DEL PROYECTO]"}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">PROGRAMA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default Programa programa ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">GRUPO DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default GrupoInvestigacionNombre grupo_investigacion GrupoInvestigacion ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">DOMINIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default Dominio dominio ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">LÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default LineaInvestigacion linea_investigacion ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">SUBLÍNEA DE INVESTIGACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default SublineaInvestigacion sublinea_investigacion ""}}}</td>
+        </tr>
+        
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">TIPO DE INVESTIGACIÓN (X):</td>
+          <td style="padding: 0; border: 1px solid #000000;" colspan="5">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8pt; color: #000000; margin: 0;">
+              <tr>
+                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">BÁSICA</td>
+                <td style="width: 13%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "BASICA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">APLICADA</td>
+                <td style="width: 13%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "APLICADA"}}(X){{else}}{{#if_eq tipo_investigacion "APLICADA"}}(X){{else}}( X ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 24%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">DESARROLLO EXPERIMENTAL</td>
+                <td style="width: 10%; padding: 4px; border: none;">{{#if_eq TipoInvestigacion "EXPERIMENTAL"}}(X){{else}}{{#if_eq tipo_investigacion "EXPERIMENTAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO AMPLIO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default CampoAmplio campo_amplio ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO ESPECÍFICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default CampoEspecifico campo_especifico ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CAMPO DETALLADO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default CampoDetallado campo_detallado ""}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">CARRERA:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">Tecnología Superior en {{{default Carrera carrera "TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE"}}}</td>
+        </tr>
+        <tr>
+          <td style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 5px 8px; border: 1px solid #000000; text-transform: uppercase;">PERIODO ACADÉMICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;" colspan="5">{{{default Periodo periodo "PERIODO ACADÉMICO MARZO 2025 - SEPTIEMBRE 2025"}}}</td>
+        </tr>
+        
+        <tr style="background-color: #ffffff; color: #000000; font-weight: bold; text-align: center;">
+          <td colspan="6" style="padding: 6px; border: 1px solid #000000; text-transform: uppercase; font-size: 9pt;">ALCANCE DEL PROYECTO (X)</td>
+        </tr>
+        <tr style="background-color: #ffffff; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; color: #000000;">
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">INSTITUCIONAL</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">PARROQUIAL</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">CANTONAL</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">PROVINCIAL</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;" colspan="2">NACIONAL</td>
+        </tr>
+        <tr style="text-align: center; font-weight: bold; color: #000000;">
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "INSTITUCIONAL"}}(X){{else}}{{#if_eq alcance_proyecto "INSTITUCIONAL"}}(X){{else}}( X ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "PARROQUIAL"}}(X){{else}}{{#if_eq alcance_proyecto "PARROQUIAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "CANTONAL"}}(X){{else}}{{#if_eq alcance_proyecto "CANTONAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;">{{#if_eq AlcanceProyecto "PROVINCIAL"}}(X){{else}}{{#if_eq alcance_proyecto "PROVINCIAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">{{#if_eq AlcanceProyecto "NACIONAL"}}(X){{else}}{{#if_eq alcance_proyecto "NACIONAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+        </tr>
+        
+        <tr style="background-color: #ffffff; text-align: center; font-weight: bold; font-size: 8pt; text-transform: uppercase; color: #000000;">
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="1">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">FECHA DE INICIO DEL PROYECTO</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="1">FECHA FIN PRESENTADA DEL PROYECTO</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">FECHA FIN REAL</td>
+        </tr>
+        <tr style="text-align: center; color: #000000;">
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="1">{{{default FechaPresentacion fecha_presentacion ""}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">{{{default FechaInicio fecha_inicio ""}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="1">{{{default FechaFinPresentada fecha_fin_presentada ""}}}</td>
+          <td style="padding: 5px; border: 1px solid #000000;" colspan="2">{{{default FechaFinReal fecha_fin_real ""}}}</td>
+        </tr>
+        
+        <tr style="background-color: #ffffff; color: #000000; font-weight: bold; text-align: center;">
+          <td colspan="6" style="padding: 6px; border: 1px solid #000000; text-transform: uppercase; font-size: 9pt;">INVESTIGADORES</td>
+        </tr>
+        <tr style="background-color: #ffffff; font-weight: bold; text-transform: uppercase; font-size: 8.5pt; text-align: center; color: #000000;">
+          <td style="padding: 5px; border: 1px solid #000000; width: 25%;">NOMBRE</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">NÚMERO DE CÉDULA</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;">EMAIL</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 15%;">TELÉFONO</td>
+          <td style="padding: 5px; border: 1px solid #000000; width: 20%;" colspan="2">ROL DENTRO DE LA INSTITUCIÓN</td>
+        </tr>
+        {{#if Investigadores}}
+          {{#each Investigadores}}
+          <tr style="color: #000000; text-align: center;">
+            <td style="padding: 5px; border: 1px solid #000000; text-align: left; font-weight: bold;">{{{default Nombre nombre ""}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default Cedula cedula ""}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default Email email ""}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default Telefono telefono ""}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;" colspan="2">{{{default Rol rol "INVESTIGADOR"}}}</td>
+          </tr>
+          {{/each}}
+        {{else}}
+          <tr style="color: #000000; text-align: center;">
+            <td style="padding: 5px; border: 1px solid #000000; text-align: left; font-weight: bold;">{{{default DirectorProyecto NombreDirector "JOSUE ISRAEL MIÑO SOLIZ"}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default CedulaDirector cedula_director "__________"}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default EmailDirector email_director "director@istpet.edu.ec"}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">{{{default TelefonoDirector telefono_director ""}}}</td>
+            <td style="padding: 5px; border: 1px solid #000000; font-weight: bold;" colspan="2">DIRECTOR DE PROYECTO</td>
+          </tr>
+        {{/if}}
+        
+      </tbody>
+    </table>
+  </div><!-- BLOQUE: PLAN DE REDACCIÓN INFORME FINAL -->
+<div style="margin-top: 25px;">
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       2. ÍNDICE
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">DETALLAR ÍNDICE DE CONTENIDO, TABLAS E IMÁGENES</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Indice indice ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       3. RESUMEN
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">250-300 PALABRAS, 3-4 PÁRRAFOS - TERCERA PERSONA SIN CITAS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Resumen resumen ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       4. INTRODUCCIÓN
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">500-700 PALABRAS, 5-7 PÁRRAFOS - NORMAS APA 7ª EDICIÓN</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Introduccion introduccion ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       5. OBJETIVO GENERAL Y OBJETIVOS ESPECÍFICOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">OBJETIVO GENERAL + LISTA DE OBJETIVOS ESPECÍFICOS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Objetivos objetivos ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       6. FUNDAMENTOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">EXTENSIÓN VARIABLE - CITAR USANDO NORMAS APA 7ª EDICIÓN</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Fundamentos fundamentos ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       7. MÉTODOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">700-900 PALABRAS, 5-8 PÁRRAFOS - TÉCNICAS E INSTRUMENTOS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Metodos metodos ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       8. RESULTADOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">800-1200 PALABRAS, 6-12 PÁRRAFOS - GRÁFICOS, TABLAS O FIGURAS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Resultados resultados ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       9. PRODUCTOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">400-600 PALABRAS, 4-6 PÁRRAFOS - PUBLICACIONES Y SOFTWARE</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Productos productos ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       10. IMPACTOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">500-800 PALABRAS, 5-8 PÁRRAFOS - IMPACTOS CIENTÍFICOS Y SOCIALES</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Impactos impactos ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       11. TRANSFERENCIA DE RESULTADOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">400-600 PALABRAS, 4-6 PÁRRAFOS - CONVENIOS Y APLICACIONES</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Transferencia transferencia ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       12. INFORME FINANCIERO DE GASTOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">EXTENSIÓN VARIABLE - TABLAS Y JUSTIFICACIÓN DE GASTOS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default InformeFinanciero informe_financiero ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       13. CONCLUSIONES
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">500-700 PALABRAS, 5-7 PÁRRAFOS - LOGRO DE OBJETIVOS Y LIMITACIONES</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Conclusiones conclusiones ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       14. RECOMENDACIONES
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">500-700 PALABRAS, 5-7 PÁRRAFOS - ACCIONES VIABLES Y MEJORAS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Recomendaciones recomendaciones ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       15. BIBLIOGRAFÍA
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">NORMAS APA 7ª EDICIÓN</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Bibliografia bibliografia ""}}}
     </div>
   </div>
 
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <div style="background-color: #1e2a4a; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 8px;">
+  <div style="margin-top: 25px; page-break-inside: avoid;">
+    <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       16. ANEXOS
-    </div>
-    <div style="font-size: 9.5pt; line-height: 1.6; color: #1e293b; text-align: justify;">
+    </h2>
+    <p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">DOCUMENTOS COMPLEMENTARIOS Y CAPTURAS</p>
+    <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default Anexos anexos ""}}}
     </div>
   </div>
-
+</div>
 </div>

@@ -592,34 +592,22 @@ export const RenderFinalReportWritingSection: React.FC<{
     }));
 
     return (
-        <div className="w-full text-slate-900 font-sans my-2">
-            <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white">
-                <div
-                    className="px-3 py-2 font-bold text-[11px] uppercase tracking-wider text-center text-white"
-                    style={{ backgroundColor: headerBg }}
-                >
-                    PLAN DE REDACCIÓN INFORME FINAL (15 SUBSECCIONES CIENTÍFICAS)
+        <div className="w-full font-sans my-4 space-y-6">
+            {subs.map((sub: any) => (
+                <div key={sub.key} className="w-full bg-white p-3 border-b border-slate-200">
+                    <h2 className="text-[13pt] font-extrabold text-[#002060] text-center uppercase tracking-wide mb-1.5 font-sans">
+                        {sub.numberPrefix ? `${sub.numberPrefix} ${sub.title}` : sub.title}
+                    </h2>
+                    {sub.requirementText && (
+                        <p className="text-[9pt] text-slate-700 italic text-left mb-2 leading-relaxed">
+                            {sub.requirementText}
+                        </p>
+                    )}
+                    <div className="text-[9.5pt] text-slate-400 italic text-justify leading-relaxed">
+                        [Redacción enriquecida colaborativa en Tiptap / Yjs...]
+                    </div>
                 </div>
-
-                <table className="w-full border-collapse border border-slate-300 text-[8.5pt]">
-                    <tbody>
-                        {subs.map((sub: any) => (
-                            <tr key={sub.key} className="border-b border-slate-200">
-                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px]" style={{ backgroundColor: sub.variant === 'banner_gold' ? goldColor : headerBg }}>
-                                    {sub.numberPrefix ? `${sub.numberPrefix} ${sub.title}` : sub.title}
-                                </td>
-                                <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
-                                    {sub.requirementText ? (
-                                        <span className="font-bold text-slate-700 block whitespace-pre-line">[{sub.requirementText}]</span>
-                                    ) : (
-                                        <span className="italic text-slate-400">[Redacción colaborativa en Tiptap / Yjs]</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            ))}
         </div>
     );
 };
