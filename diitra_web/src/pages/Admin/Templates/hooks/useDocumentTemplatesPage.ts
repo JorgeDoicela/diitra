@@ -289,12 +289,13 @@ export const useDocumentTemplatesPage = () => {
                         tituloSuperior: tmpl.code === "INFORME_AVANCE"
                             ? "INFORME DE AVANCE DE INVESTIGACIÓN"
                             : tmpl.code === "INFORME_FINAL_INVESTIGACION"
-                                ? "INFORME FINAL DE INVESTIGACIÓN"
+                                ? "INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN"
                                 : tmpl.code === "DICTAMEN_ARBITRAJE"
                                     ? "ACTA DE DICTAMEN DE ARBITRAJE"
                                     : tmpl.code === "REPORTE_ANALITICAS"
                                         ? "REPORTE DE ANALÍTICAS DE INVESTIGACIÓN"
                                         : "PROYECTO DE INVESTIGACIÓN",
+                        colorTituloSuperior: tmpl.code === "INFORME_FINAL_INVESTIGACION" ? "gold" : "navy",
                         carreraPorDefecto: "TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE",
                         periodoPorDefecto: "PERIODO ACADÉMICO MARZO 2025 - SEPTIEMBRE 2025",
                         colorTema: "#1e2a4a"

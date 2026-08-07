@@ -55,15 +55,14 @@ export const FinalReportHeaderSection: React.FC<FinalReportHeaderSectionProps> =
     return (
         <div className="space-y-8 animate-fade-in pb-10">
             {/* Cabecera de la Ficha Técnica */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl border border-indigo-500/20 relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2.5 bg-indigo-500/20 rounded-xl backdrop-blur-md border border-indigo-400/30">
-                        <BookOpen className="w-6 h-6 text-indigo-300" />
+            <div className="bg-bg-card p-6 rounded-2xl text-text-main shadow-xs border border-border-thin relative overflow-hidden">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl border border-indigo-500/20">
+                        <BookOpen className="w-6 h-6" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight">DATOS DEL PROYECTO DE INVESTIGACIÓN</h2>
-                        <p className="text-xs text-indigo-200/80">Ficha técnica institucional oficial para el Informe Final (ISTPET CACES 2026)</p>
+                        <h2 className="text-xl font-bold tracking-tight text-text-main">DATOS DEL PROYECTO DE INVESTIGACIÓN</h2>
+                        <p className="text-xs text-text-dim">Ficha técnica institucional oficial para el Informe Final (ISTPET CACES 2026)</p>
                     </div>
                 </div>
             </div>

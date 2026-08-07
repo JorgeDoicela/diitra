@@ -73,9 +73,28 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const alignPeriodo = config.alignPeriodo || gCover.alignPeriodo || 'center';
 
     const textInst = config.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
-    const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
     const textCarrera = config.carreraPorDefecto || gCover.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
-    const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO 2026-2026';
+    const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025';
+
+    const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'gold';
+    const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '#1e2a4a' : colorTitleKey;
+    const isGoldTitle = colorTitleKey === 'gold' || titleColor === '#b8912e' || titleColor === '#d4af37';
+
+    const colorInst = config.colorInstitution || gCover.colorInstitution || '#ffffff';
+    const colorTema = config.colorTemaProyecto || gCover.colorTemaProyecto || '#ffffff';
+    const colorCar = config.colorCarrera || gCover.colorCarrera || '#ffffff';
+    const colorPer = config.colorPeriodo || gCover.colorPeriodo || '#ffffff';
+
+    const prefijoCarrera = config.prefijoCarrera !== undefined ? config.prefijoCarrera : '';
+    const cleanCarreraText = textCarrera.trim();
+    const hasCarreraPrefixInText = cleanCarreraText.toUpperCase().startsWith('TECNOLOGÍA SUPERIOR EN') || cleanCarreraText.toUpperCase().startsWith('CARRERA');
+    const showCarreraPrefix = Boolean(prefijoCarrera && prefijoCarrera.trim().length > 0 && !hasCarreraPrefixInText);
+
+    const prefijoPeriodo = config.prefijoPeriodo !== undefined ? config.prefijoPeriodo : 'PERIODO ACADÉMICO';
+    const cleanPeriodoText = textPeriodo.trim();
+    const hasPeriodoPrefixInText = cleanPeriodoText.toUpperCase().startsWith('PERIODO ACADÉMICO') || cleanPeriodoText.toUpperCase().startsWith('PERÍODO ACADÉMICO');
+    const showPeriodoPrefix = Boolean(prefijoPeriodo && prefijoPeriodo.trim().length > 0 && !hasPeriodoPrefixInText);
 
     const positions: Record<CoverElementId, FreeFormPosition> = {
         institution: {
@@ -191,28 +210,42 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 </div>
 
                 {renderElement('institution', showInst, alignInst,
-                    <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white select-none flex items-center gap-1.5" style={{ backgroundColor: color }}>
+                    <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none flex items-center gap-1.5 shadow-sm" style={{ backgroundColor: color, color: colorInst }}>
                         {textInst}
                     </span>
                 )}
 
                 {renderElement('title', showTitle, alignTitle,
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tight uppercase leading-tight" style={{ color }}>{textTitle}</h1>
-                        <div className="text-base font-bold uppercase mt-1 leading-tight opacity-70 italic" style={{ color }}>
-                            Escribir tema aquí...
+                    <div className="space-y-4">
+                        <h1 className={`text-xl tracking-tight uppercase leading-snug ${isGoldTitle ? 'italic font-black text-[#b8912e]' : 'font-extrabold'}`} style={{ color: titleColor }}>
+                            {textTitle}
+                        </h1>
+                        <div className="text-sm font-extrabold uppercase tracking-wide leading-tight" style={{ color: colorTema }}>
+                            ESCRIBIR EL TEMA EN MAYÚSCULAS
                         </div>
                     </div>
                 )}
 
                 {renderElement('carrera', showCarrera, alignCarrera,
-                    <div>
-                        <div className="text-sm font-bold text-gray-600 uppercase tracking-wider">{textCarrera}</div>
+                    <div className="space-y-1" style={{ color: colorCar }}>
+                        {showCarreraPrefix && (
+                            <div className="text-xs font-black uppercase tracking-wider opacity-90">{prefijoCarrera}</div>
+                        )}
+                        <div className="text-sm font-bold uppercase tracking-wide">
+                            {textCarrera}
+                        </div>
                     </div>
                 )}
 
                 {renderElement('periodo', showPeriodo, alignPeriodo,
-                    <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">{textPeriodo}</div>
+                    <div className="space-y-0.5" style={{ color: colorPer }}>
+                        {showPeriodoPrefix && (
+                            <div className="text-[11px] font-black uppercase tracking-wide opacity-90">{prefijoPeriodo}</div>
+                        )}
+                        <div className="text-xs font-semibold uppercase tracking-wide">
+                            {textPeriodo}
+                        </div>
+                    </div>
                 )}
             </div>
         );
@@ -248,27 +281,33 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 )}
 
                 {hasTitle && (
-                    <div style={getHorizontalAlignmentStyle(alignTitle)} className="w-full">
-                        <h1 className="text-2xl font-black tracking-tight uppercase leading-tight" style={{ color }}>
+                    <div style={getHorizontalAlignmentStyle(alignTitle)} className="w-full space-y-4">
+                        <h1 className={`text-xl tracking-tight uppercase leading-snug ${isGoldTitle ? 'italic font-black text-[#b8912e]' : 'font-extrabold'}`} style={{ color: titleColor }}>
                             {textTitle}
                         </h1>
-                        <div className="text-base font-bold uppercase mt-1 leading-tight opacity-70 italic" style={{ color }}>
-                            Escribir tema aquí...
+                        <div className="text-sm font-extrabold uppercase tracking-wide leading-tight text-white/90">
+                            ESCRIBIR EL TEMA EN MAYÚSCULAS
                         </div>
                     </div>
                 )}
 
                 {hasCarrera && (
-                    <div style={getHorizontalAlignmentStyle(alignCarrera)} className="w-full">
-                        <div className="text-sm font-bold text-gray-600 uppercase tracking-wider">
+                    <div style={getHorizontalAlignmentStyle(alignCarrera)} className="w-full space-y-1">
+                        {prefijoCarrera && (
+                            <div className="text-xs font-black text-white uppercase tracking-wider">{prefijoCarrera}</div>
+                        )}
+                        <div className="text-sm font-bold text-white uppercase tracking-wide">
                             {textCarrera}
                         </div>
                     </div>
                 )}
 
                 {hasPeriodo && (
-                    <div style={getHorizontalAlignmentStyle(alignPeriodo)} className="w-full">
-                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                    <div style={getHorizontalAlignmentStyle(alignPeriodo)} className="w-full space-y-0.5">
+                        {prefijoPeriodo && (
+                            <div className="text-[11px] font-black text-white uppercase tracking-wide">{prefijoPeriodo}</div>
+                        )}
+                        <div className="text-xs font-semibold text-white uppercase tracking-wide">
                             {textPeriodo}
                         </div>
                     </div>

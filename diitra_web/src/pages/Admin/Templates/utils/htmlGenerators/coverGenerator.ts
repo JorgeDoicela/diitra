@@ -16,17 +16,33 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const alignPeriodo = c.alignPeriodo || gCover.alignPeriodo || 'center';
 
     const textInst = c.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
-    const textTitle = c.tituloSuperior || gCover.tituloSuperior || 'PORTADA DE PRUEBA DE IDENTIDAD VISUAL';
+    const textTitle = c.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
 
+    const colorTitleKey = c.colorTituloSuperior || gCover.colorTituloSuperior || 'gold';
+    const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '{{ theme.colors.primary }}' : colorTitleKey;
+    const isGoldTitle = colorTitleKey === 'gold' || titleColor === '#b8912e' || titleColor === '#d4af37';
+
+    const colorInst = c.colorInstitution || gCover.colorInstitution || '#ffffff';
+    const colorTema = c.colorTemaProyecto || gCover.colorTemaProyecto || '#ffffff';
+    const colorCar = c.colorCarrera || gCover.colorCarrera || '#ffffff';
+    const colorPer = c.colorPeriodo || gCover.colorPeriodo || '#ffffff';    const prefijoCarrera = c.prefijoCarrera !== undefined ? c.prefijoCarrera : '';
     const cleanCarrera = (c.carreraPorDefecto || gCover.carreraPorDefecto || '').replace(/"/g, '\\"');
+    const cleanCarreraUpper = cleanCarrera.trim().toUpperCase();
+    const hasCarreraPrefixInText = cleanCarreraUpper.startsWith('TECNOLOGÍA SUPERIOR EN') || cleanCarreraUpper.startsWith('CARRERA');
+    const showCarreraPrefix = Boolean(prefijoCarrera && prefijoCarrera.trim().length > 0 && !hasCarreraPrefixInText);
+
+    const prefijoPeriodo = c.prefijoPeriodo !== undefined ? c.prefijoPeriodo : 'PERIODO ACADÉMICO';
     const cleanPeriodo = (c.periodoPorDefecto || gCover.periodoPorDefecto || '').replace(/"/g, '\\"');
+    const cleanPeriodoUpper = cleanPeriodo.trim().toUpperCase();
+    const hasPeriodoPrefixInText = cleanPeriodoUpper.startsWith('PERIODO ACADÉMICO') || cleanPeriodoUpper.startsWith('PERÍODO ACADÉMICO');
+    const showPeriodoPrefix = Boolean(prefijoPeriodo && prefijoPeriodo.trim().length > 0 && !hasPeriodoPrefixInText);
 
     if (isFreeForm) {
         const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
         const yInst  = c.yInstitution ?? gCover.yInstitution ?? 4;
         const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
         const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
-        const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 10; 
+        const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
         const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
         const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
         const yPer   = c.yPeriodo     ?? gCover.yPeriodo     ?? 80;
@@ -38,34 +54,34 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
 
         const instEl = showInst ? `
         <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; ${alignStyle(alignInst)}">
-          <span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color: {{ theme.colors.primary }}; padding:3px 10px; border-radius:9999px; display:inline-block;">
+          <span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst}; background-color: {{ theme.colors.primary }}; padding:3px 10px; border-radius:9999px; display:inline-block;">
             ${textInst}
           </span>
         </div>` : '';
 
         const titleEl = showTitle ? `
         <div style="position:absolute; left:${toMmX(xTitle)}; top:${toMmY(yTitle)}; width:${getWidthMm(xTitle)}; ${alignStyle(alignTitle)}">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:22pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase; line-height:1.2;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:20pt; font-weight:bold; ${isGoldTitle ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform:uppercase; line-height:1.2;">
             ${textTitle}
           </div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:13pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:8px; line-height:1.3; word-wrap:break-word;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:13pt; font-weight:bold; color: ${colorTema}; text-transform:uppercase; margin-top:12px; line-height:1.3; word-wrap:break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
           </div>
         </div>` : '';
 
         const carreraEl = showCarrera ? `
         <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; ${alignStyle(alignCarrera)}">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase;">TECNOLOGÍA SUPERIOR EN</div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:normal; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:3px;">
+          ${showCarreraPrefix ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase;">${prefijoCarrera}</div>` : ''}
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase; margin-top:2px;">
             {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
         const periodoEl = showPeriodo ? `
         <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; ${alignStyle(alignPeriodo)}">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; color: {{ theme.colors.primary }}; text-transform:uppercase;">PERIODO ACADÉMICO</div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:normal; color: {{ theme.colors.primary }}; text-transform:uppercase; margin-top:2px;">
-            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
+          ${showPeriodoPrefix ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; color: ${colorPer}; text-transform:uppercase;">${prefijoPeriodo}</div>` : ''}
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:normal; color: ${colorPer}; text-transform:uppercase; margin-top:2px;">
+            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025'}"}}
           </div>
         </div>` : '';
 
@@ -86,38 +102,34 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
 
     const instHtml = showInst ? `
         <div style="text-align: ${alignInst}; width: 100%;">
-          <span style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #ffffff; background-color: {{ theme.colors.primary }}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
+          <span style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: ${colorInst}; background-color: {{ theme.colors.primary }}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
             ${textInst}
           </span>
         </div>` : '';
 
     const titleHtml = showTitle ? `
         <div style="text-align: ${alignTitle}; width: 100%;">
-          <h1 style="font-family: {{ theme.typography.font_family }}; font-size: 24pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase; margin: 0; line-height: 1.2;">
+          <h1 style="font-family: {{ theme.typography.font_family }}; font-size: 20pt; font-weight: bold; ${isGoldTitle ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform: uppercase; margin: 0; line-height: 1.2;">
             ${textTitle}
           </h1>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 15pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 14pt; font-weight: bold; color: ${colorTema}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
             {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
           </div>
         </div>` : '';
 
     const carreraHtml = showCarrera ? `
         <div style="text-align: ${alignCarrera}; width: 100%;">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase;">
-            TECNOLOGÍA SUPERIOR EN
-          </div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: normal; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 4px;">
+          ${prefijoCarrera ? `<div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: bold; color: ${colorCar}; text-transform: uppercase;">${prefijoCarrera}</div>` : ''}
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: normal; color: ${colorCar}; text-transform: uppercase; margin-top: 4px;">
             {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
           </div>
         </div>` : '';
 
     const periodoHtml = showPeriodo ? `
         <div style="text-align: ${alignPeriodo}; width: 100%;">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; color: {{ theme.colors.primary }}; text-transform: uppercase;">
-            PERIODO ACADÉMICO
-          </div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: normal; color: {{ theme.colors.primary }}; text-transform: uppercase; margin-top: 2px;">
-            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO 2026-2026'}"}}
+          ${prefijoPeriodo ? `<div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; color: ${colorPer}; text-transform: uppercase;">${prefijoPeriodo}</div>` : ''}
+          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: normal; color: ${colorPer}; text-transform: uppercase; margin-top: 2px;">
+            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025'}"}}
           </div>
         </div>` : '';
 

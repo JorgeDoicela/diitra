@@ -154,13 +154,15 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     alignKey: string,
                                     textKey: string,
                                     textPlaceholder: string,
-                                    defPos: { x: number; y: number }
+                                    defPos: { x: number; y: number },
+                                    colorKey?: string
                                 ) => {
                                     const isVisible = (activeBlock.config as any)[showKey] !== false;
                                     const xVal: number = (activeBlock.config as any)[xKey] ?? defPos.x;
                                     const yVal: number = (activeBlock.config as any)[yKey] ?? defPos.y;
                                     const alignVal: string = (activeBlock.config as any)[alignKey] || 'center';
                                     const textVal: string = (activeBlock.config as any)[textKey] || '';
+                                    const colorVal: string = colorKey ? ((activeBlock.config as any)[colorKey] || '#ffffff') : '#ffffff';
 
                                     return (
                                         <div key={showKey} className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
@@ -195,6 +197,37 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                             <option value="right">Derecha</option>
                                                         </select>
                                                     </LabeledField>
+                                                    {colorKey && (
+                                                        <LabeledField label="Color de Texto">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="color"
+                                                                    value={colorVal.startsWith('#') ? colorVal : '#ffffff'}
+                                                                    onChange={e => onUpdateConfig(activeBlock.id, colorKey, e.target.value)}
+                                                                    className="w-7 h-7 rounded border border-border-thin p-0 cursor-pointer bg-transparent"
+                                                                />
+                                                                <input
+                                                                    type="text"
+                                                                    className={`${inputCls} font-mono text-[10px] uppercase w-24`}
+                                                                    value={colorVal}
+                                                                    onChange={e => onUpdateConfig(activeBlock.id, colorKey, e.target.value)}
+                                                                    placeholder="#ffffff"
+                                                                />
+                                                                <div className="flex items-center gap-1 ml-auto">
+                                                                    {['#ffffff', '#facc15', '#b8912e', '#1e2a4a', '#000000'].map(preset => (
+                                                                        <button
+                                                                            key={preset}
+                                                                            type="button"
+                                                                            onClick={() => onUpdateConfig(activeBlock.id, colorKey, preset)}
+                                                                            className="w-4 h-4 rounded-full border border-black/20 transition-transform hover:scale-110 cursor-pointer"
+                                                                            style={{ backgroundColor: preset }}
+                                                                            title={preset}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </LabeledField>
+                                                    )}
                                                     {isFreeForm && (
                                                         <div>
                                                             <div className="flex items-center justify-between mb-1.5">
@@ -314,12 +347,47 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 })}
                                             </div>
                                         </div>
+                                        <div className="space-y-3 pt-2 border-t border-border-thin/20">
+                                            <LabeledField label="Tipo de Documento (Titulo Superior)">
+                                                <select
+                                                    className={selectCls}
+                                                    value={activeBlock.config.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN'}
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        onUpdateConfig(activeBlock.id, 'tituloSuperior', val);
+                                                        if (val.includes('INFORME FINAL')) {
+                                                            onUpdateConfig(activeBlock.id, 'colorTituloSuperior', 'gold');
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN">Informe Final del Proyecto de Investigación (Dorado / CACES)</option>
+                                                    <option value="PROYECTO DE INVESTIGACIÓN">Proyecto de Investigación (Protocolo)</option>
+                                                    <option value="INFORME DE AVANCE DE INVESTIGACIÓN">Informe de Avance de Investigación</option>
+                                                    <option value="ACTA DE DICTAMEN DE ARBITRAJE">Acta de Dictamen de Arbitraje</option>
+                                                    <option value="REPORTE DE ANALÍTICAS DE INVESTIGACIÓN">Reporte de Analíticas de Investigación</option>
+                                                </select>
+                                            </LabeledField>
+
+                                            <LabeledField label="Color del Título Documental">
+                                                <select
+                                                    className={selectCls}
+                                                    value={activeBlock.config.colorTituloSuperior || 'gold'}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', e.target.value)}
+                                                >
+                                                    <option value="gold">Dorado Acreditación (#b8912e / Itálica)</option>
+                                                    <option value="white">Blanco Pulcro (#ffffff)</option>
+                                                    <option value="navy">Azul Institucional (#1e2a4a)</option>
+                                                    <option value="slate">Gris Neutro (#475569)</option>
+                                                </select>
+                                            </LabeledField>
+                                        </div>
+
                                         <div className="space-y-3">
                                             <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Elementos de la Portada</h5>
-                                            {renderElementPanel('Institucion / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLOGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution)}
-                                            {renderElementPanel('Titulo de Portada', 'showTitle', 'xTitle', 'yTitle', 'alignTitle', 'tituloSuperior', 'PROYECTO DE INVESTIGACION', DEFAULT_POS.title)}
-                                            {renderElementPanel('Carrera / Unidad', 'showCarrera', 'xCarrera', 'yCarrera', 'alignCarrera', 'carreraPorDefecto', 'TECNOLOGIA SUPERIOR EN ...', DEFAULT_POS.carrera)}
-                                            {renderElementPanel('Periodo Academico', 'showPeriodo', 'xPeriodo', 'yPeriodo', 'alignPeriodo', 'periodoPorDefecto', 'PERIODO ACADEMICO 2026-2026', DEFAULT_POS.periodo)}
+                                            {renderElementPanel('Institución / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution, 'colorInstitution')}
+                                            {renderElementPanel('Título de Portada (Edición Libre)', 'showTitle', 'xTitle', 'yTitle', 'alignTitle', 'tituloSuperior', 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN', DEFAULT_POS.title, 'colorTituloSuperior')}
+                                            {renderElementPanel('Carrera / Unidad', 'showCarrera', 'xCarrera', 'yCarrera', 'alignCarrera', 'carreraPorDefecto', 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', DEFAULT_POS.carrera, 'colorCarrera')}
+                                            {renderElementPanel('Periodo Académico', 'showPeriodo', 'xPeriodo', 'yPeriodo', 'alignPeriodo', 'periodoPorDefecto', 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025', DEFAULT_POS.periodo, 'colorPeriodo')}
                                         </div>
                                     </div>
                                 );

@@ -220,8 +220,16 @@ export interface DocumentBlock {
         // ── cover ──────────────────────────────────────────────────────────
         coverLayoutMode?: 'zones' | 'freeform'; // 'freeform' es el default moderno
         tituloSuperior?: string;
+        colorTituloSuperior?: string;
+        colorTemaProyecto?: string;
+        colorCarrera?: string;
+        colorPeriodo?: string;
+        colorInstitution?: string;
+        estiloTituloSuperior?: 'italic_bold' | 'bold' | 'normal';
         carreraPorDefecto?: string;
+        prefijoCarrera?: string;
         periodoPorDefecto?: string;
+        prefijoPeriodo?: string;
         colorTema?: string;
         showInstitution?: boolean;
         textoInstitucion?: string;
