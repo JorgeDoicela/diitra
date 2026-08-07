@@ -150,49 +150,51 @@ namespace Diitra.Infrastructure.Common.Documents
                             .Where(d => d.EntidadUuid == documentInstanceUuid)
                             .ToListAsync(cancellationToken);
 
-                        if (coworkDocs.Any())
+                        var rawText = renderData is System.Text.Json.JsonElement je 
+                            ? je.GetRawText() 
+                            : System.Text.Json.JsonSerializer.Serialize(renderData);
+                        
+                        var dataDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(rawText) 
+                            ?? new Dictionary<string, object?>();
+
+                        foreach (var doc in coworkDocs)
                         {
-                            var rawText = renderData is System.Text.Json.JsonElement je 
-                                ? je.GetRawText() 
-                                : System.Text.Json.JsonSerializer.Serialize(renderData);
-                            
-                            var dataDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(rawText);
-                            if (dataDict != null)
+                            if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
                             {
-                                foreach (var doc in coworkDocs)
+                                var htmlVal = doc.ContentHtml;
+                                var key = doc.CampoNombre;
+
+                                dataDict[key] = htmlVal;
+                                dataDict[key.ToLower()] = htmlVal;
+                                dataDict[key.ToUpper()] = htmlVal;
+
+                                var pascalKey = key.Length > 0 && char.IsLower(key[0])
+                                    ? char.ToUpper(key[0]) + key.Substring(1)
+                                    : key;
+                                dataDict[pascalKey] = htmlVal;
+
+                                if (key.Equals("ObjetivosDesarrolloSostenible", StringComparison.OrdinalIgnoreCase) || key.Equals("ods", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
-                                    {
-                                        dataDict[doc.CampoNombre] = doc.ContentHtml;
-
-                                        // Fallbacks para asegurar coincidencia independientemente del casing de la plantilla (Handlebars):
-                                        var key = doc.CampoNombre;
-                                        dataDict[key.ToLower()] = doc.ContentHtml;
-                                        dataDict[key.ToUpper()] = doc.ContentHtml;
-
-                                        if (key.Equals("ObjetivosDesarrolloSostenible", StringComparison.OrdinalIgnoreCase) || key.Equals("ods", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            dataDict["ods"] = doc.ContentHtml;
-                                            dataDict["ODS"] = doc.ContentHtml;
-                                            dataDict["objetivos_desarrollo_sostenible"] = doc.ContentHtml;
-                                            dataDict["ObjetivosDesarrolloSostenible"] = doc.ContentHtml;
-                                        }
-
-                                        if (key.StartsWith("field_", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            var upperField = "FIELD_" + key.Substring(6);
-                                            dataDict[upperField] = doc.ContentHtml;
-                                            var lowerField = "field_" + key.Substring(6);
-                                            dataDict[lowerField] = doc.ContentHtml;
-                                        }
-
-                                        var snakeKey = Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
-                                        dataDict[snakeKey] = doc.ContentHtml;
-                                    }
+                                    dataDict["ods"] = htmlVal;
+                                    dataDict["ODS"] = htmlVal;
+                                    dataDict["objetivos_desarrollo_sostenible"] = htmlVal;
+                                    dataDict["ObjetivosDesarrolloSostenible"] = htmlVal;
                                 }
-                                renderData = dataDict;
+
+                                if (key.StartsWith("field_", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var upperField = "FIELD_" + key.Substring(6);
+                                    dataDict[upperField] = htmlVal;
+                                    var lowerField = "field_" + key.Substring(6);
+                                    dataDict[lowerField] = htmlVal;
+                                }
+
+                                var snakeKey = Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
+                                dataDict[snakeKey] = htmlVal;
                             }
                         }
+                        renderData = dataDict;
+
                     }
                     catch (Exception ex)
                     {
@@ -227,22 +229,14 @@ namespace Diitra.Infrastructure.Common.Documents
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                bool isPlaceholderDbHtml = string.IsNullOrWhiteSpace(template.HtmlContent) ||
-                                           template.HtmlContent.TrimStart().StartsWith("<!-- Cargado desde") ||
-                                           template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") ||
-                                           template.HtmlContent.Contains("<div class=\"doc-container\">\r\n</div>") ||
-                                           template.HtmlContent.Contains("<div class=\"doc-container\"></div>") ||
-                                           template.HtmlContent.Trim() == "<div class=\"doc-container\"></div>";
+                var htmlToRender = !string.IsNullOrWhiteSpace(fileHtml) 
+                    ? fileHtml 
+                    : template.HtmlContent;
 
-                bool isDbHtmlValid = !isPlaceholderDbHtml;
+                var cssToUse = !string.IsNullOrWhiteSpace(fileCss)
+                    ? fileCss
+                    : template.CustomCss;
 
-                var htmlToRender = isDbHtmlValid 
-                    ? template.HtmlContent 
-                    : (!string.IsNullOrWhiteSpace(fileHtml) ? fileHtml : template.HtmlContent);
-
-                var cssToUse = !string.IsNullOrWhiteSpace(template.CustomCss)
-                    ? template.CustomCss
-                    : (!string.IsNullOrWhiteSpace(fileCss) ? fileCss : "");
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.

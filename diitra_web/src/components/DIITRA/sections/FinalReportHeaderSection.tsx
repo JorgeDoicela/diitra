@@ -24,12 +24,7 @@ export const FinalReportHeaderSection: React.FC<FinalReportHeaderSectionProps> =
     onAdd,
     onRemove,
     onUpdateItem,
-    carreras = [],
-    dominios = [],
-    lineas = [],
-    sublineas = [],
-    config = {},
-    isAdmin = false
+    config = {}
 }) => {
     const isReadOnly = cowork?.session?.readOnly;
 

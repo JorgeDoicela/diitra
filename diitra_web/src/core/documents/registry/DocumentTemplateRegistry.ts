@@ -181,7 +181,23 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
     INFORME_FINAL_INVESTIGACION: {
         title: "Informe Final de Investigación",
         subtitle: "Cierre y entrega de resultados - ISTPET",
-        schema: {},
+        schema: {
+            Indice: '',
+            Resumen: '',
+            Introduccion: '',
+            Objetivos: '',
+            Fundamentos: '',
+            Metodos: '',
+            Resultados: '',
+            Productos: '',
+            Impactos: '',
+            Transferencia: '',
+            InformeFinanciero: '',
+            Conclusiones: '',
+            Recomendaciones: '',
+            Bibliografia: '',
+            Anexos: ''
+        },
         lists: [],
         sections: []
     },

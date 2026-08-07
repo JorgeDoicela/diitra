@@ -281,6 +281,44 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("ObservacionesDirector", "observaciones_director");
             SyncKeyAlias("ObservacionesCoordinador", "observaciones_coordinador");
 
+            // Subsecciones de Redacción de Informe Final (resiliencia bidireccional PascalCase <-> snake_case)
+            SyncKeyAlias("Indice", "indice");
+            SyncKeyAlias("Resumen", "resumen");
+            SyncKeyAlias("Introduccion", "introduccion");
+            SyncKeyAlias("Objetivos", "objetivos");
+            SyncKeyAlias("Fundamentos", "fundamentos");
+            SyncKeyAlias("Metodos", "metodos");
+            SyncKeyAlias("Resultados", "resultados");
+            SyncKeyAlias("Productos", "productos");
+            SyncKeyAlias("Impactos", "impactos");
+            SyncKeyAlias("Transferencia", "transferencia");
+            SyncKeyAlias("InformeFinanciero", "informe_financiero");
+            SyncKeyAlias("Conclusiones", "conclusiones");
+            SyncKeyAlias("Recomendaciones", "recomendaciones");
+            SyncKeyAlias("Bibliografia", "bibliografia");
+            SyncKeyAlias("Anexos", "anexos");
+
+            // Sincronización dinámica de alias para cualquier propiedad no listada explícitamente
+            var currentKeys = dict.Keys.ToList();
+            foreach (var key in currentKeys)
+            {
+                if (dict.TryGetValue(key, out var val) && val != null && !string.IsNullOrWhiteSpace(val.ToString()))
+                {
+                    var snake = System.Text.RegularExpressions.Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
+                    if (!dict.ContainsKey(snake) || dict[snake] == null || string.IsNullOrWhiteSpace(dict[snake]?.ToString()))
+                    {
+                        dict[snake] = val;
+                    }
+                    var pascalKey = key.Length > 0 && char.IsLower(key[0]) 
+                        ? char.ToUpper(key[0]) + key.Substring(1)
+                        : key;
+                    if (!dict.ContainsKey(pascalKey) || dict[pascalKey] == null || string.IsNullOrWhiteSpace(dict[pascalKey]?.ToString()))
+                    {
+                        dict[pascalKey] = val;
+                    }
+                }
+            }
+
             // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
             var ods1 = dict.TryGetValue("objetivos_desarrollo_sostenible", out var v1) ? v1?.ToString() : null;
             var ods2 = dict.TryGetValue("ods", out var v2) ? v2?.ToString() : null;

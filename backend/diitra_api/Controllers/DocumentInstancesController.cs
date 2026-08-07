@@ -170,7 +170,7 @@ namespace diitra_api.Controllers
                 string metadataJson = metadata.GetRawText();
                 var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
 
-                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" || instance.EntityType == "Proyecto")
+                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
                 {
                     try
                     {
