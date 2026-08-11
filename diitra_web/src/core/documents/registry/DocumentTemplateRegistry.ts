@@ -123,32 +123,12 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         title: "Rúbrica de Evaluación por Pares",
         subtitle: "Evaluación anónima (Fase 2) — Normativa CACES",
         schema: {
-            Pertinencia: 0,
-            Metodologia: 0,
-            Viabilidad: 0,
-            Impacto: 0,
+            criterios_evaluados: [],
             ComentariosGenerales: '',
             RecomendacionFinal: ''
         },
-        lists: [],
-        sections: [
-            {
-                id: 'evaluacion',
-                label: 'Evaluación Técnica',
-                iconName: 'CheckSquare',
-                config: {
-                    referenceTemplateCode: 'PROTOCOLO_INVESTIGACION',
-                    fields: [
-                        { name: 'Pertinencia',          label: 'Pertinencia Social (0-25)',               type: 'number',   collaborative: false, min: 0, max: 25 },
-                        { name: 'Metodologia',          label: 'Metodología Científica (0-25)',            type: 'number',   collaborative: false, min: 0, max: 25 },
-                        { name: 'Viabilidad',           label: 'Viabilidad y Presupuesto (0-25)',          type: 'number',   collaborative: false, min: 0, max: 25 },
-                        { name: 'Impacto',              label: 'Impacto y Transferencia (0-25)',           type: 'number',   collaborative: false, min: 0, max: 25 },
-                        { name: 'ComentariosGenerales', label: 'Observaciones y comentarios institucionales', type: 'textarea', collaborative: false, placeholder: 'Escriba un informe cualitativo para fundamentar las puntuaciones...' },
-                        { name: 'RecomendacionFinal',   label: 'Recomendación Final de Comisión',         type: 'select',   collaborative: false, options: ['Aprobado sin modificaciones', 'Aprobado con observaciones menores', 'Requiere re-estructuración mayor', 'Rechazado'] }
-                    ]
-                }
-            }
-        ]
+        lists: ['criterios_evaluados'],
+        sections: []
     },
 
     INFORME_AVANCE: {

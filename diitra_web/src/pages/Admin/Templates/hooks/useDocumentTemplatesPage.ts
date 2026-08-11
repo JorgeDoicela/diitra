@@ -400,9 +400,18 @@ export const useDocumentTemplatesPage = () => {
                             id: "block-bibliografia", type: "rich_text", title: "BIBLIOGRAFÍA", isActive: true,
                             config: { title: "BIBLIOGRAFÍA", placeholder: "(Extensión variable)\nListar fuentes adicionales que hayan sido consultadas, tanto las usadas como aquellas que no necesariamente han sido citadas en el texto." }
                         },
+                        baseSignatures
+                    ];
+                } else if (tmpl.code === "RUBRICA_EVALUACION") {
+                    loadedBlocks = [
+                        baseCover,
                         {
-                            id: "block-anexos", type: "rich_text", title: "ANEXOS", isActive: true,
-                            config: { title: "ANEXOS", placeholder: "(Extensión variable)\nIncluir documentos complementarios como cuestionarios, encuestas, imágenes, gráficos, diagramas, o capturas de pantalla de herramientas utilizadas." }
+                            id: "block-1", type: "title", title: "Título de Sección", isActive: true,
+                            config: { text: "RÚBRICA DE EVALUACIÓN POR PARES", fontSize: "H1", color: "#1e2a4a", alignment: "center" }
+                        },
+                        {
+                            id: "block-7", type: "rubric_table", title: "Tabla de Criterios (Rúbrica)", isActive: true,
+                            config: { mostrarDescripcionCriterio: true, mostrarObservacionesCriterio: true }
                         },
                         baseSignatures
                     ];

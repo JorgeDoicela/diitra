@@ -158,16 +158,44 @@ namespace diitra_api.Controllers
             // 4. Mapeos hardcoded legacy por código de plantilla (retrocompatibilidad)
             var code = instance.TemplateCode;
 
-            if (code == "RUBRICA_EVALUACION_PROYECTO")
+            if (code == "RUBRICA_EVALUACION" || code == "RUBRICA_EVALUACION_PROYECTO")
             {
                 InvRubrica? rubricaActiva = null;
-                if (!string.IsNullOrEmpty(instance.EntityUuid) && int.TryParse(instance.EntityUuid, out int idRubrica))
+
+                // Intento 1: Buscar por la revisión asignada al proyecto
+                var revision = await _context.InvRevisionesPares
+                    .Include(r => r.Proyecto)
+                    .FirstOrDefaultAsync(r => r.Uuid == instance.EntityUuid, ct);
+
+                if (revision?.Proyecto != null && revision.Proyecto.IdConvocatoria.HasValue)
+                {
+                    var convocatoria = await _context.InvConvocatorias
+                        .FirstOrDefaultAsync(c => c.IdConvocatoria == revision.Proyecto.IdConvocatoria.Value, ct);
+                    if (convocatoria != null && convocatoria.IdRubrica.HasValue)
+                    {
+                        rubricaActiva = await _context.InvRubricas
+                            .Include(r => r.InvRubricaCriterios)
+                            .FirstOrDefaultAsync(r => r.IdRubrica == convocatoria.IdRubrica.Value, ct);
+                    }
+                }
+
+                // Intento 2: Si EntityUuid es el ID numérico directo de la rúbrica
+                if (rubricaActiva == null && !string.IsNullOrEmpty(instance.EntityUuid) && int.TryParse(instance.EntityUuid, out int idRubrica))
                 {
                     rubricaActiva = await _context.InvRubricas
                         .Include(r => r.InvRubricaCriterios)
                         .FirstOrDefaultAsync(r => r.IdRubrica == idRubrica, ct);
                 }
 
+                // Intento 3: Rúbrica activa en BD
+                if (rubricaActiva == null)
+                {
+                    rubricaActiva = await _context.InvRubricas
+                        .Include(r => r.InvRubricaCriterios)
+                        .FirstOrDefaultAsync(r => r.Activo == true, ct);
+                }
+
+                // Intento 4: Primera rúbrica disponible
                 if (rubricaActiva == null)
                 {
                     rubricaActiva = await _context.InvRubricas

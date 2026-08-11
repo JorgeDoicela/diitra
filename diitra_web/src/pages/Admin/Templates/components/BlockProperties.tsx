@@ -14,6 +14,7 @@ import { ProgressHeaderProperties } from './properties/ProgressHeaderProperties'
 import { ProgressActivityProperties } from './properties/ProgressActivityProperties';
 import { ProgressStatusProperties } from './properties/ProgressStatusProperties';
 import { ThemeEditorTab } from './ThemeEditorTab';
+import { RubricTableProperties } from './properties/RubricTableProperties';
 
 
 interface BlockPropertiesProps {
@@ -622,6 +623,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             )}
 
                             {/* ── TABLA DE INVESTIGADORES ─────────────────────────────────── */}
+                            {/* ── EQUIPO DE INVESTIGADORES ────────────────────────────────── */}
                             {activeBlock.type === 'researchers_table' && (
                                 <div className="space-y-3 border-t border-border-thin/20 pt-4">
                                     {[
@@ -649,25 +651,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {/* ── TABLA DE RÚBRICA ────────────────────────────────────────── */}
                             {activeBlock.type === 'rubric_table' && (
-                                <div className="space-y-3 border-t border-border-thin/20 pt-4">
-                                    {[
-                                        { key: 'mostrarDescripcionCriterio', label: 'Mostrar Descripción de Criterios', desc: 'Detalle de estándares de evaluación.' },
-                                        { key: 'mostrarObservacionesCriterio', label: 'Mostrar Observaciones del Revisor', desc: 'Comentarios individuales del evaluador.' },
-                                    ].map(({ key, label, desc }) => (
-                                        <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-main block">{label}</label>
-                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={(activeBlock.config as any)[key] || false}
-                                                onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
-                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <RubricTableProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}
 
                             {/* ── FIRMAS ──────────────────────────────────────────────────── */}

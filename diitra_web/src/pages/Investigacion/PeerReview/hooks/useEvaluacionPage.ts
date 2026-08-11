@@ -248,21 +248,26 @@ export const useEvaluacionPage = () => {
     const handleDescargarRubrica = async () => {
         if (!rubrica) return;
         try {
-            const pertinencia = detalles.find(d => d.criterio.includes('Pertinencia'))?.puntaje ?? 0;
-            const metodologia = detalles.find(d => d.criterio.includes('Metodología') || d.criterio.includes('Metodologia'))?.puntaje ?? 0;
-            const viabilidad = detalles.find(d => d.criterio.includes('Viabilidad') || d.criterio.includes('Presupuesto') || d.criterio.includes('Viabilidad y Presupuesto'))?.puntaje ?? 0;
-            const impacto = detalles.find(d => d.criterio.includes('Impacto'))?.puntaje ?? 0;
+            const criteriosEvaluados = detalles.map(d => {
+                const critInfo = rubrica.criterios.find(c => c.id_criterio === d.idCriterio || c.nombre === d.criterio);
+                return {
+                    nombre: d.criterio,
+                    descripcion: critInfo?.descripcion || "",
+                    peso: critInfo ? critInfo.peso_porcentaje : 0,
+                    puntaje: d.puntaje,
+                    observaciones: d.observaciones || ""
+                };
+            });
 
             const payload = {
                 titulo: rubrica.proyecto_titulo,
                 entity_uuid: rubrica.proyecto_uuid,
+                evaluador_tipo: rubrica.es_externo ? "Evaluador Externo" : "Evaluador Interno",
                 fecha_evaluacion: new Date().toLocaleDateString('es-EC'),
-                Pertinencia: pertinencia,
-                Metodologia: metodologia,
-                Viabilidad: viabilidad,
-                Impacto: impacto,
-                ComentariosGenerales: observacionesGral,
-                RecomendacionFinal: puntajeTotal >= (rubrica.puntaje_minimo_aprobacion ?? 70) ? "Aprobado sin modificaciones" : "Rechazado"
+                criterios_evaluados: criteriosEvaluados,
+                puntaje_total: puntajeTotal,
+                comentarios_generales: observacionesGral,
+                recomendacion_final: puntajeTotal >= (rubrica.puntaje_minimo_aprobacion ?? 70) ? "Aprobado sin modificaciones" : "Rechazado"
             };
 
             const response = await api.post(
