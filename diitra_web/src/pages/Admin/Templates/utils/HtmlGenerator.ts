@@ -16,7 +16,6 @@ import {
 import {
     generateResourcesHtml,
     generateProjectProgressHtml,
-    generateProjectEthicsHtml,
     generateProjectApprovalNoticeHtml,
     generateProgressActivityHtml,
     generateProgressStatusHtml,
@@ -101,9 +100,6 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'progress_status_section':
                 html += generateProgressStatusHtml(block);
-                break;
-            case 'project_ethics_report':
-                html += generateProjectEthicsHtml(block);
                 break;
             case 'expected_products':
                 html += generateExpectedProductsHtml(block);

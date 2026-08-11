@@ -429,9 +429,7 @@ namespace Diitra.Infrastructure.Common.Documents
             "resumen_ejecutivo", "cumplimiento_objetivos", "resultados_discusion", "impacto_innovacion", "conclusiones_recomendaciones", "bibliografia_final",
             "Indice", "Resumen", "Introduccion", "Objetivos", "Fundamentos", "Metodos", "Resultados", "Productos", "Impactos", "Transferencia", "InformeFinanciero", "Conclusiones", "Recomendaciones", "Bibliografia", "Anexos",
             "indice", "resumen", "introduccion", "objetivos", "fundamentos", "metodos", "resultados", "productos", "impactos", "transferencia", "informe_financiero", "conclusiones", "recomendaciones", "bibliografia", "anexos",
-            "resultados", "discusion", "impacto_final", "transferencia_conocimiento",
-            // ACTA_COMITE_ETICA
-            "JustificacionEtica", "RiesgosIdentificados", "MetodoConsentimiento", "MiembrosFirmantes"
+            "resultados", "discusion", "impacto_final", "transferencia_conocimiento"
         };
 
         private static bool IsHtmlEmpty(string? html)

@@ -68,7 +68,6 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                 { type: 'project_technical_section', icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'project_budget_section', icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'project_progress_report', icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
-                { type: 'project_ethics_report', icon: Award, label: 'Acta del Comité de Ética', desc: 'Dictamen final de pertinencia ética y bioética.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'expected_products', icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'impacts', icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'rubric_table', icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },

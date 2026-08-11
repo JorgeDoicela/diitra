@@ -163,49 +163,6 @@ export const generateProjectProgressHtml = (block: DocumentBlock): string => {
 };
 
 /**
- * Genera el HTML de Pertinencia Ética y Bioética (Bloque: project_ethics_report)
- */
-export const generateProjectEthicsHtml = (_block: DocumentBlock): string => {
-    return `
-  <!-- BLOQUE: EVALUACIÓN DE ÉTICA -->
-  <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 8px;">Dictamen de Pertinencia Ética y Bioética</p>
-    
-    <div style="margin-bottom: 12px;">
-      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Justificación Ética de la Propuesta:</strong>
-      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default justificacion_etica "No registrada."}}</div>
-    </div>
-
-    <div style="margin-bottom: 12px;">
-      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Riesgos Identificados & Medidas de Mitigación:</strong>
-      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default riesgos_identificados "No registrada."}}</div>
-    </div>
-
-    <div style="margin-bottom: 12px;">
-      <strong style="font-size: 8.5pt; color: ${COLORS.gray}; display: block; margin-bottom: 2px;">Procedimiento de Consentimiento Informado:</strong>
-      <div style="font-size: 9pt; line-height: 1.5; color: #1e293b;">{{default metodo_consentimiento "No registrada."}}</div>
-    </div>
-
-    <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-        <tbody>
-          <tr>
-            <td style="width: 50%;">
-              <strong>Dictamen Final del Comité:</strong><br/>
-              <span style="font-size: 10.5pt; font-weight: bold; color: ${COLORS.blue}; text-transform: uppercase;">{{default dictamen_comite "Pendiente"}}</span>
-            </td>
-            <td>
-              <strong>Observaciones / Sugerencias de Enmienda:</strong><br/>
-              <span style="color: #475569;">{{default observaciones_especificas "Ninguna."}}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>`;
-};
-
-/**
  * Genera el HTML del Oficio de Aprobación de Proyecto (Bloque: project_approval_notice)
  */
 export const generateProjectApprovalNoticeHtml = (_block: DocumentBlock): string => {

@@ -680,9 +680,6 @@ export const useDocumentTemplatesPage = () => {
             case 'project_progress_report':
                 newBlock = { id: newId, type, title: 'Avance de Ejecución y Monitoreo', isActive: true, config: {} };
                 break;
-            case 'project_ethics_report':
-                newBlock = { id: newId, type, title: 'Acta del Comité de Ética', isActive: true, config: {} };
-                break;
             case 'expected_products':
                 newBlock = { id: newId, type, title: 'Productos Esperados', isActive: true, config: { productosTitle: '5. Productos Esperados' } };
                 break;

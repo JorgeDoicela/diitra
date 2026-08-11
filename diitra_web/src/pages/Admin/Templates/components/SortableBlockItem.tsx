@@ -27,7 +27,6 @@ import {
 import {
     RenderProjectBudgetSection,
     RenderProjectProgressReport,
-    RenderProjectEthicsReport,
     RenderProjectApprovalNotice,
 } from './canvasRenderers/RenderReports';
 import {
@@ -44,7 +43,6 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'project_technical_section',
     'project_budget_section',
     'project_progress_report',
-    'project_ethics_report',
     'researchers_table',
     'gantt',
     'signatures',
@@ -136,8 +134,6 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProjectBudgetSection config={block.config} />;
             case 'project_progress_report':
                 return <RenderProjectProgressReport config={block.config} />;
-            case 'project_ethics_report':
-                return <RenderProjectEthicsReport config={block.config} />;
             case 'project_approval_notice':
                 return <RenderProjectApprovalNotice config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'expected_products':

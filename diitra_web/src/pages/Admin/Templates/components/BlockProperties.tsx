@@ -814,18 +814,6 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 </div>
                             )}
 
-                            {/* ── ACTA DE COMITÉ DE ÉTICA ─────────────────────────────────── */}
-                            {activeBlock.type === 'project_ethics_report' && (
-                                <div className="space-y-3 border-t border-border-thin/20 pt-4">
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Bloque Dinámico institucional para la evaluación ética y bioética de la propuesta.
-                                    </p>
-                                    <div className="p-3 rounded-lg bg-surface-hover/30 border border-border-thin/15 text-center">
-                                        <p className="text-[10px] text-text-dim">No requiere configuración adicional.</p>
-                                    </div>
-                                </div>
-                            )}
-
                             {/* ── OFICIO DE APROBACIÓN DE PROYECTO ─────────────────────────── */}
                             {activeBlock.type === 'project_approval_notice' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">

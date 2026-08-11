@@ -34,7 +34,6 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'project_technical_section',
     'project_budget_section',
     'project_progress_report',
-    'project_ethics_report',
     'researchers_table',
     'gantt',
     'impacts',

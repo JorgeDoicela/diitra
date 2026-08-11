@@ -128,37 +128,6 @@ export const RenderProjectProgressReport: React.FC<{ config: any }> = ({ config 
     );
 };
 
-export const RenderProjectEthicsReport: React.FC<{ config: any }> = () => {
-    return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                    DICTAMEN DE PERTINENCIA ÉTICA Y BIOÉTICA
-                </span>
-                <span className="text-[8px] font-mono text-purple-600 font-bold bg-purple-50 px-1.5 py-0.5 rounded">
-                    COMITÉ DE ÉTICA
-                </span>
-            </div>
-
-            <div className="space-y-2 text-[8.5px]">
-                <div className="p-2 border border-slate-200 rounded-lg bg-slate-50">
-                    <strong className="text-slate-700 block font-bold">Justificación Ética de la Propuesta:</strong>
-                    <p className="text-slate-500 italic mt-0.5">[Impacto ético y fundamentación bioética...]</p>
-                </div>
-                <div className="p-2 border border-slate-200 rounded-lg bg-slate-50">
-                    <strong className="text-slate-700 block font-bold">Riesgos Identificados & Medidas de Mitigación:</strong>
-                    <p className="text-slate-500 italic mt-0.5">[Identificación de riesgos y plan de contingencia...]</p>
-                </div>
-                <div className="p-2 border border-slate-200 rounded-lg bg-slate-50">
-                    <strong className="text-slate-700 block font-bold">Procedimiento de Consentimiento Informado:</strong>
-                    <p className="text-slate-500 italic mt-0.5">[Protocolos de firma de consentimiento...]</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 export const RenderProjectApprovalNotice: React.FC<{
     config: any;
     blockId?: string;

@@ -258,47 +258,6 @@ namespace diitra_api.Controllers
                 });
             }
 
-            if (code == "ACTA_COMITE_ETICA")
-            {
-                return Ok(new
-                {
-                    title = "Acta del Comité de Ética de Investigación",
-                    subtitle = "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
-                    signatureType = template.SignatureType,
-                    schema = new Dictionary<string, object>
-                    {
-                        { "JustificacionEtica", "" },
-                        { "RiesgosIdentificados", "" },
-                        { "MetodoConsentimiento", "" },
-                        { "DictamenComite", "Aprobado sin observaciones" },
-                        { "ObservacionesEspecificas", "" },
-                        { "MiembrosFirmantes", new object[] { } }
-                    },
-                    lists = new[] { "MiembrosFirmantes" },
-                    sections = new[]
-                    {
-                        new
-                        {
-                            id = "evaluacion_comite",
-                            label = "Evaluación de Ética",
-                            iconName = "CheckSquare",
-                            config = new
-                            {
-                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
-                                fields = new[]
-                                {
-                                    new { name = "JustificacionEtica", label = "Justificación Ética de la Investigación", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Describa el impacto ético sobre seres humanos, datos sensibles o animales..." },
-                                    new { name = "RiesgosIdentificados", label = "Identificación y Mitigación de Riesgos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Especifique cualquier riesgo biológico, digital o social y cómo se resolverá..." },
-                                    new { name = "MetodoConsentimiento", label = "Mecanismo de Consentimiento Informado", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Detalle cómo se obtendrá el consentimiento firmado de los participantes..." },
-                                    new { name = "DictamenComite", label = "Dictamen Final de Comisión de Ética", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)new[] { "Aprobado sin observaciones", "Aprobado con sugerencias", "Rechazado" }, placeholder = (string?)null },
-                                    new { name = "ObservacionesEspecificas", label = "Observaciones y Requerimientos de Enmienda", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = (string?)"Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar..." }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
             if (code == "OFICIO_APROBACION")
             {
                 return Ok(new
