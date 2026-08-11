@@ -8,6 +8,11 @@ using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers
 {
+    /// <summary>
+    /// Proveedor dinámico de bloque para la Rúbrica de Evaluación por Pares.
+    /// Mapea los criterios definidos en la base de datos (inv_rubrica_criterios) hacia el
+    /// formulario interactivo del evaluador y el esquema colaborativo/local de Yjs.
+    /// </summary>
     public class RubricTableBlockProvider : IDocumentBlockProvider
     {
         private readonly DiitraContext _context;
@@ -28,7 +33,10 @@ namespace diitra_api.Controllers
             ref int premiumFieldsCount,
             string templateCode)
         {
-            // Consultamos sincrónicamente la rúbrica activa para poblar las claves del esquema inicial de Yjs
+            // 1. Campos institucionales de la evaluación formal
+            schemaDict["DeclaracionSinConflicto"] = true;
+
+            // 2. Criterios dinámicos desde la rúbrica activa
             var rubricaActiva = _context.InvRubricas
                 .Include(r => r.InvRubricaCriterios)
                 .FirstOrDefault(r => r.Activo == true);
@@ -49,7 +57,9 @@ namespace diitra_api.Controllers
                 }
             }
 
+            // 3. Justificaciones y dictamen cualitativo
             schemaDict["ComentariosGenerales"] = "";
+            schemaDict["JustificacionRecomendacion"] = "";
             schemaDict["RecomendacionFinal"] = "";
         }
 
@@ -75,6 +85,20 @@ namespace diitra_api.Controllers
                 }
 
                 var rubricFields = new List<object>();
+
+                // A. Declaración formal de ausencia de conflicto de interés
+                rubricFields.Add(new {
+                    name = "DeclaracionSinConflicto",
+                    label = "Declaración de Ausencia de Conflicto de Interés (Normativa CACES)",
+                    type = "checkbox",
+                    collaborative = false,
+                    min = (int?)null,
+                    max = (int?)null,
+                    options = (string[]?)null,
+                    placeholder = (string?)null
+                });
+
+                // B. Criterios de evaluación dinámicos
                 if (rubricaActiva != null)
                 {
                     foreach (var criterion in rubricaActiva.InvRubricaCriterios.OrderBy(c => c.Orden ?? 0))
@@ -82,7 +106,7 @@ namespace diitra_api.Controllers
                         var fieldName = $"Criterio_{criterion.IdCriterio}";
                         rubricFields.Add(new {
                             name = fieldName,
-                            label = $"{criterion.Nombre} (0-{(int)criterion.PesoPorcentaje})",
+                            label = $"{criterion.Nombre} (0-{(int)criterion.PesoPorcentaje} pts)",
                             type = "number",
                             collaborative = false,
                             min = 0,
@@ -93,21 +117,32 @@ namespace diitra_api.Controllers
                     }
                 }
 
-                // Agregar observaciones cualitativas y recomendación final como en la versión clásica
+                // C. Observaciones cualitativas e informes de respaldo
                 rubricFields.Add(new { 
                     name = "ComentariosGenerales", 
-                    label = "Observaciones y comentarios institucionales", 
+                    label = "5. Observaciones y Comentarios Fundamentales", 
                     type = "textarea", 
                     collaborative = false, 
                     min = (int?)null, 
                     max = (int?)null, 
                     options = (string[]?)null, 
-                    placeholder = "Escriba un informe cualitativo para fundamentar las puntuaciones..." 
+                    placeholder = "Escriba un informe cualitativo detallado para fundamentar las puntuaciones asignadas..." 
+                });
+
+                rubricFields.Add(new { 
+                    name = "JustificacionRecomendacion", 
+                    label = "6. Fundamentación Técnica de la Recomendación Final", 
+                    type = "textarea", 
+                    collaborative = false, 
+                    min = (int?)null, 
+                    max = (int?)null, 
+                    options = (string[]?)null, 
+                    placeholder = "Argumente técnicamente el motivo de la recomendación dictaminada..." 
                 });
 
                 rubricFields.Add(new { 
                     name = "RecomendacionFinal", 
-                    label = "Recomendación Final de Comisión", 
+                    label = "7. Recomendación y Dictamen Final de la Comisión", 
                     type = "select", 
                     collaborative = false, 
                     min = (int?)null, 

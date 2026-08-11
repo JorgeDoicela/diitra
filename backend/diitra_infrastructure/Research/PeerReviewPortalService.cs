@@ -368,6 +368,10 @@ namespace diitra_infrastructure.Research
                         }).ToList();
 
                         string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
+                        decimal maximoPosible = criteriosRubrica.Sum(c => c.Peso);
+                        if (maximoPosible == 0) maximoPosible = 100m;
+                        decimal porcentaje = maximoPosible > 0 ? Math.Round((totalScore / maximoPosible) * 100m, 1) : 0m;
+                        bool esAprobado = totalScore >= umbralAprobacion;
 
                         var dataSnapshot = new
                         {
@@ -375,13 +379,23 @@ namespace diitra_infrastructure.Research
                             RevisionUuid = revision.Uuid,
                             EsExterno = revision.EsExterno,
                             EvaluadorTipo = tipoEvaluador,
+                            EvaluadorGrado = "Magíster / Especialista Académico",
+                            EvaluadorEspecialidad = "Revisor de Pares Acreditado",
                             ComentariosGenerales = dto.ObservacionesGral ?? "",
-                            RecomendacionFinal = totalScore >= umbralAprobacion ? "Aprobado sin modificaciones" : "Rechazado",
+                            JustificacionRecomendacion = dto.ObservacionesGral ?? "",
+                            RecomendacionFinal = esAprobado ? "Aprobado sin modificaciones" : "Rechazado",
                             PuntajeTotal = totalScore,
+                            PuntajeMaximoPosible = maximoPosible,
+                            PuntajePorcentaje = porcentaje,
+                            EsAprobado = esAprobado,
+                            UmbralAprobacion = umbralAprobacion,
                             CriteriosEvaluados = criteriosSnapshot,
                             Titulo = project.Titulo,
                             CodigoInstitucional = project.CodigoInstitucional,
-                            FechaEvaluacion = DateTime.Now.ToString("yyyy-MM-dd")
+                            ConvocatoriaTitulo = "Convocatoria Institucional de Investigación",
+                            LineaInvestigacion = "Línea Institucional de Innovación",
+                            FechaEvaluacion = DateTime.Now.ToString("yyyy-MM-dd"),
+                            DeclaracionConflicto = true
                         };
 
                         string json = System.Text.Json.JsonSerializer.Serialize(dataSnapshot);

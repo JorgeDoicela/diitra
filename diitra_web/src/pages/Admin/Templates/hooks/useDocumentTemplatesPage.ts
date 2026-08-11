@@ -406,12 +406,42 @@ export const useDocumentTemplatesPage = () => {
                     loadedBlocks = [
                         baseCover,
                         {
-                            id: "block-1", type: "title", title: "Título de Sección", isActive: true,
-                            config: { text: "RÚBRICA DE EVALUACIÓN POR PARES", fontSize: "H1", color: "#1e2a4a", alignment: "center" }
+                            id: "block-1", type: "title", title: "Encabezado Principal", isActive: true,
+                            config: { text: "RÚBRICA DE EVALUACIÓN TÉCNICA POR PARES", fontSize: "H1", color: "#1e2a4a", alignment: "center" }
                         },
                         {
-                            id: "block-7", type: "rubric_table", title: "Tabla de Criterios (Rúbrica)", isActive: true,
-                            config: { mostrarDescripcionCriterio: true, mostrarObservacionesCriterio: true }
+                            id: "block-sec-1", type: "title", title: "1. Información del Proyecto", isActive: true,
+                            config: { text: "1. INFORMACIÓN DEL PROYECTO DE INVESTIGACIÓN", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
+                        },
+                        {
+                            id: "block-sec-2", type: "title", title: "2. Datos del Evaluador Técnico", isActive: true,
+                            config: { text: "2. DATOS DEL EVALUADOR TÉCNICO ACREDITADO", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
+                        },
+                        {
+                            id: "block-sec-3", type: "title", title: "3. Declaración de Conflicto de Interés", isActive: true,
+                            config: { text: "3. DECLARACIÓN DE AUSENCIA DE CONFLICTO DE INTERÉS", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
+                        },
+                        {
+                            id: "block-7", type: "rubric_table", title: "4. Tabla de Criterios (Rúbrica Dinámica)", isActive: true,
+                            config: {
+                                mostrarDescripcionCriterio: true,
+                                mostrarObservacionesCriterio: true,
+                                mostrarConflictoInteres: true,
+                                mostrarJustificacionRecomendacion: true,
+                                mostrarResumenPuntuacion: true
+                            }
+                        },
+                        {
+                            id: "block-sec-5", type: "title", title: "5. Observaciones Fundamentales", isActive: true,
+                            config: { text: "5. OBSERVACIONES Y COMENTARIOS FUNDAMENTALES", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
+                        },
+                        {
+                            id: "block-sec-6", type: "title", title: "6. Fundamentación Técnica", isActive: true,
+                            config: { text: "6. FUNDAMENTACIÓN TÉCNICA DE LA EVALUACIÓN", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
+                        },
+                        {
+                            id: "block-sec-7", type: "title", title: "7. Dictamen Final", isActive: true,
+                            config: { text: "7. DICTAMEN Y RECOMENDACIÓN FINAL DEL EVALUADOR", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
                         },
                         baseSignatures
                     ];

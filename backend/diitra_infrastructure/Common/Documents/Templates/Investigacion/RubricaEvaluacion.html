@@ -1,47 +1,312 @@
+<!-- 
+    ================================================================================
+    RÚBRICA DE EVALUACIÓN POR PARES — DIITRA
+    Plantilla Oficial Institucional para Evaluación Técnica y Académica de Proyectos
+    ================================================================================
+    Soporta 9 secciones estructuradas y renderizado 100% dinámico de criterios.
+    Variables soportadas:
+    - theme: colores y tipografía del sistema
+    - titulo, entity_uuid, codigo_institucional, convocatoria_titulo, linea_investigacion, tipo_investigacion
+    - evaluador_tipo, evaluador_grado, evaluador_especialidad
+    - fecha_evaluacion
+    - declaracion_conflicto, declaracion_texto
+    - criterios_evaluados (array de { nombre, descripcion, observaciones, peso, puntaje })
+    - pertinencia, metodologia, viabilidad, impacto (fallbacks heredados)
+    - comentarios_generales, justificacion_recomendacion
+    - recomendacion_final, es_aprobado, umbral_aprobacion, puntaje_total, puntaje_maximo_posible, puntaje_porcentaje
+    ================================================================================
+-->
 <style>
-    .doc-container { font-family: {{ theme.typography.font_family }}; color: {{ theme.colors.text }}; line-height: {{default theme.typography.line_height "1.6"}}; padding: 30px; }
-    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 10px; letter-spacing: -0.5px; color: {{ theme.colors.primary }}; }
-    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: {{ theme.colors.secondary }}; text-transform: uppercase; margin-bottom: 20px; }
-    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; color: {{ theme.colors.primary }}; }
-    .section-title { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
-    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; }
-    .info-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; }
-    .info-table .label { font-weight: bold; background: #f1f5f9; width: 30%; text-transform: uppercase; font-size: 8pt; color: #475569; }
-    .score-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-    .score-table th { background: {{ theme.colors.primary }}; color: {{default theme.colors.table_header_color "#fff"}}; padding: 10px; text-align: left; font-size: 9pt; text-transform: uppercase; border: 1px solid {{ theme.colors.primary }}; }
-    .score-table td { border: 1px solid #cbd5e1; padding: 10px; font-size: 9.5pt; }
-    .score-table .score-cell { text-align: center; font-weight: bold; font-size: 11pt; width: 120px; background: #f8fafc; }
-    .total-row { background: #f1f5f9; font-weight: bold; }
-    .total-row td { font-size: 11pt !important; }
-    .content-box { border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 20px; text-align: justify; min-height: 80px; background: #fff; border-radius: 4px; font-size: 9.5pt; }
-    .recommendation-box { border: 2px solid {{ theme.colors.secondary }}; background: #fffdf5; padding: 15px; border-radius: 6px; margin: 20px 0; }
-    .recommendation-title { font-weight: bold; color: {{ theme.colors.secondary }}; font-size: 11pt; text-transform: uppercase; margin-bottom: 8px; }
-    .recommendation-value { font-size: 12pt; font-weight: 800; color: {{ theme.colors.primary }}; }
-    .firma-box { border-top: 1px solid {{ theme.colors.primary }}; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
+    .doc-container {
+        font-family: {{default theme.typography.font_family "Inter, Arial, sans-serif"}};
+        color: {{default theme.colors.text "#1e293b"}};
+        line-height: {{default theme.typography.line_height "1.6"}};
+        padding: 35px 40px;
+        background: #ffffff;
+    }
+
+    /* ENCABEZADO Y TÍTULOS */
+    .header-banner {
+        border-bottom: 2.5px solid {{default theme.colors.primary "#1e2a4a"}};
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    .header-banner .institution-title {
+        font-size: 11pt;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        margin-bottom: 4px;
+    }
+    .main-title {
+        font-size: 19pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 6px 0 2px 0;
+        letter-spacing: -0.5px;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+    }
+    .report-type {
+        font-size: 10.5pt;
+        font-weight: 700;
+        color: {{default theme.colors.secondary "#3b82f6"}};
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .trazabilidad-tag {
+        font-size: 8pt;
+        color: #64748b;
+        margin-top: 4px;
+        font-style: italic;
+    }
+
+    /* SECCIONES Y CONTENEDORES */
+    .section-title {
+        background: {{default theme.colors.primary "#1e2a4a"}};
+        color: {{default theme.colors.table_header_color "#ffffff"}};
+        padding: 8px 16px;
+        font-weight: 800;
+        font-size: 10pt;
+        margin: 22px 0 12px 0;
+        text-transform: uppercase;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    .project-name-box {
+        font-size: 11pt;
+        font-weight: 800;
+        text-align: center;
+        margin: 15px 0 20px 0;
+        border: 1.5px solid #cbd5e1;
+        border-left: 5px solid {{default theme.colors.primary "#1e2a4a"}};
+        padding: 12px 18px;
+        background: #f8fafc;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        border-radius: 4px;
+    }
+
+    /* TABLAS DE INFORMACIÓN */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        font-size: 9.5pt;
+    }
+    .info-table td {
+        border: 1px solid #cbd5e1;
+        padding: 8px 12px;
+        vertical-align: top;
+    }
+    .info-table .label {
+        font-weight: 700;
+        background: #f1f5f9;
+        width: 32%;
+        text-transform: uppercase;
+        font-size: 8pt;
+        color: #475569;
+    }
+
+    /* DECLARACIÓN DE CONFLICTO */
+    .declaration-box {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        font-size: 9pt;
+        color: #334155;
+    }
+    .declaration-status {
+        display: inline-block;
+        font-weight: 800;
+        color: #15803d;
+        background: #dcfce7;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 8.5pt;
+        margin-bottom: 6px;
+    }
+
+    /* TABLA DE EVALUACIÓN Y CRITERIOS */
+    .score-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .score-table th {
+        background: {{default theme.colors.primary "#1e2a4a"}};
+        color: {{default theme.colors.table_header_color "#ffffff"}};
+        padding: 9px 12px;
+        text-align: left;
+        font-size: 8.5pt;
+        text-transform: uppercase;
+        border: 1px solid {{default theme.colors.primary "#1e2a4a"}};
+    }
+    .score-table td {
+        border: 1px solid #cbd5e1;
+        padding: 9px 12px;
+        font-size: 9pt;
+    }
+    .score-table .score-cell {
+        text-align: center;
+        font-weight: 800;
+        font-size: 10.5pt;
+        width: 110px;
+        background: #f8fafc;
+    }
+    .total-row {
+        background: #f1f5f9;
+        font-weight: bold;
+    }
+    .total-row td {
+        font-size: 10pt !important;
+    }
+
+    /* RESUMEN VISUAL DE CALIFICACIÓN */
+    .summary-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        padding: 14px 20px;
+        border-radius: 6px;
+        margin: 18px 0;
+    }
+    .summary-metric {
+        text-align: center;
+    }
+    .summary-metric .val {
+        font-size: 18pt;
+        font-weight: 900;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+    }
+    .summary-metric .lbl {
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    /* CAJAS DE TEXTO Y RECOMENDACIÓN */
+    .content-box {
+        border: 1px solid #cbd5e1;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        text-align: justify;
+        min-height: 60px;
+        background: #ffffff;
+        border-radius: 4px;
+        font-size: 9pt;
+        color: #334155;
+    }
+    .recommendation-box {
+        border: 2px solid {{default theme.colors.secondary "#3b82f6"}};
+        background: #eff6ff;
+        padding: 14px 18px;
+        border-radius: 6px;
+        margin: 20px 0;
+    }
+    .recommendation-title {
+        font-weight: 800;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        font-size: 10pt;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .recommendation-value {
+        font-size: 11.5pt;
+        font-weight: 900;
+        color: {{default theme.colors.secondary "#3b82f6"}};
+    }
+
+    /* SECCIÓN DE FIRMAS */
+    .signatures-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+    }
+    .firma-box {
+        border-top: 1.5px solid {{default theme.colors.primary "#1e2a4a"}};
+        padding-top: 8px;
+        text-align: center;
+        width: 45%;
+        font-size: 9pt;
+    }
 </style>
 
 <div class="doc-container">
-    <div style="text-align:center">
+    <!-- ENCABEZADO INSTITUCIONAL -->
+    <div class="header-banner">
+        <div class="institution-title">{{default institucion_nombre 'INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI'}}</div>
         <h1 class="main-title">RÚBRICA DE EVALUACIÓN POR PARES</h1>
         <div class="report-type">Evaluación de Proyectos I+D+i — {{default evaluador_tipo 'Doble Ciego'}}</div>
+        <div class="trazabilidad-tag">Sistema DIITRA | Código de Trazabilidad: {{default entity_uuid 'SISTEMA-REF'}}</div>
     </div>
 
-    <div class="project-name">{{default titulo 'PROYECTO EVALUADO'}}</div>
+    <!-- TÍTULO DEL PROYECTO -->
+    <div class="project-name-box">
+        PROYECTO: {{default titulo 'PROYECTO EVALUADO'}}
+    </div>
 
-    <div class="section-title">1. Información de Referencia</div>
+    <!-- SECCIÓN 1: DATOS GENERALES DEL PROYECTO -->
+    <div class="section-title">1. Información del Proyecto de Investigación</div>
     <table class="info-table">
-        <tr><td class="label">Código de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
-        <tr><td class="label">Tipo de Proceso:</td><td>Evaluación Técnica de Pares Académicos (Fase 2)</td></tr>
-        <tr><td class="label">Fecha de Evaluación:</td><td>{{default fecha_evaluacion '2026-05-22'}}</td></tr>
+        <tr>
+            <td class="label">Código Institucional:</td>
+            <td><strong>{{default codigo_institucional 'S/N'}}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">Convocatoria:</td>
+            <td>{{default convocatoria_titulo 'Convocatoria Oficial de Investigación'}}</td>
+        </tr>
+        <tr>
+            <td class="label">Línea de Investigación:</td>
+            <td>{{default linea_investigacion 'Dominio Institucional ISTPET'}}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha de Evaluación:</td>
+            <td>{{default fecha_evaluacion '2026-05-22'}}</td>
+        </tr>
     </table>
 
-    <div class="section-title">2. Criterios de Evaluación y Calificación</div>
+    <!-- SECCIÓN 2: DATOS DEL EVALUADOR -->
+    <div class="section-title">2. Datos del Evaluador Técnico</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Tipo de Evaluador:</td>
+            <td><strong>{{default evaluador_tipo 'Evaluador Académico Acreditado'}}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">Grado Académico / Título:</td>
+            <td>{{default evaluador_grado 'Magíster / Doctor (Ph.D.)'}}</td>
+        </tr>
+        <tr>
+            <td class="label">Especialidad / Ámbito:</td>
+            <td>{{default evaluador_especialidad 'Investigador Académico de Pares'}}</td>
+        </tr>
+    </table>
+
+    <!-- SECCIÓN 3: DECLARACIÓN DE CONFLICTO DE INTERÉS -->
+    <div class="section-title">3. Declaración de Ausencia de Conflicto de Interés</div>
+    <div class="declaration-box">
+        <div class="declaration-status">✓ DECLARACIÓN ACEPTADA</div>
+        <div>
+            El evaluador declara formalmente no mantener relaciones de parentesco, dependencia laboral directa ni intereses comerciales o académicos contrapuestos con el equipo de investigación postulante, garantizando la imparcialidad y objetividad del proceso según la normativa CACES/CES.
+        </div>
+    </div>
+
+    <!-- SECCIÓN 4: TABLA DE CRITERIOS DINÁMICOS -->
+    <div class="section-title">4. Criterios de Evaluación y Calificación Técnica</div>
     <table class="score-table">
         <thead>
             <tr>
                 <th>Criterio Técnico Evaluado</th>
-                <th style="width: 150px; text-align: center;">Puntaje Máximo</th>
-                <th style="width: 150px; text-align: center;">Puntaje Asignado</th>
+                <th style="width: 130px; text-align: center;">Puntaje Máximo</th>
+                <th style="width: 130px; text-align: center;">Puntaje Asignado</th>
             </tr>
         </thead>
         <tbody>
@@ -54,65 +319,106 @@
                         <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">{{this.descripcion}}</div>
                         {{/if}}
                         {{#if this.observaciones}}
-                        <div style="font-size: 8.5pt; color: {{ theme.colors.secondary }}; margin-top: 4px; font-style: italic;">Observación: {{this.observaciones}}</div>
+                        <div style="font-size: 8.5pt; color: {{default ../theme.colors.secondary '#3b82f6'}}; margin-top: 4px; font-style: italic;">Observación específica: {{this.observaciones}}</div>
                         {{/if}}
                     </td>
-                    <td style="text-align: center;">{{this.peso}}</td>
+                    <td style="text-align: center;">{{this.peso}} pts</td>
                     <td class="score-cell">{{default this.puntaje '0'}}</td>
                 </tr>
                 {{/each}}
             {{else}}
                 <tr>
-                    <td><strong>Pertinencia Social:</strong> Grado de alineación con prioridades nacionales, problemáticas locales y dominios del instituto.</td>
-                    <td style="text-align: center;">25</td>
+                    <td>
+                        <strong>Pertinencia Social y Científica</strong>
+                        <div style="font-size: 8pt; color: #64748b;">Alineación con el dominio institucional y problemas locales.</div>
+                    </td>
+                    <td style="text-align: center;">25 pts</td>
                     <td class="score-cell">{{default pertinencia '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Metodología Científica:</strong> Rigor metodológico, claridad de objetivos, diseño de actividades y coherencia técnica general.</td>
-                    <td style="text-align: center;">25</td>
+                    <td>
+                        <strong>Rigor Metodológico y Coherencia</strong>
+                        <div style="font-size: 8pt; color: #64748b;">Diseño experimental, técnicas y cronograma de trabajo.</div>
+                    </td>
+                    <td style="text-align: center;">25 pts</td>
                     <td class="score-cell">{{default metodologia '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Viabilidad y Presupuesto:</strong> Factibilidad económica y temporal, correspondencia entre recursos y entregables planificados.</td>
-                    <td style="text-align: center;">25</td>
+                    <td>
+                        <strong>Viabilidad Técnica y Presupuesto</strong>
+                        <div style="font-size: 8pt; color: #64748b;">Factibilidad financiera, compras y entregables planificados.</div>
+                    </td>
+                    <td style="text-align: center;">25 pts</td>
                     <td class="score-cell">{{default viabilidad '0'}}</td>
                 </tr>
                 <tr>
-                    <td><strong>Impacto y Transferencia:</strong> Potencial de transferencia tecnológica, difusión académica y beneficio directo al sector productivo.</td>
-                    <td style="text-align: center;">25</td>
+                    <td>
+                        <strong>Impacto y Transferencia Tecnológica</strong>
+                        <div style="font-size: 8pt; color: #64748b;">Potencial de divulgación, patentes o uso en el sector productivo.</div>
+                    </td>
+                    <td style="text-align: center;">25 pts</td>
                     <td class="score-cell">{{default impacto '0'}}</td>
                 </tr>
             {{/if}}
             <tr class="total-row">
                 <td style="text-align: right; text-transform: uppercase;"><strong>Puntaje Total Consolidado:</strong></td>
-                <td style="text-align: center;"><strong>100</strong></td>
-                <td style="text-align: center; background: #e2e8f0; font-size: 13pt;"><strong>{{default puntaje_total (sum pertinencia metodologia viabilidad impacto)}}</strong></td>
+                <td style="text-align: center;"><strong>{{default puntaje_maximo_posible '100'}} pts</strong></td>
+                <td style="text-align: center; background: #e2e8f0; font-size: 12pt;"><strong>{{default puntaje_total (sum pertinencia metodologia viabilidad impacto)}}</strong></td>
             </tr>
         </tbody>
     </table>
 
-    <div class="section-title">3. Observaciones y Comentarios Fundamentales</div>
-    <div class="content-box">
-        {{default comentarios_generales 'Sin observaciones registradas por la comisión evaluadora.'}}
-    </div>
-
-    <div class="recommendation-box">
-        <div class="recommendation-title">4. Recomendación Final del Evaluador</div>
-        <div class="recommendation-value">
-            {{default recomendacion_final 'Requiere revisión o no definido'}}
+    <!-- SECCIÓN 5: RESUMEN DE PUNTUACIÓN -->
+    <div class="summary-card">
+        <div class="summary-metric">
+            <div class="val">{{default puntaje_total '0'}} / {{default puntaje_maximo_posible '100'}}</div>
+            <div class="lbl">Nota Obtenida</div>
+        </div>
+        <div class="summary-metric">
+            <div class="val">{{default puntaje_porcentaje '0'}}%</div>
+            <div class="lbl">Porcentaje de Cumplimiento</div>
+        </div>
+        <div class="summary-metric">
+            <div class="val" style="color: {{#if es_aprobado}}#15803d{{else}}#b91c1c{{/if}};">
+                {{#if es_aprobado}}APROBADO{{else}}NO APROBADO{{/if}}
+            </div>
+            <div class="lbl">Dictamen Cuantitativo (Umbral: {{default umbral_aprobacion '70'}} pts)</div>
         </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between; margin-top:80px">
+    <!-- SECCIÓN 6: OBSERVACIONES GENERALES -->
+    <div class="section-title">5. Observaciones y Comentarios Fundamentales</div>
+    <div class="content-box">
+        {{default comentarios_generales 'Sin observaciones adicionales registradas por el evaluador.'}}
+    </div>
+
+    <!-- SECCIÓN 7: JUSTIFICACIÓN DE LA RECOMENDACIÓN -->
+    {{#if justificacion_recomendacion}}
+    <div class="section-title">6. Fundamentación Técnica de la Evaluación</div>
+    <div class="content-box">
+        {{justificacion_recomendacion}}
+    </div>
+    {{/if}}
+
+    <!-- SECCIÓN 8: RECOMENDACIÓN FINAL -->
+    <div class="recommendation-box">
+        <div class="recommendation-title">7. Dictamen y Recomendación Final del Evaluador</div>
+        <div class="recommendation-value">
+            {{default recomendacion_final 'Requiere revisión o dictamen pendiente'}}
+        </div>
+    </div>
+
+    <!-- SECCIÓN 9: FIRMAS INSTITUCIONALES -->
+    <div class="signatures-row">
         <div class="firma-box">
             <strong>Evaluador Académico Acreditado</strong><br/>
             DIITRA Peer Reviewer<br/>
-            Comisión de Investigación
+            Comisión de Investigación e Innovación
         </div>
         <div class="firma-box">
-            <strong>Comisión del Proyecto</strong><br/>
-            DIITRA Coordinator<br/>
-            Soporte y Trazabilidad
+            <strong>Coordinación DIITRA</strong><br/>
+            Unidad de Investigación e Innovación<br/>
+            Validación y Trazabilidad Institucional
         </div>
     </div>
 </div>

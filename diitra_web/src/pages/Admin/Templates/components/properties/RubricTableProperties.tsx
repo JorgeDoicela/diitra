@@ -22,11 +22,14 @@ export const RubricTableProperties: React.FC<RubricTablePropertiesProps> = ({
             {/* Opciones de visualización */}
             <div className="space-y-3">
                 <h5 className="text-[10px] font-bold text-text-dim uppercase tracking-wider">
-                    Opciones Visuales del Bloque
+                    Opciones Visuales y Secciones del Documento
                 </h5>
                 {[
                     { key: 'mostrarDescripcionCriterio', label: 'Mostrar Descripción de Criterios', desc: 'Detalle de estándares de evaluación en la vista y PDF.' },
                     { key: 'mostrarObservacionesCriterio', label: 'Mostrar Observaciones del Revisor', desc: 'Comentarios individuales por cada criterio evaluado.' },
+                    { key: 'mostrarConflictoInteres', label: 'Sección: Declaración de Conflicto de Interés', desc: 'Aviso formal de transparencia CACES.' },
+                    { key: 'mostrarResumenPuntuacion', label: 'Sección: Tarjeta Resumen de Puntuación', desc: 'Métricas de nota total, porcentaje y dictamen.' },
+                    { key: 'mostrarJustificacionRecomendacion', label: 'Sección: Fundamentación Técnica de Recomendación', desc: 'Campo de texto para la justificación del dictamen.' },
                 ].map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
                         <div>
