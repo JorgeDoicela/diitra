@@ -11,10 +11,12 @@ node_modules
 dist
 dist-ssr
 
-# Permitir archivos .local y .env para trabajo en casa (Repo Privado)
-# *.local
-# .env
-# .env.*
+# Environment Variables
+.env
+.env.*
+*.local
+!.env.example
+
 
 # Editor directories and files
 .vscode/*

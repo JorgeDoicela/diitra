@@ -5,10 +5,19 @@
 .tmp.driveupload
 .DS_Store
 
-# .env (Habilitados para trabajo en casa en repo privado)
-# .env
-# .env.*
+# Archivos de Entorno y Secretos
+.env
+.env.*
+.env.local
 !.env.example
+!.env.template
+
+# Certificados y Claves Privadas
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
 
 # ==============================
 # Editores y Entornos ESP / IDEs
@@ -33,6 +42,12 @@
 # No ignorar el código nativo de infra
 !backend/
 
+# Configuraciones con secretos en Backend
+backend/diitra_api/appsettings.json
+backend/diitra_api/appsettings.*.json
+!backend/diitra_api/appsettings.template.json
+!backend/diitra_api/appsettings.*.template.json
+
 # ==============================
 # Node / Frontend (React / Vite / Expo)
 # ==============================
@@ -47,12 +62,6 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# Asegurar que el SQL y archivos de config se suban siempre
-!*.sql
-!*.json
-!*.env
-!*.env.*
-
 # Despliegues y Backups Locales
 backend/publish/
 scripts/despliegue/backups/
@@ -66,3 +75,5 @@ backend/diitra_api/uploads/signatures/*
 # Backups locales (archivos .sql, .zip, etc.)
 backend/diitra_api/backups/*
 !backend/diitra_api/backups/.gitkeep
+*.sql
+
