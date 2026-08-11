@@ -73,7 +73,7 @@ namespace diitra_infrastructure.Common.Notifications
         {
             var vapidPublicKey = _configuration["WebPush:PublicKey"];
             var vapidPrivateKey = _configuration["WebPush:PrivateKey"];
-            var vapidSubject = _configuration["WebPush:Subject"] ?? "mailto:ismael02doicela@gmail.com";
+            var vapidSubject = _configuration["WebPush:Subject"] ?? "mailto:no-reply@diitra.istpet.edu.ec";
 
             if (string.IsNullOrEmpty(vapidPublicKey) || string.IsNullOrEmpty(vapidPrivateKey))
             {

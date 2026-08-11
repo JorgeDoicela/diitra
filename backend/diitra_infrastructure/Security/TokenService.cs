@@ -20,7 +20,7 @@ public class TokenService : ITokenService
     public string GenerateToken(AuthResponse user)
     {
         var jwtSettings = _configuration.GetSection("JWTSettings");
-        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var secret = jwtSettings["Secret"] ?? "YOUR_JWT_SHARED_SECRET_KEY_CHANGE_IN_PRODUCTION";
         var key = Encoding.UTF8.GetBytes(secret);
 
         var systemsClaim = user.Sistemas ?? string.Empty;
@@ -66,7 +66,7 @@ public class TokenService : ITokenService
     public string GenerateRefreshToken(string username)
     {
         var jwtSettings = _configuration.GetSection("JWTSettings");
-        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var secret = jwtSettings["Secret"] ?? "YOUR_JWT_SHARED_SECRET_KEY_CHANGE_IN_PRODUCTION";
         var key = Encoding.UTF8.GetBytes(secret);
 
         var claims = new List<Claim>

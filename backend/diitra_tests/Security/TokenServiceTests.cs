@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using Xunit;
@@ -23,7 +23,7 @@ public class TokenServiceTests
         new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JWTSettings:Secret"]        = "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!",
+                ["JWTSettings:Secret"]        = "YOUR_JWT_SHARED_SECRET_KEY_CHANGE_IN_PRODUCTION",
                 ["JWTSettings:Issuer"]        = "diitra-test-issuer",
                 ["JWTSettings:Audience"]      = "diitra-test-audience",
                 ["JWTSettings:ExpiryMinutes"] = "60",

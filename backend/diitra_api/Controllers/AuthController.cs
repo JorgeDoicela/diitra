@@ -242,7 +242,7 @@ public class AuthController : ControllerBase
         try
         {
             var jwtSettings = _configuration.GetSection("JWTSettings");
-            var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+            var secret = jwtSettings["Secret"] ?? "YOUR_JWT_SHARED_SECRET_KEY_CHANGE_IN_PRODUCTION";
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(secret);
 

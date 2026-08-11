@@ -43,7 +43,7 @@ builder.Services.AddCors(options =>
 
 // 1.1 Configurar Autenticación JWT y Cookies (SSO Stateless Compartido)
 var jwtSettings = builder.Configuration.GetSection("JWTSettings");
-var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+var secret = jwtSettings["Secret"] ?? "YOUR_JWT_SHARED_SECRET_KEY_CHANGE_IN_PRODUCTION";
 var key = Encoding.UTF8.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
