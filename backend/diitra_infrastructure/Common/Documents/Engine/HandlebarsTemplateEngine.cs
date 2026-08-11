@@ -103,19 +103,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             if (element.ValueKind == JsonValueKind.Object)
             {
                 var dict = new Dictionary<string, object?>();
-                var keys = element.EnumerateObject().Select(p => p.Name).ToList();
                 foreach (var prop in element.EnumerateObject())
                 {
                     var name = prop.Name;
-                    if (name.Length > 0 && char.IsLower(name[0]))
-                    {
-                        var hasPascal = keys.Any(k => k != name && string.Equals(k, name, StringComparison.OrdinalIgnoreCase) && k.Length > 0 && char.IsUpper(k[0]));
-                        if (hasPascal)
-                        {
-                            continue;
-                        }
-                    }
-
                     var val = prop.Value;
                     if (val.ValueKind == JsonValueKind.String)
                     {
@@ -281,22 +271,71 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("ObservacionesDirector", "observaciones_director");
             SyncKeyAlias("ObservacionesCoordinador", "observaciones_coordinador");
 
-            // Subsecciones de Redacción de Informe Final (resiliencia bidireccional PascalCase <-> snake_case)
+            // Subsecciones de Redacción de Informe Final (resiliencia bidireccional PascalCase <-> snake_case <-> sec_* <-> CACES legacy)
             SyncKeyAlias("Indice", "indice");
+            SyncKeyAlias("Indice", "sec_indice");
+            SyncKeyAlias("indice", "sec_indice");
+
             SyncKeyAlias("Resumen", "resumen");
+            SyncKeyAlias("Resumen", "sec_resumen");
+            SyncKeyAlias("resumen", "resumen_ejecutivo");
+            SyncKeyAlias("sec_resumen", "resumen_ejecutivo");
+
             SyncKeyAlias("Introduccion", "introduccion");
+            SyncKeyAlias("Introduccion", "sec_introduccion");
+            SyncKeyAlias("introduccion", "sec_introduccion");
+
             SyncKeyAlias("Objetivos", "objetivos");
+            SyncKeyAlias("Objetivos", "sec_objetivos");
+            SyncKeyAlias("objetivos", "cumplimiento_objetivos");
+            SyncKeyAlias("sec_objetivos", "cumplimiento_objetivos");
+
             SyncKeyAlias("Fundamentos", "fundamentos");
+            SyncKeyAlias("Fundamentos", "sec_fundamentos");
+            SyncKeyAlias("fundamentos", "sec_fundamentos");
+
             SyncKeyAlias("Metodos", "metodos");
+            SyncKeyAlias("Metodos", "sec_metodos");
+            SyncKeyAlias("metodos", "sec_metodos");
+
             SyncKeyAlias("Resultados", "resultados");
+            SyncKeyAlias("Resultados", "sec_resultados");
+            SyncKeyAlias("resultados", "sec_resultados");
+
             SyncKeyAlias("Productos", "productos");
+            SyncKeyAlias("Productos", "sec_productos");
+            SyncKeyAlias("productos", "sec_productos");
+
             SyncKeyAlias("Impactos", "impactos");
+            SyncKeyAlias("Impactos", "sec_impactos");
+            SyncKeyAlias("impactos", "impacto_final");
+            SyncKeyAlias("sec_impactos", "impacto_final");
+
             SyncKeyAlias("Transferencia", "transferencia");
+            SyncKeyAlias("Transferencia", "sec_transferencia");
+            SyncKeyAlias("transferencia", "transferencia_conocimiento");
+            SyncKeyAlias("sec_transferencia", "transferencia_conocimiento");
+
             SyncKeyAlias("InformeFinanciero", "informe_financiero");
+            SyncKeyAlias("InformeFinanciero", "sec_informe_financiero");
+            SyncKeyAlias("informe_financiero", "sec_informe_financiero");
+
             SyncKeyAlias("Conclusiones", "conclusiones");
+            SyncKeyAlias("Conclusiones", "sec_conclusiones");
+            SyncKeyAlias("conclusiones", "sec_conclusiones");
+
             SyncKeyAlias("Recomendaciones", "recomendaciones");
+            SyncKeyAlias("Recomendaciones", "sec_recomendaciones");
+            SyncKeyAlias("recomendaciones", "sec_recomendaciones");
+
             SyncKeyAlias("Bibliografia", "bibliografia");
+            SyncKeyAlias("Bibliografia", "sec_bibliografia");
+            SyncKeyAlias("bibliografia", "bibliografia_final");
+            SyncKeyAlias("sec_bibliografia", "bibliografia_final");
+
             SyncKeyAlias("Anexos", "anexos");
+            SyncKeyAlias("Anexos", "sec_anexos");
+            SyncKeyAlias("anexos", "sec_anexos");
 
             // Sincronización dinámica de alias para cualquier propiedad no listada explícitamente
             var currentKeys = dict.Keys.ToList();

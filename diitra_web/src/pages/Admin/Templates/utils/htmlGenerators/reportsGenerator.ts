@@ -825,14 +825,11 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
         const title = sub.title || key;
         const prefix = sub.numberPrefix ? `${sub.numberPrefix} ` : '';
-        const reqText = sub.requirementText || '';
-
         html += `
   <div style="margin-top: 25px; page-break-inside: avoid;">
     <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       ${prefix}${title}
     </h2>
-    ${reqText ? `<p style="font-size: 9.5pt; color: #000000; text-align: left; margin-bottom: 10px; font-style: italic;">${reqText}</p>` : ''}
     <div style="font-size: 10pt; line-height: 1.5; color: #000000; text-align: justify; font-family: Arial, sans-serif;">
       {{{default ${key} ${snakeKey} ""}}}
     </div>

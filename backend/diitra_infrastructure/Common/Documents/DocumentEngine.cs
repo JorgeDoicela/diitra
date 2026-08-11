@@ -141,13 +141,47 @@ namespace Diitra.Infrastructure.Common.Documents
                     documentInstanceUuid = request.EntityUuid ?? request.ProjectUuid;
                 }
 
-                if (!string.IsNullOrEmpty(documentInstanceUuid))
+                var targetUuids = new List<string>();
+                if (!string.IsNullOrEmpty(documentInstanceUuid)) targetUuids.Add(documentInstanceUuid);
+                if (!string.IsNullOrEmpty(request.EntityUuid)) targetUuids.Add(request.EntityUuid);
+                if (!string.IsNullOrEmpty(request.ProjectUuid)) targetUuids.Add(request.ProjectUuid);
+
+                if (renderData != null)
+                {
+                    try
+                    {
+                        var rawCheckText = renderData is System.Text.Json.JsonElement je 
+                            ? je.GetRawText() 
+                            : System.Text.Json.JsonSerializer.Serialize(renderData);
+
+                        using var checkDoc = System.Text.Json.JsonDocument.Parse(rawCheckText);
+                        if (checkDoc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            foreach (var pName in new[] { "Uuid", "uuid", "EntityUuid", "entityUuid", "ProjectUuid", "projectUuid", "proyectoId", "id", "Id" })
+                            {
+                                if (checkDoc.RootElement.TryGetProperty(pName, out var pVal) && pVal.ValueKind == System.Text.Json.JsonValueKind.String)
+                                {
+                                    var strVal = pVal.GetString()?.Trim();
+                                    if (!string.IsNullOrEmpty(strVal) && !targetUuids.Contains(strVal))
+                                    {
+                                        targetUuids.Add(strVal);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                targetUuids = targetUuids.Distinct().ToList();
+
+                if (targetUuids.Count > 0)
                 {
                     try
                     {
                         var coworkDocs = await _db.InvCoworkDocumentos
                             .AsNoTracking()
-                            .Where(d => d.EntidadUuid == documentInstanceUuid)
+                            .Where(d => targetUuids.Contains(d.EntidadUuid) || targetUuids.Contains(d.Uuid))
                             .ToListAsync(cancellationToken);
 
                         var rawText = renderData is System.Text.Json.JsonElement je 
@@ -157,42 +191,72 @@ namespace Diitra.Infrastructure.Common.Documents
                         var dataDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(rawText) 
                             ?? new Dictionary<string, object?>();
 
+                        bool IsHtmlEmpty(object? val)
+                        {
+                            if (val == null) return true;
+                            var str = val.ToString()?.Trim();
+                            if (string.IsNullOrWhiteSpace(str)) return true;
+                            var clean = Regex.Replace(str, @"<[^>]*>", "").Trim();
+                            return string.IsNullOrWhiteSpace(clean);
+                        }
+
                         foreach (var doc in coworkDocs)
                         {
-                            if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
+                            if (!string.IsNullOrEmpty(doc.CampoNombre) && !IsHtmlEmpty(doc.ContentHtml))
                             {
                                 var htmlVal = doc.ContentHtml;
                                 var key = doc.CampoNombre;
-
-                                dataDict[key] = htmlVal;
-                                dataDict[key.ToLower()] = htmlVal;
-                                dataDict[key.ToUpper()] = htmlVal;
-
                                 var pascalKey = key.Length > 0 && char.IsLower(key[0])
                                     ? char.ToUpper(key[0]) + key.Substring(1)
                                     : key;
-                                dataDict[pascalKey] = htmlVal;
+                                var snakeKey = Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
+
+                                bool hasClientVal = !IsHtmlEmpty(dataDict.GetValueOrDefault(key)) ||
+                                                     !IsHtmlEmpty(dataDict.GetValueOrDefault(pascalKey)) ||
+                                                     !IsHtmlEmpty(dataDict.GetValueOrDefault(snakeKey));
+
+                                var valToUse = hasClientVal
+                                    ? (dataDict.GetValueOrDefault(key) ?? dataDict.GetValueOrDefault(pascalKey) ?? dataDict.GetValueOrDefault(snakeKey))
+                                    : htmlVal;
+
+                                dataDict[key] = valToUse;
+                                dataDict[key.ToLower()] = valToUse;
+                                dataDict[key.ToUpper()] = valToUse;
+                                dataDict[pascalKey] = valToUse;
+                                dataDict[snakeKey] = valToUse;
 
                                 if (key.Equals("ObjetivosDesarrolloSostenible", StringComparison.OrdinalIgnoreCase) || key.Equals("ods", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    dataDict["ods"] = htmlVal;
-                                    dataDict["ODS"] = htmlVal;
-                                    dataDict["objetivos_desarrollo_sostenible"] = htmlVal;
-                                    dataDict["ObjetivosDesarrolloSostenible"] = htmlVal;
+                                    dataDict["ods"] = valToUse;
+                                    dataDict["ODS"] = valToUse;
+                                    dataDict["objetivos_desarrollo_sostenible"] = valToUse;
+                                    dataDict["ObjetivosDesarrolloSostenible"] = valToUse;
                                 }
 
                                 if (key.StartsWith("field_", StringComparison.OrdinalIgnoreCase))
                                 {
                                     var upperField = "FIELD_" + key.Substring(6);
-                                    dataDict[upperField] = htmlVal;
+                                    dataDict[upperField] = valToUse;
                                     var lowerField = "field_" + key.Substring(6);
-                                    dataDict[lowerField] = htmlVal;
+                                    dataDict[lowerField] = valToUse;
                                 }
-
-                                var snakeKey = Regex.Replace(key, @"([A-Z])", "_$1").ToLower().TrimStart('_');
-                                dataDict[snakeKey] = htmlVal;
                             }
                         }
+
+                        // Además, propagar llaves alternativas para cualquier propiedad enviada por el cliente que no esté en CoWork DB
+                        var existingKeys = dataDict.Keys.ToList();
+                        foreach (var k in existingKeys)
+                        {
+                            var val = dataDict[k];
+                            if (!IsHtmlEmpty(val))
+                            {
+                                var pascalKey = k.Length > 0 && char.IsLower(k[0]) ? char.ToUpper(k[0]) + k.Substring(1) : k;
+                                var snakeKey = Regex.Replace(k, @"([A-Z])", "_$1").ToLower().TrimStart('_');
+                                if (!dataDict.ContainsKey(pascalKey)) dataDict[pascalKey] = val;
+                                if (!dataDict.ContainsKey(snakeKey)) dataDict[snakeKey] = val;
+                            }
+                        }
+
                         renderData = dataDict;
 
                     }

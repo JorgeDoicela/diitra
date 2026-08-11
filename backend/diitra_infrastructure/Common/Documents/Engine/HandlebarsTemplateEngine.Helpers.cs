@@ -16,6 +16,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback y colecciones Enumerable)
             handlebars.RegisterHelper("default", (output, context, arguments) =>
             {
+                bool isHtmlEmpty(string? val)
+                {
+                    if (string.IsNullOrWhiteSpace(val)) return true;
+                    var clean = Regex.Replace(val, @"<[^>]*>", "").Trim();
+                    return string.IsNullOrWhiteSpace(clean);
+                }
+
                 foreach (var arg in arguments)
                 {
                     if (arg != null && arg.GetType().Name != "UndefinedBindingResult")
@@ -28,7 +35,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                                 if (item != null)
                                 {
                                     var strItem = item.ToString()?.Trim();
-                                    if (!string.IsNullOrWhiteSpace(strItem)) items.Add(strItem);
+                                    if (!isHtmlEmpty(strItem)) items.Add(strItem!);
                                 }
                             }
                             var joined = string.Join("<br/>", items);
@@ -41,9 +48,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                         else
                         {
                             var str = arg.ToString();
-                            if (!string.IsNullOrWhiteSpace(str))
+                            if (!isHtmlEmpty(str))
                             {
-                                output.WriteSafeString(str);
+                                output.WriteSafeString(str!);
                                 return;
                             }
                         }

@@ -453,10 +453,18 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     // ── 4. Resolver campos de texto enriquecido (Rich-Text) para evitar colisión de constructores Yjs ──
     const richTexts = React.useMemo(() => {
         const list: string[] = [];
-        const techSection = templateConfig?.sections?.find((s: any) => s.componentName === "TechnicalSection" || s.component_name === "TechnicalSection" || s.id === "tecnico");
+        const techSection = templateConfig?.sections?.find((s: any) =>
+            s.componentName === "TechnicalSection" ||
+            s.component_name === "TechnicalSection" ||
+            s.id === "tecnico" ||
+            s.id === "redaccion_informe_final"
+        );
 
         if (techSection) {
-            const techSecs = techSection.config?.technicalSections || techSection.config?.TechnicalSections;
+            const techSecs = techSection.config?.writingSections ||
+                             techSection.config?.WritingSections ||
+                             techSection.config?.technicalSections ||
+                             techSection.config?.TechnicalSections;
             if (Array.isArray(techSecs) && techSecs.length > 0) {
                 techSecs.filter((s: any) => s.enabled !== false).forEach((s: any) => {
                     const key = s.fieldKey || s.id;
@@ -472,6 +480,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             }
         } else if (templateCode === 'PROTOCOLO_INVESTIGACION') {
             ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion', 'Bibliografia'].forEach(k => {
+                if (!list.includes(k)) list.push(k);
+            });
+        } else if (templateCode === 'INFORME_FINAL_INVESTIGACION') {
+            ['Indice', 'Resumen', 'Introduccion', 'Objetivos', 'Fundamentos', 'Metodos', 'Resultados', 'Productos', 'Impactos', 'Transferencia', 'InformeFinanciero', 'Conclusiones', 'Recomendaciones', 'Bibliografia', 'Anexos'].forEach(k => {
                 if (!list.includes(k)) list.push(k);
             });
         } else if (templateCode === 'INFORME_AVANCE' && !templateConfig?.sections?.some((s: any) => s.id === "edicion_colaborativa")) {
@@ -495,6 +507,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         if (hasBibliographySection && !list.includes('Bibliografia')) {
             list.push('Bibliografia');
         }
+
+        ['Antecedentes', 'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 'Metodologia', 'Evaluacion', 'Indice', 'sec_indice', 'Resumen', 'sec_resumen', 'resumen_ejecutivo', 'Introduccion', 'sec_introduccion', 'Objetivos', 'sec_objetivos', 'cumplimiento_objetivos', 'Fundamentos', 'sec_fundamentos', 'Metodos', 'sec_metodos', 'Resultados', 'sec_resultados', 'Productos', 'sec_productos', 'Impactos', 'sec_impactos', 'impacto_final', 'Transferencia', 'sec_transferencia', 'transferencia_conocimiento', 'InformeFinanciero', 'sec_informe_financiero', 'Conclusiones', 'sec_conclusiones', 'Recomendaciones', 'sec_recomendaciones', 'Bibliografia', 'sec_bibliografia', 'bibliografia_final', 'Anexos', 'sec_anexos'].forEach(k => {
+            if (!list.includes(k)) list.push(k);
+        });
+
         return list;
     }, [templateConfig, templateCode]);
 
@@ -681,7 +698,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             canSign={canSign}
             onUpdateField={updateField}
             signatureType={templateConfig?.signatureType || 'DIITRA'}
-            documentUuid={formData.Uuid || formData.uuid || initialData?.Uuid || initialData?.uuid}
+            documentUuid={formData?.Uuid || formData?.uuid || initialData?.Uuid || initialData?.uuid}
             hasTemplateUpdate={showUpgradeBanner}
             instanceVersion={templateConfig?.instance_version ?? templateConfig?.instanceVersion}
             templateVersion={templateConfig?.template_version ?? templateConfig?.templateVersion}
