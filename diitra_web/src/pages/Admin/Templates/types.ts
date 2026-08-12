@@ -57,7 +57,8 @@ export type BlockType =
     | 'progress_activity_section'
     | 'progress_status_section'
     | 'final_report_header_section'
-    | 'final_report_writing_section';
+    | 'final_report_writing_section'
+    | 'project_budget_section';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos
@@ -293,6 +294,9 @@ export interface DocumentBlock {
         // ── rubric_table ───────────────────────────────────────────────────
         mostrarDescripcionCriterio?: boolean;
         mostrarObservacionesCriterio?: boolean;
+        mostrarConflictoInteres?: boolean;
+        mostrarJustificacionRecomendacion?: boolean;
+        mostrarResumenPuntuacion?: boolean;
 
         // ── signatures ─────────────────────────────────────────────────────
         signatories?: Signatory[];

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText, ExternalLink, Target, Layers } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import type { RubricaDinamicaDto } from '../../../../services/peerReviewService';
@@ -12,7 +13,6 @@ interface ProtocoloDocumentProps {
     activeTab: 'document' | 'rubric';
     handleDescargarCiego: () => Promise<void>;
     handleDescargarRubrica: () => Promise<void>;
-    navigate: any;
 }
 
 export const ProtocoloDocument: React.FC<ProtocoloDocumentProps> = ({
@@ -20,8 +20,7 @@ export const ProtocoloDocument: React.FC<ProtocoloDocumentProps> = ({
     isReadOnly,
     activeTab,
     handleDescargarCiego,
-    handleDescargarRubrica,
-    navigate
+    handleDescargarRubrica
 }) => {
     // Sincronización con el motor de plantillas dinámicas
     const dataJson = rubrica.dataSnapshotJson || rubrica.data_snapshot_json;
@@ -100,13 +99,13 @@ export const ProtocoloDocument: React.FC<ProtocoloDocumentProps> = ({
         <section className={`flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden ${activeTab === 'document' ? 'flex' : 'hidden lg:flex'}`}>
             <div className="px-6 py-5 border-b border-border-thin bg-surface/5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/revisiones')}
-                        className="p-2 rounded-xl bg-text-main/5 border border-text-main/10 text-text-dim hover:text-text-main hover:bg-text-main/10 transition-all mr-1 cursor-pointer"
+                    <Link
+                        to="/revisiones"
+                        className="p-2 rounded-xl bg-text-main/5 border border-text-main/10 text-text-dim hover:text-text-main hover:bg-text-main/10 transition-all mr-1 cursor-pointer inline-flex items-center justify-center no-underline"
                         title="Volver a Mis Revisiones"
                     >
                         <ArrowLeft size={16} />
-                    </button>
+                    </Link>
                     <div>
                         <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">
                             Mis Revisiones / #{rubrica.id_rubrica}

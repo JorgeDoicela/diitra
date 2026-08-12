@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import type { EvaluacionDetalle } from '../hooks/useEvaluacionPage';
 
@@ -7,15 +8,13 @@ interface EvaluacionExitoProps {
     dictamenCfg: any;
     puntajeTotal: number;
     detalles: EvaluacionDetalle[];
-    navigate: any;
 }
 
 export const EvaluacionExito: React.FC<EvaluacionExitoProps> = ({
     dictamenPreview,
     dictamenCfg,
     puntajeTotal,
-    detalles,
-    navigate
+    detalles
 }) => {
     return (
         <main className="flex-1 bg-bg-deep flex items-center justify-center p-8 lg:p-10">
@@ -67,13 +66,13 @@ export const EvaluacionExito: React.FC<EvaluacionExitoProps> = ({
                     </div>
                 </div>
 
-                <button
-                    onClick={() => navigate('/revisiones')}
-                    className="btn-brand w-full py-3 text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                <Link
+                    to="/revisiones"
+                    className="btn-brand w-full py-3 text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all no-underline"
                 >
                     Volver a Mis Revisiones
                     <ArrowLeft size={12} className="rotate-180" />
-                </button>
+                </Link>
             </div>
         </main>
     );

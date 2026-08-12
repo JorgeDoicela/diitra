@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
     ArrowLeft, Activity, DollarSign, Calendar, 
     CheckCircle2, TrendingUp, Wallet, 
@@ -156,9 +156,9 @@ export const MonitoringPage: React.FC = () => {
                     <p className="text-text-dim text-sm font-medium mb-6">
                         {error || 'No se pudo resolver la instancia del proyecto de investigación.'}
                     </p>
-                    <button onClick={() => navigate('/investigacion')} className="btn-vercel-primary py-3 w-full">
+                    <Link to="/investigacion" className="btn-vercel-primary py-3 w-full inline-block text-center no-underline">
                         Volver a Investigaciones
-                    </button>
+                    </Link>
                 </div>
             </div>
         );

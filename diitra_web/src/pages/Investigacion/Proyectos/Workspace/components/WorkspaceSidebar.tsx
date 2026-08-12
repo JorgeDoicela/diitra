@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Shield, FileSignature, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
@@ -24,7 +24,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     setActiveDocument,
     isAdmin = false
 }) => {
-    const navigate = useNavigate();
     const isSigned = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
 
     return (
@@ -43,14 +42,13 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                         </p>
                     </div>
                     <div className="mt-4">
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm"
+                        <Link
+                            to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
+                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm no-underline"
                         >
                             <Shield size={12} />
                             <span>Iniciar Revisión Técnica</span>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             )}

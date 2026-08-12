@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
@@ -288,13 +288,13 @@ const InformesAvancePage: React.FC = () => {
                     }
                 >
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => navigate(`/investigacion/monitoreo/${projectId}`)}
-                            className="btn-vercel-secondary flex items-center gap-2"
+                        <Link
+                            to={`/investigacion/monitoreo/${projectId}`}
+                            className="btn-vercel-secondary flex items-center gap-2 no-underline"
                         >
                             <Activity size={13} />
                             Monitoreo Gantt
-                        </button>
+                        </Link>
                         <button
                             onClick={load}
                             disabled={loading}

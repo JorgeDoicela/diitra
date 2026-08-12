@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios_config';
 import './ProximosEventosWidget.css';
 
@@ -126,12 +126,12 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
                 )}
             </div>
 
-            <div className="widget-footer" onClick={() => navigate('/calendario')}>
+            <Link to="/calendario" className="widget-footer no-underline">
                 <span>Ver calendario completo</span>
                 <svg viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" d="M8.59,16.59L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.59Z" />
                 </svg>
-            </div>
+            </Link>
         </div>
     );
 };

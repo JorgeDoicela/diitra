@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
 import { stripHtmlToText } from '../../utils/notificationText';
 
@@ -118,12 +118,13 @@ const NotificationBell = () => {
                         </div>
 
                         <footer className="p-3 border-t border-border-thin bg-surface/30 text-center">
-                            <button 
-                                onClick={() => { setIsOpen(false); navigate('/notificaciones'); }}
-                                className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors"
+                            <Link 
+                                to="/notificaciones"
+                                onClick={() => { setIsOpen(false); }}
+                                className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors no-underline inline-block"
                             >
                                 Ver todo el historial
-                            </button>
+                            </Link>
                         </footer>
                     </div>
                 </>

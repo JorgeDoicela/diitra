@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronRight, FileText, UploadCloud, ArrowLeft } from 'lucide-react';
 interface WorkspaceHeaderProps {
     currentProject: {
@@ -12,7 +13,6 @@ interface WorkspaceHeaderProps {
     isSidebarCollapsed: boolean;
     isPublishingDSpace: boolean;
     urlPrefix: string;
-    navigate: (path: string) => void;
     onExportCaces: () => void;
     onPublishDSpace: () => void;
 }
@@ -22,7 +22,6 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     isSidebarCollapsed,
     isPublishingDSpace,
     urlPrefix,
-    navigate,
     onExportCaces,
     onPublishDSpace
 }) => {
@@ -55,21 +54,21 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                         <div className="h-4 w-[1px] bg-border-thin mx-1" />
                     </>
                 )}
-                <button 
-                    onClick={() => navigate(urlPrefix)} 
-                    className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
+                <Link 
+                    to={urlPrefix} 
+                    className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer inline-flex items-center justify-center"
                     title="Volver"
                 >
                     <ArrowLeft size={16} />
-                </button>
+                </Link>
                 <div className="flex flex-col justify-center">
                     <div className="flex items-center gap-1.5 text-[11px] text-text-dim">
-                        <span 
-                            className="hover:text-text-main cursor-pointer transition-colors duration-150"
-                            onClick={() => navigate(urlPrefix)}
+                        <Link 
+                            to={urlPrefix}
+                            className="hover:text-text-main cursor-pointer transition-colors duration-150 no-underline text-inherit"
                         >
                             {urlPrefix.endsWith('mis-proyectos') ? 'Mis Proyectos' : 'Investigación'}
-                        </span>
+                        </Link>
                         <ChevronRight size={10} className="opacity-60" />
                         <span className="text-text-main font-semibold font-mono">Proyecto #{currentProject.id}</span>
                     </div>

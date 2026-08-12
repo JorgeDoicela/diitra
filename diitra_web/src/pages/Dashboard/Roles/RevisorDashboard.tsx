@@ -3,7 +3,7 @@ import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch, RotateCw }
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { getMyReviews } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
@@ -11,7 +11,6 @@ import { DashboardSkeleton } from '../Components/DashboardSkeleton';
 
 export const RevisorDashboard: React.FC = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [reviews, setReviews] = useState<PeerReviewDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -92,13 +91,13 @@ export const RevisorDashboard: React.FC = () => {
                         >
                             <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
                         </button>
-                        <button 
-                            onClick={() => navigate('/revisiones')}
-                            className="btn-vercel-primary flex-1 md:flex-none"
+                        <Link 
+                            to="/revisiones"
+                            className="btn-vercel-primary flex-1 md:flex-none no-underline"
                         >
                             <Shield size={16} />
                             <span>Ver Asignaciones</span>
-                        </button>
+                        </Link>
                     </>
                 }
             />
@@ -141,17 +140,17 @@ export const RevisorDashboard: React.FC = () => {
                                         })
                                         : 'No definida';
                                     return (
-                                        <div 
+                                        <Link 
                                             key={r.uuid}
-                                            onClick={() => navigate('/revisiones')}
-                                            className="p-3 rounded-md border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all"
+                                            to="/revisiones"
+                                            className="p-3 rounded-md border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all no-underline text-inherit"
                                         >
                                             <div className="min-w-0 flex-1 pr-2">
                                                 <p className="text-[10px] font-semibold text-text-main uppercase tracking-tighter truncate">{title}</p>
                                                 <p className="text-[9px] text-text-dim mt-1">Límite: {limitDate}</p>
                                             </div>
                                             <ExternalLink size={12} className="text-text-dim group-hover:text-text-main transition-colors shrink-0" />
-                                        </div>
+                                        </Link>
                                     );
                                 })
                             )}

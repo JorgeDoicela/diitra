@@ -127,27 +127,23 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                             }`}
                     >
-                        <button
+                        <Link
+                            to={item.name === 'Investigación' ? '/investigacion' : '/investigacion/mis-proyectos'}
                             onClick={(e) => {
-                                e.preventDefault();
-                                if (item.name === 'Investigación') {
-                                    setIsInvestigacionOpen(true);
-                                    if (location.pathname !== '/investigacion') {
-                                        navigate('/investigacion');
+                                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                                    if (item.name === 'Investigación') {
+                                        setIsInvestigacionOpen(true);
+                                    } else {
+                                        setIsMisProyectosOpen(true);
                                     }
-                                } else {
-                                    setIsMisProyectosOpen(true);
-                                    if (location.pathname !== '/investigacion/mis-proyectos') {
-                                        navigate('/investigacion/mis-proyectos');
-                                    }
+                                    if (onClose) onClose();
                                 }
-                                if (onClose) onClose();
                             }}
-                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left no-underline"
                         >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
                                 ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                               : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
                                 }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
@@ -155,7 +151,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 }`}>
                                 {item.name}
                             </span>
-                        </button>
+                        </Link>
                         <button
                             onClick={toggleOpen}
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
@@ -277,16 +273,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                             }`}
                     >
-                        <button
+                        <Link
+                            to="/analiticas"
                             onClick={(e) => {
-                                e.preventDefault();
-                                setIsAnalyticsOpen(true);
-                                if (!location.pathname.startsWith('/analiticas')) {
-                                    navigate('/analiticas');
+                                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                                    setIsAnalyticsOpen(true);
+                                    if (onClose) onClose();
                                 }
-                                if (onClose) onClose();
                             }}
-                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left no-underline"
                         >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
                                 ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -298,7 +293,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 }`}>
                                 {item.name}
                             </span>
-                        </button>
+                        </Link>
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
@@ -369,16 +364,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                             }`}
                     >
-                        <button
+                        <Link
+                            to="/usuarios"
                             onClick={(e) => {
-                                e.preventDefault();
-                                setIsUsersOpen(true);
-                                if (!location.pathname.startsWith('/usuarios')) {
-                                    navigate('/usuarios');
+                                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                                    setIsUsersOpen(true);
+                                    if (onClose) onClose();
                                 }
-                                if (onClose) onClose();
                             }}
-                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left no-underline"
                         >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
                                 ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -390,7 +384,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 }`}>
                                 {item.name}
                             </span>
-                        </button>
+                        </Link>
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
@@ -461,16 +455,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                             }`}
                     >
-                        <button
+                        <Link
+                            to="/parametros-normativos"
                             onClick={(e) => {
-                                e.preventDefault();
-                                setIsParametrosOpen(true);
-                                if (!location.pathname.startsWith('/parametros-normativos')) {
-                                    navigate('/parametros-normativos');
+                                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                                    setIsParametrosOpen(true);
+                                    if (onClose) onClose();
                                 }
-                                if (onClose) onClose();
                             }}
-                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left no-underline"
                         >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
                                 ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -482,7 +475,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 }`}>
                                 {item.name}
                             </span>
-                        </button>
+                        </Link>
                         <button
                             onClick={(e) => {
                                 e.preventDefault();

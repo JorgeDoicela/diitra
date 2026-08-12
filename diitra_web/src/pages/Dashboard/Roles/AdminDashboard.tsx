@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { DashboardSkeleton } from '../Components/DashboardSkeleton';
@@ -39,7 +39,6 @@ interface GlobalStats {
 
 export const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Admin';
     const [stats, setStats] = useState<GlobalStats | null>(null);
@@ -129,20 +128,20 @@ export const AdminDashboard: React.FC = () => {
                         >
                             <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
                         </button>
-                        <button
-                            onClick={() => navigate('/investigacion')}
-                            className="btn-vercel-secondary flex-1 md:flex-none"
+                        <Link
+                            to="/investigacion"
+                            className="btn-vercel-secondary flex-1 md:flex-none no-underline"
                         >
                             <Folder size={14} />
                             <span>Investigación</span>
-                        </button>
-                        <button
-                            onClick={() => navigate('/convocatorias')}
-                            className="btn-vercel-primary flex-1 md:flex-none"
+                        </Link>
+                        <Link
+                            to="/convocatorias"
+                            className="btn-vercel-primary flex-1 md:flex-none no-underline"
                         >
                             <Megaphone size={16} />
                             <span>Convocatorias</span>
-                        </button>
+                        </Link>
                     </>
                 }
             />

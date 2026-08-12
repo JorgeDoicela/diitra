@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
     ShieldCheck, Send, MessageSquare, AlertCircle,
     CheckCircle2, XCircle, Loader2, BookOpen, Lock, ArrowLeft
@@ -64,9 +65,9 @@ const EvaluacionPage: React.FC = () => {
     if (!rubrica) {
         return (
             <main className="flex-1 bg-bg-deep p-10">
-                <button onClick={() => navigate('/revisiones')} className="btn-vercel-secondary flex items-center gap-2 mb-6">
+                <Link to="/revisiones" className="btn-vercel-secondary flex items-center gap-2 mb-6 no-underline inline-flex">
                     <ArrowLeft size={14} /> Volver
-                </button>
+                </Link>
                 <div className="empty-state py-20">
                     <AlertCircle size={32} className="text-error mb-4" />
                     <p className="text-error font-semibold uppercase tracking-widest text-sm">

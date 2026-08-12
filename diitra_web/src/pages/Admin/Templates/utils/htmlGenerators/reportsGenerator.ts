@@ -624,8 +624,6 @@ export const generateProgressHeaderHtml = (block: DocumentBlock): string => {
 export const generateFinalReportHeaderHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
-    const headerColorKey = c.finalReportHeaderColor || 'navy';
-    const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
 
     const showTipo = c.showTipoInvestigacion !== false;
     const showAlcance = c.showAlcanceProyecto !== false;

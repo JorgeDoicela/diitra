@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { ExternalLink, Info, AlertTriangle, Mail, Bell } from 'lucide-react';
 import { stripHtmlToText } from '../../../../utils/notificationText';
@@ -12,7 +13,6 @@ interface NotificationPanelProps {
     notifications: NotificationItem[];
     markAllAsRead: () => Promise<void>;
     handleNotificationClick: (n: NotificationItem) => Promise<void>;
-    navigate: (path: string) => void;
 }
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
@@ -22,8 +22,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     unreadCount,
     notifications,
     markAllAsRead,
-    handleNotificationClick,
-    navigate
+    handleNotificationClick
 }) => {
     if (!isNotificationsOpen) return null;
 
@@ -105,12 +104,13 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 </div>
 
                 <footer className="p-2 border-t border-border-thin bg-surface/30 text-center">
-                    <button
-                        onClick={() => { setIsNotificationsOpen(false); navigate('/notificaciones'); }}
-                        className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer"
+                    <Link
+                        to="/notificaciones"
+                        onClick={() => { setIsNotificationsOpen(false); }}
+                        className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer no-underline inline-block"
                     >
                         Ver todo el historial
-                    </button>
+                    </Link>
                 </footer>
             </div>
         </>,

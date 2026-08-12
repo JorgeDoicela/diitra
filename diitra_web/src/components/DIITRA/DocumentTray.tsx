@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     FileText,
     Plus,
@@ -129,10 +130,10 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Docume
                         const isProtocolo = tCode.toUpperCase().includes('PROTOCOLO');
 
                         return (
-                            <div
+                            <Link
                                 key={doc.uuid || doc.Uuid}
-                                onClick={() => navigate(buildWorkspacePath(tCode, doc.uuid || doc.Uuid!))}
-                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
+                                to={buildWorkspacePath(tCode, doc.uuid || doc.Uuid!)}
+                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer no-underline text-inherit"
                             >
                                 {/* Col 1: Documento / Actividad */}
                                 <div className="flex-1 min-w-0 md:max-w-xs lg:max-w-md xl:max-w-2xl">
@@ -190,7 +191,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Docume
                                     </div>
 
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })
                 )}

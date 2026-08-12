@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Sun, Moon, Settings, Trash2, LogOut, Bell } from 'lucide-react';
 
 const MoreHorizontalIcon = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
@@ -80,27 +81,27 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                             {currentTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
                             <span>{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
                         </div>
-                        <div
+                        <Link
+                            to="/configuracion"
                             onClick={() => {
-                                navigate('/configuracion');
                                 setIsUserMenuOpen(false);
                             }}
-                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
                         >
                             <Settings size={14} />
                             <span>Configuración</span>
-                        </div>
+                        </Link>
                         {(isAdmin || user?.roles?.includes('DIITRA_DOCENTE')) && (
-                            <div
+                            <Link
+                                to="/papelera"
                                 onClick={() => {
-                                    navigate('/papelera');
                                     setIsUserMenuOpen(false);
                                 }}
-                                className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                                className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
                             >
                                 <Trash2 size={14} />
                                 <span>Papelera</span>
-                            </div>
+                            </Link>
                         )}
                         <hr className="border-border-thin my-1" />
                         <div
