@@ -55,9 +55,9 @@ export type BlockType =
     | 'project_approval_notice'
     | 'progress_header_section'
     | 'progress_activity_section'
-    | 'progress_status_section'
     | 'final_report_header_section'
     | 'final_report_writing_section'
+    | 'arbitration_dictamen_section'
     | 'project_budget_section';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -297,6 +297,14 @@ export interface DocumentBlock {
         mostrarConflictoInteres?: boolean;
         mostrarJustificacionRecomendacion?: boolean;
         mostrarResumenPuntuacion?: boolean;
+
+        // ── arbitration_dictamen_section ───────────────────────────────────
+        mostrarAvisoDobleCiego?: boolean;
+        mostrarDatosProyectoDictamen?: boolean;
+        mostrarPanelArbitros?: boolean;
+        mostrarTarjetaResolucion?: boolean;
+        mostrarObservacionesConsolidadas?: boolean;
+        mostrarCertificacionInstitucional?: boolean;
 
         // ── signatures ─────────────────────────────────────────────────────
         signatories?: Signatory[];

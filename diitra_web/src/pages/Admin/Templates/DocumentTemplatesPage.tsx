@@ -40,7 +40,8 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'rubric_table',
     'resources',
     'expected_products',
-    'project_approval_notice'
+    'project_approval_notice',
+    'arbitration_dictamen_section'
 ];
 
 const DocumentTemplatesPage: React.FC = () => {

@@ -72,6 +72,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                 { type: 'impacts', icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'rubric_table', icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'project_approval_notice', icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
+                { type: 'arbitration_dictamen_section', icon: Award, label: 'Dictamen de Arbitraje', desc: 'Matriz de pares evaluadores, promedio y resolución CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'signatures', icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' }
             ]
         },

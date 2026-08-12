@@ -449,23 +449,15 @@ export const useDocumentTemplatesPage = () => {
                     loadedBlocks = [
                         baseCover,
                         {
-                            id: "block-2", type: "title", title: "Título de Sección", isActive: true,
-                            config: { text: "1. IDENTIFICACIÓN DE LA EVALUACIÓN", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
-                        },
-                        {
-                            id: "block-3", type: "advanced_table", title: "Tabla de Identificación", isActive: true,
+                            id: "block-dictamen-1", type: "arbitration_dictamen_section", title: "Acta de Dictamen de Arbitraje Consolidado", isActive: true,
                             config: {
-                                headers: ["Campo", "Detalle de la Evaluación"], colWidths: ["30%", "70%"],
-                                rows: [{ cells: ["Nombre del Proyecto:", "{{titulo}}"] }, { cells: ["Evaluador Técnico:", "{{evaluador}}"] }, { cells: ["Fecha de Evaluación:", "{{fecha_evaluacion}}"] }]
+                                mostrarAvisoDobleCiego: true,
+                                mostrarDatosProyectoDictamen: true,
+                                mostrarPanelArbitros: true,
+                                mostrarTarjetaResolucion: true,
+                                mostrarObservacionesConsolidadas: true,
+                                mostrarCertificacionInstitucional: true
                             }
-                        },
-                        {
-                            id: "block-6", type: "title", title: "Título de Sección", isActive: true,
-                            config: { text: "2. CRITERIOS DE EVALUACIÓN", fontSize: "H2", color: "#1e2a4a", alignment: "left" }
-                        },
-                        {
-                            id: "block-7", type: "rubric_table", title: "Tabla de Criterios (Rúbrica)", isActive: true,
-                            config: { mostrarDescripcionCriterio: true, mostrarObservacionesCriterio: true }
                         },
                         baseSignatures
                     ];
@@ -703,6 +695,22 @@ export const useDocumentTemplatesPage = () => {
                 break;
             case 'final_report_writing_section':
                 newBlock = { id: newId, type, title: 'Plan de Redacción Informe Final', isActive: true, config: { writingHeaderColor: 'navy', writingLayoutMode: 'table_2col' } };
+                break;
+            case 'arbitration_dictamen_section':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Acta de Dictamen de Arbitraje Consolidado',
+                    isActive: true,
+                    config: {
+                        mostrarAvisoDobleCiego: true,
+                        mostrarDatosProyectoDictamen: true,
+                        mostrarPanelArbitros: true,
+                        mostrarTarjetaResolucion: true,
+                        mostrarObservacionesConsolidadas: true,
+                        mostrarCertificacionInstitucional: true
+                    }
+                };
                 break;
             default:
                 return;

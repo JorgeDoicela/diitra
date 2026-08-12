@@ -32,21 +32,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             var dbSet = context.Set<DocumentTemplate>();
 
-            // Limpieza automática de plantilla obsoleta previa en MySQL
-            try
-            {
-                var obsoleteActa = await dbSet.FirstOrDefaultAsync(t => t.Code == "ACTA_APROBACION_PROYECTO");
-                if (obsoleteActa != null)
-                {
-                    logger.LogInformation("DIITRA DocumentSeeder: Removiendo registro obsoleto 'ACTA_APROBACION_PROYECTO' de la base de datos.");
-                    dbSet.Remove(obsoleteActa);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "DIITRA DocumentSeeder: No se pudo eliminar registro obsoleto 'ACTA_APROBACION_PROYECTO'. Continuando...");
-            }
-
             foreach (var seed in seedTemplates)
             {
                 var template = await dbSet.FirstOrDefaultAsync(t => t.Code == seed.Code);

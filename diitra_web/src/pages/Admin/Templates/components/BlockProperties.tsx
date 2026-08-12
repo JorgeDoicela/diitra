@@ -15,6 +15,8 @@ import { ProgressActivityProperties } from './properties/ProgressActivityPropert
 import { ProgressStatusProperties } from './properties/ProgressStatusProperties';
 import { ThemeEditorTab } from './ThemeEditorTab';
 import { RubricTableProperties } from './properties/RubricTableProperties';
+import { ArbitrationDictamenProperties } from './properties/ArbitrationDictamenProperties';
+
 
 
 interface BlockPropertiesProps {
@@ -652,6 +654,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             {/* ── TABLA DE RÚBRICA ────────────────────────────────────────── */}
                             {activeBlock.type === 'rubric_table' && (
                                 <RubricTableProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
+                            )}
+
+                            {/* ── ACTA DE DICTAMEN DE ARBITRAJE ────────────────────────────── */}
+                            {activeBlock.type === 'arbitration_dictamen_section' && (
+                                <ArbitrationDictamenProperties block={activeBlock} onUpdateConfig={onUpdateConfig} />
                             )}
 
                             {/* ── FIRMAS ──────────────────────────────────────────────────── */}

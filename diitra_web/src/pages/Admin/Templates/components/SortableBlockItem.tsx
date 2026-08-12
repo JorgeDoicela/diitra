@@ -53,6 +53,7 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'progress_status_section',
     'final_report_header_section',
     'final_report_writing_section',
+    'arbitration_dictamen_section',
 ];
 
 interface SortableBlockItemProps {
@@ -136,6 +137,8 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderProjectProgressReport config={block.config} />;
             case 'project_approval_notice':
                 return <RenderProjectApprovalNotice config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'arbitration_dictamen_section':
+                return <RenderArbitrationDictamenSection config={block.config} />;
             case 'expected_products':
                 return <RenderExpectedProducts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':
@@ -226,3 +229,75 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
         </div>
     );
 };
+
+const RenderArbitrationDictamenSection: React.FC<{ config: any }> = ({ config }) => {
+    return (
+        <div className="space-y-4 p-4 border border-border-thin rounded-lg bg-surface-hover/10 text-xs">
+            <div className="flex items-center justify-between border-b border-border-thin/40 pb-2">
+                <span className="font-bold text-text-main text-sm uppercase tracking-wide">
+                    Acta de Dictamen de Arbitraje Consolidado
+                </span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-semibold text-[10px]">
+                    DINÁMICO CACES
+                </span>
+            </div>
+
+            {config.mostrarAvisoDobleCiego !== false && (
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-700 dark:text-amber-300">
+                    <strong>Aviso de Doble Ciego:</strong> Anonimato garantizado conforme al Art. 10 RRA CES.
+                </div>
+            )}
+
+            {config.mostrarDatosProyectoDictamen !== false && (
+                <div className="space-y-1 bg-surface-hover/30 p-2.5 rounded border border-border-thin/30 text-[11px]">
+                    <p><strong>Proyecto:</strong> [Título autogenerado del proyecto de investigación]</p>
+                    <p><strong>Código:</strong> [Código institucional de registro]</p>
+                </div>
+            )}
+
+            {config.mostrarPanelArbitros !== false && (
+                <div className="border border-border-thin/40 rounded overflow-hidden">
+                    <table className="w-full text-left text-[10px]">
+                        <thead className="bg-surface-hover/40 text-text-main font-semibold">
+                            <tr>
+                                <th className="p-2">#</th>
+                                <th className="p-2">Árbitro (Anon.)</th>
+                                <th className="p-2">Puntaje</th>
+                                <th className="p-2">Dictamen</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-thin/20 text-text-dim">
+                            <tr>
+                                <td className="p-2">1</td>
+                                <td className="p-2">Árbitro Evaluador #1</td>
+                                <td className="p-2 font-bold text-text-main">85 / 100</td>
+                                <td className="p-2 text-emerald-600 font-semibold">Aprueba</td>
+                            </tr>
+                            <tr>
+                                <td className="p-2">2</td>
+                                <td className="p-2">Árbitro Evaluador #2</td>
+                                <td className="p-2 font-bold text-text-main">90 / 100</td>
+                                <td className="p-2 text-emerald-600 font-semibold">Aprueba</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {config.mostrarTarjetaResolucion !== false && (
+                <div className="flex items-center justify-around p-3 bg-emerald-500/5 border border-emerald-500/20 rounded text-center">
+                    <div>
+                        <div className="text-lg font-black text-emerald-600">87.5 / 100</div>
+                        <div className="text-[9px] uppercase font-bold text-text-dim">Promedio Ponderado</div>
+                    </div>
+                    <div className="h-8 w-px bg-border-thin/40" />
+                    <div>
+                        <div className="text-xs font-black text-emerald-600 uppercase">✓ APROBADO</div>
+                        <div className="text-[9px] uppercase font-bold text-text-dim">Dictamen Final</div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
