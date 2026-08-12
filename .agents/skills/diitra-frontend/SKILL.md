@@ -1,10 +1,11 @@
 ---
 name: diitra-frontend
-description: Extiende la skill global de frontend con convenciones y patrones específicos de DIITRA (Yjs, CoWorkField, snake_case, Axios). Activa esta skill para tareas de UI, componentes React, estilos o integraciones del cliente en DIITRA.
+description: Extiende la skill global de frontend con convenciones y patrones específicos de DIITRA (Yjs, CoWorkField, snake_case, Axios). Activa esta skill EN COMBINACIÓN CON `desarrollo-frontend` para tareas de UI, componentes React, estilos o integraciones del cliente en DIITRA.
 ---
 # Extensión de Frontend — DIITRA
 
-Esta skill **complementa** las directrices globales de `desarrollo-frontend` con reglas exclusivas del proyecto DIITRA. No duplica principios generales (estética premium, micro-animaciones, tipografía, tipado estricto) ya cubiertos por la skill global.
+> **Orquestación:** Esta skill **extiende y complementa** las directrices globales de `desarrollo-frontend`. Debe cargarse siempre junto con los principios globales (estética premium, micro-animaciones, tipografía, tipado estricto).
+
 
 ## 1. Colaboración en Tiempo Real (Yjs / CoWorkField)
 
@@ -28,3 +29,11 @@ Esta skill **complementa** las directrices globales de `desarrollo-frontend` con
 * Usa `custom-scrollbar` como clase CSS estándar del proyecto para barras de scroll discretas.
 * Los sidebars colapsables y arrastrables deben persistir su estado de visibilidad con `localStorage`.
 * En selects/dropdowns con catálogos relacionales, verifica que cada opción exponga el `id` local y las claves de vinculación externa necesarias (ej: `l.id` y `s.id_linea` para vincular líneas y sublíneas de forma reactiva).
+
+## 5. Estructura de Carpetas y Organización
+
+* **Vistas / Páginas:** `src/pages/[NombreModulo]/` (contiene la página principal y su subcarpeta `components/` si supera el umbral de modularización).
+* **Componentes Compartidos:** `src/components/` (sólo componentes UI globales o reutilizables entre múltiples módulos).
+* **Servicios de API:** `src/api/` (instancia de Axios configurada, métodos de consumo modularizados por entidad).
+* **Hooks Personalizados:** `src/hooks/` (lógica de estado reusable o subscripciones en tiempo real).
+

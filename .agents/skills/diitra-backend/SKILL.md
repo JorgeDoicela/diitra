@@ -1,10 +1,11 @@
 ---
 name: diitra-backend
-description: Extiende la skill global de backend con convenciones y restricciones específicas del proyecto DIITRA. Activa esta skill para tareas de controladores, servicios C#, EF Core, DTOs o base de datos de DIITRA.
+description: Extiende la skill global de backend con convenciones y restricciones específicas del proyecto DIITRA. Activa esta skill EN COMBINACIÓN CON `desarrollo-backend` para tareas de controladores, servicios C#, EF Core, DTOs o base de datos de DIITRA.
 ---
 # Extensión de Backend — DIITRA
 
-Esta skill **complementa** las directrices globales de `desarrollo-backend` con reglas exclusivas del proyecto DIITRA. No duplica principios generales (arquitectura limpia, inyección de dependencias, logging, commits semánticos) ya cubiertos por la skill global.
+> **Orquestación:** Esta skill **extiende y complementa** las directrices globales de `desarrollo-backend`. Debe cargarse siempre junto con los principios globales (arquitectura limpia, inyección de dependencias, logging, commits semánticos).
+
 
 ## 1. Convenciones de Base de Datos (DIITRA)
 
@@ -26,3 +27,11 @@ Esta skill **complementa** las directrices globales de `desarrollo-backend` con 
 ## 4. Seguridad y Gobernanza
 
 * Aplica siempre las reglas de la skill global `gobernanza-datos-segura` para cualquier operación que involucre credenciales, roles, permisos o tablas de usuarios de `sigafi`.
+
+## 5. Convenciones de Rutas y Controladores API
+
+* **Prefijo de Ruta y Nombres:** Todas las rutas de controladores API deben mantener el prefijo `/api/[controller]` usando sustantivos en inglés en plural y kebab-case (ej: `/api/projects`, `/api/peer-reviews`, `/api/document-templates`).
+* **Verbos HTTP:** Respeta estrictamente los verbos REST estándar (`GET` para lectura, `POST` para creación, `PUT` para actualización completa, `PATCH` para parcial, `DELETE` para eliminación).
+* **Respuestas Uniformes:** Devuelve respuestas estructuradas con códigos HTTP adecuados (`200 OK`, `201 Created`, `400 BadRequest`, `404 NotFound`, `500 InternalServerError`).
+
+
