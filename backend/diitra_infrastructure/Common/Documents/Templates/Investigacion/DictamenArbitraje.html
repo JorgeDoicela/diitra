@@ -1,484 +1,343 @@
-﻿<!DOCTYPE html>
-<html lang="es">
+<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1kaWN0YW1lbi0xIiwidHlwZSI6ImFyYml0cmF0aW9uX2RpY3RhbWVuX3NlY3Rpb24iLCJ0aXRsZSI6IkFjdGEgZGUgRGljdGFtZW4gZGUgQXJiaXRyYWplIENvbnNvbGlkYWRvIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJtb3N0cmFyQXZpc29Eb2JsZUNpZWdvIjp0cnVlLCJtb3N0cmFyRGF0b3NQcm95ZWN0b0RpY3RhbWVuIjp0cnVlLCJtb3N0cmFyUGFuZWxBcmJpdHJvcyI6dHJ1ZSwibW9zdHJhclRhcmpldGFSZXNvbHVjaW9uIjp0cnVlLCJtb3N0cmFyT2JzZXJ2YWNpb25lc0NvbnNvbGlkYWRhcyI6dHJ1ZSwibW9zdHJhckNlcnRpZmljYWNpb25JbnN0aXR1Y2lvbmFsIjp0cnVlfX0seyJpZCI6ImJsb2NrLTgiLCJ0eXBlIjoic2lnbmF0dXJlcyIsInRpdGxlIjoiQmxvcXVlIGRlIEZpcm1hcyB5IFRyYXphYmlsaWRhZCIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dG9QaWVGaXJtYSI6IkNvbWlzacOzbiBkZSBBY3JlZGl0YWNpw7NuIGUgSW52ZXN0aWdhY2nDs24gSVNUIFRyYXZlcnNhcmkifX1d -->
+<style>
+    * { box-sizing: border-box; }
+    
+    @page {
+        margin-top: {{default theme.layout.margin_top "2.5cm"}};
+        margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+        margin-left: {{default theme.layout.margin_left "2cm"}};
+        margin-right: {{default theme.layout.margin_right "2cm"}};
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <style>
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     ACTA DE DICTAMEN DE ARBITRAJE â€” DIITRA
-     Plantilla oficial CACES para evaluaciÃ³n por pares doble ciego
-     VersiÃ³n 1.0 | Normativa: Reglamento RRA CES-2021
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .doc-container { 
+        font-family: {{default theme.typography.font_family "Inter, Arial, sans-serif"}}; 
+        font-size: {{default theme.typography.base_size "10pt"}};
+        color: {{default theme.colors.text "#1e293b"}}; 
+        line-height: {{default theme.typography.line_height "1.5"}};
+        padding: 0; 
+        background: transparent; 
+    }
+    
+    /* ENCABEZADO INSTITUCIONAL */
+    .dictamen-header {
+        text-align: center;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid {{default theme.colors.primary "#1e2a4a"}};
+    }
 
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    .dictamen-header .logo-area {
+        font-size: 11pt;
+        font-weight: 700;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
 
-        body {
-            font-family: {{ theme.typography.font_family }};
-            font-size: {{default theme.typography.base_size "10.5pt"}};
-            color: {{default theme.colors.text "#1a1a2e"}};
-            margin: 0;
-            padding: 0;
-            background: #fff;
-        }
+    .dictamen-header h1 {
+        font-size: 16pt;
+        font-weight: 900;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        margin: 6px 0 2px;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+    }
 
-        /* ENCABEZADO INSTITUCIONAL */
-        .dictamen-header {
-            text-align: center;
-            padding: 20px 40px 10px;
-            margin-bottom: 18px;
-        }
+    .dictamen-header .subtitulo {
+        font-size: 9pt;
+        color: {{default theme.colors.secondary "#3b82f6"}};
+        margin: 0;
+        font-weight: 600;
+    }
 
-        .dictamen-header .logo-area {
-            font-size: 13pt;
-            font-weight: 700;
-            color: #1a1a6e;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
+    .dictamen-header .codigo-trazabilidad {
+        font-size: 8pt;
+        color: #64748b;
+        margin-top: 4px;
+        font-style: italic;
+    }
 
-        .dictamen-header h1 {
-            font-size: 14pt;
-            font-weight: 700;
-            color: #1a1a6e;
-            margin: 8px 0 2px;
-            text-transform: uppercase;
-        }
+    /* SECCIONES */
+    .section-title {
+        font-size: 10pt;
+        font-weight: 800;
+        background: {{default theme.colors.primary "#1e2a4a"}};
+        color: {{default theme.colors.table_header_color "#ffffff"}};
+        padding: 6px 12px;
+        margin: 20px 0 10px 0;
+        text-transform: uppercase;
+        border-radius: 4px;
+    }
 
-        .dictamen-header .subtitulo {
-            font-size: 9pt;
-            color: #555;
-            margin: 0;
-        }
+    /* TABLAS GENERALES */
+    .datos-table, .arbitros-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        font-size: 9pt;
+    }
 
-        .dictamen-header .codigo-trazabilidad {
-            font-size: 8.5pt;
-            color: #777;
-            margin-top: 4px;
-            font-style: italic;
-        }
+    .datos-table td, .arbitros-table td, .arbitros-table th {
+        border: 1px solid #cbd5e1;
+        padding: 8px 10px;
+        vertical-align: middle;
+    }
 
-        /* SECCIONES */
-        section {
-            padding: 0 40px;
-            margin-bottom: 16px;
-        }
+    .datos-table .label {
+        font-weight: 700;
+        background: #f1f5f9;
+        width: 32%;
+        text-transform: uppercase;
+        font-size: 8pt;
+        color: #475569;
+    }
 
-        section h2 {
-            font-size: 11pt;
-            font-weight: 700;
-            color: #1a1a6e;
-            padding-bottom: 3px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
+    .arbitros-table th {
+        background: {{default theme.colors.primary "#1e2a4a"}};
+        color: {{default theme.colors.table_header_color "#ffffff"}};
+        font-weight: 700;
+        font-size: 8pt;
+        text-transform: uppercase;
+        text-align: left;
+    }
 
-        section h3 {
-            font-size: 10pt;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 6px;
-        }
+    /* TARJETA DE RESOLUCIÓN */
+    .summary-box {
+        text-align: center;
+        margin: 16px 0;
+        padding: 16px;
+        background: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
 
-        /* TABLAS DE DATOS */
-        table.datos {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
+    .puntaje-box {
+        text-align: center;
+    }
 
-        table.datos td {
-            padding: 5px 8px;
-            vertical-align: top;
-            border: 1px solid #ddd;
-        }
+    .puntaje-box .valor {
+        font-size: 20pt;
+        font-weight: 900;
+        color: {{default theme.colors.primary "#1e2a4a"}};
+        display: block;
+    }
 
-        table.datos td:first-child {
-            width: 38%;
-            font-weight: 600;
-            background: #f0f2ff;
-            color: #1a1a6e;
-        }
+    .puntaje-box .etiqueta {
+        font-size: 7.5pt;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 700;
+        display: block;
+    }
 
-        /* TABLA DE ÃRBITROS */
-        table.arbitros {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
+    .resultado-badge {
+        font-size: 14pt;
+        font-weight: 900;
+        padding: 8px 20px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        display: inline-block;
+    }
 
-        table.arbitros th {
-            background: #1a1a6e;
-            color: #fff;
-            font-weight: 600;
-            padding: 6px 10px;
-            text-align: left;
-            font-size: 9pt;
-        }
+    .resultado-aprobado {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1.5px solid #86efac;
+    }
 
-        table.arbitros td {
-            padding: 5px 10px;
-            border: 1px solid #e0e0e0;
-            font-size: 9pt;
-            vertical-align: middle;
-        }
+    .resultado-rechazado {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1.5px solid #fca5a5;
+    }
 
-        table.arbitros tr:nth-child(even) td {
-            background: #f8f9ff;
-        }
+    .resultado-desempate {
+        background: #fef3c7;
+        color: #b45309;
+        border: 1.5px solid #fcd34d;
+    }
 
-        /* RESOLUCIÃ“N */
-        .resultado-badge {
-            display: inline-block;
-            padding: 6px 18px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 13pt;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 8px 0;
-        }
+    /* AVISO DOBLE CIEGO */
+    .aviso-ciego {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 4px;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 8.5pt;
+        color: #92400e;
+    }
 
-        .resultado-aprobado {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #28a745;
-        }
+    /* OBSERVACIONES CONSOLIDADAS */
+    .obs-box {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-left: 4px solid {{default theme.colors.primary "#1e2a4a"}};
+        padding: 10px 14px;
+        font-size: 9pt;
+        color: #334155;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
 
-        .resultado-rechazado {
-            background: #f8d7da;
-            color: #721c24;
-            border: 2px solid #dc3545;
-        }
+    /* FIRMAS Y CERTIFICACIÓN */
+    .firma-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+        page-break-inside: avoid;
+    }
 
-        .resultado-desempate {
-            background: #fff3cd;
-            color: #856404;
-            border: 2px solid #ffc107;
-        }
+    .firma-box {
+        text-align: center;
+        width: 45%;
+        border-top: 1.5px solid {{default theme.colors.primary "#1e2a4a"}};
+        padding-top: 8px;
+        font-size: 8.5pt;
+    }
+</style>
 
-        .resultado-revision {
-            background: #cce5ff;
-            color: #004085;
-            border: 2px solid #007bff;
-        }
-
-        .puntaje-box {
-            background: #f0f2ff;
-            border: 1px solid #c0c5ef;
-            border-radius: 6px;
-            padding: 10px 16px;
-            margin: 10px 0;
-            display: inline-block;
-            min-width: 200px;
-        }
-
-        .puntaje-box .valor {
-            font-size: 22pt;
-            font-weight: 700;
-            color: #1a1a6e;
-            display: block;
-            text-align: center;
-        }
-
-        .puntaje-box .etiqueta {
-            font-size: 8pt;
-            color: #666;
-            text-align: center;
-            display: block;
-        }
-
-        /* AVISO DOBLE CIEGO */
-        .aviso-ciego {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 4px;
-            padding: 8px 12px;
-            margin-bottom: 14px;
-            font-size: 9pt;
-            color: #856404;
-        }
-
-        /* FIRMAS */
-        .firma-section {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            padding: 0 40px;
-        }
-
-        .firma-box {
-            text-align: center;
-            width: 45%;
-        }
-
-        .firma-linea {
-            border-top: 1.5px solid #333;
-            margin: 6px 0 4px;
-        }
-
-        .firma-nombre {
-            font-weight: 700;
-            font-size: 10pt;
-        }
-
-        .firma-cargo {
-            font-size: 8.5pt;
-            color: #666;
-        }
-
-        /* OBSERVACIONES */
-        .obs-box {
-            background: #f8f9ff;
-            border-left: 4px solid #1a1a6e;
-            padding: 10px 14px;
-            font-size: 9.5pt;
-            font-style: italic;
-            color: #333;
-            margin: 8px 0;
-            min-height: 40px;
-        }
-
-        /* LEGITIMIDAD */
-        .legitimidad {
-            font-size: 8pt;
-            color: #888;
-            text-align: center;
-            margin-top: 16px;
-            padding: 0 40px;
-        }
-    </style>
-</head>
-
-<body>
-
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     ENCABEZADO INSTITUCIONAL
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="doc-container">
+    <!-- ENCABEZADO INSTITUCIONAL -->
     <div class="dictamen-header">
-        <div class="logo-area">{{default institucion_nombre "Instituto Superior TecnolÃ³gico"}}</div>
+        <div class="logo-area">{{default institucion_nombre "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"}}</div>
         <h1>Acta de Dictamen de Arbitraje</h1>
-        <p class="subtitulo">Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari â€” DIITRA</p>
-        <p class="subtitulo">Proceso de EvaluaciÃ³n por Pares Doble Ciego | Normativa CACES-IST 2024-2025</p>
-        <p class="codigo-trazabilidad">CÃ³digo de Trazabilidad: {{default traceability_code "N/A"}}</p>
+        <p class="subtitulo">Departamento de Investigación e Innovación Traversari — DIITRA</p>
+        <p class="subtitulo">Proceso de Evaluación por Pares Doble Ciego | Normativa CACES-IST</p>
+        <p class="codigo-trazabilidad">Código de Trazabilidad: {{default entity_uuid "DICTAMEN-REF"}}</p>
     </div>
 
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     AVISO DOBLE CIEGO (solo si aplica)
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- AVISO DE DOBLE CIEGO -->
     {{#if es_doble_ciego}}
-    <section>
-        <div class="aviso-ciego">
-            <strong>PROCESO DE DOBLE CIEGO:</strong> La identidad de los Ã¡rbitros evaluadores se mantiene bajo
-            reserva conforme al Art. 10 del Reglamento de RÃ©gimen AcadÃ©mico (CES). Los evaluadores desconocen la
-            identidad de los autores y viceversa durante el proceso de revisiÃ³n.
-        </div>
-    </section>
+    <div class="aviso-ciego">
+        <strong>PROCESO DE DOBLE CIEGO:</strong> La identidad de los árbitros evaluadores se mantiene bajo reserva conforme al Art. 10 del Reglamento de Régimen Académico (CES). Los evaluadores desconocen la identidad de los autores y viceversa durante el proceso de revisión.
+    </div>
     {{/if}}
 
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SECCIÃ“N 1: DATOS DEL PROYECTO
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <section>
-        <h2>1. Datos del Proyecto Evaluado</h2>
-        <table class="datos">
-            <tr>
-                <td>CÃ³digo Institucional:</td>
-                <td><strong>{{default codigo_institucional "Sin cÃ³digo asignado"}}</strong></td>
-            </tr>
-            <tr>
-                <td>TÃ­tulo del Proyecto:</td>
-                <td>{{default proyecto_titulo "[Anonimizado â€” Doble Ciego]"}}</td>
-            </tr>
-            <tr>
-                <td>Convocatoria:</td>
-                <td>{{default convocatoria_titulo "N/A"}}</td>
-            </tr>
-            <tr>
-                <td>LÃ­nea de InvestigaciÃ³n:</td>
-                <td>{{default linea_investigacion "N/A"}}</td>
-            </tr>
-            <tr>
-                <td>Fecha de PostulaciÃ³n:</td>
-                <td>{{default fecha_postulacion "N/A"}}</td>
-            </tr>
-            <tr>
-                <td>Fecha de Cierre del Arbitraje:</td>
-                <td>{{fecha_larga fecha_cierre}}</td>
-            </tr>
-        </table>
-    </section>
+    <!-- SECCIÓN 1: DATOS DEL PROYECTO -->
+    <div class="section-title">1. Datos del Proyecto Evaluado</div>
+    <table class="datos-table">
+        <tr>
+            <td class="label">Código Institucional:</td>
+            <td><strong>{{default codigo_institucional "Sin código asignado"}}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">Título del Proyecto:</td>
+            <td><strong>{{default proyecto_titulo "[Anonimizado — Doble Ciego]"}}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">Convocatoria:</td>
+            <td>{{default convocatoria_titulo "Convocatoria Oficial de Investigación"}}</td>
+        </tr>
+        <tr>
+            <td class="label">Línea de Investigación:</td>
+            <td>{{default linea_investigacion "Dominio Institucional"}}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha de Cierre del Arbitraje:</td>
+            <td>{{default fecha_cierre "2026-05-22"}}</td>
+        </tr>
+    </table>
 
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SECCIÃ“N 2: PANEL DE ÃRBITROS
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <section>
-        <h2>2. Panel de Ãrbitros Evaluadores</h2>
-        <p style="font-size:9pt; color:#555; margin-bottom:8px;">
-            La composiciÃ³n del panel cumple con el criterio de <strong>mÃ­nimo 2 Ã¡rbitros por proyecto</strong>
-            establecido en el Art. 75 del Reglamento de RÃ©gimen AcadÃ©mico del CES.
-        </p>
+    <!-- SECCIÓN 2: PANEL DE ÁRBITROS EVALUADORES -->
+    <div class="section-title">2. Panel de Árbitros Evaluadores</div>
+    <table class="arbitros-table">
+        <thead>
+            <tr>
+                <th style="width: 35px; text-align: center;">#</th>
+                <th>Árbitro Evaluador</th>
+                <th style="width: 80px;">Tipo</th>
+                <th style="width: 120px;">Grado Académico</th>
+                <th style="width: 110px; text-align: center;">Puntaje</th>
+                <th style="width: 110px; text-align: center;">Dictamen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each revisiones}}
+            <tr>
+                <td style="text-align: center;">{{sum @index 1}}</td>
+                <td>
+                    {{#if ../es_doble_ciego}}
+                    Árbitro Evaluador #{{sum @index 1}}
+                    {{else}}
+                    {{this.revisor_nombre}}
+                    {{/if}}
+                </td>
+                <td>
+                    {{#if this.es_externo}}
+                    Externo
+                    {{else}}
+                    Interno
+                    {{/if}}
+                </td>
+                <td>{{default this.revisor_grado "Magíster / Ph.D."}}</td>
+                <td style="text-align: center; font-weight: bold;">{{default this.puntaje_total "—"}} / 100</td>
+                <td style="text-align: center; font-weight: bold;">{{default this.dictamen_revisor "Pendiente"}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
 
-        <table class="arbitros">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Ãrbitro (Anon.)</th>
-                    <th>Tipo</th>
-                    <th>Grado AcadÃ©mico</th>
-                    <th>Puntaje Asignado</th>
-                    <th>Dictamen Individual</th>
-                    <th>Estado</th>
-                    <th>Fecha Completado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{#each revisiones}}
-                <tr>
-                    <td>{{sum @index 1}}</td>
-                    <td>
-                        {{#if ../es_doble_ciego}}
-                        Ãrbitro #{{sum @index 1}}
-                        {{else}}
-                        {{revisor_nombre}}
-                        {{/if}}
-                    </td>
-                    <td>
-                        {{#if es_externo}}
-                        Externo
-                        {{else}}
-                        Interno
-                        {{/if}}
-                    </td>
-                    <td>{{default revisor_grado "N/I"}}</td>
-                    <td><strong>{{default puntaje_total "â€”"}}/100</strong></td>
-                    <td>{{default dictamen_revisor "Pendiente"}}</td>
-                    <td>{{estado}}</td>
-                    <td>{{default fecha_completado "â€”"}}</td>
-                </tr>
-                {{/each}}
-            </tbody>
-        </table>
-    </section>
-
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SECCIÃ“N 3: RESOLUCIÃ“N FINAL
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <section>
-        <h2>3. ResoluciÃ³n Final del Panel</h2>
-
-        <div style="text-align:center; margin: 14px 0;">
-            <div class="puntaje-box">
-                <span class="valor">{{default puntaje_promedio "0"}}/100</span>
-                <span class="etiqueta">Puntaje Promedio Ponderado</span>
-            </div>
-            &nbsp;&nbsp;&nbsp;
-            <div class="puntaje-box">
-                <span class="valor">{{default puntaje_minimo "70"}}/100</span>
-                <span class="etiqueta">Puntaje MÃ­nimo de AprobaciÃ³n</span>
-            </div>
+    <!-- SECCIÓN 3: RESOLUCIÓN FINAL -->
+    <div class="section-title">3. Resolución Final del Panel</div>
+    <div class="summary-box">
+        <div class="puntaje-box">
+            <span class="valor">{{default puntaje_promedio "0"}} / 100</span>
+            <span class="etiqueta">Puntaje Promedio Ponderado</span>
         </div>
-
-        <div style="text-align:center; margin: 12px 0;">
+        <div class="puntaje-box">
+            <span class="valor">{{default puntaje_minimo "70"}} / 100</span>
+            <span class="etiqueta">Puntaje Mínimo de Aprobación</span>
+        </div>
+        <div>
             {{#if (eq dictamen_resultado "Aprobado")}}
-            <div class="resultado-badge resultado-aprobado">âœ“ {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-aprobado">✓ APROBADO</div>
             {{else}}{{#if (eq dictamen_resultado "Rechazado")}}
-            <div class="resultado-badge resultado-rechazado">âœ— {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-rechazado">✗ RECHAZADO</div>
             {{else}}{{#if (eq dictamen_resultado "Desempate")}}
-            <div class="resultado-badge resultado-desempate">âš– Desempate Requerido</div>
+            <div class="resultado-badge resultado-desempate">⚖ DESEMPATE REQUERIDO</div>
             {{else}}
-            <div class="resultado-badge resultado-revision">â†º {{dictamen_resultado}}</div>
+            <div class="resultado-badge resultado-aprobado">{{dictamen_resultado}}</div>
             {{/if}}{{/if}}{{/if}}
         </div>
-
-        {{#if mensaje_desempate}}
-        <p style="text-align:center; font-size:9pt; color:#856404; font-style:italic; margin-top:6px;">
-            {{mensaje_desempate}}
-        </p>
-        {{/if}}
-
-        <table class="datos" style="margin-top:14px;">
-            <tr>
-                <td>Estado Anterior del Proyecto:</td>
-                <td>{{estado_anterior}}</td>
-            </tr>
-            <tr>
-                <td>Estado Nuevo del Proyecto:</td>
-                <td><strong>{{estado_nuevo}}</strong></td>
-            </tr>
-            <tr>
-                <td>Fundamento Normativo:</td>
-                <td>Art. 75, Reglamento de RÃ©gimen AcadÃ©mico (CES) â€” Criterios de evaluaciÃ³n CACES-IST Indicador I5</td>
-            </tr>
-        </table>
-    </section>
-
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SECCIÃ“N 4: OBSERVACIONES DEL PANEL
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <section>
-        <h2>4. Observaciones Consolidadas del Panel</h2>
-        {{#each revisiones}}
-        {{#if observaciones_gral}}
-        <div>
-            <h3>Ãrbitro #{{sum @index 1}}:</h3>
-            <div class="obs-box">{{observaciones_gral}}</div>
-        </div>
-        {{/if}}
-        {{/each}}
-    </section>
-
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SECCIÃ“N 5: CERTIFICACIÃ“N Y FIRMA
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <section>
-        <h2>5. CertificaciÃ³n Institucional</h2>
-        <p style="font-size:9.5pt; text-align:justify;">
-            El presente dictamen es emitido por el Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari (DIITRA)
-            en cumplimiento del proceso de evaluaciÃ³n por pares establecido en el Reglamento de RÃ©gimen AcadÃ©mico
-            del Consejo de EducaciÃ³n Superior (CES) y los criterios de acreditaciÃ³n del CACES para Institutos
-            Superiores TecnolÃ³gicos. El resultado es <strong>definitivo y vinculante</strong> para la continuaciÃ³n
-            del proyecto en el sistema SIGAFI-DIITRA.
-        </p>
-
-        <div class="firma-section" style="padding: 0; margin-top: 28px;">
-            <div class="firma-box">
-                {{#if firma_imagen}}
-                <img src="{{firma_imagen}}" style="max-height:60px; margin-bottom:4px;" alt="Firma digital" />
-                {{else}}
-                <div style="height:60px; border-bottom: 1px dashed #aaa; margin-bottom:4px;"></div>
-                {{/if}}
-                <div class="firma-linea"></div>
-                <div class="firma-nombre">{{default director_nombre "Director/a de InvestigaciÃ³n"}}</div>
-                <div class="firma-cargo">Director/a de InvestigaciÃ³n e InnovaciÃ³n</div>
-                <div class="firma-cargo">DIITRA â€” {{default institucion_nombre "IST"}}</div>
-                <div class="firma-cargo">Fecha: {{default fecha_cierre "N/A"}}</div>
-            </div>
-            <div class="firma-box">
-                <div
-                    style="height:60px; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:8pt;">
-                    [Sello Institucional]
-                </div>
-                <div class="firma-linea"></div>
-                <div class="firma-nombre">Sello DIITRA</div>
-                <div class="firma-cargo">Departamento de InvestigaciÃ³n e InnovaciÃ³n Traversari</div>
-                <div class="firma-cargo">{{default institucion_nombre "Instituto Superior TecnolÃ³gico"}}</div>
-                <div class="firma-cargo">Quito, Ecuador</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     PIE DE LEGITIMIDAD
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <div class="legitimidad">
-        Este documento ha sido generado automÃ¡ticamente por el Sistema DIITRA v2.0.
-        Su autenticidad puede verificarse en: <strong>{{default verification_url
-            "https://diitra.ist.edu.ec/verificar"}}</strong><br />
-        CÃ³digo de Trazabilidad: {{default traceability_code "N/A"}} |
-        Generado el {{default fecha_generacion ""}} (UTC-5)
     </div>
 
-</body>
+    {{#if mensaje_desempate}}
+    <div style="text-align:center; font-size:8.5pt; color:#b45309; font-style:italic; margin-bottom:12px;">
+        {{mensaje_desempate}}
+    </div>
+    {{/if}}
 
-</html>
+    <!-- SECCIÓN 4: OBSERVACIONES CONSOLIDADAS -->
+    <div class="section-title">4. Observaciones Consolidadas del Panel</div>
+    {{#each revisiones}}
+    {{#if this.observaciones_gral}}
+    <div class="obs-box">
+        <strong>Árbitro Evaluador #{{sum @index 1}}:</strong> {{this.observaciones_gral}}
+    </div>
+    {{/if}}
+    {{/each}}
+
+    <!-- SECCIÓN 5: CERTIFICACIÓN Y FIRMA -->
+    <div class="section-title">5. Certificación e Identificador Legal Institucional</div>
+    <p style="font-size:8.5pt; text-align:justify; color:#334155;">
+        El presente dictamen es emitido por el Departamento de Investigación e Innovación Traversari (DIITRA) en cumplimiento del proceso de evaluación por pares establecido en el Reglamento de Régimen Académico del Consejo de Educación Superior (CES) y los criterios de acreditación del CACES. El resultado es <strong>definitivo y vinculante</strong>.
+    </p>
+
+    <div class="firma-section">
+        <div class="firma-box">
+            <strong>{{default director_nombre "Director/a de Investigación"}}</strong><br/>
+            Director/a de Investigación e Innovación<br/>
+            DIITRA — {{default institucion_nombre "ISTPET"}}
+        </div>
+        <div class="firma-box">
+            <strong>Sello Institucional DIITRA</strong><br/>
+            Departamento de Investigación e Innovación<br/>
+            Validación Electrónica de Trazabilidad
+        </div>
+    </div>
+</div>

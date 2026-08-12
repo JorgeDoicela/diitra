@@ -17,8 +17,6 @@ import { ThemeEditorTab } from './ThemeEditorTab';
 import { RubricTableProperties } from './properties/RubricTableProperties';
 import { ArbitrationDictamenProperties } from './properties/ArbitrationDictamenProperties';
 
-
-
 interface BlockPropertiesProps {
     selectedTemplate?: DocumentTemplateDto | null;
     activeBlock: DocumentBlock | undefined;

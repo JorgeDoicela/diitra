@@ -327,6 +327,8 @@ namespace diitra_infrastructure.Research
             {
                 try
                 {
+                    string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
+
                     var existingDoc = await _context.DocumentInstances
                         .FirstOrDefaultAsync(d => d.EntityUuid == revision.Uuid && d.TemplateCode == "RUBRICA_EVALUACION");
 
@@ -336,7 +338,6 @@ namespace diitra_infrastructure.Research
                             .FirstOrDefaultAsync(t => t.Code == "RUBRICA_EVALUACION" && t.IsActive);
                         if (template != null)
                         {
-                            string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
                             existingDoc = Diitra.Domain.Common.Documents.DocumentInstance.Create(
                                 "RUBRICA_EVALUACION",
                                 template.Version,
@@ -366,8 +367,6 @@ namespace diitra_infrastructure.Research
                                 observaciones = d.Observaciones ?? ""
                             };
                         }).ToList();
-
-                        string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
                         decimal maximoPosible = criteriosRubrica.Sum(c => c.Peso);
                         if (maximoPosible == 0) maximoPosible = 100m;
                         decimal porcentaje = maximoPosible > 0 ? Math.Round((totalScore / maximoPosible) * 100m, 1) : 0m;

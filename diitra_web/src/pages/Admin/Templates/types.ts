@@ -55,6 +55,7 @@ export type BlockType =
     | 'project_approval_notice'
     | 'progress_header_section'
     | 'progress_activity_section'
+    | 'progress_status_section'
     | 'final_report_header_section'
     | 'final_report_writing_section'
     | 'arbitration_dictamen_section'
