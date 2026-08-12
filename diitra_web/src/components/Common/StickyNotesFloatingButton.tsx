@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FileText, X, Plus, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
 import './StickyNotesFloatingButton.css';
 
 interface StickyNotesFloatingButtonProps {
-    onOpenHelp?: () => void;
     pendingCount?: number;
 }
 
@@ -22,7 +21,6 @@ const getContextoLabel = (pathname: string): { label: string; icon: string } | n
 };
 
 export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps> = ({
-    onOpenHelp,
     pendingCount = 0,
 }) => {
     const location = useLocation();
@@ -181,17 +179,6 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
             )}
 
             <div className="sticky-floating-triggers-wrapper">
-                {onOpenHelp && (
-                    <button
-                        type="button"
-                        onClick={onOpenHelp}
-                        className="sticky-floating-help-btn"
-                        title="Guía Interactiva de la página"
-                    >
-                        <HelpCircle size={15} />
-                    </button>
-                )}
-
                 <button
                     type="button"
                     onClick={() => isOpen ? handleClose() : setIsOpen(true)}

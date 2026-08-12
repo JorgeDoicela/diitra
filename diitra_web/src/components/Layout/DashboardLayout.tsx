@@ -334,7 +334,6 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
             />
 
             <StickyNotesFloatingButton
-                onOpenHelp={() => setIsHelpOpen(true)}
                 pendingCount={pendingNotesCount}
             />
         </div>
