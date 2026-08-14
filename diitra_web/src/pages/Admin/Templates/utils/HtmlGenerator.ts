@@ -31,6 +31,11 @@ import {
     generateSignaturesHtml,
     generatePageBreakHtml,
 } from './htmlGenerators/miscGenerators';
+import {
+    generateCertificateHeaderHtml,
+    generateCertificateRecipientBadgeHtml,
+    generateCertificateBodyHtml,
+} from './htmlGenerators/certificateGenerators';
 
 export { renderSection };
 
@@ -118,6 +123,15 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'final_report_writing_section':
                 html += generateFinalReportWritingHtml(block);
+                break;
+            case 'certificate_header':
+                html += generateCertificateHeaderHtml(block, themeConfig);
+                break;
+            case 'certificate_recipient_badge':
+                html += generateCertificateRecipientBadgeHtml(block);
+                break;
+            case 'certificate_body':
+                html += generateCertificateBodyHtml(block);
                 break;
             default:
                 break;

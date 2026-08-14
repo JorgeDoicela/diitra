@@ -88,6 +88,19 @@ namespace Diitra.Infrastructure.Certificates
                 try
                 {
                     var docResult = await _documentEngine.GenerateAsync(docReq, ct);
+                    
+                    var inst = DocumentInstance.Create(
+                        templateCode: "CERTIFICADO_COMPLETACION",
+                        templateVersion: 1,
+                        entityUuid: recipientCedula,
+                        createdBy: recipientCedula,
+                        title: $"Certificado de Completación - {proyecto.Titulo}",
+                        entityType: "Certificado",
+                        dataSnapshotJson: JsonSerializer.Serialize(certificateData)
+                    );
+                    inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+                    _db.DocumentInstances.Add(inst);
+
                     results.Add(new IssuedCertificateResultDto
                     {
                         DocumentUuid = docResult.TraceabilityCode,
@@ -105,6 +118,11 @@ namespace Diitra.Infrastructure.Certificates
                 {
                     _logger.LogError(ex, "Error al generar certificado para participante {Cedula} en proyecto {ProyectoId}", recipientCedula, proyectoId);
                 }
+            }
+
+            if (results.Count > 0)
+            {
+                await _db.SaveChangesAsync(ct);
             }
 
             return results;
@@ -162,6 +180,19 @@ namespace Diitra.Infrastructure.Certificates
                 try
                 {
                     var docResult = await _documentEngine.GenerateAsync(docReq, ct);
+
+                    var inst = DocumentInstance.Create(
+                        templateCode: "CERTIFICADO_PARTICIPACION_GRUPO",
+                        templateVersion: 1,
+                        entityUuid: recipientCedula,
+                        createdBy: recipientCedula,
+                        title: $"Certificado Grupo - {grupo.Nombre}",
+                        entityType: "Certificado",
+                        dataSnapshotJson: JsonSerializer.Serialize(certificateData)
+                    );
+                    inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+                    _db.DocumentInstances.Add(inst);
+
                     results.Add(new IssuedCertificateResultDto
                     {
                         DocumentUuid = docResult.TraceabilityCode,
@@ -179,6 +210,11 @@ namespace Diitra.Infrastructure.Certificates
                 {
                     _logger.LogError(ex, "Error al generar certificado de grupo para miembro {MiembroId}", miembro.IdGrupoMiembro);
                 }
+            }
+
+            if (results.Count > 0)
+            {
+                await _db.SaveChangesAsync(ct);
             }
 
             return results;
@@ -214,9 +250,11 @@ namespace Diitra.Infrastructure.Certificates
                 InstitutionName = "Instituto Superior Tecnológico DIITRA"
             };
 
+            string tplCode = string.IsNullOrWhiteSpace(templateCode) ? "CERTIFICADO_COMPLETACION" : templateCode;
+
             var docReq = new DocumentRequest
             {
-                TemplateCode = string.IsNullOrWhiteSpace(templateCode) ? "CERTIFICADO_COMPLETACION" : templateCode,
+                TemplateCode = tplCode,
                 Data = certificateData,
                 RequestedBy = issuedBy,
                 ExtraVariables = new Dictionary<string, object>
@@ -230,6 +268,19 @@ namespace Diitra.Infrastructure.Certificates
             };
 
             var docResult = await _documentEngine.GenerateAsync(docReq, ct);
+
+            var inst = DocumentInstance.Create(
+                templateCode: tplCode,
+                templateVersion: 1,
+                entityUuid: userCedula,
+                createdBy: userCedula,
+                title: certificateTitle,
+                entityType: "Certificado",
+                dataSnapshotJson: JsonSerializer.Serialize(certificateData)
+            );
+            inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+            _db.DocumentInstances.Add(inst);
+            await _db.SaveChangesAsync(ct);
 
             return new IssuedCertificateResultDto
             {
@@ -288,7 +339,7 @@ namespace Diitra.Infrastructure.Certificates
                 RecipientRole = recipientRole,
                 RecipientCedula = recipientCedula,
                 CertificateType = instance.TemplateCode,
-                Title = $"Certificado Oficial - {instance.TemplateCode}",
+                Title = !string.IsNullOrWhiteSpace(instance.Title) ? instance.Title : $"Certificado Oficial - {instance.TemplateCode}",
                 IssueDate = instance.CreatedAt,
                 TraceabilityCode = instance.TraceabilityCode ?? instance.Uuid,
                 TemplateVersion = instance.TemplateVersion,
@@ -298,9 +349,12 @@ namespace Diitra.Infrastructure.Certificates
 
         public async Task<IEnumerable<IssuedCertificateResultDto>> GetCertificatesForUserAsync(string userCedulaOrId, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(userCedulaOrId)) return Enumerable.Empty<IssuedCertificateResultDto>();
+
             var instances = await _db.DocumentInstances
                 .AsNoTracking()
-                .Where(d => d.TemplateCode.StartsWith("CERTIFICADO_") && (d.CreatedBy == userCedulaOrId || (d.DataSnapshotJson != null && d.DataSnapshotJson.Contains(userCedulaOrId))))
+                .Where(d => d.TemplateCode.StartsWith("CERTIFICADO_") && 
+                    (d.CreatedBy == userCedulaOrId || d.EntityUuid == userCedulaOrId || (d.DataSnapshotJson != null && d.DataSnapshotJson.Contains(userCedulaOrId))))
                 .OrderByDescending(d => d.CreatedAt)
                 .ToListAsync(ct);
 
@@ -327,15 +381,15 @@ namespace Diitra.Infrastructure.Certificates
 
                 list.Add(new IssuedCertificateResultDto
                 {
-                    DocumentUuid = inst.Uuid,
+                    DocumentUuid = inst.TraceabilityCode ?? inst.Uuid,
                     RecipientName = recipientName,
                     RecipientRole = recipientRole,
                     RecipientCedula = recipientCedula,
-                    Title = $"Certificado {inst.TemplateCode}",
+                    Title = !string.IsNullOrWhiteSpace(inst.Title) ? inst.Title : $"Certificado {inst.TemplateCode}",
                     IssueDate = inst.CreatedAt,
                     TraceabilityCode = inst.TraceabilityCode ?? inst.Uuid,
                     PdfBytes = Array.Empty<byte>(),
-                    FileName = $"Certificado_{inst.Uuid[..Math.Min(6, inst.Uuid.Length)]}.pdf"
+                    FileName = $"Certificado_{recipientName.Replace(" ", "_")}.pdf"
                 });
             }
 

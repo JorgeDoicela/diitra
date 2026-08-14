@@ -41,7 +41,7 @@ export const certificatesService = {
      * Emite certificados de completación desacoplados para todos los participantes de un proyecto.
      */
     async issueProjectCertificates(projectId: number): Promise<{ message: string; count: number; certificates: IssuedCertificateDto[] }> {
-        const response = await api.post(`/api/certificates/issue/project/${projectId}`);
+        const response = await api.post(`/certificates/issue/project/${projectId}`);
         return response.data;
     },
 
@@ -49,7 +49,7 @@ export const certificatesService = {
      * Emite certificados de grupo a los integrantes de un Grupo de Investigación.
      */
     async issueGroupCertificates(groupId: number, milestoneTitle?: string): Promise<{ message: string; count: number; certificates: IssuedCertificateDto[] }> {
-        const response = await api.post(`/api/certificates/issue/group/${groupId}`, null, {
+        const response = await api.post(`/certificates/issue/group/${groupId}`, null, {
             params: { milestoneTitle }
         });
         return response.data;
@@ -59,7 +59,7 @@ export const certificatesService = {
      * Emite un certificado individual a una persona por su cédula y rol.
      */
     async issueIndividualCertificate(req: IndividualCertificateRequest): Promise<IssuedCertificateDto> {
-        const response = await api.post('/api/certificates/issue/individual', req);
+        const response = await api.post('/certificates/issue/individual', req);
         return response.data;
     },
 
@@ -67,7 +67,7 @@ export const certificatesService = {
      * Endpoint PÚBLICO para verificar la autenticidad y trazabilidad de un certificado por QR / UUID.
      */
     async verifyCertificate(uuid: string): Promise<CertificateVerificationDto> {
-        const response = await api.get(`/api/certificates/verify/${uuid}`);
+        const response = await api.get(`/certificates/verify/${uuid}`);
         return response.data;
     },
 
@@ -75,7 +75,7 @@ export const certificatesService = {
      * Obtiene todos los certificados otorgados al usuario autenticado.
      */
     async getMyCertificates(): Promise<IssuedCertificateDto[]> {
-        const response = await api.get('/api/certificates/my-certificates');
+        const response = await api.get('/certificates/my-certificates');
         return response.data;
     },
 
@@ -83,8 +83,8 @@ export const certificatesService = {
      * Obtiene el URL de descarga directa del PDF del certificado.
      */
     getDownloadUrl(uuid: string): string {
-        const baseUrl = api.defaults.baseURL || '';
-        return `${baseUrl}/api/certificates/download/${uuid}`;
+        const baseUrl = api.defaults.baseURL || '/api';
+        return `${baseUrl}/certificates/download/${uuid}`;
     }
 };
 

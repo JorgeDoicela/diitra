@@ -51,12 +51,18 @@ public class RbacService : IRbacService
         }
 
         // 3. Traer todos los módulos, operaciones y relaciones de DIITRA a memoria en una sola tanda
-        var existingModules = await _context.Modules
+        var existingModulesList = await _context.Modules
             .Where(m => m.IdSistema == system.IdSistema)
-            .ToDictionaryAsync(m => m.Nombre, m => m);
+            .ToListAsync();
+        var existingModules = existingModulesList
+            .GroupBy(m => m.Nombre, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        var existingOperations = await _context.Operations
-            .ToDictionaryAsync(o => o.NombreOperacion, o => o);
+        var existingOperationsList = await _context.Operations
+            .ToListAsync();
+        var existingOperations = existingOperationsList
+            .GroupBy(o => o.NombreOperacion, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var existingRelations = await _context.ModuleOperations
             .Where(mo => mo.Module.IdSistema == system.IdSistema)

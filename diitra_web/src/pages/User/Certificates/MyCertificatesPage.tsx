@@ -110,9 +110,9 @@ export const MyCertificatesPage: React.FC = () => {
                                     </a>
 
                                     <Link
-                                        to={`/verificar-certificado/${code}`}
+                                        to={`/verificacion/${code}`}
                                         className="p-2.5 bg-bg-subtle hover:bg-bg-subtle/80 text-text-secondary border border-border-subtle rounded-xl text-xs font-medium flex items-center justify-center transition-colors"
-                                        title="Verificación Pública QR"
+                                        title="Verificación Institucional de Autenticidad"
                                     >
                                         <ExternalLink className="w-4 h-4" />
                                     </Link>

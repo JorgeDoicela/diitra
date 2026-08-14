@@ -35,6 +35,11 @@ import {
     RenderProgressStatusSection,
     RenderFinalReportHeaderSection,
 } from './canvasRenderers/RenderProgressSections';
+import {
+    RenderCertificateHeader,
+    RenderCertificateRecipientBadge,
+    RenderCertificateBody,
+} from './canvasRenderers/RenderCertificates';
 
 /** Tipos de bloques de los que solo se permite una única instancia */
 const UNIQUE_BLOCK_TYPES: BlockType[] = [
@@ -153,6 +158,12 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderFinalReportHeaderSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'final_report_writing_section':
                 return <RenderFinalReportWritingSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'certificate_header':
+                return <RenderCertificateHeader config={block.config} themeConfig={themeConfig} />;
+            case 'certificate_recipient_badge':
+                return <RenderCertificateRecipientBadge config={block.config} themeConfig={themeConfig} />;
+            case 'certificate_body':
+                return <RenderCertificateBody config={block.config} themeConfig={themeConfig} />;
             case 'page_break':
                 return (
                     <div className="w-full flex items-center justify-between py-2 select-none">

@@ -32,9 +32,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             bool isBlindMode,
             string? customLopdpClause = null)
         {
-            var legalSections = new System.Text.StringBuilder();
+            bool isCertificate = template.Category == DocumentCategory.CertificadoCompletacion 
+                || template.Category == DocumentCategory.CertificadoGrupo 
+                || template.Category == DocumentCategory.CertificadoParticipacion 
+                || template.Category == DocumentCategory.CertificadoDocente 
+                || (template.Code != null && template.Code.StartsWith("CERTIFICADO_"));
 
-            // El aviso de doble ciego se maneja de forma nativa en la cabecera del PDF mediante DocumentEventHandler para evitar desbordamiento y superposiciones.
+            if (isCertificate)
+            {
+                return renderedHtml;
+            }
+
+            var legalSections = new System.Text.StringBuilder();
 
             // 2. Pie de página legal
             var lopdpText = customLopdpClause ?? DefaultLopdpClause;

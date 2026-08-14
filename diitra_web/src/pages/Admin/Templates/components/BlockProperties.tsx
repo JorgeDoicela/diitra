@@ -866,6 +866,62 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                 </div>
                             )}
+
+                            {/* ── ENCABEZADO DE CERTIFICADO ─────────────────────────────────── */}
+                            {activeBlock.type === 'certificate_header' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Configuración del Encabezado</h5>
+                                    <div className="space-y-3">
+                                        <LabeledField label="Título Principal del Certificado">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.certificateTitle || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'certificateTitle', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="CERTIFICADO DE COMPLETACIÓN"
+                                            />
+                                        </LabeledField>
+
+                                        <LabeledField label="Subtítulo / Unidad Emisora">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.certificateSubtitle || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'certificateSubtitle', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="DIRECCIÓN DE INVESTIGACIÓN, DESARROLLO E INNOVACIÓN (DIITRA)"
+                                            />
+                                        </LabeledField>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── DESTINATARIO Y ROL DE CERTIFICADO ─────────────────────────── */}
+                            {activeBlock.type === 'certificate_recipient_badge' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Campos de Destinatario</h5>
+                                    <p className="text-[10px] text-text-dim leading-relaxed">
+                                        Estos campos se pueblan automáticamente desde la base de datos de docentes, estudiantes o miembros del grupo al emitir el certificado.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* ── CUERPO DEL CERTIFICADO ─────────────────────────────────────── */}
+                            {activeBlock.type === 'certificate_body' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Texto y Redacción del Logro</h5>
+                                    <div className="space-y-3">
+                                        <LabeledField label="Texto de Concesión / Logro">
+                                            <textarea
+                                                rows={3}
+                                                value={(activeBlock.config as any)?.textAchievement || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'textAchievement', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Por haber culminado con éxito su participación..."
+                                            />
+                                        </LabeledField>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

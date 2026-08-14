@@ -712,6 +712,45 @@ export const useDocumentTemplatesPage = () => {
                     }
                 };
                 break;
+            case 'certificate_header':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Encabezado de Certificado',
+                    isActive: true,
+                    config: {
+                        certificateTitle: 'CERTIFICADO DE COMPLETACIÓN',
+                        certificateSubtitle: 'DIRECCIÓN DE INVESTIGACIÓN, INNOVACIÓN Y TRANSFERENCIA TECNOLÓGICA (DIITRA)',
+                        certificateNumber: 'DIITRA-CERT-2026-XXXX'
+                    }
+                };
+                break;
+            case 'certificate_recipient_badge':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Destinatario y Rol del Certificado',
+                    isActive: true,
+                    config: {
+                        recipientName: '{{ RecipientName }}',
+                        recipientRole: '{{ RecipientRole }}',
+                        recipientCedula: '{{ RecipientCedula }}'
+                    }
+                };
+                break;
+            case 'certificate_body':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Cuerpo y Logro del Certificado',
+                    isActive: true,
+                    config: {
+                        textAchievement: 'Por su destacada y honorable participación en el proyecto de investigación y desarrollo tecnológico institucional.',
+                        projectTitle: '{{ ProjectTitle }}',
+                        completionDate: '{{ IssueDate }}'
+                    }
+                };
+                break;
             default:
                 return;
         }

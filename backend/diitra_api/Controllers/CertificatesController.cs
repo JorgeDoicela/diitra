@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Diitra.Application.Common.Certificates;
+using Diitra.Application.Common.Documents;
 using diitra_infrastructure.data.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace diitra_api.Controllers
 {
@@ -15,12 +18,20 @@ namespace diitra_api.Controllers
     public class CertificatesController : ControllerBase
     {
         private readonly ICertificateIssuanceService _certificateService;
+        private readonly IDocumentEngine _documentEngine;
         private readonly DiitraContext _db;
+        private readonly ILogger<CertificatesController> _logger;
 
-        public CertificatesController(ICertificateIssuanceService certificateService, DiitraContext db)
+        public CertificatesController(
+            ICertificateIssuanceService certificateService, 
+            IDocumentEngine documentEngine,
+            DiitraContext db,
+            ILogger<CertificatesController> logger)
         {
             _certificateService = certificateService;
+            _documentEngine = documentEngine;
             _db = db;
+            _logger = logger;
         }
 
         /// <summary>
@@ -84,9 +95,9 @@ namespace diitra_api.Controllers
 
         public class IndividualCertificateRequestDto
         {
-            public required string UserCedula { get; set; }
-            public required string RecipientRole { get; set; }
-            public required string Title { get; set; }
+            public string UserCedula { get; set; } = string.Empty;
+            public string RecipientRole { get; set; } = "Participante";
+            public string Title { get; set; } = string.Empty;
             public string? Description { get; set; }
             public string? TemplateCode { get; set; }
         }
@@ -99,7 +110,7 @@ namespace diitra_api.Controllers
         {
             if (req == null || string.IsNullOrWhiteSpace(req.UserCedula))
             {
-                return BadRequest(new { error = "La cédula del destinatario es obligatoria." });
+                return BadRequest(new { error = "La cédula del destinatario es obligatoria (campo user_cedula)." });
             }
 
             try
@@ -110,7 +121,7 @@ namespace diitra_api.Controllers
                     req.RecipientRole,
                     req.Title,
                     req.Description ?? "",
-                    req.TemplateCode ?? "CERTIFICADO_COMPLETACION",
+                    string.IsNullOrWhiteSpace(req.TemplateCode) ? "CERTIFICADO_COMPLETACION" : req.TemplateCode,
                     issuedBy,
                     ct);
 
@@ -148,8 +159,23 @@ namespace diitra_api.Controllers
         [HttpGet("my-certificates")]
         public async Task<IActionResult> GetMyCertificates(CancellationToken ct)
         {
-            string userCedula = User?.Identity?.Name ?? "";
-            var certs = await _certificateService.GetCertificatesForUserAsync(userCedula, ct);
+            var idRef = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? User.FindFirst("id_usuario")?.Value
+                ?? User.Identity?.Name
+                ?? "";
+
+            var certs = await _certificateService.GetCertificatesForUserAsync(idRef, ct);
+
+            if (!certs.Any() && !string.IsNullOrWhiteSpace(User.Identity?.Name) && User.Identity?.Name != idRef)
+            {
+                var certsByName = await _certificateService.GetCertificatesForUserAsync(User.Identity.Name, ct);
+                if (certsByName.Any())
+                {
+                    return Ok(certsByName);
+                }
+            }
+
             return Ok(certs);
         }
 
@@ -175,7 +201,28 @@ namespace diitra_api.Controllers
                 return File(bytes, "application/pdf", $"Certificado_DIITRA_{uuid[..Math.Min(6, uuid.Length)]}.pdf");
             }
 
-            return BadRequest(new { error = "El archivo PDF del certificado no se encuentra disponible en disco." });
+            if (!string.IsNullOrEmpty(instance.DataSnapshotJson))
+            {
+                try
+                {
+                    var data = JsonSerializer.Deserialize<object>(instance.DataSnapshotJson) ?? new { };
+                    var docReq = new Diitra.Application.Common.Documents.DocumentRequest
+                    {
+                        TemplateCode = instance.TemplateCode,
+                        Data = data,
+                        RequestedBy = instance.CreatedBy,
+                        IsDraftMode = false
+                    };
+                    var docResult = await _documentEngine.GenerateAsync(docReq, ct);
+                    return File(docResult.PdfBytes, "application/pdf", $"Certificado_DIITRA_{uuid[..Math.Min(6, uuid.Length)]}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al generar PDF dinámico para certificado {Uuid}", uuid);
+                }
+            }
+
+            return BadRequest(new { error = "El archivo PDF del certificado no se encuentra disponible." });
         }
     }
 }

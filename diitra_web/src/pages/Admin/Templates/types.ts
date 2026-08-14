@@ -433,6 +433,17 @@ export interface DocumentBlock {
         coordinador_nombre?: string;
         coordinador_cargo?: string;
         firmante_institucion?: string;
+
+        // ── certificate blocks ─────────────────────────────────────────────
+        certificateTitle?: string;
+        certificateSubtitle?: string;
+        certificateNumber?: string;
+        recipientName?: string;
+        recipientRole?: string;
+        recipientCedula?: string;
+        textAchievement?: string;
+        projectTitle?: string;
+        completionDate?: string;
     };
 }
 
