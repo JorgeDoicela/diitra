@@ -66,7 +66,7 @@ namespace Diitra.Infrastructure.Certificates
                     ProjectCode = proyecto.CodigoInstitucional ?? proyecto.Uuid,
                     CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
                     IssuerAuthority = "Dirección de Investigación y Transferencia Tecnológica",
-                    InstitutionName = "Instituto Superior Tecnológico DIITRA"
+                    InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
                 };
 
                 var docReq = new DocumentRequest
@@ -159,7 +159,7 @@ namespace Diitra.Infrastructure.Certificates
                     GroupName = grupo.Nombre,
                     MilestoneTitle = milestoneTitle,
                     CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
-                    InstitutionName = "Instituto Superior Tecnológico DIITRA"
+                    InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
                 };
 
                 var docReq = new DocumentRequest
@@ -247,7 +247,7 @@ namespace Diitra.Infrastructure.Certificates
                 CertificateTitle = certificateTitle,
                 CertificateDescription = certificateDescription,
                 IssueDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
-                InstitutionName = "Instituto Superior Tecnológico DIITRA"
+                InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
             };
 
             string tplCode = string.IsNullOrWhiteSpace(templateCode) ? "CERTIFICADO_COMPLETACION" : templateCode;
@@ -343,7 +343,7 @@ namespace Diitra.Infrastructure.Certificates
                 IssueDate = instance.CreatedAt,
                 TraceabilityCode = instance.TraceabilityCode ?? instance.Uuid,
                 TemplateVersion = instance.TemplateVersion,
-                Issuer = "Instituto Superior Tecnológico DIITRA - Dirección de Investigación"
+                Issuer = "Instituto Superior Tecnológico Mayor Pedro Traversari - Dirección de Investigación (DIITRA)"
             };
         }
 
