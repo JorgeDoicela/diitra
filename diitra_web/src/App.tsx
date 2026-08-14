@@ -46,6 +46,8 @@ const RecycleBinPage         = lazy(() => import('./pages/RecycleBin/RecycleBinP
 const ResetAlertPage         = lazy(() => import('./pages/Auth/ResetAlertPage'));
 const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMaintenancePage'));
 const DocumentTemplatesPage   = lazy(() => import('./pages/Admin/Templates/DocumentTemplatesPage'));
+const CertificateVerificationPage = lazy(() => import('./pages/Public/CertificateVerificationPage'));
+const MyCertificatesPage      = lazy(() => import('./pages/User/Certificates/MyCertificatesPage'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -247,6 +249,12 @@ function App() {
                         <Route path="/auth/reestablecer-alerta" element={
                             <ResetAlertPage />
                         } />
+                        <Route path="/verificar-certificado/:uuid" element={
+                            <CertificateVerificationPage />
+                        } />
+                        <Route path="/verificar-certificado" element={
+                            <Navigate to="/dashboard" replace />
+                        } />
 
                         {/* Internal Pages with Layout (Stable) */}
                         <Route element={
@@ -257,6 +265,7 @@ function App() {
                             </ProtectedRoute>
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/mis-certificados" element={<MyCertificatesPage />} />
                             <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/papelera" element={<RecycleBinPage />} />
                             <Route path="/configuracion" element={<SettingsPage />} />

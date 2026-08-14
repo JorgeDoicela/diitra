@@ -207,6 +207,8 @@ namespace Diitra.Domain.Common.Documents
         // Semilleros y estudiantes
         ActaConformacionSemillero = 40,
         CertificadoParticipacion = 41,
+        CertificadoCompletacion = 42,
+        CertificadoGrupo = 43,
 
         // Convenios y redes
         ConvenioMarco = 50,

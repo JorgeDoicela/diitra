@@ -182,6 +182,7 @@ builder.Services.AddHttpClient<IRepositoryConnector, DSpaceRepositoryConnector>(
     client.Timeout = TimeSpan.FromSeconds(5); // Resiliencia: Timeout estricto de 5s para evitar congelación de hebras
 });
 builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageService, Diitra.Infrastructure.Common.Storage.LocalFileStorageService>();
+builder.Services.AddScoped<Diitra.Application.Common.Certificates.ICertificateIssuanceService, Diitra.Infrastructure.Certificates.CertificateIssuanceService>();
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Application Services (Modular Monolith)

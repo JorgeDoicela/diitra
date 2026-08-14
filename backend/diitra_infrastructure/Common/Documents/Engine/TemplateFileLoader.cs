@@ -124,6 +124,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 ["REPORTE_ANALITICAS"]            = "Investigacion/ReporteAnaliticas.html",
                 ["DICTAMEN_ARBITRAJE"]            = "Investigacion/DictamenArbitraje.html",
                 ["OFICIO_APROBACION"]             = "Investigacion/OficioAprobacion.html",
+                ["CERTIFICADO_COMPLETACION"]      = "Investigacion/CertificadoCompletacion.html",
+                ["CERTIFICADO_PARTICIPACION_GRUPO"] = "Investigacion/CertificadoGrupo.html",
             };
 
             if (map.TryGetValue(templateCode, out var relativePath))

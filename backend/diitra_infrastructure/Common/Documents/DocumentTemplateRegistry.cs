@@ -118,6 +118,33 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: true,
                 version: 20);
 
+            // ══════════════════════════════════════════════════════════════
+            // CERTIFICADOS DE COMPLETACIÓN Y PARTICIPACIÓN
+            // ══════════════════════════════════════════════════════════════
+            yield return DocumentTemplate.Create(
+                code: "CERTIFICADO_COMPLETACION",
+                name: "Certificado de Completación de Proyecto",
+                description: "Certificado oficial otorgado a estudiantes, docentes y directores al finalizar con éxito un proyecto de investigación.",
+                category: DocumentCategory.CertificadoCompletacion,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/CertificadoCompletacion.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                version: 10);
+
+            yield return DocumentTemplate.Create(
+                code: "CERTIFICADO_PARTICIPACION_GRUPO",
+                name: "Certificado de Participación de Grupo",
+                description: "Certificado de reconocimiento por pertenecer a un Grupo o Semillero de Investigación.",
+                category: DocumentCategory.CertificadoGrupo,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/CertificadoGrupo.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                version: 10);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()

@@ -59,6 +59,9 @@ export type BlockType =
     | 'final_report_header_section'
     | 'final_report_writing_section'
     | 'arbitration_dictamen_section'
+    | 'certificate_header'
+    | 'certificate_recipient_badge'
+    | 'certificate_body'
     | 'project_budget_section';
 
 // ─────────────────────────────────────────────────────────────────────────────

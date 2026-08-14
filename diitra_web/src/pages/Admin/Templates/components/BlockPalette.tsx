@@ -90,6 +90,14 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                 { type: 'final_report_header_section', icon: BookOpen, label: 'Encabezado Informe Final', desc: 'Datos del proyecto, tipo de investigación, alcance, plazos e investigadores.', color: 'text-purple-500 bg-purple-500/5' },
                 { type: 'final_report_writing_section', icon: FileText, label: 'Plan de Redacción Informe Final', desc: '15 sub-secciones de redacción científica pre-cargadas.', color: 'text-indigo-500 bg-indigo-500/5' }
             ]
+        },
+        {
+            title: 'Bloques de Certificados & Reconocimientos',
+            items: [
+                { type: 'certificate_header', icon: Award, label: 'Encabezado de Certificado', desc: 'Título, marco y subtítulo oficial del certificado.', color: 'text-amber-500 bg-amber-500/5' },
+                { type: 'certificate_recipient_badge', icon: Users, label: 'Destinatario y Rol', desc: 'Nombre del estudiante/docente e insignia de rol.', color: 'text-amber-500 bg-amber-500/5' },
+                { type: 'certificate_body', icon: FileText, label: 'Cuerpo del Certificado', desc: 'Texto de logro, proyecto, fecha y firma de autoridades.', color: 'text-amber-500 bg-amber-500/5' }
+            ]
         }
     ];
 
