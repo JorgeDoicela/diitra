@@ -216,7 +216,7 @@ export const MonitoringPage: React.FC = () => {
                 </div>
                 <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Estado de Ciclo de Vida</span>
-                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-bold w-fit mt-1`} style={cfg.style}>
+                    <span className={`status-label ${cfg.badge} text-[10px] font-semibold w-fit mt-1 uppercase tracking-wider`} style={cfg.style}>
                         <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                         {cfg.label}
                     </span>

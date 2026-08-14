@@ -510,11 +510,11 @@ const ResearchProjectsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`badge-vercel ${cfg.badge} self-start`} style={cfg.style}>
+                                    <div className={`status-label ${cfg.badge} self-start text-[10px] tracking-wider uppercase font-semibold`} style={cfg.style}>
                                         <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                                         {cfg.label}
                                         {p.rol_en_proyecto && (
-                                            <span className="opacity-60 ml-1">· {p.rol_en_proyecto}</span>
+                                            <span className="opacity-60 ml-1 font-normal lowercase tracking-normal">· {p.rol_en_proyecto}</span>
                                         )}
                                     </div>
 

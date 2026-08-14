@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
-import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 interface ProyectoResumen {
     uuid: string;
     titulo: string;
@@ -152,7 +152,7 @@ export const EstudianteDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <DashboardSkeleton />
+                <FullscreenLoader fullscreen={false} message="Cargando colaboraciones y proyectos..." />
             ) : (
                 <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
                     <BentoCard 

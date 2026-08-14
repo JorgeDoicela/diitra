@@ -10,7 +10,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
-import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 import { AnimatedNumber } from '../Components/AnimatedNumber';
 interface GlobalStats {
     total_proyectos: number;
@@ -147,7 +147,7 @@ export const AdminDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <DashboardSkeleton />
+                <FullscreenLoader fullscreen={false} message="Sincronizando métricas institucionales..." />
             ) : error ? (
                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center max-w-lg mx-auto bg-surface border border-border-thin shadow-md rounded-xl animate-fade-up mt-6">
                     <div className="w-12 h-12 rounded-full bg-error/10 border border-error/20 flex items-center justify-center mb-4 text-error animate-pulse">

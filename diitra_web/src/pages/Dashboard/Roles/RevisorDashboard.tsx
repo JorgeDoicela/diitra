@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { getMyReviews } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
-import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 
 export const RevisorDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -103,7 +103,7 @@ export const RevisorDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <DashboardSkeleton />
+                <FullscreenLoader fullscreen={false} message="Cargando asignaciones de evaluación..." />
             ) : error ? (
                 <div className="badge-vercel-error !rounded-xl !p-4 mt-6 text-sm">
                     <AlertCircle size={16} />

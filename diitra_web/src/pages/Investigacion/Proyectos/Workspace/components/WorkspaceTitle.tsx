@@ -28,8 +28,8 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
             {/* ── Page Title ── */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-0">
                 <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold text-text-main uppercase tracking-[0.3em]">
-                        <span className={`badge-vercel ${cfg.badge} text-[9px]`} style={cfg.style}>
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em]">
+                        <span className={`status-label ${cfg.badge} text-[10px]`} style={cfg.style}>
                             <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                             {cfg.label}
                         </span>

@@ -9,7 +9,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
-import { DashboardSkeleton } from '../Components/DashboardSkeleton';
+import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 import { AnimatedNumber } from '../Components/AnimatedNumber';
 interface DashboardStats {
     mis_proyectos_activos: number;
@@ -126,7 +126,7 @@ export const DocenteDashboard: React.FC = () => {
             />
 
             {loading ? (
-                <DashboardSkeleton />
+                <FullscreenLoader fullscreen={false} message="Cargando tus proyectos y actividades..." />
             ) : (
                 /* Two-column Vercel Layout */
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:200ms] pb-10">

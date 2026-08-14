@@ -526,7 +526,7 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className={`badge-vercel ${cfg.badge} mb-4`} style={cfg.style}>
+                            <div className={`status-label ${cfg.badge} mb-4 text-[10px] tracking-wider uppercase font-semibold`} style={cfg.style}>
                                 <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                                 {cfg.label}
                                 {p.rol_en_proyecto && (

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DIITRA — Tests: useWorkflowStates.ts
  *
  * Valida el hook de estados del flujo de trabajo de investigación:
@@ -67,15 +67,8 @@ function getEstadoConfig(estadoName: string, states: WorkflowState[]) {
     }
 
     const baseColor = dbState?.color || "#94A3B8";
-    const rgb = hexToRgb(baseColor);
 
     const style = {
-        backgroundColor: rgb
-            ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`
-            : "rgba(148, 163, 184, 0.08)",
-        borderColor: rgb
-            ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`
-            : "rgba(148, 163, 184, 0.2)",
         color: baseColor,
     };
 
