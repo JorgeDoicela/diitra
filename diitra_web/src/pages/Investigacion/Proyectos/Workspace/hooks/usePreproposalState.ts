@@ -192,11 +192,6 @@ export function usePreproposalState(
             return;
         }
 
-        if (!currentProject.descripcion?.trim()) {
-            addToast("Validación de Prepropuesta", "No se puede aprobar la prepropuesta porque la descripción está vacía.", "warning");
-            return;
-        }
-
         if (!await confirm({
             title: "Aprobar Prepropuesta",
             message: `¿Está seguro de aprobar la idea del proyecto "${currentProject.title}"? Esto habilitará al docente para iniciar la formulación completa.`,

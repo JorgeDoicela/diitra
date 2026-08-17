@@ -37,8 +37,9 @@ export function useProjectCore() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const isInnovacion = location.pathname.startsWith('/innovacion') || templateCode.includes('INNOVACION');
     const isMisProyectos = location.pathname.startsWith('/investigacion/mis-proyectos');
-    const urlPrefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
+    const urlPrefix = isInnovacion ? '/innovacion' : (isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion');
 
     const queryParams = new URLSearchParams(location.search);
     const editParam = queryParams.get('edit');
@@ -50,6 +51,13 @@ export function useProjectCore() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
         return localStorage.getItem('sidebar_collapsed') === 'true';
     });
+
+    useEffect(() => {
+        if (templateCode.includes('INNOVACION') && location.pathname.startsWith('/investigacion')) {
+            const newPath = location.pathname.replace(/^\/investigacion(\/mis-proyectos)?/, '/innovacion');
+            navigate(`${newPath}${location.search}`, { replace: true });
+        }
+    }, [templateCode, location.pathname, location.search, navigate]);
 
     useEffect(() => {
         const handleStateChange = (e: Event) => {

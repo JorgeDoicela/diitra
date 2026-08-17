@@ -101,11 +101,15 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     const [isParametrosOpen, setIsParametrosOpen] = useState(
         location.pathname.startsWith('/parametros-normativos')
     );
+    const isInnovacionWorkspace = location.pathname.includes('/protocolo-innovacion');
     const [isInvestigacionOpen, setIsInvestigacionOpen] = useState(
-        location.pathname === '/investigacion' || (location.pathname.startsWith('/investigacion/') && !location.pathname.startsWith('/investigacion/mis-proyectos') && !location.pathname.startsWith('/investigacion/adopcion'))
+        !isInnovacionWorkspace && (location.pathname === '/investigacion' || (location.pathname.startsWith('/investigacion/') && !location.pathname.startsWith('/investigacion/mis-proyectos') && !location.pathname.startsWith('/investigacion/adopcion')))
     );
     const [isMisProyectosOpen, setIsMisProyectosOpen] = useState(
-        location.pathname.startsWith('/investigacion/mis-proyectos')
+        !isInnovacionWorkspace && location.pathname.startsWith('/investigacion/mis-proyectos')
+    );
+    const [isInnovacionOpen, setIsInnovacionOpen] = useState(
+        location.pathname.startsWith('/innovacion') || isInnovacionWorkspace
     );
     const [sidebarProjects, setSidebarProjects] = useState<SidebarProject[]>([]);
     const [sidebarProjectsLoading, setSidebarProjectsLoading] = useState(false);
@@ -235,10 +239,10 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
         { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 1 },
         { name: 'Calendario', icon: Calendar, path: '/calendario', roles: ['ANY'], group: 1 },
-        // ── Ciclo de investigación (inicio → postulación → revisión → evaluación) ──
+        // ── Ciclo de investigación e innovación (inicio → postulación → revisión → evaluación) ──
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
-        { name: 'Mis Proyectos', icon: ListChecks || ShieldCheck, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
-        { name: 'Innovación', icon: Sparkles, path: '/innovacion', roles: ['ANY'], group: 1 },
+        { name: 'Investigación', icon: ClipboardList, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
+        { name: 'Innovación', icon: Sparkles, path: '/innovacion', roles: ['ANY'], group: 1, hasChevron: true },
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 1 },
@@ -280,6 +284,11 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     });
 
     const activeItem = menuItems.reduce<MenuItem | null>((best, item) => {
+        if (isInnovacionWorkspace) {
+            if (item.name === 'Innovación') return item;
+            if (item.name === 'Investigación' || item.name === 'Mis Proyectos') return best;
+        }
+
         const isMatch = location.pathname === item.path
             || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
@@ -514,6 +523,8 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         setIsInvestigacionOpen,
         isMisProyectosOpen,
         setIsMisProyectosOpen,
+        isInnovacionOpen,
+        setIsInnovacionOpen,
         sidebarProjects,
         sidebarProjectsLoading,
         showAllProjects,

@@ -110,7 +110,7 @@ export const ConvocatoriaFormModal = ({
                         <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
                             {isEditing ? 'Editar Convocatoria' : 'Nueva Convocatoria'}
                         </h3>
-                        <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest">Registro de Ciclo de Investigación</p>
+                        <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest">Registro de Ciclo de Investigación e Innovación</p>
                     </div>
                     <button onClick={handleCloseModal} className="p-2 text-text-dim hover:text-text-main transition-colors">
                         <X size={20} />

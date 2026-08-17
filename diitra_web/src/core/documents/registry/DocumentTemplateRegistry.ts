@@ -119,6 +119,76 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         sections: [] // Comentado para evitar solapamientos y usar 100% el comportamiento dinámico desde la API
     },
 
+    PROTOCOLO_INNOVACION: {
+        title: "Proyecto de Innovación",
+        subtitle: "Formulación del Proyecto de Innovación y Transferencia - ISTPET",
+        schema: {
+            // Sección 1: Identificación
+            Titulo: '',
+            CodigoInstitucional: '',
+            IdCarrera: 0,
+            Carrera: '',
+            IdConvocatoria: 0,
+            PeriodoConvocatoria: '',
+            TiempoEjecucion: '',
+            Programa: '',
+            GrupoInvestigacionTipo: 'NO',       // 'NO' | 'SI'
+            GrupoInvestigacionNombre: '',
+            TipoInnovacion: 'PRODUCTO',          // 'PRODUCTO' | 'PROCESO' | 'ORGANIZATIVA' | 'COMERCIAL'
+            LineaInvestigacion: '',
+            SublineaInvestigacion: '',
+            CampoAmplio: '',
+            CampoEspecifico: '',
+            CampoDetallado: '',
+            Alcance: 'INSTITUCIONAL',            // 'INSTITUCIONAL' | 'LOCAL' | 'COMUNITARIO' | 'REGIONAL'
+            DirectorProyecto: '',
+            FechaPresentacion: '',
+            FechaInicioPrevista: '',
+            FechaFinPrevista: '',
+
+            // Sección 2: Investigadores
+            Investigadores: [],
+
+            // Sección 3: Descripción del Proyecto
+            ResumenProyecto: '',
+            ObjetivoGeneral: '',
+            ObjetivosEspecificos: '',
+            Antecedentes: '',
+            JustificacionInnovacion: '',
+            DescripcionInnovacion: '',
+            VinculacionSociedad: '',
+            ConvenioAsociado: '',
+            EstadoArteConceptual: '',
+            MetodologiaAplicacion: '',
+            MetodologiaEvaluacion: '',
+            Beneficiarios: '',
+            ResultadosEsperados: [],
+            Viabilidad: '',
+            TransferenciaConocimiento: '',
+
+            // Sección 4: Recursos, Costo y Financiamiento
+            RecursosDisponibles: [],
+            RecursosNecesarios: [],
+            CostoTotal: 0,
+            FinanciamientoIstpet: false,
+            FinanciamientoOtrasFuentes: false,
+            NombresOtrasFuentes: '',
+
+            // Sección 5: Impactos
+            Impacto: { social: '', cientifico: '', economico: '', ambiental: '', otro: '' },
+
+            // Sección 6: Firmas de Responsabilidad
+            FirmasResponsabilidad: {
+                DirectorNombre: '',
+                DirectorCargo: 'Director del Proyecto de Innovación',
+                CoordinadorNombre: '',
+                CoordinadorCargo: 'Coordinador de Innovación y Transferencia'
+            }
+        },
+        lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'ResultadosEsperados'],
+        sections: []
+    },
+
     RUBRICA_EVALUACION: {
         title: "Rúbrica de Evaluación por Pares",
         subtitle: "Evaluación anónima (Fase 2) — Normativa CACES",

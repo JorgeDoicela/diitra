@@ -278,12 +278,14 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => $"{pp.IdUsuarioNavigation!.Nombre} ({(pp.TipoParticipante == "Alumno" ? "Estudiante" : (pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")))})")
                         .ToListAsync();
                     string participantes = participants.Count > 0 ? string.Join(", ", participants) : "un docente";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: true);
+
                     await _notificationService.NotifyByRoleCodesAsync(
                         "Proyecto Postulado",
                         $"El proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido postulado y requiere revisión.",
                         new[] { "DIITRA_ADMIN" },
-                        $"/investigacion/revision-tecnica/{proyecto.Uuid}"
+                        actionUrl
                     );
                 }
                 catch (Exception ex)
@@ -300,13 +302,9 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => $"{pp.IdUsuarioNavigation!.Nombre} ({(pp.TipoParticipante == "Alumno" ? "Estudiante" : (pp.Rol ?? (pp.EsDirector == true ? "Director" : "Docente")))})")
                         .ToListAsync();
                     string participantes = participants.Count > 0 ? string.Join(", ", participants) : "un docente";
- 
-                    var docInstance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                    string actionUrl = docInstance != null 
-                        ? $"/investigacion/workspace/protocolo-investigacion/{proyecto.Uuid}"
-                        : $"/investigacion";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: true);
+
                     await _notificationService.NotifyByRoleCodesAsync(
                         "Prepropuesta Registrada",
                         $"La prepropuesta del proyecto '{proyecto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
@@ -328,13 +326,9 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => pp.IdUsuario)
                         .Distinct()
                         .ToListAsync();
- 
-                    var docInstance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                    string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
-                        : $"/investigacion/mis-proyectos";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
+
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -360,13 +354,9 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => pp.IdUsuario)
                         .Distinct()
                         .ToListAsync();
- 
-                    var docInstance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                    string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
-                        : $"/investigacion/mis-proyectos";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
+
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -392,13 +382,9 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => pp.IdUsuario)
                         .Distinct()
                         .ToListAsync();
- 
-                    var docInstance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                    string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
-                        : $"/investigacion/mis-proyectos";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
+
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -424,17 +410,13 @@ namespace Diitra.Infrastructure.Research
                         .Select(pp => pp.IdUsuario)
                         .Distinct()
                         .ToListAsync();
- 
+
                     string obsResumen = string.IsNullOrEmpty(observacion) 
                         ? "Sin observaciones detalladas." 
                         : (observacion.Length > 150 ? observacion.Substring(0, 147) + "..." : observacion);
- 
-                    var docInstance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                    string actionUrl = docInstance != null 
-                        ? $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{proyecto.Uuid}"
-                        : $"/investigacion/mis-proyectos";
- 
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
+
                     foreach (var userId in participantUserIds)
                     {
                         await _notificationService.NotifyUserAsync(
@@ -467,6 +449,30 @@ namespace Diitra.Infrastructure.Research
                     t.Observacion
                 })
                 .ToListAsync();
+        }
+
+        private async Task<string> ResolveActionUrlAsync(InvProyecto proyecto, bool forAdmin = false)
+        {
+            var docInstance = await _context.DocumentInstances
+                .FirstOrDefaultAsync(di => di.EntityUuid == proyecto.Uuid && (di.TemplateCode == "PROTOCOLO_INVESTIGACION" || di.TemplateCode == "PROTOCOLO_INNOVACION"));
+
+            string templateCode = docInstance?.TemplateCode 
+                ?? (proyecto.IdTipoNavigation?.Nombre?.ToUpper() == "INNOVACION" ? "PROTOCOLO_INNOVACION" : "PROTOCOLO_INVESTIGACION");
+
+            bool isInnovacion = templateCode.Contains("INNOVACION");
+            string slug = isInnovacion ? "protocolo-innovacion" : "protocolo-investigacion";
+
+            if (isInnovacion)
+            {
+                return $"/innovacion/workspace/{slug}/{proyecto.Uuid}";
+            }
+
+            if (forAdmin)
+            {
+                return $"/investigacion/workspace/{slug}/{proyecto.Uuid}";
+            }
+
+            return $"/investigacion/mis-proyectos/workspace/{slug}/{proyecto.Uuid}";
         }
     }
 }

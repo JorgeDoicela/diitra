@@ -3,19 +3,23 @@ import { PageHeader } from '../../components/Common/PageHeader';
 import {
     Plus,
     Search,
-    RefreshCw,
     Sparkles,
     Loader2,
     Target,
-    AlertCircle
+    AlertCircle,
+    Lightbulb,
+    Layers
 } from 'lucide-react';
 import { useInnovation } from './hooks/useInnovation';
 import { InnovationAssetCard } from './components/InnovationAssetCard';
 import { RegisterAssetModal } from './components/RegisterAssetModal';
+import { InnovationProjectsTab } from './components/InnovationProjectsTab';
 
 const InnovationPage: React.FC = () => {
     const { assets, loading, refreshing, error, reload } = useInnovation();
+    const [activeTab, setActiveTab] = useState<'proyectos' | 'activos'>('proyectos');
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [projectsCount, setProjectsCount] = useState<number>(0);
 
     // Filtros y ordenamiento
     const [search, setSearch] = useState('');
@@ -66,16 +70,16 @@ const InnovationPage: React.FC = () => {
     }, [assets, search, trlFilter, tipoFilter, senadiFilter, sortBy]);
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-10 animate-fade-up">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-8 animate-fade-up">
             {/* Header del Módulo */}
             <PageHeader
-                kicker="Catálogo Institucional de Prototipos e i+TT"
+                kicker="Módulo Institucional ISTPET"
                 icon={Sparkles}
                 title="Innovación y Transferencia Tecnológica"
                 description={
                     <span className="flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1">
                         <span>
-                            Administre los activos tecnológicos, prototipos TRL, propiedad intelectual (SENADI) y convenios de transferencia (CTT).
+                            Gestione proyectos de innovación oficial ISTPET, prototipos TRL, propiedad intelectual (SENADI) y convenios CTT.
                         </span>
                         {refreshing && (
                             <span className="flex items-center gap-1 text-brand text-[10px] uppercase tracking-wider font-mono animate-pulse shrink-0">
@@ -87,34 +91,64 @@ const InnovationPage: React.FC = () => {
                 }
             >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <button
-                        onClick={() => reload()}
-                        disabled={refreshing}
-                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold cursor-pointer"
-                        title="Actualizar catálogo"
-                    >
-                        <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                        <span>Actualizar</span>
-                    </button>
-                    <button
-                        onClick={() => setIsRegisterOpen(true)}
-                        className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold cursor-pointer"
-                    >
-                        <Plus size={14} strokeWidth={3} />
-                        <span>Nuevo Activo / Prototipo</span>
-                    </button>
+                    {activeTab === 'activos' && (
+                        <button
+                            onClick={() => setIsRegisterOpen(true)}
+                            className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold cursor-pointer"
+                        >
+                            <Plus size={14} strokeWidth={3} />
+                            <span>Nuevo Activo / Prototipo</span>
+                        </button>
+                    )}
                 </div>
             </PageHeader>
 
-            {error && (
-                <div className="badge-vercel-error !rounded-xl !p-4 mb-6 w-full text-sm flex items-center gap-3">
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
-                </div>
-            )}
+            {/* Pestañas de Navegación del Módulo */}
+            <div className="flex items-center gap-2 border-b border-border-thin pb-4">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('proyectos')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === 'proyectos'
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'text-text-dim hover:text-text-main hover:bg-surface'
+                    }`}
+                >
+                    <Lightbulb size={15} />
+                    <span>Proyectos de Innovación e i+TT</span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                        activeTab === 'proyectos' ? 'bg-white/20 text-white' : 'bg-surface border border-border-thin text-text-dim'
+                    }`}>
+                        {projectsCount}
+                    </span>
+                </button>
 
-            {/* ── SECCIÓN DE FILTROS ── */}
-            {!error && !loading && (
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('activos')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === 'activos'
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'text-text-dim hover:text-text-main hover:bg-surface'
+                    }`}
+                >
+                    <Sparkles size={15} />
+                    <span>Banco de Activos & Prototipos TRL</span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                        activeTab === 'activos' ? 'bg-white/20 text-white' : 'bg-surface border border-border-thin text-text-dim'
+                    }`}>
+                        {assets.length}
+                    </span>
+                </button>
+            </div>
+
+            {/* Renderizado de la Pestaña Activa */}
+            {activeTab === 'proyectos' ? (
+                <InnovationProjectsTab 
+                    onCountChange={(cnt) => setProjectsCount(cnt)}
+                />
+            ) : (
+                <>
                 <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:50ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">
                     <div className="flex flex-col lg:flex-row gap-3">
                         <div className="relative flex-1">
@@ -208,7 +242,6 @@ const InnovationPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            )}
 
             {/* ── LISTADO O SKELETON RESPONSIVE (3 COLUMNAS) ── */}
             {loading ? (
@@ -248,8 +281,10 @@ const InnovationPage: React.FC = () => {
                     ))}
                 </div>
             )}
+            </>
+            )}
 
-            {/* Modal de Registro */}
+            {/* Modal de Registro de Activo */}
             <RegisterAssetModal
                 isOpen={isRegisterOpen}
                 onClose={() => setIsRegisterOpen(false)}

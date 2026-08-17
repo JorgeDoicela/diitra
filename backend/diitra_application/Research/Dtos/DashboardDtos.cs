@@ -40,6 +40,7 @@ namespace Diitra.Application.Research.Dtos
         public string? ObjetivoPnd { get; set; }
         public string? ConvocatoriaCodigo { get; set; }
         public string? DirectorNombre { get; set; }
+        public string? TemplateCode { get; set; }
     }
 
     /// <summary>

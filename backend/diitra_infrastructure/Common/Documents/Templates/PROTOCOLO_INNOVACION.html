@@ -1,0 +1,465 @@
+﻿<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1jb3Zlci0xNzg2OTgzMzYxNDM4IiwidHlwZSI6ImNvdmVyIiwidGl0bGUiOiJQb3J0YWRhIEluc3RpdHVjaW9uYWwgKFJvbWJvcykiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRpdHVsb1N1cGVyaW9yIjoiUFJPWUVDVE8gREUgSU5OT1ZBQ0nDk04iLCJjb2xvclRpdHVsb1N1cGVyaW9yIjoiZ29sZCIsImNhcnJlcmFQb3JEZWZlY3RvIjoiVEVDTk9MT0fDjUEgU1VQRVJJT1IgRU4gREVTQVJST0xMTyBERSBTT0ZUV0FSRSIsInBlcmlvZG9Qb3JEZWZlY3RvIjoiUEVSSU9ETyBBQ0FEw4lNSUNPIEFCUklMIDIwMjUg4oCTIFNFUFRJRU1CUkUgMjAyNSIsImNvbG9yVGVtYSI6IiMxZTJhNGEiLCJzaG93SW5zdGl0dXRpb24iOnRydWUsInRleHRvSW5zdGl0dWNpb24iOiJJTlNUSVRVVE8gVEVDTk9Mw5NHSUNPIFNVUEVSSU9SIE1BWU9SIFBFRFJPIFRSQVZFUlNBUkkiLCJwb3NJbnN0aXR1dGlvbiI6InRvcCIsImFsaWduSW5zdGl0dXRpb24iOiJjZW50ZXIiLCJzaG93VGl0bGUiOnRydWUsInBvc1RpdGxlIjoibWlkZGxlIiwiYWxpZ25UaXRsZSI6ImNlbnRlciIsInNob3dDYXJyZXJhIjp0cnVlLCJwb3NDYXJyZXJhIjoiYm90dG9tIiwiYWxpZ25DYXJyZXJhIjoiY2VudGVyIiwic2hvd1BlcmlvZG8iOnRydWUsInBvc1BlcmlvZG8iOiJib3R0b20iLCJhbGlnblBlcmlvZG8iOiJjZW50ZXIifX0seyJpZCI6ImJsb2NrLWdlbmVyYWwiLCJ0eXBlIjoicHJvamVjdF9nZW5lcmFsX3NlY3Rpb24iLCJ0aXRsZSI6IjEuIElERU5USUZJQ0FDScOTTiBERUwgUFJPWUVDVE8iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InNob3dUaXR1bG8iOnRydWUsInNob3dQcm9ncmFtYSI6dHJ1ZSwic2hvd0dydXBvIjp0cnVlLCJzaG93VGlwbyI6dHJ1ZSwic2hvd0xpbmVhIjp0cnVlLCJzaG93Q2FjZXMiOnRydWUsInNob3dEaXJlY3RvciI6dHJ1ZSwic2hvd0ZlY2hhcyI6dHJ1ZX19LHsiaWQiOiJibG9jay1yZXNlYXJjaGVycyIsInR5cGUiOiJyZXNlYXJjaGVyc190YWJsZSIsInRpdGxlIjoiMi4gSU5WRVNUSUdBRE9SRVMiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7Im1vc3RyYXJDZWR1bGEiOnRydWUsIm1vc3RyYXJFbWFpbCI6dHJ1ZSwibW9zdHJhclRlbGVmb25vIjp0cnVlLCJtb3N0cmFyTml2ZWxBY2FkZW1pY28iOnRydWUsIm1vc3RyYXJIb3JhcyI6dHJ1ZX19LHsiaWQiOiJibG9jay10ZWNobmljYWwiLCJ0eXBlIjoicHJvamVjdF90ZWNobmljYWxfc2VjdGlvbiIsInRpdGxlIjoiMy4gREVTQ1JJUENJw5NOIERFTCBQUk9ZRUNUTyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGVjaG5pY2FsU2VjdGlvbnMiOlt7ImlkIjoic2VjX3Jlc3VtZW4iLCJmaWVsZEtleSI6IlJlc3VtZW5Qcm95ZWN0byIsIm51bWJlclByZWZpeCI6IjMuMSIsInRpdGxlIjoiUkVTVU1FTiBERUwgUFJPWUVDVE8iLCJwbGFjZWhvbGRlciI6IlPDrW50ZXNpcyBnZW5lcmFsIGRlbCBwcm95ZWN0byAoMTUwLTIwMCBwYWxhYnJhcykuLi4iLCJyZXF1aXJlbWVudFRleHQiOiJFWFRFTlNJw5NOIFNVR0VSSURBOiAxNTDigJMyMDAgUEFMQUJSQVMiLCJlbmFibGVkIjp0cnVlLCJjb2xTcGFuIjoyLCJ2YXJpYW50Ijoic3RhbmRhcmQiLCJoYXNDb250ZW50Ijp0cnVlfSx7ImlkIjoic2VjX2Jhbm5lcl9vYmpldGl2b3MiLCJmaWVsZEtleSI6IkJhbm5lck9iamV0aXZvcyIsIm51bWJlclByZWZpeCI6IjMuMiIsInRpdGxlIjoiT0JKRVRJVk9TIiwicGxhY2Vob2xkZXIiOiIiLCJyZXF1aXJlbWVudFRleHQiOiIiLCJlbmFibGVkIjp0cnVlLCJjb2xTcGFuIjoyLCJ2YXJpYW50IjoiYmFubmVyX2dvbGQiLCJoYXNDb250ZW50IjpmYWxzZSwiaXNHcm91cEhlYWRlciI6dHJ1ZX0seyJpZCI6InNlY19vYmpldGl2b19nZW5lcmFsIiwiZmllbGRLZXkiOiJPYmpldGl2b0dlbmVyYWwiLCJudW1iZXJQcmVmaXgiOiIiLCJ0aXRsZSI6IkdFTkVSQUwiLCJwbGFjZWhvbGRlciI6IlByb3DDs3NpdG8gcHJpbmNpcGFsIGRlbCBwcm95ZWN0byAoMjAtMzAgcGFsYWJyYXMpLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMjDigJMzMCBQQUxBQlJBUyIsImVuYWJsZWQiOnRydWUsImNvbFNwYW4iOjEsInZhcmlhbnQiOiJiYW5uZXJfbmF2eSIsImhhc0NvbnRlbnQiOnRydWUsInBhcmVudElkIjoic2VjX2Jhbm5lcl9vYmpldGl2b3MifSx7ImlkIjoic2VjX29iamV0aXZvc19lc3BlY2lmaWNvcyIsImZpZWxkS2V5IjoiT2JqZXRpdm9zRXNwZWNpZmljb3MiLCJudW1iZXJQcmVmaXgiOiIiLCJ0aXRsZSI6IkVTUEVDw41GSUNPUyIsInBsYWNlaG9sZGVyIjoiMS4gTWV0YXMgY29uY3JldGFzLi4uXG4yLiBEZSAzIGEgNSBvYmpldGl2b3MgZXNwZWPDrWZpY29zLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiREUgMyBBIDUgT0JKRVRJVk9TLCAxNeKAkzI1IFBBTEFCUkFTIEMvVSIsImVuYWJsZWQiOnRydWUsImNvbFNwYW4iOjEsInZhcmlhbnQiOiJiYW5uZXJfbmF2eSIsImhhc0NvbnRlbnQiOnRydWUsInBhcmVudElkIjoic2VjX2Jhbm5lcl9vYmpldGl2b3MifSx7ImlkIjoic2VjX2FudGVjZWRlbnRlcyIsImZpZWxkS2V5IjoiQW50ZWNlZGVudGVzIiwibnVtYmVyUHJlZml4IjoiMy4zIiwidGl0bGUiOiJBLiBBTlRFQ0VERU5URVMiLCJwbGFjZWhvbGRlciI6IkNvbnRleHRvIHByZXZpbyBkZWwgcHJvYmxlbWEsIGVzdHVkaW9zIHkgZXhwZXJpZW5jaWFzLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMjAw4oCTMzAwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY19qdXN0aWZpY2FjaW9uIiwiZmllbGRLZXkiOiJKdXN0aWZpY2FjaW9uSW5ub3ZhY2lvbiIsIm51bWJlclByZWZpeCI6IjMuNCIsInRpdGxlIjoiQi4gSlVTVElGSUNBQ0nDk04gREUgTEEgSU5OT1ZBQ0nDk04iLCJwbGFjZWhvbGRlciI6IkZ1bmRhbWVudGFjacOzbiBkZWwgcHJveWVjdG86IHF1w6kgc2UgdmEgYSB0cmFuc2Zvcm1hciB5IHF1w6kgYXBvcnRhIGRlIG51ZXZvLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMjAw4oCTMzAwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY19kZXNjcmlwY2lvbl9pbm5vdmFjaW9uIiwiZmllbGRLZXkiOiJEZXNjcmlwY2lvbklubm92YWNpb24iLCJudW1iZXJQcmVmaXgiOiIzLjUiLCJ0aXRsZSI6IkMuIERFU0NSSVBDScOTTiBERSBMQSBJTk5PVkFDScOTTiIsInBsYWNlaG9sZGVyIjoiRGVzY3JpYmEgZW4gcXXDqSBjb25zaXN0ZSBsYSBpbm5vdmFjacOzbiAoYW50ZXMgdnMgZGVzcHXDqXMsIHRpcG8gZGUgaW5ub3ZhY2nDs24pLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMjAw4oCTMzAwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY192aW5jdWxhY2lvbiIsImZpZWxkS2V5IjoiVmluY3VsYWNpb25Tb2NpZWRhZCIsIm51bWJlclByZWZpeCI6IjMuNiIsInRpdGxlIjoiVklOQ1VMQUNJw5NOIENPTiBMQSBTT0NJRURBRCIsInBsYWNlaG9sZGVyIjoiUmVsYWNpw7NuIGRlbCBwcm95ZWN0byBjb24gbGEgY29tdW5pZGFkIG8gZW50b3Juby4uLiIsInJlcXVpcmVtZW50VGV4dCI6IkVYVEVOU0nDk04gU1VHRVJJREE6IDE1MOKAkzI1MCBQQUxBQlJBUyIsImVuYWJsZWQiOnRydWUsImNvbFNwYW4iOjIsInZhcmlhbnQiOiJzdGFuZGFyZCIsImhhc0NvbnRlbnQiOnRydWV9LHsiaWQiOiJzZWNfY29udmVuaW8iLCJmaWVsZEtleSI6IkNvbnZlbmlvQXNvY2lhZG8iLCJudW1iZXJQcmVmaXgiOiIzLjciLCJ0aXRsZSI6IkNPTlZFTklPIEFTT0NJQURPIiwicGxhY2Vob2xkZXIiOiJEZXRhbGxlIGRlIGNvbnZlbmlvcyBjb24gZW50aWRhZGVzIGV4dGVybmFzIG8gZW1wcmVzYXMuLi4iLCJyZXF1aXJlbWVudFRleHQiOiJOT01CUkUgREVMIENPTlZFTklPIE8gRU5USURBRCBBU09DSUFEQSIsImVuYWJsZWQiOnRydWUsImNvbFNwYW4iOjIsInZhcmlhbnQiOiJzdGFuZGFyZCIsImhhc0NvbnRlbnQiOnRydWV9LHsiaWQiOiJzZWNfZXN0YWRvX2FydGUiLCJmaWVsZEtleSI6IkVzdGFkb0FydGVDb25jZXB0dWFsIiwibnVtYmVyUHJlZml4IjoiMy44IiwidGl0bGUiOiJFU1RBRE8gREVMIEFSVEUgWS9PIENPTkNFUFRVQUwiLCJwbGFjZWhvbGRlciI6Ik1hcmNvIGNvbmNlcHR1YWwgeSBlc3RhZG8gZGVsIGFydGUuLi4iLCJyZXF1aXJlbWVudFRleHQiOiJFWFRFTlNJw5NOIFNVR0VSSURBOiAzIFDDgUdJTkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY19tZXRvZG9sb2dpYV9hcGxpY2FjaW9uIiwiZmllbGRLZXkiOiJNZXRvZG9sb2dpYUFwbGljYWNpb24iLCJudW1iZXJQcmVmaXgiOiIzLjkiLCJ0aXRsZSI6Ik1FVE9ET0xPR8ONQSBERSBBUExJQ0FDScOTTiIsInBsYWNlaG9sZGVyIjoiRmFzZXMsIGFjdGl2aWRhZGVzLCByZXNwb25zYWJlcywgdMOpY25pY2FzIGUgaW5zdHJ1bWVudG9zLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMjAw4oCTMzAwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY19tZXRvZG9sb2dpYV9ldmFsdWFjaW9uIiwiZmllbGRLZXkiOiJNZXRvZG9sb2dpYUV2YWx1YWNpb24iLCJudW1iZXJQcmVmaXgiOiIzLjEwIiwidGl0bGUiOiJNRVRPRE9MT0fDjUEgREUgRVZBTFVBQ0nDk04gREUgUkVTVUxUQURPUyIsInBsYWNlaG9sZGVyIjoiQ3JpdGVyaW9zIGRlIGV2YWx1YWNpw7NuLCBpbmRpY2Fkb3JlcyB5IG1vbWVudG9zIGRlIGV2YWx1YWNpw7NuLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMTUw4oCTMjUwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY19iZW5lZmljaWFyaW9zIiwiZmllbGRLZXkiOiJCZW5lZmljaWFyaW9zIiwibnVtYmVyUHJlZml4IjoiMy4xMSIsInRpdGxlIjoiQkVORUZJQ0lBUklPUyIsInBsYWNlaG9sZGVyIjoiQmVuZWZpY2lhcmlvcyBkaXJlY3RvcyBlIGluZGlyZWN0b3MuLi4iLCJyZXF1aXJlbWVudFRleHQiOiJESVJFQ1RPUyBFIElORElSRUNUT1MgUE9SIENBUlJFUkEvUk9MIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY192aWFiaWxpZGFkIiwiZmllbGRLZXkiOiJWaWFiaWxpZGFkIiwibnVtYmVyUHJlZml4IjoiMy4xMiIsInRpdGxlIjoiVklBQklMSURBRCIsInBsYWNlaG9sZGVyIjoiVmlhYmlsaWRhZCB0w6ljbmljYSwgb3BlcmF0aXZhLCBlY29uw7NtaWNhIHkgbGVnYWwvw6l0aWNhLi4uIiwicmVxdWlyZW1lbnRUZXh0IjoiRVhURU5TScOTTiBTVUdFUklEQTogMTUw4oCTMjAwIFBBTEFCUkFTIiwiZW5hYmxlZCI6dHJ1ZSwiY29sU3BhbiI6MiwidmFyaWFudCI6InN0YW5kYXJkIiwiaGFzQ29udGVudCI6dHJ1ZX0seyJpZCI6InNlY190cmFuc2ZlcmVuY2lhIiwiZmllbGRLZXkiOiJUcmFuc2ZlcmVuY2lhQ29ub2NpbWllbnRvIiwibnVtYmVyUHJlZml4IjoiMy4xMyIsInRpdGxlIjoiVFJBTlNGRVJFTkNJQSBERSBDT05PQ0lNSUVOVE8iLCJwbGFjZWhvbGRlciI6IkNhcGFjaXRhY2lvbmVzLCB0YWxsZXJlcywgcHVibGljYWNpb25lcyB5IHNvY2lhbGl6YWNpw7NuIGRlIHJlc3VsdGFkb3MuLi4iLCJyZXF1aXJlbWVudFRleHQiOiJFWFRFTlNJw5NOIFNVR0VSSURBOiAxNTDigJMyMDAgUEFMQUJSQVMiLCJlbmFibGVkIjp0cnVlLCJjb2xTcGFuIjoyLCJ2YXJpYW50Ijoic3RhbmRhcmQiLCJoYXNDb250ZW50Ijp0cnVlfV19fSx7ImlkIjoiYmxvY2stcHJvZHVjdHMiLCJ0eXBlIjoiZXhwZWN0ZWRfcHJvZHVjdHMiLCJ0aXRsZSI6IlJFU1VMVEFET1MgRVNQRVJBRE9TIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJwcm9kdWN0Q29sdW1ucyI6eyJzaG93Q2F0ZWdvcnkiOnRydWUsInNob3dRdWFudGl0eSI6dHJ1ZSwic2hvd1ZlcmlmaWNhdGlvbk1lYW5zIjp0cnVlLCJzaG93RGVhZGxpbmUiOnRydWV9fX0seyJpZCI6ImJsb2NrLXNpZ25hdHVyZXMtMTc4Njk4MzM2MTQzOCIsInR5cGUiOiJzaWduYXR1cmVzIiwidGl0bGUiOiJGaXJtYXMgZGUgUmVzcG9uc2FiaWxpZGFkIHkgVHJhemFiaWxpZGFkIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJzaWduYXRvcmllcyI6W3sibGFiZWwiOiJEaXJlY3RvciBkZWwgUHJveWVjdG8gZGUgSW5ub3ZhY2nDs24iLCJuYW1lIjoie3tkaXJlY3Rvcl9wcm95ZWN0b319Iiwicm9sZSI6IkRpcmVjdG9yIGRlIFByb3llY3RvIn0seyJsYWJlbCI6IkNvb3JkaW5hY2nDs24gZGUgSW5ub3ZhY2nDs24geSBUcmFuc2ZlcmVuY2lhIiwibmFtZSI6IkluZy4gRXN0ZWZhbmkgU8OhbmNoZXogTWd0ci4iLCJyb2xlIjoiQ29vcmRpbmFkb3JhIGRlIEludmVzdGlnYWNpw7NuIGUgSW5ub3ZhY2nDs24ifV0sInRleHRvUGllRmlybWEiOiJJTlNUSVRVVE8gU1VQRVJJT1IgVEVDTk9Mw5NHSUNPIE1BWU9SIFBFRFJPIFRSQVZFUlNBUkkifX1d -->
+<style>
+  * { box-sizing: border-box; }
+  
+  @page {
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
+  }
+
+  /* Reset y Core del Documento con Tematización Dinámica */
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+  
+  /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
+  .doc-watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 210mm;
+      height: 0;
+      line-height: 0;
+      font-size: 0;
+      z-index: -1;
+      pointer-events: none;
+      {{#if theme.brand.background_image}}
+      background-image: url('{{ theme.brand.background_image }}');
+      background-size: {{default theme.brand.background_fit "contain"}};
+      background-position: center center;
+      background-repeat: no-repeat;
+      opacity: {{default theme.brand.background_opacity "0.12"}};
+      {{/if}}
+  }
+  
+  /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      max-height: 296.5mm;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      {{#if portada_base64}}
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      {{/if}}
+      color: {{ theme.colors.primary }};
+      z-index: 1000;
+      overflow: hidden;
+      page-break-inside: avoid;
+      page-break-after: always;
+  }
+
+  .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 3cm 2cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: space-around;
+  }
+
+  .main-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 24pt;
+      font-weight: bold;
+      color: {{ theme.colors.secondary }};
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0;
+      width: 100%;
+  }
+
+  .project-theme {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 16pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin: 1.5cm 0;
+      line-height: 1.3;
+      width: 100%;
+      word-wrap: break-word;
+  }
+
+  .career-container {
+      margin: 1cm 0;
+      text-align: center;
+      width: 100%;
+  }
+
+  .career-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+  }
+
+  .career-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: normal;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin-top: 4px;
+  }
+
+  .period-container {
+      width: 100%;
+      margin-top: 1cm;
+      text-align: center;
+  }
+
+  .period-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: {{ theme.colors.primary }};
+  }
+
+  .period-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
+      font-weight: normal;
+      text-transform: uppercase;
+      color: {{ theme.colors.primary }};
+      margin-top: 2px;
+  }
+
+  /* Títulos de sección */
+  .title-h1 { 
+      font-size: 16pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.primary "#222c57"}}; 
+      margin-top: 35px; 
+      text-transform: uppercase; 
+  }
+  .title-h2 { 
+      font-size: 10pt; 
+      font-weight: 800; 
+      background: {{default theme.colors.table_header_bg "#222c57"}}; 
+      color: {{default theme.colors.table_header_color "#ffffff"}} !important; 
+      padding: 6px 12px; 
+      margin-top: 25px; 
+      text-transform: uppercase; 
+  }
+  .title-h3 { 
+      font-size: 9.5pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.secondary "#c4a857"}}; 
+      margin-top: 15px; 
+      text-transform: uppercase; 
+  }
+  
+  /* Tablas generales compactas con bordes negros (formato premium original) */
+  .info-table, .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 12px; 
+      font-size: 9pt; 
+      background: #ffffff; 
+  }
+  .info-table td, .info-table th, .data-table td, .data-table th { 
+      border: 1px solid #000000; 
+      padding: 0 8px; 
+      height: 0.6cm;
+      vertical-align: middle; 
+      color: #000000;
+  }
+  .info-table th, .data-table th { 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+      background: {{ theme.colors.table_header_bg }};
+      color: {{ theme.colors.table_header_color }};
+      text-align: center;
+  }
+  .label-cell { 
+      font-weight: bold; 
+      background: {{ theme.colors.table_header_bg }}; 
+      color: {{ theme.colors.table_header_color }};
+      width: 35%; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+  }
+  
+  /* Texto enriquecido */
+  .rich-content { 
+      font-size: 9.5pt; 
+      text-align: justify; 
+      color: #000000; 
+      margin-top: 10px; 
+      line-height: 1.4; 
+  }
+  .rich-content p { margin: 6px 0; }
+  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
+  .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
+  .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
+  
+  /* Dos columnas */
+  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
+  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
+  
+  /* Salto de página */
+  .page-break { page-break-after: always; height: 0; }
+  
+  /* Firmas y Trazabilidad */
+  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
+  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+  .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
+  .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
+</style>
+
+<div class="doc-container">
+  <!-- BLOQUE: PORTADA FREE-FORM -->
+  <div class="cover-page">
+    
+        <div style="position:absolute; left:21.0mm; top:10.8mm; width:174.0mm; text-align:center;">
+          <span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:#ffffff; background-color: {{ theme.colors.primary }}; padding:3px 10px; border-radius:9999px; display:inline-block;">
+            INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI
+          </span>
+        </div>
+    
+        <div style="position:absolute; left:21.0mm; top:94.5mm; width:174.0mm; text-align:center;">
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:20pt; font-weight:bold; font-style:italic; color: #b8912e; text-transform:uppercase; line-height:1.2;">
+            PROYECTO DE INNOVACIÓN
+          </div>
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:13pt; font-weight:bold; color: #ffffff; text-transform:uppercase; margin-top:12px; line-height:1.3; word-wrap:break-word;">
+            {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
+          </div>
+        </div>
+    
+        <div style="position:absolute; left:147.0mm; top:189.0mm; width:50.0mm; text-align:center;">
+          
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: #ffffff; text-transform:uppercase; margin-top:2px;">
+            {{default carrera "TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE"}}
+          </div>
+        </div>
+    
+        <div style="position:absolute; left:21.0mm; top:202.5mm; width:174.0mm; text-align:center;">
+          
+          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:normal; color: #ffffff; text-transform:uppercase; margin-top:2px;">
+            {{default periodo "PERIODO ACADÉMICO ABRIL 2025 – SEPTIEMBRE 2025"}}
+          </div>
+        </div>
+  </div>
+  <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">Ficha de Identificación</p>
+  
+    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
+      <tbody>
+        
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 25%; vertical-align: top; border: 1px solid #cbd5e1;">Título del Proyecto</td>
+      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; border: 1px solid #cbd5e1;"><span style="font-weight: bold;">{{default titulo "[TEMA / NOMBRE DEL PROYECTO]"}}</span></td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Director del Proyecto</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default director_proyecto "No especificado"}}</td>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Carrera / Unidad Académica</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default carrera "No especificada"}}</td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Convocatoria</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default convocatoria "No especificada"}}</td>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Programa</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default programa "No especificado"}}</td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Grupo de Investigación</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default grupo_investigacion "No especificado"}}</td>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Línea de Investigación</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;"><div><strong>Línea:</strong> {{default linea_investigacion "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div></td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Tipo de Investigación</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default tipo_investigacion "No especificado"}}</td>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Campo Detallado CACES</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; border: 1px solid #cbd5e1;">{{default campo_detallado "No especificado"}}</td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; border: 1px solid #cbd5e1;">Fechas y Plazos</td>
+      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; border: 1px solid #cbd5e1;"><div><strong>Inicio:</strong> {{default fecha_inicio "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div></td>
+    </tr>
+      </tbody>
+    </table>
+  <!-- BLOQUE: INVESTIGADORES -->
+  <table class="info-table">
+    <thead><tr>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Nombre Completo</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Rol en Proyecto</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Cédula</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Email</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Teléfono</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Nivel Académico</th>
+      <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Horas</th>
+    </tr></thead>
+    <tbody>
+      {{#each participantes}}
+      <tr>
+        <td>{{this.nombre}}</td>
+        <td>{{this.rol}}</td>
+        <td>{{this.cedula}}</td>
+        <td>{{this.email}}</td>
+        <td>{{this.telefono}}</td>
+        <td>{{this.nivelAcademico}}</td>
+        <td>{{this.horas}} hs</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <!-- BLOQUE: PROPUESTA TÉCNICA -->
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">Propuesta Técnica</p>
+  
+    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
+      <tbody>
+        
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.1 RESUMEN DEL PROYECTO</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.2 OBJETIVOS</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">GENERAL</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">ESPECÍFICOS</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.3 A. ANTECEDENTES</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.4 B. JUSTIFICACIÓN DE LA INNOVACIÓN</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.5 C. DESCRIPCIÓN DE LA INNOVACIÓN</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.6 VINCULACIÓN CON LA SOCIEDAD</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.7 CONVENIO ASOCIADO</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.8 ESTADO DEL ARTE Y/O CONCEPTUAL</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.9 METODOLOGÍA DE APLICACIÓN</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.10 METODOLOGÍA DE EVALUACIÓN DE RESULTADOS</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.11 BENEFICIARIOS</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.12 VIABILIDAD</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+
+      <tr>
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">3.13 TRANSFERENCIA DE CONOCIMIENTO</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">{{{default contenido CONTENIDO "Sin contenido redactado."}}}</td>
+      </tr>
+      </tbody>
+    </table>
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (DETALLADO CACES) -->
+  <div style="margin-top: 20px;">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">5. Productos y Entregables Esperados</p>
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Categoría</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Subtipo / Entregable</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Nombre del Producto</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Indicador Verificable</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Medio de Verificación</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 60px; text-align: center;">Cant.</th>
+          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 80px; text-align: center;">Plazo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each productos_esperados}}
+        <tr>
+          <td>{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>
+          <td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>
+          <td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>
+          <td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>
+          <td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>
+          <td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>
+          <td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <!-- BLOQUE: FIRMAS -->
+  <div class="signatures-row">
+    <div class="sig-box">
+      <div class="sig-label">Director del Proyecto de Innovación</div>
+      <div>&nbsp;</div>
+      <div style="margin-top: 40px;">{{director_proyecto}}</div>
+      <div style="color: #64748b; font-size: 8.5pt;">Director de Proyecto</div>
+    </div>
+    <div class="sig-box">
+      <div class="sig-label">Coordinación de Innovación y Transferencia</div>
+      <div>&nbsp;</div>
+      <div style="margin-top: 40px;">Ing. Estefani Sánchez Mgtr.</div>
+      <div style="color: #64748b; font-size: 8.5pt;">Coordinadora de Investigación e Innovación</div>
+    </div></div>
+  <div class="sig-footer">INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI</div>
+</div>

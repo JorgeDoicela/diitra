@@ -300,6 +300,9 @@ function App() {
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
                             
+                            {/* Innovation Context */}
+                            <Route path="/innovacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+
                             {/* Researcher Context (Docentes, Estudiantes, Externos) */}
                             <Route path="/investigacion/mis-proyectos" element={<ResearcherRoute><MyProjectsPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ResearcherRoute><ProjectWorkspace /></ResearcherRoute>} />

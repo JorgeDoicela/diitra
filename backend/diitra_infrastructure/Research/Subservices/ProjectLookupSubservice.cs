@@ -107,7 +107,11 @@ namespace diitra_infrastructure.Research.Subservices
                         ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation!.Nombre)
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+                    TemplateCode = _context.DocumentInstances
+                        .Where(d => d.EntityUuid == p.Uuid)
+                        .Select(d => d.TemplateCode)
+                        .FirstOrDefault() ?? "PROTOCOLO_INVESTIGACION"
                 })
                 .ToListAsync();
         }
@@ -184,7 +188,11 @@ namespace diitra_infrastructure.Research.Subservices
                         ?? p.InvProyectoParticipantes
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation!.Nombre)
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+                    TemplateCode = _context.DocumentInstances
+                        .Where(d => d.EntityUuid == p.Uuid)
+                        .Select(d => d.TemplateCode)
+                        .FirstOrDefault() ?? "PROTOCOLO_INVESTIGACION"
                 })
                 .ToListAsync();
         }

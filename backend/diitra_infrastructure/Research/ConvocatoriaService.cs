@@ -283,7 +283,7 @@ public class ConvocatoriaService : IConvocatoriaService
                     var notificationService = sp.GetRequiredService<INotificationService>();
                     await notificationService.BroadcastAsync(
                         "Nueva Convocatoria Abierta",
-                        $"Se ha publicado la convocatoria: {titulo}. Ya puedes empezar a postular tus proyectos.",
+                        $"Se ha publicado la convocatoria: {titulo}. Ya puedes empezar a postular tus proyectos de investigación o innovación.",
                         "DOCENTE",
                         "/convocatorias",
                         new Dictionary<string, string>

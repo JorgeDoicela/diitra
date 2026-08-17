@@ -119,7 +119,7 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         var instancia = await _context.DocumentInstances
             .FirstOrDefaultAsync(d => d.Uuid == dto.DocumentoUuid)
             ?? await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.EntityUuid == dto.DocumentoUuid && d.TemplateCode == "PROTOCOLO_INVESTIGACION")
+            .FirstOrDefaultAsync(d => d.EntityUuid == dto.DocumentoUuid && (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION"))
             ?? throw new KeyNotFoundException($"Documento '{dto.DocumentoUuid}' no encontrado.");
 
         // 3. Verificar que el perfil de firma está configurado
@@ -282,8 +282,8 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             };
             _context.InvLopdpAuditoriaDatos.Add(successAudit);
 
-            // Transición de Estado de Workflow (Específico de PROTOCOLO_INVESTIGACION)
-            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION")
+            // Transición de Estado de Workflow (PROTOCOLO_INVESTIGACION y PROTOCOLO_INNOVACION)
+            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION")
             {
                 var workflowService = _serviceProvider.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
                 await workflowService.TransicionarEstadoAsync(instancia.EntityUuid, "Enviado", 1, $"Firma Digital DIITRA e Inmutabilidad Forense - Hash: {docHash}");

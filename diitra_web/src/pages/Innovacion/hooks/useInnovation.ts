@@ -52,6 +52,28 @@ export const useInnovation = () => {
 
     useEffect(() => {
         loadAssets();
+
+        const handleFocus = () => {
+            loadAssets(false);
+        };
+        const handleChanged = () => {
+            loadAssets(false);
+        };
+
+        window.addEventListener('focus', handleFocus);
+        window.addEventListener('diitra-projects-changed', handleChanged);
+
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadAssets(false);
+            }
+        }, 45000);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('diitra-projects-changed', handleChanged);
+            clearInterval(interval);
+        };
     }, [loadAssets]);
 
     return {
@@ -59,6 +81,6 @@ export const useInnovation = () => {
         loading,
         refreshing,
         error,
-        reload: () => loadAssets(true)
+        reload: () => loadAssets(false)
     };
 };

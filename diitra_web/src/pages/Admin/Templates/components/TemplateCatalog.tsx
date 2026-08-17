@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Palette, PanelLeft, GripVertical } from 'lucide-react';
+import { FileText, Palette, PanelLeft, GripVertical, Sparkles, Award, FlaskConical, BarChart3 } from 'lucide-react';
 import {
     DndContext,
     rectIntersection,
@@ -29,6 +29,30 @@ interface TemplateCatalogProps {
     onReorderTemplates?: (newTemplates: DocumentTemplateDto[]) => void;
 }
 
+type TemplateCategoryKey = 'INVESTIGACION' | 'INNOVACION' | 'CERTIFICADOS' | 'REPORTES';
+
+function getTemplateCategory(code: string): TemplateCategoryKey {
+    const c = (code || '').toUpperCase();
+    if (c.includes('INNOVACION') || c.includes('TRL')) return 'INNOVACION';
+    if (c.startsWith('CERTIFICADO') || c.includes('CERTIFICADO')) return 'CERTIFICADOS';
+    if (c.startsWith('REPORTE') || c.includes('ANALITICAS')) return 'REPORTES';
+    return 'INVESTIGACION';
+}
+
+function getTemplateIcon(code: string) {
+    const cat = getTemplateCategory(code);
+    switch (cat) {
+        case 'INNOVACION':
+            return <Sparkles className="w-3.5 h-3.5 text-text-dim" />;
+        case 'CERTIFICADOS':
+            return <Award className="w-3.5 h-3.5 text-text-dim" />;
+        case 'REPORTES':
+            return <BarChart3 className="w-3.5 h-3.5 text-text-dim" />;
+        default:
+            return <FileText className="w-3.5 h-3.5 text-text-dim" />;
+    }
+}
+
 interface TemplateItemProps {
     template: DocumentTemplateDto;
     isSelected: boolean;
@@ -46,6 +70,8 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
     isDragging,
     isOverlay
 }) => {
+    const cat = getTemplateCategory(template.code);
+
     return (
         <div
             className={`group w-full flex items-center relative border-b border-border-thin/30 last:border-b-0 transition-opacity duration-150 ${
@@ -77,7 +103,7 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                 className="flex-1 text-left p-3 pl-1.5 flex items-start gap-3 transition-all min-w-0"
             >
                 <div className="p-1.5 rounded bg-surface border border-border-thin/40 shrink-0 text-text-main shadow-none">
-                    <FileText className="w-3.5 h-3.5" />
+                    {getTemplateIcon(template.code)}
                 </div>
                 
                 <div className="min-w-0 flex-1">
@@ -89,9 +115,21 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                             v{template.version}
                         </span>
                     </div>
-                    <p className="text-[9px] text-text-dim mt-1 font-mono tracking-tight select-all">
-                        {template.code}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        {cat === 'INNOVACION' && (
+                            <span className="text-[8px] font-mono font-semibold uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                                Innovación
+                            </span>
+                        )}
+                        {cat === 'CERTIFICADOS' && (
+                            <span className="text-[8px] font-mono font-semibold uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                                Certificado
+                            </span>
+                        )}
+                        <p className="text-[9px] text-text-dim font-mono tracking-tight select-all truncate">
+                            {template.code}
+                        </p>
+                    </div>
                 </div>
             </button>
         </div>
@@ -118,8 +156,8 @@ const SortableTemplateItem: React.FC<SortableTemplateItemProps> = ({
         isDragging
     } = useSortable({ id: template.code });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform),
         transition,
     };
 
@@ -150,26 +188,29 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 5,
             },
         })
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
+        setActiveId(String(event.active.id));
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        setActiveId(null);
         const { active, over } = event;
-        if (!over || active.id === over.id || !onReorderTemplates) return;
+        setActiveId(null);
 
-        const oldIndex = templates.findIndex(t => t.code === active.id);
-        const newIndex = templates.findIndex(t => t.code === over.id);
-
-        if (oldIndex !== -1 && newIndex !== -1) {
-            const reordered = arrayMove(templates, oldIndex, newIndex);
-            onReorderTemplates(reordered);
+        if (over && active.id !== over.id) {
+            const oldIndex = templates.findIndex(t => t.code === active.id);
+            const newIndex = templates.findIndex(t => t.code === over.id);
+            
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newTemplates = arrayMove(templates, oldIndex, newIndex);
+                if (onReorderTemplates) {
+                    onReorderTemplates(newTemplates);
+                }
+            }
         }
     };
 
@@ -179,8 +220,14 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
 
     const activeTemplate = templates.find(t => t.code === activeId);
 
+    // Agrupación de plantillas
+    const investigacionTemplates = templates.filter(t => getTemplateCategory(t.code) === 'INVESTIGACION');
+    const innovacionTemplates = templates.filter(t => getTemplateCategory(t.code) === 'INNOVACION');
+    const certificadosTemplates = templates.filter(t => getTemplateCategory(t.code) === 'CERTIFICADOS');
+    const reportesTemplates = templates.filter(t => getTemplateCategory(t.code) === 'REPORTES');
+
     return (
-        <div className="w-full border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden shrink-0">
+        <div className="w-full h-full border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden min-h-0">
             {/* Header del panel */}
             <div className="p-3 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 h-10">
                 <div className="flex items-center gap-2 min-w-0">
@@ -200,8 +247,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                 </div>
             </div>
             
-            {/* Lista unificada sin separaciones toscas */}
-            <div className="flex-1 overflow-y-auto divide-y divide-border-thin/30">
+            {/* Lista dividida por categorías institucionales con scroll fluido */}
+            <div className="flex-1 overflow-y-auto divide-y divide-border-thin/30 custom-scrollbar min-h-0 pb-12">
                 {/* OPCIÓN VIRTUAL: TEMA GLOBAL INSTITUCIONAL */}
                 <button
                     type="button"
@@ -254,18 +301,106 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                     onDragCancel={handleDragCancel}
                 >
                     <SortableContext items={templates.map(t => t.code)} strategy={verticalListSortingStrategy}>
-                        <div className="divide-y divide-border-thin/30">
-                            {templates.map(t => {
-                                const isSelected = selectedTemplate?.code === t.code;
-                                return (
-                                    <SortableTemplateItem
-                                        key={t.code}
-                                        template={t}
-                                        isSelected={isSelected}
-                                        onSelect={() => onSelectTemplate(t)}
-                                    />
-                                );
-                            })}
+                        <div className="flex flex-col">
+                            {/* SECCIÓN 1: INVESTIGACIÓN CIENTÍFICA */}
+                            {investigacionTemplates.length > 0 && (
+                                <div className="border-b border-border-thin/40">
+                                    <div className="px-3 py-2 bg-surface-deep/40 border-b border-border-thin/30 flex items-center justify-between">
+                                        <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
+                                            <FlaskConical size={11} className="text-text-dim" />
+                                            Investigación (I+D+i)
+                                        </span>
+                                        <span className="text-[9px] font-mono text-text-dim/60">
+                                            {investigacionTemplates.length}
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-border-thin/30">
+                                        {investigacionTemplates.map(t => (
+                                            <SortableTemplateItem
+                                                key={t.code}
+                                                template={t}
+                                                isSelected={selectedTemplate?.code === t.code}
+                                                onSelect={() => onSelectTemplate(t)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* SECCIÓN 2: INNOVACIÓN Y TRANSFERENCIA */}
+                            {innovacionTemplates.length > 0 && (
+                                <div className="border-b border-border-thin/40">
+                                    <div className="px-3 py-2 bg-surface-deep/40 border-b border-border-thin/30 flex items-center justify-between">
+                                        <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
+                                            <Sparkles size={11} className="text-text-dim" />
+                                            Innovación & i+TT
+                                        </span>
+                                        <span className="text-[9px] font-mono text-text-dim/60">
+                                            {innovacionTemplates.length}
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-border-thin/30">
+                                        {innovacionTemplates.map(t => (
+                                            <SortableTemplateItem
+                                                key={t.code}
+                                                template={t}
+                                                isSelected={selectedTemplate?.code === t.code}
+                                                onSelect={() => onSelectTemplate(t)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* SECCIÓN 3: CERTIFICADOS INSTITUCIONALES */}
+                            {certificadosTemplates.length > 0 && (
+                                <div className="border-b border-border-thin/40">
+                                    <div className="px-3 py-2 bg-surface-deep/40 border-b border-border-thin/30 flex items-center justify-between">
+                                        <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
+                                            <Award size={11} className="text-text-dim" />
+                                            Certificados Oficiales
+                                        </span>
+                                        <span className="text-[9px] font-mono text-text-dim/60">
+                                            {certificadosTemplates.length}
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-border-thin/30">
+                                        {certificadosTemplates.map(t => (
+                                            <SortableTemplateItem
+                                                key={t.code}
+                                                template={t}
+                                                isSelected={selectedTemplate?.code === t.code}
+                                                onSelect={() => onSelectTemplate(t)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* SECCIÓN 4: REPORTES & ANALÍTICAS */}
+                            {reportesTemplates.length > 0 && (
+                                <div>
+                                    <div className="px-3 py-2 bg-surface-deep/40 border-b border-border-thin/30 flex items-center justify-between">
+                                        <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
+                                            <BarChart3 size={11} className="text-text-dim" />
+                                            Reportes & Analíticas
+                                        </span>
+                                        <span className="text-[9px] font-mono text-text-dim/60">
+                                            {reportesTemplates.length}
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-border-thin/30">
+                                        {reportesTemplates.map(t => (
+                                            <SortableTemplateItem
+                                                key={t.code}
+                                                template={t}
+                                                isSelected={selectedTemplate?.code === t.code}
+                                                onSelect={() => onSelectTemplate(t)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </SortableContext>
                     

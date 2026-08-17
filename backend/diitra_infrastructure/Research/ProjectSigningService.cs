@@ -221,9 +221,15 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync(p => p.IdUsuario == dbUser.IdUsuario);
                 string? firmaImagenB64 = signatureProfile?.FirmaImagenB64;
 
+                var existingInstance = await _context.DocumentInstances
+                    .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && (i.TemplateCode == "PROTOCOLO_INVESTIGACION" || i.TemplateCode == "PROTOCOLO_INNOVACION"));
+
+                string templateCodeToUse = existingInstance?.TemplateCode 
+                    ?? ((projectDto.TipoInvestigacion?.ToUpper() == "INNOVACION") ? "PROTOCOLO_INNOVACION" : "PROTOCOLO_INVESTIGACION");
+
                 var request = new DocumentRequest
                 {
-                    TemplateCode = "PROTOCOLO_INVESTIGACION",
+                    TemplateCode = templateCodeToUse,
                     Data = projectDto,
                     IsDraftMode = false,
                     IsBlindMode = false,
@@ -311,12 +317,12 @@ namespace diitra_infrastructure.Research
                 try
                 {
                     var instance = await _context.DocumentInstances
-                        .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                        .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && i.TemplateCode == templateCodeToUse);
 
                     if (instance == null)
                     {
                         instance = await _documentInstanceService.CreateAsync(
-                            "PROTOCOLO_INVESTIGACION",
+                            templateCodeToUse,
                             projectDto.Uuid!,
                             user.Identity?.Name ?? "Sistema DIITRA",
                             $"Protocolo Oficial: {projectDto.Titulo}",

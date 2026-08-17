@@ -42,9 +42,42 @@ namespace diitra_infrastructure.Research.Subservices
                     try
                     {
                         using var doc = System.Text.Json.JsonDocument.Parse(basicProject.MetadataCacesJson);
-                        if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) || doc.RootElement.TryGetProperty("DescripcionProyecto", out el))
+                        if (doc.RootElement.TryGetProperty("descripcionProyecto", out var el) 
+                         || doc.RootElement.TryGetProperty("DescripcionProyecto", out el)
+                         || doc.RootElement.TryGetProperty("descripcionInnovacion", out el)
+                         || doc.RootElement.TryGetProperty("DescripcionInnovacion", out el)
+                         || doc.RootElement.TryGetProperty("resumenProyecto", out el)
+                         || doc.RootElement.TryGetProperty("ResumenProyecto", out el)
+                         || doc.RootElement.TryGetProperty("descripcion", out el)
+                         || doc.RootElement.TryGetProperty("Descripcion", out el))
                         {
                             desc = el.GetString() ?? "";
+                        }
+                    }
+                    catch {}
+                }
+
+                if (string.IsNullOrWhiteSpace(desc))
+                {
+                    try
+                    {
+                        var instance = await _context.DocumentInstances
+                            .FirstOrDefaultAsync(i => i.EntityUuid == basicProject.Uuid && (i.TemplateCode == "PROTOCOLO_INNOVACION" || i.TemplateCode == "PROTOCOLO_INVESTIGACION"));
+
+                        if (instance?.DataSnapshotJson != null)
+                        {
+                            using var docInst = System.Text.Json.JsonDocument.Parse(instance.DataSnapshotJson);
+                            if (docInst.RootElement.TryGetProperty("descripcionProyecto", out var el) 
+                             || docInst.RootElement.TryGetProperty("DescripcionProyecto", out el)
+                             || docInst.RootElement.TryGetProperty("descripcionInnovacion", out el)
+                             || docInst.RootElement.TryGetProperty("DescripcionInnovacion", out el)
+                             || docInst.RootElement.TryGetProperty("resumenProyecto", out el)
+                             || docInst.RootElement.TryGetProperty("ResumenProyecto", out el)
+                             || docInst.RootElement.TryGetProperty("descripcion", out el)
+                             || docInst.RootElement.TryGetProperty("Descripcion", out el))
+                            {
+                                desc = el.GetString() ?? "";
+                            }
                         }
                     }
                     catch {}

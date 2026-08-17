@@ -83,7 +83,7 @@ namespace diitra_infrastructure.Research.Subservices
 
             // Mapeo de Atributos Nucleares Básicos
             project.Titulo = dto.Titulo ?? "PROYECTO SIN TÍTULO";
-            project.CodigoInstitucional = dto.CodigoInstitucional;
+            project.CodigoInstitucional = string.IsNullOrWhiteSpace(dto.CodigoInstitucional) ? null : dto.CodigoInstitucional.Trim();
             project.TiempoEjecucion = dto.TiempoEjecucion;
             project.FechaPresentacion = ProjectHelper.ParseDateOnly(dto.FechaPresentacion);
             project.FechaInicio = ProjectHelper.ParseDateOnly(dto.FechaInicio ?? dto.FechaInicioEstimada);

@@ -171,7 +171,7 @@ const PublicConvocatoriasPage = () => {
             {/* Header Section */}
             <header className="max-w-4xl space-y-4">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">Oportunidades de Investigación</h1>
+                    <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">Oportunidades de Investigación e Innovación</h1>
                 </div>
                 <p className="text-text-dim text-base leading-relaxed max-w-2xl font-medium">
                     Explora las convocatorias vigentes y postula tus proyectos de investigación e innovación institucional.
@@ -437,7 +437,7 @@ const PublicConvocatoriasPage = () => {
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />
-                                        <span>Subir el protocolo completo de investigación redactado de forma colaborativa.</span>
+                                        <span>Completar el protocolo de investigación o innovación de forma colaborativa.</span>
                                     </li>
                                 </ul>
                             </div>

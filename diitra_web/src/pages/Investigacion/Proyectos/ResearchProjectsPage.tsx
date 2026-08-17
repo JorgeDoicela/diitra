@@ -141,6 +141,10 @@ const ResearchProjectsPage = () => {
     const filteredProjects = useMemo(() => {
         return proyectos
             .filter(p => {
+                // Desacoplamiento estricto: Solo proyectos de Investigación I+D+i
+                const isInnovacion = (p.template_code || (p as any).templateCode) === 'PROTOCOLO_INNOVACION' || ((p as any).tipo_investigacion || '').toUpperCase() === 'INNOVACION';
+                if (isInnovacion) return false;
+
                 const query = search.toLowerCase();
                 const matchSearch = 
                     (p.titulo || '').toLowerCase().includes(query) ||

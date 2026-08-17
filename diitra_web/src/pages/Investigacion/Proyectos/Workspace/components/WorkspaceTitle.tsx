@@ -42,7 +42,11 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             </span>
                         </div>
                     )}
-                    <p className="text-sm text-text-dim font-medium mt-1">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
+                    <p className="text-sm text-text-dim font-medium mt-1">
+                        {(templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion')
+                            ? 'Gestión del ciclo de vida institucional del proyecto de innovación y transferencia tecnológica.'
+                            : 'Gestión del ciclo de vida institucional del proyecto de investigación.'}
+                    </p>
                 </div>
             </header>
 

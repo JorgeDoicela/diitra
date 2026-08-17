@@ -101,7 +101,7 @@ public class P12SignatureSubservice : IP12SignatureSubservice
         var instancia = await _context.DocumentInstances
             .FirstOrDefaultAsync(d => d.Uuid == documentoUuid)
             ?? await _context.DocumentInstances
-            .FirstOrDefaultAsync(d => d.EntityUuid == documentoUuid && d.TemplateCode == "PROTOCOLO_INVESTIGACION")
+            .FirstOrDefaultAsync(d => d.EntityUuid == documentoUuid && (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION"))
             ?? throw new KeyNotFoundException($"Documento '{documentoUuid}' no encontrado.");
 
         // 3. Verificar firma existente o permitir re-firma si el proyecto fue devuelto a corrección
@@ -210,8 +210,8 @@ public class P12SignatureSubservice : IP12SignatureSubservice
                 idUsuario, idUsuario, "inv_documentos_firmas", "firma_code", "ESCRITURA",
                 $"Firma digital avanzada (.p12) de documento exitosa. Código: {firmaCode}.", ipAddress, userAgent);
 
-            // 12. Transición de Estado de Workflow (Específico de PROTOCOLO_INVESTIGACION)
-            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION")
+            // 12. Transición de Estado de Workflow (PROTOCOLO_INVESTIGACION y PROTOCOLO_INNOVACION)
+            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION")
             {
                 var workflowService = _serviceProvider.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
                 await workflowService.TransicionarEstadoAsync(instancia.EntityUuid, "Enviado", 1, $"Firma Digital .p12 e Inmutabilidad Forense - Hash: {docHash}");

@@ -60,6 +60,8 @@ interface SidebarNavProps {
     setIsInvestigacionOpen: (v: boolean) => void;
     isMisProyectosOpen: boolean;
     setIsMisProyectosOpen: (v: boolean) => void;
+    isInnovacionOpen: boolean;
+    setIsInnovacionOpen: (v: boolean) => void;
     isAnalyticsOpen: boolean;
     setIsAnalyticsOpen: (v: boolean) => void;
     isUsersOpen: boolean;
@@ -86,6 +88,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setIsInvestigacionOpen,
     isMisProyectosOpen,
     setIsMisProyectosOpen,
+    isInnovacionOpen,
+    setIsInnovacionOpen,
     isAnalyticsOpen,
     setIsAnalyticsOpen,
     isUsersOpen,
@@ -103,21 +107,37 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     const renderMenuItem = (item: MenuItem) => {
         const isActive = item === activeItem;
 
-        if (item.name === 'Investigación' || item.name === 'Mis Proyectos') {
-            const isMenuOpen = item.name === 'Investigación' ? isInvestigacionOpen : isMisProyectosOpen;
+        const isInnovacion = item.name === 'Innovación';
+        const isInvestigacion = item.name === 'Investigación';
+
+        if (isInvestigacion || isInnovacion) {
+            const isMenuOpen = isInnovacion 
+                ? isInnovacionOpen 
+                : (item.path === '/investigacion' ? isInvestigacionOpen : isMisProyectosOpen);
+
             const toggleOpen = (e: React.MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (item.name === 'Investigación') {
+                if (isInnovacion) {
+                    setIsInnovacionOpen(!isInnovacionOpen);
+                } else if (item.path === '/investigacion') {
                     setIsInvestigacionOpen(!isInvestigacionOpen);
                 } else {
                     setIsMisProyectosOpen(!isMisProyectosOpen);
                 }
             };
 
+            const relevantProjects = sidebarProjects.filter(p => {
+                const isProjInnovacion = (p.template_code || p.templateCode) === 'PROTOCOLO_INNOVACION';
+                return isInnovacion ? isProjInnovacion : !isProjInnovacion;
+            });
+
             const displayLimit = 6;
-            const shownProjects = showAllProjects ? sidebarProjects : sidebarProjects.slice(0, displayLimit);
-            const hasMore = sidebarProjects.length > displayLimit;
+            const shownProjects = showAllProjects ? relevantProjects : relevantProjects.slice(0, displayLimit);
+            const hasMore = relevantProjects.length > displayLimit;
+            const targetBasePath = isInnovacion 
+                ? '/innovacion' 
+                : item.path;
 
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
@@ -128,10 +148,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             }`}
                     >
                         <Link
-                            to={item.name === 'Investigación' ? '/investigacion' : '/investigacion/mis-proyectos'}
+                            to={targetBasePath}
                             onClick={(e) => {
                                 if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
-                                    if (item.name === 'Investigación') {
+                                    if (isInnovacion) {
+                                        setIsInnovacionOpen(true);
+                                    } else if (item.name === 'Investigación') {
                                         setIsInvestigacionOpen(true);
                                     } else {
                                         setIsMisProyectosOpen(true);
@@ -165,14 +187,14 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
-                            {sidebarProjectsLoading && sidebarProjects.length === 0 ? (
+                            {sidebarProjectsLoading && relevantProjects.length === 0 ? (
                                 <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[13px] text-text-dim/40 font-medium italic select-none">
                                     <div className="w-7 h-7 flex items-center justify-center shrink-0">
                                         <Loader2 size={13} className="shrink-0 animate-spin opacity-40" />
                                     </div>
                                     <span>Cargando...</span>
                                 </div>
-                            ) : sidebarProjects.length === 0 ? (
+                            ) : relevantProjects.length === 0 ? (
                                 <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[13px] text-text-dim/40 font-medium italic select-none">
                                     <div className="w-7 h-7 flex items-center justify-center shrink-0">
                                         <BookOpen size={13} strokeWidth={1} className="shrink-0 opacity-40" />
@@ -183,9 +205,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 <>
                                     <div className="flex flex-col gap-0.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
                                         {shownProjects.map((p) => {
-                                            const projectPath = item.name === 'Investigación'
-                                                ? `/investigacion/workspace/protocolo-investigacion/${p.uuid}`
-                                                : `/investigacion/mis-proyectos/workspace/protocolo-investigacion/${p.uuid}`;
+                                            const projectPath = isInnovacion
+                                                ? `/innovacion/workspace/protocolo-innovacion/${p.uuid}`
+                                                : (item.name === 'Investigación'
+                                                    ? `/investigacion/workspace/protocolo-investigacion/${p.uuid}`
+                                                    : `/investigacion/mis-proyectos/workspace/protocolo-investigacion/${p.uuid}`);
 
                                             const isSubActive = location.pathname.includes(`/workspace/`) && location.pathname.includes(p.uuid);
 

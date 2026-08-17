@@ -170,7 +170,7 @@ namespace diitra_api.Controllers
                 string metadataJson = metadata.GetRawText();
                 var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
 
-                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" || instance.TemplateCode == "PROTOCOLO_INNOVACION")
                 {
                     try
                     {
@@ -239,13 +239,18 @@ namespace diitra_api.Controllers
                                             ? string.Join(", ", participantsList)
                                             : "un docente";
 
+                                        string targetSlug = instance.TemplateCode.ToLower().Replace('_', '-');
+                                        string notifTitle = instance.TemplateCode == "PROTOCOLO_INNOVACION" 
+                                            ? "Propuesta de Innovación Registrada" 
+                                            : "Prepropuesta Registrada";
+
                                         try
                                         {
                                             await notificationService.NotifyByRoleCodesAsync(
-                                                "Prepropuesta Registrada",
+                                                notifTitle,
                                                 $"La prepropuesta del proyecto '{dto.Titulo}' (Autores: {participantes}) ha sido registrada/reenviada y está pendiente de aprobación de idea.",
                                                 new[] { "DIITRA_ADMIN" },
-                                                $"/investigacion/workspace/{instance.TemplateCode}/{dto.Uuid}"
+                                                $"/investigacion/workspace/{targetSlug}/{dto.Uuid}"
                                             );
                                         }
                                         catch (Exception ex)

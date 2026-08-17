@@ -1,0 +1,258 @@
+<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1jb3ZlciIsInR5cGUiOiJjb3ZlciIsInRpdGxlIjoiUG9ydGFkYSBJbnN0aXR1Y2lvbmFsIChSb21ib3MpIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0aXR1bG9TdXBlcmlvciI6IlBST1lFQ1RPIERFIElOTk9WQUNJw5NOIiwiY29sb3JUaXR1bG9TdXBlcmlvciI6ImdvbGQiLCJjYXJyZXJhUG9yRGVmZWN0byI6IlRFQ05PTE9Hw41BIFNVUEVSSU9SIEVOIERFU0FSUk9MTE8gREUgU09GVFdBUkUiLCJwZXJpb2RvUG9yRGVmZWN0byI6IlBFUklPRE8gQUNBRMOJTUlDTyBBQlJJTCAyMDI1IOKAkyBTRVBUSUVNQlJFIDIwMjUiLCJjb2xvclRlbWEiOiIjMWUyYTRhIn19XQ== -->
+<style>
+  * { box-sizing: border-box; }
+  
+  @page {
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
+  }
+
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      {{#if portada_base64}}
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      {{/if}}
+      color: {{ theme.colors.primary }};
+      page-break-after: always;
+  }
+
+  .cover-overlay {
+      padding: 3.5cm 2cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: space-between;
+      height: 100%;
+  }
+
+  .main-label {
+      font-size: 22pt;
+      font-weight: bold;
+      color: #c29b38;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 1cm;
+  }
+
+  .project-theme {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #1b263b;
+      text-transform: uppercase;
+      line-height: 1.3;
+      margin: 1.5cm 0;
+  }
+
+  .carrera-label {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #415a77;
+      text-transform: uppercase;
+  }
+
+  .periodo-label {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #1b263b;
+      text-transform: uppercase;
+  }
+
+  /* Tablas y Secciones Oficiales */
+  .doc-section-header {
+      background-color: #1b263b;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 10.5pt;
+      padding: 6px 10px;
+      text-transform: uppercase;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      border-radius: 2px;
+  }
+
+  table.doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      font-size: 9.5pt;
+  }
+
+  table.doc-table th {
+      background-color: #1b263b;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 6px 8px;
+      text-align: left;
+      border: 1px solid #0d1b2a;
+      font-size: 9pt;
+      text-transform: uppercase;
+  }
+
+  table.doc-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      vertical-align: top;
+  }
+
+  .field-label {
+      font-weight: bold;
+      background-color: #f8fafc;
+      width: 30%;
+      color: #1b263b;
+  }
+
+  .rich-paragraph {
+      text-align: justify;
+      margin-bottom: 10px;
+      line-height: 1.5;
+  }
+</style>
+
+<div class="doc-container">
+  {{#unless is_blind_mode}}
+  <!-- PORTADA INSTITUCIONAL -->
+  <div class="cover-page">
+    <div class="cover-overlay">
+      <div class="main-label">PROYECTO DE INNOVACIÓN</div>
+      <div class="project-theme">{{default titulo "[TÍTULO DEL PROYECTO DE INNOVACIÓN]"}}</div>
+      <div>
+        <div class="carrera-label">{{default carrera "[CARRERA / ÁREA ACADÉMICA]"}}</div>
+        <div class="periodo-label" style="margin-top: 8px;">PERIODO ACADÉMICO: {{default periodo "[PERIODO ACADÉMICO]"}}</div>
+      </div>
+    </div>
+  </div>
+  {{/unless}}
+
+  <!-- 1. IDENTIFICACIÓN DEL PROYECTO -->
+  <div class="doc-section-header">1. IDENTIFICACIÓN DEL PROYECTO</div>
+  <table class="doc-table">
+    <tr>
+      <td class="field-label">NOMBRE DEL PROYECTO:</td>
+      <td>{{default titulo ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">CÓDIGO DEL PROYECTO:</td>
+      <td>{{default codigo_institucional ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">TIPO DE INNOVACIÓN:</td>
+      <td>{{default tipo_innovacion "PRODUCTO / PROCESO"}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">LÍNEA DE INVESTIGACIÓN:</td>
+      <td>{{default linea_investigacion ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">SUBLÍNEA DE INVESTIGACIÓN:</td>
+      <td>{{default sublinea_investigacion ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">CARRERA(S) / ÁREA:</td>
+      <td>{{default carrera ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">ALCANCE:</td>
+      <td>{{default alcance "INSTITUCIONAL"}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">DIRECTOR DEL PROYECTO:</td>
+      <td>{{default director_proyecto ""}}</td>
+    </tr>
+    <tr>
+      <td class="field-label">TIEMPO DE EJECUCIÓN:</td>
+      <td>{{default tiempo_ejecucion ""}}</td>
+    </tr>
+  </table>
+
+  <!-- 2. INVESTIGADORES -->
+  <div class="doc-section-header">2. INVESTIGADORES Y PARTICIPANTES</div>
+  <table class="doc-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Cédula</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Nivel Académico</th>
+        <th>Rol</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each investigadores}}
+      <tr>
+        <td>{{this.nombre}}</td>
+        <td>{{this.cedula}}</td>
+        <td>{{this.email}}</td>
+        <td>{{this.telefono}}</td>
+        <td>{{this.nivel_academico}}</td>
+        <td>{{this.rol}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <!-- 3. DESCRIPCIÓN DEL PROYECTO -->
+  <div class="doc-section-header">3. DESCRIPCIÓN DEL PROYECTO DE INNOVACIÓN</div>
+  
+  <div style="font-weight: bold; margin: 8px 0 4px 0;">3.1 RESUMEN DEL PROYECTO</div>
+  <div class="rich-paragraph">{{{default resumen_proyecto ""}}}</div>
+
+  <div style="font-weight: bold; margin: 8px 0 4px 0;">3.2 OBJETIVOS</div>
+  <div class="rich-paragraph"><strong>General:</strong> {{{default objetivo_general ""}}}</div>
+  <div class="rich-paragraph"><strong>Específicos:</strong> {{{default objetivos_especificos ""}}}</div>
+
+  <div style="font-weight: bold; margin: 8px 0 4px 0;">3.3 ANTECEDENTES Y JUSTIFICACIÓN</div>
+  <div class="rich-paragraph">{{{default antecedentes ""}}}</div>
+  <div class="rich-paragraph">{{{default justificacion_innovacion ""}}}</div>
+
+  <div style="font-weight: bold; margin: 8px 0 4px 0;">3.4 DESCRIPCIÓN TÉCNICA DE LA INNOVACIÓN</div>
+  <div class="rich-paragraph">{{{default descripcion_innovacion ""}}}</div>
+
+  <div style="font-weight: bold; margin: 8px 0 4px 0;">3.5 METODOLOGÍA Y RESULTADOS ESPERADOS</div>
+  <div class="rich-paragraph">{{{default metodologia_aplicacion ""}}}</div>
+  <div class="rich-paragraph">{{{default transferencia_conocimiento ""}}}</div>
+
+  <!-- 4. RECURSOS Y FINANCIAMIENTO -->
+  <div class="doc-section-header">4. RECURSOS, COSTO Y FINANCIAMIENTO</div>
+  <div class="rich-paragraph"><strong>Costo Total Estimado:</strong> ${{default costo_total "0.00"}} USD</div>
+
+  <!-- 5. FIRMAS -->
+  <div style="margin-top: 30px; page-break-inside: avoid;">
+    <div class="doc-section-header">FIRMAS DE RESPONSABILIDAD</div>
+    <table style="width: 100%; border: none; margin-top: 40px;">
+      <tr>
+        <td style="width: 50%; text-align: center; border: none;">
+          ______________________________________<br>
+          <strong>{{default director_proyecto "DIRECTOR DEL PROYECTO"}}</strong><br>
+          Director del Proyecto de Innovación
+        </td>
+        <td style="width: 50%; text-align: center; border: none;">
+          ______________________________________<br>
+          <strong>Ing. Estefani Sánchez Mgtr.</strong><br>
+          Coordinadora de Investigación e Innovación
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>

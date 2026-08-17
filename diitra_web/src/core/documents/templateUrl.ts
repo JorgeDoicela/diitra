@@ -8,8 +8,10 @@ export function slugToTemplateCode(slug: string): string {
     return slug.replace(/-/g, '_').toUpperCase();
 }
 
-export function buildWorkspacePath(templateCode: string, documentUuid: string, search = '', prefix = '/investigacion'): string {
-    return `${prefix}/workspace/${templateCodeToSlug(templateCode)}/${documentUuid}${search}`;
+export function buildWorkspacePath(templateCode: string, documentUuid: string, search = '', prefix?: string): string {
+    const isInnovacion = (templateCode || '').toUpperCase().includes('INNOVACION');
+    const resolvedPrefix = prefix ?? (isInnovacion ? '/innovacion' : '/investigacion');
+    return `${resolvedPrefix}/workspace/${templateCodeToSlug(templateCode)}/${documentUuid}${search}`;
 }
 
 /** Indica si el segmento de URL usa el formato legado en mayúsculas/underscores. */

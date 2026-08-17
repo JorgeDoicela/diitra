@@ -13,6 +13,7 @@ interface WorkspaceHeaderProps {
     isSidebarCollapsed: boolean;
     isPublishingDSpace: boolean;
     urlPrefix: string;
+    templateCode?: string;
     onExportCaces: () => void;
     onPublishDSpace: () => void;
 }
@@ -22,9 +23,14 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     isSidebarCollapsed,
     isPublishingDSpace,
     urlPrefix,
+    templateCode,
     onExportCaces,
     onPublishDSpace
 }) => {
+    const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
+    const returnPath = isInnovacion ? '/innovacion' : urlPrefix;
+    const returnLabel = isInnovacion ? 'Innovación' : (urlPrefix.endsWith('mis-proyectos') ? 'Mis Proyectos' : 'Investigación');
+
     return (
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
@@ -55,7 +61,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                     </>
                 )}
                 <Link 
-                    to={urlPrefix} 
+                    to={returnPath} 
                     className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer inline-flex items-center justify-center"
                     title="Volver"
                 >
@@ -64,10 +70,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 <div className="flex flex-col justify-center">
                     <div className="flex items-center gap-1.5 text-[11px] text-text-dim">
                         <Link 
-                            to={urlPrefix}
+                            to={returnPath}
                             className="hover:text-text-main cursor-pointer transition-colors duration-150 no-underline text-inherit"
                         >
-                            {urlPrefix.endsWith('mis-proyectos') ? 'Mis Proyectos' : 'Investigación'}
+                            {returnLabel}
                         </Link>
                         <ChevronRight size={10} className="opacity-60" />
                         <span className="text-text-main font-semibold font-mono">Proyecto #{currentProject.id}</span>

@@ -2,6 +2,7 @@ using Diitra.Domain.Common.Documents;
 using System.Collections.Generic;
 using System.Linq;
 using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
+using Diitra.Infrastructure.Common.Documents.Templates.Innovacion;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -38,6 +39,20 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: true,
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"dominio\", \"linea_investigacion\", \"sublinea_investigacion\", \"tipo_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"antecedentes\", \"descripcion_proyecto\", \"justificacion\", \"objetivo_general\", \"objetivos_especificos\", \"ods\", \"marco_teorico\", \"metodologia\", \"evaluacion\", \"bibliografia\"]",
                 version: 300);
+
+            // 2. FORMATO PROYECTO DE INNOVACIÓN
+            yield return DocumentTemplate.Create(
+                code: ProyectoInnovacionTemplate.CODE,
+                name: "2. Formato Proyecto de Innovación",
+                description: "Documento oficial para formulación de proyectos de innovación y transferencia tecnológica - ISTPET.",
+                category: DocumentCategory.Protocolo,
+                htmlContent: "<!-- Cargado desde Templates/Innovacion/ProyectoInnovacion.html -->",
+                requiresLopdp: true,
+                supportsBlind: true,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"tipo_innovacion\", \"linea_investigacion\", \"sublinea_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"carrera\", \"alcance\", \"resumen_proyecto\", \"objetivo_general\", \"objetivos_especificos\", \"antecedentes\", \"justificacion_innovacion\", \"descripcion_innovacion\", \"vinculacion_sociedad\", \"convenio_asociado\", \"estado_arte_conceptual\", \"metodologia_aplicacion\", \"metodologia_evaluacion\", \"beneficiarios\", \"viabilidad\", \"transferencia_conocimiento\", \"recursos_disponibles\", \"recursos_necesarios\", \"financiamiento\", \"impactos\"]",
+                version: 100);
 
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)

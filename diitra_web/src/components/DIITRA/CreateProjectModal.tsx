@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign } from 'lucide-react';
+import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign, Sparkles, Lightbulb } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -44,9 +44,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 }) => {
     const navigate = useNavigate();
     const { user, isDocente, isAdmin } = useAuth();
-    useNotifications();
+    const { addToast } = useNotifications();
     const confirm = useConfirm();
 
+    const [modalidad, setModalidad] = useState<'INVESTIGACION' | 'INNOVACION'>('INVESTIGACION');
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [presupuestoEstimado, setPresupuestoEstimado] = useState<string>('');
@@ -94,6 +95,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             try {
                 const parsed = JSON.parse(draftStr);
                 if (parsed) {
+                    if (parsed.modalidad) setModalidad(parsed.modalidad);
                     setTitulo(parsed.titulo || '');
                     setDescripcion(parsed.descripcion || '');
                     setPresupuestoEstimado(parsed.presupuestoEstimado || '');
@@ -155,6 +157,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
         if (hasChanges) {
             const draftData = {
+                modalidad,
                 titulo,
                 descripcion,
                 presupuestoEstimado,
@@ -336,9 +339,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         setError(null);
 
         try {
-            setCreationStepMsg("Creando el expediente digital del proyecto...");
+            const isInnovacion = modalidad === 'INNOVACION';
+            const templateCode = isInnovacion ? 'PROTOCOLO_INNOVACION' : 'PROTOCOLO_INVESTIGACION';
+
+            setCreationStepMsg(isInnovacion 
+                ? "Creando el expediente de innovación y transferencia..."
+                : "Creando el expediente digital de investigación...");
+
             const response = await api.post('/documents/instances', {
-                templateCode: 'PROTOCOLO_INVESTIGACION',
+                templateCode,
                 entityUuid: 'GLOBAL',
                 title: titulo.trim().toUpperCase()
             });
@@ -348,8 +357,28 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 throw new Error("No se recibió el identificador único del proyecto.");
             }
 
-            setCreationStepMsg("Vinculando convocatoria y estructurando secciones CACES...");
-            const initialMetadata = {
+            setCreationStepMsg(isInnovacion
+                ? "Vinculando convocatoria y estructurando secciones de innovación..."
+                : "Vinculando convocatoria y estructurando secciones CACES...");
+
+            const initialMetadata = isInnovacion ? {
+                ...DocumentTemplateRegistry.PROTOCOLO_INNOVACION.schema,
+                Uuid: newUuid,
+                Titulo: titulo.trim().toUpperCase(),
+                IdCarrera: idCarrera,
+                IdConvocatoria: idConvocatoria,
+                DirectorProyecto: user?.nombre_completo || '',
+                DescripcionProyecto: descripcion.trim(),
+                DescripcionInnovacion: descripcion.trim(),
+                ResumenProyecto: descripcion.trim(),
+                CostoTotal: parsedBudget,
+                costoTotal: parsedBudget,
+                costo_total: parsedBudget,
+                PresupuestoEstimado: parsedBudget,
+                presupuestoEstimado: parsedBudget,
+                presupuesto_estimado: parsedBudget,
+                Estado: 'Prepropuesta'
+            } : {
                 ...DocumentTemplateRegistry.PROTOCOLO_INVESTIGACION.schema,
                 Uuid: newUuid,
                 Titulo: titulo.trim().toUpperCase(),
@@ -372,9 +401,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             clearDraft();
 
+            addToast(
+                isInnovacion ? "Propuesta de Innovación Enviada" : "Prepropuesta de Investigación Enviada",
+                isInnovacion 
+                    ? "Su propuesta de innovación y transferencia ha sido enviada exitosamente a la Coordinación."
+                    : "Su prepropuesta de investigación ha sido registrada y enviada para revisión institucional.",
+                "success"
+            );
+
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-                navigate('/investigacion/mis-proyectos', { replace: true });
+                navigate(isInnovacion ? '/innovacion' : '/investigacion/mis-proyectos', { replace: true });
                 onClose();
             }, 800);
 
@@ -501,15 +538,81 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 </div>
                             )}
 
+                            {/* Selector de Modalidad: Investigación vs Innovación */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
+                                    <Sparkles size={10} className="text-text-dim" />
+                                    Modalidad de Postulación Institucional
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setModalidad('INVESTIGACION')}
+                                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                                            modalidad === 'INVESTIGACION'
+                                                ? 'bg-brand/[0.06] border-brand shadow-[0_0_12px_rgba(0,112,243,0.12)]'
+                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between w-full">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${modalidad === 'INVESTIGACION' ? 'bg-brand text-white' : 'bg-bg-deep text-text-dim'}`}>
+                                                    <BookOpen size={14} />
+                                                </div>
+                                                <span className="text-xs font-bold text-text-main">Investigación</span>
+                                            </div>
+                                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
+                                                modalidad === 'INVESTIGACION' ? 'bg-brand/20 text-brand' : 'bg-bg-deep text-text-dim'
+                                            }`}>
+                                                I+D+i
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-text-dim leading-relaxed">
+                                            Proyectos científicos, marco teórico, ODS y metodología académica.
+                                        </p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setModalidad('INNOVACION')}
+                                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                                            modalidad === 'INNOVACION'
+                                                ? 'bg-amber-500/[0.08] border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between w-full">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${modalidad === 'INNOVACION' ? 'bg-amber-500 text-white' : 'bg-bg-deep text-text-dim'}`}>
+                                                    <Lightbulb size={14} />
+                                                </div>
+                                                <span className="text-xs font-bold text-text-main">Innovación</span>
+                                            </div>
+                                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
+                                                modalidad === 'INNOVACION' ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400' : 'bg-bg-deep text-text-dim'
+                                            }`}>
+                                                i+TT
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-text-dim leading-relaxed">
+                                            Prototipos, tipo de innovación (producto/proceso) y transferencia ISTPET.
+                                        </p>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
                                     <BookOpen size={10} className="text-text-dim" />
-                                    Tema / Nombre del Proyecto (Mayúsculas)
+                                    {modalidad === 'INNOVACION' ? 'Tema / Proyecto de Innovación (Mayúsculas)' : 'Tema / Nombre del Proyecto (Mayúsculas)'}
                                 </label>
                                 <textarea
                                     value={titulo}
                                     onChange={(e) => setTitulo(e.target.value)}
-                                    placeholder="EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN MEDIANTE PLATAFORMA DIGITAL..."
+                                    placeholder={modalidad === 'INNOVACION'
+                                        ? "EJ: SISTEMA AUTOMATIZADO IOT PARA MONITOREO DE CULTIVOS HIDROPÓNICOS Y TRANSFERENCIA TECNOLÓGICA..."
+                                        : "EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN MEDIANTE PLATAFORMA DIGITAL..."
+                                    }
                                     className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none !placeholder:text-text-dim/30"
                                     required
                                 />

@@ -62,11 +62,15 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     handleIniciarEjecucion,
     navigate
 }) => {
+    const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
+
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">
             <div className="flex items-center gap-2.5 mb-2">
                 <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
+                <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">
+                    {isInnovacion ? 'Flujo de Innovación e i+TT' : 'Flujo Institucional CACES'}
+                </h3>
             </div>
 
             <div className="relative pl-8 space-y-4 mt-6">
@@ -165,14 +169,16 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         {phase.label}
                                     </h3>
                                 </div>
-                                <p className="text-[11px] text-text-dim mt-1.5 leading-relaxed">
-                                    {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
+                                <p className="text-xs text-text-dim mt-1.5 leading-relaxed font-normal">
+                                    {phase.id === 'Borrador' && (
+                                        isInnovacion 
+                                            ? 'Construcción colaborativa del proyecto de innovación y transferencia tecnológica.' 
+                                            : 'Construcción colaborativa del protocolo de investigación por parte del equipo.'
+                                    )}
                                     {phase.id === 'Enviado' && (
-                                        isAdmin
-                                            ? 'Revisión de requisitos CACES, carga horaria, firmas y presupuesto.'
-                                            : currentProject.status === 'En Corrección'
-                                                ? 'El Administrador ha solicitado correcciones puntuales en su protocolo antes de la evaluación.'
-                                                : 'El proyecto está siendo revisado técnicamente por el administrador.'
+                                        (currentProject.status === 'Prepropuesta' || currentProject.status === 'Prepropuesta Rechazada')
+                                            ? 'Validación y dictamen preliminar de la idea de proyecto por parte del Administrador.'
+                                            : 'Revisión formal de requisitos, carga horaria, firmas y presupuesto institucional.'
                                     )}
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
@@ -183,7 +189,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 {phase.id === 'Borrador' && (
                                     <div className="mt-4">
                                         <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PROTOCOLO_INVESTIGACION')}`, urlPrefix)}
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix)}
                                             onClick={(e) => { e.stopPropagation(); }}
                                             className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
                                                 ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
@@ -191,7 +197,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 }`}
                                         >
                                             <FileText size={14} />
-                                            <span>{(currentProject.puedeEditar === false || isPast) ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
+                                            <span>
+                                                {(currentProject.puedeEditar === false || isPast) 
+                                                    ? (isInnovacion ? 'Ver Proyecto' : 'Ver Protocolo') 
+                                                    : (isInnovacion ? 'Editar Proyecto de Innovación' : 'Editar Protocolo')}
+                                            </span>
                                         </Link>
                                     </div>
                                 )}
@@ -209,7 +219,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             </Link>
                                         ) : isCurrentActive && !isAdmin && currentProject.status === 'En Corrección' ? (
                                             <Link
-                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PROTOCOLO_INVESTIGACION')}`, urlPrefix)}
+                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix)}
                                                 onClick={(e) => { e.stopPropagation(); }}
                                                 className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.2)] !bg-amber-500 hover:!bg-amber-600 !text-white"
                                             >
