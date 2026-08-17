@@ -3,7 +3,7 @@ import { PageHeader } from '../../../components/Common/PageHeader';
 import { certificatesService, type IssuedCertificateDto } from '../../../services/certificatesService';
 import {
     Award, Download, ExternalLink, Calendar, User, ShieldCheck,
-    Loader2, QrCode
+    Loader2, QrCode, RotateCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VercelUsageCard } from '../../Investigacion/Convocatorias/components/VercelUsageCard';
@@ -79,13 +79,23 @@ export const MyCertificatesPage: React.FC = () => {
                 title="Mis Certificados de Completación"
                 description="Certificados oficiales otorgados por la Dirección de Investigación e Innovación a estudiantes, docentes, directores y miembros de grupos."
             >
-                <Link
-                    to="/verificacion"
-                    className="btn-vercel-secondary flex items-center gap-2 shrink-0 no-underline"
-                >
-                    <QrCode size={14} />
-                    <span>Verificar Código QR</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={fetchCertificates}
+                        className="btn-vercel-secondary flex items-center gap-1.5 shrink-0"
+                        title="Actualizar listado de certificados"
+                    >
+                        <RotateCw size={14} className={loading ? 'animate-spin' : ''} />
+                        <span>Actualizar</span>
+                    </button>
+                    <Link
+                        to="/verificacion"
+                        className="btn-vercel-secondary flex items-center gap-2 shrink-0 no-underline"
+                    >
+                        <QrCode size={14} />
+                        <span>Verificar Código QR</span>
+                    </Link>
+                </div>
             </PageHeader>
 
             {/* ── TWO-COLUMN LAYOUT — estilo institucional Vercel Geist ─── */}

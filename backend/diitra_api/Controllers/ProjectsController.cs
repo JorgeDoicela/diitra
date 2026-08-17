@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
+using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers
 {
@@ -126,6 +129,113 @@ namespace diitra_api.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/devolver-informe-final")]
+        public async Task<IActionResult> DevolverInformeFinal(
+            string id,
+            [FromQuery] string observation,
+            [FromServices] DiitraContext context,
+            [FromServices] diitra_application.Common.Notifications.INotificationService notificationService)
+        {
+            if (!await CanCurrentUserManageProjectAsync(id))
+            {
+                return StatusCode(403, new { message = "No tienes permisos para auditar este proyecto." });
+            }
+
+            var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == id);
+            if (project == null) return NotFound("Proyecto no encontrado");
+
+            // 1. Buscar y reabrir instancias de Informe Final
+            var docInstances = await context.DocumentInstances
+                .Where(d => d.EntityUuid == project.Uuid && 
+                           (d.TemplateCode == "INFORME_FINAL_INVESTIGACION" || d.TemplateCode == "INFORME_FINAL_INNOVACION"))
+                .ToListAsync();
+
+            foreach (var doc in docInstances)
+            {
+                doc.ReopenForRevision();
+                var firmas = await context.InvDocumentoFirmas
+                    .Where(f => (f.DocumentoUuid == doc.Uuid || f.DocumentoUuid == project.Uuid) && f.EsValida)
+                    .ToListAsync();
+                foreach (var f in firmas)
+                {
+                    f.EsValida = false;
+                }
+            }
+
+            // 2. Registrar Trazabilidad Inmutable
+            var userSigafiRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int idUsuario = (await _projectOrchestrator.GetUserInternalIdBySigafiIdAsync(userSigafiRef ?? "")) ?? 1;
+
+            var trazabilidad = new InvTrazabilidadProyecto
+            {
+                Uuid = Guid.NewGuid().ToString(),
+                IdProyecto = project.IdProyecto,
+                IdUsuario = idUsuario,
+                EstadoAnterior = project.Estado,
+                EstadoNuevo = project.Estado,
+                Observacion = $"Devolución de Informe Final con observaciones: {observation}",
+                FechaTransicion = DateTime.Now
+            };
+            context.InvTrazabilidadProyectos.Add(trazabilidad);
+
+            await context.SaveChangesAsync();
+
+            // 3. Notificar a los participantes del proyecto
+            try
+            {
+                var participantUserIds = await context.InvProyectoParticipantes
+                    .Where(pp => pp.IdProyecto == project.IdProyecto && pp.Activo != false)
+                    .Select(pp => pp.IdUsuario)
+                    .Distinct()
+                    .ToListAsync();
+
+                string actionUrl = $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{project.Uuid}?edit=informe-final-investigacion";
+
+                foreach (var userId in participantUserIds)
+                {
+                    await notificationService.NotifyUserAsync(
+                        userId,
+                        "Informe Final Devuelto para Correcciones",
+                        $"El Informe Final del proyecto '{project.Titulo}' ha sido devuelto con observaciones: {observation}",
+                        "INVESTIGACION",
+                        actionUrl
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA] Error al notificar devolución de informe final: {ex.Message}");
+            }
+
+            return Ok(new { message = "Informe final devuelto correctamente para ajustes del docente." });
+        }
+
+        [HttpPost("{id}/issue-certificates")]
+        public async Task<IActionResult> IssueProjectCertificatesByUuid(
+            string id,
+            [FromServices] DiitraContext context,
+            [FromServices] Diitra.Application.Common.Certificates.ICertificateIssuanceService certificateService)
+        {
+            var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == id);
+            if (project == null) return NotFound("Proyecto no encontrado");
+
+            try
+            {
+                string issuedBy = User?.Identity?.Name ?? "Coordinación de Investigación";
+                var certificates = await certificateService.IssueProjectCompletionCertificatesAsync(project.IdProyecto, issuedBy);
+                return Ok(new
+                {
+                    message = "Certificados emitidos exitosamente.",
+                    count = certificates.Count(),
+                    certificates
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Error al emitir certificados: {ex.Message}" });
             }
         }
 

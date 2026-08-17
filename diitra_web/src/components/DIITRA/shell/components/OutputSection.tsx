@@ -1,8 +1,10 @@
 import React from 'react';
-import { Settings, FileText, Users, Shield, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, FileText, Users, Shield, CheckCircle, Clock, ArrowRight } from 'lucide-react';
 import { FullscreenLoader } from '../../../Common/FullscreenLoader';
 import { getDocumentSignatures } from '../../../../services/signaturesService';
 import { SignatureBlock } from '../../SignatureBlock';
+import { useAuth } from '../../../../api/AuthContext';
 
 export interface OutputSectionProps {
     title: string;
@@ -51,6 +53,8 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     handleSign,
     signatureRefreshTrigger
 }) => {
+    const { isAdmin } = useAuth();
+    const navigate = useNavigate();
     const [signatures, setSignatures] = React.useState<any[]>([]);
     const [hasLoadedSigs, setHasLoadedSigs] = React.useState(false);
 
@@ -74,7 +78,25 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
         return () => { isMounted = false; };
     }, [documentUuid, formData.Uuid, formData.uuid, signatureRefreshTrigger]);
 
-    const isDocumentSigned = signatures.length > 0;
+    const isEditingOrCorrection = React.useMemo(() => {
+        if (!projectStatus) return true;
+        const normalized = projectStatus.toLowerCase().trim();
+        return (
+            normalized === 'borrador' ||
+            normalized === 'en edición' ||
+            normalized === 'en edicion' ||
+            normalized === 'en corrección' ||
+            normalized === 'en correccion' ||
+            normalized === 'corregir' ||
+            normalized === 'con observaciones' ||
+            normalized === 'devuelto' ||
+            normalized === 'prepropuesta' ||
+            normalized === 'prepropuesta rechazada'
+        );
+    }, [projectStatus]);
+
+    const activeSignatures = signatures.filter(s => s.esValida !== false && s.estado !== 2);
+    const isDocumentSigned = !isEditingOrCorrection && activeSignatures.length > 0;
 
     return (
         <div className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-y-auto lg:overflow-hidden custom-scrollbar">
@@ -124,18 +146,62 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                             />
                         ) : (
                             <div className="flex flex-col gap-4">
+                            {isEditingOrCorrection && signatures.length > 0 && (
+                                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1.5 animate-fade-in">
+                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                        <Clock size={14} /> Documento en Corrección
+                                    </p>
+                                    <p className="text-[11px] text-text-dim leading-relaxed">
+                                        El proyecto fue devuelto para ajustes por el revisor. Una vez completadas las correcciones solicitadas, aplique su firma a continuación para certificar y reenviar el protocolo.
+                                    </p>
+                                </div>
+                            )}
+
                             {isDocumentSigned ? (
-                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
+                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-3 animate-fade-in">
                                     <div className="flex justify-center">
-                                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-sm">
                                             <CheckCircle size={20} />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-text-main">Documento Firmado Oficialmente</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
-                                            Este documento ya ha sido firmado electrónicamente y cuenta con registro inmutable.
+                                            {projectStatus === 'Enviado' || projectStatus === 'En Revisión'
+                                                ? 'El documento cuenta con firma electrónica y ha sido remitido a la etapa de Revisión del Administrador.'
+                                                : 'Este documento cuenta con firma electrónica oficial y registro inmutable de trazabilidad.'}
                                         </p>
+                                    </div>
+
+                                    <div className="pt-1 flex flex-col gap-2">
+                                        {isAdmin && (projectStatus === 'Enviado' || projectStatus === 'En Revisión') && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const pId = formData.EntityUuid || formData.entityUuid || formData.Uuid || formData.uuid || documentUuid;
+                                                    if (pId) navigate(`/investigacion/revision-tecnica/${pId}`);
+                                                }}
+                                                className="w-full py-2 px-3 bg-text-main hover:bg-text-main/90 text-bg-deep rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                            >
+                                                <Shield size={14} />
+                                                <span>Ir a Revisión Técnica</span>
+                                                <ArrowRight size={13} />
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const url = new URL(window.location.href);
+                                                url.searchParams.delete('edit');
+                                                url.searchParams.delete('section');
+                                                navigate(url.pathname);
+                                            }}
+                                            className="w-full py-2 px-3 border border-border-thin bg-surface hover:bg-surface-hover text-text-main rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                        >
+                                            <Settings size={14} />
+                                            <span>Ver Flujo Institucional</span>
+                                        </button>
                                     </div>
                                 </div>
                             ) : !canSign ? (

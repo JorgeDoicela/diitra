@@ -90,7 +90,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
             try {
                 // 1. Registrar Service Worker de forma explícita
-                const registration = await navigator.serviceWorker.register('/sw.js');
+                const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
 
                 // 2. Esperar a que el service worker esté completamente listo
                 await navigator.serviceWorker.ready;

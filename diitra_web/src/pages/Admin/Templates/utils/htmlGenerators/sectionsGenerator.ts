@@ -1,5 +1,5 @@
-import type { DocumentBlock, IdentificationField, ImpactCategory } from '../../types';
-import { DEFAULT_IMPACT_CATEGORIES } from '../../types';
+import type { DocumentBlock, IdentificationField, ImpactCategory, TechnicalSubsection } from '../../types';
+import { DEFAULT_IMPACT_CATEGORIES, DEFAULT_TECHNICAL_SUBSECTIONS } from '../../types';
 import { COLORS, headerBg } from './generatorStyles';
 
 export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
@@ -166,7 +166,7 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
 };
 
 export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
-    const c: any = block.config;
+    const c: any = block.config || {};
     const layoutMode = c.technicalLayoutMode || 'table_2col';
     const headerColorKey = c.technicalHeaderColor || 'navy';
     const resolveHeaderBg = (col: string) => {
@@ -179,6 +179,7 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         }
     };
     const headerBgCol = resolveHeaderBg(headerColorKey);
+    const goldColor = '#b8912e';
 
     const sanitizeScribanVar = (rawVar?: string, fallbackKey?: string) => {
         let raw = (rawVar || fallbackKey || 'contenido').trim();
@@ -200,9 +201,11 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         return p ? `${p} ${t}`.trim().toUpperCase() : t.toUpperCase();
     };
 
-    const activeSections: any[] = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
-        ? c.technicalSections.filter((s: any) => s.enabled !== false)
-        : [];
+    const rawSections = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
+        ? c.technicalSections
+        : DEFAULT_TECHNICAL_SUBSECTIONS;
+
+    const activeSections: any[] = rawSections.filter((s: any) => s.enabled !== false);
 
     if (activeSections.length === 0) return '';
 
@@ -211,12 +214,22 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     if (layoutMode === 'bento_cards') {
         const cardHtmlList = activeSections.map((sec: any) => {
             const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.key);
-            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} "Sin contenido redactado."}}}`;
+            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
+            const pascalVar = (sec.fieldKey || sec.key || '').trim();
+            const isGroup = sec.isGroupHeader || sec.hasContent === false;
+            
+            if (isGroup) {
+                return `
+      <div style="margin-bottom: 12px; border: 1.5px solid ${goldColor}; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: ${goldColor}; color: #000000; padding: 8px 10px; font-weight: bold; font-size: 9pt; text-align: center; text-transform: uppercase;">
+        ${displayTitle}
+      </div>`;
+            }
+
+            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
 
             return `
       <div style="margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
-        <div style="background-color: ${headerBgCol}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
+        <div style="background-color: ${sec.variant === 'banner_gold' ? goldColor : headerBgCol}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
           ${displayTitle}
         </div>
         <div style="padding: 10px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
@@ -232,8 +245,18 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     } else if (layoutMode === 'headings_text') {
         const secHtmlList = activeSections.map((sec: any) => {
             const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.key);
-            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} "Sin contenido redactado."}}}`;
+            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
+            const pascalVar = (sec.fieldKey || sec.key || '').trim();
+            const isGroup = sec.isGroupHeader || sec.hasContent === false;
+
+            if (isGroup) {
+                return `
+      <div style="margin: 18px 0 10px 0; padding: 6px 10px; background-color: ${goldColor}; color: #000000; font-weight: bold; font-size: 9pt; text-transform: uppercase; text-align: center;">
+        ${displayTitle}
+      </div>`;
+            }
+
+            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
 
             return `
       <div style="margin-bottom: 16px; page-break-inside: avoid;">
@@ -251,22 +274,69 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
       ${secHtmlList.join('')}
     </div>`;
     } else {
-        const rowsHtml = activeSections.map((sec: any) => {
-            const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.key);
-            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} "Sin contenido redactado."}}}`;
+        // Matriz Reticular Interactiva (table_2col)
+        const renderedRows: string[] = [];
+        let i = 0;
 
-            return `
-      <tr>
+        while (i < activeSections.length) {
+            const sec = activeSections[i];
+            const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
+            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
+            const pascalVar = (sec.fieldKey || sec.key || '').trim();
+            const colSpan = sec.colSpan || 2;
+            const variant = sec.variant || 'standard';
+            const isGroup = sec.isGroupHeader || sec.hasContent === false;
+
+            if (isGroup || variant === 'banner_gold') {
+                renderedRows.push(`
+      <tr style="page-break-inside: avoid;">
+        <td colspan="2" style="background-color: ${goldColor} !important; color: #000000 !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; border: 1px solid #cbd5e1; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+      </tr>`);
+                i++;
+            } else if (colSpan === 1 || variant === 'banner_navy') {
+                const nextSec = activeSections[i + 1];
+                if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy') && !nextSec.isGroupHeader) {
+                    const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
+                    const nextVarName = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey || nextSec.key);
+                    const nextPascalVar = (nextSec.fieldKey || nextSec.key || '').trim();
+
+                    const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+                    const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} "Sin contenido redactado."}}}`;
+
+                    renderedRows.push(`
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${nextTitle}</td>
+      </tr>
+      <tr style="page-break-inside: avoid;">
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag2}</td>
+      </tr>`);
+                    i += 2;
+                } else {
+                    const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+                    renderedRows.push(`
+      <tr style="page-break-inside: avoid;">
         <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${fieldScribanTag}</td>
-      </tr>`;
-        }).join('\n');
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+      </tr>`);
+                    i++;
+                }
+            } else {
+                const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+                renderedRows.push(`
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+      </tr>`);
+                i++;
+            }
+        }
 
         bodyHtml = `
     <table style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
       <tbody>
-        ${rowsHtml}
+        ${renderedRows.join('\n')}
       </tbody>
     </table>`;
     }

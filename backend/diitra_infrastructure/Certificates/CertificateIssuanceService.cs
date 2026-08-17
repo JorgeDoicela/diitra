@@ -44,18 +44,81 @@ namespace Diitra.Infrastructure.Certificates
             }
 
             var results = new List<IssuedCertificateResultDto>();
-            var participantes = proyecto.InvProyectoParticipantes.ToList();
+            var recipients = new List<(string Name, string Cedula, string Role)>();
 
-            if (!participantes.Any())
+            foreach (var part in proyecto.InvProyectoParticipantes)
             {
-                _logger.LogWarning("El proyecto {ProyectoId} no tiene participantes asociados en inv_proyecto_participantes.", proyectoId);
+                string name = part.IdUsuarioNavigation?.Nombre ?? "Investigador / Participante";
+                string cedula = part.IdUsuarioNavigation?.IdSigafi ?? part.IdUsuario.ToString();
+                string role = part.EsDirector == true ? "Director de Proyecto" : (part.Rol ?? part.TipoParticipante ?? "Investigador");
+                recipients.Add((name, cedula, role));
             }
 
-            foreach (var part in participantes)
+            // Fallback 1: Firmantes oficiales del proyecto en InvDocumentoFirmas
+            var docUuids = await _db.DocumentInstances
+                .Where(d => d.EntityUuid == proyecto.Uuid)
+                .Select(d => d.Uuid)
+                .ToListAsync(ct);
+
+            var firmas = await _db.InvDocumentoFirmas
+                .AsNoTracking()
+                .Where(f => (f.DocumentoUuid == proyecto.Uuid || docUuids.Contains(f.DocumentoUuid)) && f.EsValida)
+                .ToListAsync(ct);
+
+            foreach (var firma in firmas)
             {
-                string recipientName = part.IdUsuarioNavigation?.Nombre ?? "Investigador / Participante";
-                string recipientCedula = part.IdUsuarioNavigation?.IdSigafi ?? part.IdUsuario.ToString();
-                string recipientRole = part.EsDirector == true ? "Director de Proyecto" : (part.Rol ?? part.TipoParticipante ?? "Investigador");
+                string fName = "";
+                if (!string.IsNullOrEmpty(firma.FirmaMetadata))
+                {
+                    try
+                    {
+                        using var docF = JsonDocument.Parse(firma.FirmaMetadata);
+                        if (docF.RootElement.TryGetProperty("nombre_completo", out var nc)) fName = nc.GetString() ?? "";
+                        if (string.IsNullOrEmpty(fName) && docF.RootElement.TryGetProperty("NombreCompleto", out var ncc)) fName = ncc.GetString() ?? "";
+                    }
+                    catch { }
+                }
+                if (string.IsNullOrEmpty(fName)) fName = "Director de Proyecto";
+
+                if (!string.IsNullOrEmpty(firma.FirmanteId) && !recipients.Any(r => r.Cedula == firma.FirmanteId))
+                {
+                    recipients.Add((fName, firma.FirmanteId, firma.FirmanteRol ?? "Director de Proyecto"));
+                }
+            }
+
+            // Fallback 2: Parsear MetadataCacesJson
+            if (!string.IsNullOrEmpty(proyecto.MetadataCacesJson))
+            {
+                try
+                {
+                    using var docMeta = JsonDocument.Parse(proyecto.MetadataCacesJson);
+                    if (docMeta.RootElement.TryGetProperty("investigadores", out var invList) && invList.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var elem in invList.EnumerateArray())
+                        {
+                            string name = elem.TryGetProperty("nombres_completos", out var n) ? n.GetString() ?? "" : "";
+                            if (string.IsNullOrEmpty(name) && elem.TryGetProperty("nombresCompletos", out var nc)) name = nc.GetString() ?? "";
+                            if (string.IsNullOrEmpty(name) && elem.TryGetProperty("nombre", out var nom)) name = nom.GetString() ?? "";
+                            
+                            string cedula = elem.TryGetProperty("cedula", out var c) ? c.GetString() ?? "" : "";
+                            string role = elem.TryGetProperty("rol", out var ro) ? ro.GetString() ?? "Investigador" : "Investigador";
+
+                            if (!string.IsNullOrEmpty(name) && !recipients.Any(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase) || (!string.IsNullOrEmpty(cedula) && r.Cedula == cedula)))
+                            {
+                                recipients.Add((name, string.IsNullOrEmpty(cedula) ? name : cedula, role));
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            Console.WriteLine($"[DIITRA] [CertificateService] Iniciando emisión para proyecto ID {proyectoId} ({proyecto.Titulo})...");
+            Console.WriteLine($"[DIITRA] [CertificateService] Total destinatarios encontrados: {recipients.Count}");
+
+            foreach (var (recipientName, recipientCedula, recipientRole) in recipients)
+            {
+                Console.WriteLine($"[DIITRA] [CertificateService] Generando certificado para: {recipientName} (ID/Cédula: {recipientCedula}, Rol: {recipientRole})");
 
                 var certificateData = new
                 {
@@ -101,6 +164,8 @@ namespace Diitra.Infrastructure.Certificates
                     inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
                     _db.DocumentInstances.Add(inst);
 
+                    Console.WriteLine($"[DIITRA] [CertificateService] Certificado emitido exitosamente. TraceabilityCode: {docResult.TraceabilityCode}");
+
                     results.Add(new IssuedCertificateResultDto
                     {
                         DocumentUuid = docResult.TraceabilityCode,
@@ -116,6 +181,7 @@ namespace Diitra.Infrastructure.Certificates
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[DIITRA] [CertificateService] ERROR al generar certificado para {recipientName}: {ex.Message}");
                     _logger.LogError(ex, "Error al generar certificado para participante {Cedula} en proyecto {ProyectoId}", recipientCedula, proyectoId);
                 }
             }
@@ -123,6 +189,7 @@ namespace Diitra.Infrastructure.Certificates
             if (results.Count > 0)
             {
                 await _db.SaveChangesAsync(ct);
+                Console.WriteLine($"[DIITRA] [CertificateService] {results.Count} certificados guardados en BD con éxito.");
             }
 
             return results;
@@ -351,16 +418,39 @@ namespace Diitra.Infrastructure.Certificates
         {
             if (string.IsNullOrWhiteSpace(userCedulaOrId)) return Enumerable.Empty<IssuedCertificateResultDto>();
 
+            var userIdentities = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { userCedulaOrId };
+
+            // Buscar usuario en base de datos para obtener todos sus alias/identificadores
+            var dbUser = await _db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.IdSigafi == userCedulaOrId || u.EmailInstitucional == userCedulaOrId || u.Nombre == userCedulaOrId || u.IdUsuario.ToString() == userCedulaOrId, ct);
+
+            if (dbUser != null)
+            {
+                userIdentities.Add(dbUser.IdUsuario.ToString());
+                if (!string.IsNullOrEmpty(dbUser.IdSigafi)) userIdentities.Add(dbUser.IdSigafi);
+                if (!string.IsNullOrEmpty(dbUser.EmailInstitucional)) userIdentities.Add(dbUser.EmailInstitucional);
+                if (!string.IsNullOrEmpty(dbUser.Nombre)) userIdentities.Add(dbUser.Nombre);
+            }
+
             var instances = await _db.DocumentInstances
                 .AsNoTracking()
-                .Where(d => d.TemplateCode.StartsWith("CERTIFICADO_") && 
-                    (d.CreatedBy == userCedulaOrId || d.EntityUuid == userCedulaOrId || (d.DataSnapshotJson != null && d.DataSnapshotJson.Contains(userCedulaOrId))))
+                .Where(d => d.TemplateCode.StartsWith("CERTIFICADO_"))
                 .OrderByDescending(d => d.CreatedAt)
                 .ToListAsync(ct);
 
+            // Filtrar en memoria por cualquiera de las identidades válidas
+            var matchedInstances = instances.Where(d =>
+                userIdentities.Contains(d.CreatedBy ?? "") ||
+                userIdentities.Contains(d.EntityUuid ?? "") ||
+                userIdentities.Any(id => d.DataSnapshotJson != null && d.DataSnapshotJson.Contains(id))
+            ).ToList();
+
+            Console.WriteLine($"[DIITRA] [GetCertificatesForUserAsync] Solicitado: '{userCedulaOrId}'. Alias: [{string.Join(", ", userIdentities)}]. Total certificados en BD: {instances.Count}. Coincidentes: {matchedInstances.Count}");
+
             var list = new List<IssuedCertificateResultDto>();
 
-            foreach (var inst in instances)
+            foreach (var inst in matchedInstances)
             {
                 string recipientName = "Usuario";
                 string recipientRole = "Participante";

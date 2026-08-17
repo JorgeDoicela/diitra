@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
 using Diitra.Application.Research;
+using Diitra.Application.Common.Certificates;
 using diitra_application.Security;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.DependencyInjection;
@@ -405,6 +407,31 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
+                    // 1. Invalidar firmas previas del protocolo devuelto para permitir re-firma
+                    var docInstances = await _context.DocumentInstances
+                        .Where(d => d.EntityUuid == proyecto.Uuid)
+                        .ToListAsync();
+
+                    var docUuids = docInstances.Select(d => d.Uuid).ToList();
+                    docUuids.Add(proyecto.Uuid);
+
+                    var existingFirmas = await _context.InvDocumentoFirmas
+                        .Where(f => docUuids.Contains(f.DocumentoUuid) && f.EsValida)
+                        .ToListAsync();
+
+                    foreach (var firma in existingFirmas)
+                    {
+                        firma.EsValida = false;
+                    }
+
+                    foreach (var docInst in docInstances)
+                    {
+                        docInst.ReopenForRevision();
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    // 2. Notificar a los participantes del proyecto
                     var participantUserIds = await _context.InvProyectoParticipantes
                         .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
                         .Select(pp => pp.IdUsuario)
@@ -430,7 +457,52 @@ namespace Diitra.Infrastructure.Research
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[DIITRA] Error al notificar devolución técnica: {ex.Message}");
+                    Console.WriteLine($"[DIITRA] Error al procesar devolución técnica: {ex.Message}");
+                }
+            }
+            else if (nuevoEstado == "Finalizado")
+            {
+                try
+                {
+                    // 1. Emitir certificados institucionales de completación para todos los participantes
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var certService = scope.ServiceProvider.GetService<ICertificateIssuanceService>();
+                        if (certService != null)
+                        {
+                            Console.WriteLine($"[DIITRA] Emitiendo certificados de completación para proyecto {proyecto.IdProyecto}...");
+                            await certService.IssueProjectCompletionCertificatesAsync(proyecto.IdProyecto, "Coordinación de Investigación");
+                        }
+                    }
+                    catch (Exception exCert)
+                    {
+                        Console.WriteLine($"[DIITRA] Error al emitir certificados de culminación: {exCert.Message}");
+                    }
+
+                    // 2. Notificar a todos los participantes
+                    var participantUserIds = await _context.InvProyectoParticipantes
+                        .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                        .Select(pp => pp.IdUsuario)
+                        .Distinct()
+                        .ToListAsync();
+
+                    string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
+
+                    foreach (var userId in participantUserIds)
+                    {
+                        await _notificationService.NotifyUserAsync(
+                            userId,
+                            "Proyecto Culminado Oficialmente",
+                            $"El proyecto '{proyecto.Titulo}' ha sido aprobado formalmente en su etapa de Cierre Institucional CACES. Sus certificados ya están disponibles en su perfil.",
+                            "INVESTIGACION",
+                            actionUrl
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error en notificación de finalización de proyecto: {ex.Message}");
                 }
             }
  

@@ -28,6 +28,11 @@ const RecycleBinPage: React.FC = () => {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const fetchItems = async () => {
+        if (activeTab === 'convocatorias' && !isAdmin) {
+            setActiveTab('projects');
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await api.get(`/recyclebin/${activeTab}`);
@@ -41,7 +46,7 @@ const RecycleBinPage: React.FC = () => {
 
     useEffect(() => {
         fetchItems();
-    }, [activeTab]);
+    }, [activeTab, isAdmin]);
 
     const handleRestore = async (uuid: string, title: string) => {
         const entityLabel = activeTab === 'projects' ? 'proyecto' : activeTab === 'convocatorias' ? 'convocatoria' : 'grupo';
@@ -108,10 +113,10 @@ const RecycleBinPage: React.FC = () => {
     };
 
     const tabs = [
-        { id: 'projects', name: 'Proyectos', icon: FileText, roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
-        { id: 'convocatorias', name: 'Convocatorias', icon: Calendar, roles: ['DIITRA_ADMIN'] },
-        { id: 'groups', name: 'Grupos de Investigación', icon: Award, roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] }
-    ].filter(tab => tab.roles.includes('DIITRA_ADMIN') || !tab.roles.includes('DIITRA_ADMIN') || (tab.roles.includes('DIITRA_DOCENTE') && !isAdmin));
+        { id: 'projects', name: 'Proyectos', icon: FileText, adminOnly: false },
+        { id: 'convocatorias', name: 'Convocatorias', icon: Calendar, adminOnly: true },
+        { id: 'groups', name: 'Grupos de Investigación', icon: Award, adminOnly: false }
+    ].filter(tab => !tab.adminOnly || isAdmin);
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-6">

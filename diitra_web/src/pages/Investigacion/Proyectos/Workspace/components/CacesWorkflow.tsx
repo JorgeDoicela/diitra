@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare,
-    AlertCircle, BarChart, Activity, Shield, FileCheck
+    AlertCircle, BarChart, Activity, Shield, FileCheck, Clock, Award
 } from 'lucide-react';
+import api from '../../../../../api/axios_config';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
 const WorkflowPhases = [
@@ -63,6 +64,55 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     navigate
 }) => {
     const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
+    const [isFinalReportSigned, setIsFinalReportSigned] = useState(false);
+    const [emitiendoCertificados, setEmitiendoCertificados] = useState(false);
+
+    const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
+
+    const handleEmitirCertificados = async () => {
+        if (!resolvedProjectUuid) return;
+        setEmitiendoCertificados(true);
+        try {
+            const res = await api.post(`/projects/${resolvedProjectUuid}/issue-certificates`);
+            alert(res.data?.message || 'Certificados emitidos con éxito para todos los integrantes.');
+            navigate('/mis-certificados');
+        } catch (err: any) {
+            alert(err?.response?.data?.error || 'Error al emitir certificados');
+        } finally {
+            setEmitiendoCertificados(false);
+        }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const checkFinalReport = async () => {
+            if (!resolvedProjectUuid || resolvedProjectUuid.startsWith('temp_')) return;
+            try {
+                const res = await api.get('/documents/instances/resolve', {
+                    params: {
+                        templateCode: finalReportTemplateCode,
+                        entityUuid: resolvedProjectUuid
+                    }
+                });
+                if (res.data?.uuid && isMounted) {
+                    const sigsRes = await api.get(`/signatures/document/${res.data.uuid}`);
+                    const validSigs = Array.isArray(sigsRes.data) ? sigsRes.data.filter((s: any) => s.es_valida !== false) : [];
+                    if (isMounted) {
+                        setIsFinalReportSigned(validSigs.length > 0 || res.data.state === 'Signed');
+                    }
+                }
+            } catch {
+                // Silencioso si aún no existe la instancia
+            }
+        };
+        checkFinalReport();
+        const onProjectsChanged = () => checkFinalReport();
+        window.addEventListener('diitra-projects-changed', onProjectsChanged);
+        return () => {
+            isMounted = false;
+            window.removeEventListener('diitra-projects-changed', onProjectsChanged);
+        };
+    }, [resolvedProjectUuid, finalReportTemplateCode]);
 
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">
@@ -171,8 +221,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 </div>
                                 <p className="text-xs text-text-dim mt-1.5 leading-relaxed font-normal">
                                     {phase.id === 'Borrador' && (
-                                        isInnovacion 
-                                            ? 'Construcción colaborativa del proyecto de innovación y transferencia tecnológica.' 
+                                        isInnovacion
+                                            ? 'Construcción colaborativa del proyecto de innovación y transferencia tecnológica.'
                                             : 'Construcción colaborativa del protocolo de investigación por parte del equipo.'
                                     )}
                                     {phase.id === 'Enviado' && (
@@ -198,8 +248,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         >
                                             <FileText size={14} />
                                             <span>
-                                                {(currentProject.puedeEditar === false || isPast) 
-                                                    ? (isInnovacion ? 'Ver Proyecto' : 'Ver Protocolo') 
+                                                {(currentProject.puedeEditar === false || isPast)
+                                                    ? (isInnovacion ? 'Ver Proyecto' : 'Ver Protocolo')
                                                     : (isInnovacion ? 'Editar Proyecto de Innovación' : 'Editar Protocolo')}
                                             </span>
                                         </Link>
@@ -280,7 +330,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
                                                     <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
                                                     <span>
-                                                        El proyecto se encuentra en la etapa formal de **evaluación anónima por pares**.
+                                                        El proyecto se encuentra en la etapa formal de evaluación anónima por pares.
                                                         Por motivos de confidencialidad de la evaluación anónima (CACES), los evaluadores asignados
                                                         y el desarrollo de sus rúbricas permanecen anónimos. Una vez concluido el arbitraje y
                                                         emitido el dictamen final, el puntaje obtenido y la resolución legal se publicarán aquí.
@@ -377,14 +427,85 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
                                 {phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix)}
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === 'INFORME_FINAL_INVESTIGACION' ? 'pointer-events-none opacity-50' : ''}`}
-                                        >
-                                            <FileSignature size={14} />
-                                            <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
-                                        </Link>
+                                        {currentProject.status === 'Finalizado' ? (
+                                            <div className="space-y-2.5">
+                                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1">
+                                                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                                                        <Award size={15} /> Proyecto Culminado Oficialmente
+                                                    </p>
+                                                    <p className="text-[10px] text-text-dim">
+                                                        El proyecto cuenta con cierre legal, acta institucional y certificados emitidos para el equipo.
+                                                    </p>
+                                                </div>
+                                                <Link
+                                                    to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
+                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                                >
+                                                    <FileSignature size={14} />
+                                                    <span>Ver Informe Final Oficial</span>
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); handleEmitirCertificados(); }}
+                                                    disabled={emitiendoCertificados}
+                                                    className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-amber-500/50"
+                                                >
+                                                    <Award size={14} className={emitiendoCertificados ? 'animate-spin' : 'text-amber-500'} />
+                                                    <span>{emitiendoCertificados ? 'Generando Certificados...' : 'Emitir Certificados de Acreditación'}</span>
+                                                </button>
+                                            </div>
+                                        ) : isFinalReportSigned ? (
+                                            /* Informe Final firmado pero pendiente de dictamen/cierre del Admin */
+                                            isAdmin ? (
+                                                <div className="p-3 bg-brand/10 border border-brand/20 rounded-xl space-y-2.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <Shield size={15} className="text-brand shrink-0" />
+                                                        <p className="text-xs font-bold text-text-main">Informe Final Firmado</p>
+                                                    </div>
+                                                    <p className="text-[11px] text-text-dim leading-relaxed">
+                                                        El Director ha firmado y postulado el Informe Final. Como Administrador, puedes auditar el informe y aprobar el cierre definitivo del proyecto.
+                                                    </p>
+                                                    <div className="pt-1">
+                                                        <Link
+                                                            to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
+                                                            onClick={(e) => { e.stopPropagation(); }}
+                                                            className="btn-vercel-primary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                                                        >
+                                                            <Shield size={14} />
+                                                            <span>Auditar y Dictaminar Informe Final</span>
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
+                                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                                        <Clock size={14} /> Informe Final en Revisión por Coordinación
+                                                    </p>
+                                                    <p className="text-[11px] text-text-dim leading-relaxed">
+                                                        Su Informe Final ha sido remitido con firma digital. La Coordinación de Investigación está revisando los resultados para emitir la resolución de cierre institucional.
+                                                    </p>
+                                                    <Link
+                                                        to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
+                                                        onClick={(e) => { e.stopPropagation(); }}
+                                                        className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5"
+                                                    >
+                                                        <FileText size={14} />
+                                                        <span>Ver Informe Final</span>
+                                                    </Link>
+                                                </div>
+                                            )
+                                        ) : (
+                                            /* Aún no se ha firmado el Informe Final */
+                                            <Link
+                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
+                                                onClick={(e) => { e.stopPropagation(); }}
+                                                className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === finalReportTemplateCode ? 'pointer-events-none opacity-50' : ''}`}
+                                            >
+                                                <FileSignature size={14} />
+                                                <span>Elaborar Informe Final</span>
+                                            </Link>
+                                        )}
                                     </div>
                                 )}
                             </div>

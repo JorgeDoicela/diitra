@@ -27,6 +27,7 @@ const ArbitrajePage          = lazy(() => import('./pages/Investigacion/Arbitraj
 const ArbitrajeProyecto      = lazy(() => import('./pages/Investigacion/Arbitraje/ArbitrajeProyecto'));
 const ProjectWorkspace       = lazy(() => import('./pages/Investigacion/Proyectos/Workspace/ProjectWorkspace').then(m => ({ default: m.ProjectWorkspace })));
 const RevisionTecnicaPage    = lazy(() => import('./pages/Investigacion/Proyectos/RevisionTecnicaPage').then(m => ({ default: m.RevisionTecnicaPage })));
+const RevisionInformeFinalPage = lazy(() => import('./pages/Investigacion/Proyectos/RevisionInformeFinalPage').then(m => ({ default: m.RevisionInformeFinalPage })));
 const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
 const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
 const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
@@ -299,6 +300,7 @@ function App() {
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
+                            <Route path="/investigacion/revision-informe-final/:projectUuid" element={<AdminRoute><RevisionInformeFinalPage /></AdminRoute>} />
                             
                             {/* Innovation Context */}
                             <Route path="/innovacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />

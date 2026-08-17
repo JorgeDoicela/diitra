@@ -58,23 +58,36 @@ export const generateTwoColumnHtml = (block: DocumentBlock): string => {
 };
 
 export const generateSignaturesHtml = (block: DocumentBlock): string => {
-    const c: any = block.config;
-    const sigs = c.signatories ?? [
-        { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
-        { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' },
-    ];
-    const sigBoxes = sigs.map((s: any) => `
-    <div class="sig-box">
-      <div class="sig-label">${s.label}</div>
-      <div>&nbsp;</div>
-      <div style="margin-top: 40px;">${s.name}</div>
-      <div style="color: #64748b; font-size: 8.5pt;">${s.role}</div>
-    </div>`).join('');
+    const c: any = block.config || {};
+    const sigs = (c.signatories && Array.isArray(c.signatories) && c.signatories.length > 0)
+        ? c.signatories
+        : [
+            { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
+            { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' },
+        ];
+
+    const colWidthPct = Math.floor(100 / sigs.length);
+
+    const sigCells = sigs.map((s: any) => `
+      <td style="width: ${colWidthPct}%; vertical-align: top; text-align: center; padding: 0 15px; border: none;">
+        <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+        <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">${s.label}</div>
+        <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 30px;">${s.name}</div>
+        <div style="color: #64748b; font-size: 8.5pt;">${s.role}</div>
+      </td>`).join('');
 
     return `
   <!-- BLOQUE: FIRMAS -->
-  <div class="signatures-row">${sigBoxes}</div>
-  <div class="sig-footer">${c.textoPieFirma || 'IST Traversari'}</div>`;
+  <table style="width: 100%; border-collapse: collapse; margin-top: 50px; border: none; page-break-inside: avoid;">
+    <tbody>
+      <tr>
+        ${sigCells}
+      </tr>
+    </tbody>
+  </table>
+  <div style="text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 25px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+    ${c.textoPieFirma || 'Comisión de Acreditación e Investigación IST Traversari'}
+  </div>`;
 };
 
 export const generatePageBreakHtml = (): string => {

@@ -25,9 +25,17 @@ public class SignatureVerificationSubservice : ISignatureVerificationSubservice
 
     public async Task<IEnumerable<SignatureRecordDto>> GetByDocumentAsync(string documentoUuid)
     {
+        var matchingDocUuids = new List<string> { documentoUuid };
+        var entityInstances = await _context.DocumentInstances
+            .AsNoTracking()
+            .Where(d => d.EntityUuid == documentoUuid || d.Uuid == documentoUuid)
+            .Select(d => d.Uuid)
+            .ToListAsync();
+        matchingDocUuids.AddRange(entityInstances);
+
         var firmas = await _context.InvDocumentoFirmas
             .AsNoTracking()
-            .Where(f => f.DocumentoUuid == documentoUuid)
+            .Where(f => matchingDocUuids.Contains(f.DocumentoUuid) && f.EsValida)
             .OrderByDescending(f => f.FechaFirma)
             .ToListAsync();
 

@@ -225,7 +225,7 @@ const playNotificationSound = (type: 'success' | 'error' | 'warning' | 'info' | 
 
         // Si es una notificación estándar (default o info), intentar reproducir el mp3 personalizado
         if (type === 'default' || type === 'info') {
-            const audio = new Audio('/notification.mp3');
+            const audio = new Audio(`${import.meta.env.BASE_URL}notification.mp3`);
             audio.volume = 0.5; // volumen moderado agradable
             audio.play().catch((err) => {
                 console.warn('Fallo al reproducir audio personalizado, usando fallback sintetizado:', err);
@@ -307,7 +307,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
                 const n = new window.Notification(title, {
                     body: cleanBody,
-                    icon: '/logo_fondo_negro.png'
+                    icon: `${import.meta.env.BASE_URL}logo_fondo_negro.png`
                 });
                 
                 n.onclick = () => {

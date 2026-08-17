@@ -24,6 +24,13 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
 import type { DocumentTemplateDto, DocumentBlock, BlockType } from '../types';
+import {
+    DEFAULT_TECHNICAL_SUBSECTIONS,
+    DEFAULT_IMPACT_CATEGORIES,
+    DEFAULT_PROGRESS_HEADER_FIELDS,
+    DEFAULT_PROGRESS_STATUS_SUBSECTIONS,
+    DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS
+} from '../types';
 import { mergeWithDefaults } from '../utils/theme-schema';
 import { generateHtmlFromBlocks } from '../utils/HtmlGenerator';
 import { generateDefaultBlocksForTemplate } from '../utils/defaultBlocksFactory';
@@ -414,41 +421,146 @@ export const useDocumentTemplatesPage = () => {
                 };
                 break;
             case 'project_general_section':
-                newBlock = { id: newId, type, title: 'Ficha de Identificación del Proyecto', isActive: true, config: {} };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Ficha de Identificación del Proyecto',
+                    isActive: true,
+                    config: {
+                        showTitulo: true,
+                        showDirector: true,
+                        showCarrera: true,
+                        showConvocatoria: true,
+                        showPrograma: true,
+                        showGrupo: true,
+                        showLinea: true,
+                        showTipo: true,
+                        showCaces: true,
+                        showFechas: true
+                    }
+                };
                 break;
             case 'project_technical_section':
-                newBlock = { id: newId, type, title: 'Plan Técnico de Redacción', isActive: true, config: {} };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Plan Técnico de Redacción',
+                    isActive: true,
+                    config: {
+                        technicalSections: DEFAULT_TECHNICAL_SUBSECTIONS,
+                        technicalLayoutMode: 'table_2col',
+                        technicalHeaderColor: 'navy'
+                    }
+                };
                 break;
             case 'project_budget_section':
             case 'resources':
-                newBlock = { id: newId, type, title: 'Recursos y Financiamiento del Proyecto', isActive: true, config: {} };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Recursos y Financiamiento del Proyecto',
+                    isActive: true,
+                    config: {
+                        showRecursosDisponibles: true,
+                        showRecursosNecesarios: true,
+                        showFinanciamiento: true
+                    }
+                };
                 break;
             case 'project_progress_report':
-                newBlock = { id: newId, type, title: 'Avance de Ejecución y Monitoreo', isActive: true, config: {} };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Avance de Ejecución y Monitoreo',
+                    isActive: true,
+                    config: {
+                        showHitosCompletados: true,
+                        showEvidencias: true,
+                        showPresupuestoEjecutado: true
+                    }
+                };
                 break;
             case 'expected_products':
-                newBlock = { id: newId, type, title: 'Productos Esperados', isActive: true, config: { productosTitle: '5. Productos Esperados' } };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Productos Esperados',
+                    isActive: true,
+                    config: {
+                        productosTitle: '5. Productos Esperados',
+                        productsLayoutMode: 'table_detailed',
+                        productColumns: {
+                            showCategory: true,
+                            showSubtype: true,
+                            showProductName: true,
+                            showIndicator: true,
+                            showVerificationMeans: true,
+                            showQuantity: true,
+                            showDeadline: true
+                        }
+                    }
+                };
                 break;
             case 'impacts':
-                newBlock = { id: newId, type, title: 'Matriz de Impactos', isActive: true, config: {} };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Matriz de Impactos',
+                    isActive: true,
+                    config: {
+                        impactCategories: DEFAULT_IMPACT_CATEGORIES,
+                        impactLayoutMode: 'table'
+                    }
+                };
                 break;
             case 'project_approval_notice':
                 newBlock = { id: newId, type, title: 'Oficio de Aprobación de Proyecto', isActive: true, config: {} };
                 break;
             case 'progress_header_section':
-                newBlock = { id: newId, type, title: 'Encabezado Informe Avance', isActive: true, config: { headerTitle: '1. DATOS GENERALES DEL INFORME DE AVANCE' } };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Encabezado Informe Avance',
+                    isActive: true,
+                    config: {
+                        headerTitle: '1. DATOS GENERALES DEL INFORME DE AVANCE',
+                        progressHeaderFields: DEFAULT_PROGRESS_HEADER_FIELDS,
+                        progressHeaderColor: 'navy',
+                        progressHeaderBorder: 'solid'
+                    }
+                };
                 break;
             case 'progress_activity_section':
                 newBlock = { id: newId, type, title: 'Matriz Actividades Avance', isActive: true, config: { activityVariant: 'ejecutadas', activityTableTitle: 'MATRIZ DE ACTIVIDADES EJECUTADAS', activityHeaderColor: 'navy' } };
                 break;
             case 'progress_status_section':
-                newBlock = { id: newId, type, title: 'Estado y Observaciones', isActive: true, config: { statusTitle: 'ESTADO Y OBSERVACIONES' } };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Estado y Observaciones',
+                    isActive: true,
+                    config: {
+                        statusTitle: 'ESTADO Y OBSERVACIONES',
+                        progressStatusSections: DEFAULT_PROGRESS_STATUS_SUBSECTIONS,
+                        progressStatusHeaderColor: 'navy'
+                    }
+                };
                 break;
             case 'final_report_header_section':
                 newBlock = { id: newId, type, title: 'Encabezado Informe Final', isActive: true, config: { finalReportTitle: 'DATOS DEL PROYECTO DE INVESTIGACIÓN', finalReportHeaderColor: 'navy', showTipoInvestigacion: true, showAlcanceProyecto: true, showFechasProyecto: true, showTablaInvestigadores: true } };
                 break;
             case 'final_report_writing_section':
-                newBlock = { id: newId, type, title: 'Plan de Redacción Informe Final', isActive: true, config: { writingHeaderColor: 'navy', writingLayoutMode: 'table_2col' } };
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Plan de Redacción Informe Final',
+                    isActive: true,
+                    config: {
+                        writingHeaderColor: 'navy',
+                        writingLayoutMode: 'table_2col',
+                        writingSections: DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS
+                    }
+                };
                 break;
             case 'arbitration_dictamen_section':
                 newBlock = {
@@ -577,20 +689,33 @@ export const useDocumentTemplatesPage = () => {
     };
 
     const extractScribanVariables = (htmlContent: string): string[] => {
-        const regex = /\{\{\s*(?:#each\s+|#if\s+|this\.)?([a-zA-Z0-9_]+)/g;
         const matches = new Set<string>();
-        let match;
-        while ((match = regex.exec(htmlContent)) !== null) {
-            if (match[1]) {
-                matches.add(match[1]);
+        
+        // 1. Variables estándar: {{variable}}, {{#if variable}}, {{#each variable}}
+        const stdRegex = /\{\{\{?\s*(?:#each\s+|#if\s+|this\.)?([a-zA-Z0-9_]+)/g;
+        let m;
+        while ((m = stdRegex.exec(htmlContent)) !== null) {
+            if (m[1]) matches.add(m[1]);
+        }
+
+        // 2. Variables dentro de helper default: {{default var1 var2 "valor"}} o {{{default var1 var2 "valor"}}}
+        const defaultHelperRegex = /\{\{\{?\s*default\s+([^}]+)\}\}\}?/g;
+        while ((m = defaultHelperRegex.exec(htmlContent)) !== null) {
+            const tokens = m[1].split(/\s+/);
+            for (const token of tokens) {
+                const clean = token.replace(/["']/g, '').trim();
+                if (clean && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(clean)) {
+                    matches.add(clean);
+                }
             }
         }
+
         const blacklist = new Set([
-            'logo_base64', 'portada_base64', 'participantes', 'criterios_evaluados',
+            'default', 'logo_base64', 'portada_base64', 'participantes', 'criterios_evaluados',
             'puntaje_total', 'firma_trazabilidad', 'fecha_emision', 'this', 'each',
             'if', 'else', 'end', 'with', 'index', 'parent', 'carreras_coejecutoras',
             'investigador_director', 'investigadores_docentes', 'investigadores_estudiantes',
-            'titulo'
+            'titulo', 'eq', 'ne', 'and', 'or', 'not', 'theme', 'lookup'
         ]);
 
         return Array.from(matches).filter(v => !blacklist.has(v.toLowerCase()));

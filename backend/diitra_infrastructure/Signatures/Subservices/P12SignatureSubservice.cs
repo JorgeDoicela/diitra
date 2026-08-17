@@ -216,6 +216,20 @@ public class P12SignatureSubservice : IP12SignatureSubservice
                 var workflowService = _serviceProvider.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
                 await workflowService.TransicionarEstadoAsync(instancia.EntityUuid, "Enviado", 1, $"Firma Digital .p12 e Inmutabilidad Forense - Hash: {docHash}");
             }
+            else if (instancia.TemplateCode == "INFORME_FINAL_INVESTIGACION" || instancia.TemplateCode == "INFORME_FINAL_INNOVACION")
+            {
+                var notifService = _serviceProvider.GetRequiredService<diitra_application.Common.Notifications.INotificationService>();
+                var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instancia.EntityUuid);
+                if (project != null)
+                {
+                    await notifService.NotifyByRoleCodesAsync(
+                        "Informe Final Postulado",
+                        $"El Director del proyecto '{project.Titulo}' ha firmado el Informe Final. Requiere revisión técnica y dictamen institucional de cierre.",
+                        new[] { "DIITRA_ADMIN" },
+                        $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{project.Uuid}"
+                    );
+                }
+            }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

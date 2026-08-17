@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, ListChecks, Gavel, FileCode2, Sparkles } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import api from '../../../../api/axios_config';
@@ -172,6 +172,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         setIsParametrosOpen(false);
         setIsInvestigacionOpen(false);
         setIsMisProyectosOpen(false);
+        setIsInnovacionOpen(false);
     }, []);
 
     useEffect(() => {
