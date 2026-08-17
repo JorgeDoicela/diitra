@@ -66,6 +66,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly TemplateFileLoader _templateFileLoader;
         private readonly ImageResourceLoader _imageLoader;
         private readonly DiitraContext _db;
+        private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
         // Stateless engines: safe to share across requests
         private static readonly HandlebarsTemplateEngine _handlebarsEngine = new();
@@ -82,7 +83,8 @@ namespace Diitra.Infrastructure.Common.Documents
             ILogger<DocumentEngine> logger,
             IConfiguration configuration,
             IHostEnvironment environment,
-            DiitraContext db)
+            DiitraContext db,
+            diitra_application.Common.IAppUrlService appUrlService)
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
@@ -91,6 +93,7 @@ namespace Diitra.Infrastructure.Common.Documents
             _templateFileLoader = new TemplateFileLoader(environment);
             _imageLoader = new ImageResourceLoader(environment);
             _db = db;
+            _appUrlService = appUrlService;
         }
 
         public async Task<DocumentResult> GenerateAsync(
@@ -857,9 +860,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 // 6. Inyectar Cumplimiento Legal (Header/Footer, QR, Traceability)
                 var finalHtml = _complianceInjector.InjectLegalFooter(optimizedHtml, template, traceabilityCode, request.IsBlindMode);
 
-                var verificationBaseUrl = _configuration["FrontendUrl"] 
-                                           ?? _configuration["Email:FrontendUrl"] 
-                                           ?? "https://diitra.ist.edu.ec";
+                var verificationBaseUrl = _appUrlService.GetFrontendUrl();
 
                 // 7. Renderizado a PDF
                 //    Carga de fondo de hojas (stationary) desacoplada (Schema-driven desde Tema Global o Plantilla)

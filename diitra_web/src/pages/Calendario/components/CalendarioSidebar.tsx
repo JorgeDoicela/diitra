@@ -55,22 +55,36 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
 
     return (
         <div className="calendario-sidebar">
-            {/* Filtros */}
-            <div className="sidebar-section">
-                <h3>Filtros de Agenda</h3>
-                <div className="filtros-lista">
-                    {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
-                        <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles[key]}
-                                onChange={() => toggleCategoria(key)}
-                            />
-                            <span className="color-dot" />
-                            <span>{label}</span>
-                        </label>
-                    ))}
-                </div>
+            {/* Próximos Eventos */}
+            <div className="sidebar-section proximos-section">
+                <h3>Próximos Eventos</h3>
+                {proximosEventos.length === 0 ? (
+                    <p className="proximos-empty">Sin eventos próximos</p>
+                ) : (
+                    <div className="proximos-lista">
+                        {proximosEventos.map(ev => {
+                            const r = ev.resource;
+                            const esMismo = format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd');
+                            return (
+                                <button
+                                    key={r.uuid}
+                                    className="proximo-item"
+                                    style={{ '--ev-color': r.color_hex || '#6B7280' } as React.CSSProperties}
+                                    onClick={() => setSelectedEvent(r)}
+                                >
+                                    <span className="proximo-dot" />
+                                    <div className="proximo-info">
+                                        <span className="proximo-titulo">{r.titulo}</span>
+                                        <span className="proximo-fecha">
+                                            {esMismo ? 'Hoy' : format(ev.start as Date, 'd MMM', { locale: es })}
+                                        </span>
+                                    </div>
+                                    <ChevronRight size={12} className="proximo-arrow" />
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Notas Rápidas (Inbox) */}
@@ -141,36 +155,22 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                 </div>
             </div>
 
-            {/* Próximos Eventos */}
-            <div className="sidebar-section proximos-section">
-                <h3>Próximos Eventos</h3>
-                {proximosEventos.length === 0 ? (
-                    <p className="proximos-empty">Sin eventos próximos</p>
-                ) : (
-                    <div className="proximos-lista">
-                        {proximosEventos.map(ev => {
-                            const r = ev.resource;
-                            const esMismo = format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd');
-                            return (
-                                <button
-                                    key={r.uuid}
-                                    className="proximo-item"
-                                    style={{ '--ev-color': r.color_hex || '#6B7280' } as React.CSSProperties}
-                                    onClick={() => setSelectedEvent(r)}
-                                >
-                                    <span className="proximo-dot" />
-                                    <div className="proximo-info">
-                                        <span className="proximo-titulo">{r.titulo}</span>
-                                        <span className="proximo-fecha">
-                                            {esMismo ? 'Hoy' : format(ev.start as Date, 'd MMM', { locale: es })}
-                                        </span>
-                                    </div>
-                                    <ChevronRight size={12} className="proximo-arrow" />
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
+            {/* Filtros */}
+            <div className="sidebar-section">
+                <h3>Filtros de Agenda</h3>
+                <div className="filtros-lista">
+                    {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
+                        <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
+                            <input
+                                type="checkbox"
+                                checked={categoriasVisibles[key]}
+                                onChange={() => toggleCategoria(key)}
+                            />
+                            <span className="color-dot" />
+                            <span>{label}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
 
             {/* iCal */}

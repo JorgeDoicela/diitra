@@ -21,23 +21,71 @@ using Diitra.Infrastructure.Common.Documents;
 // DIITRA Firma
 using diitra_application.Signatures;
 using diitra_infrastructure.Signatures;
+using System.Net;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 
-// 1. Configurar CORS (Para que React y la APK entren)
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                     ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+// 1. Configurar CORS dinámico (Para React, SignalR, móvil, red local y producción)
+var frontendUrl = builder.Configuration["FrontendUrl"] ?? builder.Configuration["App:FrontendUrl"] ?? builder.Configuration["Email:FrontendUrl"];
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Diitra_policy", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials(); // Obligatorio para SignalR
+        policy.SetIsOriginAllowed(origin =>
+        {
+            if (string.IsNullOrWhiteSpace(origin)) return false;
+
+            if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+            {
+                // 1. Permitir siempre localhost y 127.0.0.1 en cualquier puerto
+                if (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                    uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // 2. Permitir solicitudes si provienen del mismo host u origen configurado en FrontendUrl
+                if (!string.IsNullOrWhiteSpace(frontendUrl) &&
+                    Uri.TryCreate(frontendUrl, UriKind.Absolute, out var frontUri))
+                {
+                    if (uri.Host.Equals(frontUri.Host, StringComparison.OrdinalIgnoreCase) ||
+                        origin.TrimEnd('/').Equals(frontendUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                // 3. Permitir conexiones desde redes locales privadas (Wi-Fi, LAN, teléfonos u otras PCs)
+                if (IPAddress.TryParse(uri.Host, out var ip))
+                {
+                    var bytes = ip.GetAddressBytes();
+                    if (bytes.Length == 4)
+                    {
+                        // 192.168.x.x
+                        if (bytes[0] == 192 && bytes[1] == 168) return true;
+                        // 10.x.x.x
+                        if (bytes[0] == 10) return true;
+                        // 172.16.x.x - 172.31.x.x
+                        if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return true;
+                    }
+                }
+            }
+
+            // 4. Permitir cualquier origen explícito listado en Cors:AllowedOrigins
+            if (configuredOrigins.Any(o => o.TrimEnd('/').Equals(origin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            return false;
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials(); // Obligatorio para SignalR
     });
 });
 
@@ -121,6 +169,7 @@ builder.Services.AddSignalR(options =>
 });
 
 // Infrastructure Services
+builder.Services.AddSingleton<diitra_application.Common.IAppUrlService, diitra_infrastructure.Common.AppUrlService>();
 builder.Services.AddScoped<diitra_infrastructure.Security.IFirmaElectronicaService, diitra_infrastructure.Security.FirmaElectronicaService>();
 builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 

@@ -7,9 +7,9 @@ export const useCollaboration = (documentId: string, userName: string = 'Móvil'
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        // En móviles, localhost no suele funcionar para el backend. 
-        // Se debería usar la IP de la máquina o una variable de entorno.
-        const hubUrl = 'http://192.168.110.26:5175/hubs/collaboration';
+        const apiBase = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5175/api';
+        const rootUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+        const hubUrl = `${rootUrl}/hubs/collaboration`;
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl)

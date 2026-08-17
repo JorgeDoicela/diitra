@@ -4,7 +4,7 @@ import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     Gavel, Loader2,
     AlertTriangle, UserPlus, Building,
-    ShieldCheck, X, FileDown, Check,
+    X, FileDown, Check,
     PlusCircle, AlertCircle, ChevronRight
 } from 'lucide-react';
 import {
@@ -519,24 +519,7 @@ const ArbitrajePage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Avance global */}
-                    {stats && stats.total_arbitros_asignados > 0 && (
-                        <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="section-label">
-                                    <ShieldCheck size={12} className="text-success" />
-                                    <span className="text-[13px] font-semibold text-text-main">Avance Global</span>
-                                </div>
-                                <span className="font-mono text-[13px] font-bold text-success">{stats.porcentaje_avance}%</span>
-                            </div>
-                            <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
-                                <div className="h-full rounded-full bg-success transition-all duration-700" style={{ width: `${stats.porcentaje_avance}%` }} />
-                            </div>
-                            <p className="text-[10px] text-text-dim mt-2 font-mono">
-                                Tiempo prom.: <span className="text-text-main">{tiempoPromText}</span>
-                            </p>
-                        </div>
-                    )}
+
                 </div>
 
             </div>

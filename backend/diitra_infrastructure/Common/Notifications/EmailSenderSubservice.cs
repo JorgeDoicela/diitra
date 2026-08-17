@@ -28,6 +28,7 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly diitra_infrastructure.Security.IFirmaElectronicaService _firmaElectronicaService;
         private readonly EmailMasterLayoutRenderer _layoutRenderer;
         private readonly IEmailTemplateService _templateService;
+        private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
         public EmailSenderSubservice(
             DiitraContext context,
@@ -37,7 +38,8 @@ namespace diitra_infrastructure.Common.Notifications
             IProjectOrchestrator projectOrchestrator,
             diitra_infrastructure.Security.IFirmaElectronicaService firmaElectronicaService,
             EmailMasterLayoutRenderer layoutRenderer,
-            IEmailTemplateService templateService)
+            IEmailTemplateService templateService,
+            diitra_application.Common.IAppUrlService appUrlService)
         {
             _context = context;
             _configuration = configuration;
@@ -47,6 +49,7 @@ namespace diitra_infrastructure.Common.Notifications
             _firmaElectronicaService = firmaElectronicaService;
             _layoutRenderer = layoutRenderer;
             _templateService = templateService;
+            _appUrlService = appUrlService;
         }
 
         public async Task<bool> SendTemplatedEmailAsync(EmailSendRequest request)
@@ -180,7 +183,7 @@ namespace diitra_infrastructure.Common.Notifications
             var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
 
-            var frontendUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+            var frontendUrl = _appUrlService.GetFrontendUrl();
 
             // 3.5. Cargar variables de contexto dinámico (una sola vez por envío)
             var contextReplacements = new Dictionary<string, string>();
@@ -222,7 +225,7 @@ namespace diitra_infrastructure.Common.Notifications
                             contextReplacements["[[proyecto_director_email]]"] = dir?.EmailInstitucional ?? "";
                             contextReplacements["[[linea_investigacion]]"] = proj.IdSublineaNavigation?.IdLineaNavigation?.NombreLinea ?? "General";
                             contextReplacements["[[proyecto_sublinea]]"] = proj.IdSublineaNavigation?.Nombre ?? "No asignada";
-                            contextReplacements["[[proyecto_workspace_url]]"] = $"{frontendUrl}/investigacion/workspace/protocolo-investigacion/{proj.Uuid}";
+                            contextReplacements["[[proyecto_workspace_url]]"] = _appUrlService.BuildFrontendUrl($"/investigacion/workspace/protocolo-investigacion/{proj.Uuid}");
                         }
                     }
                     else if (request.EntityType.Equals("Convocatoria", StringComparison.OrdinalIgnoreCase))

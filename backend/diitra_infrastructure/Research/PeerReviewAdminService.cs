@@ -33,12 +33,11 @@ namespace diitra_infrastructure.Research
             IAuthService authService,
             IAuditService auditService,
             INotificationService notificationService,
-            IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor)
+            diitra_application.Common.IAppUrlService appUrlService)
             : this(
                 new PeerReviewQuerySubservice(context),
                 new PeerReviewerManagementSubservice(context, auditService),
-                new PeerReviewAssignmentSubservice(context, authService, auditService, notificationService, configuration, httpContextAccessor))
+                new PeerReviewAssignmentSubservice(context, authService, auditService, notificationService, appUrlService))
         {
         }
 

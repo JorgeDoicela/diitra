@@ -20,6 +20,7 @@ public class P12SignatureSubservice : IP12SignatureSubservice
     private readonly IFileStorageService _storageService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<P12SignatureSubservice> _logger;
+    private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
     public P12SignatureSubservice(
         DiitraContext context,
@@ -27,7 +28,8 @@ public class P12SignatureSubservice : IP12SignatureSubservice
         IConfiguration config,
         IFileStorageService storageService,
         IServiceProvider serviceProvider,
-        ILogger<P12SignatureSubservice> logger)
+        ILogger<P12SignatureSubservice> logger,
+        diitra_application.Common.IAppUrlService appUrlService)
     {
         _context = context;
         _hashService = hashService;
@@ -35,6 +37,7 @@ public class P12SignatureSubservice : IP12SignatureSubservice
         _storageService = storageService;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _appUrlService = appUrlService;
     }
 
     public async Task<SignatureResultDto> SignDocumentWithP12Async(
@@ -228,8 +231,7 @@ public class P12SignatureSubservice : IP12SignatureSubservice
             throw;
         }
 
-        var verificationBaseUrl = _config["FrontendUrl"] ?? _config["Email:FrontendUrl"] ?? "http://localhost:3000";
-        var verificationUrl = $"{verificationBaseUrl.TrimEnd('/')}/verificacion/{firmaCode}";
+        var verificationUrl = _appUrlService.BuildFrontendUrl($"/verificacion/{firmaCode}");
 
         return new SignatureResultDto
         {

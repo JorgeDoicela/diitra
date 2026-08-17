@@ -19,11 +19,16 @@ namespace diitra_infrastructure.Common.Notifications
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailMasterLayoutRenderer> _logger;
+        private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
-        public EmailMasterLayoutRenderer(IConfiguration configuration, ILogger<EmailMasterLayoutRenderer> logger)
+        public EmailMasterLayoutRenderer(
+            IConfiguration configuration, 
+            ILogger<EmailMasterLayoutRenderer> logger,
+            diitra_application.Common.IAppUrlService appUrlService)
         {
             _configuration = configuration;
             _logger = logger;
+            _appUrlService = appUrlService;
         }
 
         public string TemplateDirectory =>
@@ -113,7 +118,7 @@ namespace diitra_infrastructure.Common.Notifications
             string? actionUrl = null,
             Dictionary<string, string>? extraData = null)
         {
-            var frontendUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+            var frontendUrl = _appUrlService.GetFrontendUrl();
             var host = _configuration["Email:Host"];
             var isMock = string.IsNullOrEmpty(host);
 
@@ -141,7 +146,7 @@ namespace diitra_infrastructure.Common.Notifications
                 var absoluteActionUrl = actionUrl != null
                     ? (actionUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                         ? actionUrl
-                        : $"{frontendUrl.TrimEnd('/')}{(actionUrl.StartsWith("/") ? actionUrl : "/" + actionUrl)}")
+                        : _appUrlService.BuildFrontendUrl(actionUrl))
                     : null;
 
                 var context = new

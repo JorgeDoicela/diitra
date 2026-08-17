@@ -18,6 +18,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IPasswordService _passwordService;
+    private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
     public PasswordRecoveryService(
         DiitraContext context,
@@ -25,7 +26,8 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         IAuditService auditService,
         IServiceProvider serviceProvider,
         IHttpContextAccessor httpContextAccessor,
-        IPasswordService passwordService)
+        IPasswordService passwordService,
+        diitra_application.Common.IAppUrlService appUrlService)
     {
         _context = context;
         _configuration = configuration;
@@ -33,28 +35,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
         _passwordService = passwordService;
-    }
-
-    private string GetFrontendUrl()
-    {
-        var configuredUrl = _configuration["Email:FrontendUrl"] ?? _configuration["FrontendUrl"] ?? "http://localhost:3000";
-        
-        var httpContext = _httpContextAccessor?.HttpContext;
-        if (httpContext != null)
-        {
-            var request = httpContext.Request;
-            var host = request.Host.Value;
-            
-            if (host.Contains(":5175") || host.Contains(":5000") || host.Contains("localhost") || host.Contains("127.0.0.1"))
-            {
-                return configuredUrl;
-            }
-            
-            var scheme = request.Scheme;
-            return $"{scheme}://{host}/diitra";
-        }
-
-        return configuredUrl;
+        _appUrlService = appUrlService;
     }
 
     private bool VerifyPassword(User user, string password)
@@ -182,8 +163,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         await _context.SaveChangesAsync();
 
         // 6. Construir enlace y enviar email
-        var baseUrl = GetFrontendUrl();
-        var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/ver-contrasenia?token={plainToken}";
+        var recoveryUrl = _appUrlService.BuildFrontendUrl($"/auth/ver-contrasenia?token={plainToken}");
 
         var emailBody =
             $"<p>Has solicitado recuperar tu contraseña de acceso a <strong>DIITRA</strong>.</p>" +
@@ -355,8 +335,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
                 _context.Set<InvMagicLink>().Add(recoveryLink);
                 await _context.SaveChangesAsync();
 
-                var baseUrl = GetFrontendUrl();
-                var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/reestablecer-alerta?token={plainToken}";
+                var recoveryUrl = _appUrlService.BuildFrontendUrl($"/auth/reestablecer-alerta?token={plainToken}");
 
                 var emailBody =
                     $"<p>Hola, <strong>{user.Nombre}</strong>.</p>" +

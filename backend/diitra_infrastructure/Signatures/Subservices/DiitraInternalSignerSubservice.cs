@@ -19,6 +19,7 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
     private readonly IFileStorageService _storageService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiitraInternalSignerSubservice> _logger;
+    private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
     public DiitraInternalSignerSubservice(
         DiitraContext context,
@@ -27,7 +28,8 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         IConfiguration config,
         IFileStorageService storageService,
         IServiceProvider serviceProvider,
-        ILogger<DiitraInternalSignerSubservice> logger)
+        ILogger<DiitraInternalSignerSubservice> logger,
+        diitra_application.Common.IAppUrlService appUrlService)
     {
         _context = context;
         _hashService = hashService;
@@ -36,6 +38,7 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         _storageService = storageService;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _appUrlService = appUrlService;
     }
 
     public async Task<SignatureResultDto> SignDocumentAsync(
@@ -206,8 +209,7 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
         var firmaImagenB64 = await GetFirmaBase64Async(perfil?.FirmaImagenB64);
 
         // 9. Estampar el bloque visual en el PDF
-        var verificationBaseUrl = _config["FrontendUrl"] ?? _config["Email:FrontendUrl"] ?? "http://localhost:3000";
-        var verificationUrl = $"{verificationBaseUrl.TrimEnd('/')}/verificacion/{firmaCode}";
+        var verificationUrl = _appUrlService.BuildFrontendUrl($"/verificacion/{firmaCode}");
 
         var pdfFirmado = _stamper.StampSignatureBlock(
             pdfBytes: pdfBytes,

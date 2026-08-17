@@ -644,8 +644,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         var buildResult = await documentEngine.GenerateAsync(docRequest, ct);
                         var currentBytes = buildResult.PdfBytes;
 
-                        var config = _serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-                        var verificationBaseUrl = config["FrontendUrl"] ?? config["Email:FrontendUrl"] ?? "http://localhost:3000";
+                        var appUrlService = _serviceProvider.GetRequiredService<diitra_application.Common.IAppUrlService>();
                         var stamper = _serviceProvider.GetRequiredService<diitra_infrastructure.Signatures.SignatureStamper>();
 
                         foreach (var firma in firmasDb)
@@ -662,7 +661,7 @@ namespace Diitra.Infrastructure.Common.Documents
                             }
                             catch { }
 
-                            var verificationUrl = $"{verificationBaseUrl.TrimEnd('/')}/verificacion/{firma.FirmaCode}";
+                            var verificationUrl = appUrlService.BuildFrontendUrl($"/verificacion/{firma.FirmaCode}");
                             currentBytes = stamper.StampSignatureBlock(
                                 pdfBytes: currentBytes,
                                 nombreFirmante: nombreFirmante,

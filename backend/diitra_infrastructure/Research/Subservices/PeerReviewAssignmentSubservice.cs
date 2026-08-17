@@ -18,23 +18,20 @@ namespace diitra_infrastructure.Research.Subservices
         private readonly IAuthService _authService;
         private readonly IAuditService _auditService;
         private readonly INotificationService _notificationService;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly diitra_application.Common.IAppUrlService _appUrlService;
 
         public PeerReviewAssignmentSubservice(
             DiitraContext context,
             IAuthService authService,
             IAuditService auditService,
             INotificationService notificationService,
-            IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor)
+            diitra_application.Common.IAppUrlService appUrlService)
         {
             _context = context;
             _authService = authService;
             _auditService = auditService;
             _notificationService = notificationService;
-            _configuration = configuration;
-            _httpContextAccessor = httpContextAccessor;
+            _appUrlService = appUrlService;
         }
 
         public async Task<string> AsignarArbitroAsync(AsignarArbitroDto dto, int directorId)
@@ -177,8 +174,7 @@ namespace diitra_infrastructure.Research.Subservices
                 if (revisorUser != null && !string.IsNullOrEmpty(revisorUser.EmailInstitucional))
                 {
                     var plainToken = await _authService.CreateMagicLinkAsync(revisorUser.IdUsuario, dto.FechaLimite);
-                    var baseUrl = GetFrontendUrl();
-                    var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
+                    var magicLinkUrl = _appUrlService.BuildFrontendUrl($"/auth/magic-login?token={plainToken}");
                     var emailTitle = $"Acceso de Arbitraje Científico - DIITRA";
                     string emailBody;
 
@@ -342,28 +338,6 @@ namespace diitra_infrastructure.Research.Subservices
 
             await _context.SaveChangesAsync();
             return true;
-        }
-
-        private string GetFrontendUrl()
-        {
-            var configuredUrl = _configuration["Email:FrontendUrl"] ?? _configuration["FrontendUrl"] ?? "http://localhost:3000";
-            
-            var httpContext = _httpContextAccessor?.HttpContext;
-            if (httpContext != null)
-            {
-                var request = httpContext.Request;
-                var host = request.Host.Value;
-                
-                if (host.Contains(":5175") || host.Contains(":5000") || host.Contains("localhost") || host.Contains("127.0.0.1"))
-                {
-                    return configuredUrl;
-                }
-                
-                var scheme = request.Scheme;
-                return $"{scheme}://{host}/diitra";
-            }
-
-            return configuredUrl;
         }
     }
 }

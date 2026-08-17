@@ -19,6 +19,7 @@ public class MagicLinkService : IMagicLinkService
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IPasswordService _passwordService;
+    private readonly diitra_application.Common.IAppUrlService _appUrlService;
     
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
 
@@ -29,7 +30,8 @@ public class MagicLinkService : IMagicLinkService
         diitra_application.Common.Notifications.INotificationService notificationService,
         IServiceProvider serviceProvider,
         IHttpContextAccessor httpContextAccessor,
-        IPasswordService passwordService)
+        IPasswordService passwordService,
+        diitra_application.Common.IAppUrlService appUrlService)
     {
         _context = context;
         _configuration = configuration;
@@ -38,28 +40,7 @@ public class MagicLinkService : IMagicLinkService
         _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
         _passwordService = passwordService;
-    }
-
-    private string GetFrontendUrl()
-    {
-        var configuredUrl = _configuration["Email:FrontendUrl"] ?? _configuration["FrontendUrl"] ?? "http://localhost:3000";
-        
-        var httpContext = _httpContextAccessor?.HttpContext;
-        if (httpContext != null)
-        {
-            var request = httpContext.Request;
-            var host = request.Host.Value;
-            
-            if (host.Contains(":5175") || host.Contains(":5000") || host.Contains("localhost") || host.Contains("127.0.0.1"))
-            {
-                return configuredUrl;
-            }
-            
-            var scheme = request.Scheme;
-            return $"{scheme}://{host}/diitra";
-        }
-
-        return configuredUrl;
+        _appUrlService = appUrlService;
     }
 
     private static int GetIpLockoutMinutes(int attempts) => attempts switch
@@ -263,8 +244,7 @@ public class MagicLinkService : IMagicLinkService
         var plainToken = await CreateMagicLinkAsync(user.IdUsuario, expirationDate);
 
         // 4. Enviar por correo
-        var baseUrl = GetFrontendUrl();
-        var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
+        var magicLinkUrl = _appUrlService.BuildFrontendUrl($"/auth/magic-login?token={plainToken}");
 
         var emailTitle = "Acceso de Arbitraje Científico - DIITRA (Reenvío)";
         string emailBody;
