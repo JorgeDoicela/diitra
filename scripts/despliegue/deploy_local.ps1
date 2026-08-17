@@ -258,6 +258,11 @@ function Deploy-Backend {
             Write-Host "  ⚠️ Robocopy reportó una advertencia menor o bloqueo (Código: $exitCode)." -ForegroundColor Yellow
         }
 
+        # Asegurar permisos de escritura/modificación para el App Pool (uploads, logs, temporales)
+        Write-Step "🔐" "Asegurando permisos NTFS para IIS AppPool y carpeta de uploads..."
+        icacls $IisApiPath /grant "IIS AppPool\${AppPoolName}:(OI)(CI)M" /T | Out-Null
+        icacls $IisApiPath /grant "IIS_IUSRS:(OI)(CI)M" /T | Out-Null
+
         $elapsed = [Math]::Round(([DateTime]::Now - $startTime).TotalSeconds, 2)
         Write-Success "Backend desplegado con éxito en $elapsed segundos."
         return $elapsed
