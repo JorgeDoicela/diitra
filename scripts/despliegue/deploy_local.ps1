@@ -18,8 +18,8 @@ if (-not $isAdmin) {
     exit
 }
 
-# Configuración del Entorno
-$ProjectRoot = "c:\Users\DESARROLLADOR\Desktop\Proyectos\diitra"
+# Configuración del Entorno (Detección dinámica de la raíz del proyecto)
+$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $WebDir = Join-Path $ProjectRoot "diitra_web"
 $ApiDir = Join-Path $ProjectRoot "backend\diitra_api"
 $PublishTemp = Join-Path $ProjectRoot "backend\publish"
