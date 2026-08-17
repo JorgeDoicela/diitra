@@ -45,48 +45,76 @@ namespace Diitra.Infrastructure.Certificates
 
             var results = new List<IssuedCertificateResultDto>();
             var recipients = new List<(string Name, string Cedula, string Role)>();
+            var seenCedulas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var part in proyecto.InvProyectoParticipantes)
+            void AddRecipient(string name, string cedula, string role)
+            {
+                if (string.IsNullOrWhiteSpace(cedula) || string.IsNullOrWhiteSpace(name)) return;
+                cedula = cedula.Trim();
+                name = name.Trim();
+                if (seenCedulas.Add(cedula))
+                {
+                    recipients.Add((name, cedula, role.Trim()));
+                }
+            }
+
+            // 1. Participantes directos del proyecto (docentes, estudiantes, director)
+            foreach (var part in proyecto.InvProyectoParticipantes.Where(p => p.Activo != false))
             {
                 string name = part.IdUsuarioNavigation?.Nombre ?? "Investigador / Participante";
                 string cedula = part.IdUsuarioNavigation?.IdSigafi ?? part.IdUsuario.ToString();
-                string role = part.EsDirector == true ? "Director de Proyecto" : (part.Rol ?? part.TipoParticipante ?? "Investigador");
-                recipients.Add((name, cedula, role));
-            }
+                string role = part.EsDirector == true ? "Director de Proyecto" : (part.Rol ?? (part.TipoParticipante == "Docente" ? "Docente Investigador" : (part.TipoParticipante == "Alumno" ? "Estudiante Colaborador" : "Investigador")));
 
-            // Fallback 1: Firmantes oficiales del proyecto en InvDocumentoFirmas
-            var docUuids = await _db.DocumentInstances
-                .Where(d => d.EntityUuid == proyecto.Uuid)
-                .Select(d => d.Uuid)
-                .ToListAsync(ct);
-
-            var firmas = await _db.InvDocumentoFirmas
-                .AsNoTracking()
-                .Where(f => (f.DocumentoUuid == proyecto.Uuid || docUuids.Contains(f.DocumentoUuid)) && f.EsValida)
-                .ToListAsync(ct);
-
-            foreach (var firma in firmas)
-            {
-                string fName = "";
-                if (!string.IsNullOrEmpty(firma.FirmaMetadata))
+                // Enriquecer nombre desde Profesores o Alumnos si es posible
+                if (!string.IsNullOrEmpty(cedula))
                 {
-                    try
+                    var prof = await _db.Profesores.AsNoTracking().FirstOrDefaultAsync(p => p.IdProfesor == cedula, ct);
+                    if (prof != null)
                     {
-                        using var docF = JsonDocument.Parse(firma.FirmaMetadata);
-                        if (docF.RootElement.TryGetProperty("nombre_completo", out var nc)) fName = nc.GetString() ?? "";
-                        if (string.IsNullOrEmpty(fName) && docF.RootElement.TryGetProperty("NombreCompleto", out var ncc)) fName = ncc.GetString() ?? "";
+                        name = $"{prof.Nombres} {prof.Apellidos}".Trim();
                     }
-                    catch { }
+                    else
+                    {
+                        var alum = await _db.Alumnos.AsNoTracking().FirstOrDefaultAsync(a => a.IdAlumno == cedula, ct);
+                        if (alum != null)
+                        {
+                            name = $"{alum.PrimerNombre} {alum.ApellidoPaterno}".Trim();
+                        }
+                    }
                 }
-                if (string.IsNullOrEmpty(fName)) fName = "Director de Proyecto";
 
-                if (!string.IsNullOrEmpty(firma.FirmanteId) && !recipients.Any(r => r.Cedula == firma.FirmanteId))
+                AddRecipient(name, cedula, role);
+            }
+
+            // 2. Miembros del Grupo de Investigación vinculado al proyecto (si aplica)
+            if (proyecto.IdGrupo.HasValue && proyecto.IdGrupo.Value > 0)
+            {
+                var miembrosGrupo = await _db.InvGruposMiembros
+                    .AsNoTracking()
+                    .Include(m => m.IdUsuarioNavigation)
+                    .Where(m => m.IdGrupo == proyecto.IdGrupo.Value && m.Activo != false)
+                    .ToListAsync(ct);
+
+                foreach (var miembro in miembrosGrupo)
                 {
-                    recipients.Add((fName, firma.FirmanteId, firma.FirmanteRol ?? "Director de Proyecto"));
+                    string mName = miembro.IdUsuarioNavigation?.Nombre ?? "Miembro de Grupo";
+                    string mCedula = miembro.IdUsuarioNavigation?.IdSigafi ?? miembro.IdUsuario.ToString();
+                    string mRole = miembro.Rol ?? "Miembro del Grupo de Investigación";
+
+                    if (!string.IsNullOrEmpty(mCedula))
+                    {
+                        var prof = await _db.Profesores.AsNoTracking().FirstOrDefaultAsync(p => p.IdProfesor == mCedula, ct);
+                        if (prof != null)
+                        {
+                            mName = $"{prof.Nombres} {prof.Apellidos}".Trim();
+                        }
+                    }
+
+                    AddRecipient(mName, mCedula, mRole);
                 }
             }
 
-            // Fallback 2: Parsear MetadataCacesJson
+            // 3. Investigadores registrados formalmente en la ficha CACES (MetadataCacesJson)
             if (!string.IsNullOrEmpty(proyecto.MetadataCacesJson))
             {
                 try
@@ -99,13 +127,13 @@ namespace Diitra.Infrastructure.Certificates
                             string name = elem.TryGetProperty("nombres_completos", out var n) ? n.GetString() ?? "" : "";
                             if (string.IsNullOrEmpty(name) && elem.TryGetProperty("nombresCompletos", out var nc)) name = nc.GetString() ?? "";
                             if (string.IsNullOrEmpty(name) && elem.TryGetProperty("nombre", out var nom)) name = nom.GetString() ?? "";
-                            
-                            string cedula = elem.TryGetProperty("cedula", out var c) ? c.GetString() ?? "" : "";
-                            string role = elem.TryGetProperty("rol", out var ro) ? ro.GetString() ?? "Investigador" : "Investigador";
 
-                            if (!string.IsNullOrEmpty(name) && !recipients.Any(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase) || (!string.IsNullOrEmpty(cedula) && r.Cedula == cedula)))
+                            string cedula = elem.TryGetProperty("cedula", out var c) ? c.GetString() ?? "" : "";
+                            string role = elem.TryGetProperty("rol", out var ro) ? ro.GetString() ?? "Docente Investigador" : "Docente Investigador";
+
+                            if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(cedula))
                             {
-                                recipients.Add((name, string.IsNullOrEmpty(cedula) ? name : cedula, role));
+                                AddRecipient(name, cedula, role);
                             }
                         }
                     }
@@ -183,7 +211,13 @@ namespace Diitra.Infrastructure.Certificates
                 {
                     Console.WriteLine($"[DIITRA] [CertificateService] ERROR al generar certificado para {recipientName}: {ex.Message}");
                     _logger.LogError(ex, "Error al generar certificado para participante {Cedula} en proyecto {ProyectoId}", recipientCedula, proyectoId);
+                    throw new InvalidOperationException($"Error al compilar y generar certificado para {recipientName}: {ex.Message}", ex);
                 }
+            }
+
+            if (recipients.Count == 0)
+            {
+                throw new InvalidOperationException($"El proyecto '{proyecto.Titulo}' no cuenta con participantes registrados ni firmantes para emitir certificados.");
             }
 
             if (results.Count > 0)

@@ -296,7 +296,7 @@ function App() {
                             
                             {/* Supervision Context (Admin Only) */}
                             <Route path="/investigacion" element={<AdminRoute><ResearchProjectsPage /></AdminRoute>} />
-                            <Route path="/investigacion/workspace/:templateCode/:projectUuid" element={<AdminRoute><ProjectWorkspace /></AdminRoute>} />
+                            <Route path="/investigacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
@@ -307,7 +307,7 @@ function App() {
 
                             {/* Researcher Context (Docentes, Estudiantes, Externos) */}
                             <Route path="/investigacion/mis-proyectos" element={<ResearcherRoute><MyProjectsPage /></ResearcherRoute>} />
-                            <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ResearcherRoute><ProjectWorkspace /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
                             <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<ResearcherRoute><MonitoringPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<ResearcherRoute><InformesAvancePage /></ResearcherRoute>} />
                             

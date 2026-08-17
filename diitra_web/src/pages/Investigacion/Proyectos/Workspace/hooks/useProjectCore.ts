@@ -159,6 +159,21 @@ export function useProjectCore() {
                 ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
                 : '';
 
+            const userCedula = user?.idSigafi || user?.id_sigafi || (user as any)?.cedula || '';
+            const userInternalId = user?.id?.toString() || (user as any)?.id_usuario?.toString() || '';
+            const isUserInInvestigadores = (res.data.investigadores || []).some((inv: any) =>
+                (inv.cedula && inv.cedula === userCedula) ||
+                (inv.idUsuario && inv.idUsuario.toString() === userInternalId) ||
+                (inv.id_usuario && inv.id_usuario.toString() === userInternalId) ||
+                (inv.id && inv.id.toString() === userInternalId)
+            );
+            const isUserDirector = directorObj && (
+                (directorObj.cedula && directorObj.cedula === userCedula) ||
+                (directorObj.idUsuario && directorObj.idUsuario.toString() === userInternalId) ||
+                (directorObj.id_usuario && directorObj.id_usuario.toString() === userInternalId)
+            );
+            const esParticipante = isUserInInvestigadores || isUserDirector || (res.data.puede_firmar ?? res.data.puedeFirmar ?? false);
+
             const projectData = {
                 id: res.data.uuid.substring(0, 8).toUpperCase(),
                 uuid: res.data.uuid,
@@ -167,6 +182,7 @@ export function useProjectCore() {
                 presupuesto: res.data.costoTotal ?? res.data.costo_total ?? res.data.CostoTotal ?? 0,
                 linea: res.data.linea_investigacion || 'No definida',
                 directorProyecto: directorNombre,
+                esParticipante: !!esParticipante,
                 puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                     (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección' || res.data.estado === 'Prepropuesta' || res.data.estado === 'Prepropuesta Rechazada'),
                 puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,

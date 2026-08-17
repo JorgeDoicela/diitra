@@ -72,7 +72,6 @@ interface SidebarNavProps {
     sidebarProjectsLoading: boolean;
     showAllProjects: boolean;
     setShowAllProjects: (v: boolean) => void;
-    navigate: (path: string) => void;
     location: { pathname: string; search: string };
     onClose?: () => void;
 }
@@ -100,7 +99,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     sidebarProjectsLoading,
     showAllProjects,
     setShowAllProjects,
-    navigate,
     location,
     onClose
 }) => {
@@ -205,11 +203,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                 <>
                                     <div className="flex flex-col gap-0.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
                                         {shownProjects.map((p) => {
-                                            const projectPath = isInnovacion
-                                                ? `/innovacion/workspace/protocolo-innovacion/${p.uuid}`
-                                                : (item.name === 'Investigación'
-                                                    ? `/investigacion/workspace/protocolo-investigacion/${p.uuid}`
-                                                    : `/investigacion/mis-proyectos/workspace/protocolo-investigacion/${p.uuid}`);
+                                            const tCode = (p.template_code || p.templateCode || (isInnovacion ? 'PROTOCOLO_INNOVACION' : 'PROTOCOLO_INVESTIGACION')).toLowerCase().replace(/_/g, '-');
+                                            const basePath = isInnovacion 
+                                                ? '/innovacion/workspace'
+                                                : (item.path === '/investigacion' ? '/investigacion/workspace' : '/investigacion/mis-proyectos/workspace');
+                                            const projectPath = `${basePath}/${tCode}/${p.uuid}`;
 
                                             const isSubActive = location.pathname.includes(`/workspace/`) && location.pathname.includes(p.uuid);
 

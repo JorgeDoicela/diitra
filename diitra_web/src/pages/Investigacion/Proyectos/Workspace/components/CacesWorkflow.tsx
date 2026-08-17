@@ -33,6 +33,7 @@ interface CacesWorkflowProps {
         puntajeEvaluacion: number | null;
         codigoInstitucional: string | null;
         uuid: string;
+        esParticipante?: boolean;
     };
     templateCode: string;
     assignedRevisionUuid: string | null;
@@ -65,23 +66,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 }) => {
     const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
     const [isFinalReportSigned, setIsFinalReportSigned] = useState(false);
-    const [emitiendoCertificados, setEmitiendoCertificados] = useState(false);
 
     const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
-
-    const handleEmitirCertificados = async () => {
-        if (!resolvedProjectUuid) return;
-        setEmitiendoCertificados(true);
-        try {
-            const res = await api.post(`/projects/${resolvedProjectUuid}/issue-certificates`);
-            alert(res.data?.message || 'Certificados emitidos con éxito para todos los integrantes.');
-            navigate('/mis-certificados');
-        } catch (err: any) {
-            alert(err?.response?.data?.error || 'Error al emitir certificados');
-        } finally {
-            setEmitiendoCertificados(false);
-        }
-    };
 
     useEffect(() => {
         let isMounted = true;
@@ -434,7 +420,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                         <Award size={15} /> Proyecto Culminado Oficialmente
                                                     </p>
                                                     <p className="text-[10px] text-text-dim">
-                                                        El proyecto cuenta con cierre legal, acta institucional y certificados emitidos para el equipo.
+                                                        El proyecto cuenta con cierre legal, acta institucional y certificados emitidos automáticamente para el equipo.
                                                     </p>
                                                 </div>
                                                 <Link
@@ -445,15 +431,16 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                     <FileSignature size={14} />
                                                     <span>Ver Informe Final Oficial</span>
                                                 </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); handleEmitirCertificados(); }}
-                                                    disabled={emitiendoCertificados}
-                                                    className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-amber-500/50"
-                                                >
-                                                    <Award size={14} className={emitiendoCertificados ? 'animate-spin' : 'text-amber-500'} />
-                                                    <span>{emitiendoCertificados ? 'Generando Certificados...' : 'Emitir Certificados de Acreditación'}</span>
-                                                </button>
+                                                {currentProject.esParticipante && (
+                                                    <Link
+                                                        to="/mis-certificados"
+                                                        onClick={(e) => { e.stopPropagation(); }}
+                                                        className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-brand/50 no-underline text-text-main"
+                                                    >
+                                                        <Award size={14} className="text-brand" />
+                                                        <span>Ver Mis Certificados</span>
+                                                    </Link>
+                                                )}
                                             </div>
                                         ) : isFinalReportSigned ? (
                                             /* Informe Final firmado pero pendiente de dictamen/cierre del Admin */

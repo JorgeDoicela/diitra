@@ -226,11 +226,17 @@ namespace diitra_api.Controllers
             {
                 string issuedBy = User?.Identity?.Name ?? "Coordinación de Investigación";
                 var certificates = await certificateService.IssueProjectCompletionCertificatesAsync(project.IdProyecto, issuedBy);
+                var certList = certificates.ToList();
+                if (certList.Count == 0)
+                {
+                    return BadRequest(new { error = "No se encontraron integrantes para emitir certificados en este proyecto." });
+                }
+
                 return Ok(new
                 {
-                    message = "Certificados emitidos exitosamente.",
-                    count = certificates.Count(),
-                    certificates
+                    message = $"Se emitieron exitosamente {certList.Count} certificados oficiales para el equipo.",
+                    count = certList.Count,
+                    certificates = certList
                 });
             }
             catch (Exception ex)

@@ -134,7 +134,8 @@ namespace diitra_infrastructure.Common.Notifications
                         subscriptionData.keys?.auth
                     );
 
-                    await webPushClient.SendNotificationAsync(subscription, payload, vapidDetails);
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(4));
+                    await webPushClient.SendNotificationAsync(subscription, payload, vapidDetails, cts.Token);
                     _logger.LogInformation("Notificación Web Push enviada con éxito al dispositivo {TokenId} del usuario {UserId}", token.IdToken, userId);
                 }
                 catch (WebPushException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Gone || ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -142,6 +143,10 @@ namespace diitra_infrastructure.Common.Notifications
                     // Si el navegador expiró la suscripción o se revocó el permiso, limpiamos la base de datos automáticamente
                     _logger.LogWarning("Suscripción de Web Push {TokenId} ha expirado o ya no es válida (HTTP {Status}). Eliminándola de la base de datos...", token.IdToken, ex.StatusCode);
                     _context.InvDispositivosTokens.Remove(token);
+                }
+                catch (Exception ex) when (ex is System.Net.Http.HttpRequestException || ex is System.Net.Sockets.SocketException || ex is OperationCanceledException)
+                {
+                    _logger.LogWarning("No se pudo entregar Web Push al dispositivo {TokenId} del usuario {UserId} por indisponibilidad o timeout con el servidor push externo ({Endpoint})", token.IdToken, userId, ex.Message);
                 }
                 catch (Exception ex)
                 {

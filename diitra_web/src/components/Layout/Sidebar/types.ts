@@ -24,6 +24,8 @@ export interface MenuItem {
 export interface SidebarProject {
     uuid: string;
     titulo?: string;
+    template_code?: string;
+    templateCode?: string;
     fecha_modificacion?: string;
     fecha_registro?: string;
 }

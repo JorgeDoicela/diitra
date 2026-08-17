@@ -137,17 +137,17 @@
             <div class="main-title">Certificado de Reconocimiento</div>
 
             <div class="conferral-text">Otorgado a:</div>
-            <div class="recipient-name">{{ data.recipient_name }}</div>
+            <div class="recipient-name">{{default recipient_name data.recipient_name "Miembro Investigador"}}</div>
             <br>
-            <div class="recipient-role-badge">{{ data.recipient_role }}</div>
+            <div class="recipient-role-badge">{{default recipient_role data.recipient_role "Miembro"}}</div>
 
             <div class="achievement-text">
                 Por su destacada trayectoria y valiosa contribución como miembro activo del Grupo / Semillero de Investigación:<br>
-                <span class="group-title">"{{ data.group_name | default: data.certificate_title }}"</span>
+                <span class="group-title">"{{default group_name data.group_name milestone_title data.milestone_title certificate_title data.certificate_title "Grupo de Investigación"}}"</span>
             </div>
 
             <div class="date-text">
-                Dado en la ciudad de Quito, a los {{ data.completion_date | default: data.issue_date }}.
+                Dado en la ciudad de Quito, a los {{default completion_date data.completion_date issue_date data.issue_date}}.
             </div>
         </div>
 
@@ -159,7 +159,7 @@
             </div>
 
             <div class="certificate-footer">
-                <span>Código de Verificación: <strong>{{ data.recipient_cedula | default: traceability_code }}</strong></span>
+                <span>Código de Verificación: <strong>{{default traceability_code data.recipient_cedula}}</strong></span>
                 <span>Validación Oficial CACES & QR Institucional ISTPET · DIITRA</span>
             </div>
         </div>

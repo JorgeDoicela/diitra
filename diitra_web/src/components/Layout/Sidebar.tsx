@@ -137,7 +137,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                         sidebarProjectsLoading={sidebarProjectsLoading}
                         showAllProjects={showAllProjects}
                         setShowAllProjects={setShowAllProjects}
-                        navigate={navigate}
                         location={location}
                         onClose={onClose}
                     />

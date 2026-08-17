@@ -50,6 +50,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     templateHtml = templateHtml.Replace("{{/if_eq}}", "{{/if}}");
                 }
 
+                // Normalizar sintaxis con pipes (ej: {{ data.project_title | default: data.certificate_title }}) a {{default data.project_title data.certificate_title}}
+                if (templateHtml.Contains("| default:"))
+                {
+                    templateHtml = System.Text.RegularExpressions.Regex.Replace(
+                        templateHtml,
+                        @"\{\{\s*([^}|]+)\s*\|\s*default:\s*([^}]+)\s*\}\}",
+                        m =>
+                        {
+                            var left = m.Groups[1].Value.Trim();
+                            var right = m.Groups[2].Value.Replace("| default:", " ").Trim();
+                            return $"{{{{default {left} {right}}}}}";
+                        }
+                    );
+                }
+
                 // Aplanar sub-expresiones anidadas de default (ej: {{default A (default B "fallback")}})
                 while (templateHtml.Contains("(default "))
                 {
