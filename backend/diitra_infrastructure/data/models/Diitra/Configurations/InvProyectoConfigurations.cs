@@ -229,14 +229,19 @@ public class InvProductoConfiguration : IEntityTypeConfiguration<InvProducto>
         entity.HasKey(e => e.IdProducto).HasName("PRIMARY");
         entity.ToTable("inv_productos");
         entity.Property(e => e.IdProducto).HasColumnName("idProducto");
+        entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
         entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
         entity.Property(e => e.IdTipoProducto).HasColumnName("idTipoProducto");
         entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(500).IsRequired();
         entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasDefaultValueSql("'1'");
         entity.Property(e => e.UrlProducto).HasColumnName("urlProducto").HasMaxLength(512);
         entity.Property(e => e.EsPropiedadIntelectual).HasColumnName("esPropiedadIntelectual").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+        entity.Property(e => e.TipoPropiedadIntelectual).HasColumnName("tipoPropiedadIntelectual").HasMaxLength(50);
         entity.Property(e => e.NumeroRegistro).HasColumnName("numeroRegistro").HasMaxLength(100);
         entity.Property(e => e.FechaRegistroSenadi).HasColumnName("fechaRegistroSenadi");
+        entity.Property(e => e.EstadoSenadi).HasColumnName("estadoSenadi").HasMaxLength(20).HasDefaultValueSql("'NoAplica'");
+        entity.Property(e => e.TrlActual).HasColumnName("trlActual").HasColumnType("tinyint").HasDefaultValueSql("'4'");
+        entity.Property(e => e.UrlCertificadoSenadi).HasColumnName("urlCertificadoSenadi").HasMaxLength(512);
         entity.Property(e => e.MetadataJson).HasColumnName("metadataJson").HasColumnType("json");
 
         entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProductos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_prod_proyecto");
@@ -385,13 +390,21 @@ public class InvTransferenciaConfiguration : IEntityTypeConfiguration<InvTransfe
         entity.HasKey(e => e.IdTransferencia).HasName("PRIMARY");
         entity.ToTable("inv_transferencias");
         entity.Property(e => e.IdTransferencia).HasColumnName("idTransferencia");
+        entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
         entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+        entity.Property(e => e.IdProducto).HasColumnName("idProducto");
         entity.Property(e => e.EntidadReceptora).HasColumnName("entidadReceptora").HasMaxLength(255).IsRequired();
+        entity.Property(e => e.RucEntidad).HasColumnName("rucEntidad").HasMaxLength(13);
         entity.Property(e => e.NumeroConvenio).HasColumnName("numeroConvenio").HasMaxLength(100);
         entity.Property(e => e.FechaConvenio).HasColumnName("fechaConvenio");
+        entity.Property(e => e.Modalidad).HasColumnName("modalidad").HasMaxLength(50).HasDefaultValueSql("'ConvenioCooperacion'");
+        entity.Property(e => e.ValorMonetario).HasColumnName("valorMonetario").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
+        entity.Property(e => e.BeneficiariosDirectos).HasColumnName("beneficiariosDirectos").HasDefaultValueSql("'0'");
+        entity.Property(e => e.UrlActaFirmada).HasColumnName("urlActaFirmada").HasMaxLength(512);
         entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
 
         entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvTransferencias).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_trans_proyecto");
+        entity.HasOne(d => d.IdProductoNavigation).WithMany(p => p.InvTransferencias).HasForeignKey(d => d.IdProducto).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_trans_producto");
     }
 }
 

@@ -47,6 +47,8 @@ const ResetAlertPage         = lazy(() => import('./pages/Auth/ResetAlertPage'))
 const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMaintenancePage'));
 const DocumentTemplatesPage   = lazy(() => import('./pages/Admin/Templates/DocumentTemplatesPage'));
 const MyCertificatesPage      = lazy(() => import('./pages/User/Certificates/MyCertificatesPage'));
+const InnovationPage          = lazy(() => import('./pages/Innovacion/InnovationPage'));
+const InnovationWorkspace     = lazy(() => import('./pages/Innovacion/Workspace/InnovationWorkspace'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -260,6 +262,8 @@ function App() {
                             </ProtectedRoute>
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/innovacion" element={<InnovationPage />} />
+                            <Route path="/innovacion/workspace/:assetUuid" element={<InnovationWorkspace />} />
                             <Route path="/mis-certificados" element={<MyCertificatesPage />} />
                             <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/papelera" element={<RecycleBinPage />} />

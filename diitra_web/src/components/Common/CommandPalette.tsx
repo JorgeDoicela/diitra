@@ -33,6 +33,7 @@ import {
     Loader2,
     User,
     FolderOpen,
+    Sparkles,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -203,6 +204,7 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'dashboard', label: 'Tablero Principal', description: 'Vista general con métricas y actividad reciente', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D', roles: ['ANY'], keywords: ['inicio', 'home', 'panel', 'resumen'], boost: 8 },
         { id: 'investigacion', label: 'Proyectos de investigación', description: 'Repositorio de proyectos de investigación institucionales', category: 'Navegación', icon: ClipboardList, path: '/investigacion', shortcut: 'P', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], keywords: ['proyectos', 'investigacion', 'research', 'i+d', 'ciencia'], boost: 9 },
         { id: 'mis-proyectos', label: 'Mis Proyectos', description: 'Proyectos en los que participas directamente', category: 'Navegación', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], keywords: ['mis proyectos', 'colaboraciones', 'expediente'], boost: isDocente || isEstudiante ? 10 : 5 },
+        { id: 'innovacion', label: 'Innovación y Transferencia', description: 'Catálogo de activos tecnológicos, prototipos TRL y convenios CTT', category: 'Navegación', icon: Sparkles, path: '/innovacion', shortcut: 'I', roles: ['ANY'], keywords: ['innovacion', 'transferencia', 'tecnologia', 'prototipos', 'senadi', 'patentes', 'software', 'trl', 'ctt'], boost: 9 },
         { id: 'convocatorias', label: 'Convocatorias Activas', description: 'Postulaciones abiertas para proyectos de investigación', category: 'Navegación', icon: PenTool, path: '/convocatorias', shortcut: 'G', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], keywords: ['convocatoria', 'postular', 'aplicar', 'call', 'becas'], boost: 7 },
         { id: 'revisiones', label: 'Revisiones por Pares', description: 'Evaluaciones de proyectos asignadas para revisión académica', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], keywords: ['revision', 'peer review', 'evaluar', 'pares', 'dictamen'], boost: isRevisor ? 10 : 6 },
         { id: 'notificaciones', label: 'Centro de Notificaciones', description: 'Historial completo de alertas y mensajes del sistema', category: 'Navegación', icon: Bell, path: '/notificaciones', roles: ['ANY'], keywords: ['notificacion', 'alertas', 'mensajes', 'inbox'], boost: 5 },

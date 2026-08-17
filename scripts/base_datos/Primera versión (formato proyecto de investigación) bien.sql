@@ -577,16 +577,21 @@ CREATE TABLE inv_financiamientos (
 
 CREATE TABLE inv_productos (
     idProducto    INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid          VARCHAR(36)  NOT NULL UNIQUE,
     idProyecto    INT          NOT NULL,
     idTipoProducto INT         NOT NULL,
     titulo        VARCHAR(500) NOT NULL,
     cantidad      INT          NOT NULL DEFAULT 1,
     urlProducto   VARCHAR(512),
-    -- Campos para Propiedad Intelectual (SENADI)
+    -- Campos para Propiedad Intelectual e Innovación (SENADI / CACES)
     esPropiedadIntelectual TINYINT(1) DEFAULT 0,
-    numeroRegistro VARCHAR(100),
-    fechaRegistroSenadi DATE,
-    metadataJson  JSON         NULL COMMENT 'Metadatos específicos según tipo (ISSN, ISBN, PatentID)',
+    tipoPropiedadIntelectual VARCHAR(50) NULL COMMENT 'Software | ModeloUtilidad | DisenoIndustrial | Marca | SecretoIndustrial',
+    numeroRegistro VARCHAR(100) NULL COMMENT 'Número de trámite o título SENADI',
+    fechaRegistroSenadi DATE NULL,
+    estadoSenadi  ENUM('NoAplica', 'Solicitado', 'EnExamen', 'Concedido', 'Denegado') DEFAULT 'NoAplica',
+    trlActual     TINYINT      NULL DEFAULT 4 COMMENT 'Nivel de madurez tecnológica del activo (1-9)',
+    urlCertificadoSenadi VARCHAR(512) NULL,
+    metadataJson  JSON         NULL COMMENT 'Metadatos específicos según tipo (ISSN, ISBN, PatentID, TRL)',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idTipoProducto) REFERENCES inv_cat_tipo_producto(idTipoProducto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -701,15 +706,23 @@ CREATE TABLE inv_gastos (
     FOREIGN KEY (idEvidencia) REFERENCES inv_evidencias(idEvidencia)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Transferencia Tecnológica y Convenios
+-- Transferencia Tecnológica y Convenios (CTT / CACES)
 CREATE TABLE inv_transferencias (
     idTransferencia INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid            VARCHAR(36)  NOT NULL UNIQUE,
     idProyecto      INT          NOT NULL,
+    idProducto      INT          NULL COMMENT 'Activo tecnológico o producto específico transferido',
     entidadReceptora VARCHAR(255) NOT NULL,
+    rucEntidad      VARCHAR(13)  NULL,
     numeroConvenio  VARCHAR(100),
     fechaConvenio   DATE,
+    modalidad       ENUM('Licencia', 'Cesion', 'ConvenioCooperacion', 'AsistenciaTecnica', 'Donacion') DEFAULT 'ConvenioCooperacion',
+    valorMonetario  DECIMAL(12,2) DEFAULT 0.00,
+    beneficiariosDirectos INT    DEFAULT 0 COMMENT 'Métrica auditada por el CACES',
+    urlActaFirmada  VARCHAR(512) NULL COMMENT 'Acta de entrega-recepción con firma electrónica',
     descripcion     TEXT,
-    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
+    FOREIGN KEY (idProducto) REFERENCES inv_productos(idProducto) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
@@ -774,6 +787,10 @@ CREATE TRIGGER trg_ent_ext_uuid BEFORE INSERT ON inv_entidades_externas FOR EACH
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 
 -- Triggers adicionales para asegurar la generación de UUIDs en todo el esquema
+CREATE TRIGGER trg_productos_uuid BEFORE INSERT ON inv_productos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_transferencias_uuid BEFORE INSERT ON inv_transferencias FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_programas_uuid BEFORE INSERT ON inv_programas FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_dominios_uuid BEFORE INSERT ON inv_dominios FOR EACH ROW
@@ -1050,18 +1067,22 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1. Tipos de Convocatoria
 INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES
 ('Investigación Aplicada', 'Desarrollo de prototipos y soluciones técnicas'),
-('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
+('Innovación y Transferencia Tecnológica', 'Proyectos orientados a prototipos TRL 4-7, registro SENADI y transferencia a la industria'),
+('Retos de Innovación Abierta', 'Desafíos técnicos formulados por empresas o GADs locales'),
 ('Semilleros', 'Iniciación a la investigación con estudiantes'),
 ('Vinculación e Investigación', 'Proyectos integrados con la comunidad');
 
--- 10. Catálogo de Productos (Suck from Core)
+-- 10. Catálogo de Productos (Investigación + Innovación + Transferencia)
 INSERT INTO inv_cat_tipo_producto (uuid, nombre, categoria, requiereRegistro) VALUES
 (UUID(), 'Artículo Indexado (Scopus/WoS)', 'Académico', 0),
-(UUID(), 'Prototipo Industrial', 'Tecnológico', 1),
-(UUID(), 'Software Registrado', 'Innovación', 1),
+(UUID(), 'Prototipo Funcional / Maqueta Operativa', 'Innovación', 1),
+(UUID(), 'Software Registrado ante SENADI', 'Innovación', 1),
+(UUID(), 'Modelo de Utilidad Industrial', 'Innovación', 1),
 (UUID(), 'Patente de Invención', 'Innovación', 1),
+(UUID(), 'Diseño Industrial Registrado', 'Innovación', 1),
 (UUID(), 'Libro / Capítulo de Libro', 'Académico', 0),
-(UUID(), 'Informe Técnico de Transferencia', 'Transferencia', 1);
+(UUID(), 'Manual de Transferencia Tecnológica / Guía Operativa', 'Transferencia', 0),
+(UUID(), 'Contrato / Acta de Transferencia Tecnológica', 'Transferencia', 1);
 
 -- 11. Catálogo de Evidencias
 INSERT INTO inv_cat_tipo_evidencia (uuid, nombre, descripcion) VALUES
@@ -1459,6 +1480,7 @@ VALUES
         1,    -- requires_traceability = TRUE
         0     -- requires_lopdp = FALSE (no datos personales sensibles en el acta)
     );
+*/
 
 -- =============================================================================
 -- SECCIÓN: MOTOR DE CORREOS PERSONALIZADO (DIITRA)
@@ -1491,6 +1513,13 @@ CREATE TABLE inv_email_historial (
     metadataJson     JSON         NULL COMMENT 'JSON con metadatos del sistema (proyecto_uuid, etc)',
     FOREIGN KEY (idUsuarioDestinatario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DELIMITER $$
+CREATE TRIGGER trg_email_tpl_uuid BEFORE INSERT ON inv_email_templates FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_email_hist_uuid BEFORE INSERT ON inv_email_historial FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
 
 -- =============================================================================
 -- SEMILLAS: MOTOR DE CORREOS PERSONALIZADO (DIITRA)
@@ -2120,6 +2149,10 @@ CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
 
 INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
 VALUES ('20260720202138_InitialCreate', '9.0.0');
+
+-- Reactivación final de integridad referencial
+SET FOREIGN_KEY_CHECKS = 1;
+
 
 
 

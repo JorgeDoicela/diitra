@@ -9,11 +9,19 @@ namespace diitra_infrastructure.data.models;
 public partial class InvTransferencia
 {
     public int IdTransferencia { get; set; }
+    public string Uuid { get; set; } = null!;
     public int IdProyecto { get; set; }
+    public int? IdProducto { get; set; }
     public string EntidadReceptora { get; set; } = null!;
+    public string? RucEntidad { get; set; }
     public string? NumeroConvenio { get; set; }
     public DateOnly? FechaConvenio { get; set; }
+    public string Modalidad { get; set; } = "ConvenioCooperacion";
+    public decimal ValorMonetario { get; set; } = 0.00m;
+    public int BeneficiariosDirectos { get; set; } = 0;
+    public string? UrlActaFirmada { get; set; }
     public string? Descripcion { get; set; }
 
     public virtual InvProyecto IdProyectoNavigation { get; set; } = null!;
+    public virtual InvProducto? IdProductoNavigation { get; set; }
 }

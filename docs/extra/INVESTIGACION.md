@@ -77,3 +77,24 @@ Para eliminar el papel y dotar de validez legal a las actas de aprobación, rúb
 * **Diseño Colaborativo:** Los proyectos son construidos dinámicamente en fases: Postulación (coordinadores/docentes/estudiantes), Evaluación de Pares (Rúbricas anónimas en doble ciego), y Aprobación (Resoluciones institucionales).
 * **QuestPDF / Generador Dinámico de Plantillas:** Dado que los formatos y rúbricas del CACES cambian constantemente, la lógica de reportes de DIITRA debe basarse en plantillas PDF dinámicas para facilitar su adaptación inmediata sin necesidad de alterar el código del frontend.
 * **Compatibilidad SIIES:** El sistema de base de datos debe ser capaz de exportar las evidencias estructuradas en formatos CSV compatibles con las plantillas de carga masiva solicitadas por la plataforma SIIES del CACES durante la fase de auditoría.
+
+---
+
+## 5. Proceso de Innovación y Transferencia Tecnológica (i + TT)
+En concordancia con el **Código Orgánico de la Economía Social de los Conocimientos (Código Ingenios)** y los estándares de cualificación de **Institutos Superiores Universitarios (ISTU)** del CACES, el sistema DIITRA separa operativamente la investigación formativa/aplicada del ciclo de innovación y explotación productiva:
+
+### A. Trazabilidad de Madurez Tecnológica (Escala TRL 1 a 9)
+* **TRL 1-3:** Investigación básica y formulación de concepto en laboratorio.
+* **TRL 4-6:** Prototipado funcional validado en entornos controlados y simulaciones industriales.
+* **TRL 7-9:** Demostración en entorno real, licenciamiento y despliegue en el sector productivo o social.
+
+### B. Ventanilla de Propiedad Intelectual (SENADI / CATI)
+DIITRA registra y audita el estado legal de los activos generados en el instituto:
+* **Derechos de Autor (Soporte Lógico):** Registro de software, algoritmos y manuales operativos.
+* **Propiedad Industrial:** Modelos de utilidad, diseños industriales, marcas colectivas y patentes de invención.
+* **Trazabilidad Legal:** Número de trámite, estado del examen formal/fondo ante el SENADI, y fechas de concesión de títulos.
+
+### C. Centro de Transferencia Tecnológica (CTT)
+* **Catálogo de Oferta Tecnológica:** Exposición de prototipos y software institucional disponible para empresas y GADs.
+* **Convenios y Modalidades de Transferencia:** Licenciamiento, cesión de derechos patrimoniales, acuerdos de asistencia técnica y convenios de donación tecnológica con actas firmadas digitalmente (`.p12`) y cómputo de beneficiarios directos auditables por el CACES.
+
