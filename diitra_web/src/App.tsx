@@ -300,7 +300,7 @@ function App() {
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
-                            <Route path="/investigacion/revision-informe-final/:projectUuid" element={<AdminRoute><RevisionInformeFinalPage /></AdminRoute>} />
+                            <Route path="/investigacion/revision-informe-final/:projectUuid" element={<RevisionInformeFinalPage />} />
                             
                             {/* Innovation Context */}
                             <Route path="/innovacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
@@ -310,6 +310,7 @@ function App() {
                             <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
                             <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<ResearcherRoute><MonitoringPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<ResearcherRoute><InformesAvancePage /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/revision-informe-final/:projectUuid" element={<RevisionInformeFinalPage />} />
                             
                             <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><ProjectAdoptionPage /></RoleRoute>} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />

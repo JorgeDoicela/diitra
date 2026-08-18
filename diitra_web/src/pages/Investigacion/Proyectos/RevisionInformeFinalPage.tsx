@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AlertCircle, MessageSquare, Award, ArrowLeft, FileText, Eye } from 'lucide-react';
+import { AlertCircle, MessageSquare, Award, ArrowLeft, FileText, Eye, CheckCircle2 } from 'lucide-react';
 import api from '../../../api/axios_config';
+import { useAuth } from '../../../api/AuthContext';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 import { InteractiveFinalReportSections } from './components/InteractiveFinalReportSections';
@@ -13,6 +14,7 @@ import { FIELD_LABELS } from './types/revisionTecnicaTypes';
 export const RevisionInformeFinalPage: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
     const { addToast } = useNotifications();
 
     const [project, setProject] = useState<any>(null);
@@ -251,14 +253,24 @@ export const RevisionInformeFinalPage: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Botón de Dictamen */}
-                    <button
-                        onClick={() => setIsFinalizeModalOpen(true)}
-                        className="btn-vercel-primary !py-1.5 !px-4 text-xs font-bold flex items-center gap-1.5 !bg-emerald-600 hover:!bg-emerald-700 !text-white shadow-sm cursor-pointer"
-                    >
-                        <Award size={14} />
-                        <span>Emitir Dictamen de Cierre</span>
-                    </button>
+                    {/* Botón de Dictamen / Badge de Estado */}
+                    {isAdmin && project.status !== 'Finalizado' ? (
+                        <button
+                            onClick={() => setIsFinalizeModalOpen(true)}
+                            className="btn-vercel-primary !py-1.5 !px-4 text-xs font-bold flex items-center gap-1.5 !bg-emerald-600 hover:!bg-emerald-700 !text-white shadow-sm cursor-pointer"
+                        >
+                            <Award size={14} />
+                            <span>Emitir Dictamen de Cierre</span>
+                        </button>
+                    ) : project.status === 'Finalizado' ? (
+                        <span className="badge-vercel badge-vercel-success !text-[11px] !py-1.5 !px-3 font-semibold flex items-center gap-1.5">
+                            <CheckCircle2 size={13} /> Cierre Aprobado Oficialmente
+                        </span>
+                    ) : (
+                        <span className="badge-vercel badge-vercel-warning !text-[11px] !py-1.5 !px-3 font-semibold flex items-center gap-1.5">
+                            En Auditoría por Coordinación
+                        </span>
+                    )}
                 </div>
             </header>
 

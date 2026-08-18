@@ -13,18 +13,9 @@ const WorkflowPhases = [
     { id: 'En Revisión', label: 'Evaluación Pares', icon: CheckCircle2 },
     { id: 'Aprobado', label: 'Aprobación Legal', icon: FileSignature },
     { id: 'En Ejecución', label: 'Ejecución y Avance', icon: Settings },
-    { id: 'Finalizado', label: 'Informe Final', icon: FileCheck },
+    { id: 'InformeFinal', label: 'Informe Final', icon: FileSignature },
+    { id: 'RevisionInformeFinal', label: 'Revisión Administrador', icon: Shield },
 ];
-
-const getPhaseIndex = (status: string) => {
-    if (status === 'Borrador' || status === 'En Corrección') return 0;
-    if (status === 'Enviado') return 1;
-    if (status === 'En Revisión') return 2;
-    if (status === 'Aprobado') return 3;
-    if (status === 'En Ejecución') return 4;
-    if (status === 'Finalizado') return 5;
-    return -1;
-};
 
 interface CacesWorkflowProps {
     currentProject: {
@@ -114,20 +105,52 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                 <div className="absolute left-3 top-2.5 bottom-2.5 w-0.5 bg-border-thin"></div>
 
                 {WorkflowPhases.map((phase, idx) => {
-                    const currentIdx = getPhaseIndex(currentProject.status);
-                    const isCurrent = currentIdx === idx;
-                    const isPast = currentIdx > idx;
-                    const isFuture = idx > currentIdx;
+                    // Determinar el estado lógico de cada una de las 7 fases
+                    let isCurrent = false;
+                    let isPast = false;
+                    let isFuture = false;
+                    let isRevisionDone = false;
 
-                    const isRevisionDone = phase.id === 'En Revisión' && (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
-                    const showChecked = isPast || isRevisionDone;
-                    const isCurrentActive = isCurrent && !isRevisionDone;
+                    const status = currentProject.status;
+
+                    if (phase.id === 'Borrador') {
+                        isCurrent = status === 'Borrador' || status === 'En Corrección';
+                        isPast = !isCurrent;
+                    } else if (phase.id === 'Enviado') {
+                        isCurrent = status === 'Enviado';
+                        isPast = status !== 'Borrador' && status !== 'En Corrección' && status !== 'Enviado';
+                        isFuture = status === 'Borrador' || status === 'En Corrección';
+                    } else if (phase.id === 'En Revisión') {
+                        isRevisionDone = (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
+                        isCurrent = status === 'En Revisión';
+                        isPast = status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
+                        isFuture = status === 'Borrador' || status === 'En Corrección' || status === 'Enviado';
+                    } else if (phase.id === 'Aprobado') {
+                        isCurrent = status === 'Aprobado';
+                        isPast = status === 'En Ejecución' || status === 'Finalizado';
+                        isFuture = status === 'Borrador' || status === 'En Corrección' || status === 'Enviado' || status === 'En Revisión';
+                    } else if (phase.id === 'En Ejecución') {
+                        isPast = status === 'Finalizado' || (status === 'En Ejecución' && isFinalReportSigned);
+                        isCurrent = status === 'En Ejecución' && !isFinalReportSigned;
+                        isFuture = status === 'Borrador' || status === 'En Corrección' || status === 'Enviado' || status === 'En Revisión' || status === 'Aprobado';
+                    } else if (phase.id === 'InformeFinal') {
+                        isPast = status === 'Finalizado' || (status === 'En Ejecución' && isFinalReportSigned);
+                        isCurrent = status === 'En Ejecución' && !isFinalReportSigned;
+                        isFuture = status !== 'En Ejecución' && status !== 'Finalizado';
+                    } else if (phase.id === 'RevisionInformeFinal') {
+                        isPast = status === 'Finalizado';
+                        isCurrent = status === 'En Ejecución' && isFinalReportSigned;
+                        isFuture = status !== 'Finalizado' && !(status === 'En Ejecución' && isFinalReportSigned);
+                    }
+
+                    const showChecked = isPast || (phase.id === 'En Revisión' && isRevisionDone);
+                    const isCurrentActive = isCurrent && !(phase.id === 'En Revisión' && isRevisionDone);
 
                     return (
                         <div key={phase.id} className="relative group/step">
                             {/* Connector segment — verde sólido si está completado */}
                             {idx < WorkflowPhases.length - 1 && (
-                                <div className={`absolute top-9 bottom-[-20px] transition-all duration-300 z-0 ${isPast
+                                <div className={`absolute top-9 bottom-[-20px] transition-all duration-300 z-0 ${showChecked
                                     ? 'w-[2.5px] -left-[20.25px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
                                     : 'w-0.5 -left-[20px] bg-border-thin'
                                     }`} />
@@ -138,7 +161,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.4)]'
                                 : isCurrentActive
                                     ? 'bg-text-main border-text-main text-bg-deep ring-4 ring-text-main/10 shadow-[0_0_12px_rgba(0,0,0,0.08)] animate-pulse'
-                                    : (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución')
+                                    : (phase.id === 'InformeFinal' && currentProject.status === 'En Ejecución')
                                         ? 'bg-surface border-text-dim/40 text-text-main'
                                         : 'bg-surface border-border-thin text-text-dim'
                                 }`}>
@@ -149,7 +172,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 )}
                             </div>
 
-                            {/* Card Content — franja izquierda verde si completado */}
+                            {/* Card Content */}
                             <div
                                 onClick={() => {
                                     if (phase.id === 'Borrador' && (isCurrent || isPast)) {
@@ -180,15 +203,17 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         } else {
                                             navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix));
                                         }
-                                    } else if (phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado')) {
-                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`, urlPrefix));
+                                    } else if (phase.id === 'InformeFinal' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado')) {
+                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix));
+                                    } else if (phase.id === 'RevisionInformeFinal' && (currentProject.status === 'Finalizado' || (currentProject.status === 'En Ejecución' && isFinalReportSigned))) {
+                                        navigate(`/investigacion/revision-informe-final/${resolvedProjectUuid}`);
                                     }
                                 }}
                                 className={`p-4 rounded-xl border transition-all duration-300 ${isCurrentActive
                                     ? 'bg-surface border-text-dim/40 shadow-[0_2px_16px_rgba(0,0,0,0.06)] cursor-pointer ring-1 ring-text-dim/10'
                                     : showChecked
                                         ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
-                                        : (isPast || (phase.id === 'Finalizado' && currentProject.status === 'En Ejecución'))
+                                        : (isPast || (phase.id === 'InformeFinal' && currentProject.status === 'En Ejecución'))
                                             ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
                                             : isFuture
                                                 ? 'bg-transparent border-transparent opacity-30 select-none'
@@ -219,9 +244,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
-                                    {phase.id === 'Finalizado' && 'Elaboración, consolidación de resultados y presentación del informe final de investigación.'}
+                                    {phase.id === 'InformeFinal' && 'Elaboración, consolidación de resultados, producción científica y firma digital del equipo.'}
+                                    {phase.id === 'RevisionInformeFinal' && 'Auditoría técnica formal, verificación de cumplimiento de metas y dictamen de cierre institucional.'}
                                 </p>
 
+                                {/* 1. FORMULACIÓN */}
                                 {phase.id === 'Borrador' && (
                                     <div className="mt-4">
                                         <Link
@@ -242,6 +269,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     </div>
                                 )}
 
+                                {/* 2. REVISIÓN ADMINISTRADOR (PROTOCOLO) */}
                                 {phase.id === 'Enviado' && (isCurrent || isPast) && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
                                         {isCurrentActive && isAdmin ? (
@@ -275,6 +303,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     </div>
                                 )}
 
+                                {/* 3. EVALUACIÓN POR PARES */}
                                 {phase.id === 'En Revisión' && (isCurrent || isPast) && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-3 w-full">
                                         <div className="flex flex-col gap-2.5 w-full">
@@ -335,6 +364,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     </div>
                                 )}
 
+                                {/* 4. APROBACIÓN LEGAL */}
                                 {phase.id === 'Aprobado' && (isCurrent || isPast) && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
                                         {currentProject.codigoInstitucional && (
@@ -378,6 +408,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     </div>
                                 )}
 
+                                {/* 5. EJECUCIÓN Y AVANCE */}
                                 {phase.id === 'En Ejecución' && (
                                     (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') ? (
                                         <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
@@ -411,89 +442,117 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                     )
                                 )}
 
-                                {phase.id === 'Finalizado' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
-                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        {currentProject.status === 'Finalizado' ? (
-                                            <div className="space-y-2.5">
-                                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1">
-                                                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
-                                                        <Award size={15} /> Proyecto Culminado Oficialmente
-                                                    </p>
-                                                    <p className="text-[10px] text-text-dim">
-                                                        El proyecto cuenta con cierre legal, acta institucional y certificados emitidos automáticamente para el equipo.
-                                                    </p>
-                                                </div>
+                                {/* 6. INFORME FINAL (FORMULACIÓN / REDACCIÓN POR EL EQUIPO) */}
+                                {phase.id === 'InformeFinal' && (
+                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') ? (
+                                        <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                            {isFinalReportSigned || currentProject.status === 'Finalizado' ? (
                                                 <Link
                                                     to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
                                                     onClick={(e) => { e.stopPropagation(); }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                                    className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                                >
+                                                    <FileText size={14} />
+                                                    <span>Ver Informe Final</span>
+                                                </Link>
+                                            ) : (
+                                                <Link
+                                                    to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
+                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                    className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)] ${resolvingDocument === finalReportTemplateCode ? 'pointer-events-none opacity-50' : ''}`}
                                                 >
                                                     <FileSignature size={14} />
-                                                    <span>Ver Informe Final Oficial</span>
+                                                    <span>Elaborar y Firmar Informe Final</span>
                                                 </Link>
-                                                {currentProject.esParticipante && (
-                                                    <Link
-                                                        to="/mis-certificados"
-                                                        onClick={(e) => { e.stopPropagation(); }}
-                                                        className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-brand/50 no-underline text-text-main"
-                                                    >
-                                                        <Award size={14} className="text-brand" />
-                                                        <span>Ver Mis Certificados</span>
-                                                    </Link>
-                                                )}
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="mt-3 p-3 bg-surface/40 border border-border-thin/60 rounded-xl text-center space-y-1 select-none">
+                                            <div className="flex justify-center text-text-dim/50">
+                                                <FileSignature size={16} />
                                             </div>
-                                        ) : isFinalReportSigned ? (
-                                            /* Informe Final firmado pero pendiente de dictamen/cierre del Admin */
-                                            isAdmin ? (
-                                                <div className="p-3 bg-brand/10 border border-brand/20 rounded-xl space-y-2.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <Shield size={15} className="text-brand shrink-0" />
-                                                        <p className="text-xs font-bold text-text-main">Informe Final Firmado</p>
-                                                    </div>
-                                                    <p className="text-[11px] text-text-dim leading-relaxed">
-                                                        El Director ha firmado y postulado el Informe Final. Como Administrador, puedes auditar el informe y aprobar el cierre definitivo del proyecto.
-                                                    </p>
-                                                    <div className="pt-1">
-                                                        <Link
-                                                            to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
-                                                            onClick={(e) => { e.stopPropagation(); }}
-                                                            className="btn-vercel-primary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                                                        >
-                                                            <Shield size={14} />
-                                                            <span>Auditar y Dictaminar Informe Final</span>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
-                                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                                                        <Clock size={14} /> Informe Final en Revisión por Coordinación
-                                                    </p>
-                                                    <p className="text-[11px] text-text-dim leading-relaxed">
-                                                        Su Informe Final ha sido remitido con firma digital. La Coordinación de Investigación está revisando los resultados para emitir la resolución de cierre institucional.
-                                                    </p>
-                                                    <Link
-                                                        to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
-                                                        onClick={(e) => { e.stopPropagation(); }}
-                                                        className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5"
-                                                    >
-                                                        <FileText size={14} />
-                                                        <span>Ver Informe Final</span>
-                                                    </Link>
-                                                </div>
-                                            )
-                                        ) : (
-                                            /* Aún no se ha firmado el Informe Final */
+                                            <p className="text-[11px] font-semibold text-text-dim/80">Etapa Pendiente</p>
+                                            <p className="text-[10px] text-text-dim/60 leading-snug">
+                                                Se habilitará durante la etapa de ejecución para la consolidación de resultados.
+                                            </p>
+                                        </div>
+                                    )
+                                )}
+
+                                {/* 7. REVISIÓN ADMINISTRADOR (INFORME FINAL / DICTAMEN DE CIERRE) */}
+                                {phase.id === 'RevisionInformeFinal' && (
+                                    currentProject.status === 'Finalizado' ? (
+                                        <div className="mt-4 animate-fade-in space-y-2.5">
+                                            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1">
+                                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                                                    <Award size={15} /> Proyecto Culminado Oficialmente
+                                                </p>
+                                                <p className="text-[10px] text-text-dim">
+                                                    El proyecto cuenta con cierre legal, acta institucional y certificados emitidos automáticamente.
+                                                </p>
+                                            </div>
                                             <Link
                                                 to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
                                                 onClick={(e) => { e.stopPropagation(); }}
-                                                className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${resolvingDocument === finalReportTemplateCode ? 'pointer-events-none opacity-50' : ''}`}
+                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
                                             >
                                                 <FileSignature size={14} />
-                                                <span>Elaborar Informe Final</span>
+                                                <span>Ver Informe Final Oficial</span>
                                             </Link>
-                                        )}
-                                    </div>
+                                            {currentProject.esParticipante && (
+                                                <Link
+                                                    to="/mis-certificados"
+                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                    className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-brand/50 no-underline text-text-main"
+                                                >
+                                                    <Award size={14} className="text-brand" />
+                                                    <span>Ver Mis Certificados</span>
+                                                </Link>
+                                            )}
+                                        </div>
+                                    ) : isFinalReportSigned && currentProject.status === 'En Ejecución' ? (
+                                        <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                            {isAdmin ? (
+                                                <Link
+                                                    to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
+                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                    className="btn-vercel-primary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.15)]"
+                                                >
+                                                    <Shield size={14} />
+                                                    <span>Auditar y Dictaminar Informe Final</span>
+                                                </Link>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1 text-center">
+                                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1.5">
+                                                            <Clock size={14} /> Informe en Revisión por Coordinación
+                                                        </p>
+                                                        <p className="text-[10px] text-text-dim leading-relaxed">
+                                                            Su Informe Final ha sido remitido. La Coordinación de Investigación está auditando los resultados.
+                                                        </p>
+                                                    </div>
+                                                    <Link
+                                                        to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
+                                                        onClick={(e) => { e.stopPropagation(); }}
+                                                        className="btn-vercel-secondary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5"
+                                                    >
+                                                        <Shield size={14} />
+                                                        <span>Ver Revisión Técnica</span>
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="mt-3 p-3 bg-surface/40 border border-border-thin/60 rounded-xl text-center space-y-1 select-none">
+                                            <div className="flex justify-center text-text-dim/50">
+                                                <Shield size={16} />
+                                            </div>
+                                            <p className="text-[11px] font-semibold text-text-dim/80">Etapa Bloqueada</p>
+                                            <p className="text-[10px] text-text-dim/60 leading-snug">
+                                                Requiere que el equipo investigador firme y postule el Informe Final en el paso anterior.
+                                            </p>
+                                        </div>
+                                    )
                                 )}
                             </div>
                         </div>
@@ -505,4 +564,5 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 };
 
 export default CacesWorkflow;
+
 

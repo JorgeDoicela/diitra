@@ -166,16 +166,6 @@ namespace diitra_api.Controllers
                 ?? "";
 
             var certs = await _certificateService.GetCertificatesForUserAsync(idRef, ct);
-
-            if (!certs.Any() && !string.IsNullOrWhiteSpace(User.Identity?.Name) && User.Identity?.Name != idRef)
-            {
-                var certsByName = await _certificateService.GetCertificatesForUserAsync(User.Identity.Name, ct);
-                if (certsByName.Any())
-                {
-                    return Ok(certsByName);
-                }
-            }
-
             return Ok(certs);
         }
 

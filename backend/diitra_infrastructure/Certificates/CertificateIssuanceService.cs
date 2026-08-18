@@ -184,7 +184,7 @@ namespace Diitra.Infrastructure.Certificates
                         templateCode: "CERTIFICADO_COMPLETACION",
                         templateVersion: 1,
                         entityUuid: recipientCedula,
-                        createdBy: recipientCedula,
+                        createdBy: issuedBy,
                         title: $"Certificado de Completación - {proyecto.Titulo}",
                         entityType: "Certificado",
                         dataSnapshotJson: JsonSerializer.Serialize(certificateData)
@@ -286,7 +286,7 @@ namespace Diitra.Infrastructure.Certificates
                         templateCode: "CERTIFICADO_PARTICIPACION_GRUPO",
                         templateVersion: 1,
                         entityUuid: recipientCedula,
-                        createdBy: recipientCedula,
+                        createdBy: issuedBy,
                         title: $"Certificado Grupo - {grupo.Nombre}",
                         entityType: "Certificado",
                         dataSnapshotJson: JsonSerializer.Serialize(certificateData)
@@ -374,7 +374,7 @@ namespace Diitra.Infrastructure.Certificates
                 templateCode: tplCode,
                 templateVersion: 1,
                 entityUuid: userCedula,
-                createdBy: userCedula,
+                createdBy: issuedBy,
                 title: certificateTitle,
                 entityType: "Certificado",
                 dataSnapshotJson: JsonSerializer.Serialize(certificateData)
@@ -452,19 +452,20 @@ namespace Diitra.Infrastructure.Certificates
         {
             if (string.IsNullOrWhiteSpace(userCedulaOrId)) return Enumerable.Empty<IssuedCertificateResultDto>();
 
-            var userIdentities = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { userCedulaOrId };
+            var userRecipientIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { userCedulaOrId.Trim() };
 
-            // Buscar usuario en base de datos para obtener todos sus alias/identificadores
+            // Buscar usuario en base de datos para mapear sus identificadores únicos legítimos (Cédula e ID de Usuario)
             var dbUser = await _db.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.IdSigafi == userCedulaOrId || u.EmailInstitucional == userCedulaOrId || u.Nombre == userCedulaOrId || u.IdUsuario.ToString() == userCedulaOrId, ct);
 
             if (dbUser != null)
             {
-                userIdentities.Add(dbUser.IdUsuario.ToString());
-                if (!string.IsNullOrEmpty(dbUser.IdSigafi)) userIdentities.Add(dbUser.IdSigafi);
-                if (!string.IsNullOrEmpty(dbUser.EmailInstitucional)) userIdentities.Add(dbUser.EmailInstitucional);
-                if (!string.IsNullOrEmpty(dbUser.Nombre)) userIdentities.Add(dbUser.Nombre);
+                userRecipientIds.Add(dbUser.IdUsuario.ToString());
+                if (!string.IsNullOrWhiteSpace(dbUser.IdSigafi))
+                {
+                    userRecipientIds.Add(dbUser.IdSigafi.Trim());
+                }
             }
 
             var instances = await _db.DocumentInstances
@@ -473,22 +474,15 @@ namespace Diitra.Infrastructure.Certificates
                 .OrderByDescending(d => d.CreatedAt)
                 .ToListAsync(ct);
 
-            // Filtrar en memoria por cualquiera de las identidades válidas
-            var matchedInstances = instances.Where(d =>
-                userIdentities.Contains(d.CreatedBy ?? "") ||
-                userIdentities.Contains(d.EntityUuid ?? "") ||
-                userIdentities.Any(id => d.DataSnapshotJson != null && d.DataSnapshotJson.Contains(id))
-            ).ToList();
-
-            Console.WriteLine($"[DIITRA] [GetCertificatesForUserAsync] Solicitado: '{userCedulaOrId}'. Alias: [{string.Join(", ", userIdentities)}]. Total certificados en BD: {instances.Count}. Coincidentes: {matchedInstances.Count}");
-
             var list = new List<IssuedCertificateResultDto>();
 
-            foreach (var inst in matchedInstances)
+            // Filtrar estrictamente por destinatario (EntityUuid o RecipientCedula en snapshot)
+            // NUNCA por CreatedBy (que corresponde a la autoridad/administrador emisor)
+            foreach (var inst in instances)
             {
-                string recipientName = "Usuario";
+                string recipientName = "Usuario Destinatario";
                 string recipientRole = "Participante";
-                string recipientCedula = userCedulaOrId;
+                string recipientCedula = inst.EntityUuid?.Trim() ?? "";
 
                 if (!string.IsNullOrEmpty(inst.DataSnapshotJson))
                 {
@@ -498,24 +492,36 @@ namespace Diitra.Infrastructure.Certificates
                         var root = doc.RootElement;
                         if (root.TryGetProperty("RecipientName", out var pName)) recipientName = pName.GetString() ?? recipientName;
                         if (root.TryGetProperty("RecipientRole", out var pRole)) recipientRole = pRole.GetString() ?? recipientRole;
-                        if (root.TryGetProperty("RecipientCedula", out var pCed)) recipientCedula = pCed.GetString() ?? recipientCedula;
+                        if (root.TryGetProperty("RecipientCedula", out var pCed))
+                        {
+                            var ced = pCed.GetString();
+                            if (!string.IsNullOrWhiteSpace(ced)) recipientCedula = ced.Trim();
+                        }
                     }
                     catch { }
                 }
 
-                list.Add(new IssuedCertificateResultDto
+                bool isLegitimateRecipient = (!string.IsNullOrEmpty(inst.EntityUuid) && userRecipientIds.Contains(inst.EntityUuid.Trim()))
+                    || (!string.IsNullOrEmpty(recipientCedula) && userRecipientIds.Contains(recipientCedula));
+
+                if (isLegitimateRecipient)
                 {
-                    DocumentUuid = inst.TraceabilityCode ?? inst.Uuid,
-                    RecipientName = recipientName,
-                    RecipientRole = recipientRole,
-                    RecipientCedula = recipientCedula,
-                    Title = !string.IsNullOrWhiteSpace(inst.Title) ? inst.Title : $"Certificado {inst.TemplateCode}",
-                    IssueDate = inst.CreatedAt,
-                    TraceabilityCode = inst.TraceabilityCode ?? inst.Uuid,
-                    PdfBytes = Array.Empty<byte>(),
-                    FileName = $"Certificado_{recipientName.Replace(" ", "_")}.pdf"
-                });
+                    list.Add(new IssuedCertificateResultDto
+                    {
+                        DocumentUuid = inst.TraceabilityCode ?? inst.Uuid,
+                        RecipientName = recipientName,
+                        RecipientRole = recipientRole,
+                        RecipientCedula = recipientCedula,
+                        Title = !string.IsNullOrWhiteSpace(inst.Title) ? inst.Title : $"Certificado {inst.TemplateCode}",
+                        IssueDate = inst.CreatedAt,
+                        TraceabilityCode = inst.TraceabilityCode ?? inst.Uuid,
+                        PdfBytes = Array.Empty<byte>(),
+                        FileName = $"Certificado_{recipientName.Replace(" ", "_")}.pdf"
+                    });
+                }
             }
+
+            Console.WriteLine($"[DIITRA] [GetCertificatesForUserAsync] Solicitado: '{userCedulaOrId}'. Identificadores: [{string.Join(", ", userRecipientIds)}]. Certificados asignados al usuario: {list.Count}");
 
             return list;
         }
