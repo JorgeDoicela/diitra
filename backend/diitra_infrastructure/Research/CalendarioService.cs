@@ -40,10 +40,17 @@ public class CalendarioService : ICalendarioService
 
         if (rolUsuario != "DIITRA_ADMIN")
         {
-            var misGrupos = await _context.Set<InvGrupoMiembro>()
+            var misGruposMiembro = await _context.Set<InvGrupoMiembro>()
                 .Where(m => m.IdUsuario == idUsuario && (m.Activo ?? true))
                 .Select(m => m.IdGrupo)
                 .ToListAsync();
+
+            var misGruposCoordinador = await _context.Set<InvGrupoInvestigacion>()
+                .Where(g => g.IdCoordinador == idUsuario && (g.Activo ?? true) && (g.Eliminado != true))
+                .Select(g => g.IdGrupo)
+                .ToListAsync();
+
+            var misGrupos = misGruposMiembro.Union(misGruposCoordinador).Distinct().ToList();
 
             proyectosQuery = proyectosQuery.Where(p =>
                 p.InvProyectoParticipantes.Any(pp => pp.IdUsuario == idUsuario && (pp.Activo ?? true)) ||
@@ -69,8 +76,9 @@ public class CalendarioService : ICalendarioService
 
         foreach (var p in proyectos)
         {
-            // 1.1 Plazo de Subsanación de Protocolo (Fase 1 y 2)
-            if (p.FechaLimiteSubsanacion.HasValue &&
+            // 1.1 Plazo de Subsanación de Protocolo (Fase 1 y 2) — Exclusivo para el Docente/Equipo de Proyecto
+            if (rolUsuario != "DIITRA_ADMIN" &&
+                p.FechaLimiteSubsanacion.HasValue &&
                 p.FechaLimiteSubsanacion.Value >= desde &&
                 p.FechaLimiteSubsanacion.Value <= hasta &&
                 (p.Estado == "En Corrección" || p.Estado == "En Correccion"))
@@ -162,9 +170,10 @@ public class CalendarioService : ICalendarioService
                 ));
             }
 
-            // 1.4 Entrega Informe Final (Fases 6 y 7)
+            // 1.4 Entrega Informe Final (Fases 6 y 7) — Exclusivo para el Docente/Equipo de Proyecto
             var fechaInformeFinal = p.FechaLimiteSubsanacionFinal ?? p.FechaLimiteInformeFinal;
-            if (fechaInformeFinal.HasValue &&
+            if (rolUsuario != "DIITRA_ADMIN" &&
+                fechaInformeFinal.HasValue &&
                 fechaInformeFinal.Value >= desde &&
                 fechaInformeFinal.Value <= hasta &&
                 p.Estado == "En Ejecución")

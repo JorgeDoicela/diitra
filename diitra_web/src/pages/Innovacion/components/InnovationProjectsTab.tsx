@@ -11,7 +11,9 @@ import {
     RotateCcw,
     Layers,
     DollarSign,
-    Loader2
+    Loader2,
+    Target,
+    Pin
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
@@ -19,6 +21,8 @@ import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
+import { QuickAccessProjectsBar } from '../../Investigacion/Proyectos/components/QuickAccessProjectsBar';
+import { useProjectPreferences } from '../../Investigacion/Proyectos/hooks/useProjectPreferences';
 
 export interface ProyectoInnovacionResumen {
     id_proyecto: number;
@@ -59,7 +63,10 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     const [search, setSearch] = useState('');
     const [estadoFilter, setEstadoFilter] = useState('todos');
     const [carreraFilter, setCarreraFilter] = useState('todas');
+    const [sortBy, setSortBy] = useState<string>('mi_actividad');
     const [processingUuid, setProcessingUuid] = useState<string | null>(null);
+
+    const { pinnedUuids, recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
 
     const loadProjects = useCallback(async () => {
         try {
@@ -137,18 +144,79 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     }, [proyectos]);
 
     const filteredProjects = useMemo(() => {
-        return proyectos.filter(p => {
-            const matchesSearch = !search.trim() ||
-                p.titulo.toLowerCase().includes(search.toLowerCase()) ||
-                (p.director_nombre && p.director_nombre.toLowerCase().includes(search.toLowerCase())) ||
-                (p.codigo_institucional && p.codigo_institucional.toLowerCase().includes(search.toLowerCase()));
+        return proyectos
+            .filter(p => {
+                const matchesSearch = !search.trim() ||
+                    p.titulo.toLowerCase().includes(search.toLowerCase()) ||
+                    (p.director_nombre && p.director_nombre.toLowerCase().includes(search.toLowerCase())) ||
+                    (p.codigo_institucional && p.codigo_institucional.toLowerCase().includes(search.toLowerCase()));
 
-            const matchesEstado = estadoFilter === 'todos' || p.estado.toLowerCase() === estadoFilter.toLowerCase();
-            const matchesCarrera = carreraFilter === 'todas' || p.carrera === carreraFilter;
+                const matchesEstado = estadoFilter === 'todos' || p.estado.toLowerCase() === estadoFilter.toLowerCase();
+                const matchesCarrera = carreraFilter === 'todas' || p.carrera === carreraFilter;
 
-            return matchesSearch && matchesEstado && matchesCarrera;
-        });
-    }, [proyectos, search, estadoFilter, carreraFilter]);
+                return matchesSearch && matchesEstado && matchesCarrera;
+            })
+            .sort((a, b) => {
+                if (sortBy === 'mi_actividad') {
+                    const aPinned = isPinned(a.uuid);
+                    const bPinned = isPinned(b.uuid);
+                    if (aPinned && !bPinned) return -1;
+                    if (!aPinned && bPinned) return 1;
+
+                    const aVisit = recentVisitsMap.get(a.uuid) || 0;
+                    const bVisit = recentVisitsMap.get(b.uuid) || 0;
+                    if (aVisit !== bVisit) {
+                        return bVisit - aVisit;
+                    }
+
+                    const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                    const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                    return new Date(dateB).getTime() - new Date(dateA).getTime();
+                }
+                if (sortBy === 'accion_requerida') {
+                    const actionPriority: Record<string, number> = {
+                        'prepropuesta': 1,
+                        'enviado': 2,
+                        'formulacion': 3,
+                        'enrevision': 4,
+                        'correccion': 5,
+                        'aprobado': 6,
+                        'ejecucion': 7,
+                        'finalizado': 8,
+                        'rechazado': 9
+                    };
+                    const pA = actionPriority[a.estado.toLowerCase()] || 50;
+                    const pB = actionPriority[b.estado.toLowerCase()] || 50;
+                    if (pA !== pB) return pA - pB;
+
+                    const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                    const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                    return new Date(dateB).getTime() - new Date(dateA).getTime();
+                }
+                if (sortBy === 'recientes') {
+                    const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                    const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                    return new Date(dateB).getTime() - new Date(dateA).getTime();
+                }
+                if (sortBy === 'antiguos') {
+                    const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                    const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                    return new Date(dateA).getTime() - new Date(dateB).getTime();
+                }
+                if (sortBy === 'trl_mayor') {
+                    return (b.trl_actual ?? 0) - (a.trl_actual ?? 0);
+                }
+                if (sortBy === 'titulo') {
+                    return (a.titulo || '').localeCompare(b.titulo || '');
+                }
+                if (sortBy === 'presupuesto') {
+                    return (b.presupuesto_total || 0) - (a.presupuesto_total || 0);
+                }
+                return 0;
+            });
+    }, [proyectos, search, estadoFilter, carreraFilter, sortBy, isPinned, recentVisitsMap]);
+
+    const hasActiveFilters = search.trim() !== '' || estadoFilter !== 'todos' || carreraFilter !== 'todas';
 
     const handleAprobarIdea = async (e: React.MouseEvent, p: ProyectoInnovacionResumen) => {
         e.preventDefault();
@@ -205,7 +273,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     if (loading) {
         return (
             <div className="py-24 flex flex-col items-center justify-center gap-3 text-text-dim">
-                <Loader2 className="animate-spin text-amber-500" size={24} />
+                <Loader2 className="animate-spin text-brand" size={24} />
                 <span className="text-xs font-mono uppercase tracking-widest">Cargando proyectos de innovación...</span>
             </div>
         );
@@ -213,6 +281,16 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {/* Barra de Acceso Rápido & Proyectos Fijados */}
+            <QuickAccessProjectsBar
+                proyectos={proyectos}
+                pinnedUuids={pinnedUuids}
+                recentVisitsMap={recentVisitsMap}
+                onTogglePin={togglePin}
+                basePath="/innovacion"
+                templateCode="PROTOCOLO_INNOVACION"
+            />
+
             {/* Barra de Búsqueda y Filtros */}
             <div className="flex flex-col lg:flex-row gap-3 bg-surface p-4 rounded-2xl border border-border-thin shadow-sm">
                 <div className="relative flex-1">
@@ -226,6 +304,20 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                 </div>
 
                 <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="input-vercel !rounded-xl !py-2 !text-xs min-w-[160px] cursor-pointer"
+                    >
+                        <option value="mi_actividad">Mi actividad reciente</option>
+                        <option value="accion_requerida">Requieren atención</option>
+                        <option value="recientes">Modificados recientemente</option>
+                        <option value="antiguos">Más antiguos</option>
+                        <option value="trl_mayor">Mayor madurez TRL</option>
+                        <option value="titulo">Título (A-Z)</option>
+                        <option value="presupuesto">Presupuesto mayor</option>
+                    </select>
+
                     <select
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
@@ -258,25 +350,24 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
 
             {/* Listado de Proyectos */}
             {filteredProjects.length === 0 ? (
-                <div className="bento-card p-12 text-center flex flex-col items-center justify-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-surface-hover border border-border-thin text-text-dim flex items-center justify-center">
-                        <Lightbulb size={24} />
+                <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-up">
+                    <div className="icon-circle !p-4 bg-surface mb-6">
+                        <Target size={28} className="text-text-dim" />
                     </div>
-                    <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-text-main">No hay proyectos de innovación que coincidan</h4>
-                        <p className="text-xs text-text-dim max-w-md">
-                            {search || estadoFilter !== 'todos'
-                                ? "Intente ajustar los filtros de búsqueda o restablecer los criterios."
-                                : "Las postulaciones de proyectos se realizan a través de las convocatorias vigentes publicadas por la Dirección de Investigación e Innovación."}
-                        </p>
-                    </div>
-                    {(!search && estadoFilter === 'todos') && (
+                    <h3 className="text-lg font-semibold text-text-main tracking-tight mb-2">
+                        {hasActiveFilters ? 'Sin resultados' : 'Aún no tienes proyectos'}
+                    </h3>
+                    <p className="text-sm text-text-dim max-w-xs mb-6">
+                        {hasActiveFilters
+                            ? 'Prueba con otros filtros de búsqueda.'
+                            : 'Crea tu primera propuesta de innovación para comenzar.'}
+                    </p>
+                    {!hasActiveFilters && (
                         <Link
                             to="/convocatorias"
-                            className="btn-vercel-primary !mt-2 !py-2 !px-4 !text-xs font-semibold flex items-center gap-1.5"
+                            className="btn-vercel-primary px-6 py-2.5 flex items-center justify-center gap-2"
                         >
-                            <span>Ver Convocatorias Disponibles</span>
-                            <ArrowRight size={14} />
+                            <Plus size={14} strokeWidth={3} /> Postular a Convocatoria
                         </Link>
                     )}
                 </div>
@@ -290,14 +381,14 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                         return (
                             <div
                                 key={p.uuid}
-                                className="bento-card group relative p-6 flex flex-col justify-between overflow-hidden cursor-pointer hover:border-amber-500/40 transition-all duration-200"
+                                className="bento-card group relative p-6 flex flex-col justify-between overflow-hidden cursor-pointer"
                             >
                                 {/* Enlace global de la tarjeta para acceso directo e inmediato */}
                                 <Link
                                     to={buildWorkspacePath('PROTOCOLO_INNOVACION', p.uuid)}
                                     className="absolute inset-0 z-10"
                                 />
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-subtle rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                 <div className="space-y-4">
                                     {/* Header de la tarjeta con flecha y estado */}
@@ -308,22 +399,38 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                                     {p.codigo_institucional}
                                                 </span>
                                             )}
-                                            <h3 className="text-sm font-semibold text-text-main line-clamp-2 leading-snug group-hover:text-amber-500 transition-colors">
+                                            <h3 className="text-sm font-semibold text-text-main line-clamp-2 leading-snug group-hover:text-brand transition-colors">
                                                 {p.titulo?.trim() || '(Sin título)'}
                                             </h3>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex items-center gap-1.5 shrink-0 relative z-20">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    togglePin(p.uuid);
+                                                }}
+                                                className={`p-1.5 rounded-lg transition-colors ${
+                                                    isPinned(p.uuid)
+                                                        ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                                                        : 'hover:bg-surface-hover text-text-dim hover:text-amber-400'
+                                                }`}
+                                                title={isPinned(p.uuid) ? 'Desfijar de accesos prioritarios' : 'Fijar en accesos prioritarios'}
+                                            >
+                                                <Pin size={13} className={isPinned(p.uuid) ? 'fill-amber-400 text-amber-400' : ''} />
+                                            </button>
                                             <span className={`badge-vercel text-[9px] font-mono uppercase px-2 py-0.5 ${cfg.badgeClass}`}>
                                                 {cfg.label}
                                             </span>
-                                            <ArrowRight size={14} className="text-text-dim group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+                                            <ArrowRight size={14} className="text-text-dim group-hover:text-brand group-hover:translate-x-1 transition-all" />
                                         </div>
                                     </div>
 
                                     {/* Director y Carrera */}
                                     <div className="space-y-1 pt-2 border-t border-border-thin/60">
                                         {p.director_nombre && (
-                                            <div className="flex items-center gap-1.5 text-xs text-text-dim">
+                                             <div className="flex items-center gap-1.5 text-xs text-text-dim">
                                                 <User size={12} className="shrink-0 text-text-dim opacity-70" />
                                                 <span className="truncate">Director: <strong className="text-text-main font-medium">{p.director_nombre}</strong></span>
                                             </div>
@@ -340,7 +447,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                     <div className="grid grid-cols-2 gap-2 pt-1">
                                         <div className="p-2.5 rounded-xl bg-bg-deep border border-border-thin flex flex-col justify-center">
                                             <span className="text-[9px] font-mono uppercase text-text-dim font-bold flex items-center gap-1">
-                                                <Sparkles size={10} className="text-amber-500" />
+                                                <Sparkles size={10} className="text-brand" />
                                                 Madurez TRL
                                             </span>
                                             <span className="text-xs font-bold text-text-main mt-0.5">
@@ -395,7 +502,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                     <span className="text-[10px] font-mono text-text-dim">
                                         {p.fecha_registro ? new Date(p.fecha_registro).toLocaleDateString() : ''}
                                     </span>
-                                    <span className="text-[11px] font-semibold text-amber-500 flex items-center gap-1 group-hover:underline">
+                                    <span className="text-[11px] font-semibold text-brand flex items-center gap-1 group-hover:underline">
                                         Ingresar al Proyecto <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                 </div>

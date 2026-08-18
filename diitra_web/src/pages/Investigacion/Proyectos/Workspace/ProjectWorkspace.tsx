@@ -20,17 +20,15 @@ import DocumentEditor from '../Wizard/DocumentEditor';
 // Hooks de Orquestación
 import { useProjectCore } from './hooks/useProjectCore';
 import { useProjectTeam } from './hooks/useProjectTeam';
-import { useResearchProducts } from './hooks/useResearchProducts';
 import { usePreproposalState } from './hooks/usePreproposalState';
+import { useProjectPreferences } from '../hooks/useProjectPreferences';
 
 // Subcomponentes Desacoplados
 import WorkspaceHeader from './components/WorkspaceHeader';
 import WorkspaceTitle from './components/WorkspaceTitle';
 import CacesWorkflow from './components/CacesWorkflow';
 import TeamManagement from './components/TeamManagement';
-import ResearchProductsList from './components/ResearchProductsList';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
-import ProductRegistrationModal from './components/ProductRegistrationModal';
 import DirectorTransferModal from './components/DirectorTransferModal';
 import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
 import { PreproposalAdminView } from './components/PreproposalAdminView';
@@ -76,17 +74,23 @@ export const ProjectWorkspace: React.FC = () => {
         isPreproposalState
     );
 
-    const products = useResearchProducts(
-        resolvedProjectUuid,
-        activeDocument,
-        isPreproposalState
-    );
-
     const preproposal = usePreproposalState(
         currentProject,
         resolvedProjectUuid,
         fetchProject
     );
+
+    const { touchProject } = useProjectPreferences();
+
+    useEffect(() => {
+        if (currentProject?.uuid) {
+            touchProject(
+                currentProject.uuid,
+                currentProject.titulo,
+                currentProject.codigo_institucional || (currentProject as any).codigo
+            );
+        }
+    }, [currentProject?.uuid, currentProject?.titulo, (currentProject as any)?.codigo_institucional, touchProject]);
 
     const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
     const preloadedData = React.useMemo(() => ({ Uuid: editorUuid }), [editorUuid]);
@@ -388,13 +392,6 @@ export const ProjectWorkspace: React.FC = () => {
                                 onRemoveMember={team.handleRemoveMember}
                                 onOpenGroupDetail={team.handleOpenGroupDetail}
                             />
-
-                            <ResearchProductsList
-                                currentProject={currentProject}
-                                products={products.products}
-                                onOpenRegisterModal={() => products.setShowProductModal(true)}
-                                onDeleteProduct={products.handleDeleteProduct}
-                            />
                         </div>
 
                         <div className="lg:sticky lg:top-0 flex flex-col gap-3">
@@ -408,15 +405,6 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </main>
             </div>
-
-            <ProductRegistrationModal
-                isOpen={products.showProductModal}
-                onClose={() => products.setShowProductModal(false)}
-                onSubmit={products.handleCreateProduct}
-                newProduct={products.newProduct}
-                setNewProduct={products.setNewProduct}
-                productTypes={products.productTypes}
-            />
 
             <DirectorTransferModal
                 isOpen={team.showTransferModal}

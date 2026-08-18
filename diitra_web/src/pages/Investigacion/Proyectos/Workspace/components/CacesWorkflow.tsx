@@ -481,7 +481,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
                                 {/* 5. EJECUCIÓN Y AVANCE */}
                                 {phase.id === 'En Ejecución' && (
-                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') ? (
+                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
                                         <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
                                             <Link
                                                 to={`${urlPrefix}/informes-avance/${currentProject.uuid}`}
@@ -500,22 +500,12 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 <span>Ver Monitoreo Financiero</span>
                                             </Link>
                                         </div>
-                                    ) : (
-                                        <div className="mt-3 p-3 bg-surface/40 border border-border-thin/60 rounded-xl text-center space-y-1 select-none">
-                                            <div className="flex justify-center text-text-dim/50">
-                                                <Shield size={16} />
-                                            </div>
-                                            <p className="text-[11px] font-semibold text-text-dim/80">Etapa Bloqueada</p>
-                                            <p className="text-[10px] text-text-dim/60 leading-snug">
-                                                Requiere la firma electrónica del Oficio de Aprobación por la Coordinación de Investigación.
-                                            </p>
-                                        </div>
                                     )
                                 )}
 
                                 {/* 6. INFORME FINAL (FORMULACIÓN / REDACCIÓN POR EL EQUIPO) */}
                                 {phase.id === 'InformeFinal' && (
-                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') ? (
+                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
                                         <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
                                             {isFinalReportSigned || currentProject.status === 'Finalizado' ? (
                                                 <Link
@@ -536,16 +526,6 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                     <span>Elaborar y Firmar Informe Final</span>
                                                 </Link>
                                             )}
-                                        </div>
-                                    ) : (
-                                        <div className="mt-3 p-3 bg-surface/40 border border-border-thin/60 rounded-xl text-center space-y-1 select-none">
-                                            <div className="flex justify-center text-text-dim/50">
-                                                <FileSignature size={16} />
-                                            </div>
-                                            <p className="text-[11px] font-semibold text-text-dim/80">Etapa Pendiente</p>
-                                            <p className="text-[10px] text-text-dim/60 leading-snug">
-                                                Se habilitará durante la etapa de ejecución para la consolidación de resultados.
-                                            </p>
                                         </div>
                                     )
                                 )}
@@ -613,17 +593,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 </div>
                                             )}
                                         </div>
-                                    ) : (
-                                        <div className="mt-3 p-3 bg-surface/40 border border-border-thin/60 rounded-xl text-center space-y-1 select-none">
-                                            <div className="flex justify-center text-text-dim/50">
-                                                <Shield size={16} />
-                                            </div>
-                                            <p className="text-[11px] font-semibold text-text-dim/80">Etapa Bloqueada</p>
-                                            <p className="text-[10px] text-text-dim/60 leading-snug">
-                                                Requiere que el equipo investigador firme y postule el Informe Final en el paso anterior.
-                                            </p>
-                                        </div>
-                                    )
+                                    ) : null
                                 )}
                             </div>
                         </div>

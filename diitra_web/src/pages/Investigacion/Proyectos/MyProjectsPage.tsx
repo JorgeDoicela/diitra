@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool, FileText
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool, FileText, Pin
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -12,6 +12,8 @@ import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { QuickAccessProjectsBar } from './components/QuickAccessProjectsBar';
+import { useProjectPreferences } from './hooks/useProjectPreferences';
 
 interface ProyectoResumen {
     uuid: string;
@@ -51,10 +53,13 @@ const MyProjectsPage: React.FC = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    
+    const { pinnedUuids, recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
+
     const [filterEstado, setFilterEstado] = useState<string>('todos');
     const [filterLinea, setFilterLinea] = useState<string>('todas');
     const [filterConvocatoria, setFilterConvocatoria] = useState<string>('todas');
-    const [sortBy, setSortBy] = useState<string>('recientes');
+    const [sortBy, setSortBy] = useState<string>('mi_actividad');
     const [showNewProject, setShowNewProject] = useState(false);
     const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
     const [deletingTitle, setDeletingTitle] = useState<string>('');
@@ -231,6 +236,44 @@ const MyProjectsPage: React.FC = () => {
             return matchSearch && matchEstado && matchLinea && matchConvocatoria;
         })
         .sort((a, b) => {
+            if (sortBy === 'mi_actividad') {
+                const aPinned = isPinned(a.uuid);
+                const bPinned = isPinned(b.uuid);
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+
+                const aVisit = recentVisitsMap.get(a.uuid) || 0;
+                const bVisit = recentVisitsMap.get(b.uuid) || 0;
+                if (aVisit !== bVisit) {
+                    return bVisit - aVisit;
+                }
+
+                const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+            }
+            if (sortBy === 'accion_requerida') {
+                const actionPriority: Record<string, number> = {
+                    'Enviado': 1,
+                    'Revisión Técnica': 2,
+                    'En Corrección': 3,
+                    'Prepropuesta': 4,
+                    'En Dictamen': 5,
+                    'Pendiente Firma': 6,
+                    'Borrador': 7,
+                    'Aprobado': 8,
+                    'En Ejecución': 9,
+                    'Finalizado': 10,
+                    'Rechazado': 11
+                };
+                const pA = actionPriority[a.estado] || 50;
+                const pB = actionPriority[b.estado] || 50;
+                if (pA !== pB) return pA - pB;
+
+                const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+            }
             if (sortBy === 'recientes') {
                 const dateA = a.fecha_modificacion || a.fecha_registro || '';
                 const dateB = b.fecha_modificacion || b.fecha_registro || '';
@@ -350,6 +393,17 @@ const MyProjectsPage: React.FC = () => {
                 </div>
             )}
 
+            {/* ── BARRA DE ACCESO RÁPIDO & PROYECTOS FIJADOS (SMART WORKSPACE) ── */}
+            {!error && !loading && (
+                <QuickAccessProjectsBar
+                    proyectos={proyectos}
+                    pinnedUuids={pinnedUuids}
+                    recentVisitsMap={recentVisitsMap}
+                    onTogglePin={togglePin}
+                    basePath="/investigacion/mis-proyectos"
+                />
+            )}
+
             <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:100ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">
                 <div className="flex flex-col lg:flex-row gap-3">
                     <div className="relative flex-1">
@@ -365,9 +419,11 @@ const MyProjectsPage: React.FC = () => {
                         <select
                             value={sortBy}
                             onChange={e => setSortBy(e.target.value)}
-                            className="input-vercel !rounded-xl !py-2.5 !text-sm min-w-[150px] cursor-pointer"
+                            className="input-vercel !rounded-xl !py-2.5 !text-sm min-w-[170px] cursor-pointer"
                         >
-                            <option value="recientes">Más recientes</option>
+                            <option value="mi_actividad">Mi actividad reciente</option>
+                            <option value="accion_requerida">Requieren atención</option>
+                            <option value="recientes">Modificados recientemente</option>
                             <option value="antiguos">Más antiguos</option>
                             <option value="titulo">Título (A-Z)</option>
                             <option value="presupuesto">Presupuesto mayor</option>
@@ -379,7 +435,7 @@ const MyProjectsPage: React.FC = () => {
                                     setFilterEstado('todos');
                                     setFilterLinea('todas');
                                     setFilterConvocatoria('todas');
-                                    setSortBy('recientes');
+                                    setSortBy('mi_actividad');
                                 }}
                                 className="btn-vercel-secondary !py-2.5 !px-4 !rounded-xl !text-xs whitespace-nowrap hover:bg-surface-hover hover:text-text-main transition-all"
                             >
@@ -510,7 +566,23 @@ const MyProjectsPage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5 relative z-20">
+                                <div className="flex items-center gap-1.5 shrink-0 ml-2 mt-0.5 relative z-20">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            togglePin(p.uuid);
+                                        }}
+                                        className={`p-1.5 rounded-lg transition-colors ${
+                                            isPinned(p.uuid)
+                                                ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                                                : 'hover:bg-surface-hover text-text-dim hover:text-amber-400'
+                                        }`}
+                                        title={isPinned(p.uuid) ? 'Desfijar de accesos prioritarios' : 'Fijar en accesos prioritarios'}
+                                    >
+                                        <Pin size={13} className={isPinned(p.uuid) ? 'fill-amber-400 text-amber-400' : ''} />
+                                    </button>
                                     {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
                                         <button
                                             onClick={(e) => {

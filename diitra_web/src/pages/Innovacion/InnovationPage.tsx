@@ -104,21 +104,17 @@ const InnovationPage: React.FC = () => {
             </PageHeader>
 
             {/* Pestañas de Navegación del Módulo */}
-            <div className="flex items-center gap-2 border-b border-border-thin pb-4">
+            <div className="tabs-vercel">
                 <button
                     type="button"
                     onClick={() => setActiveTab('proyectos')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === 'proyectos'
-                            ? 'bg-amber-500 text-white shadow-sm'
-                            : 'text-text-dim hover:text-text-main hover:bg-surface'
+                    className={`tab-vercel-item flex items-center gap-2 ${
+                        activeTab === 'proyectos' ? 'active' : ''
                     }`}
                 >
                     <Lightbulb size={15} />
                     <span>Proyectos de Innovación e i+TT</span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
-                        activeTab === 'proyectos' ? 'bg-white/20 text-white' : 'bg-surface border border-border-thin text-text-dim'
-                    }`}>
+                    <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim">
                         {projectsCount}
                     </span>
                 </button>
@@ -126,17 +122,13 @@ const InnovationPage: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setActiveTab('activos')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === 'activos'
-                            ? 'bg-amber-500 text-white shadow-sm'
-                            : 'text-text-dim hover:text-text-main hover:bg-surface'
+                    className={`tab-vercel-item flex items-center gap-2 ${
+                        activeTab === 'activos' ? 'active' : ''
                     }`}
                 >
                     <Sparkles size={15} />
                     <span>Banco de Activos & Prototipos TRL</span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
-                        activeTab === 'activos' ? 'bg-white/20 text-white' : 'bg-surface border border-border-thin text-text-dim'
-                    }`}>
+                    <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim">
                         {assets.length}
                     </span>
                 </button>
