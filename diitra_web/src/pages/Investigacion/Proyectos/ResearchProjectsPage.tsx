@@ -22,6 +22,8 @@ export interface ProyectoResumen {
     estado: string;
     linea_investigacion?: string;
     tipo_investigacion?: string;
+    template_code?: string;
+    templateCode?: string;
     presupuesto_total?: number;
     presupuesto_ejecutado?: number;
     puntaje_evaluacion?: number;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Pin, Clock, Sparkles, ArrowUpRight, FolderKanban } from 'lucide-react';
+import { Pin, Clock, Sparkles, ArrowUpRight } from 'lucide-react';
+import { buildWorkspacePath } from '../../../../core/documents/templateUrl';
 export interface QuickAccessProjectItem {
     uuid: string;
     titulo: string;
