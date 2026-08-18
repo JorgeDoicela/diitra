@@ -7,8 +7,7 @@ import {
     MicOff,
     ChevronRight,
     Shield,
-    AlertCircle,
-    Activity
+    AlertCircle
 } from 'lucide-react';
 import api from '../../../../api/axios_config';
 
@@ -111,28 +110,10 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
                 title="Arrastra para ajustar el ancho"
             />
 
-            {/* Cabecera Superior Integrada */}
-            <div className="p-5 pb-3 border-b border-border-thin flex justify-between items-center bg-bg-deep shrink-0">
-                <div className="flex items-center gap-2">
-                    <Activity size={15} className="text-text-main animate-pulse shrink-0" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main font-mono">
-                        Auditoría del Protocolo
-                    </span>
-                </div>
-                <button
-                    onClick={toggleOpen}
-                    className="p-1.5 hover:bg-surface-hover rounded-lg text-text-dim hover:text-text-main transition-colors cursor-pointer"
-                    title="Contraer panel lateral"
-                >
-                    <ChevronRight size={16} />
-                </button>
-            </div>
-
-            {/* Contenedor Principal de Observaciones */}
-            <div className="flex-1 flex flex-col min-h-0">
-                {/* Selector de campo bajo inspección */}
-                <div className="p-4 py-3 border-b border-border-thin bg-surface/20 shrink-0">
-                    <div className="flex justify-between items-center mb-1.5">
+            {/* Selector de campo bajo inspección / Cabecera */}
+            <div className="p-4 py-3 border-b border-border-thin bg-surface/20 shrink-0">
+                <div className="flex justify-between items-center mb-1.5">
+                    <div className="flex items-center gap-2">
                         <label className="text-[9px] font-black text-text-dim uppercase tracking-wider font-mono">
                             Campo Bajo Inspección:
                         </label>
@@ -143,27 +124,38 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
                             </span>
                         )}
                     </div>
-                    <select
-                        value={activeCommentField}
-                        onChange={(e) => setActiveCommentField(e.target.value)}
-                        className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 pr-8 text-xs font-bold uppercase tracking-tight text-text-main outline-none focus:border-text-main transition-all cursor-pointer font-sans appearance-none shadow-xs"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
-                            backgroundPosition: 'right 0.75rem center',
-                            backgroundSize: '1.2em 1.2em',
-                            backgroundRepeat: 'no-repeat'
-                        }}
+                    <button
+                        onClick={toggleOpen}
+                        className="p-1 hover:bg-surface-hover rounded-lg text-text-dim hover:text-text-main transition-colors cursor-pointer"
+                        title="Contraer panel lateral"
                     >
-                        {Object.entries(availableFields).map(([key, label]) => {
-                            const count = comments[key]?.length || 0;
-                            return (
-                                <option key={key} value={key} className="bg-bg-deep text-text-main py-1">
-                                    {count > 0 ? `⚠️ [${count}] ` : ''}{label}
-                                </option>
-                            );
-                        })}
-                    </select>
+                        <ChevronRight size={16} />
+                    </button>
                 </div>
+                <select
+                    value={activeCommentField}
+                    onChange={(e) => setActiveCommentField(e.target.value)}
+                    className="w-full bg-surface border border-border-thin rounded-xl px-3 py-2 pr-8 text-xs font-bold uppercase tracking-tight text-text-main outline-none focus:border-text-main transition-all cursor-pointer font-sans appearance-none shadow-xs"
+                    style={{
+                        backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                        backgroundPosition: 'right 0.75rem center',
+                        backgroundSize: '1.2em 1.2em',
+                        backgroundRepeat: 'no-repeat'
+                    }}
+                >
+                    {Object.entries(availableFields).map(([key, label]) => {
+                        const count = comments[key]?.length || 0;
+                        return (
+                            <option key={key} value={key} className="bg-bg-deep text-text-main py-1">
+                                {count > 0 ? `⚠️ [${count}] ` : ''}{label}
+                            </option>
+                        );
+                    })}
+                </select>
+            </div>
+
+            {/* Contenedor Principal de Observaciones */}
+            <div className="flex-1 flex flex-col min-h-0">
 
                 {/* Lista de Observaciones */}
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3.5 bg-bg-deep/40">
