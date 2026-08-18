@@ -12,7 +12,6 @@ import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
-import { QuickAccessProjectsBar } from './components/QuickAccessProjectsBar';
 import { useProjectPreferences } from './hooks/useProjectPreferences';
 
 interface ProyectoResumen {
@@ -56,7 +55,7 @@ const MyProjectsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     
-    const { pinnedUuids, recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
+    const { recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
 
     const [filterEstado, setFilterEstado] = useState<string>('todos');
     const [filterLinea, setFilterLinea] = useState<string>('todas');
@@ -393,17 +392,6 @@ const MyProjectsPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            )}
-
-            {/* ── BARRA DE ACCESO RÁPIDO & PROYECTOS FIJADOS (SMART WORKSPACE) ── */}
-            {!error && !loading && (
-                <QuickAccessProjectsBar
-                    proyectos={proyectos}
-                    pinnedUuids={pinnedUuids}
-                    recentVisitsMap={recentVisitsMap}
-                    onTogglePin={togglePin}
-                    basePath="/investigacion/mis-proyectos"
-                />
             )}
 
             <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:100ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">

@@ -73,6 +73,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                 onNavigateBack={handleNavigateBack}
                 onOpenFinalizeModal={() => layout.setIsFinalizeModalOpen(true)}
                 isReadonly={isReadonlyResult}
+                pdfUrl={data.pdfUrl}
             />
 
             {/* Layout Principal */}
@@ -83,38 +84,47 @@ export const RevisionTecnicaPage: React.FC = () => {
                 ) : (
                     /* ── MODO AUDITORÍA: Visor interactivo completo para admin activo ── */
                     <>
-                        <div className="flex-1 h-full border-r border-border-thin bg-bg-deep flex overflow-hidden relative">
-                            {layout.viewMode === 'pdf' ? (
-                                data.loadingPdf ? (
-                                    <div className="flex-1 flex items-center justify-center text-text-dim text-xs gap-2 font-mono">
-                                        <Loader2 size={16} className="animate-spin text-brand" /> Generando vista previa del PDF...
-                                    </div>
-                                ) : data.pdfUrl ? (
-                                    <iframe
-                                        src={`${data.pdfUrl}#toolbar=0`}
-                                        className="w-full h-full border-0 bg-bg-deep"
-                                        title="Visor PDF Protocolo"
-                                    />
+                        <div className="flex-1 h-full bg-bg-deep flex overflow-hidden relative">
+                            {/* Panel Izquierdo: Secciones (en modo interactivo) */}
+                            {layout.viewMode === 'interactive' && (
+                                <SectionsSidebar
+                                    isOpen={layout.isLeftSidebarOpen}
+                                    width={layout.leftSidebarWidth}
+                                    isDraggingLeft={layout.isDraggingLeft}
+                                    leftSidebarRef={layout.leftSidebarRef}
+                                    activeSection={layout.activeSection}
+                                    setActiveSection={layout.setActiveSection}
+                                    onClose={() => layout.setIsLeftSidebarOpen(false)}
+                                    startDraggingLeft={layout.startDraggingLeft}
+                                    comments={commentsState.comments}
+                                    templateBlocks={data.templateBlocks}
+                                    templateSections={data.templateSections}
+                                    onOpenFinalizeModal={() => layout.setIsFinalizeModalOpen(true)}
+                                />
+                            )}
+
+                            {/* Área Central: Visor PDF o Secciones Interactivas */}
+                            <div className="flex-1 h-full overflow-hidden relative bg-bg-deep transition-colors duration-300">
+                                {layout.viewMode === 'pdf' ? (
+                                    data.loadingPdf ? (
+                                        <div className="flex-1 h-full flex items-center justify-center text-text-dim text-xs gap-2 font-mono">
+                                            <Loader2 size={16} className="animate-spin text-brand" /> Generando vista previa del PDF...
+                                        </div>
+                                    ) : data.pdfUrl ? (
+                                        <div className="w-full h-full flex items-center justify-center p-3 sm:p-5 bg-zinc-200/60 dark:bg-zinc-950/80 transition-colors duration-300">
+                                            <iframe
+                                                src={`${data.pdfUrl}#toolbar=0`}
+                                                className="w-full h-full bg-white rounded-2xl border border-border-thin shadow-2xl transition-all"
+                                                title="Visor PDF Protocolo"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 h-full flex flex-col items-center justify-center p-12 text-center text-text-dim gap-3 bg-zinc-200/60 dark:bg-zinc-950/80">
+                                            <AlertCircle size={24} className="text-warning" />
+                                            <p className="text-xs font-semibold">No se pudo cargar el PDF del protocolo.</p>
+                                        </div>
+                                    )
                                 ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-text-dim gap-3">
-                                        <AlertCircle size={24} className="text-warning" />
-                                        <p className="text-xs font-semibold">No se pudo cargar el PDF del protocolo.</p>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="flex-1 flex h-full overflow-hidden relative">
-                                    <SectionsSidebar
-                                        isOpen={layout.isLeftSidebarOpen}
-                                        width={layout.leftSidebarWidth}
-                                        isDraggingLeft={layout.isDraggingLeft}
-                                        leftSidebarRef={layout.leftSidebarRef}
-                                        activeSection={layout.activeSection}
-                                        setActiveSection={layout.setActiveSection}
-                                        onClose={() => layout.setIsLeftSidebarOpen(false)}
-                                        startDraggingLeft={layout.startDraggingLeft}
-                                        comments={commentsState.comments}
-                                        templateBlocks={data.templateBlocks}
-                                    />
                                     <InteractiveSections
                                         activeSection={layout.activeSection}
                                         project={data.project}
@@ -132,11 +142,38 @@ export const RevisionTecnicaPage: React.FC = () => {
                                         setIsRightSidebarOpen={layout.setIsRightSidebarOpen}
                                         getSafeArray={getSafeArray}
                                     />
-                                </div>
-                            )}
+                                )}
+                            </div>
 
+                            {/* Panel Derecho: Auditoría & Observaciones (SIEMPRE DISPONIBLE en PDF e Interactivo) */}
+                            <ObservationsSidebar
+                                isOpen={layout.isRightSidebarOpen}
+                                width={layout.rightSidebarWidth}
+                                isDragging={layout.isDraggingRight}
+                                startDragging={layout.startDraggingRight}
+                                toggleOpen={() => layout.setIsRightSidebarOpen(false)}
+                                activeCommentField={layout.activeCommentField}
+                                setActiveCommentField={layout.setActiveCommentField}
+                                activeSection={layout.activeSection}
+                                setActiveSection={layout.setActiveSection}
+                                projectUuid={projectUuid ?? ''}
+                                comments={commentsState.comments}
+                                contextualInput={commentsState.contextualInput}
+                                setContextualInput={commentsState.setContextualInput}
+                                isListening={commentsState.isListening}
+                                submitting={data.submitting}
+                                editingCommentId={commentsState.editingCommentId}
+                                setEditingCommentId={commentsState.setEditingCommentId}
+                                saveContextualComment={commentsState.saveContextualComment}
+                                handleStartListening={commentsState.handleStartListening}
+                                removeCommentLocal={commentsState.removeCommentLocal}
+                                FIELD_LABELS={FIELD_LABELS}
+                                templateBlocks={data.templateBlocks}
+                            />
+
+                            {/* Pestañas Flotantes de Reapertura */}
                             <FloatingSidebarButtons
-                                isLeftSidebarOpen={layout.isLeftSidebarOpen}
+                                isLeftSidebarOpen={layout.viewMode === 'pdf' ? true : layout.isLeftSidebarOpen}
                                 seccionesButtonTop={layout.seccionesButtonTop}
                                 seccionesButtonLeft={layout.seccionesButtonLeft}
                                 isDraggingSeccionesButton={layout.isDraggingSeccionesButton}
@@ -148,29 +185,6 @@ export const RevisionTecnicaPage: React.FC = () => {
                                 handleButtonDragStart={layout.handleButtonDragStart}
                             />
                         </div>
-
-                        {/* LADO DERECHO: SIDEBAR DE AUDITORÍA */}
-                        <ObservationsSidebar
-                            isOpen={layout.isRightSidebarOpen}
-                            width={layout.rightSidebarWidth}
-                            isDragging={layout.isDraggingRight}
-                            startDragging={layout.startDraggingRight}
-                            toggleOpen={() => layout.setIsRightSidebarOpen(false)}
-                            activeCommentField={layout.activeCommentField}
-                            setActiveCommentField={layout.setActiveCommentField}
-                            comments={commentsState.comments}
-                            contextualInput={commentsState.contextualInput}
-                            setContextualInput={commentsState.setContextualInput}
-                            isListening={commentsState.isListening}
-                            submitting={data.submitting}
-                            editingCommentId={commentsState.editingCommentId}
-                            setEditingCommentId={commentsState.setEditingCommentId}
-                            saveContextualComment={commentsState.saveContextualComment}
-                            handleStartListening={commentsState.handleStartListening}
-                            removeCommentLocal={commentsState.removeCommentLocal}
-                            FIELD_LABELS={FIELD_LABELS}
-                            templateBlocks={data.templateBlocks}
-                        />
                     </>
                 )}
             </div>

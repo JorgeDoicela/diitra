@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeft, FileText, Eye, Scale, History } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, FileText, Eye, Scale, History, Download, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 
 interface RevisionHeaderProps {
@@ -11,6 +11,7 @@ interface RevisionHeaderProps {
     onNavigateBack: () => void;
     onOpenFinalizeModal: () => void;
     isReadonly?: boolean;
+    pdfUrl?: string | null;
 }
 
 export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
@@ -20,10 +21,35 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
     setViewMode,
     onNavigateBack,
     onOpenFinalizeModal,
-    isReadonly = false
+    isReadonly = false,
+    pdfUrl
 }) => {
     const { isAdmin } = useAuth();
     const isAuditActive = isAdmin && (projectStatus === 'Enviado' || projectStatus === 'En Corrección');
+
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+        return document.documentElement.getAttribute('data-theme') !== 'light';
+    });
+
+    const toggleTheme = () => {
+        const nextMode = !isDarkMode;
+        setIsDarkMode(nextMode);
+        document.documentElement.setAttribute('data-theme', nextMode ? 'dark' : 'light');
+        localStorage.setItem('theme', nextMode ? 'dark' : 'light');
+    };
+
+    const handleDownloadPdf = () => {
+        if (!pdfUrl) return;
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        const safeName = projectTitle
+            ? projectTitle.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50)
+            : 'Protocolo_Investigacion';
+        link.download = `Protocolo_${safeName}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="px-4 md:px-8 py-3 border-b border-border-thin bg-bg-deep/75 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-[50] shrink-0">
@@ -81,6 +107,32 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
                         </button>
                     </div>
                 )}
+
+                {/* Botón Descargar PDF (Solo Ícono) */}
+                {pdfUrl && (
+                    <button
+                        onClick={handleDownloadPdf}
+                        className="p-2 rounded-xl bg-surface hover:bg-surface-hover border border-border-thin text-text-main shadow-xs transition-all cursor-pointer flex items-center justify-center active:scale-95 duration-150"
+                        title="Descargar archivo PDF"
+                        aria-label="Descargar archivo PDF"
+                    >
+                        <Download size={14} />
+                    </button>
+                )}
+
+                {/* Botón Alternar Tema Claro / Oscuro */}
+                <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-xl bg-surface hover:bg-surface-hover border border-border-thin text-text-main shadow-xs transition-all cursor-pointer flex items-center justify-center active:scale-95 duration-150"
+                    title={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                    aria-label={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                >
+                    {isDarkMode ? (
+                        <Sun size={14} className="text-amber-400 hover:rotate-45 transition-transform" />
+                    ) : (
+                        <Moon size={14} className="text-text-main hover:-rotate-12 transition-transform" />
+                    )}
+                </button>
 
                 {/* Badge o botón según modo */}
                 {isReadonly ? (

@@ -12,7 +12,6 @@ import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
-import { QuickAccessProjectsBar } from './components/QuickAccessProjectsBar';
 import { useProjectPreferences } from './hooks/useProjectPreferences';
 
 export interface ProyectoResumen {
@@ -56,7 +55,7 @@ const ResearchProjectsPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     
-    const { pinnedUuids, recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
+    const { recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
 
     const [filterEstado, setFilterEstado] = useState<string>('todos');
     const [filterLinea, setFilterLinea] = useState<string>('todas');
@@ -382,17 +381,6 @@ const ResearchProjectsPage = () => {
                     <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
-            )}
-
-            {/* ── BARRA DE ACCESO RÁPIDO & PROYECTOS FIJADOS (SMART WORKSPACE) ── */}
-            {!error && !loading && (
-                <QuickAccessProjectsBar
-                    proyectos={proyectos}
-                    pinnedUuids={pinnedUuids}
-                    recentVisitsMap={recentVisitsMap}
-                    onTogglePin={togglePin}
-                    basePath="/investigacion"
-                />
             )}
 
             {/* ── SECCIÓN DE FILTROS ── */}

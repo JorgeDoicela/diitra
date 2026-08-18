@@ -38,6 +38,7 @@ export const useRevisionTecnicaData = ({
     const [loadingPdf, setLoadingPdf] = useState(false);
     const [docSnapshot, setDocSnapshot] = useState<any>({});
     const [templateBlocks, setTemplateBlocks] = useState<any[]>([]);
+    const [templateSections, setTemplateSections] = useState<any[]>([]);
 
     const loadTemplateBlocks = useCallback(async (uuid: string) => {
         try {
@@ -48,6 +49,16 @@ export const useRevisionTecnicaData = ({
                 const instanceRes = await api.get(`/documents/instances/resolve`, {
                     params: { templateCode: 'PROTOCOLO_INVESTIGACION', entityUuid: uuid }
                 });
+
+                const instanceUuid = instanceRes.data?.uuid || instanceRes.data?.Uuid;
+                if (instanceUuid) {
+                    try {
+                        const uiConfigRes = await api.get(`/documents/instances/${instanceUuid}/ui-config`);
+                        if (uiConfigRes.data?.sections && Array.isArray(uiConfigRes.data.sections)) {
+                            setTemplateSections(uiConfigRes.data.sections);
+                        }
+                    } catch {}
+                }
 
                 const snapshotJson = instanceRes.data?.templateConfigSnapshotJson || instanceRes.data?.template_config_snapshot_json;
                 if (snapshotJson) {
@@ -62,6 +73,13 @@ export const useRevisionTecnicaData = ({
 
             // 2. Fallback: Si es un borrador nuevo sin snapshot congelado, usar la versión activa publicada
             if (loadedBlocks.length === 0) {
+                try {
+                    const uiConfigRes = await api.get('/documents/instances/templates/PROTOCOLO_INVESTIGACION/ui-config');
+                    if (uiConfigRes.data?.sections && Array.isArray(uiConfigRes.data.sections)) {
+                        setTemplateSections(uiConfigRes.data.sections);
+                    }
+                } catch {}
+
                 const tmplRes = await api.get('/admin/templates/PROTOCOLO_INVESTIGACION');
                 if (tmplRes.data?.htmlContent) {
                     const match = tmplRes.data.htmlContent.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
@@ -422,6 +440,7 @@ export const useRevisionTecnicaData = ({
         loadingPdf,
         docSnapshot,
         templateBlocks,
+        templateSections,
         teachersWithExceedingHours,
         isHoursOk,
         handleAprobar,

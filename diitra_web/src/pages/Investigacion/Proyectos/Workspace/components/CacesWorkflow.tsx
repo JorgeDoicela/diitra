@@ -252,15 +252,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                         }
                                     } else if (phase.id === 'Enviado' && (isCurrent || isPast)) {
-                                        if (isAdmin) {
-                                            navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
-                                        } else {
-                                            if (templateCode === 'PROTOCOLO_INVESTIGACION') {
-                                                setActiveDocument('PROTOCOLO_INVESTIGACION');
-                                            } else {
-                                                resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
-                                            }
-                                        }
+                                        navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
                                     } else if (phase.id === 'En Revisión' && (isCurrent || isPast)) {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);

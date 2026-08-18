@@ -134,7 +134,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             <div>
                                 <h4 className="font-bold text-xs text-text-main">{activeBlock.title}</h4>
                                 <p className="text-[10px] text-text-dim mt-0.5 leading-normal capitalize">
-                                    Tipo: <span className="text-text-main font-semibold">{activeBlock.type.replace('_', ' ')}</span>
+                                    Tipo: <span className="text-text-main font-semibold">{(activeBlock.type || 'bloque').replace(/_/g, ' ')}</span>
                                 </p>
                             </div>
 

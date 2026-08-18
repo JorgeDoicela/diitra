@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import api from './axios_config';
 import { useAuth } from './AuthContext';
@@ -71,6 +71,39 @@ interface VercelToastItemProps {
 const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, navigate }) => {
     const [isUndoing, setIsUndoing] = useState(false);
     const toastType = toast.type || 'default';
+    const totalDuration = toast.onUndo ? 8000 : 5000;
+    const remainingTimeRef = useRef<number>(totalDuration);
+    const startTimeRef = useRef<number>(Date.now());
+    const timerIdRef = useRef<NodeJS.Timeout | null>(null);
+
+    const startTimer = useCallback(() => {
+        if (timerIdRef.current) clearTimeout(timerIdRef.current);
+        startTimeRef.current = Date.now();
+        timerIdRef.current = setTimeout(() => {
+            onDismiss(toast.id);
+        }, Math.max(remainingTimeRef.current, 1500));
+    }, [toast.id, onDismiss]);
+
+    const pauseTimer = useCallback(() => {
+        if (timerIdRef.current) {
+            clearTimeout(timerIdRef.current);
+            timerIdRef.current = null;
+            const elapsed = Date.now() - startTimeRef.current;
+            remainingTimeRef.current = Math.max(remainingTimeRef.current - elapsed, 1500);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isUndoing) {
+            startTimer();
+        } else {
+            pauseTimer();
+        }
+        return () => {
+            if (timerIdRef.current) clearTimeout(timerIdRef.current);
+        };
+    }, [isUndoing, startTimer, pauseTimer]);
+
     let IconComponent = Bell;
     let typeClass = 'toast-vercel-default';
 
@@ -92,6 +125,11 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
         <div 
             className={`toast-vercel ${typeClass} group cursor-pointer items-center`}
             translate="no"
+            onMouseEnter={pauseTimer}
+            onMouseLeave={startTimer}
+            onTouchStart={pauseTimer}
+            onTouchEnd={startTimer}
+            onTouchCancel={startTimer}
             onClick={() => {
                 if (toast.url && !isUndoing) {
                     navigate(toast.url);
@@ -106,53 +144,65 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                 <h4 className="text-xs font-semibold text-text-main leading-snug">{toast.title}</h4>
                 <p className="text-[10px] text-text-dim leading-normal mt-0.5">{toast.body}</p>
             </div>
-            <div className="flex items-center gap-2.5 shrink-0 ml-2 border-l border-border-thin pl-3">
-                {toast.url && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(toast.url!);
-                            onDismiss(toast.id);
-                        }}
-                        className="text-[10px] font-sans font-bold uppercase tracking-wider text-brand hover:underline bg-transparent border-0 p-0 cursor-pointer select-none"
-                    >
-                        {toast.actionLabel || 'Ver'}
-                    </button>
-                )}
-                {toast.onUndo && (
-                    <button
-                        type="button"
-                        disabled={isUndoing}
-                        onClick={async (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            setIsUndoing(true);
-                            try {
-                                await toast.onUndo?.();
-                            } catch (err) {
-                                console.error("[Toast Undo] Error al revertir la acción:", err);
-                            } finally {
-                                setIsUndoing(false);
-                                onDismiss(toast.id);
-                            }
-                        }}
-                        className="text-[10px] font-sans font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 hover:underline bg-transparent border-0 p-0 cursor-pointer select-none disabled:opacity-50"
-                    >
-                        {isUndoing ? "..." : "Deshacer"}
-                    </button>
-                )}
-                <button 
-                    className="text-text-dim hover:text-text-main p-1 rounded hover:bg-surface-hover transition-colors cursor-pointer"
+            {/* Divisoria visual centrada de altura media */}
+            {(toast.url || toast.onUndo) && (
+                <div className="w-px h-5 bg-border-thin shrink-0 ml-1.5 self-center" />
+            )}
+
+            {/* Botón de acción con área de clic extendida (toda la altura del toast de forma invisible) */}
+            {toast.url && (
+                <button
+                    type="button"
                     onClick={(e) => {
                         e.stopPropagation();
+                        navigate(toast.url!);
                         onDismiss(toast.id);
                     }}
-                    title="Cerrar notificación"
+                    className="group/btn self-stretch -my-3 flex items-center justify-center px-3.5 bg-transparent border-0 cursor-pointer select-none"
                 >
-                    <X size={14} />
+                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-brand group-hover/btn:underline">
+                        {toast.actionLabel || 'Ver'}
+                    </span>
                 </button>
-            </div>
+            )}
+
+            {toast.onUndo && (
+                <button
+                    type="button"
+                    disabled={isUndoing}
+                    onClick={async (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setIsUndoing(true);
+                        try {
+                            await toast.onUndo?.();
+                        } catch (err) {
+                            console.error("[Toast Undo] Error al revertir la acción:", err);
+                        } finally {
+                            setIsUndoing(false);
+                            onDismiss(toast.id);
+                        }
+                    }}
+                    className="group/btn self-stretch -my-3 flex items-center justify-center px-3.5 bg-transparent border-0 cursor-pointer select-none disabled:opacity-50"
+                >
+                    <span className="text-[10px] font-sans font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 group-hover/btn:underline">
+                        {isUndoing ? "..." : "Deshacer"}
+                    </span>
+                </button>
+            )}
+
+            {/* Botón cerrar */}
+            <button 
+                type="button"
+                className="text-text-dim hover:text-text-main p-2 -mr-1 rounded hover:bg-surface-hover transition-colors cursor-pointer flex items-center justify-center self-center shrink-0"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDismiss(toast.id);
+                }}
+                title="Cerrar notificación"
+            >
+                <X size={14} />
+            </button>
         </div>
     );
 };
@@ -280,12 +330,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             playNotificationSound(type);
         }
 
-        const duration = onUndo ? 8000 : 5000;
-        
-        // Auto-remove after duration
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, duration);
+        // El tiempo de vida y descarte automático es gestionado individualmente por VercelToastItem para soportar pausa en hover / touch
 
         // Evitar duplicar la notificación nativa si Web Push está activo y sincronizado en este navegador
         const isWebPushActive = localStorage.getItem('web_push_active') === 'true';

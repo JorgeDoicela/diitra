@@ -6,7 +6,6 @@ import {
     ArrowRight, 
     User, 
     Sparkles, 
-    Lightbulb, 
     CheckCircle2, 
     RotateCcw,
     Layers,
@@ -21,7 +20,6 @@ import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
-import { QuickAccessProjectsBar } from '../../Investigacion/Proyectos/components/QuickAccessProjectsBar';
 import { useProjectPreferences } from '../../Investigacion/Proyectos/hooks/useProjectPreferences';
 
 export interface ProyectoInnovacionResumen {
@@ -66,7 +64,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     const [sortBy, setSortBy] = useState<string>('mi_actividad');
     const [processingUuid, setProcessingUuid] = useState<string | null>(null);
 
-    const { pinnedUuids, recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
+    const { recentVisitsMap, togglePin, isPinned } = useProjectPreferences();
 
     const loadProjects = useCallback(async () => {
         try {
@@ -226,7 +224,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
             title: "¿Aprobar Prepropuesta de Innovación?",
             message: `¿Desea aprobar la idea del proyecto '${p.titulo}'? El equipo podrá iniciar la formulación del documento oficial ISTPET.`,
             confirmText: "Aprobar Prepropuesta",
-            type: "primary"
+            variant: "primary"
         });
 
         if (!ok) return;
@@ -252,7 +250,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
             title: "¿Devolver Prepropuesta con Observaciones?",
             message: `El proyecto '${p.titulo}' volverá al docente para que realice los ajustes solicitados.`,
             confirmText: "Devolver a Ajustes",
-            type: "danger"
+            variant: "destructive"
         });
 
         if (!ok) return;
@@ -281,16 +279,6 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Barra de Acceso Rápido & Proyectos Fijados */}
-            <QuickAccessProjectsBar
-                proyectos={proyectos}
-                pinnedUuids={pinnedUuids}
-                recentVisitsMap={recentVisitsMap}
-                onTogglePin={togglePin}
-                basePath="/innovacion"
-                templateCode="PROTOCOLO_INNOVACION"
-            />
-
             {/* Barra de Búsqueda y Filtros */}
             <div className="flex flex-col lg:flex-row gap-3 bg-surface p-4 rounded-2xl border border-border-thin shadow-sm">
                 <div className="relative flex-1">
@@ -420,7 +408,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                             >
                                                 <Pin size={13} className={isPinned(p.uuid) ? 'fill-amber-400 text-amber-400' : ''} />
                                             </button>
-                                            <span className={`badge-vercel text-[9px] font-mono uppercase px-2 py-0.5 ${cfg.badgeClass}`}>
+                                            <span className={`badge-vercel ${cfg.badge} text-[9px] font-mono uppercase px-2 py-0.5`} style={cfg.style}>
                                                 {cfg.label}
                                             </span>
                                             <ArrowRight size={14} className="text-text-dim group-hover:text-brand group-hover:translate-x-1 transition-all" />

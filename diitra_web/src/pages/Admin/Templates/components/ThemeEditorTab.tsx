@@ -1,5 +1,5 @@
 import React from 'react';
-import { Palette, Plus, Trash2, Type, Layout, Shield, Image as RotateCcw, Eye } from 'lucide-react';
+import { Palette, Plus, Trash2, Type, Layout, Shield, RotateCcw } from 'lucide-react';
 import { THEME_SCHEMA, mergeWithDefaults, buildDefaultTheme } from '../utils/theme-schema';
 
 interface ThemeEditorTabProps {
@@ -202,54 +202,6 @@ export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
                     </div>
                 );
             })}
-
-            {/* Vista Previa del Tema */}
-            <div className="space-y-2 border-t border-border-thin pt-4">
-                <h5 className="text-[10px] font-black text-text-main uppercase tracking-wider flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-text-main" />
-                    Vista Previa del Tema en Vivo
-                </h5>
-                <div className="border border-border-thin rounded-lg overflow-hidden bg-white dark:bg-zinc-900 shadow-sm p-3 space-y-2 select-none">
-                    <div
-                        className="p-2 rounded text-center font-bold text-xs shadow-xs text-white"
-                        style={{ backgroundColor: theme.colors?.primary || '#222c57' }}
-                    >
-                        UNIVERSIDAD DIITRA
-                        <div
-                            className="h-0.5 mt-1 w-full rounded"
-                            style={{ backgroundColor: theme.colors?.secondary || '#c4a857' }}
-                        />
-                    </div>
-                    <div
-                        className="text-[10px] space-y-1 p-1"
-                        style={{
-                            color: theme.colors?.text || '#1a1a1a',
-                            fontFamily: theme.typography?.fontFamily || 'sans-serif'
-                        }}
-                    >
-                        <div className="font-bold text-[11px]">1.1 Objetivos del Proyecto</div>
-                        <p className="opacity-90 leading-tight">
-                            Texto de ejemplo redactado para verificar el contraste, la tipografía y los colores del documento PDF.
-                        </p>
-                    </div>
-                    <div className="overflow-hidden rounded border border-border-thin/40 text-[9px]">
-                        <div
-                            className="px-2 py-1 font-bold flex justify-between"
-                            style={{
-                                backgroundColor: theme.colors?.tableHeaderBg || '#222c57',
-                                color: theme.colors?.tableHeaderColor || '#ffffff'
-                            }}
-                        >
-                            <span>CONCEPTO</span>
-                            <span>VALOR</span>
-                        </div>
-                        <div className="px-2 py-1 bg-zinc-50 dark:bg-zinc-800 text-text-dim flex justify-between">
-                            <span>Equipos e Insumos</span>
-                            <span>$ 1.500,00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };

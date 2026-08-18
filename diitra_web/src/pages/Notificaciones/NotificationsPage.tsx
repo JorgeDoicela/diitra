@@ -98,32 +98,21 @@ const NotificationsPage = () => {
 
         const originalNotifications = [...allNotifications];
         
-        // Actualización optimista
+        // Actualización optimista inmediata
         setAllNotifications(prev => prev.filter(x => x.uuid !== n.uuid));
 
-        let undone = false;
-
-        addToast(
-            "Notificación eliminada",
-            `Se ha eliminado "${stripHtmlToText(n.titulo)}"`,
-            "info",
-            undefined,
-            () => {
-                undone = true;
-                setAllNotifications(originalNotifications);
-            }
-        );
-
-        setTimeout(async () => {
-            if (!undone) {
-                try {
-                    await deleteNotification(n.uuid);
-                } catch (err) {
-                    console.error("Error al eliminar la notificación:", err);
-                    setAllNotifications(originalNotifications);
-                }
-            }
-        }, 8000);
+        try {
+            await deleteNotification(n.uuid);
+            addToast(
+                "Notificación eliminada",
+                `Se ha eliminado "${stripHtmlToText(n.titulo)}"`,
+                "info"
+            );
+        } catch (err) {
+            console.error("Error al eliminar la notificación:", err);
+            setAllNotifications(originalNotifications);
+            addToast("Error", "No se pudo eliminar la notificación", "error");
+        }
     };
 
     const handleClearRead = async () => {
@@ -135,29 +124,18 @@ const NotificationsPage = () => {
         // Actualización optimista: remover leídas localmente
         setAllNotifications(prev => prev.filter(n => !n.leido));
 
-        let undone = false;
-
-        addToast(
-            "Historial limpio",
-            `Se han eliminado ${readNotifications.length} notificaciones leídas`,
-            "info",
-            undefined,
-            () => {
-                undone = true;
-                setAllNotifications(originalNotifications);
-            }
-        );
-
-        setTimeout(async () => {
-            if (!undone) {
-                try {
-                    await clearReadNotifications();
-                } catch (err) {
-                    console.error("Error al limpiar las notificaciones leídas:", err);
-                    setAllNotifications(originalNotifications);
-                }
-            }
-        }, 8000);
+        try {
+            await clearReadNotifications();
+            addToast(
+                "Historial limpio",
+                `Se han eliminado ${readNotifications.length} notificaciones leídas`,
+                "info"
+            );
+        } catch (err) {
+            console.error("Error al limpiar las notificaciones leídas:", err);
+            setAllNotifications(originalNotifications);
+            addToast("Error", "No se pudieron limpiar las notificaciones", "error");
+        }
     };
 
     const handleMarkAllRead = async () => {

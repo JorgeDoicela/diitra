@@ -208,10 +208,10 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                                 url.searchParams.delete('section');
                                                 navigate(url.pathname);
                                             }}
-                                            className="w-full py-2 px-3 border border-border-thin bg-surface hover:bg-surface-hover text-text-main rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                            className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-[0.98] cursor-pointer"
                                         >
                                             <Settings size={14} />
-                                            <span>Ver Flujo Institucional</span>
+                                            <span>Ver Proyecto</span>
                                         </button>
                                     </div>
                                 </div>

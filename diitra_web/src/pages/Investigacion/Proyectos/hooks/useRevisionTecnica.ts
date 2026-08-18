@@ -29,6 +29,16 @@ export const useRevisionTecnica = () => {
         setContextualInput: commentsState.setContextualInput
     });
 
+    // Sincronizar activeSection si la sección por defecto (ej. identificacion) fue eliminada en el editor de plantillas
+    useEffect(() => {
+        if (data.templateSections && data.templateSections.length > 0) {
+            const hasCurrent = data.templateSections.some(s => s.id === layout.activeSection);
+            if (!hasCurrent) {
+                layout.setActiveSection(data.templateSections[0].id);
+            }
+        }
+    }, [data.templateSections, layout.activeSection]);
+
     // Auto-Scroll suave a la tarjeta seleccionada en el visor interactivo
     useEffect(() => {
         if (!layout.activeCommentField || layout.viewMode === 'pdf') return;
