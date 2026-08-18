@@ -3,6 +3,7 @@ import type { View, SlotInfo } from 'react-big-calendar';
 import { format, startOfWeek, addDays, isAfter, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../api/AuthContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import {
     getEventos,
@@ -10,11 +11,13 @@ import {
     updateEvento,
     deleteEvento,
     buildPayload,
+    resolveEventUrl,
     CATEGORIAS_CONFIG,
 } from '../../../services/calendarioService';
 import type { CalendarEventExtended, Evento } from '../types/calendarioTypes';
 
 export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
+    const { isAdmin } = useAuth();
     const [loading, setLoading] = useState(true);
     const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -253,16 +256,34 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
             setLoading(true);
             const raw = await getEventos(date);
             const parsed: CalendarEventExtended[] = raw
-                .filter(ev => ev.fecha_inicio !== null)
+                .filter(ev => Boolean(ev.fecha_inicio || (ev as any).fechaInicio))
                 .map((ev) => {
-                    const [yI, mI, dI] = ev.fecha_inicio!.split('-').map(Number);
+                    const fInicio = (ev.fecha_inicio || (ev as any).fechaInicio) as string;
+                    const fFin = (ev.fecha_fin || (ev as any).fechaFin) as string | null;
+                    const [yI, mI, dI] = fInicio.split('-').map(Number);
                     const start = new Date(yI, mI - 1, dI);
                     let end = start;
-                    if (ev.fecha_fin) {
-                        const [yF, mF, dF] = ev.fecha_fin.split('-').map(Number);
+                    if (fFin) {
+                        const [yF, mF, dF] = fFin.split('-').map(Number);
                         end = new Date(yF, mF - 1, dF);
                     }
-                    return { title: ev.titulo, start, end, allDay: ev.es_todo_el_dia, resource: ev };
+                    const normalizedResource: Evento = {
+                        ...ev,
+                        categoria_global: ev.categoria_global || (ev as any).categoriaGlobal || 'Personal',
+                        subcategoria: ev.subcategoria || (ev as any).subcategoria || 'General',
+                        fecha_inicio: fInicio,
+                        fecha_fin: fFin,
+                        es_todo_el_dia: ev.es_todo_el_dia ?? (ev as any).esTodoElDia ?? true,
+                        color_hex: ev.color_hex || (ev as any).colorHex || null,
+                        url_accion: ev.url_accion || (ev as any).urlAccion || null,
+                    };
+                    return {
+                        title: ev.titulo,
+                        start,
+                        end,
+                        allDay: normalizedResource.es_todo_el_dia,
+                        resource: normalizedResource
+                    };
                 });
             setEventos(parsed);
         } catch (error) {
@@ -281,14 +302,13 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
 
     const handleGoToEventAction = (ev: Evento) => {
         setSelectedEvent(null);
-        if (ev.url_accion) {
-            if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
-                window.open(ev.url_accion, '_blank');
+        const targetUrl = resolveEventUrl(ev, isAdmin);
+        if (targetUrl) {
+            if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+                window.open(targetUrl, '_blank');
             } else {
-                navigate(ev.url_accion);
+                navigate(targetUrl);
             }
-        } else if (ev.categoria_global === 'Proyecto' && ev.uuid) {
-            navigate(`/proyectos/${ev.uuid}`);
         }
     };
 

@@ -112,7 +112,12 @@ namespace diitra_api.Controllers
         }
 
         [HttpPost("{id}/transition")]
-        public async Task<IActionResult> TransitionState(string id, [FromQuery] string newState, [FromQuery] string observation, [FromServices] IWorkflowEngineService workflowEngine)
+        public async Task<IActionResult> TransitionState(
+            string id,
+            [FromQuery] string newState,
+            [FromQuery] string observation,
+            [FromQuery] string? fechaLimite,
+            [FromServices] IWorkflowEngineService workflowEngine)
         {
             if (!await CanCurrentUserManageProjectAsync(id))
             {
@@ -122,7 +127,14 @@ namespace diitra_api.Controllers
             {
                 var userSigafiRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 int idUsuario = (await _projectOrchestrator.GetUserInternalIdBySigafiIdAsync(userSigafiRef ?? "")) ?? 1;
-                var success = await workflowEngine.TransicionarEstadoAsync(id, newState, idUsuario, observation);
+                
+                DateOnly? deadline = null;
+                if (!string.IsNullOrEmpty(fechaLimite) && DateOnly.TryParse(fechaLimite, out var parsedDeadline))
+                {
+                    deadline = parsedDeadline;
+                }
+
+                var success = await workflowEngine.TransicionarEstadoAsync(id, newState, idUsuario, observation, deadline);
                 if (!success) return NotFound("Proyecto no encontrado");
                 return Ok(new { message = $"Proyecto transitado exitosamente a {newState}" });
             }
@@ -136,6 +148,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> DevolverInformeFinal(
             string id,
             [FromQuery] string observation,
+            [FromQuery] string? fechaLimite,
             [FromServices] DiitraContext context,
             [FromServices] diitra_application.Common.Notifications.INotificationService notificationService)
         {
@@ -146,6 +159,13 @@ namespace diitra_api.Controllers
 
             var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == id);
             if (project == null) return NotFound("Proyecto no encontrado");
+
+            DateOnly? deadline = null;
+            if (!string.IsNullOrEmpty(fechaLimite) && DateOnly.TryParse(fechaLimite, out var parsedDeadline))
+            {
+                deadline = parsedDeadline;
+                project.FechaLimiteSubsanacionFinal = deadline;
+            }
 
             // 1. Buscar y reabrir instancias de Informe Final
             var docInstances = await context.DocumentInstances
@@ -169,6 +189,7 @@ namespace diitra_api.Controllers
             var userSigafiRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             int idUsuario = (await _projectOrchestrator.GetUserInternalIdBySigafiIdAsync(userSigafiRef ?? "")) ?? 1;
 
+            string plazoInfo = deadline.HasValue ? $" (Plazo límite de entrega: {deadline.Value:dd/MM/yyyy})" : "";
             var trazabilidad = new InvTrazabilidadProyecto
             {
                 Uuid = Guid.NewGuid().ToString(),
@@ -176,7 +197,7 @@ namespace diitra_api.Controllers
                 IdUsuario = idUsuario,
                 EstadoAnterior = project.Estado,
                 EstadoNuevo = project.Estado,
-                Observacion = $"Devolución de Informe Final con observaciones: {observation}",
+                Observacion = $"Devolución de Informe Final con observaciones: {observation}{plazoInfo}",
                 FechaTransicion = DateTime.Now
             };
             context.InvTrazabilidadProyectos.Add(trazabilidad);
@@ -194,12 +215,13 @@ namespace diitra_api.Controllers
 
                 string actionUrl = $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{project.Uuid}?edit=informe-final-investigacion";
 
+                string plazoTexto = deadline.HasValue ? $" Plazo límite de entrega: {deadline.Value:dd/MM/yyyy}." : "";
                 foreach (var userId in participantUserIds)
                 {
                     await notificationService.NotifyUserAsync(
                         userId,
                         "Informe Final Devuelto para Correcciones",
-                        $"El Informe Final del proyecto '{project.Titulo}' ha sido devuelto con observaciones: {observation}",
+                        $"El Informe Final del proyecto '{project.Titulo}' ha sido devuelto con observaciones.{plazoTexto} Observación: {observation}",
                         "INVESTIGACION",
                         actionUrl
                     );

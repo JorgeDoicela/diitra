@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getSignatureProfile, updateSignatureProfile } from '../../../services/signaturesService';
 import type { UserSignatureProfileDto } from '../../../services/signaturesService';
 import { useAuth } from '../../../api/AuthContext';
@@ -40,6 +41,7 @@ export interface SignatureProfileState {
 
 export function useSignatureProfile(): SignatureProfileState {
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
 
     const [profile, setProfile] = useState<UserSignatureProfileDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -79,6 +81,19 @@ export function useSignatureProfile(): SignatureProfileState {
         load();
         return () => { active = false; };
     }, [user]);
+
+    // Activar modo edición y scroll si se navegó mediante el botón de la notificación
+    useEffect(() => {
+        if (searchParams.get('editFirma') === 'true' || window.location.hash === '#perfil-firma') {
+            setIsEditing(true);
+            setTimeout(() => {
+                const el = document.getElementById('perfil-firma');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
+        }
+    }, [searchParams]);
 
     const cancelEdit = () => {
         setIsEditing(false);

@@ -121,7 +121,7 @@ export const RevisionInformeFinalPage: React.FC = () => {
         }
     };
 
-    const handleDevolver = async (): Promise<boolean> => {
+    const handleDevolver = async (fechaLimite?: string): Promise<boolean> => {
         if (!projectUuid) return false;
         if (!generalFeedback.trim()) {
             addToast('Observación requerida', 'Debe ingresar las observaciones para justificar la devolución.', 'warning');
@@ -131,11 +131,12 @@ export const RevisionInformeFinalPage: React.FC = () => {
         try {
             await api.post(`/projects/${projectUuid}/devolver-informe-final`, null, {
                 params: {
-                    observation: generalFeedback.trim()
+                    observation: generalFeedback.trim(),
+                    fechaLimite: fechaLimite || undefined
                 }
             });
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-            addToast('Informe Devuelto', 'El informe final ha sido reabierto para correcciones del equipo.', 'info');
+            addToast('Informe Devuelto', 'El informe final ha sido reabierto para correcciones del equipo con el plazo fijado.', 'info');
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
             return true;
         } catch (err: any) {

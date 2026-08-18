@@ -279,6 +279,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                             setSignaturePassword={pdfAndSign.setSignaturePassword}
                                             handleSign={pdfAndSign.handleSign}
                                             signatureRefreshTrigger={pdfAndSign.signatureRefreshTrigger}
+                                            isSignedModalOpen={pdfAndSign.isSignedModalOpen}
+                                            setIsSignedModalOpen={pdfAndSign.setIsSignedModalOpen}
+                                            signedModalData={pdfAndSign.signedModalData}
                                         />
                                     )}
                                 </div>

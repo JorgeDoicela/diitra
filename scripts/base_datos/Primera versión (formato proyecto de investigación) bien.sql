@@ -368,9 +368,14 @@ CREATE TABLE inv_proyectos (
     idEntidadAliada      INT           NULL COMMENT 'Empresa o Institución Co-ejecutora',
     trlInicial           TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Inicial (1-9)',
     trlActual            TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Actual (1-9)',
-    trlMeta              TINYINT       NULL COMMENT 'Technology Readiness Level esperado al finalizar',
+    trlMeta              TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Meta (1-9)',
     autoExtendDeadlines  TINYINT(1)    DEFAULT 0,
     autoExtendDays       INT           DEFAULT 7,
+
+    -- GESTIÓN Y CONTROL DE PLAZOS INSTITUCIONALES (DEADLINES)
+    fechaLimiteSubsanacion      DATE          NULL COMMENT 'Fecha límite fijada por el Administrador para subsanar observaciones del protocolo (Fase 1/2)',
+    fechaLimiteInformeFinal     DATE          NULL COMMENT 'Fecha límite formal fijada para la entrega del informe final (Fase 6)',
+    fechaLimiteSubsanacionFinal DATE          NULL COMMENT 'Fecha límite fijada al devolver el informe final con observaciones (Fase 6/7)',
 
 
     FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria),
@@ -1960,7 +1965,7 @@ SELECT
     fechaApertura, NULL, 1,
     '#3B82F6',
     idConvocatoria, uuid, 'CONVOCATORIA',
-    '/convocatorias', NULL,
+    NULL, NULL,
     IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0),
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
@@ -1982,7 +1987,7 @@ SELECT
     fechaCierre, NULL, 1,
     '#F97316',
     idConvocatoria, uuid, 'CONVOCATORIA',
-    '/convocatorias', NULL,
+    NULL, NULL,
     IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0),
     0                                       AS esPrivado,
     'Media'                                 AS prioridad,
@@ -2073,7 +2078,7 @@ SELECT
     r.fechaLimite, NULL, 1,
     '#EC4899',
     r.idProyecto, p.uuid, 'PEER_REVIEW',
-    '/revisiones', 'DIITRA_ADMIN,DIITRA_REVISOR_EXTERNO',
+    NULL, 'DIITRA_ADMIN,DIITRA_REVISOR_EXTERNO',
     IF(r.estado = 'Pendiente', 1, 0),
     0                                       AS esPrivado,
     'Alta'                                  AS prioridad,
@@ -2082,7 +2087,53 @@ SELECT
     NULL                                    AS alertaDias,
     0                                       AS recurrenciaAnual
 FROM inv_revisiones_pares r
-JOIN inv_proyectos p ON p.idProyecto = r.idProyecto;
+JOIN inv_proyectos p ON p.idProyecto = r.idProyecto
+
+UNION ALL
+
+-- 9. Plazo de subsanación de protocolo (Fase 1/2)
+SELECT
+    CONCAT('SUB-PROT-', p.idProyecto),
+    p.uuid,
+    CONCAT('Plazo de Subsanación: ', p.titulo),
+    'Fecha límite para corregir y reenviar el protocolo de investigación.',
+    'Proyecto', 'SubsanacionProtocolo',
+    p.fechaLimiteSubsanacion, NULL, 1,
+    '#F59E0B',
+    p.idProyecto, p.uuid, 'PROYECTO',
+    NULL, NULL,
+    IF(p.estado = 'En Corrección' AND p.activo = 1, 1, 0),
+    0                                       AS esPrivado,
+    'Alta'                                  AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
+FROM inv_proyectos p
+WHERE p.fechaLimiteSubsanacion IS NOT NULL
+
+UNION ALL
+
+-- 10. Plazo de entrega de informe final (Fase 6)
+SELECT
+    CONCAT('INF-FIN-', p.idProyecto),
+    p.uuid,
+    CONCAT('Entrega Informe Final: ', p.titulo),
+    'Fecha límite para la consolidación, firma y entrega del informe final.',
+    'Proyecto', 'EntregaInformeFinal',
+    COALESCE(p.fechaLimiteSubsanacionFinal, p.fechaLimiteInformeFinal, p.fechaFin), NULL, 1,
+    '#3B82F6',
+    p.idProyecto, p.uuid, 'PROYECTO',
+    NULL, NULL,
+    IF(p.estado = 'En Ejecución' AND p.activo = 1, 1, 0),
+    0                                       AS esPrivado,
+    'Alta'                                  AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor,
+    NULL                                    AS alertaDias,
+    0                                       AS recurrenciaAnual
+FROM inv_proyectos p
+WHERE (p.fechaLimiteInformeFinal IS NOT NULL OR p.fechaLimiteSubsanacionFinal IS NOT NULL);
 
 
 -- =============================================================================

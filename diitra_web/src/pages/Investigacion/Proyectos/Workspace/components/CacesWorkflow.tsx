@@ -25,6 +25,16 @@ interface CacesWorkflowProps {
         codigoInstitucional: string | null;
         uuid: string;
         esParticipante?: boolean;
+        fechaInicio?: string | null;
+        fechaFin?: string | null;
+        fechaLimiteSubsanacion?: string | null;
+        fechaLimiteInformeFinal?: string | null;
+        fechaLimiteSubsanacionFinal?: string | null;
+        fecha_limite_subsanacion?: string | null;
+        fecha_limite_informe_final?: string | null;
+        fecha_limite_subsanacion_final?: string | null;
+        fecha_fin?: string | null;
+        [key: string]: any;
     };
     templateCode: string;
     assignedRevisionUuid: string | null;
@@ -55,27 +65,68 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     handleIniciarEjecucion,
     navigate
 }) => {
-    const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
+    const isInnovacion = templateCode.startsWith('INNOVACION') || templateCode.startsWith('TRANSFERENCIA');
+    const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
     const [isFinalReportSigned, setIsFinalReportSigned] = useState(false);
 
-    const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
+    const renderDeadlineBadge = (dateStr?: string | null, prefix: string = 'Plazo') => {
+        if (!dateStr) return null;
+        
+        let targetDate: Date;
+        if (dateStr.includes('/')) {
+            const [d, m, y] = dateStr.split('/').map(Number);
+            targetDate = new Date(y, m - 1, d);
+        } else {
+            targetDate = new Date(dateStr + (dateStr.length === 10 ? 'T00:00:00' : ''));
+        }
+
+        if (isNaN(targetDate.getTime())) return null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        targetDate.setHours(0, 0, 0, 0);
+
+        const diffTime = targetDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const formattedDate = targetDate.toLocaleDateString('es-EC', { day: '2-digit', month: 'short' });
+
+        if (diffDays < 0) {
+            return (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full font-mono">
+                    <AlertCircle size={11} className="shrink-0" />
+                    <span>Vencido ({Math.abs(diffDays)}d)</span>
+                </span>
+            );
+        } else if (diffDays <= 3) {
+            return (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono animate-pulse">
+                    <Clock size={11} className="shrink-0" />
+                    <span>{diffDays === 0 ? 'Vence hoy' : diffDays === 1 ? 'Vence mañana' : `Vence en ${diffDays}d`}</span>
+                </span>
+            );
+        } else {
+            return (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-text-dim bg-surface border border-border-thin px-2 py-0.5 rounded-full font-mono">
+                    <Clock size={11} className="shrink-0 text-text-dim/70" />
+                    <span>{prefix}: {formattedDate} ({diffDays}d)</span>
+                </span>
+            );
+        }
+    };
 
     useEffect(() => {
         let isMounted = true;
         const checkFinalReport = async () => {
-            if (!resolvedProjectUuid || resolvedProjectUuid.startsWith('temp_')) return;
+            if (!resolvedProjectUuid) return;
             try {
-                const res = await api.get('/documents/instances/resolve', {
-                    params: {
-                        templateCode: finalReportTemplateCode,
-                        entityUuid: resolvedProjectUuid
-                    }
-                });
-                if (res.data?.uuid && isMounted) {
-                    const sigsRes = await api.get(`/signatures/document/${res.data.uuid}`);
-                    const validSigs = Array.isArray(sigsRes.data) ? sigsRes.data.filter((s: any) => s.es_valida !== false) : [];
-                    if (isMounted) {
-                        setIsFinalReportSigned(validSigs.length > 0 || res.data.state === 'Signed');
+                const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
+                if (isMounted && Array.isArray(res.data)) {
+                    const finalDoc = res.data.find(
+                        (d: any) => d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode
+                    );
+                    if (finalDoc) {
+                        setIsFinalReportSigned(finalDoc.is_signed === true || finalDoc.isSigned === true);
                     }
                 }
             } catch {
@@ -145,6 +196,25 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
                     const showChecked = isPast || (phase.id === 'En Revisión' && isRevisionDone);
                     const isCurrentActive = isCurrent && !(phase.id === 'En Revisión' && isRevisionDone);
+
+                    // Determinar fecha límite correspondiente a la fase
+                    let deadlineDate: string | null = null;
+                    let deadlinePrefix: string = 'Plazo';
+
+                    if (phase.id === 'Borrador' && status === 'En Corrección') {
+                        deadlineDate = currentProject.fecha_limite_subsanacion || currentProject.fechaLimiteSubsanacion || null;
+                        deadlinePrefix = 'Subsanación';
+                    } else if (phase.id === 'En Ejecución' && status === 'En Ejecución' && !showChecked) {
+                        deadlineDate = currentProject.fecha_fin || currentProject.fechaFin || null;
+                        deadlinePrefix = 'Cierre Proyecto';
+                    } else if (phase.id === 'InformeFinal' && status === 'En Ejecución' && !showChecked) {
+                        deadlineDate = currentProject.fecha_limite_subsanacion_final || currentProject.fechaLimiteSubsanacionFinal
+                            || currentProject.fecha_limite_informe_final || currentProject.fechaLimiteInformeFinal
+                            || currentProject.fecha_fin || currentProject.fechaFin || null;
+                        deadlinePrefix = (currentProject.fecha_limite_subsanacion_final || currentProject.fechaLimiteSubsanacionFinal)
+                            ? 'Subsanación'
+                            : 'Entrega';
+                    }
 
                     return (
                         <div key={phase.id} className="relative group/step">
@@ -229,6 +299,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         }`}>
                                         {phase.label}
                                     </h3>
+                                    {deadlineDate && !showChecked && renderDeadlineBadge(deadlineDate, deadlinePrefix)}
                                 </div>
                                 <p className="text-xs text-text-dim mt-1.5 leading-relaxed font-normal">
                                     {phase.id === 'Borrador' && (

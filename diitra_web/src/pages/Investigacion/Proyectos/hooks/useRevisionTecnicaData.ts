@@ -337,7 +337,7 @@ export const useRevisionTecnicaData = ({
         }
     };
 
-    const handleDevolver = async (generalFeedback: string): Promise<boolean> => {
+    const handleDevolver = async (generalFeedback: string, fechaLimite?: string): Promise<boolean> => {
         if (!project) return false;
 
         const hasContextualComments = Object.values(comments).some(list => list && list.length > 0);
@@ -348,8 +348,8 @@ export const useRevisionTecnicaData = ({
 
         if (!await confirm({
             title: "Devolver al Docente",
-            message: "¿Retornar el proyecto a fase de formulación (En Corrección) con las observaciones descritas?",
-            confirmText: "Devolver",
+            message: `¿Retornar el proyecto a fase de formulación (En Corrección) con las observaciones descritas${fechaLimite ? ` y plazo límite al ${fechaLimite}` : ''}?`,
+            confirmText: "Devolver con Plazo",
             cancelText: "Cancelar",
             variant: "destructive"
         })) return false;
@@ -373,7 +373,8 @@ export const useRevisionTecnicaData = ({
             await api.post(`/projects/${project.uuid}/transition`, null, {
                 params: {
                     newState: 'En Corrección',
-                    observation: fullObs
+                    observation: fullObs,
+                    fechaLimite: fechaLimite || undefined
                 }
             });
 

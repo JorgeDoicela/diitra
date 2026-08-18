@@ -184,3 +184,63 @@ export const getContextDescription = (ev: EventoCalendario): string | null => {
     return EVENTO_CONTEXTO_HELP[ev.tipo_entidad_origen || ''] || null;
 };
 
+/**
+ * Resuelve la URL de navegación de un evento según su tipo de entidad, subcategoría y rol del usuario.
+ * Desacopla la base de datos de las rutas del frontend.
+ */
+export const resolveEventUrl = (ev: {
+    url_accion?: string | null;
+    tipo_entidad_origen?: string | null;
+    uuid_entidad_origen?: string | null;
+    id_entidad_origen?: number | null;
+    categoria_global?: string;
+    subcategoria?: string;
+    uuid?: string;
+}, isAdmin: boolean = false): string | null => {
+    // 1. Si el evento contiene una URL explícita (ej. link normativo externo o PDF)
+    if (ev.url_accion) {
+        return ev.url_accion;
+    }
+
+    const projectUuid = ev.uuid_entidad_origen || ev.uuid;
+    const prefix = isAdmin ? '/investigacion' : '/investigacion/mis-proyectos';
+
+    // 2. Mapeo según el tipo de entidad de dominio
+    switch (ev.tipo_entidad_origen) {
+        case 'PROYECTO': {
+            if (!projectUuid) return `${prefix}`;
+            if (ev.subcategoria === 'SubsanacionProtocolo' || ev.subcategoria === 'InicioProyecto') {
+                return `${prefix}/workspace/protocolo-investigacion/${projectUuid}`;
+            }
+            if (ev.subcategoria === 'EntregaInformeFinal') {
+                return `${prefix}/workspace/informe-final-investigacion/${projectUuid}`;
+            }
+            return `${prefix}/workspace/protocolo-investigacion/${projectUuid}`;
+        }
+        case 'CONVOCATORIA':
+            return '/convocatorias';
+        case 'INFORME_AVANCE':
+            return projectUuid ? `${prefix}/informes-avance/${projectUuid}` : `${prefix}`;
+        case 'PEER_REVIEW':
+            return '/revisiones';
+        default:
+            break;
+    }
+
+    // 3. Fallbacks por categoría global
+    if (ev.categoria_global === 'Proyecto' && projectUuid) {
+        return `${prefix}/workspace/protocolo-investigacion/${projectUuid}`;
+    }
+    if (ev.categoria_global === 'Convocatoria') {
+        return '/convocatorias';
+    }
+    if (ev.categoria_global === 'Monitoreo' && projectUuid) {
+        return `${prefix}/informes-avance/${projectUuid}`;
+    }
+    if (ev.categoria_global === 'PeerReview') {
+        return '/revisiones';
+    }
+
+    return null;
+};
+

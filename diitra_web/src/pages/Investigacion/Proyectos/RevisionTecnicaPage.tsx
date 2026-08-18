@@ -184,7 +184,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                     setGeneralFeedback={layout.setGeneralFeedback}
                     submitting={data.submitting}
                     onAprobar={() => data.handleAprobar(layout.generalFeedback)}
-                    onDevolver={() => data.handleDevolver(layout.generalFeedback)}
+                    onDevolver={(fechaLimite) => data.handleDevolver(layout.generalFeedback, fechaLimite)}
                 />
             )}
         </div>,

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios_config';
+import { useAuth } from '../../api/AuthContext';
+import { resolveEventUrl } from '../../services/calendarioService';
 import './ProximosEventosWidget.css';
 
 interface Evento {
@@ -15,6 +17,9 @@ interface Evento {
     es_todo_el_dia: boolean;
     color_hex: string | null;
     url_accion: string | null;
+    tipo_entidad_origen?: string | null;
+    uuid_entidad_origen?: string | null;
+    id_entidad_origen?: number | null;
 }
 
 interface ProximosEventosWidgetProps {
@@ -23,6 +28,7 @@ interface ProximosEventosWidgetProps {
 }
 
 export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ className = '', style }) => {
+  const { isAdmin } = useAuth();
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -58,14 +64,13 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
   }, []);
 
   const handleEventoClick = (ev: Evento) => {
-    if (ev.url_accion) {
-      if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
-        window.open(ev.url_accion, '_blank');
+    const targetUrl = resolveEventUrl(ev, isAdmin);
+    if (targetUrl) {
+      if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+        window.open(targetUrl, '_blank');
       } else {
-        navigate(ev.url_accion);
+        navigate(targetUrl);
       }
-    } else if (ev.categoria_global === 'Proyecto' && ev.uuid) {
-      navigate(`/proyectos/${ev.uuid}`);
     } else {
       navigate('/calendario');
     }

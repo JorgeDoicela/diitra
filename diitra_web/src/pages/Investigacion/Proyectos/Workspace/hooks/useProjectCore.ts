@@ -195,7 +195,12 @@ export function useProjectCore() {
                 descripcion: res.data.descripcion_proyecto || res.data.descripcionProyecto || '',
                 carrera: res.data.carrera || '',
                 convocatoria: res.data.convocatoria_titulo || res.data.convocatoriaTitulo || '',
-                convocatoriaMontoMaximo: res.data.convocatoria_monto_maximo ?? res.data.convocatoriaMontoMaximo ?? res.data.ConvocatoriaMontoMaximo ?? null
+                convocatoriaMontoMaximo: res.data.convocatoria_monto_maximo ?? res.data.convocatoriaMontoMaximo ?? res.data.ConvocatoriaMontoMaximo ?? null,
+                fechaInicio: res.data.fecha_inicio || res.data.fechaInicio || null,
+                fechaFin: res.data.fecha_fin || res.data.fechaFin || null,
+                fechaLimiteSubsanacion: res.data.fecha_limite_subsanacion || res.data.fechaLimiteSubsanacion || null,
+                fechaLimiteInformeFinal: res.data.fecha_limite_informe_final || res.data.fechaLimiteInformeFinal || null,
+                fechaLimiteSubsanacionFinal: res.data.fecha_limite_subsanacion_final || res.data.fechaLimiteSubsanacionFinal || null
             };
             setCurrentProject(projectData);
             setIsNotFound(false);

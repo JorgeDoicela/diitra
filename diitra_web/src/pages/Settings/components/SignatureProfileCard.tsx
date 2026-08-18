@@ -47,7 +47,7 @@ export const SignatureProfileCard: React.FC = () => {
     }
 
     return (
-        <div className="signature-profile-container">
+        <div className="signature-profile-container" id="perfil-firma">
             <div className="signature-profile-card">
             <div className="signature-profile-header">
                 <div className="signature-profile-title-area">

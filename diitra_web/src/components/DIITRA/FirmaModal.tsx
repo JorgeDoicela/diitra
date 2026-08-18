@@ -79,7 +79,7 @@ export const FirmaModal: React.FC<FirmaModalProps> = ({
                         <p>No ha configurado su cargo o su trazo de firma manuscrita. Debe hacerlo en la sección de configuración de perfil antes de firmar.</p>
                         <div className="firma-modal-actions">
                             <button type="button" onClick={onClose} className="btn-sig btn-sig-secondary">Cancelar</button>
-                            <a href="/perfil" className="btn-sig btn-sig-primary text-center-link">
+                            <a href="/configuracion?editFirma=true#perfil-firma" className="btn-sig btn-sig-primary text-center-link">
                                 Ir a Configuración
                             </a>
                         </div>

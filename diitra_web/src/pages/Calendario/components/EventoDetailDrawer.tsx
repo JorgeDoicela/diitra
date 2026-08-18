@@ -4,7 +4,8 @@ import {
     X, RotateCcw, Calendar as CalendarIcon, Info, Bell,
     CheckCircle, Edit2, Trash2, ArrowRight
 } from 'lucide-react';
-import { PRIORIDAD_COLORS, ESTADO_LABELS, getContextDescription } from '../../../services/calendarioService';
+import { PRIORIDAD_COLORS, ESTADO_LABELS, getContextDescription, resolveEventUrl } from '../../../services/calendarioService';
+import { useAuth } from '../../../api/AuthContext';
 import type { Evento } from '../types/calendarioTypes';
 import './EventoDrawers.css';
 
@@ -25,7 +26,9 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
     handleDeleteEvent,
     handleGoToEventAction,
 }) => {
+    const { isAdmin } = useAuth();
     if (!selectedEvent) return null;
+    const hasAction = !!resolveEventUrl(selectedEvent, isAdmin);
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end">
@@ -186,7 +189,7 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
                         </div>
                     ) : (
                         <>
-                            {(selectedEvent.url_accion || (selectedEvent.categoria_global === 'Proyecto' && selectedEvent.uuid)) ? (
+                            {hasAction ? (
                                 <button
                                     onClick={() => handleGoToEventAction(selectedEvent)}
                                     className="w-full py-3.5 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"

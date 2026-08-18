@@ -31,7 +31,7 @@ public class CalendarioController : ControllerBase
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
         if (dbUser == null) return Unauthorized();
 
-        var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "DIITRA_DOCENTE";
+        var rol = User.IsInRole("DIITRA_ADMIN") ? "DIITRA_ADMIN" : (User.FindFirst(ClaimTypes.Role)?.Value ?? "DIITRA_DOCENTE");
         var eventos = await _calendarioService.GetEventosAsync(desde, hasta, rol, dbUser.IdUsuario);
         return Ok(eventos);
     }

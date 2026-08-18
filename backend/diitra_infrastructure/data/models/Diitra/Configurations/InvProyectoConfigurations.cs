@@ -46,6 +46,9 @@ public class InvProyectoConfiguration : IEntityTypeConfiguration<InvProyecto>
         entity.Property(e => e.TrlMeta).HasColumnName("trlMeta");
         entity.Property(e => e.AutoExtendDeadlines).HasColumnName("autoExtendDeadlines").HasColumnType("tinyint(1)").HasDefaultValue(false);
         entity.Property(e => e.AutoExtendDays).HasColumnName("autoExtendDays").HasColumnType("int").HasDefaultValue(7);
+        entity.Property(e => e.FechaLimiteSubsanacion).HasColumnName("fechaLimiteSubsanacion");
+        entity.Property(e => e.FechaLimiteInformeFinal).HasColumnName("fechaLimiteInformeFinal");
+        entity.Property(e => e.FechaLimiteSubsanacionFinal).HasColumnName("fechaLimiteSubsanacionFinal");
 
         entity.HasOne(d => d.IdObjetivoPndNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdObjetivoPnd).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_pnd_obj");
         entity.HasOne(d => d.IdConvocatoriaNavigation).WithMany(p => p.Proyectos).HasForeignKey(d => d.IdConvocatoria).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_conv");

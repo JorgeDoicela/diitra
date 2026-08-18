@@ -44,6 +44,11 @@ public partial class InvProyecto
     public bool AutoExtendDeadlines { get; set; } = false;
     public int AutoExtendDays { get; set; } = 7;
 
+    // GESTIÓN Y CONTROL DE PLAZOS INSTITUCIONALES (DEADLINES)
+    public DateOnly? FechaLimiteSubsanacion { get; set; }
+    public DateOnly? FechaLimiteInformeFinal { get; set; }
+    public DateOnly? FechaLimiteSubsanacionFinal { get; set; }
+
 
     public virtual InvConvocatoria? IdConvocatoriaNavigation { get; set; }
     public virtual InvSublinea? IdSublineaNavigation { get; set; }

@@ -26,7 +26,7 @@ namespace Diitra.Infrastructure.Research
             _scopeFactory = scopeFactory;
         }
 
-        public async Task<bool> TransicionarEstadoAsync(string proyectoUuid, string nuevoEstado, int idUsuario, string observacion)
+        public async Task<bool> TransicionarEstadoAsync(string proyectoUuid, string nuevoEstado, int idUsuario, string observacion, DateOnly? fechaLimite = null)
         {
             var proyecto = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == proyectoUuid);
             if (proyecto == null) return false;
@@ -232,6 +232,16 @@ namespace Diitra.Infrastructure.Research
             proyecto.Estado = nuevoEstado;
             proyecto.FechaModificacion = DateTime.Now;
 
+            if (nuevoEstado == "En Corrección" && fechaLimite.HasValue)
+            {
+                proyecto.FechaLimiteSubsanacion = fechaLimite.Value;
+            }
+            else if (nuevoEstado == "Enviado" || nuevoEstado == "En Revisión" || nuevoEstado == "Aprobado")
+            {
+                // Si el docente subsana y vuelve a enviar o se aprueba, se da por cumplida la subsanación
+                // pero se mantiene el registro en la trazabilidad
+            }
+
             // 3. Registrar Trazabilidad Inmutable (Audit Trail para CACES)
             var ultimaTransicion = await _context.InvTrazabilidadProyectos
                 .Where(t => t.IdProyecto == proyecto.IdProyecto)
@@ -259,7 +269,9 @@ namespace Diitra.Infrastructure.Research
             }
 
             _context.InvTrazabilidadProyectos.Add(trazabilidad);
-               var afterState = new
+            await _context.SaveChangesAsync();
+
+            var afterState = new
             {
                 Titulo = proyecto.Titulo,
                 CodigoInstitucional = proyecto.CodigoInstitucional,
@@ -442,6 +454,7 @@ namespace Diitra.Infrastructure.Research
                         ? "Sin observaciones detalladas." 
                         : (observacion.Length > 150 ? observacion.Substring(0, 147) + "..." : observacion);
 
+                    string plazoTexto = fechaLimite.HasValue ? $" Plazo límite de subsanación: {fechaLimite.Value:dd/MM/yyyy}." : "";
                     string actionUrl = await ResolveActionUrlAsync(proyecto, forAdmin: false);
 
                     foreach (var userId in participantUserIds)
@@ -449,7 +462,7 @@ namespace Diitra.Infrastructure.Research
                         await _notificationService.NotifyUserAsync(
                             userId,
                             "Revisión Técnica Devuelta",
-                            $"Su propuesta de proyecto '{proyecto.Titulo}' ha sido devuelta para correcciones. Observación: {obsResumen}",
+                            $"Su propuesta de proyecto '{proyecto.Titulo}' ha sido devuelta para correcciones.{plazoTexto} Observación: {obsResumen}",
                             "INVESTIGACION",
                             actionUrl
                         );

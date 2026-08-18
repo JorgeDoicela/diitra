@@ -2,13 +2,12 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
-    ClipboardList, Plus, FileCheck, ArrowRight, Calendar, AlertCircle,
+    ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
-import FinalReportLauncher from './components/FinalReportLauncher';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
@@ -46,7 +45,6 @@ const ResearchProjectsPage = () => {
     const { addToast } = useNotifications();
     const confirm = useConfirm();
     const [showWizard, setShowWizard] = useState(false);
-    const [showReportLauncher, setShowReportLauncher] = useState(false);
     
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
@@ -317,13 +315,6 @@ const ResearchProjectsPage = () => {
                 }
             >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <button
-                        onClick={() => setShowReportLauncher(true)}
-                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
-                    >
-                        <FileCheck size={14} />
-                        <span>Informe Final</span>
-                    </button>
                     <Link
                         to="/investigacion/adopcion"
                         className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
@@ -637,7 +628,6 @@ const ResearchProjectsPage = () => {
             </section>
 
             {showWizard && <CreateProjectModal onClose={() => setShowWizard(false)} />}
-            {showReportLauncher && <FinalReportLauncher onClose={() => setShowReportLauncher(false)} />}
 
             {/* Modal de confirmación de borrado */}
             {deletingUuid && (

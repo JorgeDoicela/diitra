@@ -356,7 +356,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Auto-Seeder de Plantillas de Documentos (Sincronización Código ↔ MySQL)
+// Auto-Seeder de Plantillas de Documentos y Vistas del Sistema (Sincronización Código ↔ MySQL)
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -364,12 +364,14 @@ using (var scope = app.Services.CreateScope())
         var dbContext = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
         await DocumentTemplateSeeder.SeedTemplatesAsync(dbContext, env, logger);
+        await CalendarioViewSeeder.EnsureCalendarioViewCreatedAsync(dbContext, logger);
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "DIITRA DocumentSeeder: Error al sincronizar las plantillas de documentos al arrancar.");
+        logger.LogError(ex, "DIITRA Seeder: Error al sincronizar esquemas y plantillas al arrancar.");
     }
 }
 

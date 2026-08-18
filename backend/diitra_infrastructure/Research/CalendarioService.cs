@@ -26,111 +26,390 @@ public class CalendarioService : ICalendarioService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // EVENTOS — Consulta la vista v_calendario_eventos
+    // EVENTOS — Agregación Fuertemente Tipada con EF Core (Sin dependencia de vistas SQL)
     // ─────────────────────────────────────────────────────────────────────────
     public async Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(
         DateOnly desde, DateOnly hasta, string rolUsuario, int idUsuario)
     {
-        var misProyectosIdsStr = "";
+        var resultado = new List<CalendarioEventoDto>();
+
+        // 1. PROYECTOS Y SUS HITOS DE CICLO DE VIDA (Subsanación, Inicio, Fin, Informe Final)
+        IQueryable<InvProyecto> proyectosQuery = _context.InvProyectos
+            .AsNoTracking()
+            .Where(p => (p.Activo ?? true) && (p.Eliminado != true));
 
         if (rolUsuario != "DIITRA_ADMIN")
         {
-            // Obtener IDs de proyectos de interés de forma fuertemente tipada usando LINQ
-            var proyectosParticipante = await _context.Set<InvProyectoParticipante>()
-                .Where(p => p.IdUsuario == idUsuario && (p.Activo ?? true))
-                .Select(p => p.IdProyecto)
-                .ToListAsync();
-
-            var gruposUsuario = await _context.Set<InvGrupoMiembro>()
+            var misGrupos = await _context.Set<InvGrupoMiembro>()
                 .Where(m => m.IdUsuario == idUsuario && (m.Activo ?? true))
                 .Select(m => m.IdGrupo)
                 .ToListAsync();
 
-            var proyectosGrupo = await _context.Set<InvProyecto>()
-                .Where(p => p.IdGrupo.HasValue && (p.Activo ?? true) && gruposUsuario.Contains(p.IdGrupo.Value))
-                .Select(p => p.IdProyecto)
-                .ToListAsync();
-
-            var misProyectosIds = proyectosParticipante
-                .Union(proyectosGrupo)
-                .Distinct()
-                .ToList();
-
-            misProyectosIdsStr = string.Join(",", misProyectosIds);
+            proyectosQuery = proyectosQuery.Where(p =>
+                p.InvProyectoParticipantes.Any(pp => pp.IdUsuario == idUsuario && (pp.Activo ?? true)) ||
+                (p.IdGrupo.HasValue && misGrupos.Contains(p.IdGrupo.Value))
+            );
         }
 
-        var sql = @"
-            SELECT
-                idEventoCalendario, uuid, titulo, descripcion,
-                categoriaGlobal, subcategoria,
-                fechaInicio, fechaFin, esTodoElDia, colorHex,
-                idEntidadOrigen, uuidEntidadOrigen, tipoEntidadOrigen,
-                urlAccion, rolesVisibles, esPrivado, prioridad, estado, creadoPor,
-                alertaDias, recurrenciaAnual
-            FROM v_calendario_eventos
-            WHERE activo = 1
-              AND fechaInicio <= {1}
-              AND COALESCE(fechaFin, fechaInicio) >= {0}
-              AND (rolesVisibles IS NULL OR FIND_IN_SET({2}, rolesVisibles) > 0)
-              AND (esPrivado = 0 OR creadoPor = {3})
-              AND (
-                  {2} = 'DIITRA_ADMIN'
-                  OR tipoEntidadOrigen NOT IN ('PROYECTO', 'INFORME_AVANCE', 'PEER_REVIEW')
-                  OR (idEntidadOrigen IS NOT NULL AND FIND_IN_SET(idEntidadOrigen, {4}) > 0)
-              )
-            ORDER BY fechaInicio ASC";
-
-        var eventos = await _context.Database
-            .SqlQueryRaw<CalendarioEventoRaw>(sql,
-                desde.ToString("yyyy-MM-dd"),
-                hasta.ToString("yyyy-MM-dd"),
-                rolUsuario,
-                idUsuario,
-                misProyectosIdsStr)
+        var proyectos = await proyectosQuery
+            .Select(p => new
+            {
+                p.IdProyecto,
+                p.Uuid,
+                p.CodigoInstitucional,
+                p.Titulo,
+                p.Estado,
+                p.FechaInicio,
+                p.FechaFin,
+                p.FechaLimiteSubsanacion,
+                p.FechaLimiteInformeFinal,
+                p.FechaLimiteSubsanacionFinal
+            })
             .ToListAsync();
 
-        // Expandir eventos con recurrencia anual de la tabla normativa
+        foreach (var p in proyectos)
+        {
+            // 1.1 Plazo de Subsanación de Protocolo (Fase 1 y 2)
+            if (p.FechaLimiteSubsanacion.HasValue &&
+                p.FechaLimiteSubsanacion.Value >= desde &&
+                p.FechaLimiteSubsanacion.Value <= hasta &&
+                (p.Estado == "En Corrección" || p.Estado == "En Correccion"))
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"SUB-PROT-{p.IdProyecto}",
+                    p.Uuid,
+                    $"Plazo de Subsanación: {p.Titulo}",
+                    "Fecha límite para corregir y reenviar el protocolo de investigación.",
+                    "Proyecto",
+                    "SubsanacionProtocolo",
+                    p.FechaLimiteSubsanacion.Value,
+                    null,
+                    true,
+                    "#F59E0B",
+                    p.IdProyecto,
+                    p.Uuid,
+                    "PROYECTO",
+                    $"/investigacion/workspace/protocolo-investigacion/{p.Uuid}",
+                    null,
+                    false,
+                    "Alta",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+
+            // 1.2 Inicio de Proyecto
+            if (p.FechaInicio.HasValue &&
+                p.FechaInicio.Value >= desde &&
+                p.FechaInicio.Value <= hasta &&
+                p.Estado != "Borrador" && p.Estado != "Anulado" && p.Estado != "Rechazado")
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"PROY-INI-{p.IdProyecto}",
+                    p.Uuid,
+                    $"Inicio: {p.Titulo}",
+                    $"Fecha de inicio del proyecto {p.CodigoInstitucional ?? p.Uuid}",
+                    "Proyecto",
+                    "InicioProyecto",
+                    p.FechaInicio.Value,
+                    null,
+                    true,
+                    "#10B981",
+                    p.IdProyecto,
+                    p.Uuid,
+                    "PROYECTO",
+                    $"/investigacion/workspace/protocolo-investigacion/{p.Uuid}",
+                    "DIITRA_ADMIN",
+                    false,
+                    "Media",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+
+            // 1.3 Vencimiento de Proyecto
+            if (p.FechaFin.HasValue &&
+                p.FechaFin.Value >= desde &&
+                p.FechaFin.Value <= hasta &&
+                (p.Estado == "En Ejecución" || p.Estado == "Aprobado"))
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"PROY-FIN-{p.IdProyecto}",
+                    p.Uuid,
+                    $"Vencimiento: {p.Titulo}",
+                    $"Fecha de cierre planificada del proyecto {p.CodigoInstitucional ?? p.Uuid}",
+                    "Proyecto",
+                    "VencimientoProyecto",
+                    p.FechaFin.Value,
+                    null,
+                    true,
+                    "#EF4444",
+                    p.IdProyecto,
+                    p.Uuid,
+                    "PROYECTO",
+                    $"/investigacion/workspace/protocolo-investigacion/{p.Uuid}",
+                    null,
+                    false,
+                    "Alta",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+
+            // 1.4 Entrega Informe Final (Fases 6 y 7)
+            var fechaInformeFinal = p.FechaLimiteSubsanacionFinal ?? p.FechaLimiteInformeFinal;
+            if (fechaInformeFinal.HasValue &&
+                fechaInformeFinal.Value >= desde &&
+                fechaInformeFinal.Value <= hasta &&
+                p.Estado == "En Ejecución")
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"INF-FIN-{p.IdProyecto}",
+                    p.Uuid,
+                    $"Entrega Informe Final: {p.Titulo}",
+                    "Fecha límite para la consolidación, firma y entrega del informe final.",
+                    "Proyecto",
+                    "EntregaInformeFinal",
+                    fechaInformeFinal.Value,
+                    null,
+                    true,
+                    "#3B82F6",
+                    p.IdProyecto,
+                    p.Uuid,
+                    "PROYECTO",
+                    $"/investigacion/workspace/informe-final/{p.Uuid}",
+                    null,
+                    false,
+                    "Alta",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+        }
+
+        // 2. CONVOCATORIAS (Apertura y Cierre)
+        var convocatorias = await _context.InvConvocatorias
+            .AsNoTracking()
+            .Where(c => (c.Eliminado != true) && (c.Estado == "Borrador" || c.Estado == "Abierta" || c.Estado == "Cerrada"))
+            .Select(c => new
+            {
+                c.IdConvocatoria,
+                c.Uuid,
+                c.Titulo,
+                c.CodigoConvocatoria,
+                c.FechaApertura,
+                c.FechaCierre
+            })
+            .ToListAsync();
+
+        foreach (var conv in convocatorias)
+        {
+            if (conv.FechaApertura >= desde && conv.FechaApertura <= hasta)
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"CONV-APE-{conv.IdConvocatoria}",
+                    conv.Uuid,
+                    $"Apertura: {conv.Titulo}",
+                    $"Convocatoria {conv.CodigoConvocatoria} - Inicio del período de postulación.",
+                    "Convocatoria",
+                    "AperturaConvocatoria",
+                    conv.FechaApertura,
+                    null,
+                    true,
+                    "#3B82F6",
+                    conv.IdConvocatoria,
+                    conv.Uuid,
+                    "CONVOCATORIA",
+                    null,
+                    null,
+                    false,
+                    "Media",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+
+            if (conv.FechaCierre >= desde && conv.FechaCierre <= hasta)
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"CONV-CIE-{conv.IdConvocatoria}",
+                    conv.Uuid,
+                    $"Cierre: {conv.Titulo}",
+                    $"Convocatoria {conv.CodigoConvocatoria} - Fecha límite de postulación.",
+                    "Convocatoria",
+                    "CierreConvocatoria",
+                    conv.FechaCierre,
+                    null,
+                    true,
+                    "#F97316",
+                    conv.IdConvocatoria,
+                    conv.Uuid,
+                    "CONVOCATORIA",
+                    null,
+                    null,
+                    false,
+                    "Media",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+        }
+
+        // 3. INFORMES DE AVANCE
+        var projectIdsPermitidos = rolUsuario == "DIITRA_ADMIN" ? null : proyectos.Select(p => p.IdProyecto).ToHashSet();
+        var informesAvance = await _context.InvInformesAvance
+            .AsNoTracking()
+            .Include(ia => ia.IdProyectoNavigation)
+            .Where(ia => ia.Estado == "Pendiente" && ia.FechaReporte >= desde && ia.FechaReporte <= hasta)
+            .ToListAsync();
+
+        foreach (var ia in informesAvance)
+        {
+            if (projectIdsPermitidos != null && !projectIdsPermitidos.Contains(ia.IdProyecto)) continue;
+            var p = ia.IdProyectoNavigation;
+            resultado.Add(new CalendarioEventoDto(
+                $"INF-{ia.IdInforme}",
+                ia.Uuid.ToString(),
+                $"Informe #{ia.NumeroInforme}: {p?.Titulo ?? "Proyecto"}",
+                $"Entrega del Informe de Avance N° {ia.NumeroInforme}",
+                "Monitoreo",
+                "InformeAvance",
+                ia.FechaReporte,
+                null,
+                true,
+                "#8B5CF6",
+                ia.IdProyecto,
+                p?.Uuid,
+                "INFORME_AVANCE",
+                p != null ? $"/investigacion/proyectos/informes-avance/{p.Uuid}" : null,
+                null,
+                false,
+                "Media",
+                "Pendiente",
+                null,
+                null,
+                false
+            ));
+        }
+
+        // 4. EVALUACIONES POR PARES (Peer Review)
+        var revisionesQuery = _context.Set<InvRevisionesPares>()
+            .AsNoTracking()
+            .Include(r => r.Proyecto)
+            .Where(r => r.Estado == "Pendiente");
+
+        if (rolUsuario != "DIITRA_ADMIN")
+        {
+            revisionesQuery = revisionesQuery.Where(r => r.IdRevisor.HasValue && r.IdRevisor.Value == idUsuario);
+        }
+
+        var revisiones = await revisionesQuery.ToListAsync();
+        foreach (var r in revisiones)
+        {
+            var fechaLim = DateOnly.FromDateTime(r.FechaLimite);
+            if (fechaLim >= desde && fechaLim <= hasta)
+            {
+                resultado.Add(new CalendarioEventoDto(
+                    $"REV-{r.IdRevision}",
+                    r.Uuid,
+                    $"Plazo de evaluación: {r.Proyecto?.Titulo ?? "Proyecto"}",
+                    "Fecha límite para completar la evaluación por pares del proyecto.",
+                    "PeerReview",
+                    "PlazoPeerReview",
+                    fechaLim,
+                    null,
+                    true,
+                    "#EC4899",
+                    r.IdProyecto,
+                    r.Proyecto?.Uuid,
+                    "PEER_REVIEW",
+                    rolUsuario == "DIITRA_ADMIN"
+                        ? (r.Proyecto != null ? $"/evaluacion-pares/proyecto/{r.Proyecto.Uuid}" : null)
+                        : $"/revisiones/{r.Uuid}",
+                    "DIITRA_ADMIN,DIITRA_REVISOR_EXTERNO",
+                    false,
+                    "Alta",
+                    "Pendiente",
+                    null,
+                    null,
+                    false
+                ));
+            }
+        }
+
+        // 5. HITOS NORMATIVOS Y PERSONALES (inv_calendario_eventos_normativos)
         var normativos = await _context.Set<InvCalendarioEventoNormativo>()
-            .Where(e => e.Activo && e.RecurrenciaAnual)
+            .AsNoTracking()
+            .Where(e => e.Activo)
             .ToListAsync();
-
-        var resultado = eventos.Select(MapRawToDto).ToList();
 
         foreach (var norm in normativos)
         {
             if (!norm.FechaInicio.HasValue) continue;
 
+            // Filtro de roles visibles
             if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
                 !norm.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rolUsuario)) continue;
 
-            // Filtro de privacidad para eventos recurrentes
+            // Filtro de privacidad
             if (norm.EsPrivado && norm.CreadoPor != idUsuario) continue;
 
-            // Proyectar la recurrencia en el rango solicitado
-            int añoDesde = desde.Year;
-            int añoHasta = hasta.Year;
-            for (int año = añoDesde; año <= añoHasta; año++)
+            if (norm.RecurrenciaAnual)
             {
-                if (norm.RecurrenciaHasta.HasValue && año > norm.RecurrenciaHasta.Value.Year) break;
-                var fechaOcurrencia = new DateOnly(año, norm.FechaInicio.Value.Month, norm.FechaInicio.Value.Day);
-                if (fechaOcurrencia < desde || fechaOcurrencia > hasta) continue;
+                // Proyectar la recurrencia anual en el rango
+                int añoDesde = desde.Year;
+                int añoHasta = hasta.Year;
+                for (int año = añoDesde; año <= añoHasta; año++)
+                {
+                    if (norm.RecurrenciaHasta.HasValue && año > norm.RecurrenciaHasta.Value.Year) break;
+                    var fechaOcurrencia = new DateOnly(año, norm.FechaInicio.Value.Month, norm.FechaInicio.Value.Day);
+                    if (fechaOcurrencia < desde || fechaOcurrencia > hasta) continue;
 
-                // No duplicar si ya existe por el SELECT de la vista (mismo año de creación)
-                var idCompuesto = $"NORM-{norm.IdEvento}-{año}";
-                if (resultado.Any(e => e.IdEventoCalendario == idCompuesto)) continue;
-
-                resultado.Add(new CalendarioEventoDto(
-                    idCompuesto, norm.Uuid, norm.Titulo, norm.Descripcion,
-                    "Normativo", norm.TipoEvento,
-                    fechaOcurrencia, norm.FechaFin.HasValue
-                        ? new DateOnly(año, norm.FechaFin.Value.Month, norm.FechaFin.Value.Day)
-                        : null,
-                    norm.EsTodoElDia, norm.ColorHex,
-                    norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
-                    norm.UrlAccion, norm.RolesVisibles,
-                    norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor,
-                    norm.AlertaDias, norm.RecurrenciaAnual
-                ));
+                    var idCompuesto = $"NORM-{norm.IdEvento}-{año}";
+                    resultado.Add(new CalendarioEventoDto(
+                        idCompuesto, norm.Uuid, norm.Titulo, norm.Descripcion,
+                        "Normativo", norm.TipoEvento,
+                        fechaOcurrencia, norm.FechaFin.HasValue
+                            ? new DateOnly(año, norm.FechaFin.Value.Month, norm.FechaFin.Value.Day)
+                            : null,
+                        norm.EsTodoElDia, norm.ColorHex,
+                        norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
+                        norm.UrlAccion, norm.RolesVisibles,
+                        norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor,
+                        norm.AlertaDias, norm.RecurrenciaAnual
+                    ));
+                }
+            }
+            else
+            {
+                var fInicio = norm.FechaInicio.Value;
+                var fFin = norm.FechaFin ?? fInicio;
+                if (fInicio <= hasta && fFin >= desde)
+                {
+                    var categoriaGlobal = (norm.TipoEvento is "Normativo" or "Academico" or "Institucional" or "Feriado") ? "Normativo" : "Personal";
+                    resultado.Add(new CalendarioEventoDto(
+                        $"NORM-{norm.IdEvento}", norm.Uuid, norm.Titulo, norm.Descripcion,
+                        categoriaGlobal, norm.TipoEvento,
+                        fInicio, norm.FechaFin,
+                        norm.EsTodoElDia, norm.ColorHex,
+                        norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
+                        norm.UrlAccion, norm.RolesVisibles,
+                        norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor,
+                        norm.AlertaDias, norm.RecurrenciaAnual
+                    ));
+                }
             }
         }
 
@@ -479,16 +758,6 @@ public class CalendarioService : ICalendarioService
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
-    private static CalendarioEventoDto MapRawToDto(CalendarioEventoRaw r) => new(
-        r.IdEventoCalendario, r.Uuid, r.Titulo, r.Descripcion,
-        r.CategoriaGlobal, r.Subcategoria,
-        r.FechaInicio, r.FechaFin, r.EsTodoElDia, r.ColorHex,
-        r.IdEntidadOrigen, r.UuidEntidadOrigen, r.TipoEntidadOrigen,
-        r.UrlAccion, r.RolesVisibles,
-        r.EsPrivado, r.Prioridad, r.Estado, r.CreadoPor,
-        r.AlertaDias, r.RecurrenciaAnual
-    );
-
     private static EventoNormativoDto ToDto(InvCalendarioEventoNormativo e) => new(
         e.Uuid, e.Titulo, e.Descripcion, e.TipoEvento,
         e.FechaInicio, e.FechaFin, e.EsTodoElDia,
@@ -501,30 +770,4 @@ public class CalendarioService : ICalendarioService
 
     private static string EscapeIcal(string s) =>
         s.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\n", "\\n");
-}
-
-// Clase auxiliar para mapear la vista SQL cruda
-internal class CalendarioEventoRaw
-{
-    public string IdEventoCalendario { get; set; } = "";
-    public string Uuid { get; set; } = "";
-    public string Titulo { get; set; } = "";
-    public string? Descripcion { get; set; }
-    public string CategoriaGlobal { get; set; } = "";
-    public string Subcategoria { get; set; } = "";
-    public DateOnly FechaInicio { get; set; }
-    public DateOnly? FechaFin { get; set; }
-    public bool EsTodoElDia { get; set; }
-    public string? ColorHex { get; set; }
-    public int? IdEntidadOrigen { get; set; }
-    public string? UuidEntidadOrigen { get; set; }
-    public string TipoEntidadOrigen { get; set; } = "";
-    public string? UrlAccion { get; set; }
-    public string? RolesVisibles { get; set; }
-    public bool EsPrivado { get; set; }
-    public string Prioridad { get; set; } = "Media";
-    public string Estado { get; set; } = "Pendiente";
-    public int? CreadoPor { get; set; }
-    public int? AlertaDias { get; set; }
-    public bool RecurrenciaAnual { get; set; } = false;
 }

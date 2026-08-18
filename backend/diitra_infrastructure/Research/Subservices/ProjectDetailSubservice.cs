@@ -509,6 +509,9 @@ namespace diitra_infrastructure.Research.Subservices
             dto.FechaFin = p.FechaFin?.ToString("dd/MM/yyyy");
             dto.FechaInicioEstimada = p.FechaInicio?.ToString("dd/MM/yyyy");
             dto.FechaFinEstimada = p.FechaFin?.ToString("dd/MM/yyyy");
+            dto.FechaLimiteSubsanacion = p.FechaLimiteSubsanacion?.ToString("yyyy-MM-dd");
+            dto.FechaLimiteInformeFinal = p.FechaLimiteInformeFinal?.ToString("yyyy-MM-dd");
+            dto.FechaLimiteSubsanacionFinal = p.FechaLimiteSubsanacionFinal?.ToString("yyyy-MM-dd");
             dto.Periodo = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle
                           ?? p.IdConvocatoriaNavigation?.IdPeriodo
                           ?? dto.Periodo

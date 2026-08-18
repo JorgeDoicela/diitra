@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, FileText, Users, Shield, CheckCircle, Clock, ArrowRight } from 'lucide-react';
 import { FullscreenLoader } from '../../../Common/FullscreenLoader';
+import { TimedSuccessModal } from '../../../Common/TimedSuccessModal';
 import { getDocumentSignatures } from '../../../../services/signaturesService';
 import { SignatureBlock } from '../../SignatureBlock';
 import { useAuth } from '../../../../api/AuthContext';
@@ -28,6 +29,13 @@ export interface OutputSectionProps {
     setSignaturePassword: (val: string) => void;
     handleSign: () => Promise<void>;
     signatureRefreshTrigger: number;
+    isSignedModalOpen?: boolean;
+    setIsSignedModalOpen?: (val: boolean) => void;
+    signedModalData?: {
+        documentTitle?: string;
+        rolFirmante?: string;
+        fechaFirma?: string;
+    } | null;
 }
 
 export const OutputSection: React.FC<OutputSectionProps> = ({
@@ -51,7 +59,10 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     signaturePassword,
     setSignaturePassword,
     handleSign,
-    signatureRefreshTrigger
+    signatureRefreshTrigger,
+    isSignedModalOpen = false,
+    setIsSignedModalOpen,
+    signedModalData
 }) => {
     const { isAdmin } = useAuth();
     const navigate = useNavigate();
@@ -352,6 +363,23 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                     )}
                 </div>
             </div>
+
+            {/* Modal Reutilizable de Éxito de Firma */}
+            {isSignedModalOpen && setIsSignedModalOpen && (
+                <TimedSuccessModal
+                    isOpen={isSignedModalOpen}
+                    onClose={() => setIsSignedModalOpen(false)}
+                    durationMs={4500}
+                    title="¡Documento Firmado Exitosamente!"
+                    subtitle="Su firma institucional ha sido estampada y certificada en el documento oficial con trazabilidad inmutable."
+                    badgeText="Firma Electrónica Certificada"
+                    details={[
+                        { label: 'Documento', value: signedModalData?.documentTitle || title },
+                        { label: 'Rol Firmante', value: signedModalData?.rolFirmante || 'Firmante Autorizado' },
+                        { label: 'Fecha y Hora', value: signedModalData?.fechaFirma || new Date().toLocaleString() }
+                    ]}
+                />
+            )}
         </div>
     );
 };

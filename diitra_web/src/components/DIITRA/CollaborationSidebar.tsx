@@ -96,22 +96,71 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
     const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
     const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
+    const [projectDeadline, setProjectDeadline] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchTrazabilidad = async () => {
+        const fetchProjectDetails = async () => {
             if (!entityUuid) return;
             setIsLoadingTrazabilidad(true);
             try {
-                const res = await api.get(`/projects/${entityUuid}/traceability`);
-                setTrazabilidad(res.data || []);
+                const [traceRes, projectRes] = await Promise.all([
+                    api.get(`/projects/${entityUuid}/traceability`).catch(() => ({ data: [] })),
+                    api.get(`/projects/${entityUuid}/detail`).catch(() => ({ data: null }))
+                ]);
+                setTrazabilidad(traceRes.data || []);
+                if (projectRes.data) {
+                    const pData = projectRes.data;
+                    const deadline = pData.fechaLimiteSubsanacion || pData.fecha_limite_subsanacion || pData.fechaLimiteSubsanacionFinal || pData.fecha_limite_subsanacion_final;
+                    setProjectDeadline(deadline || null);
+                }
             } catch (e) {
-                console.error("Error al cargar la trazabilidad en Sidebar", e);
+                console.error("Error al cargar la información en Sidebar", e);
             } finally {
                 setIsLoadingTrazabilidad(false);
             }
         };
-        fetchTrazabilidad();
+        fetchProjectDetails();
     }, [entityUuid]);
+
+    const deadlineBadge = useMemo(() => {
+        if (!projectDeadline) return null;
+        let targetDate: Date;
+        if (projectDeadline.includes('/')) {
+            const [d, m, y] = projectDeadline.split('/').map(Number);
+            targetDate = new Date(y, m - 1, d);
+        } else {
+            targetDate = new Date(projectDeadline + (projectDeadline.length === 10 ? 'T00:00:00' : ''));
+        }
+        if (isNaN(targetDate.getTime())) return null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        targetDate.setHours(0, 0, 0, 0);
+
+        const diffTime = targetDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const formattedDate = targetDate.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        if (diffDays < 0) {
+            return {
+                text: `Plazo Vencido (${Math.abs(diffDays)}d de retraso)`,
+                date: formattedDate,
+                colorClass: 'text-red-500 bg-red-500/10 border-red-500/20'
+            };
+        } else if (diffDays <= 3) {
+            return {
+                text: diffDays === 0 ? 'Vence hoy' : diffDays === 1 ? 'Vence mañana' : `Vence en ${diffDays} días`,
+                date: formattedDate,
+                colorClass: 'text-amber-500 bg-amber-500/10 border-amber-500/20 animate-pulse'
+            };
+        } else {
+            return {
+                text: `Plazo: ${diffDays} días restantes`,
+                date: formattedDate,
+                colorClass: 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+            };
+        }
+    }, [projectDeadline]);
 
     const ultimaObservacion = useMemo(() => {
         if (isLoadingTrazabilidad) return "Cargando observaciones...";
@@ -780,16 +829,27 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
                         {activeTab === 'correcciones' && (
                             <div className="flex flex-col h-full flex-1 overflow-hidden space-y-5">
-                                {/* Observación General del Administrador */}
+                                {/* Observación General del Administrador y Plazo */}
                                 {ultimaObservacion && (
-                                    <div className="p-4 rounded-xl border border-error/20 bg-error/[0.02] space-y-2 animate-fade-in shadow-inner">
-                                        <div className="flex items-center gap-2">
-                                            <Shield size={13} className="text-error shrink-0" />
-                                            <span className="text-[10px] font-black text-error uppercase tracking-widest block">Observación General del Administrador</span>
+                                    <div className="p-4 rounded-xl border border-error/20 bg-error/[0.02] space-y-2.5 animate-fade-in shadow-inner">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Shield size={13} className="text-error shrink-0" />
+                                                <span className="text-[10px] font-black text-error uppercase tracking-widest block">Observación General del Administrador</span>
+                                            </div>
                                         </div>
                                         <p className="text-[11px] text-text-main font-medium italic font-mono leading-relaxed break-words pl-5">
                                             "{ultimaObservacion}"
                                         </p>
+                                        {deadlineBadge && (
+                                            <div className={`mt-2 flex items-center justify-between px-3 py-2 rounded-lg border text-[10px] font-mono font-bold ${deadlineBadge.colorClass}`}>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock size={12} className="shrink-0" />
+                                                    <span>{deadlineBadge.text}</span>
+                                                </div>
+                                                <span className="opacity-80">{deadlineBadge.date}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

@@ -58,6 +58,11 @@ namespace Diitra.Application.Research.Dtos
         public string? FechaInicio { get; set; }
         public string? FechaFin { get; set; }
 
+        // PLAZOS INSTITUCIONALES (DEADLINES)
+        public string? FechaLimiteSubsanacion { get; set; }
+        public string? FechaLimiteInformeFinal { get; set; }
+        public string? FechaLimiteSubsanacionFinal { get; set; }
+
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 2: INVESTIGADORES
         // ─────────────────────────────────────────────────────────────────────────

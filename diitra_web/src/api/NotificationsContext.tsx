@@ -21,6 +21,7 @@ export interface Toast {
     body: string;
     type?: 'success' | 'error' | 'warning' | 'info' | 'default';
     url?: string;
+    actionLabel?: string;
     onUndo?: () => void | Promise<void>;
 }
 
@@ -34,7 +35,7 @@ interface NotificationsContextType {
     clearReadNotifications: () => Promise<void>;
     isLoading: boolean;
     isConnected: boolean;
-    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>) => void;
+    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -105,7 +106,7 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                 <h4 className="text-xs font-semibold text-text-main leading-snug">{toast.title}</h4>
                 <p className="text-[10px] text-text-dim leading-normal mt-0.5">{toast.body}</p>
             </div>
-            <div className="flex items-center gap-3 shrink-0 ml-2 border-l border-border-thin pl-3">
+            <div className="flex items-center gap-2.5 shrink-0 ml-2 border-l border-border-thin pl-3">
                 {toast.url && (
                     <button
                         type="button"
@@ -114,9 +115,9 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                             navigate(toast.url!);
                             onDismiss(toast.id);
                         }}
-                        className="text-[9px] font-sans font-bold uppercase tracking-wider text-text-dim hover:text-text-main hover:underline bg-transparent border-0 cursor-pointer select-none"
+                        className="text-[10px] font-sans font-bold uppercase tracking-wider text-brand hover:underline bg-transparent border-0 p-0 cursor-pointer select-none"
                     >
-                        Ver
+                        {toast.actionLabel || 'Ver'}
                     </button>
                 )}
                 {toast.onUndo && (
@@ -136,7 +137,7 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                                 onDismiss(toast.id);
                             }
                         }}
-                        className="text-[10px] font-sans font-black uppercase tracking-widest text-brand hover:underline bg-transparent border-0 cursor-pointer select-none disabled:opacity-50"
+                        className="text-[10px] font-sans font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 hover:underline bg-transparent border-0 p-0 cursor-pointer select-none disabled:opacity-50"
                     >
                         {isUndoing ? "..." : "Deshacer"}
                     </button>
@@ -149,7 +150,7 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                     }}
                     title="Cerrar notificación"
                 >
-                    <X size={15} />
+                    <X size={14} />
                 </button>
             </div>
         </div>
@@ -260,13 +261,13 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>) => {
+    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string) => {
         const id = Math.random().toString(36).substring(2, 9);
         
         // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
         const cleanBody = body.replace(/<\/?[^>]+(>|$)/g, "");
         
-        setToasts(prev => [...prev, { id, title, body: cleanBody, type, url, onUndo }]);
+        setToasts(prev => [...prev, { id, title, body: cleanBody, type, url, actionLabel, onUndo }]);
         
         // ==========================================
         // CONTROL DE REPRODUCCIÓN SONORA (EVITAR DOBLE SONIDO)

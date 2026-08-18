@@ -31,6 +31,12 @@ export const useBuilderPdfAndSign = ({
     const [signatureCertFile, setSignatureCertFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
     const [signatureRefreshTrigger, setSignatureRefreshTrigger] = useState(0);
+    const [isSignedModalOpen, setIsSignedModalOpen] = useState(false);
+    const [signedModalData, setSignedModalData] = useState<{
+        documentTitle?: string;
+        rolFirmante?: string;
+        fechaFirma?: string;
+    } | null>(null);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
     useEffect(() => {
@@ -177,6 +183,17 @@ export const useBuilderPdfAndSign = ({
             setSignaturePassword('');
             addAudit('Firma digital avanzada (.p12) aplicada exitosamente.', 'success');
 
+            const docLabel = templateCode === 'OFICIO_APROBACION' 
+                ? 'Oficio de Aprobación Institucional' 
+                : 'Protocolo de Investigación';
+
+            setSignedModalData({
+                documentTitle: docLabel,
+                rolFirmante: calculatedRol,
+                fechaFirma: new Date().toLocaleString()
+            });
+            setIsSignedModalOpen(true);
+
             if (templateCode === 'OFICIO_APROBACION') {
                 const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
                 if (pUuid && !pUuid.startsWith('temp_')) {
@@ -208,12 +225,20 @@ export const useBuilderPdfAndSign = ({
             const isLopdpGate = serverMessage.toLowerCase().includes('términos') ||
                 serverMessage.toLowerCase().includes('lopdp') ||
                 serverMessage.toLowerCase().includes('consentimiento');
+            const isProfileMissing = serverMessage.toLowerCase().includes('perfil') ||
+                serverMessage.toLowerCase().includes('cargo') ||
+                serverMessage.toLowerCase().includes('trazo') ||
+                serverMessage.toLowerCase().includes('firma institucional');
 
             let finalMsg = '';
             if (isLopdpGate) {
                 finalMsg = 'Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma';
                 addAudit(finalMsg, 'warning');
-                addToast('Firma Bloqueada', finalMsg, 'warning');
+                addToast('Firma Bloqueada', finalMsg, 'warning', '/configuracion?mainTab=perfil#lopdp', undefined, 'Configurar');
+            } else if (isProfileMissing) {
+                finalMsg = serverMessage;
+                addAudit(`Error de firma: ${serverMessage}`, 'error');
+                addToast('Error de Firma', finalMsg, 'error', '/configuracion?editFirma=true#perfil-firma', undefined, 'Configurar');
             } else if (serverMessage) {
                 finalMsg = serverMessage;
                 addAudit(`Error de firma: ${serverMessage}`, 'error');
@@ -258,6 +283,17 @@ export const useBuilderPdfAndSign = ({
             setInstitutionalPassword('');
             addAudit('Firma institucional DIITRA aplicada exitosamente.', 'success');
 
+            const docLabel = templateCode === 'OFICIO_APROBACION' 
+                ? 'Oficio de Aprobación Institucional' 
+                : 'Protocolo de Investigación';
+
+            setSignedModalData({
+                documentTitle: docLabel,
+                rolFirmante: calculatedRol,
+                fechaFirma: new Date().toLocaleString()
+            });
+            setIsSignedModalOpen(true);
+
             if (templateCode === 'OFICIO_APROBACION') {
                 const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
                 if (pUuid && !pUuid.startsWith('temp_')) {
@@ -290,8 +326,39 @@ export const useBuilderPdfAndSign = ({
             } catch {}
             
             const finalMsg = serverMessage || 'Contraseña incorrecta o error de red';
+            const lowerMsg = finalMsg.toLowerCase();
+            const isProfileMissing = lowerMsg.includes('perfil') || 
+                                     lowerMsg.includes('trazo') || 
+                                     lowerMsg.includes('cargo') || 
+                                     lowerMsg.includes('configure') || 
+                                     lowerMsg.includes('firma institucional');
+            const isLopdpGate = lowerMsg.includes('términos') || 
+                                lowerMsg.includes('lopdp') || 
+                                lowerMsg.includes('consentimiento');
+
             addAudit(`Error de firma: ${finalMsg}`, 'error');
-            addToast('Error de Firma', finalMsg, 'error');
+            
+            if (isProfileMissing) {
+                addToast(
+                    'Error de Firma', 
+                    finalMsg, 
+                    'error', 
+                    '/configuracion?editFirma=true#perfil-firma', 
+                    undefined, 
+                    'Configurar'
+                );
+            } else if (isLopdpGate) {
+                addToast(
+                    'Firma Bloqueada', 
+                    finalMsg, 
+                    'warning', 
+                    '/configuracion?mainTab=perfil#lopdp', 
+                    undefined, 
+                    'Configurar'
+                );
+            } else {
+                addToast('Error de Firma', finalMsg, 'error');
+            }
         } finally {
             setIsSigning(false);
         }
@@ -311,6 +378,9 @@ export const useBuilderPdfAndSign = ({
         setSignatureCertFile,
         isSigning,
         signatureRefreshTrigger,
+        isSignedModalOpen,
+        setIsSignedModalOpen,
+        signedModalData,
         handleGeneratePdf,
         handleSign,
         handleSignDiitra
