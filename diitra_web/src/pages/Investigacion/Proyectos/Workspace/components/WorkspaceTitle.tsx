@@ -39,8 +39,8 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                                 {(currentProject as any).codigo_institucional || (currentProject as any).codigo}
                             </span>
                         )}
-                        <div className={`badge-vercel ${cfg.badge} text-[11px] !py-0.5 !px-2.5 font-medium`}>
-                            <span className={`dot ${cfg.dot}`} />
+                        <div className={`badge-vercel ${cfg.badge} text-[11px] !py-0.5 !px-2.5 font-medium`} style={cfg.style}>
+                            <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                             {cfg.label}
                         </div>
                         {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (

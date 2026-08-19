@@ -19,7 +19,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
-import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
+import { useWorkflowStates, normalizeStateKey } from '../../../hooks/useWorkflowStates';
 import { useProjectPreferences } from '../../Investigacion/Proyectos/hooks/useProjectPreferences';
 
 export interface ProyectoInnovacionResumen {
@@ -408,7 +408,8 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                             >
                                                 <Pin size={13} className={isPinned(p.uuid) ? 'fill-amber-400 text-amber-400' : ''} />
                                             </button>
-                                            <span className={`badge-vercel ${cfg.badge} text-[9px] font-mono uppercase px-2 py-0.5`} style={cfg.style}>
+                                            <span className={`badge-vercel ${cfg.badge} text-[10px] !py-0.5 !px-2 font-medium`} style={cfg.style}>
+                                                <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                                                 {cfg.label}
                                             </span>
                                             <ArrowRight size={14} className="text-text-dim group-hover:text-brand group-hover:translate-x-1 transition-all" />

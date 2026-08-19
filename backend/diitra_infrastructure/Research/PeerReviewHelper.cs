@@ -15,7 +15,22 @@ namespace diitra_infrastructure.Research
             string nombreRevisor,
             InvUsuarioMetadata? meta = null,
             string? revisorCarrera = null)
-            => new()
+        {
+            string? institucion = null;
+            if (!string.IsNullOrEmpty(meta?.Configuracion))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(meta.Configuracion);
+                    if (doc.RootElement.TryGetProperty("institucion", out var prop))
+                    {
+                        institucion = prop.GetString();
+                    }
+                }
+                catch { }
+            }
+
+            return new PeerReviewDto
             {
                 Uuid = r.Uuid,
                 IdProyecto = r.IdProyecto,
@@ -33,8 +48,10 @@ namespace diitra_infrastructure.Research
                 EsDobleCiego = r.EsDobleCiego,
                 PuntajeTotal = r.PuntajeTotal,
                 ObservacionesGral = r.ObservacionesGral,
-                RevisorCarrera = revisorCarrera
+                RevisorCarrera = revisorCarrera,
+                Institucion = institucion
             };
+        }
 
         public static string DeterminarEstadoArbitraje(List<InvRevisionesPares> revisiones, decimal puntajeMinimo = 70m)
         {

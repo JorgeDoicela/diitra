@@ -152,10 +152,10 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         try {
             for (const rev of revisoresSeleccionados) {
                 await asignarArbitro({
-                    proyecto_uuid: proyecto.proyecto_uuid,
+                    project_uuid: proyecto.proyecto_uuid,
                     id_revisor: rev.id_usuario,
                     fecha_limite: fechaLimite,
-                    modalidad: esDobleCiego ? 'DOBLE_CIEGO' : 'SIMPLE_CIEGO',
+                    es_doble_ciego: esDobleCiego,
                     es_externo: rev.es_externo,
                     auto_extend_deadlines: autoExtendDeadlines,
                     auto_extend_days: autoExtendDays,

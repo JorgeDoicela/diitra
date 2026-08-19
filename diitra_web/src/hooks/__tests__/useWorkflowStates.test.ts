@@ -33,16 +33,27 @@ function hexToRgb(hex: string) {
         : null;
 }
 
+const normalizeStateKey = (str: string): string => {
+    return (str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/_/g, ' ')
+        .trim();
+};
+
 const DEFAULT_ESTADO_CONFIGS: Record<string, { badge: string; dot: string }> = {
-    Borrador: { badge: "badge-vercel-neutral", dot: "dot-neutral" },
-    Prepropuesta: { badge: "badge-vercel-warning", dot: "dot-warning dot-pulse" },
-    "Prepropuesta Rechazada": { badge: "badge-vercel-error", dot: "dot-error" },
-    Enviado: { badge: "badge-vercel-info", dot: "dot-info" },
-    "En Revisión": { badge: "badge-vercel-warning", dot: "dot-warning dot-pulse" },
-    Aprobado: { badge: "badge-vercel-success", dot: "dot-success" },
-    "En Ejecución": { badge: "badge-vercel-violet", dot: "dot-brand dot-pulse" },
-    Finalizado: { badge: "badge-vercel-success", dot: "dot-success" },
-    Rechazado: { badge: "badge-vercel-error", dot: "dot-error" },
+    borrador: { badge: "badge-vercel-neutral", dot: "dot-neutral" },
+    prepropuesta: { badge: "badge-vercel-info", dot: "dot-info dot-pulse" },
+    "prepropuesta rechazada": { badge: "badge-vercel-error", dot: "dot-error" },
+    enviado: { badge: "badge-vercel-info", dot: "dot-info" },
+    "en revision": { badge: "badge-vercel-info", dot: "dot-info dot-pulse" },
+    "en correccion": { badge: "badge-vercel-warning", dot: "dot-warning dot-pulse" },
+    correccion: { badge: "badge-vercel-warning", dot: "dot-warning dot-pulse" },
+    aprobado: { badge: "badge-vercel-success", dot: "dot-success" },
+    "en ejecucion": { badge: "badge-vercel-violet", dot: "dot-brand dot-pulse" },
+    finalizado: { badge: "badge-vercel-success", dot: "dot-success" },
+    rechazado: { badge: "badge-vercel-error", dot: "dot-error" },
 };
 
 const STANDARD_COLORS = [
@@ -50,11 +61,12 @@ const STANDARD_COLORS = [
 ];
 
 function getEstadoConfig(estadoName: string, states: WorkflowState[]) {
+    const norm = normalizeStateKey(estadoName);
     const dbState = states.find(
-        (s) => s.estado.toLowerCase() === (estadoName || "").toLowerCase()
+        (s) => normalizeStateKey(s.estado) === norm
     );
     const label = dbState ? dbState.etiqueta : estadoName || "";
-    const defaultCfg = DEFAULT_ESTADO_CONFIGS[estadoName];
+    const defaultCfg = DEFAULT_ESTADO_CONFIGS[norm];
 
     const isCustomColor =
         dbState?.color &&
@@ -75,12 +87,11 @@ function getEstadoConfig(estadoName: string, states: WorkflowState[]) {
     const dotStyle = { backgroundColor: baseColor };
 
     let dotClass = "dot";
-    const lowerName = (estadoName || "").toLowerCase();
     if (
-        lowerName.includes("revisión") ||
-        lowerName.includes("ejecución") ||
-        lowerName.includes("progreso") ||
-        lowerName.includes("corrección")
+        norm.includes("revision") ||
+        norm.includes("ejecucion") ||
+        norm.includes("progreso") ||
+        norm.includes("correccion")
     ) {
         dotClass += " dot-pulse";
     }

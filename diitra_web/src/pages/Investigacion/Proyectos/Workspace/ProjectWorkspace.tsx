@@ -294,7 +294,6 @@ export const ProjectWorkspace: React.FC = () => {
                 isSidebarCollapsed={isSidebarCollapsed}
                 isPublishingDSpace={isPublishingDSpace}
                 urlPrefix={urlPrefix}
-                navigate={navigate}
                 onExportCaces={async () => {
                     try {
                         const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });

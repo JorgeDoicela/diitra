@@ -26,6 +26,7 @@ public class PeerReviewDto
     public decimal? PuntajeTotal { get; set; }
     public string? ObservacionesGral { get; set; }
     public string? RevisorCarrera { get; set; }
+    public string? Institucion { get; set; }
 }
 
 // ─────────────────────────────────────────────────────────────

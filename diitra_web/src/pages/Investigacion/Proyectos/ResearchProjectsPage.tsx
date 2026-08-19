@@ -576,8 +576,8 @@ const ResearchProjectsPage = () => {
 
                                     {/* Estado y Línea de Investigación */}
                                     <div className="flex items-center flex-wrap gap-2 pt-0.5">
-                                        <span className={`badge-vercel ${cfg.badge} text-[10px] !py-0.5 !px-2 font-medium`}>
-                                            <span className={`dot ${cfg.dot}`} />
+                                        <span className={`badge-vercel ${cfg.badge} text-[10px] !py-0.5 !px-2 font-medium`} style={cfg.style}>
+                                            <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                                             {cfg.label}
                                         </span>
                                         {p.linea_investigacion && (

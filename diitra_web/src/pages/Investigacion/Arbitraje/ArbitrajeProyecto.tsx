@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-    ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
+    ArrowLeft, Gavel, AlertTriangle,
     Loader2, Users, Building, GraduationCap, FileDown,
     CalendarDays, X, Trash2, Scale, Award,
-    ExternalLink, RotateCw, UserPlus, UserCheck
+    ExternalLink, RotateCw, UserPlus
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -18,6 +18,7 @@ import ModalRevisorExterno from './ModalRevisorExterno';
 import { formatNombre } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 
 const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -39,6 +40,7 @@ const ArbitrajeProyecto: React.FC = () => {
     const location = useLocation();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+    const { getEstadoConfig } = useWorkflowStates();
 
     const fromWorkspace = (location.state as { fromWorkspace?: boolean })?.fromWorkspace;
 
@@ -67,9 +69,6 @@ const ArbitrajeProyecto: React.FC = () => {
     const [projectAutoExtendDeadlines, setProjectAutoExtendDeadlines] = useState(false);
     const [projectAutoExtendDays, setProjectAutoExtendDays] = useState(7);
     const [savingSettings, setSavingSettings] = useState(false);
-
-    const internos = arbitraje ? arbitraje.revisiones.filter(r => !r.es_externo) : [];
-    const externos = arbitraje ? arbitraje.revisiones.filter(r => r.es_externo) : [];
 
     const revisionesConPuntaje = arbitraje ? arbitraje.revisiones.filter(r => r.estado === 'Completada' && r.puntaje_total != null) : [];
     const promedioCalculado = revisionesConPuntaje.length > 0
@@ -247,6 +246,7 @@ const ArbitrajeProyecto: React.FC = () => {
     }
 
     const estadoCfg = ESTADO_ARBITRAJE_CONFIG[arbitraje.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
+    const projectStatusCfg = getEstadoConfig(arbitraje.estado_proyecto);
 
     const renderRevisionRow = (rev: PeerReviewDto) => {
         const cfg = ESTADO_REVISION_CONFIG[rev.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
@@ -395,9 +395,13 @@ const ArbitrajeProyecto: React.FC = () => {
                                 <ExternalLink size={10} className="text-text-dim/60 group-hover:text-text-main transition-colors" />
                             </button>
                         )}
-                        <div className={`badge-vercel ${estadoCfg.badge}`}>
+                        <div className={`badge-vercel ${projectStatusCfg.badge} text-[11px] !py-0.5 !px-2.5 font-medium`} style={projectStatusCfg.style}>
+                            <span className={`dot ${projectStatusCfg.dot}`} style={projectStatusCfg.dotStyle} />
+                            {projectStatusCfg.label}
+                        </div>
+                        <div className={`badge-vercel ${estadoCfg.badge} text-[11px] !py-0.5 !px-2 font-medium`}>
                             <span className={`dot ${estadoCfg.dot}`} />
-                            {estadoCfg.label}
+                            Arbitraje: {estadoCfg.label}
                         </div>
                         {arbitraje.convocatoria && (
                             <span className="text-[11px] text-text-dim bg-surface border border-border-thin rounded px-2 py-0.5">

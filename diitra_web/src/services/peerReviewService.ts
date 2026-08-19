@@ -28,6 +28,7 @@ export interface PeerReviewDto {
     observaciones_gral?: string;
     dictamen_revisor?: 'Pendiente' | 'Aprueba' | 'Rechaza';
     revisor_carrera?: string;
+    institucion?: string;
 }
 
 export interface ArbitrajeProyectoDto {
