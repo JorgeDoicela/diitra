@@ -158,8 +158,11 @@ builder.Services.AddControllers()
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<diitra_application.Security.Validators.LoginRequestValidator>();
 
-// Registrar MediatR para manejar Commands y Queries en diitra_application
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(diitra_application.Security.IAuthService).Assembly));
+// Registrar MediatR para manejar Commands y Queries en diitra_application y diitra_infrastructure
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
+    typeof(diitra_application.Security.IAuthService).Assembly,
+    typeof(diitra_infrastructure.Research.GroupsService).Assembly
+));
 
 // 3. Agregar SignalR con límites ampliados para soportar transporte de imágenes Base64 en CoWork
 builder.Services.AddSignalR(options =>
