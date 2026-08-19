@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     TrendingUp, Briefcase, ClipboardList,
     Fingerprint, FileText, Layers, ExternalLink,
-    Activity, FileEdit, RotateCw, Inbox, HelpCircle, ArrowRight, AlertTriangle
+    Activity, FileEdit, Inbox, HelpCircle, ArrowRight, AlertTriangle
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -37,15 +37,11 @@ export const DocenteDashboard: React.FC = () => {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [animate, setAnimate] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const lastFetchRef = useRef<number>(0);
 
     const fetchStats = async (silent = false) => {
         const startTime = Date.now();
-        if (!silent) {
-            setIsRefreshing(true);
-        }
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
@@ -61,27 +57,34 @@ export const DocenteDashboard: React.FC = () => {
                 }
             }
             setLoading(false);
-            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
         fetchStats(false);
 
+        // Suscripción al bus reactivo en tiempo real (SignalR + Mutaciones locales)
+        const handleProjectsChanged = () => {
+            fetchStats(true);
+        };
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        // Polling de respaldo inteligente cada 30 segundos (solo si la pestaña está visible)
         const interval = setInterval(() => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 15000) {
                 fetchStats(true);
             }
-        }, 60000);
+        }, 30000);
 
         const handleFocus = () => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (Date.now() - lastFetchRef.current > 15000) {
                 fetchStats(true);
             }
         };
         window.addEventListener('focus', handleFocus);
 
         return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
         };
@@ -106,14 +109,6 @@ export const DocenteDashboard: React.FC = () => {
                 roleName="Docente Investigador"
                 actions={
                     <>
-                        <button
-                            onClick={() => fetchStats(false)}
-                            disabled={isRefreshing}
-                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
-                            title="Actualizar datos"
-                        >
-                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                        </button>
                         <Link
                             to="/investigacion/mis-proyectos"
                             className="btn-vercel-secondary flex-1 md:flex-none no-underline"
@@ -440,10 +435,6 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate, is
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <HelpCircle
-                                    size={12}
-                                    className="text-text-dim/40 group-hover:text-text-main transition-colors shrink-0 cursor-help"
-                                />
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">

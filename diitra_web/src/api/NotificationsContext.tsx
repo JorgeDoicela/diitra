@@ -35,7 +35,7 @@ interface NotificationsContextType {
     clearReadNotifications: () => Promise<void>;
     isLoading: boolean;
     isConnected: boolean;
-    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string) => void;
+    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string, silent?: boolean) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -144,12 +144,9 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                 <h4 className="text-xs font-semibold text-text-main leading-snug">{toast.title}</h4>
                 <p className="text-[10px] text-text-dim leading-normal mt-0.5">{toast.body}</p>
             </div>
-            {/* Divisoria visual centrada de altura media */}
             {(toast.url || toast.onUndo) && (
                 <div className="w-px h-5 bg-border-thin shrink-0 ml-1.5 self-center" />
             )}
-
-            {/* Botón de acción con área de clic extendida (toda la altura del toast de forma invisible) */}
             {toast.url && (
                 <button
                     type="button"
@@ -165,7 +162,6 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                     </span>
                 </button>
             )}
-
             {toast.onUndo && (
                 <button
                     type="button"
@@ -190,8 +186,6 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                     </span>
                 </button>
             )}
-
-            {/* Botón cerrar */}
             <button 
                 type="button"
                 className="text-text-dim hover:text-text-main p-2 -mr-1 rounded hover:bg-surface-hover transition-colors cursor-pointer flex items-center justify-center self-center shrink-0"
@@ -311,7 +305,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string) => {
+    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string, silent = false) => {
         const id = Math.random().toString(36).substring(2, 9);
         
         // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
@@ -322,11 +316,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         // ==========================================
         // CONTROL DE REPRODUCCIÓN SONORA (EVITAR DOBLE SONIDO)
         // ==========================================
-        // 1. Si es feedback de interacción ('success', 'error', 'warning'), siempre se reproduce el sonido sintetizado.
-        // 2. Si es una notificación en tiempo real ('default', 'info'), SOLO reproducimos el sonido en la pestaña web
-        //    si el usuario la tiene enfocada. Si está en segundo plano, el sonido lo emitirá el Sistema Operativo
-        //    al lanzar el popup nativo de escritorio (evitando que se superpongan o suenen duplicados).
-        if (type === 'success' || type === 'error' || type === 'warning' || document.hasFocus()) {
+        // 1. Si silent === true, no se reproduce ningún sonido (para acciones internas/consulta pasiva).
+        // 2. Si es feedback de interacción ('success', 'error', 'warning'), siempre se reproduce el sonido sintetizado.
+        // 3. Si es una notificación en tiempo real ('default', 'info'), SOLO reproducimos el sonido en la pestaña web
+        //    si el usuario la tiene enfocada. Si está en segundo plano, el sonido lo emitirá el Sistema Operativo.
+        if (!silent && (type === 'success' || type === 'error' || type === 'warning' || document.hasFocus())) {
             playNotificationSound(type);
         }
 

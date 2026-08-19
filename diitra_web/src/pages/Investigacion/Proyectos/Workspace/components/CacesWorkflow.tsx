@@ -416,11 +416,11 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 </div>
                                             ) : null}
 
-                                            {currentProject.puntajeEvaluacion !== null && (
-                                                <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center justify-center gap-1.5 font-semibold animate-fade-in w-full">
+                                            {currentProject.puntajeEvaluacion !== null && currentProject.puntajeEvaluacion < 70 && (
+                                                <div className="badge-vercel badge-vercel-error !text-[11px] !py-2 flex items-center justify-center gap-1.5 font-semibold animate-fade-in w-full">
                                                     <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
                                                     <span className="text-text-dim">|</span>
-                                                    <span className="text-[10px] uppercase font-mono">{currentProject.puntajeEvaluacion >= 70 ? 'Aprobado' : 'Rechazado'}</span>
+                                                    <span className="text-[10px] uppercase font-mono">Desaprobado</span>
                                                 </div>
                                             )}
                                         </div>

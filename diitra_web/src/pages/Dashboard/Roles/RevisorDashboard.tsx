@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch, RotateCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -13,7 +13,6 @@ export const RevisorDashboard: React.FC = () => {
     const { user } = useAuth();
     const [reviews, setReviews] = useState<PeerReviewDto[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -25,8 +24,6 @@ export const RevisorDashboard: React.FC = () => {
         const startTime = Date.now();
         if (isInitial) {
             setLoading(true);
-        } else if (!silent) {
-            setIsRefreshing(true);
         }
         try {
             const data = await getMyReviews();
@@ -46,27 +43,34 @@ export const RevisorDashboard: React.FC = () => {
                 }
             }
             setLoading(false);
-            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
         fetchReviews(true, false);
 
+        // Suscripción al bus reactivo en tiempo real (SignalR + Mutaciones locales)
+        const handleProjectsChanged = () => {
+            fetchReviews(false, true);
+        };
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        // Polling de respaldo inteligente cada 30 segundos (solo si la pestaña está visible)
         const interval = setInterval(() => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 15000) {
                 fetchReviews(false, true);
             }
-        }, 60000);
+        }, 30000);
 
         const handleFocus = () => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (Date.now() - lastFetchRef.current > 15000) {
                 fetchReviews(false, true);
             }
         };
         window.addEventListener('focus', handleFocus);
 
         return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
         };
@@ -83,14 +87,6 @@ export const RevisorDashboard: React.FC = () => {
                 roleName="Evaluador Externo"
                 actions={
                     <>
-                        <button
-                            onClick={() => fetchReviews(false, false)}
-                            disabled={isRefreshing}
-                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
-                            title="Actualizar datos"
-                        >
-                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                        </button>
                         <Link 
                             to="/revisiones"
                             className="btn-vercel-primary flex-1 md:flex-none no-underline"

@@ -88,9 +88,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                                             <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
-                                        {n.url_accion && (
+                                        {n.url_accion ? (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-1 hover:underline cursor-pointer">
-                                                Ir al detalle
+                                                Ver estado actual
+                                                <ExternalLink size={9} className="opacity-60" />
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center text-[8.5px] font-medium text-text-dim/60 uppercase mt-1 tracking-wider">
+                                                Informativo
                                             </span>
                                         )}
                                     </div>

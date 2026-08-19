@@ -74,43 +74,6 @@ export const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: Ve
                                     <span className="text-[13px] font-medium text-text-main truncate">
                                         {item.label}
                                     </span>
-                                    {item.hint && (
-                                        <span className="relative inline-flex shrink-0 group/hint">
-                                            <button
-                                                type="button"
-                                                aria-label={item.hint}
-                                                aria-expanded={isHintOpen}
-                                                onClick={() => setActiveHint(isHintOpen ? null : idx)}
-                                                className="text-text-dim/40 hover:text-text-main transition-colors cursor-help focus:outline-none focus:text-text-main"
-                                            >
-                                                <svg
-                                                    className="w-3 h-3"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2.5"
-                                                    aria-hidden="true"
-                                                >
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                                </svg>
-                                            </button>
-                                            <span
-                                                role="tooltip"
-                                                className={`absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-50 w-52 max-w-[min(13rem,calc(100vw-3rem))] px-3 py-2 rounded-lg text-[10px] font-normal normal-case leading-relaxed tracking-normal text-text-main bg-surface border border-border-thin shadow-lg pointer-events-none transition-opacity duration-150 ${isHintOpen
-                                                        ? 'opacity-100 visible'
-                                                        : 'opacity-0 invisible group-hover/hint:opacity-100 group-hover/hint:visible'
-                                                    }`}
-                                            >
-                                                {item.hint}
-                                                <span
-                                                    className="absolute left-1/2 -translate-x-1/2 top-full -mt-px w-2 h-2 rotate-45 bg-surface border-r border-b border-border-thin"
-                                                    aria-hidden="true"
-                                                />
-                                            </span>
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                             <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">

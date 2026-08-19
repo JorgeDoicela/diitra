@@ -3,7 +3,7 @@ import {
     Activity, BarChart3,
     Megaphone,
     Fingerprint, FileText, Layers, ExternalLink,
-    RotateCw, HelpCircle, Folder
+    HelpCircle, Folder, Lightbulb
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -45,14 +45,12 @@ export const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [animate, setAnimate] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const lastFetchRef = useRef<number>(0);
 
     const fetchData = async (silent = false) => {
         const startTime = Date.now();
         if (!silent) {
-            setIsRefreshing(true);
             setError(null);
         }
         try {
@@ -73,27 +71,34 @@ export const AdminDashboard: React.FC = () => {
                 }
             }
             setLoading(false);
-            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
         fetchData(false);
 
+        // Suscripción al bus reactivo en tiempo real (SignalR + Mutaciones locales)
+        const handleProjectsChanged = () => {
+            fetchData(true);
+        };
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        // Polling de respaldo inteligente cada 30 segundos (solo si la pestaña está visible)
         const interval = setInterval(() => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 15000) {
                 fetchData(true);
             }
-        }, 60000);
+        }, 30000);
 
         const handleFocus = () => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (Date.now() - lastFetchRef.current > 15000) {
                 fetchData(true);
             }
         };
         window.addEventListener('focus', handleFocus);
 
         return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
         };
@@ -120,20 +125,19 @@ export const AdminDashboard: React.FC = () => {
                 roleName="Director / Administrador"
                 actions={
                     <>
-                        <button
-                            onClick={() => fetchData(false)}
-                            disabled={isRefreshing}
-                            className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
-                            title="Actualizar datos"
-                        >
-                            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                        </button>
                         <Link
                             to="/investigacion"
                             className="btn-vercel-secondary flex-1 md:flex-none no-underline"
                         >
                             <Folder size={14} />
                             <span>Investigación</span>
+                        </Link>
+                        <Link
+                            to="/innovacion"
+                            className="btn-vercel-secondary flex-1 md:flex-none no-underline"
+                        >
+                            <Lightbulb size={14} />
+                            <span>Innovación</span>
                         </Link>
                         <Link
                             to="/convocatorias"
@@ -486,10 +490,6 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items, animate, is
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <HelpCircle
-                                    size={12}
-                                    className="text-text-dim/40 group-hover:text-text-main transition-colors shrink-0 cursor-help"
-                                />
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">

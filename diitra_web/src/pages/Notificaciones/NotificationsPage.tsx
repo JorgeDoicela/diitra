@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
-    CheckCheck, Filter, Search, Inbox, Trash2
+    CheckCheck, Search, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
@@ -74,21 +74,40 @@ const NotificationsPage = () => {
             await markAsRead(n.uuid);
             setAllNotifications(prev => prev.map(x => x.uuid === n.uuid ? { ...x, leido: true } : x));
         }
-        if (n.url_accion) {
-            if (n.url_accion.startsWith('http://') || n.url_accion.startsWith('https://')) {
-                try {
-                    const urlObj = new URL(n.url_accion);
-                    if (urlObj.host === window.location.host) {
-                        navigate(urlObj.pathname + urlObj.search + urlObj.hash);
-                    } else {
-                        window.open(n.url_accion, '_blank');
-                    }
-                } catch {
-                    window.location.href = n.url_accion;
+
+        if (!n.url_accion) {
+            addToast('Notificación consultada', 'El registro se ha marcado como leído en su historial.', 'info', undefined, undefined, undefined, true);
+            return;
+        }
+
+        let targetPath = n.url_accion;
+        let isExternal = false;
+
+        if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+            try {
+                const urlObj = new URL(targetPath);
+                if (urlObj.host === window.location.host) {
+                    targetPath = urlObj.pathname + urlObj.search + urlObj.hash;
+                } else {
+                    isExternal = true;
                 }
-            } else {
-                navigate(n.url_accion);
+            } catch {
+                isExternal = true;
             }
+        }
+
+        if (isExternal) {
+            window.open(targetPath, '_blank');
+            return;
+        }
+
+        const currentFullPath = window.location.pathname + window.location.search + window.location.hash;
+        if (currentFullPath === targetPath) {
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+            addToast('Estado sincronizado', 'Ya se encuentra en la vista correspondiente. Información actualizada al estado más reciente.', 'info', undefined, undefined, undefined, true);
+        } else {
+            navigate(targetPath);
+            addToast('Navegando al proyecto', 'Consultando el estado actual del proyecto en curso.', 'info', undefined, undefined, undefined, true);
         }
     };
 
@@ -106,7 +125,11 @@ const NotificationsPage = () => {
             addToast(
                 "Notificación eliminada",
                 `Se ha eliminado "${stripHtmlToText(n.titulo)}"`,
-                "info"
+                "info",
+                undefined,
+                undefined,
+                undefined,
+                true
             );
         } catch (err) {
             console.error("Error al eliminar la notificación:", err);
@@ -129,7 +152,11 @@ const NotificationsPage = () => {
             addToast(
                 "Historial limpio",
                 `Se han eliminado ${readNotifications.length} notificaciones leídas`,
-                "info"
+                "info",
+                undefined,
+                undefined,
+                undefined,
+                true
             );
         } catch (err) {
             console.error("Error al limpiar las notificaciones leídas:", err);
@@ -254,7 +281,6 @@ const NotificationsPage = () => {
                     {/* Filtros y Búsqueda */}
                     <div className="bento-card static p-4 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4 animate-fade-up [animation-delay:100ms]">
                         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-                            <Filter size={13} className="text-text-dim shrink-0" />
                             {filters.map(f => (
                                 <button
                                     key={f.key}
@@ -469,17 +495,6 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                </svg>
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">

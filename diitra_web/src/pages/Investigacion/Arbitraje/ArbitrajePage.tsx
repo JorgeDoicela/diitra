@@ -45,130 +45,7 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
     return alerts;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Modal — Registrar Revisor Externo
-// ─────────────────────────────────────────────────────────────
-interface ModalRevisorExternoProps { onClose: () => void; onSuccess: () => void; }
-
-const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSuccess }) => {
-    const [form, setForm] = useState<RegistrarRevisorExternoPayload>({
-        cedula: '', nombres: '', apellidos: '', email: '', institucion: '',
-        grado_academico: '', orcid_id: '', especialidad: ''
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [done, setDone] = useState<{ nombre: string; cedula: string } | null>(null);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true); setError(null);
-        try {
-            await registerRevisorExterno(form);
-            setDone({ nombre: `${form.nombres} ${form.apellidos}`.toUpperCase().trim(), cedula: form.cedula || form.email });
-        } catch (err: any) {
-            setError(err?.response?.data?.message ?? 'Error al registrar el revisor externo.');
-        } finally { setLoading(false); }
-    };
-
-    const inp = "w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-sm text-text-main placeholder:text-text-dim/50 focus:outline-none focus:border-text-main transition-colors";
-
-    if (done) return (
-        <div className="modal-overlay">
-            <div className="modal-card animate-scale-up max-w-sm w-full">
-                <div className="modal-header gap-3">
-                    <div className="w-8 h-8 rounded-full bg-success/10 border border-success/20 flex items-center justify-center shrink-0">
-                        <Check size={14} className="text-success" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-text-main">Evaluador registrado</h3>
-                </div>
-                <div className="modal-body">
-                    <p className="text-xs text-text-dim leading-relaxed">
-                        <span className="text-text-main font-medium">{done.nombre}</span> ha sido registrado. Credenciales por defecto:
-                    </p>
-                    <div className="mt-3 p-3 rounded-lg bg-surface border border-border-thin font-mono text-xs space-y-1 text-text-dim">
-                        <div><span className="text-text-main">Usuario:</span> {done.cedula}</div>
-                        <div><span className="text-text-main">Contraseña:</span> Diitra2026*</div>
-                    </div>
-                </div>
-                <div className="modal-footer">
-                    <button onClick={onSuccess} className="btn-vercel-primary">Entendido</button>
-                </div>
-            </div>
-        </div>
-    );
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-card animate-scale-up w-full max-w-lg">
-                <div className="modal-header">
-                    <div>
-                        <p className="section-label mb-1"><UserPlus size={10} /><span>Par Evaluador Externo · CACES I5</span></p>
-                        <h3 className="text-base font-semibold text-text-main">Registrar Revisor Externo</h3>
-                    </div>
-                    <button onClick={onClose} className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors"><X size={15} /></button>
-                </div>
-                <div className="modal-body space-y-3">
-                    {error && (
-                        <div className="p-3 rounded-lg bg-error/5 border border-error/20 text-error text-xs flex items-center gap-2">
-                            <AlertTriangle size={12} />{error}
-                        </div>
-                    )}
-                    <form id="form-externo" onSubmit={handleSubmit} className="space-y-3">
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Cédula / Pasaporte *</label>
-                            <input required className={inp} placeholder="Ej: 1712345678" value={form.cedula} onChange={e => setForm(f => ({ ...f, cedula: e.target.value }))} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Nombres *</label>
-                                <input required className={`${inp} uppercase`} placeholder="JUAN CARLOS" value={form.nombres} onChange={e => setForm(f => ({ ...f, nombres: e.target.value }))} />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Apellidos *</label>
-                                <input required className={`${inp} uppercase`} placeholder="PÉREZ MORA" value={form.apellidos} onChange={e => setForm(f => ({ ...f, apellidos: e.target.value }))} />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Email *</label>
-                            <input required type="email" className={inp} placeholder="revisor@universidad.edu" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Institución *</label>
-                            <input required className={inp} placeholder="Universidad Central del Ecuador" value={form.institucion} onChange={e => setForm(f => ({ ...f, institucion: e.target.value }))} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Grado Académico</label>
-                                <select className={inp} value={form.grado_academico} onChange={e => setForm(f => ({ ...f, grado_academico: e.target.value }))}>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="PHD">Doctorado / PhD</option>
-                                    <option value="MAESTRIA">Maestría</option>
-                                    <option value="ESPECIALIDAD">Especialidad Médica</option>
-                                    <option value="TERCER_NIVEL">Tercer Nivel</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">ORCID iD</label>
-                                <input className={inp} placeholder="0000-0000-0000-0000" value={form.orcid_id} onChange={e => setForm(f => ({ ...f, orcid_id: e.target.value }))} />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1.5">Área de Especialidad</label>
-                            <input className={inp} placeholder="Ej: Inteligencia Artificial, Biotecnología..." value={form.especialidad} onChange={e => setForm(f => ({ ...f, especialidad: e.target.value }))} />
-                        </div>
-                    </form>
-                </div>
-                <div className="modal-footer">
-                    <button type="button" onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
-                    <button type="submit" form="form-externo" className="btn-vercel-primary flex items-center gap-2" disabled={loading}>
-                        {loading ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
-                        {loading ? 'Registrando...' : 'Registrar'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
+import ModalRevisorExterno from './ModalRevisorExterno';
 
 // ─────────────────────────────────────────────────────────────
 //  Barra de progreso inline (mini)
@@ -592,14 +469,6 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: {
                             </div>
                             <div className="flex items-center gap-1.5 min-w-0">
                                 <span className="text-[13px] font-medium text-text-main truncate">{item.label}</span>
-                                {item.tooltip && (
-                                    <svg className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                        <title>{item.tooltip}</title>
-                                        <circle cx="12" cy="12" r="10" />
-                                        <line x1="12" y1="16" x2="12" y2="12" />
-                                        <line x1="12" y1="8" x2="12.01" y2="8" />
-                                    </svg>
-                                )}
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">

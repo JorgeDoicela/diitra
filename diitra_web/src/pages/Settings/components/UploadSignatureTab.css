@@ -460,7 +460,7 @@
         align-items: center;
         justify-content: center;
         color: var(--text-dim);
-        cursor: help;
+        cursor: pointer;
         position: relative;
         transition: color 0.2s ease;
     }

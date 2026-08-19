@@ -200,6 +200,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     let unreadCount = 0;
     let markAsRead = async (_uuid: string) => {};
     let markAllAsRead = async () => {};
+    let addToast = (_title: string, _body: string, _type?: any) => {};
 
     try {
         const notificationsData = useNotifications();
@@ -207,6 +208,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         unreadCount = notificationsData.unreadCount;
         markAsRead = notificationsData.markAsRead;
         markAllAsRead = notificationsData.markAllAsRead;
+        addToast = notificationsData.addToast;
     } catch (e) {
         // Fallback if context is not loaded
     }
@@ -216,22 +218,41 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
             await markAsRead(n.uuid);
         }
 
-        if (n.url_accion) {
-            if (n.url_accion.startsWith('http://') || n.url_accion.startsWith('https://')) {
-                try {
-                    const urlObj = new URL(n.url_accion);
-                    if (urlObj.host === window.location.host) {
-                        navigate(urlObj.pathname + urlObj.search + urlObj.hash);
-                    } else {
-                        window.open(n.url_accion, '_blank');
-                    }
-                } catch {
-                    window.location.href = n.url_accion;
+        setIsNotificationsOpen(false);
+
+        if (!n.url_accion) {
+            addToast('Notificación consultada', 'El registro se ha marcado como leído en su historial.', 'info', undefined, undefined, undefined, true);
+            return;
+        }
+
+        let targetPath = n.url_accion;
+        let isExternal = false;
+
+        if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+            try {
+                const urlObj = new URL(targetPath);
+                if (urlObj.host === window.location.host) {
+                    targetPath = urlObj.pathname + urlObj.search + urlObj.hash;
+                } else {
+                    isExternal = true;
                 }
-            } else {
-                navigate(n.url_accion);
+            } catch {
+                isExternal = true;
             }
-            setIsNotificationsOpen(false);
+        }
+
+        if (isExternal) {
+            window.open(targetPath, '_blank');
+            return;
+        }
+
+        const currentFullPath = location.pathname + location.search + location.hash;
+        if (currentFullPath === targetPath) {
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+            addToast('Estado sincronizado', 'Ya se encuentra en la vista correspondiente. Información actualizada al estado más reciente.', 'info', undefined, undefined, undefined, true);
+        } else {
+            navigate(targetPath);
+            addToast('Navegando al proyecto', 'Consultando el estado actual del proyecto en curso.', 'info', undefined, undefined, undefined, true);
         }
     };
 

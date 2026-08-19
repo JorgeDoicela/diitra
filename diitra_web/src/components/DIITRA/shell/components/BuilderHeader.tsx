@@ -117,7 +117,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                         {users.map((u, i) => (
                             <div
                                 key={`${u.id}-${i}`}
-                                className="w-5 h-5 rounded-full border border-surface flex items-center justify-center text-[8px] font-black text-white shadow-md cursor-help transition-transform hover:-translate-y-0.5"
+                                className="w-5 h-5 rounded-full border border-surface flex items-center justify-center text-[8px] font-black text-white shadow-md cursor-default transition-transform hover:-translate-y-0.5"
                                 style={{ backgroundColor: u.color }}
                                 title={`${u.name} (${u.role})`}
                             >

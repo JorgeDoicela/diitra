@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, UserCheck, AlertCircle, Loader2, CalendarDays, Check } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ChevronRight, UserCheck, AlertCircle, Loader2, CalendarDays, Check, X, Search, Users, ShieldCheck, GraduationCap, UserPlus } from 'lucide-react';
 import { searchRevisores, asignarArbitro } from '../../../services/peerReviewService';
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
-import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
+import { formatNombre } from './arbitrajeUtils';
+import ModalRevisorExterno from './ModalRevisorExterno';
+
+const formatCarrera = (text?: string) => {
+    if (!text) return '';
+    return text.toLowerCase()
+        .replace(/(^\w|\s\w)/g, m => m.toUpperCase())
+        .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase());
+};
 
 const highlightText = (text: string | null | undefined, search: string) => {
     if (!text) return '';
@@ -40,7 +48,9 @@ interface Props {
 const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) => {
     const [query, setQuery] = useState('');
     const [filtroTipo, setFiltroTipo] = useState<'todos' | 'internos' | 'externos'>('todos');
-    const [revisores, setRevisores] = useState<RevisorDisponibleDto[]>([]);
+    const [filtroCarrera, setFiltroCarrera] = useState<string>('');
+    const [showCrearExterno, setShowCrearExterno] = useState(false);
+    const [rawRevisores, setRawRevisores] = useState<RevisorDisponibleDto[]>([]);
     const [buscando, setBuscando] = useState(false);
     const [revisoresSeleccionados, setRevisoresSeleccionados] = useState<RevisorDisponibleDto[]>([]);
     const [fechaLimite, setFechaLimite] = useState(() => {
@@ -58,36 +68,57 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         setBuscando(true);
         try {
             const serverSoloExternos = filtroTipo === 'externos';
-            const result = await searchRevisores(query, serverSoloExternos, proyecto.proyecto_uuid);
-            
-            // Exclude already assigned reviewers
-            const asignadosIds = new Set(proyecto.revisiones.map(r => r.id_revisor));
-            const disponibles = result.filter(r => !asignadosIds.has(r.id_usuario));
-            
-            if (filtroTipo === 'internos') {
-                setRevisores(disponibles.filter(r => !r.es_externo));
-            } else {
-                setRevisores(disponibles);
-            }
+            const data = await searchRevisores(query, serverSoloExternos);
+            setRawRevisores(data);
         } catch {
-            setRevisores([]);
+            setRawRevisores([]);
         } finally {
             setBuscando(false);
         }
-    }, [query, filtroTipo, proyecto.proyecto_uuid, proyecto.revisiones]);
+    }, [query, filtroTipo]);
 
     useEffect(() => {
-        if (query === '') {
+        const timer = setTimeout(() => {
             buscar();
-        } else {
-            const timer = setTimeout(buscar, 400);
-            return () => clearTimeout(timer);
-        }
-    }, [query, buscar]);
+        }, 200);
+        return () => clearTimeout(timer);
+    }, [buscar]);
 
     useEffect(() => {
-        setQuery('');
+        if (filtroTipo === 'externos') {
+            setFiltroCarrera('');
+        }
     }, [filtroTipo]);
+
+    // Extraer carreras disponibles de forma dinámica
+    const carrerasDisponibles = useMemo(() => {
+        const map = new Map<string, number>();
+        rawRevisores.forEach(r => {
+            if (!r.es_externo && r.carrera) {
+                r.carrera.split(',').forEach(c => {
+                    const trimmed = c.trim();
+                    if (trimmed && trimmed.toLowerCase() !== 'docente') {
+                        map.set(trimmed, (map.get(trimmed) || 0) + 1);
+                    }
+                });
+            }
+        });
+        return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [rawRevisores]);
+
+    // Filtrar revisores por tipo y carrera
+    const revisores = useMemo(() => {
+        return rawRevisores.filter(r => {
+            if (filtroTipo === 'internos' && r.es_externo) return false;
+            if (filtroTipo === 'externos' && !r.es_externo) return false;
+            if (filtroCarrera && !r.es_externo) {
+                if (!r.carrera || !r.carrera.toLowerCase().includes(filtroCarrera.toLowerCase())) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }, [rawRevisores, filtroTipo, filtroCarrera]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,15 +130,19 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    const toggleRevisor = (rev: RevisorDisponibleDto) => {
+    const toggleRevisor = (revisor: RevisorDisponibleDto) => {
         setRevisoresSeleccionados(prev => {
-            const exists = prev.some(r => r.id_usuario === rev.id_usuario);
+            const exists = prev.some(r => r.id_usuario === revisor.id_usuario);
             if (exists) {
-                return prev.filter(r => r.id_usuario !== rev.id_usuario);
+                return prev.filter(r => r.id_usuario !== revisor.id_usuario);
             } else {
-                return [...prev, rev];
+                return [...prev, revisor];
             }
         });
+    };
+
+    const removeSelected = (id_usuario: number) => {
+        setRevisoresSeleccionados(prev => prev.filter(r => r.id_usuario !== id_usuario));
     };
 
     const handleAsignar = async () => {
@@ -115,14 +150,13 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         setEnviando(true);
         setError('');
         try {
-            // Assign all selected reviewers sequentially to avoid DB locks/concurrency issues
             for (const rev of revisoresSeleccionados) {
                 await asignarArbitro({
-                    project_uuid: proyecto.proyecto_uuid,
+                    proyecto_uuid: proyecto.proyecto_uuid,
                     id_revisor: rev.id_usuario,
-                    fecha_limite: new Date(fechaLimite + 'T23:59:59').toISOString(),
+                    fecha_limite: fechaLimite,
+                    modalidad: esDobleCiego ? 'DOBLE_CIEGO' : 'SIMPLE_CIEGO',
                     es_externo: rev.es_externo,
-                    es_doble_ciego: esDobleCiego,
                     auto_extend_deadlines: autoExtendDeadlines,
                     auto_extend_days: autoExtendDays,
                 });
@@ -136,287 +170,393 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     };
 
     return (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="modal-card !max-w-3xl animate-fade-up">
+        <div className="fixed inset-0 z-[9999] flex justify-end">
+            <div className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in" onClick={onClose} />
+            <div className="relative w-full max-w-4xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
+                
                 {/* Header */}
-                <div className="modal-header border-b border-border-thin pb-3">
-                    <div>
-                        <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">
-                            Asignar Evaluador
-                        </h3>
-                        <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest mt-0.5 line-clamp-1">
-                            {proyecto.proyecto_titulo}
-                        </p>
+                <div className="modal-header border-b border-border-thin">
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                        <div className="icon-circle icon-circle-brand shrink-0">
+                            <UserCheck size={18} />
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className="text-base font-semibold tracking-tight text-text-main">
+                                Asignar Evaluador
+                            </h3>
+                            <p className="section-label text-text-dim mt-0.5 truncate">
+                                {proyecto.proyecto_titulo}
+                            </p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-text-dim hover:text-text-main transition-colors">
-                        <X size={20} />
+                    <button 
+                        onClick={onClose} 
+                        className="text-text-dim hover:text-text-main transition-colors p-1.5 rounded-md hover:bg-surface-hover shrink-0 cursor-pointer"
+                        title="Cerrar panel"
+                    >
+                        <ChevronRight size={20} />
                     </button>
                 </div>
 
                 {error && (
-                    <div className="mx-6 mt-4 p-3 rounded-md bg-error/10 border border-error/30 text-error text-xs flex items-center gap-2">
-                        <AlertCircle size={13} /> {error}
+                    <div className="mx-6 mt-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-xs flex items-center gap-2">
+                        <AlertCircle size={14} className="shrink-0" />
+                        <span>{error}</span>
                     </div>
                 )}
 
-                {/* Modal Body with 2 Columns Split Layout */}
-                <div className="modal-body grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 min-h-[380px]">
+                {/* Drawer Body with 2 Columns Split Layout */}
+                <div className="flex-1 overflow-hidden p-6 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+                    
                     {/* LEFT PANEL: Búsqueda y Selección Directa */}
-                    <div className="flex flex-col space-y-4">
-                        <div className="flex-1 flex flex-col">
-                            {/* Tab filter at the top */}
-                            <div className="flex bg-bg-deep/40 rounded-lg p-0.5 border border-border-thin/50 gap-0.5 mb-3">
-                                {[
-                                    { id: 'todos', label: 'Todos' },
-                                    { id: 'internos', label: 'Internos' },
-                                    { id: 'externos', label: 'Externos' }
-                                ].map(tab => {
-                                    const active = filtroTipo === tab.id;
-                                    return (
-                                        <button
-                                            key={tab.id}
-                                            type="button"
-                                            onClick={() => setFiltroTipo(tab.id as any)}
-                                            className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${
-                                                active
-                                                    ? 'bg-surface text-text-main border border-border-thin shadow-sm font-semibold'
-                                                    : 'text-text-dim border border-transparent hover:text-text-main'
-                                            }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                    <div className="flex flex-col h-full min-h-0">
+                        
+                        {/* Tabs Vercel */}
+                        <div className="tabs-vercel !mb-3 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setFiltroTipo('todos')}
+                                className={`tab-vercel-item ${filtroTipo === 'todos' ? 'active' : ''}`}
+                            >
+                                Todos
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFiltroTipo('internos')}
+                                className={`tab-vercel-item ${filtroTipo === 'internos' ? 'active' : ''}`}
+                            >
+                                Internos
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFiltroTipo('externos')}
+                                className={`tab-vercel-item ${filtroTipo === 'externos' ? 'active' : ''}`}
+                            >
+                                Externos
+                            </button>
+                        </div>
 
-                            {/* Search bar below the tab filter */}
-                            <div className="mb-4">
+                        {/* Search and Career Filter Bars */}
+                        <div className="space-y-2 mb-3 shrink-0">
+                            {/* Search bar */}
+                            <div className="relative">
+                                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
                                 <input
                                     type="text"
-                                    className="input-vercel"
-                                    placeholder="Buscar por nombre o cédula..."
+                                    className="input-vercel !pl-8 w-full"
+                                    placeholder="Buscar por nombre, cédula o institución..."
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     autoFocus
                                 />
                             </div>
 
-                            <label className="section-label block mb-2">
-                                Evaluadores Disponibles ({revisores.length})
-                            </label>
+                            {/* Career Filter Dropdown */}
+                            {filtroTipo !== 'externos' && carrerasDisponibles.length > 0 && (
+                                <div className="flex items-center gap-2 animate-fade-in">
+                                    <div className="relative flex-1">
+                                        <GraduationCap size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
+                                        <select
+                                            value={filtroCarrera}
+                                            onChange={(e) => setFiltroCarrera(e.target.value)}
+                                            className="input-vercel !pl-8 !py-1.5 w-full text-xs font-sans bg-surface appearance-none cursor-pointer"
+                                        >
+                                            <option value="">Todas las carreras ({carrerasDisponibles.length})</option>
+                                            {carrerasDisponibles.map(([carrera, count]) => (
+                                                <option key={carrera} value={carrera}>
+                                                    {formatCarrera(carrera)} ({count})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    {filtroCarrera && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFiltroCarrera('')}
+                                            className="btn-vercel-secondary !py-1.5 !px-2.5 text-xs text-text-dim hover:text-error flex items-center gap-1 shrink-0"
+                                            title="Limpiar filtro de carrera"
+                                        >
+                                            <X size={12} />
+                                            <span>Limpiar</span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                            <div className="flex-1 overflow-y-auto space-y-1 border border-border-thin rounded-lg p-2 bg-bg-deep/10 custom-scrollbar pr-1 max-h-[260px] min-h-[220px]">
-                                {buscando ? (
-                                    <div className="flex items-center gap-2 text-text-dim text-xs py-12 justify-center">
-                                        <Loader2 size={14} className="animate-spin text-text-main" /> Buscando...
-                                    </div>
-                                ) : revisores.length === 0 ? (
-                                    <div className="text-center py-12 text-text-dim text-xs font-semibold uppercase tracking-widest">
-                                        Sin resultados
-                                    </div>
-                                ) : (
-                                    revisores.map((rev) => {
-                                        const isSelected = revisoresSeleccionados.some(r => r.id_usuario === rev.id_usuario);
-                                        const avStyle = getAvatarStyle(rev.nombre_completo);
-                                        return (
-                                            <button
-                                                key={rev.id_usuario}
-                                                type="button"
-                                                onClick={() => toggleRevisor(rev)}
-                                                className={`w-full text-left p-2 rounded-md transition-all flex items-center justify-between border hover:-translate-y-0.5 duration-200 ${
-                                                    isSelected
-                                                        ? 'bg-surface-hover border-text-main text-text-main font-semibold shadow-inner'
-                                                        : 'border-transparent hover:bg-surface-hover text-text-dim hover:text-text-main'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    {/* Checkbox indicator */}
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
-                                                        isSelected ? 'border-text-main bg-text-main text-bg-deep' : 'border-border-thin'
-                                                    }`}>
-                                                        {isSelected && <Check size={10} strokeWidth={3} />}
-                                                    </div>
-                                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-semibold flex items-center justify-center shrink-0`}>
-                                                        {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <div className="truncate">
-                                                        <p className="text-xs font-semibold leading-tight text-text-main">
-                                                            {highlightText(formatNombre(rev.nombre_completo), query)}
-                                                        </p>
-                                                        <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">
-                                                            {rev.es_externo && rev.institucion ? (
-                                                                <>{highlightText(formatNombre(rev.institucion), query)} — </>
-                                                            ) : rev.carrera ? (
-                                                                <>{highlightText(rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()), query)} — </>
-                                                            ) : ''}
-                                                            {highlightText(rev.email, query)}
-                                                        </p>
-                                                    </div>
+                        <div className="flex items-center justify-between mb-2 shrink-0">
+                            <p className="section-label">
+                                <Users size={10} />
+                                <span>Evaluadores Disponibles ({revisores.length})</span>
+                            </p>
+                            {filtroTipo === 'externos' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCrearExterno(true)}
+                                    className="btn-vercel-secondary !py-1 !px-2 text-[10px] flex items-center gap-1 shrink-0"
+                                >
+                                    <UserPlus size={11} />
+                                    <span>+ Registrar Externo</span>
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-2 border border-border-thin rounded-xl p-2.5 bg-bg-deep/20 custom-scrollbar pr-1.5 min-h-0">
+                            {buscando ? (
+                                <div className="flex items-center gap-2 text-text-dim text-xs py-16 justify-center">
+                                    <Loader2 size={14} className="animate-spin text-text-main" />
+                                    <span>Buscando evaluadores...</span>
+                                </div>
+                            ) : revisores.length === 0 ? (
+                                <div className="text-center py-16 text-text-dim text-xs space-y-3">
+                                    <p className="font-semibold uppercase tracking-widest">Sin evaluadores encontrados</p>
+                                    {filtroTipo === 'externos' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCrearExterno(true)}
+                                            className="btn-vercel-primary !py-1.5 !px-3 text-xs mx-auto flex items-center gap-1.5"
+                                        >
+                                            <UserPlus size={13} />
+                                            <span>Registrar Revisor Externo</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                revisores.map((rev) => {
+                                    const isSelected = revisoresSeleccionados.some(r => r.id_usuario === rev.id_usuario);
+                                    return (
+                                        <div
+                                            key={rev.id_usuario}
+                                            onClick={() => toggleRevisor(rev)}
+                                            className={`p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-2.5 select-none ${
+                                                isSelected
+                                                    ? 'bg-surface border-border-hover shadow-xs'
+                                                    : 'bg-surface/60 border-border-thin hover:border-border-hover hover:bg-surface'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                {/* Checkbox Vercel */}
+                                                <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
+                                                    isSelected ? 'bg-text-main border-text-main text-bg-deep' : 'border-border-thin bg-surface'
+                                                }`}>
+                                                    {isSelected && <Check size={10} strokeWidth={3} />}
                                                 </div>
-                                                <div className="text-right shrink-0 flex items-center gap-1.5">
-                                                    {rev.es_externo && (
-                                                        <span className="text-[8px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-1 py-0.5 rounded font-semibold uppercase tracking-wider">
-                                                            Ext
-                                                        </span>
-                                                    )}
-                                                    {rev.revisiones_activas > 0 && (
-                                                        <span className="text-[8px] text-warning font-semibold bg-warning-subtle border border-warning/20 px-1 py-0.5 rounded">
-                                                            {rev.revisiones_activas} act.
-                                                        </span>
-                                                    )}
+
+                                                {/* Avatar Geist */}
+                                                <div className="w-8 h-8 rounded-full border border-border-thin bg-surface flex items-center justify-center font-mono text-[11px] font-semibold text-text-main shrink-0 shadow-2xs">
+                                                    {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                 </div>
-                                            </button>
-                                        );
-                                    })
-                                )}
-                            </div>
+
+                                                <div className="truncate">
+                                                    <p className="text-xs font-medium text-text-main leading-snug truncate">
+                                                        {highlightText(formatNombre(rev.nombre_completo), query)}
+                                                    </p>
+                                                    <p className="text-[10px] text-text-dim truncate mt-0.5 font-mono">
+                                                        {rev.es_externo && rev.institucion ? (
+                                                            <>{highlightText(formatNombre(rev.institucion), query)} — </>
+                                                        ) : rev.carrera ? (
+                                                            <>{highlightText(rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()), query)} — </>
+                                                        ) : ''}
+                                                        {highlightText(rev.email, query)}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-right shrink-0 flex items-center gap-1.5">
+                                                {rev.es_externo ? (
+                                                    <span className="badge-vercel badge-vercel-info">
+                                                        Externo
+                                                    </span>
+                                                ) : (
+                                                    <span className="badge-vercel badge-vercel-neutral">
+                                                        Interno
+                                                    </span>
+                                                )}
+                                                {rev.revisiones_activas > 0 && (
+                                                    <span className="badge-vercel badge-vercel-warning">
+                                                        {rev.revisiones_activas} act.
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
 
                     {/* RIGHT PANEL: Configuración, Parámetros y Detalles */}
-                    <div className="flex flex-col justify-between border-t md:border-t-0 md:border-l border-border-thin pt-5 md:pt-0 md:pl-6">
+                    <div className="flex flex-col h-full min-h-0 border-t md:border-t-0 md:border-l border-border-thin pt-5 md:pt-0 md:pl-6 overflow-y-auto custom-scrollbar">
                         {revisoresSeleccionados.length > 0 ? (
-                            <div className="space-y-4 flex-1 flex flex-col justify-between">
+                            <div className="space-y-4 flex-1 flex flex-col justify-between min-h-0">
+                                
                                 {/* Selected reviewers list */}
-                                <div className="space-y-2.5 p-3.5 bg-surface rounded-lg border border-border-thin shadow-sm">
-                                    <div className="flex items-center gap-2 text-text-main border-b border-border-thin/50 pb-2 mb-1">
-                                        <UserCheck size={13} />
-                                        <span className="text-xs font-semibold uppercase tracking-wider">Evaluadores Seleccionados ({revisoresSeleccionados.length})</span>
-                                    </div>
-                                    <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                                <div className="bento-card static p-4 space-y-3">
+                                    <p className="section-label">
+                                        <UserCheck size={10} />
+                                        <span>Evaluadores Seleccionados ({revisoresSeleccionados.length})</span>
+                                    </p>
+                                    <div className="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                                         {revisoresSeleccionados.map((rev) => (
                                             <div
                                                 key={rev.id_usuario}
-                                                className={`flex items-center justify-between p-2.5 rounded-lg border text-xs shadow-sm bg-surface transition-colors ${
-                                                    rev.es_externo
-                                                        ? 'border-l-4 border-l-blue-500 border-border-thin'
-                                                        : 'border-l-4 border-l-purple-500 border-border-thin'
-                                                }`}
+                                                onClick={() => removeSelected(rev.id_usuario)}
+                                                className="group p-2.5 rounded-lg border border-border-thin bg-surface hover:border-error/40 hover:bg-error/5 flex items-center justify-between gap-2 shadow-2xs cursor-pointer transition-all select-none"
+                                                title="Clic para remover de la selección"
                                             >
                                                 <div className="min-w-0 pr-2 flex-1">
                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                        <span className="font-semibold text-text-main truncate leading-tight">{formatNombre(rev.nombre_completo)}</span>
-                                                        <span className={`text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 border ${
-                                                            rev.es_externo
-                                                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                                                : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
-                                                        }`}>
-                                                            {rev.es_externo ? 'Ext' : 'Int'}
+                                                        <span className="text-xs font-semibold text-text-main group-hover:text-error transition-colors truncate leading-tight">
+                                                            {formatNombre(rev.nombre_completo)}
+                                                        </span>
+                                                        <span className={rev.es_externo ? "badge-vercel badge-vercel-info" : "badge-vercel badge-vercel-neutral"}>
+                                                            {rev.es_externo ? 'Externo' : 'Interno'}
                                                         </span>
                                                     </div>
-                                                    <span className="text-[10px] text-text-dim block truncate">
-                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `${rev.carrera ? rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()) : 'Par Interno'} · ${rev.email}`}
+                                                    <span className="text-[10px] text-text-dim block truncate font-mono">
+                                                        {rev.es_externo ? `Par Externo · ${rev.email}` : `${rev.carrera ? rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()) : 'Docente'} · ${rev.email}`}
                                                     </span>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleRevisor(rev)}
-                                                    className="text-text-dim hover:text-error transition-colors p-1 shrink-0 cursor-pointer"
-                                                    title="Quitar evaluador"
+                                                <div
+                                                    className="text-text-dim group-hover:text-error group-hover:bg-error/15 transition-colors p-1.5 rounded-md shrink-0 flex items-center justify-center"
                                                 >
-                                                    <X size={14} />
-                                                </button>
+                                                    <X size={13} />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Inputs */}
+                                {/* Form settings */}
                                 <div className="space-y-4">
-                                    <div>
-                                        <label className="section-label mb-2 block">
-                                            <CalendarDays size={10} className="inline mr-1" /> Fecha Límite de Evaluación
+                                    
+                                    {/* Fecha límite */}
+                                    <div className="bento-card static p-4 space-y-2">
+                                        <label className="section-label">
+                                            <CalendarDays size={10} />
+                                            <span>Fecha Límite de Dictamen</span>
                                         </label>
                                         <input
                                             type="date"
-                                            className="input-vercel"
+                                            className="input-vercel w-full font-mono text-xs"
                                             value={fechaLimite}
                                             min={new Date().toISOString().slice(0, 10)}
                                             onChange={(e) => setFechaLimite(e.target.value)}
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="section-label mb-2 block">
-                                            Modalidad de Evaluación
-                                        </label>
-                                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${esDobleCiego ? 'border-text-main bg-surface' : 'border-border-thin'}`}>
-                                            <input
-                                                type="checkbox"
-                                                className="accent-text-main"
-                                                checked={esDobleCiego}
-                                                onChange={(e) => setEsDobleCiego(e.target.checked)}
-                                            />
+                                    {/* Modalidad Doble Ciego */}
+                                    <div 
+                                        className="bento-card static p-4 space-y-3 cursor-pointer select-none transition-all hover:border-border-hover"
+                                        onClick={() => setEsDobleCiego(!esDobleCiego)}
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-xs font-semibold text-text-main">Evaluación anónima</p>
-                                                <p className="text-[10px] text-text-dim">Identidades ocultadas (recomendado CACES)</p>
+                                                <p className="text-xs font-semibold text-text-main flex items-center gap-1.5">
+                                                    <ShieldCheck size={14} className="text-brand" />
+                                                    <span>Evaluación Anónima (Doble Ciego)</span>
+                                                </p>
+                                                <p className="text-[11px] text-text-dim mt-0.5">
+                                                    Identidades ocultadas entre autor y evaluadores (Recomendado CACES I5)
+                                                </p>
                                             </div>
-                                        </label>
-                                    </div>
-
-                                    {!esDobleCiego && (
-                                        <div className="flex items-start gap-2 p-2.5 rounded-lg border border-warning/30 bg-warning/5 animate-fade-in">
-                                            <AlertCircle size={14} className="text-warning shrink-0 mt-0.5" />
-                                            <p className="text-[9px] text-text-dim leading-relaxed">
-                                                <span className="font-semibold text-text-main">Advertencia:</span> La modalidad sin ciego no satisface los indicadores CACES.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-3 pt-2 border-t border-border-thin/40">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
-                                                <p className="text-[10px] text-text-dim">Prórroga automática al expirar</p>
+                                            <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
+                                                esDobleCiego ? 'bg-text-main border-text-main text-bg-deep' : 'border-border-thin bg-surface'
+                                            }`}>
+                                                {esDobleCiego && <Check size={10} strokeWidth={3} />}
                                             </div>
-                                            <input
-                                                type="checkbox"
-                                                className="accent-text-main"
-                                                checked={autoExtendDeadlines}
-                                                onChange={(e) => setAutoExtendDeadlines(e.target.checked)}
-                                            />
                                         </div>
-                                        {autoExtendDeadlines && (
-                                            <div className="flex items-center justify-between animate-fade-in">
-                                                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">Días de prórroga</span>
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    max={30}
-                                                    className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1 text-xs text-text-main text-center font-mono"
-                                                    value={autoExtendDays}
-                                                    onChange={(e) => setAutoExtendDays(parseInt(e.target.value) || 7)}
-                                                />
+
+                                        {!esDobleCiego && (
+                                            <div className="callout-vercel callout-vercel-warning mt-2" onClick={(e) => e.stopPropagation()}>
+                                                <AlertCircle size={14} className="shrink-0" />
+                                                <div>
+                                                    <p className="callout-vercel-title">Advertencia CACES</p>
+                                                    <p className="callout-vercel-body">La modalidad sin ciego no satisface los estándares de acreditación CACES I5.</p>
+                                                </div>
                                             </div>
                                         )}
+                                    </div>
+
+                                    {/* Auto-extender plazos */}
+                                    <div 
+                                        className="bento-card static p-4 cursor-pointer select-none transition-all hover:border-border-hover"
+                                        onClick={() => setAutoExtendDeadlines(!autoExtendDeadlines)}
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex-1">
+                                                <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
+                                                <p className="text-[11px] text-text-dim mt-0.5">Prórroga automática al expirar el plazo</p>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                {autoExtendDeadlines && (
+                                                    <div 
+                                                        className="flex items-center gap-1.5 animate-fade-in"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={30}
+                                                            className="input-vercel !w-16 !py-1 text-center font-mono text-xs"
+                                                            value={autoExtendDays}
+                                                            onChange={(e) => setAutoExtendDays(parseInt(e.target.value) || 7)}
+                                                            title="Número de días de prórroga"
+                                                        />
+                                                        <span className="text-[11px] text-text-dim font-mono select-none">días</span>
+                                                    </div>
+                                                )}
+
+                                                <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
+                                                    autoExtendDeadlines ? 'bg-text-main border-text-main text-bg-deep' : 'border-border-thin bg-surface'
+                                                }`}>
+                                                    {autoExtendDeadlines && <Check size={10} strokeWidth={3} />}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-text-dim bg-surface/20 border border-dashed border-border-thin rounded-xl my-auto">
-                                <UserCheck size={32} className="opacity-30 mb-2.5" />
-                                <p className="text-xs font-semibold uppercase tracking-wider text-text-main">Configuración de Evaluación</p>
-                                <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">
-                                    Selecciona uno o más evaluadores disponibles del listado de la izquierda para comenzar a configurar su fecha límite y modalidad.
+                            <div className="bento-card static flex-1 flex flex-col items-center justify-center text-center p-8 border-dashed">
+                                <UserCheck size={32} className="opacity-25 mb-3 text-text-dim" />
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text-main">
+                                    Configuración de Evaluación
+                                </p>
+                                <p className="text-[11px] text-text-dim mt-1.5 max-w-[220px] leading-relaxed">
+                                    Selecciona uno o más evaluadores disponibles del listado izquierdo para configurar sus plazos y modalidad.
                                 </p>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Footer (Across both panels) */}
-                <div className="modal-footer border-t border-border-thin pt-3">
-                    <button onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
+                {/* Footer */}
+                <div className="modal-footer border-t border-border-thin bg-surface p-4 flex items-center justify-end gap-3 shrink-0">
+                    <button onClick={onClose} className="btn-vercel-secondary">
+                        Cancelar
+                    </button>
                     <button
                         onClick={handleAsignar}
                         disabled={revisoresSeleccionados.length === 0 || enviando}
-                        className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-semibold font-sans"
+                        className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        {enviando ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
-                        {revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Evaluadores` : 'Asignar Evaluador'}
+                        {enviando ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
+                        <span>{revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Evaluadores` : 'Asignar Evaluador'}</span>
                     </button>
                 </div>
             </div>
+
+            {showCrearExterno && (
+                <ModalRevisorExterno
+                    onClose={() => setShowCrearExterno(false)}
+                    onSuccess={() => {
+                        setShowCrearExterno(false);
+                        buscar();
+                    }}
+                />
+            )}
         </div>
     );
 };

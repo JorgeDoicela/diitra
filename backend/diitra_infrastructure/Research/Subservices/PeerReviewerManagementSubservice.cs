@@ -76,7 +76,7 @@ namespace diitra_infrastructure.Research.Subservices
 
                 var usuarios = await usuariosQuery
                     .OrderBy(u => u.Nombre)
-                    .Take(30)
+                    .Take(100)
                     .ToListAsync();
 
                 usuarios = usuarios.Where(u => u.IdSigafi == null || !autoresSigafi.Contains(u.IdSigafi.Trim().ToLower())).ToList();
@@ -165,7 +165,7 @@ namespace diitra_infrastructure.Research.Subservices
                 var profesores = await queryDocentes
                     .OrderBy(p => p.PrimerApellido)
                     .ThenBy(p => p.PrimerNombre)
-                    .Take(30)
+                    .Take(200)
                     .ToListAsync();
 
                 profesores = profesores.Where(p => !autoresSigafi.Contains(p.IdProfesor.Trim().ToLower())).ToList();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, RotateCw } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -21,7 +21,6 @@ export const EstudianteDashboard: React.FC = () => {
     const [colaboraciones, setColaboraciones] = useState<ProyectoResumen[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Estudiante';
@@ -32,8 +31,6 @@ export const EstudianteDashboard: React.FC = () => {
         const startTime = Date.now();
         if (isInitial) {
             setLoading(true);
-        } else if (!silent) {
-            setIsRefreshing(true);
         }
         try {
             const [myRes, statsRes] = await Promise.all([
@@ -54,27 +51,34 @@ export const EstudianteDashboard: React.FC = () => {
                 }
             }
             setLoading(false);
-            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
         fetchData(true, false);
 
+        // Suscripción al bus reactivo en tiempo real (SignalR + Mutaciones locales)
+        const handleProjectsChanged = () => {
+            fetchData(false, true);
+        };
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+
+        // Polling de respaldo inteligente cada 30 segundos (solo si la pestaña está visible)
         const interval = setInterval(() => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 15000) {
                 fetchData(false, true);
             }
-        }, 60000);
+        }, 30000);
 
         const handleFocus = () => {
-            if (Date.now() - lastFetchRef.current > 30000) {
+            if (Date.now() - lastFetchRef.current > 15000) {
                 fetchData(false, true);
             }
         };
         window.addEventListener('focus', handleFocus);
 
         return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
         };
@@ -139,16 +143,6 @@ export const EstudianteDashboard: React.FC = () => {
                 title={`Hola, ${firstName}`} 
                 subtitle="Participa en proyectos de vanguardia, gana experiencia y construye tu perfil científico." 
                 roleName="Estudiante Colaborador"
-                actions={
-                    <button
-                        onClick={() => fetchData(false, false)}
-                        disabled={isRefreshing}
-                        className="btn-vercel-secondary !p-2 flex items-center justify-center shrink-0"
-                        title="Actualizar datos"
-                    >
-                        <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                    </button>
-                }
             />
 
             {loading ? (

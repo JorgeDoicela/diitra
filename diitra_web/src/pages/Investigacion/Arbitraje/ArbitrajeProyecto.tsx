@@ -5,7 +5,7 @@ import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
     Loader2, Users, Building, GraduationCap, FileDown,
     CalendarDays, X, PlusCircle, Trash2, Scale, Award,
-    ExternalLink, RotateCw
+    ExternalLink, RotateCw, UserPlus, UserCheck
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -15,6 +15,7 @@ import {
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
+import ModalRevisorExterno from './ModalRevisorExterno';
 import { formatNombre } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
@@ -61,6 +62,7 @@ const ArbitrajeProyecto: React.FC = () => {
     const [cerrando, setCerrando] = useState(false);
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const [showAsignar, setShowAsignar] = useState(false);
+    const [showCrearExterno, setShowCrearExterno] = useState(false);
     const [dictamen, setDictamen] = useState<DictamenDto | null>(null);
     const [revisionParaExtender, setRevisionParaExtender] = useState<PeerReviewDto | null>(null);
     const [projectAutoExtendDeadlines, setProjectAutoExtendDeadlines] = useState(false);
@@ -400,13 +402,20 @@ const ArbitrajeProyecto: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
-            {/* Header */}
-            <button
-                onClick={handleBack}
-                className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
-            >
-                <ArrowLeft size={12} /> {fromWorkspace ? 'Volver al Proyecto' : 'Volver al Panel de Evaluación'}
-            </button>
+            {/* Breadcrumb Hierarchy */}
+            <div className="flex items-center gap-2 mb-6 text-xs select-none animate-fade-in">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer font-medium"
+                >
+                    <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span>{fromWorkspace ? 'Volver al Proyecto' : 'Evaluación por Pares'}</span>
+                </button>
+                <span className="text-text-dim/40">/</span>
+                <span className="text-text-main font-semibold truncate max-w-xl">
+                    {arbitraje.codigo_institucional ? `${arbitraje.codigo_institucional} · ${arbitraje.proyecto_titulo}` : arbitraje.proyecto_titulo}
+                </span>
+            </div>
 
             <PageHeader
                 kicker={`Evaluación por Pares · ${arbitraje.convocatoria ?? 'Sin convocatoria'}`}
@@ -438,13 +447,22 @@ const ArbitrajeProyecto: React.FC = () => {
                         Ver Proyecto
                     </button>
                     {!arbitraje.arbitraje_cerrado && (
-                        <button
-                            onClick={() => setShowAsignar(true)}
-                            className="btn-vercel-secondary flex items-center gap-2 shrink-0"
-                        >
-                            <PlusCircle size={14} />
-                            Agregar Evaluador
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setShowCrearExterno(true)}
+                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                            >
+                                <UserPlus size={14} />
+                                Nuevo Evaluador Externo
+                            </button>
+                            <button
+                                onClick={() => setShowAsignar(true)}
+                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                            >
+                                <UserCheck size={14} />
+                                Asignar al Proyecto
+                            </button>
+                        </>
                     )}
                     {arbitraje.arbitraje_cerrado ? (
                         <button
@@ -579,27 +597,6 @@ const ArbitrajeProyecto: React.FC = () => {
                         ]}
                     />
 
-                    {/* Progress bar */}
-                    {arbitraje.total_arbitros > 0 && (
-                        <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="section-label">
-                                    <CheckCircle2 size={12} className="text-brand" />
-                                    <span className="text-[13px] font-semibold text-text-main">Progreso Evaluaciones</span>
-                                </div>
-                                <span className="font-mono text-[13px] font-semibold text-brand">
-                                    {Math.round((arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100)}%
-                                </span>
-                            </div>
-                            <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full rounded-full bg-brand transition-all duration-700"
-                                    style={{ width: `${(arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100}%` }}
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     {/* Configuración de Prórrogas Automáticas del Proyecto */}
                     <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-border-thin">
@@ -672,6 +669,12 @@ const ArbitrajeProyecto: React.FC = () => {
                 <DictamenModal
                     dictamen={dictamen}
                     onClose={() => setDictamen(null)}
+                />
+            )}
+            {showCrearExterno && (
+                <ModalRevisorExterno
+                    onClose={() => setShowCrearExterno(false)}
+                    onSuccess={() => { setShowCrearExterno(false); loadData(); }}
                 />
             )}
             {revisionParaExtender && (
@@ -825,20 +828,6 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-xs font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                {item.tooltip && (
-                                    <svg
-                                        className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                    >
-                                        <title>{item.tooltip}</title>
-                                        <circle cx="12" cy="12" r="10" />
-                                        <line x1="12" y1="16" x2="12" y2="12" />
-                                        <line x1="12" y1="8" x2="12.01" y2="8" />
-                                    </svg>
-                                )}
                             </div>
                         </div>
                         <span className="text-xs font-mono font-medium text-text-main shrink-0 ml-2">
