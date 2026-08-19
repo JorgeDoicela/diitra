@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare,
-    AlertCircle, BarChart, Activity, Shield, FileCheck, Clock, Award, GraduationCap
+    AlertCircle, BarChart, Activity, Shield, Clock, Award, GraduationCap
 } from 'lucide-react';
 import api from '../../../../../api/axios_config';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
@@ -127,20 +127,26 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
             try {
                 const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
                 if (isMounted && Array.isArray(res.data)) {
+                    const isDocValidlySigned = (doc: any): boolean => {
+                        if (!doc) return false;
+                        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) return true;
+                        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
+                        const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
+                        return hasSignedState || hasSignedFile;
+                    };
+
                     // 1. Verificar si el Protocolo está firmado
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
                                     d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
-                    const protoSigned = protoDoc ? (protoDoc.is_signed === true || protoDoc.isSigned === true || !!protoDoc.final_pdf_path || !!protoDoc.finalPdfPath || protoDoc.estado === 'Firmado') : false;
-                    setIsProtocoloSigned(protoSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+                    setIsProtocoloSigned(isDocValidlySigned(protoDoc));
 
                     // 2. Verificar si el Plan de Aprendizaje está firmado por el Director
                     const planLearningDoc = res.data.find(
                         (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
                     );
-                    const planSigned = planLearningDoc ? (planLearningDoc.is_signed === true || planLearningDoc.isSigned === true || !!planLearningDoc.final_pdf_path || !!planLearningDoc.finalPdfPath || planLearningDoc.estado === 'Firmado') : false;
-                    setIsPlanAprendizajeSigned(planSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+                    setIsPlanAprendizajeSigned(isDocValidlySigned(planLearningDoc));
 
                     // 3. Verificar si el informe final está firmado
                     const finalDoc = res.data.find(

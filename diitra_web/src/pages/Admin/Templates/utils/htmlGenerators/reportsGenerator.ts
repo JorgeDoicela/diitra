@@ -798,7 +798,7 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
 /**
  * Genera el HTML Handlebars para la Ficha de Identificación del Plan de Aprendizaje
  */
-export const generateLearningPlanHeaderHtml = (block: DocumentBlock): string => {
+export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string => {
     return `
   <!-- BLOQUE: IDENTIFICACIÓN DEL PROYECTO & ESTUDIANTE (PLAN DE APRENDIZAJE) -->
   <div style="margin-top: 15px; page-break-inside: avoid;">
@@ -870,7 +870,7 @@ export const generateLearningPlanHeaderHtml = (block: DocumentBlock): string => 
 /**
  * Genera el HTML Handlebars para los Parámetros de Evaluación (Escala Cualitativa ISTPET)
  */
-export const generateLearningPlanEvalParametersHtml = (block: DocumentBlock): string => {
+export const generateLearningPlanEvalParametersHtml = (_block?: DocumentBlock): string => {
     return `
   <!-- BLOQUE: 2. PARÁMETROS DE EVALUACIÓN CUALITATIVA -->
   <div style="margin-top: 15px; page-break-inside: avoid;">
@@ -1131,7 +1131,7 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
 /**
  * Genera el HTML Handlebars para los Resultados Generales y Dictamen (5. RESULTADOS GENERALES)
  */
-export const generateLearningPlanEvaluationHtml = (block: DocumentBlock): string => {
+export const generateLearningPlanEvaluationHtml = (_block?: DocumentBlock): string => {
     return `
   <!-- BLOQUE: 5. RESULTADOS GENERALES DE LA EVALUACIÓN -->
   <div style="margin-top: 15px; page-break-inside: avoid;">

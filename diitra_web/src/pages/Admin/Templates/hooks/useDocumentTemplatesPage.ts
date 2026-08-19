@@ -23,7 +23,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
-import type { DocumentTemplateDto, DocumentBlock, BlockType } from '../types';
+import type { DocumentTemplateDto, DocumentBlock, BlockType, TableRow } from '../types';
 import {
     DEFAULT_TECHNICAL_SUBSECTIONS,
     DEFAULT_IMPACT_CATEGORIES,
@@ -918,12 +918,11 @@ export const useDocumentTemplatesPage = () => {
     const handleAddRow = (blockId: string) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId && b.type === 'advanced_table') {
-                const rawRows = b.config.rows || [];
-                const firstRow = rawRows[0];
-                const firstRowLen = Array.isArray(firstRow) ? firstRow.length : (firstRow?.cells?.length || 0);
-                const colCount = b.config.headers?.length || firstRowLen || 2;
-                const isArrayFormat = rawRows.length > 0 && Array.isArray(firstRow);
-                const newRow = isArrayFormat ? Array(colCount).fill('') : { cells: Array(colCount).fill('') };
+                const rawRows: TableRow[] = (b.config.rows || []).map((r: any) =>
+                    Array.isArray(r) ? { cells: r } : (r?.cells ? r : { cells: [] })
+                );
+                const colCount = b.config.headers?.length || rawRows[0]?.cells?.length || 2;
+                const newRow: TableRow = { cells: Array(colCount).fill('') };
                 return { ...b, config: { ...b.config, rows: [...rawRows, newRow] } };
             }
             return b;

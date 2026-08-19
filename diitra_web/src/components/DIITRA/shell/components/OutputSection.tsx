@@ -68,7 +68,6 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     const { isAdmin } = useAuth();
     const navigate = useNavigate();
     const [signatures, setSignatures] = React.useState<any[]>([]);
-    const [hasLoadedSigs, setHasLoadedSigs] = React.useState(false);
     const [isProtocoloSigned, setIsProtocoloSigned] = React.useState<boolean | null>(null);
     const [isPlanSigned, setIsPlanSigned] = React.useState<boolean | null>(null);
 
@@ -82,14 +81,11 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                 .then(data => {
                     if (isMounted) {
                         setSignatures(data || []);
-                        setHasLoadedSigs(true);
                     }
                 })
                 .catch(() => {
-                    if (isMounted) setHasLoadedSigs(true);
+                    if (isMounted) setSignatures([]);
                 });
-        } else {
-            setHasLoadedSigs(true);
         }
         return () => { isMounted = false; };
     }, [documentUuid, formData.Uuid, formData.uuid, signatureRefreshTrigger]);
@@ -101,16 +97,24 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
         api.get(`/documents/instances/entity/${projectUuid}`)
             .then(res => {
                 if (isMounted && Array.isArray(res.data)) {
+                    const isDocValidlySigned = (doc: any): boolean => {
+                        if (!doc) return false;
+                        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(projectStatus || '')) return true;
+                        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
+                        const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
+                        return hasSignedState || hasSignedFile;
+                    };
+
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
                                     d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
-                    setIsProtocoloSigned(protoDoc ? (protoDoc.is_signed === true || protoDoc.isSigned === true || !!protoDoc.final_pdf_path || !!protoDoc.finalPdfPath || protoDoc.estado === 'Firmado') : false);
+                    setIsProtocoloSigned(isDocValidlySigned(protoDoc));
 
                     const planDoc = res.data.find(
                         (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
                     );
-                    setIsPlanSigned(planDoc ? (planDoc.is_signed === true || planDoc.isSigned === true || !!planDoc.final_pdf_path || !!planDoc.finalPdfPath || planDoc.estado === 'Firmado') : false);
+                    setIsPlanSigned(isDocValidlySigned(planDoc));
                 }
             })
             .catch(() => {});

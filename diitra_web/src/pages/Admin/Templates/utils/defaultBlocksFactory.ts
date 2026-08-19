@@ -503,15 +503,15 @@ export function generateDefaultBlocksForTemplate(
                 config: {
                     headers: ['Parámetro Institucional', 'Detalle de la Propuesta'],
                     rows: [
-                        ['Nombre Oficial del Grupo', '{{nombre_grupo}}'],
-                        ['Siglas / Acrónimo', '{{siglas}}'],
-                        ['Tipo de Grupo', '{{tipo_grupo}}'],
-                        ['Docente Coordinador / Líder', '{{coordinador_nombre}} (C.I. {{coordinador_cedula}} | Email: {{coordinador_email}} | Tel: {{coordinador_telefono}})'],
-                        ['Dominio Académico Vinculado', '{{dominio_nombre}}'],
-                        ['Líneas de Investigación', '{{lineas_investigacion}}'],
-                        ['Carreras Vinculadas', '{{carreras_vinculadas}}'],
-                        ['Categoría de Consolidación', '{{categoria_consolidacion}}'],
-                        ['Fecha de Presentación', '{{fecha_presentacion}}']
+                        { cells: ['Nombre Oficial del Grupo', '{{nombre_grupo}}'] },
+                        { cells: ['Siglas / Acrónimo', '{{siglas}}'] },
+                        { cells: ['Tipo de Grupo', '{{tipo_grupo}}'] },
+                        { cells: ['Docente Coordinador / Líder', '{{coordinador_nombre}} (C.I. {{coordinador_cedula}} | Email: {{coordinador_email}} | Tel: {{coordinador_telefono}})'] },
+                        { cells: ['Dominio Académico Vinculado', '{{dominio_nombre}}'] },
+                        { cells: ['Líneas de Investigación', '{{lineas_investigacion}}'] },
+                        { cells: ['Carreras Vinculadas', '{{carreras_vinculadas}}'] },
+                        { cells: ['Categoría de Consolidación', '{{categoria_consolidacion}}'] },
+                        { cells: ['Fecha de Presentación', '{{fecha_presentacion}}'] }
                     ],
                     headerColor: 'navy',
                     borderStyle: 'solid'
@@ -548,7 +548,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'rich_text' as BlockType,
                 title: 'Objetivo General',
                 isActive: true,
-                config: { content: '<p>{{objetivo_general}}</p>' }
+                config: { text: '<p>{{objetivo_general}}</p>' }
             },
             {
                 id: 'block-pagebreak-1',

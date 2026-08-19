@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, FileSignature, CheckCircle2, AlertCircle, FileText, GraduationCap } from 'lucide-react';
+import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap } from 'lucide-react';
 import api from '../../../../../api/axios_config';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
@@ -38,18 +38,26 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             try {
                 const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
                 if (isMounted && Array.isArray(res.data)) {
+                    const isDocValidlySigned = (doc: any): boolean => {
+                        if (!doc) return false;
+                        // Si el proyecto ya fue aprobado/ejecutado institucionalmente
+                        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) return true;
+                        // Verificación estricta de firma del documento
+                        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
+                        const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
+                        return hasSignedState || hasSignedFile;
+                    };
+
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
                                     d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
-                    const protoOk = protoDoc ? (protoDoc.is_signed === true || protoDoc.isSigned === true || !!protoDoc.final_pdf_path || !!protoDoc.finalPdfPath || protoDoc.estado === 'Firmado') : false;
-                    setIsProtocoloSigned(protoOk || ['Enviado', 'En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+                    setIsProtocoloSigned(isDocValidlySigned(protoDoc));
 
                     const planDoc = res.data.find(
                         (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
                     );
-                    const planOk = planDoc ? (planDoc.is_signed === true || planDoc.isSigned === true || !!planDoc.final_pdf_path || !!planDoc.finalPdfPath || planDoc.estado === 'Firmado') : false;
-                    setIsPlanSigned(planOk || ['Enviado', 'En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+                    setIsPlanSigned(isDocValidlySigned(planDoc));
                 }
             } catch {
                 // Silencioso
@@ -65,7 +73,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         };
     }, [resolvedProjectUuid, currentProject.status]);
 
-    const isAllSigned = (isProtocoloSigned && isPlanSigned) || (currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección');
+    const isAllSigned = isProtocoloSigned && isPlanSigned;
 
     return (
         <div className="flex flex-col gap-3">
@@ -157,14 +165,14 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                                 </span>
                             )}
                         </div>
-                        {!isProtocoloSigned && currentProject.puedeFirmar && setActiveDocument && (
+                        {!isProtocoloSigned && (currentProject.puedeFirmar || currentProject.puedeEditar) && setActiveDocument && (
                             <button
                                 type="button"
                                 onClick={() => setActiveDocument('PROTOCOLO_INVESTIGACION')}
-                                className="mt-2 w-full flex items-center justify-center gap-1 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                                className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
                             >
-                                <FileSignature size={11} />
-                                <span>Firmar Protocolo</span>
+                                <FileText size={11} className="text-brand" />
+                                <span>Completar Protocolo</span>
                             </button>
                         )}
                     </div>
@@ -191,14 +199,14 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                                 </span>
                             )}
                         </div>
-                        {!isPlanSigned && currentProject.puedeFirmar && setActiveDocument && (
+                        {!isPlanSigned && (currentProject.puedeFirmar || currentProject.puedeEditar) && setActiveDocument && (
                             <button
                                 type="button"
                                 onClick={() => setActiveDocument('PLAN_APRENDIZAJE')}
-                                className="mt-2 w-full flex items-center justify-center gap-1 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                                className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
                             >
-                                <FileSignature size={11} />
-                                <span>Firmar Plan de Aprendizaje</span>
+                                <GraduationCap size={11} className="text-brand" />
+                                <span>Completar Plan de Aprendizaje</span>
                             </button>
                         )}
                     </div>

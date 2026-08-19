@@ -162,7 +162,7 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     return html.trim();
 };
 
-function generateArbitrationDictamenHtml(block: DocumentBlock): string {
+function generateArbitrationDictamenHtml(_block?: DocumentBlock): string {
     return `
     <div style="margin: 20px 0; border: 1.5px solid #1e2a4a; padding: 15px; border-radius: 6px;">
         <h2 style="font-size: 11pt; color: #1e2a4a; margin: 0 0 10px 0; text-transform: uppercase;">Acta de Dictamen de Arbitraje Consolidado</h2>

@@ -453,7 +453,6 @@ export interface DocumentBlock {
         // ── learning plan blocks ───────────────────────────────────────────
         learningPlanMode?: 'plan' | 'evaluacion';
         learningPlanHeaderColor?: 'navy' | 'gold' | 'slate' | string;
-        showObjetivoGeneral?: boolean;
         showParametrosTexto?: boolean;
         minCognitivos?: number;
         minProcedimentales?: number;
