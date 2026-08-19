@@ -28,20 +28,19 @@ interface WorkspaceActivityPanelProps {
 const POLL_INTERVAL_MS = 30_000;
 
 function getIconComponent(icono: string) {
-    if (icono === 'check') return <CheckCircle size={13} className="text-emerald-400 shrink-0" />;
-    if (icono === 'eye')   return <Eye size={13} className="text-sky-400 shrink-0" />;
-    if (icono === 'workflow') return <GitBranch size={13} className="text-violet-400 shrink-0" />;
-    if (icono === 'comment') return <MessageSquare size={13} className="text-amber-400 shrink-0" />;
-    // tipo 'acceso' y el resto
-    return <Edit3 size={13} className="text-brand shrink-0" />;
+    if (icono === 'check') return <CheckCircle size={12} className="text-emerald-400 shrink-0" />;
+    if (icono === 'eye')   return <Eye size={12} className="text-sky-400 shrink-0" />;
+    if (icono === 'workflow') return <GitBranch size={12} className="text-violet-400 shrink-0" />;
+    if (icono === 'comment') return <MessageSquare size={12} className="text-amber-400 shrink-0" />;
+    return <Edit3 size={12} className="text-text-dim shrink-0" />;
 }
 
-function getBadgeStyle(tipo: string): string {
+function getBadgeClass(tipo: string): string {
     switch (tipo) {
-        case 'seccion':  return 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20';
-        case 'workflow': return 'bg-violet-400/10 text-violet-400 border-violet-400/20';
-        case 'comentario': return 'bg-amber-400/10 text-amber-400 border-amber-400/20';
-        default:          return 'bg-brand/10 text-brand border-brand/20';
+        case 'seccion':   return 'badge-vercel badge-vercel-success';
+        case 'workflow':  return 'badge-vercel badge-vercel-violet';
+        case 'comentario': return 'badge-vercel badge-vercel-warning';
+        default:           return 'badge-vercel badge-vercel-neutral';
     }
 }
 
@@ -121,8 +120,8 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-thin">
                 <div className="flex items-center gap-2">
-                    <Activity size={12} className="text-brand" />
-                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
+                    <Activity size={12} className="text-text-dim" />
+                    <span className="section-label text-text-dim">
                         Actividad Reciente
                     </span>
                 </div>
@@ -130,14 +129,14 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                     onClick={handleManualRefresh}
                     disabled={isLoading || isRefreshing}
                     title="Actualizar actividad"
-                    className="p-1.5 h-7 w-7 rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all disabled:opacity-40 flex items-center justify-center"
+                    className="p-1 h-6 w-6 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors disabled:opacity-40 flex items-center justify-center cursor-pointer"
                 >
                     <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
                 </button>
             </div>
 
             {/* Content */}
-            <div className="flex flex-col overflow-y-auto" style={{ maxHeight: '420px' }}>
+            <div className="flex flex-col overflow-y-auto custom-scrollbar" style={{ maxHeight: '420px' }}>
                 {isLoading ? (
                     <div className="flex flex-col items-center gap-3 py-8 px-4">
                         <div className="animate-spin h-5 w-5 border-t-2 border-brand rounded-full" />
@@ -145,10 +144,10 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                     </div>
                 ) : error ? (
                     <div className="px-4 py-6 text-center">
-                        <p className="text-[10px] text-text-dim">{error}</p>
+                        <p className="text-xs text-text-dim">{error}</p>
                         <button
                             onClick={handleManualRefresh}
-                            className="mt-2 text-[10px] text-brand hover:underline"
+                            className="mt-2 text-xs text-brand hover:underline cursor-pointer"
                         >
                             Reintentar
                         </button>
@@ -156,44 +155,44 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                 ) : actividad.length === 0 ? (
                     <div className="px-4 py-8 text-center">
                         <Activity size={20} className="text-text-dim mx-auto mb-2 opacity-40" />
-                        <p className="text-[10px] text-text-dim">Sin actividad registrada aún.</p>
+                        <p className="text-xs text-text-dim">Sin actividad registrada aún.</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-border-thin/50">
                         {actividad.map((item, idx) => (
                             <div
                                 key={idx}
-                                className="flex items-start gap-3 px-4 py-3 hover:bg-surface/40 transition-colors group"
+                                className="flex items-start gap-3 px-4 py-3 hover:bg-surface/50 transition-colors group"
                             >
-                                {/* Ícono */}
-                                <div className="mt-0.5 flex-shrink-0">
+                                {/* Ícono en contenedor Vercel Geist */}
+                                <div className="w-6 h-6 rounded-md bg-surface border border-border-thin flex items-center justify-center shrink-0 mt-0.5 group-hover:border-border-hover transition-colors">
                                     {getIconComponent(item.icono)}
                                 </div>
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                        <span className="text-[11px] font-semibold text-text-main truncate">
+                                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                        <span className="text-xs font-medium text-text-main truncate">
                                             {item.nombreUsuario || 'Usuario'}
                                         </span>
-                                        <span className={`text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded border ${getBadgeStyle(item.tipo)}`}>
+                                        <span className={`${getBadgeClass(item.tipo)} text-[8.5px] px-1.5 py-0`}>
                                             {getTypoLabel(item.tipo)}
                                         </span>
                                     </div>
-                                    <p className="text-[10px] text-text-dim leading-snug">
+                                    <p className="text-xs text-text-dim leading-snug">
                                         {item.descripcion}
                                     </p>
                                     {item.rolUsuario && (
-                                        <p className="text-[9px] text-text-dim/60 mt-0.5">
+                                        <p className="text-[10px] text-text-dim/60 mt-0.5 font-mono">
                                             {item.rolUsuario}
                                         </p>
                                     )}
                                 </div>
 
                                 {/* Timestamp */}
-                                <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
-                                    <Clock size={9} className="text-text-dim/40" />
-                                    <span className="text-[9px] text-text-dim/60 whitespace-nowrap">
+                                <div className="flex items-center gap-1 shrink-0 mt-0.5 text-text-dim/50">
+                                    <Clock size={9} />
+                                    <span className="text-[10px] font-mono whitespace-nowrap">
                                         {timeAgo(item.fecha)}
                                     </span>
                                 </div>

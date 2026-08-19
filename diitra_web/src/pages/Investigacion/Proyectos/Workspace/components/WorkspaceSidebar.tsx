@@ -79,21 +79,21 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         <div className="flex flex-col gap-3">
             {/* Banner de Revisión Técnica para el Administrador */}
             {isAdmin && currentProject.status === 'Enviado' && resolvedProjectUuid && isAllSigned && (
-                <div className="bento-card static p-5 flex flex-col justify-between border border-brand/40 bg-brand/[0.02] shadow-md animate-fade-in relative overflow-hidden group">
+                <div className="bento-card static p-5 flex flex-col justify-between border border-brand/30 bg-brand/[0.03] shadow-md animate-fade-in relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
                     <div>
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <Shield size={16} className="text-brand animate-pulse" />
-                            <h3 className="text-xs font-black tracking-widest text-brand uppercase">Revisión Técnica Requerida</h3>
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <Shield size={13} className="text-brand animate-pulse" />
+                            <span className="section-label text-brand">Revisión Técnica Requerida</span>
                         </div>
-                        <p className="text-[10px] text-text-dim leading-relaxed mt-1">
+                        <p className="text-xs text-text-dim leading-relaxed">
                             El expediente completo (Protocolo y Plan de Aprendizaje) ha sido remitido por el Director para su revisión técnica.
                         </p>
                     </div>
                     <div className="mt-4">
                         <Link
                             to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm no-underline"
+                            className="w-full btn-brand py-2 px-3 text-[10px] rounded-md no-underline"
                         >
                             <Shield size={12} />
                             <span>Iniciar Revisión Técnica</span>
@@ -104,14 +104,14 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
             {/* Banner de Correcciones Requeridas para el Docente/Investigador */}
             {!isAdmin && currentProject.status === 'En Corrección' && (
-                <div className="bento-card static p-5 flex flex-col justify-between border border-amber-500/40 bg-amber-500/[0.02] shadow-md animate-fade-in relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
+                <div className="bento-card static p-5 flex flex-col justify-between border border-warning/30 bg-warning/[0.03] shadow-md animate-fade-in relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-warning/5 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
                     <div>
-                        <div className="flex items-center gap-2.5 mb-2">
-                            <AlertCircle size={16} className="text-amber-500 animate-pulse" />
-                            <h3 className="text-xs font-black tracking-widest text-amber-500 uppercase">Correcciones Requeridas</h3>
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <AlertCircle size={13} className="text-warning animate-pulse" />
+                            <span className="section-label text-warning">Correcciones Requeridas</span>
                         </div>
-                        <p className="text-[10px] text-text-dim leading-relaxed mt-1">
+                        <p className="text-xs text-text-dim leading-relaxed">
                             El administrador ha retornado el proyecto con observaciones técnicas que deben ser atendidas en su protocolo.
                         </p>
                     </div>
@@ -121,7 +121,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                             onClick={() => {
                                 if (setActiveDocument) setActiveDocument('PROTOCOLO_INVESTIGACION');
                             }}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 btn-vercel-primary text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm !bg-amber-500 hover:!bg-amber-600 !text-white"
+                            className="w-full btn-vercel-primary py-2 px-3 text-[10px] rounded-md"
                         >
                             <FileText size={12} />
                             <span>Atender Observaciones</span>
@@ -134,90 +134,140 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             <div className="bento-card static p-5 flex flex-col justify-between group relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-28 h-28 bg-text-main/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-text-main/8 transition-colors duration-500"></div>
                 <div>
-                    <div className="flex items-center gap-2.5 mb-2">
-                        <Shield size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                        <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Instrumentos Requeridos</h3>
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <Shield size={13} className="text-text-dim" />
+                        <span className="section-label text-text-dim">
+                            Instrumentos Requeridos
+                        </span>
                     </div>
-                    <p className="text-[10px] text-text-dim leading-relaxed mt-1">
+                    <p className="text-xs text-text-dim leading-relaxed">
                         Para habilitar la revisión del Administrador, el Director debe firmar y enviar ambos documentos.
                     </p>
                 </div>
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-2.5">
                     {/* 1. Protocolo de Investigación */}
-                    <div className="p-3 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <FileText size={14} className="text-brand shrink-0" />
-                                <div>
-                                    <p className="text-[10px] font-bold text-text-main">Protocolo de Investigación</p>
-                                    <p className="text-[9px] text-text-dim">Documento base del proyecto</p>
+                    <div
+                        {...(!isProtocoloSigned && setActiveDocument ? {
+                            onClick: () => setActiveDocument('PROTOCOLO_INVESTIGACION'),
+                            role: "button",
+                            tabIndex: 0,
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setActiveDocument('PROTOCOLO_INVESTIGACION');
+                                }
+                            }
+                        } : {})}
+                        className={`p-3 rounded-lg bg-surface/50 border border-border-thin transition-all ${
+                            !isProtocoloSigned
+                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/card outline-none focus-visible:ring-1 focus-visible:ring-brand'
+                                : 'opacity-90'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
+                                    !isProtocoloSigned ? 'group-hover/card:text-brand group-hover/card:border-brand/30' : ''
+                                }`}>
+                                    <FileText size={13} />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className={`text-xs font-medium text-text-main truncate transition-colors ${
+                                        !isProtocoloSigned ? 'group-hover/card:text-brand' : ''
+                                    }`}>
+                                        Protocolo de Investigación
+                                    </p>
+                                    <p className="text-[11px] text-text-dim truncate">Documento base del proyecto</p>
                                 </div>
                             </div>
                             {isProtocoloSigned ? (
-                                <span className="text-emerald-500 flex items-center gap-1 text-[10px] font-semibold" title="Firmado">
-                                    <CheckCircle2 size={14} />
+                                <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
+                                    <CheckCircle2 size={11} />
                                     <span>Firmado</span>
                                 </span>
                             ) : (
-                                <span className="text-[9px] font-semibold text-warning flex items-center gap-1">
+                                <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
                                     <span className="dot dot-warning dot-pulse" />
-                                    Pendiente
+                                    <span>Falta completar</span>
                                 </span>
                             )}
                         </div>
-                        {!isProtocoloSigned && (currentProject.puedeFirmar || currentProject.puedeEditar) && setActiveDocument && (
+                        {!isProtocoloSigned && (
                             <button
                                 type="button"
-                                onClick={() => setActiveDocument('PROTOCOLO_INVESTIGACION')}
-                                className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (setActiveDocument) setActiveDocument('PROTOCOLO_INVESTIGACION');
+                                }}
+                                className="mt-2.5 w-full btn-vercel-secondary py-1.5 px-2.5 text-[9.5px] rounded-md"
                             >
-                                <FileText size={11} className="text-brand" />
+                                <FileText size={11} />
                                 <span>Completar Protocolo</span>
                             </button>
                         )}
                     </div>
 
                     {/* 2. Plan de Aprendizaje */}
-                    <div className="p-3 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <GraduationCap size={14} className="text-brand shrink-0" />
-                                <div>
-                                    <p className="text-[10px] font-bold text-text-main">Plan de Aprendizaje</p>
-                                    <p className="text-[9px] text-text-dim">Articulación docencia (APE)</p>
+                    <div
+                        {...(!isPlanSigned && setActiveDocument ? {
+                            onClick: () => setActiveDocument('PLAN_APRENDIZAJE'),
+                            role: "button",
+                            tabIndex: 0,
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setActiveDocument('PLAN_APRENDIZAJE');
+                                }
+                            }
+                        } : {})}
+                        className={`p-3 rounded-lg bg-surface/50 border border-border-thin transition-all ${
+                            !isPlanSigned
+                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/card outline-none focus-visible:ring-1 focus-visible:ring-brand'
+                                : 'opacity-90'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
+                                    !isPlanSigned ? 'group-hover/card:text-brand group-hover/card:border-brand/30' : ''
+                                }`}>
+                                    <GraduationCap size={13} />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className={`text-xs font-medium text-text-main truncate transition-colors ${
+                                        !isPlanSigned ? 'group-hover/card:text-brand' : ''
+                                    }`}>
+                                        Plan de Aprendizaje
+                                    </p>
+                                    <p className="text-[11px] text-text-dim truncate">Articulación docencia (APE)</p>
                                 </div>
                             </div>
                             {isPlanSigned ? (
-                                <span className="text-emerald-500 flex items-center gap-1 text-[10px] font-semibold" title="Firmado">
-                                    <CheckCircle2 size={14} />
+                                <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
+                                    <CheckCircle2 size={11} />
                                     <span>Firmado</span>
                                 </span>
                             ) : (
-                                <span className="text-[9px] font-semibold text-warning flex items-center gap-1">
+                                <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
                                     <span className="dot dot-warning dot-pulse" />
-                                    Pendiente
+                                    <span>Falta completar</span>
                                 </span>
                             )}
                         </div>
-                        {!isPlanSigned && (currentProject.puedeFirmar || currentProject.puedeEditar) && setActiveDocument && (
+                        {!isPlanSigned && (
                             <button
                                 type="button"
-                                onClick={() => setActiveDocument('PLAN_APRENDIZAJE')}
-                                className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-surface hover:bg-surface-hover border border-border-thin text-text-main text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (setActiveDocument) setActiveDocument('PLAN_APRENDIZAJE');
+                                }}
+                                className="mt-2.5 w-full btn-vercel-secondary py-1.5 px-2.5 text-[9.5px] rounded-md"
                             >
-                                <GraduationCap size={11} className="text-brand" />
+                                <GraduationCap size={11} />
                                 <span>Completar Plan de Aprendizaje</span>
                             </button>
                         )}
                     </div>
-
-                    {!isAllSigned && !currentProject.puedeFirmar && (
-                        <div className="p-2 bg-surface/60 rounded-lg border border-border-thin">
-                            <p className="text-[9px] text-text-dim leading-relaxed text-center">
-                                Esperando la firma electrónica del Director en ambos documentos para avanzar a la fase de Revisión Técnica.
-                            </p>
-                        </div>
-                    )}
                 </div>
             </div>
 
