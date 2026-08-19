@@ -62,6 +62,10 @@ export type BlockType =
     | 'certificate_header'
     | 'certificate_recipient_badge'
     | 'certificate_body'
+    | 'learning_plan_header_section'
+    | 'learning_plan_eval_parameters_section'
+    | 'learning_plan_prerequisites_section'
+    | 'learning_plan_activities_section'
     | 'learning_plan_evaluation_table'
     | 'project_budget_section';
 
@@ -445,6 +449,17 @@ export interface DocumentBlock {
         textAchievement?: string;
         projectTitle?: string;
         completionDate?: string;
+
+        // ── learning plan blocks ───────────────────────────────────────────
+        learningPlanMode?: 'plan' | 'evaluacion';
+        learningPlanHeaderColor?: 'navy' | 'gold' | 'slate' | string;
+        showObjetivoGeneral?: boolean;
+        showParametrosTexto?: boolean;
+        minCognitivos?: number;
+        minProcedimentales?: number;
+        showHorasTrabajo?: boolean;
+        showResultadosAprendizaje?: boolean;
+        allowMultipleEstudiantes?: boolean;
     };
 }
 

@@ -36,6 +36,13 @@ import {
     RenderFinalReportHeaderSection,
 } from './canvasRenderers/RenderProgressSections';
 import {
+    RenderLearningPlanHeaderSection,
+    RenderLearningPlanEvalParametersSection,
+    RenderLearningPlanPrerequisitesSection,
+    RenderLearningPlanActivitiesSection,
+    RenderLearningPlanEvaluationTable,
+} from './canvasRenderers/RenderLearningPlan';
+import {
     RenderCertificateHeader,
     RenderCertificateRecipientBadge,
     RenderCertificateBody,
@@ -59,6 +66,10 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'final_report_header_section',
     'final_report_writing_section',
     'arbitration_dictamen_section',
+    'learning_plan_header_section',
+    'learning_plan_prerequisites_section',
+    'learning_plan_activities_section',
+    'learning_plan_evaluation_table',
 ];
 
 interface SortableBlockItemProps {
@@ -158,6 +169,16 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
                 return <RenderFinalReportHeaderSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'final_report_writing_section':
                 return <RenderFinalReportWritingSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'learning_plan_header_section':
+                return <RenderLearningPlanHeaderSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'learning_plan_eval_parameters_section':
+                return <RenderLearningPlanEvalParametersSection config={block.config} />;
+            case 'learning_plan_prerequisites_section':
+                return <RenderLearningPlanPrerequisitesSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'learning_plan_activities_section':
+                return <RenderLearningPlanActivitiesSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+            case 'learning_plan_evaluation_table':
+                return <RenderLearningPlanEvaluationTable config={block.config} />;
             case 'certificate_header':
                 return <RenderCertificateHeader config={block.config} themeConfig={themeConfig} />;
             case 'certificate_recipient_badge':

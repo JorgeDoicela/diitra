@@ -70,6 +70,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     const isInnovacion = templateCode.startsWith('INNOVACION') || templateCode.startsWith('TRANSFERENCIA');
     const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
     const [isFinalReportSigned, setIsFinalReportSigned] = useState(false);
+    const [isProtocoloSigned, setIsProtocoloSigned] = useState(false);
+    const [isPlanAprendizajeSigned, setIsPlanAprendizajeSigned] = useState(false);
     const [isPlanAprendizajeApproved, setIsPlanAprendizajeApproved] = useState(false);
 
     const renderDeadlineBadge = (dateStr?: string | null, prefix: string = 'Plazo') => {
@@ -125,7 +127,22 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
             try {
                 const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
                 if (isMounted && Array.isArray(res.data)) {
-                    // 1. Verificar si el informe final está firmado
+                    // 1. Verificar si el Protocolo está firmado
+                    const protoDoc = res.data.find(
+                        (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
+                                    d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
+                    );
+                    const protoSigned = protoDoc ? (protoDoc.is_signed === true || protoDoc.isSigned === true || !!protoDoc.final_pdf_path || !!protoDoc.finalPdfPath || protoDoc.estado === 'Firmado') : false;
+                    setIsProtocoloSigned(protoSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+
+                    // 2. Verificar si el Plan de Aprendizaje está firmado por el Director
+                    const planLearningDoc = res.data.find(
+                        (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
+                    );
+                    const planSigned = planLearningDoc ? (planLearningDoc.is_signed === true || planLearningDoc.isSigned === true || !!planLearningDoc.final_pdf_path || !!planLearningDoc.finalPdfPath || planLearningDoc.estado === 'Firmado') : false;
+                    setIsPlanAprendizajeSigned(planSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
+
+                    // 3. Verificar si el informe final está firmado
                     const finalDoc = res.data.find(
                         (d: any) => d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode
                     );
@@ -133,18 +150,18 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                         setIsFinalReportSigned(finalDoc.is_signed === true || finalDoc.isSigned === true);
                     }
 
-                    // 2. Verificar si el Plan de Aprendizaje / Evaluación fue aprobado
-                    const planDoc = res.data.find(
-                        (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
+                    // 4. Verificar si el Plan de Aprendizaje / Evaluación fue aprobado por el Administrador
+                    const evalDoc = res.data.find(
+                        (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE'
                     );
                     let approved = false;
-                    if (planDoc) {
+                    if (evalDoc) {
                         let contentData: any = null;
                         try {
-                            if (planDoc.content_json) contentData = JSON.parse(planDoc.content_json);
+                            if (evalDoc.content_json) contentData = JSON.parse(evalDoc.content_json);
                         } catch { }
 
-                        approved = planDoc.is_signed === true || planDoc.isSigned === true
+                        approved = evalDoc.is_signed === true || evalDoc.isSigned === true
                             || contentData?.EstadoAprobacion === 'Aprobado'
                             || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
                     } else if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) {
@@ -186,25 +203,26 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     let isRevisionDone = false;
 
                     const status = currentProject.status;
+                    const isBothInstrumentsSubmitted = (isProtocoloSigned && isPlanAprendizajeSigned) || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
 
                     if (phase.id === 'Borrador') {
-                        isCurrent = status === 'Borrador' || status === 'En Corrección';
-                        isPast = status !== 'Borrador' && status !== 'En Corrección';
+                        isPast = isProtocoloSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = !isPast && (status === 'Borrador' || status === 'En Corrección' || status === 'Enviado');
                     } else if (phase.id === 'PlanAprendizaje') {
-                        // Fase 2: El docente elabora el plan de aprendizaje a la par del protocolo antes de enviar
-                        isCurrent = status === 'Borrador' || status === 'En Corrección' || (status === 'Enviado' && !isPlanAprendizajeApproved);
-                        isPast = isPlanAprendizajeApproved || status === 'En Revisión' || status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
+                        // Fase 2: Plan de Aprendizaje elaborado y firmado por el docente
+                        isPast = isPlanAprendizajeSigned || isPlanAprendizajeApproved || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = !isPlanAprendizajeSigned;
                         isFuture = false;
                     } else if (phase.id === 'Enviado') {
-                        // Fase 3: La revisión del Administrador se abre SOLO cuando el docente envía el expediente completo
-                        isCurrent = status === 'Enviado';
-                        isPast = status !== 'Borrador' && status !== 'En Corrección' && status !== 'Enviado';
-                        isFuture = status === 'Borrador' || status === 'En Corrección';
+                        // Fase 3: La revisión del Administrador se abre ÚNICAMENTE cuando el director ha enviado AMBOS instrumentos
+                        isCurrent = isBothInstrumentsSubmitted && (status === 'Enviado' || status === 'Borrador' || status === 'En Corrección');
+                        isPast = ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isFuture = !isBothInstrumentsSubmitted;
                     } else if (phase.id === 'EvaluacionPlanAprendizaje') {
-                        // Fase 4: Evaluación del Plan por el Administrador al recibir la postulación
-                        isCurrent = (status === 'Enviado' || status === 'En Revisión') && !isPlanAprendizajeApproved;
-                        isPast = isPlanAprendizajeApproved || status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
-                        isFuture = status === 'Borrador' || status === 'En Corrección';
+                        // Fase 4: Evaluación del Plan por el Administrador una vez remitido el expediente completo
+                        isCurrent = isBothInstrumentsSubmitted && (status === 'Enviado' || status === 'En Revisión') && !isPlanAprendizajeApproved;
+                        isPast = isPlanAprendizajeApproved || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isFuture = !isBothInstrumentsSubmitted;
                     } else if (phase.id === 'En Revisión') {
                         isRevisionDone = (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
                         // COMPUERTA: Solo se habilita si el plan de aprendizaje fue aprobado y el proyecto avanzó a revisión
@@ -345,6 +363,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             : 'Revisión formal de requisitos, carga horaria, firmas y presupuesto institucional.'
                                     )}
                                     {phase.id === 'PlanAprendizaje' && 'Articulación docencia-investigación (APE). Planificación de asignaturas vinculadas, estudiantes y tutorías.'}
+                                    {phase.id === 'EvaluacionPlanAprendizaje' && 'Evaluación técnica, pertinencia académica y dictamen del Plan de Aprendizaje por parte del Administrador.'}
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}

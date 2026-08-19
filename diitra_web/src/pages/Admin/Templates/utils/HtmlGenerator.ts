@@ -22,6 +22,11 @@ import {
     generateProgressHeaderHtml,
     generateFinalReportHeaderHtml,
     generateFinalReportWritingHtml,
+    generateLearningPlanHeaderHtml,
+    generateLearningPlanEvalParametersHtml,
+    generateLearningPlanPrerequisitesHtml,
+    generateLearningPlanActivitiesHtml,
+    generateLearningPlanEvaluationHtml,
 } from './htmlGenerators/reportsGenerator';
 import { generateGanttHtml } from './htmlGenerators/ganttGenerator';
 import {
@@ -123,6 +128,21 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'final_report_writing_section':
                 html += generateFinalReportWritingHtml(block);
+                break;
+            case 'learning_plan_header_section':
+                html += generateLearningPlanHeaderHtml(block);
+                break;
+            case 'learning_plan_eval_parameters_section':
+                html += generateLearningPlanEvalParametersHtml(block);
+                break;
+            case 'learning_plan_prerequisites_section':
+                html += generateLearningPlanPrerequisitesHtml(block);
+                break;
+            case 'learning_plan_activities_section':
+                html += generateLearningPlanActivitiesHtml(block);
+                break;
+            case 'learning_plan_evaluation_table':
+                html += generateLearningPlanEvaluationHtml(block);
                 break;
             case 'certificate_header':
                 html += generateCertificateHeaderHtml(block, themeConfig);

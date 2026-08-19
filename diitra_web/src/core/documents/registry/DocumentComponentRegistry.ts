@@ -73,6 +73,10 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'bibliografia':   BibliographySection,
     'plan_aprendizaje': LearningPlanSection,
     'evaluacion_plan_aprendizaje': LearningPlanSection,
+    'learning_plan_header_section': LearningPlanSection,
+    'learning_plan_prerequisites_section': LearningPlanSection,
+    'learning_plan_activities_section': LearningPlanSection,
+    'learning_plan_evaluation_table': LearningPlanSection,
 };
 
 /**

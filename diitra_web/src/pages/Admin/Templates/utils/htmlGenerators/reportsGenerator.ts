@@ -795,3 +795,369 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
     return html;
 };
 
+/**
+ * Genera el HTML Handlebars para la Ficha de Identificación del Plan de Aprendizaje
+ */
+export const generateLearningPlanHeaderHtml = (block: DocumentBlock): string => {
+    return `
+  <!-- BLOQUE: IDENTIFICACIÓN DEL PROYECTO & ESTUDIANTE (PLAN DE APRENDIZAJE) -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="4" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            1. IDENTIFICACIÓN DEL PROYECTO
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="width: 25%; font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">NOMBRE DEL PROYECTO:</td>
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold;">{{default NombreProyecto Titulo title ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">LÍNEA DE INVESTIGACIÓN:</td>
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default LineaInvestigacion linea ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">SUBLÍNEA DE INVESTIGACIÓN:</td>
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default SublineaInvestigacion sublinea ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">CARRERA:</td>
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default Carrera carrera ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">DIRECTOR DEL PROYECTO:</td>
+          <td style="width: 35%; padding: 5px 8px; border: 1px solid #000000;">{{default DirectorProyecto director_proyecto ""}}</td>
+          <td style="width: 25%; font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">N° ESTUDIANTES:</td>
+          <td style="width: 15%; padding: 5px 8px; border: 1px solid #000000; text-align: center;">{{default NumeroEstudiantes "1"}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">FECHA APROBACIÓN:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;">{{default FechaAprobacion "N/A"}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">PERIODO ACADÉMICO:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000;">{{default PeriodoAcademico periodo ""}}</td>
+        </tr>
+        <tr style="background-color: #e0f2fe;">
+          <td style="font-weight: bold; padding: 5px 8px; border: 1px solid #000000; color: #0369a1;">NOMBRE DEL ESTUDIANTE:</td>
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #0c4a6e;">{{default NombreEstudiante "[ESTUDIANTE SELECCIONADO]"}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 15px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+        <thead>
+          <tr style="background-color: #002060; color: #FFFFFF;">
+            <th style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+              2. OBJETIVO GENERAL DEL PROYECTO DE INVESTIGACIÓN
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 10px; border: 1px solid #000000; line-height: 1.4; color: #000000;">
+              {{{default ObjetivoGeneral objetivo_general "[Objetivo General no definido]"}}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+};
+
+/**
+ * Genera el HTML Handlebars para los Parámetros de Evaluación (Escala Cualitativa ISTPET)
+ */
+export const generateLearningPlanEvalParametersHtml = (block: DocumentBlock): string => {
+    return `
+  <!-- BLOQUE: 2. PARÁMETROS DE EVALUACIÓN CUALITATIVA -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="3" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            2. PARÁMETROS DE EVALUACIÓN
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color: #f8fafc; font-size: 8pt; color: #334155;">
+          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">
+            La evaluación de la participación del estudiante en el proyecto de investigación tiene un enfoque cualitativo y se centra en identificar los resultados de aprendizaje de las actividades que los estudiantes deben realizar en conjunto con las asignaturas asociadas.
+          </td>
+        </tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold; font-size: 8pt;">
+          <td style="width: 8%; padding: 4px; border: 1px solid #000000; text-align: center;">ESCALA</td>
+          <td style="width: 24%; padding: 4px 8px; border: 1px solid #000000;">NIVEL CUALITATIVO</td>
+          <td style="width: 68%; padding: 4px 8px; border: 1px solid #000000;">DESCRIPTOR OFICIAL ISTPET</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold; background-color: #ecfdf5;">4</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000; font-weight: bold; color: #065f46;">MUY ADECUADO</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000;">El estudiante ha superado ampliamente las expectativas, mostrando un rendimiento excepcional en todas las actividades asignadas.</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold; background-color: #eff6ff;">3</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000; font-weight: bold; color: #1e40af;">ADECUADO</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000;">El estudiante ha cumplido con las expectativas, mostrando un buen rendimiento en la mayoría de las actividades, con algunos aspectos a mejorar.</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold; background-color: #fffbeb;">2</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000; font-weight: bold; color: #92400e;">POCO ADECUADO</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000;">El estudiante ha cumplido parcialmente con las expectativas, mostrando un rendimiento inconsistente y necesitando mejoras significativas.</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold; background-color: #fef2f2;">1</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000; font-weight: bold; color: #991b1b;">NO ADECUADO</td>
+          <td style="padding: 4px 8px; border: 1px solid #000000;">El estudiante no ha cumplido con las expectativas, mostrando un rendimiento insatisfactorio en la mayoría de las actividades.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+};
+
+/**
+ * Genera el HTML Handlebars para los Prerrequisitos del Estudiante (Plan o Evaluación)
+ */
+export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const isEvaluacion = c.learningPlanMode === 'evaluacion';
+
+    if (isEvaluacion) {
+        return `
+  <!-- BLOQUE: 3. EVALUACIÓN DE PRERREQUISITOS CUALITATIVOS -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="10" style="padding: 6px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
+          </th>
+        </tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+          <th style="padding: 4px; border: 1px solid #000000; width: 28%; text-align: left;">COGNITIVOS</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 28%; text-align: left;">PROCEDIMENTALES</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
+        </tr>
+        <tr style="background-color: #f8fafc; font-size: 6.5pt; text-align: center;">
+          <th style="border-r: 1px solid #000000;"></th>
+          <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">ADEC (3)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">POCO (2)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">NO (1)</th>
+          <th style="border-r: 1px solid #000000;"></th>
+          <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">ADEC (3)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">POCO (2)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">NO (1)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 4px 6px; border: 1px solid #000000;">1. Conocimientos generales en el área temática</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">X</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px 6px; border: 1px solid #000000;">1. Trabajo en equipo interdisciplinar</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">X</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+    }
+
+    return `
+  <!-- BLOQUE: 3. PRERREQUISITOS PREVIOS A LA VINCULACIÓN -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="2" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color: #f8fafc; font-size: 7.5pt; color: #475569;">
+          <td colspan="2" style="padding: 4px 8px; border: 1px solid #000000;">
+            <strong>Cognitivos:</strong> Conocimientos generales sobre el área de estudio, capacidad de análisis y síntesis, habilidades de investigación (mínimo 3).<br/>
+            <strong>Procedimentales:</strong> Trabajo en equipo interdisciplinar, aplicación práctica, responsabilidad social y gestión del tiempo (mínimo 5).
+          </td>
+        </tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+          <td style="width: 50%; padding: 5px; border: 1px solid #000000;">COGNITIVOS</td>
+          <td style="width: 50%; padding: 5px; border: 1px solid #000000;">PROCEDIMENTALES</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
+            {{#if PrerrequisitosCognitivos}}
+              <ul style="margin: 0; padding-left: 15px;">
+                {{#each PrerrequisitosCognitivos}}
+                  <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
+                {{/each}}
+              </ul>
+            {{else}}
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Conocimientos generales en el área temática<br/>2. Capacidad de síntesis bibliográfica<br/>3. Redacción técnica</p>
+            {{/if}}
+          </td>
+          <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
+            {{#if PrerrequisitosProcedimentales}}
+              <ul style="margin: 0; padding-left: 15px;">
+                {{#each PrerrequisitosProcedimentales}}
+                  <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
+                {{/each}}
+              </ul>
+            {{else}}
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Trabajo en equipo interdisciplinar<br/>2. Manejo de herramientas metodológicas<br/>3. Organización de cronograma</p>
+            {{/if}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+};
+
+/**
+ * Genera el HTML Handlebars para la Matriz de Actividades APE (Plan o Evaluación)
+ */
+export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string => {
+    const c: any = block.config || {};
+    const isEvaluacion = c.learningPlanMode === 'evaluacion';
+
+    if (isEvaluacion) {
+        return `
+  <!-- BLOQUE: 4. EVALUACIÓN DE ACTIVIDADES EJECUTADAS -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="10" style="padding: 6px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            4. PLAN DE APRENDIZAJE (EVALUACIÓN DE ACTIVIDADES EJECUTADAS)
+          </th>
+        </tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+          <th style="padding: 4px; border: 1px solid #000000; width: 18%; text-align: left;">OBJETIVOS DEL PROYECTO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 13%; text-align: left;">ASIGNATURA</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 15%; text-align: left;">RdA ASOCIADO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="2">ACTIVIDAD EJECUTADA</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 20%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 12%; text-align: left;">OBSERVACIONES</th>
+        </tr>
+        <tr style="background-color: #f8fafc; font-size: 6.5pt; text-align: center;">
+          <th style="border-r: 1px solid #000000;"></th>
+          <th style="border-r: 1px solid #000000;"></th>
+          <th style="border-r: 1px solid #000000;"></th>
+          <th style="padding: 2px; border: 1px solid #000000;">ACTIVIDAD</th>
+          <th style="padding: 2px; border: 1px solid #000000;">FECHA</th>
+          <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">ADEC (3)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">POCO (2)</th>
+          <th style="padding: 2px; border: 1px solid #000000;">NO (1)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 4px; border: 1px solid #000000;">[Objetivo Específico 1]</td>
+          <td style="padding: 4px; border: 1px solid #000000;">[Asignatura]</td>
+          <td style="padding: 4px; border: 1px solid #000000;">[RdA Asociado]</td>
+          <td style="padding: 4px; border: 1px solid #000000;">[Tarea de campo]</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;">[DD/MM/AA]</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">X</td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
+          <td style="padding: 4px; border: 1px solid #000000;">[Cumplió satisfactoriamente]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+    }
+
+    return `
+  <!-- BLOQUE: 4. MATRIZ DEL PLAN DE APRENDIZAJE APE -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="8" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            4. PLAN DE APRENDIZAJE (ACTIVIDADES A EJECUTAR)
+          </th>
+        </tr>
+        <tr style="background-color: #f1f5f9; color: #000000; font-weight: bold; text-align: center; font-size: 7.5pt;">
+          <th style="padding: 4px; border: 1px solid #000000; width: 18%;">OBJETIVOS DEL PROYECTO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 14%;">LÍNEA DE INVESTIGACIÓN</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 14%;">ASIGNATURA</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 18%;">ACTIVIDAD A EJECUTAR</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 7%;">FECHA</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 5%;">HORAS</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 9%;">OBSERVACIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#if ActividadesPlan}}
+          {{#each ActividadesPlan}}
+            <tr style="color: #000000;">
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.objetivoProyecto}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.lineaInvestigacion}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.asignatura}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.resultadoAprendizaje}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.actividad}}</td>
+              <td style="padding: 4px; border: 1px solid #000000; text-align: center;">{{this.fecha}}</td>
+              <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">{{this.horasTrabajo}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.observaciones}}</td>
+            </tr>
+          {{/each}}
+        {{else}}
+          <tr>
+            <td colspan="8" style="padding: 8px; text-align: center; color: #94a3b8; font-style: italic; border: 1px solid #000000;">
+              No se han registrado actividades del plan de aprendizaje aún.
+            </td>
+          </tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </div>`;
+};
+
+/**
+ * Genera el HTML Handlebars para los Resultados Generales y Dictamen (5. RESULTADOS GENERALES)
+ */
+export const generateLearningPlanEvaluationHtml = (block: DocumentBlock): string => {
+    return `
+  <!-- BLOQUE: 5. RESULTADOS GENERALES DE LA EVALUACIÓN -->
+  <div style="margin-top: 15px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="2" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            5. RESULTADOS GENERALES
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="width: 45%; padding: 5px 8px; border: 1px solid #000000; font-weight: bold; background-color: #f8fafc;">COGNITIVOS:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #065f46;">{{default PromedioCognitivos "3.80 — MUY ADECUADO (4)"}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; background-color: #f8fafc;">PROCEDIMENTALES:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #065f46;">{{default PromedioProcedimentales "3.65 — MUY ADECUADO (4)"}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; background-color: #f8fafc;">ACTIVIDADES DE APRENDIZAJE:</td>
+          <td style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #065f46;">{{default PromedioActividades "3.90 — MUY ADECUADO (4)"}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+};
+

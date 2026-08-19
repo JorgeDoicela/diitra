@@ -562,6 +562,67 @@ export const useDocumentTemplatesPage = () => {
                     }
                 };
                 break;
+            case 'learning_plan_header_section':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: '1. Identificación del Proyecto & Estudiante',
+                    isActive: true,
+                    config: {
+                        learningPlanHeaderColor: 'navy',
+                        showObjetivoGeneral: true,
+                        allowMultipleEstudiantes: true
+                    }
+                };
+                break;
+            case 'learning_plan_eval_parameters_section':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: '2. Parámetros de Evaluación (Escala Cualitativa)',
+                    isActive: true,
+                    config: {
+                        learningPlanHeaderColor: 'navy'
+                    }
+                };
+                break;
+            case 'learning_plan_prerequisites_section':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: '2. Prerrequisitos Previos (Cognitivos y Procedimentales)',
+                    isActive: true,
+                    config: {
+                        learningPlanHeaderColor: 'navy',
+                        minCognitivos: 3,
+                        minProcedimentales: 5
+                    }
+                };
+                break;
+            case 'learning_plan_activities_section':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: '3. Plan de Aprendizaje (Actividades APE)',
+                    isActive: true,
+                    config: {
+                        learningPlanHeaderColor: 'navy',
+                        showHorasTrabajo: true,
+                        showResultadosAprendizaje: true
+                    }
+                };
+                break;
+            case 'learning_plan_evaluation_table':
+                newBlock = {
+                    id: newId,
+                    type,
+                    title: 'Instrumento de Evaluación del Plan (Administrador)',
+                    isActive: true,
+                    config: {
+                        learningPlanHeaderColor: 'navy'
+                    }
+                };
+                break;
             case 'arbitration_dictamen_section':
                 newBlock = {
                     id: newId,

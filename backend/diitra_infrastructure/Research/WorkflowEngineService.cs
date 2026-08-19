@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
+using Diitra.Domain.Common.Documents;
 using Diitra.Application.Research;
 using Diitra.Application.Common.Certificates;
 using diitra_application.Security;
@@ -154,6 +155,29 @@ namespace Diitra.Infrastructure.Research
                     {
                         throw new InvalidOperationException("No es posible enviar la propuesta. Debe registrar al menos un investigador en el equipo humano.");
                     }
+                }
+            }
+
+            // 1.1.b Validación de Instrumentos Obligatorios (Protocolo y Plan de Aprendizaje firmados)
+            if (nuevoEstado == "Enviado")
+            {
+                var hasSignedProtocol = await _context.DocumentInstances.AnyAsync(d =>
+                    d.EntityUuid == proyecto.Uuid &&
+                    (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION") &&
+                    (d.State == DocumentState.Signed || !string.IsNullOrEmpty(d.FinalPdfPath)));
+
+                var hasSignedPlan = await _context.DocumentInstances.AnyAsync(d =>
+                    d.EntityUuid == proyecto.Uuid &&
+                    d.TemplateCode == "PLAN_APRENDIZAJE" &&
+                    (d.State == DocumentState.Signed || !string.IsNullOrEmpty(d.FinalPdfPath)));
+
+                if (!hasSignedProtocol || !hasSignedPlan)
+                {
+                    var pendientes = new List<string>();
+                    if (!hasSignedProtocol) pendientes.Add("Protocolo de Investigación");
+                    if (!hasSignedPlan) pendientes.Add("Plan de Aprendizaje");
+
+                    throw new InvalidOperationException($"No es posible habilitar la revisión del administrador. El director del proyecto debe firmar y enviar: {string.Join(" y ", pendientes)}.");
                 }
             }
 

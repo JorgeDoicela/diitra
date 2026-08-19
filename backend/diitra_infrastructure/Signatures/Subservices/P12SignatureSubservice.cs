@@ -4,6 +4,7 @@ using diitra_application.Signatures;
 using diitra_domain.Signatures;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.Security;
+using Diitra.Domain.Common.Documents;
 using Diitra.Infrastructure.Common.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -210,11 +211,33 @@ public class P12SignatureSubservice : IP12SignatureSubservice
                 idUsuario, idUsuario, "inv_documentos_firmas", "firma_code", "ESCRITURA",
                 $"Firma digital avanzada (.p12) de documento exitosa. Código: {firmaCode}.", ipAddress, userAgent);
 
-            // 12. Transición de Estado de Workflow (PROTOCOLO_INVESTIGACION y PROTOCOLO_INNOVACION)
-            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION")
+            // 12. Transición de Estado de Workflow (Requiere envío conjunto de Protocolo y Plan de Aprendizaje)
+            if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION" || instancia.TemplateCode == "PLAN_APRENDIZAJE")
             {
-                var workflowService = _serviceProvider.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
-                await workflowService.TransicionarEstadoAsync(instancia.EntityUuid, "Enviado", 1, $"Firma Digital .p12 e Inmutabilidad Forense - Hash: {docHash}");
+                var isProtocolo = instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION";
+                var isPlan = instancia.TemplateCode == "PLAN_APRENDIZAJE";
+
+                bool hasSignedProtocolo = isProtocolo || await _context.DocumentInstances.AnyAsync(d =>
+                    d.EntityUuid == instancia.EntityUuid &&
+                    (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION") &&
+                    (d.State == DocumentState.Signed || !string.IsNullOrEmpty(d.FinalPdfPath)));
+
+                bool hasSignedPlan = isPlan || await _context.DocumentInstances.AnyAsync(d =>
+                    d.EntityUuid == instancia.EntityUuid &&
+                    d.TemplateCode == "PLAN_APRENDIZAJE" &&
+                    (d.State == DocumentState.Signed || !string.IsNullOrEmpty(d.FinalPdfPath)));
+
+                if (hasSignedProtocolo && hasSignedPlan)
+                {
+                    var workflowService = _serviceProvider.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
+                    await workflowService.TransicionarEstadoAsync(instancia.EntityUuid, "Enviado", 1, $"Firma Digital .p12 de Protocolo y Plan de Aprendizaje - Hash: {docHash}");
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "[DIITRA Firma .p12] Documento {TemplateCode} firmado para el proyecto {EntityUuid}. Esperando firma del instrumento restante para habilitar revisión del Administrador.",
+                        instancia.TemplateCode, instancia.EntityUuid);
+                }
             }
             else if (instancia.TemplateCode == "INFORME_FINAL_INVESTIGACION" || instancia.TemplateCode == "INFORME_FINAL_INNOVACION")
             {

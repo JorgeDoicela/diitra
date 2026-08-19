@@ -801,6 +801,131 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 </div>
                             )}
 
+                            {/* ── BLOQUES DE PLAN DE APRENDIZAJE & EVALUACIÓN ─────────── */}
+                            {activeBlock.type === 'learning_plan_header_section' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
+                                        >
+                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
+                                            <option value="emerald">Verde Institucional</option>
+                                            <option value="gold">Dorado</option>
+                                            <option value="slate">Gris Oscuro</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
+                                        <div>
+                                            <label className="text-xs font-semibold text-text-main block">Mostrar Objetivo General</label>
+                                            <span className="text-[9px] text-text-dim block mt-0.5">Extraer e imprimir el Objetivo General del proyecto.</span>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={activeBlock.config.showObjetivoGeneral !== false}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'showObjetivoGeneral', e.target.checked)}
+                                            className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeBlock.type === 'learning_plan_eval_parameters_section' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
+                                        >
+                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
+                                            <option value="emerald">Verde Institucional</option>
+                                            <option value="slate">Gris Oscuro</option>
+                                        </select>
+                                    </div>
+                                    <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
+                                        <p className="font-bold text-purple-600 dark:text-purple-400">Escala Cualitativa ISTPET:</p>
+                                        <p>Muestra automáticamente los 4 niveles oficiales (4 Muy Adecuado, 3 Adecuado, 2 Poco Adecuado, 1 No Adecuado) con sus descriptores oficiales.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeBlock.type === 'learning_plan_prerequisites_section' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Modo del Bloque</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanMode || 'plan'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanMode', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main font-semibold"
+                                        >
+                                            <option value="plan">Planificación (Definición de Prerrequisitos)</option>
+                                            <option value="evaluacion">Evaluación (Cuadrícula 4 Columnas de Cumplimiento)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
+                                        >
+                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
+                                            <option value="emerald">Verde Institucional</option>
+                                            <option value="gold">Dorado</option>
+                                        </select>
+                                    </div>
+                                    <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
+                                        <p className="font-bold text-teal-600 dark:text-teal-400">Reglas CACES / ISTPET:</p>
+                                        <p>• Mínimo 3 prerrequisitos Cognitivos requeridos.</p>
+                                        <p>• Mínimo 5 prerrequisitos Procedimentales requeridos.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeBlock.type === 'learning_plan_activities_section' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Modo del Bloque</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanMode || 'plan'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanMode', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main font-semibold"
+                                        >
+                                            <option value="plan">Planificación (Con Horas de Trabajo)</option>
+                                            <option value="evaluacion">Evaluación (Con 4 Columnas de Cumplimiento)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
+                                        <select
+                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
+                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
+                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
+                                        >
+                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
+                                            <option value="emerald">Verde Institucional</option>
+                                        </select>
+                                    </div>
+                                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
+                                        <p className="font-bold text-blue-600 dark:text-blue-400">Matriz APE:</p>
+                                        <p>Articula cada actividad con los Resultados de Aprendizaje (RdA), horas o nivel de desempeño cualitativo.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeBlock.type === 'learning_plan_evaluation_table' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
+                                        <p className="font-bold text-amber-600 dark:text-amber-400">5. Resultados Generales (Admin):</p>
+                                        <p>Tabla consolidada de promedios para Cognitivos, Procedimentales y Actividades de Aprendizaje con dictamen cualitativo.</p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* ── AVANCE DE EJECUCIÓN ──────────────────────────────────────── */}
                             {activeBlock.type === 'project_progress_report' && (
                                 <div className="space-y-3 border-t border-border-thin/20 pt-4">

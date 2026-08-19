@@ -351,7 +351,61 @@ export function generateDefaultBlocksForTemplate(
         ];
     }
 
-    // E. RÚBRICA DE EVALUACIÓN POR PARES
+    // E. PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
+    if (code === 'PLAN_APRENDIZAJE') {
+        return [
+            createBaseCoverBlock('PLAN DE APRENDIZAJE DE LOS ESTUDIANTES', { colorTitle: 'navy' }),
+            {
+                id: 'block-plan-1', type: 'learning_plan_header_section' as BlockType, title: '1. Identificación del Proyecto & Estudiante', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', showObjetivoGeneral: true, allowMultipleEstudiantes: true }
+            },
+            {
+                id: 'block-plan-2', type: 'learning_plan_prerequisites_section' as BlockType, title: '2. Prerrequisitos Previos (Cognitivos y Procedimentales)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', minCognitivos: 3, minProcedimentales: 5 }
+            },
+            {
+                id: 'block-plan-3', type: 'learning_plan_activities_section' as BlockType, title: '3. Plan de Aprendizaje (Actividades APE)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', showHorasTrabajo: true, showResultadosAprendizaje: true }
+            },
+            createBaseSignaturesBlock([
+                { label: 'Elaborado por', name: '{{director_proyecto}}', role: 'Director del Proyecto' },
+                { label: 'Revisado por', name: 'MSc. Christian Castro', role: 'Coordinador de la Unidad de Investigación' }
+            ])
+        ];
+    }
+
+    // E.2 EVALUACIÓN DEL PLAN DE APRENDIZAJE (ADMINISTRADOR)
+    if (code === 'EVALUACION_PLAN_APRENDIZAJE') {
+        return [
+            createBaseCoverBlock('INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE DE LOS ESTUDIANTES', { colorTitle: 'navy' }),
+            {
+                id: 'block-eval-1', type: 'learning_plan_header_section' as BlockType, title: '1. Identificación del Proyecto & Estudiante', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', showObjetivoGeneral: false }
+            },
+            {
+                id: 'block-eval-2', type: 'learning_plan_eval_parameters_section' as BlockType, title: '2. Parámetros de Evaluación (Escala Cualitativa 1-4)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy' }
+            },
+            {
+                id: 'block-eval-3', type: 'learning_plan_prerequisites_section' as BlockType, title: '3. Evaluación de Prerrequisitos (Cognitivos y Procedimentales)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', learningPlanMode: 'evaluacion', minCognitivos: 3, minProcedimentales: 5 }
+            },
+            {
+                id: 'block-eval-4', type: 'learning_plan_activities_section' as BlockType, title: '4. Evaluación del Plan de Aprendizaje (Actividades Ejecutadas)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy', learningPlanMode: 'evaluacion' }
+            },
+            {
+                id: 'block-eval-5', type: 'learning_plan_evaluation_table' as BlockType, title: '5. Resultados Generales (Consolidado de Promedios)', isActive: true,
+                config: { learningPlanHeaderColor: 'navy' }
+            },
+            createBaseSignaturesBlock([
+                { label: 'Elaborado por', name: '{{director_proyecto}}', role: 'Director del Proyecto' },
+                { label: 'Revisado por', name: 'MSc. Christian Castro', role: 'Coordinador de la Unidad de Investigación' }
+            ])
+        ];
+    }
+
+    // F. RÚBRICA DE EVALUACIÓN POR PARES
     if (code === 'RUBRICA_EVALUACION') {
         return [
             createBaseCoverBlock('RÚBRICA DE EVALUACIÓN TÉCNICA POR PARES', { colorTitle: 'navy' }),

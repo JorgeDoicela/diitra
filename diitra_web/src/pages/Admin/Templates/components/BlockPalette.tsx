@@ -16,7 +16,9 @@ import {
     Target,
     PenLine,
     Table,
-    Layout
+    Layout,
+    GraduationCap,
+    ClipboardCheck
 } from 'lucide-react';
 import type { BlockType, DocumentBlock } from '../types';
 
@@ -74,6 +76,16 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                 { type: 'project_approval_notice', icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'arbitration_dictamen_section', icon: Award, label: 'Dictamen de Arbitraje', desc: 'Matriz de pares evaluadores, promedio y resolución CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'signatures', icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' }
+            ]
+        },
+        {
+            title: 'Bloques de Plan de Aprendizaje & Evaluación (APE)',
+            items: [
+                { type: 'learning_plan_header_section', icon: GraduationCap, label: '1. Ficha Plan y Estudiante', desc: 'Metadatos del proyecto, estudiante asignado y objetivo general (ISTPET).', color: 'text-emerald-600 bg-emerald-600/5' },
+                { type: 'learning_plan_eval_parameters_section', icon: Award, label: '2. Parámetros de Evaluación', desc: 'Escala cualitativa oficial ISTPET (4 Muy Adecuado a 1 No Adecuado).', color: 'text-purple-600 bg-purple-600/5' },
+                { type: 'learning_plan_prerequisites_section', icon: ClipboardCheck, label: '3. Matriz de Prerrequisitos', desc: 'Prerrequisitos cognitivos y procedimentales (Modo Plan o Evaluación).', color: 'text-teal-600 bg-teal-600/5' },
+                { type: 'learning_plan_activities_section', icon: Table, label: '4. Matriz de Actividades APE', desc: 'Planificación o evaluación de actividades ejecutadas y RdA asociados.', color: 'text-blue-600 bg-blue-600/5' },
+                { type: 'learning_plan_evaluation_table', icon: Award, label: '5. Resultados Generales (Admin)', desc: 'Consolidado de promedios cognitivos, procedimentales y dictamen final.', color: 'text-amber-600 bg-amber-600/5' }
             ]
         },
         {
