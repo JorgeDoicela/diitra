@@ -34,6 +34,7 @@ import { ProgressReportSection }  from '../../../components/DIITRA/sections/Prog
 import { FinalReportHeaderSection } from '../../../components/DIITRA/sections/FinalReportHeaderSection';
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
 import { MultiSectionTableSection } from '../../../components/DIITRA/sections/MultiSectionTableSection';
+import { LearningPlanSection } from '../../../components/DIITRA/sections/LearningPlanSection';
 
 /**
  * Mapa de nombre string de componente → Componente React real
@@ -50,7 +51,8 @@ export const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
     'ProgressReportSection': ProgressReportSection,
     'FinalReportHeaderSection': FinalReportHeaderSection,
     'AgnosticSection': AgnosticSection,
-    'MultiSectionTableSection': MultiSectionTableSection
+    'MultiSectionTableSection': MultiSectionTableSection,
+    'LearningPlanSection': LearningPlanSection
 };
 
 /**
@@ -69,7 +71,8 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'productos_esperados': ExpectedProductsSection,
     'cronograma':     TimelineSection,
     'bibliografia':   BibliographySection,
-
+    'plan_aprendizaje': LearningPlanSection,
+    'evaluacion_plan_aprendizaje': LearningPlanSection,
 };
 
 /**

@@ -280,5 +280,83 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
                 }
             }
         ]
+    },
+
+    PLAN_APRENDIZAJE: {
+        title: "Plan de Aprendizaje de Proyecto",
+        subtitle: "Articulación de la Investigación con la Docencia y Prácticas Formativas (APE) — ISTPET",
+        schema: {
+            // 1. Identificación del Proyecto
+            NombreProyecto: '',
+            LineaInvestigacion: '',
+            SublineaInvestigacion: '',
+            Carrera: '',
+            DirectorProyecto: '',
+            NumeroEstudiantes: 1,
+            FechaAprobacion: '',
+            FechaTerminacion: '',
+            PeriodoAcademico: '',
+
+            // Estudiante activo seleccionado
+            EstudianteActivoId: '',
+
+            // 2. Fichas de Estudiantes
+            EstudiantesEvaluaciones: [],
+
+            // 6. Firmas de Responsabilidad
+            FirmasResponsabilidad: {
+                DirectorNombre: '',
+                DirectorCargo: 'Director del Proyecto',
+                CoordinadorNombre: 'MSc. Christian Castro',
+                CoordinadorCargo: 'Coordinador de la Unidad de Investigación'
+            }
+        },
+        lists: ['EstudiantesEvaluaciones'],
+        sections: [
+            {
+                id: 'plan_aprendizaje',
+                label: 'Plan de Aprendizaje',
+                iconName: 'BookOpen'
+            }
+        ]
+    },
+
+    EVALUACION_PLAN_APRENDIZAJE: {
+        title: "Instrumento de Evaluación del Plan de Aprendizaje",
+        subtitle: "Evaluación Cualitativa de Articulación con la Docencia (APE) — Coordinación de Investigación ISTPET",
+        schema: {
+            // 1. Identificación del Proyecto
+            NombreProyecto: '',
+            LineaInvestigacion: '',
+            SublineaInvestigacion: '',
+            Carrera: '',
+            DirectorProyecto: '',
+            NumeroEstudiantes: 1,
+            FechaAprobacion: '',
+            FechaTerminacion: '',
+            PeriodoAcademico: '',
+
+            // Estudiante activo seleccionado
+            EstudianteActivoId: '',
+
+            // 2. Fichas de Evaluación por Estudiante
+            EstudiantesEvaluaciones: [],
+
+            // 6. Firmas de Responsabilidad
+            FirmasResponsabilidad: {
+                DirectorNombre: '',
+                DirectorCargo: 'Director del Proyecto',
+                CoordinadorNombre: 'MSc. Christian Castro',
+                CoordinadorCargo: 'Coordinador de la Unidad de Investigación'
+            }
+        },
+        lists: ['EstudiantesEvaluaciones'],
+        sections: [
+            {
+                id: 'evaluacion_plan_aprendizaje',
+                label: 'Evaluación Plan de Aprendizaje',
+                iconName: 'Award'
+            }
+        ]
     }
 };

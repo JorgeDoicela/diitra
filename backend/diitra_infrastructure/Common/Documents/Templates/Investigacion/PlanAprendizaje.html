@@ -1,0 +1,288 @@
+<style>
+  * { box-sizing: border-box; }
+  
+  @page {
+      margin-top: 2cm;
+      margin-bottom: 2cm;
+      margin-left: 2cm;
+      margin-right: 2cm;
+  }
+
+  .plan-container {
+      font-family: 'Geist', 'Segoe UI', Arial, sans-serif;
+      font-size: 9pt;
+      color: #1a202c;
+      line-height: 1.4;
+  }
+
+  .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+  }
+
+  .header-table td {
+      border: 1px solid #1B365D;
+      padding: 6px 10px;
+      vertical-align: middle;
+  }
+
+  .doc-title-bar {
+      background-color: #1B365D;
+      color: #ffffff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11pt;
+      padding: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      border: 1px solid #1B365D;
+  }
+
+  .section-header {
+      font-weight: bold;
+      font-size: 9.5pt;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      padding: 5px 8px;
+      border: 1px solid #94a3b8;
+      margin-top: 14px;
+      margin-bottom: 0;
+      text-transform: uppercase;
+  }
+
+  .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+  }
+
+  .data-table td, .data-table th {
+      border: 1px solid #94a3b8;
+      padding: 5px 8px;
+      font-size: 8.5pt;
+  }
+
+  .data-table th {
+      background-color: #f8fafc;
+      font-weight: bold;
+      text-align: center;
+  }
+
+  .label-cell {
+      background-color: #f8fafc;
+      font-weight: bold;
+      color: #334155;
+      width: 22%;
+  }
+
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .font-bold { font-weight: bold; }
+
+  .signature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+  }
+
+  .signature-table td {
+      border: none;
+      width: 50%;
+      text-align: center;
+      vertical-align: top;
+      padding: 0 20px;
+  }
+
+  .signature-line {
+      width: 80%;
+      margin: 0 auto 6px auto;
+      border-top: 1px solid #334155;
+  }
+</style>
+
+<div class="plan-container">
+    <!-- Encabezado Institucional -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 25%; text-align: center;">
+                <strong style="font-size: 13pt; color: #1B365D;">ISTPET</strong><br/>
+                <span style="font-size: 7.5pt; color: #64748b;">INSTITUTO TRAVERSARI</span>
+            </td>
+            <td style="width: 75%; text-align: center;">
+                <strong style="font-size: 11pt; color: #1B365D;">UNIDAD DE INVESTIGACIÓN</strong>
+            </td>
+        </tr>
+    </table>
+
+    <div class="doc-title-bar">
+        INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
+    </div>
+
+    <!-- 1. IDENTIFICACIÓN DEL PROYECTO -->
+    <div class="section-header">1. IDENTIFICACIÓN DEL PROYECTO</div>
+    <table class="data-table">
+        <tr>
+            <td class="label-cell">NOMBRE DEL PROYECTO</td>
+            <td colspan="3">{{default NombreProyecto TituloProyecto}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">LÍNEA DE INVESTIGACIÓN</td>
+            <td colspan="3">{{LineaInvestigacion}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">SUBLÍNEA DE INVESTIGACIÓN</td>
+            <td colspan="3">{{SublineaInvestigacion}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">CARRERA</td>
+            <td colspan="3">{{Carrera}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">DIRECTOR DEL PROYECTO</td>
+            <td>{{DirectorProyecto}}</td>
+            <td class="label-cell">N° ESTUDIANTES PARTICIPANTES</td>
+            <td>{{NumeroEstudiantes}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">FECHA DE APROBACIÓN</td>
+            <td>{{FechaAprobacion}}</td>
+            <td class="label-cell">PERIODO ACADÉMICO</td>
+            <td>{{PeriodoAcademico}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">NOMBRE DEL ESTUDIANTE</td>
+            <td colspan="3"><strong>{{NombreEstudiante}}</strong></td>
+        </tr>
+    </table>
+
+    <!-- 2. PARÁMETROS DE EVALUACIÓN -->
+    <div class="section-header">2. PARÁMETROS DE EVALUACIÓN</div>
+    <p style="font-size: 8pt; color: #475569; margin: 4px 0 8px 0; text-align: justify;">
+        La evaluación de la participación del estudiante en el proyecto de investigación tiene un enfoque cualitativo y se centra en identificar los resultados de aprendizaje de las actividades que los estudiantes deben realizar en conjunto con las asignaturas asociadas.
+    </p>
+    <table class="data-table">
+        <tr>
+            <th style="width: 8%;">ESCALA</th>
+            <th style="width: 22%;">VALORACIÓN</th>
+            <th>DESCRIPCIÓN</th>
+        </tr>
+        <tr>
+            <td class="text-center font-bold">4</td>
+            <td class="font-bold" style="color: #059669;">MUY ADECUADO</td>
+            <td>El estudiante ha superado ampliamente las expectativas, mostrando un rendimiento excepcional en todas las actividades asignadas.</td>
+        </tr>
+        <tr>
+            <td class="text-center font-bold">3</td>
+            <td class="font-bold" style="color: #2563eb;">ADECUADO</td>
+            <td>El estudiante ha cumplido con las expectativas, mostrando un buen rendimiento en la mayoría de las actividades, con algunos aspectos a mejorar.</td>
+        </tr>
+        <tr>
+            <td class="text-center font-bold">2</td>
+            <td class="font-bold" style="color: #d97706;">POCO ADECUADO</td>
+            <td>El estudiante ha cumplido parcialmente con las expectativas, mostrando un rendimiento inconsistente y necesitando mejoras significativas.</td>
+        </tr>
+        <tr>
+            <td class="text-center font-bold">1</td>
+            <td class="font-bold" style="color: #dc2626;">NO ADECUADO</td>
+            <td>El estudiante no ha cumplido con las expectativas, mostrando un rendimiento insatisfactorio en la mayoría de las actividades.</td>
+        </tr>
+    </table>
+
+    <!-- 3. PRERREQUISITOS -->
+    <div class="section-header">3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO</div>
+    <table class="data-table">
+        <tr>
+            <th rowspan="2" style="width: 32%;">COGNITIVOS</th>
+            <th colspan="4" style="width: 18%;">NIVEL DE CUMPLIMIENTO</th>
+            <th rowspan="2" style="width: 32%;">PROCEDIMENTALES</th>
+            <th colspan="4" style="width: 18%;">NIVEL DE CUMPLIMIENTO</th>
+        </tr>
+        <tr>
+            <th>4</th><th>3</th><th>2</th><th>1</th>
+            <th>4</th><th>3</th><th>2</th><th>1</th>
+        </tr>
+        {{#each PrerrequisitosFilas}}
+        <tr>
+            <td>{{this.cognitivoDesc}}</td>
+            <td class="text-center font-bold">{{#if this.cog4}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.cog3}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.cog2}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.cog1}}X{{/if}}</td>
+            <td>{{this.procedimentalDesc}}</td>
+            <td class="text-center font-bold">{{#if this.proc4}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.proc3}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.proc2}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.proc1}}X{{/if}}</td>
+        </tr>
+        {{/each}}
+    </table>
+
+    <!-- 4. PLAN DE APRENDIZAJE -->
+    <div class="section-header">4. PLAN DE APRENDIZAJE</div>
+    <table class="data-table">
+        <tr>
+            <th rowspan="2" style="width: 20%;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
+            <th rowspan="2" style="width: 15%;">ASIGNATURA</th>
+            <th rowspan="2" style="width: 20%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
+            <th colspan="2" style="width: 20%;">ACTIVIDAD EJECUTADA</th>
+            <th colspan="4" style="width: 15%;">NIVEL DE CUMPLIMIENTO</th>
+            <th rowspan="2" style="width: 10%;">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <th>ACTIVIDAD</th>
+            <th>FECHA</th>
+            <th>4</th><th>3</th><th>2</th><th>1</th>
+        </tr>
+        {{#each ActividadesPlanFilas}}
+        <tr>
+            <td>{{this.objetivoProyecto}}</td>
+            <td>{{this.asignatura}}</td>
+            <td>{{this.resultadoAprendizaje}}</td>
+            <td>{{this.actividad}}</td>
+            <td class="text-center">{{this.fecha}}</td>
+            <td class="text-center font-bold">{{#if this.lvl4}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.lvl3}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.lvl2}}X{{/if}}</td>
+            <td class="text-center font-bold">{{#if this.lvl1}}X{{/if}}</td>
+            <td>{{this.observaciones}}</td>
+        </tr>
+        {{/each}}
+    </table>
+
+    <!-- 5. RESULTADOS GENERALES -->
+    <div class="section-header">5. RESULTADOS GENERALES</div>
+    <table class="data-table" style="width: 50%;">
+        <tr>
+            <td class="label-cell">COGNITIVOS</td>
+            <td class="text-center font-bold">{{PromedioCognitivos}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">PROCEDIMENTALES</td>
+            <td class="text-center font-bold">{{PromedioProcedimentales}}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">ACTIVIDADES DE APRENDIZAJE</td>
+            <td class="text-center font-bold">{{PromedioActividades}}</td>
+        </tr>
+    </table>
+
+    <!-- 6. FIRMAS DE RESPONSABILIDAD -->
+    <table class="signature-table">
+        <tr>
+            <td>
+                <p style="font-size: 8pt; color: #64748b; margin-bottom: 35px;">Elaborado por:</p>
+                <div class="signature-line"></div>
+                <strong>{{default FirmasResponsabilidad.DirectorNombre DirectorProyecto}}</strong><br/>
+                <span style="font-size: 8pt; color: #64748b;">Director del Proyecto</span>
+            </td>
+            <td>
+                <p style="font-size: 8pt; color: #64748b; margin-bottom: 35px;">Revisado por:</p>
+                <div class="signature-line"></div>
+                <strong>{{default FirmasResponsabilidad.CoordinadorNombre "MSc. Christian Castro"}}</strong><br/>
+                <span style="font-size: 8pt; color: #64748b;">Coordinador de la Unidad de Investigación</span>
+            </td>
+        </tr>
+    </table>
+</div>

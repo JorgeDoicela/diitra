@@ -62,6 +62,7 @@ export type BlockType =
     | 'certificate_header'
     | 'certificate_recipient_badge'
     | 'certificate_body'
+    | 'learning_plan_evaluation_table'
     | 'project_budget_section';
 
 // ─────────────────────────────────────────────────────────────────────────────

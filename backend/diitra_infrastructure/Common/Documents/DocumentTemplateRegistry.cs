@@ -54,6 +54,34 @@ namespace Diitra.Infrastructure.Common.Documents
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"tipo_innovacion\", \"linea_investigacion\", \"sublinea_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"carrera\", \"alcance\", \"resumen_proyecto\", \"objetivo_general\", \"objetivos_especificos\", \"antecedentes\", \"justificacion_innovacion\", \"descripcion_innovacion\", \"vinculacion_sociedad\", \"convenio_asociado\", \"estado_arte_conceptual\", \"metodologia_aplicacion\", \"metodologia_evaluacion\", \"beneficiarios\", \"viabilidad\", \"transferencia_conocimiento\", \"recursos_disponibles\", \"recursos_necesarios\", \"financiamiento\", \"impactos\"]",
                 version: 100);
 
+            // 3. PLAN DE APRENDIZAJE DE PROYECTO (ELABORACIÓN DIRECTOR / EQUIPO)
+            yield return DocumentTemplate.Create(
+                code: "PLAN_APRENDIZAJE",
+                name: "Plan de Aprendizaje de Proyecto (Docencia - APE)",
+                description: "Planificación de articulación de la investigación con la docencia y prácticas formativas APE - ISTPET.",
+                category: DocumentCategory.Protocolo,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/PlanAprendizaje.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"TituloProyecto\", \"Carrera\", \"PeriodoAcademico\", \"DirectorProyecto\", \"DocentesParticipantes\", \"AsignaturasVinculadas\", \"EstudiantesParticipantes\", \"MetodologiaAprendizaje\", \"CriteriosEvaluacion\", \"CronogramaTutorias\", \"FirmasResponsabilidad\"]",
+                version: 1);
+
+            // 4. INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE (REVISIÓN ADMINISTRADOR)
+            yield return DocumentTemplate.Create(
+                code: "EVALUACION_PLAN_APRENDIZAJE",
+                name: "Instrumento de Evaluación del Plan de Aprendizaje de los Estudiantes",
+                description: "Evaluación cualitativa institucional del plan de aprendizaje realizada por la Coordinación de Investigación - ISTPET.",
+                category: DocumentCategory.Protocolo,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/EvaluacionPlanAprendizaje.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"PeriodoAcademico\", \"EstudiantesEvaluaciones\", \"FirmasResponsabilidad\"]",
+                version: 1);
+
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)
             // ══════════════════════════════════════════════════════════════

@@ -207,6 +207,13 @@ export const ProjectWorkspace: React.FC = () => {
         if (activeDocument === 'PROTOCOLO_INVESTIGACION' || activeDocument === 'PROTOCOLO_PEER_REVIEW') {
             isReadOnly = !currentProject.puedeEditar;
             readOnlyReason = (currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección') ? 'state' : 'membership';
+        } else if (activeDocument === 'PLAN_APRENDIZAJE') {
+            const isTeamMember = currentProject.puedeEditar || currentProject.esParticipante || isAdmin;
+            isReadOnly = !isTeamMember || currentProject.status === 'Finalizado';
+            readOnlyReason = !isTeamMember ? 'membership' : 'state';
+        } else if (activeDocument === 'EVALUACION_PLAN_APRENDIZAJE') {
+            isReadOnly = !isAdmin;
+            readOnlyReason = !isAdmin ? 'membership' : 'state';
         } else if (activeDocument === 'RUBRICA_EVALUACION') {
             isReadOnly = true;
             readOnlyReason = 'review';
@@ -226,7 +233,7 @@ export const ProjectWorkspace: React.FC = () => {
 
         const canSignDocument = (activeDocument === 'OFICIO_APROBACION')
             ? isAdmin
-            : currentProject.puedeFirmar;
+            : (activeDocument === 'PLAN_APRENDIZAJE' ? (currentProject.puedeFirmar || isAdmin) : currentProject.puedeFirmar);
 
         return (
             <DocumentEditor

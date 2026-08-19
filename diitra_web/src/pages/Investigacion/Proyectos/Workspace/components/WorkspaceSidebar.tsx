@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, FileSignature, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
+import { Shield, FileSignature, CheckCircle2, AlertCircle } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
 interface WorkspaceSidebarProps {
@@ -147,8 +147,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                     )}
                 </div>
             </div>
-
-
 
             {/* Panel de Actividad Reciente */}
             {resolvedProjectUuid && (

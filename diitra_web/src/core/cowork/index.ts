@@ -19,6 +19,7 @@ export { useCoWork } from './hooks/useCoWork';
 
 // ── Componente de editor colaborativo (Tiptap + Yjs) ──
 export { CoWorkEditor } from './components/CoWorkEditor';
+export { CoWorkField } from './components/CoWorkField';
 
 // ── Adaptador de autenticación (DIITRA Auth → CoWork User) ──
 export { coworkUserFromAuth } from './utils/coworkUserFromAuth';

@@ -282,6 +282,41 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 }
             }
 
+            // Auto-completar metadatos del proyecto para Plan de Aprendizaje / Evaluación si faltan valores iniciales
+            if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'PLAN_APRENDIZAJE' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')) {
+                try {
+                    const projRes = await api.get(`/projects/${entityUuid}/detail`);
+                    if (projRes.data) {
+                        const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
+                            inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
+                        );
+                        const directorNombre = directorObj
+                            ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
+                            : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
+
+                        const docentes = (projRes.data.investigadores || []).map((inv: any) => ({
+                            cedula: inv.cedula || '',
+                            nombres: inv.nombres_completos || inv.nombresCompletos || `${inv.nombre || ''} ${inv.apellido || ''}`.trim(),
+                            rol: inv.rol || 'Coinvestigador'
+                        }));
+
+                        setDocInstanceData((prev: any) => ({
+                            NombreProyecto: prev?.NombreProyecto || projRes.data.titulo || '',
+                            TituloProyecto: prev?.TituloProyecto || projRes.data.titulo || '',
+                            LineaInvestigacion: prev?.LineaInvestigacion || projRes.data.linea || projRes.data.linea_investigacion || '',
+                            SublineaInvestigacion: prev?.SublineaInvestigacion || projRes.data.sublinea || projRes.data.sublinea_investigacion || '',
+                            Carrera: prev?.Carrera || projRes.data.carrera || '',
+                            PeriodoAcademico: prev?.PeriodoAcademico || projRes.data.periodo || projRes.data.periodo_convocatoria || '',
+                            DirectorProyecto: prev?.DirectorProyecto || directorNombre,
+                            DocentesParticipantes: (prev?.DocentesParticipantes && prev.DocentesParticipantes.length > 0) ? prev.DocentesParticipantes : docentes,
+                            ...prev
+                        }));
+                    }
+                } catch (e) {
+                    console.warn('[DIITRA] No se pudo autocompletar metadatos para Plan de Aprendizaje:', e);
+                }
+            }
+
             // Aplicar catálogos
             setCarreras(carrerasRes.data || []);
             const allConvs = convsRes.data || [];

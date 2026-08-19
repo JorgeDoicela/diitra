@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare,
-    AlertCircle, BarChart, Activity, Shield, FileCheck, Clock, Award
+    AlertCircle, BarChart, Activity, Shield, FileCheck, Clock, Award, GraduationCap
 } from 'lucide-react';
 import api from '../../../../../api/axios_config';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
 const WorkflowPhases = [
     { id: 'Borrador', label: 'Formulación', icon: FileText },
+    { id: 'PlanAprendizaje', label: 'Plan de Aprendizaje', icon: GraduationCap },
     { id: 'Enviado', label: 'Revisión Administrador', icon: Shield },
+    { id: 'EvaluacionPlanAprendizaje', label: 'Evaluación Plan Aprendizaje', icon: Award },
     { id: 'En Revisión', label: 'Evaluación Pares', icon: CheckCircle2 },
     { id: 'Aprobado', label: 'Aprobación Legal', icon: FileSignature },
     { id: 'En Ejecución', label: 'Ejecución y Avance', icon: Settings },
@@ -68,6 +70,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     const isInnovacion = templateCode.startsWith('INNOVACION') || templateCode.startsWith('TRANSFERENCIA');
     const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
     const [isFinalReportSigned, setIsFinalReportSigned] = useState(false);
+    const [isPlanAprendizajeApproved, setIsPlanAprendizajeApproved] = useState(false);
 
     const renderDeadlineBadge = (dateStr?: string | null, prefix: string = 'Plazo') => {
         if (!dateStr) return null;
@@ -117,30 +120,50 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
     useEffect(() => {
         let isMounted = true;
-        const checkFinalReport = async () => {
+        const checkInstances = async () => {
             if (!resolvedProjectUuid) return;
             try {
                 const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
                 if (isMounted && Array.isArray(res.data)) {
+                    // 1. Verificar si el informe final está firmado
                     const finalDoc = res.data.find(
                         (d: any) => d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode
                     );
                     if (finalDoc) {
                         setIsFinalReportSigned(finalDoc.is_signed === true || finalDoc.isSigned === true);
                     }
+
+                    // 2. Verificar si el Plan de Aprendizaje / Evaluación fue aprobado
+                    const planDoc = res.data.find(
+                        (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
+                    );
+                    let approved = false;
+                    if (planDoc) {
+                        let contentData: any = null;
+                        try {
+                            if (planDoc.content_json) contentData = JSON.parse(planDoc.content_json);
+                        } catch { }
+
+                        approved = planDoc.is_signed === true || planDoc.isSigned === true
+                            || contentData?.EstadoAprobacion === 'Aprobado'
+                            || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
+                    } else if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) {
+                        approved = true;
+                    }
+                    setIsPlanAprendizajeApproved(approved);
                 }
             } catch {
                 // Silencioso si aún no existe la instancia
             }
         };
-        checkFinalReport();
-        const onProjectsChanged = () => checkFinalReport();
+        checkInstances();
+        const onProjectsChanged = () => checkInstances();
         window.addEventListener('diitra-projects-changed', onProjectsChanged);
         return () => {
             isMounted = false;
             window.removeEventListener('diitra-projects-changed', onProjectsChanged);
         };
-    }, [resolvedProjectUuid, finalReportTemplateCode]);
+    }, [resolvedProjectUuid, finalReportTemplateCode, currentProject.status]);
 
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">
@@ -156,7 +179,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                 <div className="absolute left-3 top-2.5 bottom-2.5 w-0.5 bg-border-thin"></div>
 
                 {WorkflowPhases.map((phase, idx) => {
-                    // Determinar el estado lógico de cada una de las 7 fases
+                    // Determinar el estado lógico de cada una de las fases
                     let isCurrent = false;
                     let isPast = false;
                     let isFuture = false;
@@ -166,16 +189,29 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
                     if (phase.id === 'Borrador') {
                         isCurrent = status === 'Borrador' || status === 'En Corrección';
-                        isPast = !isCurrent;
+                        isPast = status !== 'Borrador' && status !== 'En Corrección';
+                    } else if (phase.id === 'PlanAprendizaje') {
+                        // Fase 2: El docente elabora el plan de aprendizaje a la par del protocolo antes de enviar
+                        isCurrent = status === 'Borrador' || status === 'En Corrección' || (status === 'Enviado' && !isPlanAprendizajeApproved);
+                        isPast = isPlanAprendizajeApproved || status === 'En Revisión' || status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
+                        isFuture = false;
                     } else if (phase.id === 'Enviado') {
+                        // Fase 3: La revisión del Administrador se abre SOLO cuando el docente envía el expediente completo
                         isCurrent = status === 'Enviado';
                         isPast = status !== 'Borrador' && status !== 'En Corrección' && status !== 'Enviado';
                         isFuture = status === 'Borrador' || status === 'En Corrección';
+                    } else if (phase.id === 'EvaluacionPlanAprendizaje') {
+                        // Fase 4: Evaluación del Plan por el Administrador al recibir la postulación
+                        isCurrent = (status === 'Enviado' || status === 'En Revisión') && !isPlanAprendizajeApproved;
+                        isPast = isPlanAprendizajeApproved || status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
+                        isFuture = status === 'Borrador' || status === 'En Corrección';
                     } else if (phase.id === 'En Revisión') {
                         isRevisionDone = (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
-                        isCurrent = status === 'En Revisión';
+                        // COMPUERTA: Solo se habilita si el plan de aprendizaje fue aprobado y el proyecto avanzó a revisión
+                        const canOpenPeerReview = isPlanAprendizajeApproved || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = (status === 'En Revisión' || (status === 'Enviado' && isPlanAprendizajeApproved)) && canOpenPeerReview;
                         isPast = status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
-                        isFuture = status === 'Borrador' || status === 'En Corrección' || status === 'Enviado';
+                        isFuture = !canOpenPeerReview || status === 'Borrador' || status === 'En Corrección' || (status === 'Enviado' && !isPlanAprendizajeApproved);
                     } else if (phase.id === 'Aprobado') {
                         isCurrent = status === 'Aprobado';
                         isPast = status === 'En Ejecución' || status === 'Finalizado';
@@ -253,6 +289,10 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         }
                                     } else if (phase.id === 'Enviado' && (isCurrent || isPast)) {
                                         navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                    } else if (phase.id === 'PlanAprendizaje' && (isCurrent || isPast)) {
+                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix));
+                                    } else if (phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast)) {
+                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix));
                                     } else if (phase.id === 'En Revisión' && (isCurrent || isPast)) {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
@@ -304,6 +344,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             ? 'Validación y dictamen preliminar de la idea de proyecto por parte del Administrador.'
                                             : 'Revisión formal de requisitos, carga horaria, firmas y presupuesto institucional.'
                                     )}
+                                    {phase.id === 'PlanAprendizaje' && 'Articulación docencia-investigación (APE). Planificación de asignaturas vinculadas, estudiantes y tutorías.'}
                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
@@ -363,6 +404,48 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 <span>Ver Revisión Técnica</span>
                                             </Link>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* 2.5 PLAN DE APRENDIZAJE */}
+                                {phase.id === 'PlanAprendizaje' && (isCurrent || isPast) && (
+                                    <div className="mt-4 animate-fade-in">
+                                        <Link
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix)}
+                                            onClick={(e) => { e.stopPropagation(); }}
+                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                : 'btn-vercel-secondary'
+                                                }`}
+                                        >
+                                            <GraduationCap size={14} />
+                                            <span>
+                                                {currentProject.status === 'Finalizado'
+                                                    ? 'Ver Plan de Aprendizaje'
+                                                    : 'Plan de Aprendizaje (Docencia - APE)'}
+                                            </span>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* 2.6 EVALUACIÓN PLAN DE APRENDIZAJE */}
+                                {phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast) && (
+                                    <div className="mt-4 animate-fade-in">
+                                        <Link
+                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
+                                            onClick={(e) => { e.stopPropagation(); }}
+                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive && isAdmin
+                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                : 'btn-vercel-secondary'
+                                                }`}
+                                        >
+                                            <Award size={14} />
+                                            <span>
+                                                {isAdmin
+                                                    ? 'Evaluar Plan de Aprendizaje'
+                                                    : 'Ver Evaluación del Plan'}
+                                            </span>
+                                        </Link>
                                     </div>
                                 )}
 
