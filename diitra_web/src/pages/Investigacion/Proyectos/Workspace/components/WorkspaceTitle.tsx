@@ -26,27 +26,34 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
     return (
         <>
             {/* ── Page Title ── */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-0">
-                <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em]">
-                        <span className={`status-label ${cfg.badge} text-[10px]`} style={cfg.style}>
-                            <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
+            <header className="mb-6 md:mb-8 animate-fade-in">
+                <div className="space-y-3 max-w-4xl">
+                    <h1 className="text-xl sm:text-2xl font-bold text-text-main tracking-tight leading-snug break-words">
+                        {currentProject.title?.trim() || '(Sin título)'}
+                    </h1>
+
+                    {/* Metadatos y Badges en una sola línea ordenada */}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        {((currentProject as any).codigo_institucional || (currentProject as any).codigo) && (
+                            <span className="text-[11px] font-mono bg-surface border border-border-thin rounded px-2 py-0.5 text-text-dim font-medium">
+                                {(currentProject as any).codigo_institucional || (currentProject as any).codigo}
+                            </span>
+                        )}
+                        <div className={`badge-vercel ${cfg.badge} text-[11px] !py-0.5 !px-2.5 font-medium`}>
+                            <span className={`dot ${cfg.dot}`} />
                             {cfg.label}
-                        </span>
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight break-words">{currentProject.title?.trim() || '(Sin título)'}</h2>
-                    {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <span className="badge-vercel bg-brand/5 border border-brand/20 text-brand text-[10px] font-semibold py-1 px-2.5 rounded-full flex items-center gap-1 animate-fade-in">
+                        </div>
+                        {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (
+                            <span className="badge-vercel badge-vercel-brand text-[11px] !py-0.5 !px-2.5 font-medium">
                                 Grupo: {currentProject.grupoInvestigacion}
                             </span>
-                        </div>
-                    )}
-                    <p className="text-sm text-text-dim font-medium mt-1">
-                        {(templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion')
-                            ? 'Gestión del ciclo de vida institucional del proyecto de innovación y transferencia tecnológica.'
-                            : 'Gestión del ciclo de vida institucional del proyecto de investigación.'}
-                    </p>
+                        )}
+                        {(currentProject as any).linea && (
+                            <span className="text-[11px] text-text-dim bg-surface border border-border-thin rounded px-2 py-0.5 truncate max-w-[280px]" title={(currentProject as any).linea}>
+                                {(currentProject as any).linea}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </header>
 

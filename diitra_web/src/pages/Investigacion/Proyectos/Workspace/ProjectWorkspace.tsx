@@ -335,7 +335,7 @@ export const ProjectWorkspace: React.FC = () => {
                         setActiveDocument={setActiveDocument}
                     />
 
-                    <div className="px-2 flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-3 lg:items-start">
+                    <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-4 lg:items-start">
                         <div className="flex flex-col gap-3">
                             <CacesWorkflow
                                 currentProject={currentProject}

@@ -30,10 +30,11 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     const isInnovacion = (templateCode || '').includes('INNOVACION') || window.location.pathname.includes('innovacion');
     const returnPath = isInnovacion ? '/innovacion' : urlPrefix;
     const returnLabel = isInnovacion ? 'Innovación' : (urlPrefix.endsWith('mis-proyectos') ? 'Mis Proyectos' : 'Investigación');
+    const projectCode = (currentProject as any).codigo_institucional || (currentProject as any).codigo || `Proyecto #${currentProject.id}`;
 
     return (
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
-            <div className="flex items-center gap-4">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-3.5 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
+            <div className="flex items-center gap-3">
                 {isSidebarCollapsed && (
                     <>
                         <button
@@ -68,7 +69,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                     <ArrowLeft size={16} />
                 </Link>
                 <div className="flex flex-col justify-center">
-                    <div className="flex items-center gap-1.5 text-[11px] text-text-dim">
+                    <div className="flex items-center gap-1.5 text-[11px] text-text-dim font-medium">
                         <Link 
                             to={returnPath}
                             className="hover:text-text-main cursor-pointer transition-colors duration-150 no-underline text-inherit"
@@ -76,25 +77,25 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                             {returnLabel}
                         </Link>
                         <ChevronRight size={10} className="opacity-60" />
-                        <span className="text-text-main font-semibold font-mono">Proyecto #{currentProject.id}</span>
+                        <span className="text-text-main font-semibold font-mono">{projectCode}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
                 <button 
                     onClick={onExportCaces}
-                    className="btn-vercel-secondary !py-2 text-xs flex-1 sm:flex-none justify-center"
+                    className="btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium"
                 >
-                    <FileText size={14} />
+                    <FileText size={13} />
                     <span>Exportar CACES</span>
                 </button>
                 <button 
                     disabled={isPublishingDSpace}
                     onClick={onPublishDSpace}
-                    className={`btn-vercel-primary !py-2 text-xs flex-1 sm:flex-none justify-center ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                    <UploadCloud size={14} className={isPublishingDSpace ? "animate-pulse" : ""} />
+                    <UploadCloud size={13} className={isPublishingDSpace ? "animate-pulse" : ""} />
                     <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
                 </button>
             </div>
