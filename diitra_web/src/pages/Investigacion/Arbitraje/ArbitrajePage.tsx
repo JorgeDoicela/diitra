@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
-    Gavel, Loader2,
+    Loader2, Users,
     AlertTriangle, UserPlus, Building,
     X, FileDown, Check,
     PlusCircle, AlertCircle, ChevronRight
@@ -146,50 +146,48 @@ const ArbitrajePage: React.FC = () => {
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
 
             <PageHeader
-                kicker="Módulo de Evaluación por Pares · DIITRA"
-                icon={Gavel}
                 title="Evaluación por Pares"
-                description="Panel de control del proceso de evaluación por pares bajo la normativa CACES. Asigne evaluadores, supervise el avance y emita dictámenes formales."
+                description="Supervisión y control del arbitraje a doble ciego de proyectos de investigación (CACES)."
             >
-                <button onClick={() => setShowExterno(true)} className="btn-vercel-secondary flex items-center gap-2 shrink-0">
+                <button
+                    onClick={() => setShowExterno(true)}
+                    className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                >
                     <UserPlus size={14} />
-                    Par Evaluador Externo
+                    <span>Nuevo Evaluador Externo</span>
                 </button>
             </PageHeader>
 
-
-
-            {/* ── TWO-COLUMN LAYOUT — igual que PeerReviewPage ─── */}
+            {/* ── TWO-COLUMN LAYOUT ─── */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:100ms] relative z-10">
 
                 {/* ── Columna principal: tabla ─────────────────── */}
                 <div className="lg:col-span-3 space-y-0">
 
-                    {/* Tabs filtro */}
+                    {/* Tabs filtro con conteos precisos */}
                     <div className="tabs-vercel">
-                        {FILTROS.map(f => (
-                            <button
-                                key={f.key}
-                                className={`tab-vercel-item flex items-center gap-1.5 ${filtro === f.key ? 'active' : ''}`}
-                                onClick={() => setFiltro(f.key)}
-                            >
-                                {f.label}
-                                {f.key !== 'todos' && proyectos.some(p => p.estado_arbitraje === f.key) && (
-                                    <span 
-                                        className="w-1.5 h-1.5 rounded-full inline-block shrink-0" 
-                                        style={{ backgroundColor: ESTADO_ARBITRAJE_CONFIG[f.key]?.color ?? '#888' }}
-                                    />
-                                )}
-                                {f.key === 'todos' && !loading && (
-                                    <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-0.5">
-                                        {proyectos.length}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                        {FILTROS.map(f => {
+                            const count = f.key === 'todos'
+                                ? proyectos.length
+                                : proyectos.filter(p => p.estado_arbitraje === f.key).length;
+                            return (
+                                <button
+                                    key={f.key}
+                                    className={`tab-vercel-item flex items-center gap-1.5 ${filtro === f.key ? 'active' : ''}`}
+                                    onClick={() => setFiltro(f.key)}
+                                >
+                                    {f.label}
+                                    {count > 0 && !loading && (
+                                        <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-0.5">
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    {/* Tabla */}
+                    {/* Tabla de Proyectos */}
                     <div className="bento-card static overflow-hidden">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-dim">
@@ -199,7 +197,7 @@ const ArbitrajePage: React.FC = () => {
                         ) : filtrados.length === 0 ? (
                             <div className="empty-state py-20">
                                 <div className="icon-circle icon-circle-neutral !p-4 mb-4">
-                                    <Gavel size={28} strokeWidth={1.5} />
+                                    <Users size={24} strokeWidth={1.5} />
                                 </div>
                                 <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin proyectos en esta categoría</p>
                                 <p className="text-text-dim text-xs mt-2 max-w-sm">Cambia el filtro o asigna evaluadores a los proyectos.</p>
@@ -209,12 +207,12 @@ const ArbitrajePage: React.FC = () => {
                                 <table className="w-full sm:table-fixed">
                                     <thead>
                                         <tr className="border-b border-border-thin">
-                                            <th className="text-left px-5 py-3.5 sm:w-[35%]"><span className="section-label !tracking-[0.12em]">Proyecto</span></th>
-                                            <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[15%]"><span className="section-label !tracking-[0.12em]">Convocatoria</span></th>
+                                            <th className="text-left px-5 py-3.5 sm:w-[38%]"><span className="section-label !tracking-[0.12em]">Proyecto</span></th>
+                                            <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[20%]"><span className="section-label !tracking-[0.12em]">Convocatoria</span></th>
                                             <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label justify-center !tracking-[0.12em]">Progreso</span></th>
                                             <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[8%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
                                             <th className="text-left px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label !tracking-[0.12em]">Estado</span></th>
-                                            <th className="px-4 py-3.5 sm:w-[18%] w-[90px]" />
+                                            <th className="px-4 py-3.5 sm:w-[10%] w-[80px]" />
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -228,57 +226,58 @@ const ArbitrajePage: React.FC = () => {
                                                     onClick={() => navigate(`/evaluacion-pares/proyecto/${p.proyecto_uuid}`)}
                                                 >
                                                     <td className="px-5 py-4">
-                                                        <div className="flex items-start gap-3 min-w-0">
-                                                            <div className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5 text-text-dim/80">
-                                                                 <Gavel size={16} strokeWidth={1.5} />
+                                                        <div className="min-w-0 pr-2">
+                                                            <p className="text-sm font-semibold text-text-main leading-snug group-hover:text-brand transition-colors line-clamp-2">
+                                                                {p.proyecto_titulo}
+                                                            </p>
+                                                            <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
+                                                                {p.codigo_institucional && (
+                                                                    <span className="text-[10px] font-mono text-text-dim bg-surface border border-border-thin rounded px-1.5 py-0.5">
+                                                                        {p.codigo_institucional}
+                                                                    </span>
+                                                                )}
+                                                                {!tieneExterno && p.total_arbitros > 0 && (
+                                                                    <span className="badge-vercel badge-vercel-warning text-[10px] !py-0.5 !px-1.5 font-medium">
+                                                                        <AlertTriangle size={9} className="mr-0.5" />
+                                                                        Requiere Externo
+                                                                    </span>
+                                                                )}
+                                                                {tieneExterno && (
+                                                                    <span className="badge-vercel badge-vercel-violet text-[10px] !py-0.5 !px-1.5 font-medium">
+                                                                        <Building size={9} className="mr-0.5" />
+                                                                        Par Externo
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px] group-hover:text-brand transition-colors">
-                                                                    {p.proyecto_titulo}
-                                                                </p>
-                                                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-                                                                    {p.codigo_institucional && (
-                                                                        <span className="text-[10px] font-mono text-text-dim">{p.codigo_institucional}</span>
-                                                                    )}
-                                                                    {!tieneExterno && p.total_arbitros > 0 && (
-                                                                        <span className="text-[10px] text-warning font-medium flex items-center gap-0.5">
-                                                                            <AlertTriangle size={9} />sin externo
-                                                                        </span>
-                                                                    )}
-                                                                    {tieneExterno && (
-                                                                        <span className="text-[10px] text-success font-medium flex items-center gap-0.5">
-                                                                            <Building size={9} />ext. asignado
-                                                                        </span>
-                                                                    )}
-                                                                </div>
 
-                                                                {/* Detalle apilado para móviles */}
-                                                                <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
-                                                                    {p.convocatoria && (
-                                                                        <span className="text-text-dim">
-                                                                            {p.convocatoria}
-                                                                        </span>
-                                                                    )}
-                                                                    {p.total_arbitros > 0 && (
-                                                                        <span className="text-text-dim font-mono">
-                                                                            Progreso: {p.arbitros_completados}/{p.total_arbitros}
-                                                                        </span>
-                                                                    )}
-                                                                    {p.puntaje_promedio != null && (
-                                                                        <span className={`font-mono ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
-                                                                            {p.puntaje_promedio.toFixed(1)} pts
-                                                                        </span>
-                                                                    )}
-                                                                    <div className="flex items-center gap-1.5 text-[10px] font-medium text-text-main">
-                                                                        <span className={`dot ${cfg.dot} !w-1 !h-1`} />
-                                                                        <span>{cfg.label}</span>
-                                                                    </div>
+                                                            {/* Detalle apilado para móviles */}
+                                                            <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
+                                                                {p.convocatoria && (
+                                                                    <span className="text-text-dim">
+                                                                        {p.convocatoria}
+                                                                    </span>
+                                                                )}
+                                                                {p.total_arbitros > 0 && (
+                                                                    <span className="text-text-dim font-mono">
+                                                                        Progreso: {p.arbitros_completados}/{p.total_arbitros}
+                                                                    </span>
+                                                                )}
+                                                                {p.puntaje_promedio != null && (
+                                                                    <span className={`font-mono ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                        {p.puntaje_promedio.toFixed(1)} pts
+                                                                    </span>
+                                                                )}
+                                                                <div className="flex items-center gap-1.5 text-[10px] font-medium text-text-main">
+                                                                    <span className={`dot ${cfg.dot} !w-1 !h-1`} />
+                                                                    <span>{cfg.label}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-4 hidden md:table-cell">
-                                                        <span className="text-xs text-text-dim truncate block max-w-[140px]">{p.convocatoria ?? '—'}</span>
+                                                        <span className="text-xs text-text-dim truncate block max-w-[200px]" title={p.convocatoria ?? ''}>
+                                                            {p.convocatoria ?? '—'}
+                                                        </span>
                                                     </td>
                                                     <td className="px-4 py-4 hidden sm:table-cell">
                                                         <MiniProgress completados={p.arbitros_completados} total={p.total_arbitros} />
@@ -298,28 +297,12 @@ const ArbitrajePage: React.FC = () => {
                                                             <span>{cfg.label}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
-                                                            {p.arbitraje_cerrado && (
-                                                                <button
-                                                                    onClick={e => handlePdf(e, p.proyecto_uuid)}
-                                                                    className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
-                                                                    disabled={descargando === p.proyecto_uuid}
-                                                                    title="Descargar Acta PDF"
-                                                                >
-                                                                    {descargando === p.proyecto_uuid ? <Loader2 size={11} className="animate-spin" /> : <FileDown size={11} />}
-                                                                    <span className="hidden xl:inline text-[10px]">Acta</span>
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={e => { e.stopPropagation(); setAsignarA(p); }}
-                                                                className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
-                                                                title="Asignar evaluador"
-                                                            >
-                                                                <PlusCircle size={11} />
-                                                                <span className="hidden xl:inline text-[10px]">Evaluador</span>
-                                                            </button>
-                                                            <ChevronRight size={14} className="text-text-dim/40 group-hover:text-text-dim transition-colors" />
+                                                    <td className="px-4 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <span className="text-[11px] text-text-dim group-hover:text-text-main font-medium transition-colors hidden sm:inline">
+                                                                Ver Tribunal
+                                                            </span>
+                                                            <ChevronRight size={14} className="text-text-dim/40 group-hover:text-text-main group-hover:translate-x-0.5 transition-all" />
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -333,18 +316,16 @@ const ArbitrajePage: React.FC = () => {
                 </div>
 
                 {/* ── Sidebar: VercelUsageCard ─────────────────── */}
-                <div className="space-y-6 lg:pt-[69px]">
+                <div className="space-y-6 lg:pt-[54px]">
                     {stats && (
                         <VercelUsageCard
-                            title="Métricas de Evaluación"
+                            title="Métricas del Periodo"
                             items={[
-                                { label: 'En Revisión',     value: stats.proyectos_en_revision,    displayValue: `${stats.proyectos_en_revision}`,                                     max: Math.max(10, stats.proyectos_en_revision),    color: 'var(--fg)',  tooltip: 'Proyectos actualmente en proceso de evaluación por pares.' },
-                                { label: 'Pares Evaluadores',  value: stats.total_arbitros_asignados, displayValue: `${stats.total_arbitros_asignados}`,                                   max: Math.max(15, stats.total_arbitros_asignados), color: '#3b82f6',    tooltip: 'Total de revisores asignados (internos y externos).' },
-                                { label: 'Completadas',     value: stats.evaluaciones_completadas, displayValue: `${stats.evaluaciones_completadas} / ${stats.total_arbitros_asignados}`, max: Math.max(1, stats.total_arbitros_asignados),  color: '#22c55e',    tooltip: 'Evaluaciones firmadas y entregadas por los árbitros.' },
-                                { label: 'Pendientes',      value: stats.evaluaciones_pendientes,  displayValue: `${stats.evaluaciones_pendientes}`,                                    max: Math.max(1, stats.total_arbitros_asignados),  color: '#f0a500',    tooltip: 'Evaluaciones asignadas aún sin entregar.' },
-                                { label: 'Desempates',      value: stats.casos_desempate,          displayValue: `${stats.casos_desempate}`,                                            max: Math.max(1, stats.proyectos_en_revision),     color: '#ef4444',    tooltip: 'Casos donde hay empate en dictámenes.' },
-                                { label: 'Tasa Aprobación', value: tasaAprobacion,                 displayValue: `${tasaAprobacion}%`,                                                  max: 100,                                          color: '#10b981',    tooltip: 'Porcentaje de proyectos con dictamen favorable.' },
-                                { label: 'Tiempo Promedio', value: completadas.length > 0 ? parseFloat(tiempoPromText) : 0, displayValue: tiempoPromText,                              max: 30,                                           color: '#0070f3',    tooltip: 'Días promedio que tarda un revisor en completar su evaluación.' },
+                                { label: 'En Revisión Activa', value: stats.proyectos_en_revision, displayValue: `${stats.proyectos_en_revision}`, max: Math.max(5, stats.proyectos_en_revision), color: 'var(--fg)', tooltip: 'Proyectos actualmente en proceso de evaluación por pares.' },
+                                { label: 'Pares Asignados', value: stats.total_arbitros_asignados, displayValue: `${stats.total_arbitros_asignados}`, max: Math.max(10, stats.total_arbitros_asignados), color: '#3b82f6', tooltip: 'Total de revisores asignados (internos y externos).' },
+                                { label: 'Completadas', value: stats.evaluaciones_completadas, displayValue: `${stats.evaluaciones_completadas} / ${stats.total_arbitros_asignados || 1}`, max: Math.max(1, stats.total_arbitros_asignados), color: '#22c55e', tooltip: 'Evaluaciones concluidas con dictamen formal.' },
+                                { label: 'Pendientes', value: stats.evaluaciones_pendientes, displayValue: `${stats.evaluaciones_pendientes}`, max: Math.max(1, stats.total_arbitros_asignados), color: '#f0a500', tooltip: 'Evaluaciones asignadas pendientes de dictamen.' },
+                                ...(stats.casos_desempate > 0 ? [{ label: 'Casos de Desempate', value: stats.casos_desempate, displayValue: `${stats.casos_desempate}`, max: Math.max(1, stats.proyectos_en_revision), color: '#ef4444', tooltip: 'Casos donde hay empate en dictámenes.' }] : []),
                             ]}
                         />
                     )}

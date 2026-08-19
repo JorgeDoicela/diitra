@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
     Loader2, Users, Building, GraduationCap, FileDown,
-    CalendarDays, X, PlusCircle, Trash2, Scale, Award,
+    CalendarDays, X, Trash2, Scale, Award,
     ExternalLink, RotateCw, UserPlus, UserCheck
 } from 'lucide-react';
 import {
@@ -77,6 +76,23 @@ const ArbitrajeProyecto: React.FC = () => {
         ? revisionesConPuntaje.reduce((sum, r) => sum + (r.puntaje_total ?? 0), 0) / revisionesConPuntaje.length
         : null;
 
+    const fechaEstimadaProrroga = useMemo(() => {
+        if (!arbitraje) return '';
+        const pendingReviews = arbitraje.revisiones.filter(r => r.estado === 'Pendiente');
+        let baseDate = new Date();
+        if (pendingReviews.length > 0) {
+            const timestamps = pendingReviews
+                .map(r => new Date(r.fecha_limite).getTime())
+                .filter(t => !isNaN(t));
+            if (timestamps.length > 0) {
+                baseDate = new Date(Math.max(...timestamps));
+            }
+        }
+        const target = new Date(baseDate);
+        target.setDate(target.getDate() + (projectAutoExtendDays || 7));
+        return target.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    }, [arbitraje, projectAutoExtendDays]);
+
     const loadData = useCallback(async () => {
         if (!projectUuid) return;
         setLoading(true);
@@ -100,6 +116,11 @@ const ArbitrajeProyecto: React.FC = () => {
                 auto_extend_deadlines: autoExtend,
                 auto_extend_days: days
             });
+            setArbitraje(prev => prev ? {
+                ...prev,
+                auto_extend_deadlines: autoExtend,
+                auto_extend_days: days
+            } : null);
             setProjectAutoExtendDeadlines(autoExtend);
             setProjectAutoExtendDays(days);
             addToast('Configuración Guardada', 'La configuración de prórrogas ha sido guardada con éxito.', 'success');
@@ -240,73 +261,53 @@ const ArbitrajeProyecto: React.FC = () => {
             >
                 <td className="px-5 py-4">
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center shrink-0 text-text-dim text-[11px] font-mono font-medium">
+                        {/* Avatar temático diferenciado */}
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-mono text-xs font-bold border transition-colors ${
+                            rev.es_externo
+                                ? 'bg-brand/10 border-brand/30 text-brand shadow-xs'
+                                : 'bg-surface border-border-thin text-text-main shadow-2xs'
+                        }`}>
                             {rev.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                            <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px]">
-                                {formatNombre(rev.revisor_nombre)}
-                            </p>
-                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-text-dim font-medium">
-                                {!rev.es_externo && rev.revisor_carrera && (
-                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1.5 py-0.5 rounded text-text-dim max-w-[100px] xs:max-w-[140px] sm:max-w-none" title={formatNombre(rev.revisor_carrera)}>
-                                        <GraduationCap size={9} className="shrink-0 text-text-dim/80" />
-                                        <span className="truncate">{formatNombre(rev.revisor_carrera)}</span>
-                                    </span>
-                                )}
-                                {rev.revisor_especialidad && (
-                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1.5 py-0.5 rounded text-text-dim max-w-[110px] xs:max-w-[150px] sm:max-w-none" title={rev.revisor_especialidad}>
-                                        <Award size={9} className="shrink-0 text-text-dim/80" />
-                                        <span className="truncate">{rev.revisor_especialidad}</span>
-                                    </span>
-                                )}
-                                {rev.es_doble_ciego && (
-                                    <span className="bg-surface/50 border border-border-thin rounded px-1.5 py-0.5 text-[9px] text-text-dim shrink-0 font-medium">Anónimo</span>
-                                )}
-                            </div>
 
-                            {/* Detalle apilado para móviles (debajo del nombre) */}
-                            <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
+                        <div className="min-w-0">
+                            {/* Nombre + Badge distintivo de tipo */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-semibold text-text-main leading-snug truncate max-w-[200px] sm:max-w-[320px]">
+                                    {formatNombre(rev.revisor_nombre)}
+                                </p>
                                 {rev.es_externo ? (
-                                    <span className="text-brand bg-brand/5 border border-brand/10 rounded px-1.5 py-0.5 flex items-center gap-0.5">
-                                        <Building size={8} /> Ext. CACES
+                                    <span className="badge-vercel badge-vercel-violet text-[10px] !py-0.5 !px-2 font-medium">
+                                        <Building size={10} className="mr-1" />
+                                        Par Externo (CACES)
                                     </span>
                                 ) : (
-                                    <span className="text-text-dim bg-surface border border-border-thin rounded px-1.5 py-0.5 flex items-center gap-0.5">
-                                        <Users size={8} /> Interno
+                                    <span className="badge-vercel badge-vercel-neutral text-[10px] !py-0.5 !px-2 font-medium">
+                                        <Users size={10} className="mr-1" />
+                                        Docente Interno
                                     </span>
                                 )}
-
-                                {rev.estado !== 'Completada' && (
-                                    <span className={`border rounded px-1.5 py-0.5 font-mono ${diasRestantes > 0 ? 'bg-surface border-border-thin text-text-dim' : 'bg-error/5 border-error/20 text-error'}`}>
-                                        {diasRestantes > 0 ? `${diasRestantes}d` : 'Expirado'}
-                                    </span>
-                                )}
-
-                                {rev.puntaje_total != null && (
-                                    <span className={`rounded px-1.5 py-0.5 font-mono ${rev.puntaje_total >= 70 ? 'bg-success/5 border border-success/20 text-success/90' : 'bg-error/5 border border-error/20 text-error/90'}`}>
-                                        {rev.puntaje_total.toFixed(1)} pts
-                                    </span>
-                                )}
-
-                                <div className={`scale-90 origin-left badge-vercel ${cfg.badge} !py-0 !px-1.5 !h-auto !text-[8px]`}>
-                                    <span className={`dot ${cfg.dot} !w-1 !h-1`} />
-                                    {cfg.label}
-                                </div>
                             </div>
+
+                            {/* Subtexto: Carrera o Institución (sin etiquetas redundantes) */}
+                            {((!rev.es_externo && rev.revisor_carrera && rev.revisor_carrera.toLowerCase() !== 'docente') || rev.institucion) && (
+                                <p className="text-[11px] text-text-dim mt-0.5 truncate flex items-center gap-1.5 font-medium">
+                                    {!rev.es_externo && rev.revisor_carrera && rev.revisor_carrera.toLowerCase() !== 'docente' && (
+                                        <>
+                                            <GraduationCap size={11} className="shrink-0 text-text-dim/80" />
+                                            <span>{formatNombre(rev.revisor_carrera)}</span>
+                                        </>
+                                    )}
+                                    {rev.institucion && (
+                                        <>
+                                            <Building size={11} className="shrink-0 text-text-dim/80" />
+                                            <span>{rev.institucion}</span>
+                                        </>
+                                    )}
+                                </p>
+                            )}
                         </div>
                     </div>
-                </td>
-                <td className="px-4 py-4 hidden md:table-cell">
-                    {rev.es_externo ? (
-                        <span className="text-[11px] text-brand font-medium flex items-center gap-1">
-                            <Building size={10} /> Par Externo (CACES)
-                        </span>
-                    ) : (
-                        <span className="text-[11px] text-text-dim font-medium flex items-center gap-1">
-                            <Users size={10} /> Docente Interno
-                        </span>
-                    )}
                 </td>
                 <td className="px-4 py-4 text-center hidden sm:table-cell">
                     {rev.estado === 'Completada' ? (
@@ -317,7 +318,7 @@ const ArbitrajeProyecto: React.FC = () => {
                         </span>
                     )}
                 </td>
-                <td className="px-4 py-4 text-center hidden lg:table-cell">
+                <td className="px-4 py-4 text-center hidden md:table-cell">
                     {rev.puntaje_total != null ? (
                         <span className={`text-sm font-semibold font-mono ${rev.puntaje_total >= 70 ? 'text-success/90' : 'text-error/90'}`}>
                             {rev.puntaje_total.toFixed(1)}
@@ -326,7 +327,7 @@ const ArbitrajeProyecto: React.FC = () => {
                         <span className="text-text-dim/50 text-sm">—</span>
                     )}
                 </td>
-                <td className="px-4 py-4 hidden sm:table-cell">
+                <td className="px-4 py-4">
                     <div className={`badge-vercel ${cfg.badge}`}>
                         <span className={`dot ${cfg.dot}`} />
                         {cfg.label}
@@ -358,52 +359,10 @@ const ArbitrajeProyecto: React.FC = () => {
         );
     };
 
-    const renderTable = (title: string, icon: React.ReactNode, list: PeerReviewDto[], isExternal: boolean) => {
-        return (
-            <div className="bento-card static overflow-hidden">
-                <div className="bg-surface/30 border-b border-border-thin px-5 py-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        {icon}
-                        <span className={`text-[11px] font-bold uppercase tracking-wider font-mono ${isExternal ? 'text-brand' : 'text-text-main'}`}>
-                            {title}
-                        </span>
-                    </div>
-                    <span className={`text-[10px] font-mono rounded-full px-2 py-0.5 font-bold ${isExternal ? 'bg-brand/10 text-brand border border-brand/20' : 'bg-surface border border-border-thin text-text-dim'}`}>
-                        {list.length}
-                    </span>
-                </div>
-
-                {list.length === 0 ? (
-                    <div className="px-5 py-8 text-center text-text-dim/60 text-xs font-mono">
-                        No hay {isExternal ? 'evaluadores externos' : 'evaluadores internos'} asignados.
-                    </div>
-                ) : (
-                    <div className="w-full overflow-hidden">
-                        <table className="w-full sm:table-fixed">
-                            <thead>
-                                <tr className="border-b border-border-thin">
-                                    <th className="text-left px-5 py-3.5 sm:w-[40%]"><span className="section-label !tracking-[0.12em]">Evaluador</span></th>
-                                    <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[18%]"><span className="section-label !tracking-[0.12em]">Tipo</span></th>
-                                    <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[15%]"><span className="section-label justify-center !tracking-[0.12em]">Plazo</span></th>
-                                    <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[10%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
-                                    <th className="text-left px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label !tracking-[0.12em]">Estado</span></th>
-                                    <th className="px-4 py-3.5 sm:w-[5%] w-[80px]" />
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {list.map(renderRevisionRow)}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     return (
-        <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
+        <main className="flex-1 bg-bg-deep p-6 lg:p-8 overflow-y-auto">
             {/* Breadcrumb Hierarchy */}
-            <div className="flex items-center gap-2 mb-6 text-xs select-none animate-fade-in">
+            <div className="flex items-center gap-2 mb-4 text-xs select-none animate-fade-in">
                 <button
                     onClick={handleBack}
                     className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer font-medium"
@@ -411,58 +370,53 @@ const ArbitrajeProyecto: React.FC = () => {
                     <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
                     <span>{fromWorkspace ? 'Volver al Proyecto' : 'Evaluación por Pares'}</span>
                 </button>
-                <span className="text-text-dim/40">/</span>
-                <span className="text-text-main font-semibold truncate max-w-xl">
-                    {arbitraje.codigo_institucional ? `${arbitraje.codigo_institucional} · ${arbitraje.proyecto_titulo}` : arbitraje.proyecto_titulo}
-                </span>
+                {arbitraje.codigo_institucional && (
+                    <>
+                        <span className="text-text-dim/30">/</span>
+                        <span className="font-mono text-text-dim font-medium">{arbitraje.codigo_institucional}</span>
+                    </>
+                )}
             </div>
 
-            <PageHeader
-                kicker={`Evaluación por Pares · ${arbitraje.convocatoria ?? 'Sin convocatoria'}`}
-                icon={Gavel}
-                title={arbitraje.proyecto_titulo}
-                description={
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
+            {/* Header del Proyecto */}
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pb-6 mb-6 border-b border-border-thin animate-fade-in">
+                <div className="space-y-2.5 max-w-3xl">
+                    <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-main leading-snug">
+                        {arbitraje.proyecto_titulo}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2">
                         {arbitraje.codigo_institucional && (
-                            <span className="text-[10px] font-mono bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
-                                {arbitraje.codigo_institucional}
-                            </span>
+                            <button
+                                onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-mono bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover rounded px-2 py-0.5 text-text-dim hover:text-text-main transition-colors cursor-pointer group"
+                                title="Ver ficha del proyecto en el Workspace"
+                            >
+                                <span>{arbitraje.codigo_institucional}</span>
+                                <ExternalLink size={10} className="text-text-dim/60 group-hover:text-text-main transition-colors" />
+                            </button>
                         )}
                         <div className={`badge-vercel ${estadoCfg.badge}`}>
                             <span className={`dot ${estadoCfg.dot}`} />
                             {estadoCfg.label}
                         </div>
-                        <span className="text-[10px] bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
-                            Estado: {arbitraje.estado_proyecto}
-                        </span>
+                        {arbitraje.convocatoria && (
+                            <span className="text-[11px] text-text-dim bg-surface border border-border-thin rounded px-2 py-0.5">
+                                {arbitraje.convocatoria}
+                            </span>
+                        )}
                     </div>
-                }
-            >
-                <div className="flex flex-wrap items-center gap-2 shrink-0 md:mt-1">
-                    <button
-                        onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
-                        className="btn-vercel-secondary flex items-center gap-2 shrink-0"
-                    >
-                        <ExternalLink size={14} />
-                        Ver Proyecto
-                    </button>
+                </div>
+
+                {/* Acciones Principales con Jerarquía Vercel Geist */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                     {!arbitraje.arbitraje_cerrado && (
-                        <>
-                            <button
-                                onClick={() => setShowCrearExterno(true)}
-                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
-                            >
-                                <UserPlus size={14} />
-                                Nuevo Evaluador Externo
-                            </button>
-                            <button
-                                onClick={() => setShowAsignar(true)}
-                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
-                            >
-                                <UserCheck size={14} />
-                                Asignar al Proyecto
-                            </button>
-                        </>
+                        <button
+                            onClick={() => setShowAsignar(true)}
+                            className="btn-vercel-secondary flex items-center gap-2 shrink-0"
+                        >
+                            <UserPlus size={14} />
+                            <span>Asignar Evaluador</span>
+                        </button>
                     )}
                     {arbitraje.arbitraje_cerrado ? (
                         <button
@@ -471,7 +425,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             className="btn-vercel-primary flex items-center gap-2 shrink-0"
                         >
                             {descargandoPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-                            Descargar Acta PDF
+                            <span>Descargar Acta PDF</span>
                         </button>
                     ) : (
                         <button
@@ -480,7 +434,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             className="btn-vercel-primary flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
-                            Cerrar Evaluación
+                            <span>Cerrar Evaluación</span>
                         </button>
                     )}
                     {arbitraje.estado_proyecto === 'Aprobado' && (
@@ -490,11 +444,11 @@ const ArbitrajeProyecto: React.FC = () => {
                             className="btn-vercel-secondary flex items-center gap-2 shrink-0 border-brand/40 text-brand hover:bg-brand/5"
                         >
                             {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
-                            Iniciar Ejecución
+                            <span>Iniciar Ejecución</span>
                         </button>
                     )}
                 </div>
-            </PageHeader>
+            </div>
 
             {/* Aviso si hay desempate */}
             {arbitraje.estado_arbitraje === 'Desempate' && (
@@ -510,42 +464,51 @@ const ArbitrajeProyecto: React.FC = () => {
                 </div>
             )}
 
-            {/* Tabs Bar */}
-            <div className="tabs-vercel animate-fade-up [animation-delay:50ms] relative z-10">
-                <div className="tab-vercel-item active">
-                    Evaluadores Asignados
-                    {!loading && (
-                        <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-1.5">
-                            {arbitraje.revisiones.length}
-                        </span>
-                    )}
-                </div>
-            </div>
-
             {/* Two-column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:60ms] relative z-10">
-                {/* Main Content Column */}
-                <div className="lg:col-span-3 space-y-6">
-                    {arbitraje.revisiones.length === 0 ? (
-                        <div className="bento-card static overflow-hidden">
-                            <div className="empty-state py-20">
-                                <div className="icon-circle icon-circle-neutral !p-4 mb-4">
-                                    <Gavel size={28} strokeWidth={1.5} />
-                                </div>
-                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin evaluadores asignados</p>
-                                <p className="text-text-dim text-xs mt-2 max-w-sm">Use el botón superior para agregar evaluadores.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 animate-fade-up relative z-10">
+                {/* Main Content Column: Tabla Unificada del Tribunal */}
+                <div className="lg:col-span-3 space-y-4">
+                    <div className="bento-card static overflow-hidden">
+                        <div className="bg-surface/40 border-b border-border-thin px-5 py-3.5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Users size={14} className="text-text-dim" />
+                                <span className="text-xs font-semibold text-text-main">
+                                    Tribunal de Evaluación por Pares
+                                </span>
                             </div>
                         </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {renderTable("Evaluadores Internos", <Users size={12} className="text-text-dim/80" />, internos, false)}
-                            {renderTable("Evaluadores Externos", <Building size={12} className="text-brand/80" />, externos, true)}
-                        </div>
-                    )}
+
+                        {arbitraje.revisiones.length === 0 ? (
+                            <div className="empty-state py-16">
+                                <div className="icon-circle icon-circle-neutral !p-4 mb-3">
+                                    <Gavel size={24} strokeWidth={1.5} />
+                                </div>
+                                <p className="text-text-main font-semibold text-sm">Sin evaluadores asignados</p>
+                                <p className="text-text-dim text-xs mt-1 max-w-sm">Use el botón superior para asignar evaluadores a este proyecto.</p>
+                            </div>
+                        ) : (
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-border-thin bg-surface/20">
+                                            <th className="text-left px-5 py-3"><span className="section-label">Evaluador</span></th>
+                                            <th className="text-center px-4 py-3 hidden sm:table-cell"><span className="section-label justify-center">Plazo</span></th>
+                                            <th className="text-center px-4 py-3 hidden md:table-cell"><span className="section-label justify-center">Puntaje</span></th>
+                                            <th className="text-left px-4 py-3"><span className="section-label">Estado</span></th>
+                                            <th className="px-4 py-3 w-[60px]" />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {arbitraje.revisiones.map(renderRevisionRow)}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Avisos de Cumplimiento CACES */}
                     {(arbitraje.total_arbitros < 2 || externos.length === 0) && (
-                        <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 text-warning text-xs flex items-start gap-2.5 mt-4">
+                        <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 text-warning text-xs flex items-start gap-2.5">
                             <AlertTriangle size={13} className="mt-0.5 shrink-0" />
                             <div className="flex-1 min-w-0">
                                 <span className="font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5):</span>
@@ -601,7 +564,6 @@ const ArbitrajeProyecto: React.FC = () => {
                     <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-border-thin">
                             <div className="section-label">
-                                <Scale size={12} className="text-brand" />
                                 <span className="text-[13px] font-semibold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
                             </div>
                             {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
@@ -626,28 +588,33 @@ const ArbitrajeProyecto: React.FC = () => {
                                 </label>
                             </div>
 
-                            {/* Input number */}
-                            <div className="space-y-2 pt-1">
+                            {/* Input number con fecha inline minimalista */}
+                            <div className="space-y-1.5 pt-1">
                                 <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest">
                                     Días de prórroga
                                 </label>
-                                <div className="flex gap-2 items-center">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <input
                                         type="number"
                                         min={1}
                                         max={30}
-                                        className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
+                                        className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
                                         disabled={!projectAutoExtendDeadlines || savingSettings || arbitraje.arbitraje_cerrado}
                                         value={projectAutoExtendDays}
                                         onChange={(e) => setProjectAutoExtendDays(parseInt(e.target.value) || 7)}
                                     />
-                                    {projectAutoExtendDeadlines && !arbitraje.arbitraje_cerrado && (
+                                    {fechaEstimadaProrroga && (
+                                        <span className="text-xs text-text-dim font-medium">
+                                            Hasta: <span className="text-text-main font-mono">{fechaEstimadaProrroga}</span>
+                                        </span>
+                                    )}
+                                    {projectAutoExtendDays !== (arbitraje.auto_extend_days ?? 7) && !arbitraje.arbitraje_cerrado && (
                                         <button
                                             onClick={() => handleSaveProjectSettings(projectAutoExtendDeadlines, projectAutoExtendDays)}
-                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-semibold"
+                                            className="btn-vercel-primary !py-1 !px-2.5 !text-[11px] ml-auto font-medium"
                                             disabled={savingSettings}
                                         >
-                                            Guardar
+                                            {savingSettings ? 'Guardando...' : 'Guardar'}
                                         </button>
                                     )}
                                 </div>
@@ -820,8 +787,8 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <div 
-                                className="w-1.5 h-1.5 rounded-full shrink-0" 
+                            <div
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
                                 style={{ backgroundColor: item.color || 'var(--brand)' }}
                             />
                             <div className="flex items-center gap-1.5 min-w-0">

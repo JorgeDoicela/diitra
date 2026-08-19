@@ -2,7 +2,7 @@ import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 interface PageHeaderProps {
-    kicker: string;
+    kicker?: string;
     icon?: LucideIcon;
     title: string;
     description?: React.ReactNode;
@@ -11,8 +11,6 @@ interface PageHeaderProps {
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
-    kicker,
-    icon: Icon,
     title,
     description,
     children,
@@ -21,10 +19,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     return (
         <header className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 pb-2 mb-6 ${className}`}>
             <div className="space-y-1.5">
-                <div className="section-label text-text-dim">
-                    {Icon && <Icon />}
-                    <span>{kicker}</span>
-                </div>
                 <h1 className="page-header-title">
                     {title}
                 </h1>

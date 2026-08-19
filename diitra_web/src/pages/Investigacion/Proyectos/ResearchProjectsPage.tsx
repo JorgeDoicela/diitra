@@ -43,6 +43,16 @@ export interface ProyectoResumen {
     carrera?: string;
 }
 
+const formatNombre = (name?: string) => {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .split(' ')
+        .filter(Boolean)
+        .map(w => ['de', 'la', 'del', 'los', 'las', 'y'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+};
+
 const ResearchProjectsPage = () => {
     const { states, getEstadoConfig } = useWorkflowStates();
     const { addToast } = useNotifications();
@@ -385,22 +395,22 @@ const ResearchProjectsPage = () => {
 
             {/* ── SECCIÓN DE FILTROS ── */}
             {!error && !loading && (
-                <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:50ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">
-                    <div className="flex flex-col lg:flex-row gap-3">
+                <div className="flex flex-col gap-3 mb-8 animate-fade-up [animation-delay:50ms] bg-surface p-4 rounded-xl border border-border-thin shadow-2xs">
+                    <div className="flex flex-col lg:flex-row gap-2.5">
                         <div className="relative flex-1">
                             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-dim" />
                             <input
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 placeholder="Buscar por título, código, director, carrera o convocatoria..."
-                                className="input-vercel !pl-10 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim w-full"
+                                className="input-vercel !pl-10 !rounded-lg !py-2 !text-xs !placeholder:text-text-dim w-full"
                             />
                         </div>
                         <div className="flex gap-2">
                             <select
                                 value={sortBy}
                                 onChange={e => setSortBy(e.target.value)}
-                                className="input-vercel !rounded-xl !py-2.5 !text-sm min-w-[170px] cursor-pointer"
+                                className="input-vercel !rounded-lg !py-2 !text-xs min-w-[160px] cursor-pointer"
                             >
                                 <option value="mi_actividad">Mi actividad reciente</option>
                                 <option value="accion_requerida">Requieren atención</option>
@@ -418,21 +428,21 @@ const ResearchProjectsPage = () => {
                                         setFilterConvocatoria('todas');
                                         setSortBy('mi_actividad');
                                     }}
-                                    className="btn-vercel-secondary !py-2.5 !px-4 !rounded-xl !text-xs whitespace-nowrap hover:bg-surface-hover hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary !py-2 !px-3 !rounded-lg !text-xs whitespace-nowrap"
                                 >
-                                    Limpiar filtros
+                                    Limpiar
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border-thin">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-border-thin">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Estado</label>
+                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Estado</label>
                             <select
                                 value={filterEstado}
                                 onChange={e => setFilterEstado(e.target.value)}
-                                className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
                             >
                                 <option value="todos">Todos los estados</option>
                                 {states.map(s => (
@@ -442,11 +452,11 @@ const ResearchProjectsPage = () => {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Línea de Investigación</label>
+                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Línea de Investigación</label>
                             <select
                                 value={filterLinea}
                                 onChange={e => setFilterLinea(e.target.value)}
-                                className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
                             >
                                 <option value="todas">Todas las líneas</option>
                                 {lineasDisponibles.map(linea => (
@@ -456,11 +466,11 @@ const ResearchProjectsPage = () => {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Convocatoria</label>
+                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Convocatoria</label>
                             <select
                                 value={filterConvocatoria}
                                 onChange={e => setFilterConvocatoria(e.target.value)}
-                                className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
                             >
                                 <option value="todas">Todas las convocatorias</option>
                                 {convocatoriasDisponibles.map(conv => (
@@ -510,11 +520,11 @@ const ResearchProjectsPage = () => {
                                 />
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-brand-subtle rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                <div className="space-y-4">
-                                    <div className="flex items-start justify-between">
+                                <div className="space-y-3.5">
+                                    <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0">
                                             {p.codigo_institucional && (
-                                                <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.2em] mb-1 font-mono">
+                                                <p className="text-[10px] font-semibold text-text-dim uppercase tracking-wider mb-1 font-mono">
                                                     {p.codigo_institucional}
                                                 </p>
                                             )}
@@ -522,15 +532,13 @@ const ResearchProjectsPage = () => {
                                                 {p.titulo?.trim() || '(Sin título)'}
                                             </h3>
                                             {p.director_nombre && (
-                                                <div className="flex items-center gap-1.5 text-text-dim mt-2">
-                                                    <User size={12} className="text-text-dim opacity-70" />
-                                                    <span className="text-[11px] text-text-dim font-medium truncate">
-                                                        Director: <span className="text-text-main font-semibold">{p.director_nombre}</span>
-                                                    </span>
-                                                </div>
+                                                <p className="text-[11px] text-text-dim font-medium truncate mt-1.5 flex items-center gap-1">
+                                                    <User size={11} className="shrink-0 opacity-70" />
+                                                    <span>Director: <strong className="text-text-main font-semibold">{formatNombre(p.director_nombre)}</strong></span>
+                                                </p>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-1.5 shrink-0 ml-2 mt-0.5 relative z-20">
+                                        <div className="flex items-center gap-1 shrink-0 ml-1 mt-0.5 relative z-20">
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
@@ -566,16 +574,22 @@ const ResearchProjectsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`status-label ${cfg.badge} self-start text-[10px] tracking-wider uppercase font-semibold`} style={cfg.style}>
-                                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
-                                        {cfg.label}
-                                        {p.rol_en_proyecto && (
-                                            <span className="opacity-60 ml-1 font-normal lowercase tracking-normal">· {p.rol_en_proyecto}</span>
+                                    {/* Estado y Línea de Investigación */}
+                                    <div className="flex items-center flex-wrap gap-2 pt-0.5">
+                                        <span className={`badge-vercel ${cfg.badge} text-[10px] !py-0.5 !px-2 font-medium`}>
+                                            <span className={`dot ${cfg.dot}`} />
+                                            {cfg.label}
+                                        </span>
+                                        {p.linea_investigacion && (
+                                            <span className="text-[10px] text-text-dim truncate max-w-[180px] flex items-center gap-1" title={p.linea_investigacion}>
+                                                <BookOpen size={10} className="shrink-0 opacity-70" />
+                                                <span className="truncate">{p.linea_investigacion}</span>
+                                            </span>
                                         )}
                                     </div>
 
                                     {p.estado === 'Prepropuesta' && (
-                                        <div className="flex gap-2 pt-1.5 relative z-20" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex gap-2 pt-1 relative z-20" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 onClick={() => handleAprobarIdea(p)}
                                                 className="btn-vercel-primary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider bg-brand text-white border-brand hover:bg-transparent hover:text-brand"
@@ -595,51 +609,44 @@ const ResearchProjectsPage = () => {
                                         </div>
                                     )}
 
-                                    {p.linea_investigacion && (
-                                        <div className="flex items-center gap-1.5 text-[10px] text-text-dim">
-                                            <BookOpen size={10} />
-                                            <span className="truncate">{p.linea_investigacion}</span>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                            <p className="stat-number--sm !text-sm font-bold text-text-main font-mono">{p.total_investigadores}</p>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-wide">Invest.</p>
-                                        </div>
-                                        <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                            <p className="stat-number--sm !text-sm font-bold text-text-main font-mono">{p.total_productos}</p>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-wide">Produc.</p>
-                                        </div>
-                                        <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                            <p className="stat-number--sm !text-sm font-bold text-text-main font-mono">
-                                                {p.informes_aprobados}/{p.total_informes}
-                                            </p>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-wide">Informes</p>
-                                        </div>
+                                    {/* Métricas Integradas en una Sola Barra Limpia */}
+                                    <div className="flex items-center justify-between py-1.5 px-3 bg-surface/50 rounded-lg border border-border-thin text-[11px] text-text-dim">
+                                        <span className="flex items-center gap-1 font-medium">
+                                            <span className="font-semibold text-text-main font-mono">{p.total_investigadores}</span>
+                                            <span className="text-[10px]">invest.</span>
+                                        </span>
+                                        <span className="text-border-thin">·</span>
+                                        <span className="flex items-center gap-1 font-medium">
+                                            <span className="font-semibold text-text-main font-mono">{p.total_productos}</span>
+                                            <span className="text-[10px]">prod.</span>
+                                        </span>
+                                        <span className="text-border-thin">·</span>
+                                        <span className="flex items-center gap-1 font-medium">
+                                            <span className="font-semibold text-text-main font-mono">{p.informes_aprobados}/{p.total_informes}</span>
+                                            <span className="text-[10px]">informes</span>
+                                        </span>
                                     </div>
 
                                     {p.presupuesto_total !== undefined && p.presupuesto_total > 0 && (
-                                        <div className="pt-2">
-                                            <div className="flex justify-between text-[10px] font-mono text-text-dim mb-1">
-                                                <span>Ejecución presupuestaria</span>
-                                                <span className="text-text-main font-bold">{presupuestoPorc.toFixed(0)}%</span>
+                                        <div className="space-y-1 pt-1">
+                                            <div className="flex justify-between text-[10px] font-mono text-text-dim">
+                                                <span>Presupuesto</span>
+                                                <span className="text-text-main font-medium">
+                                                    ${(p.presupuesto_ejecutado ?? 0).toLocaleString('es-EC')} / ${(p.presupuesto_total).toLocaleString('es-EC')}
+                                                    <span className="text-text-dim ml-1">({presupuestoPorc.toFixed(0)}%)</span>
+                                                </span>
                                             </div>
                                             <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
                                                 <div
-                                                    className="progress-fill progress-fill--brand"
-                                                    style={{ width: `${presupuestoPorc}%` }}
+                                                    className="h-full bg-brand rounded-full transition-all duration-500"
+                                                    style={{ width: `${Math.min(100, presupuestoPorc)}%` }}
                                                 />
-                                            </div>
-                                            <div className="flex justify-between text-[9px] text-text-dim mt-1">
-                                                <span>${(p.presupuesto_ejecutado ?? 0).toLocaleString('es-EC')}</span>
-                                                <span>${(p.presupuesto_total).toLocaleString('es-EC')}</span>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="flex items-center justify-between pt-3 border-t border-border mt-4 text-[10px] text-text-dim">
+                                <div className="flex items-center justify-between pt-3 border-t border-border-thin mt-4 text-[10px] text-text-dim">
                                     <div className="flex items-center gap-1">
                                         <Calendar size={10} />
                                         <span>
@@ -653,13 +660,13 @@ const ResearchProjectsPage = () => {
                                     {p.trl_actual != null && (
                                         <div className="flex items-center gap-1">
                                             <Zap size={10} className="text-warning" />
-                                            <span>TRL {p.trl_actual}/{p.trl_meta ?? '—'}</span>
+                                            <span className="font-mono font-medium">TRL {p.trl_actual}/{p.trl_meta ?? '—'}</span>
                                         </div>
                                     )}
                                     {p.puntaje_evaluacion != null && (
                                         <div className="flex items-center gap-1">
                                             <BarChart3 size={10} className="text-success" />
-                                            <span className="text-success font-bold">{p.puntaje_evaluacion}/100</span>
+                                            <span className="text-success font-bold font-mono">{p.puntaje_evaluacion}/100</span>
                                         </div>
                                     )}
                                 </div>
