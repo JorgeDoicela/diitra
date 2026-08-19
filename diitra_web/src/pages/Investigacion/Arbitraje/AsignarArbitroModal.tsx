@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronRight, UserCheck, AlertCircle, Loader2, CalendarDays, Check, X, Search, Users, ShieldCheck, GraduationCap, UserPlus } from 'lucide-react';
 import { searchRevisores, asignarArbitro } from '../../../services/peerReviewService';
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
@@ -169,7 +170,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end">
             <div className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in" onClick={onClose} />
             <div className="relative w-full max-w-4xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
@@ -557,7 +558,8 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                     }}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
 

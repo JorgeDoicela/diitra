@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { User as UserIcon, ChevronRight, Mail, Hash, Activity, GraduationCap, Globe, Shield, Fingerprint, Settings2 } from 'lucide-react';
 import type { ManagedUser } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre } from './utils';
@@ -18,7 +19,7 @@ export const UserDetailPanel: React.FC<UserDetailPanelProps> = ({
 }) => {
     if (!detailUser) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end">
             <div
                 className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
@@ -189,6 +190,7 @@ export const UserDetailPanel: React.FC<UserDetailPanelProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

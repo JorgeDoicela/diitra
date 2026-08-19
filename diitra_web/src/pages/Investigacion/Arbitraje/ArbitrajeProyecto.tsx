@@ -247,6 +247,7 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const estadoCfg = ESTADO_ARBITRAJE_CONFIG[arbitraje.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
     const projectStatusCfg = getEstadoConfig(arbitraje.estado_proyecto);
+    const externos = arbitraje.revisiones.filter(r => r.es_externo);
 
     const renderRevisionRow = (rev: PeerReviewDto) => {
         const cfg = ESTADO_REVISION_CONFIG[rev.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];

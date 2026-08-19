@@ -19,7 +19,7 @@ import { useAuth } from '../../../api/AuthContext';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
-import { useWorkflowStates, normalizeStateKey } from '../../../hooks/useWorkflowStates';
+import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useProjectPreferences } from '../../Investigacion/Proyectos/hooks/useProjectPreferences';
 
 export interface ProyectoInnovacionResumen {

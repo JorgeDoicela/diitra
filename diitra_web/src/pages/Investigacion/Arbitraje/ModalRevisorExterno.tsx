@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { UserPlus, AlertTriangle, Loader2, Check, ChevronRight } from 'lucide-react';
 import { registerRevisorExterno } from '../../../services/peerReviewService';
 import type { RegistrarRevisorExternoPayload } from '../../../services/peerReviewService';
@@ -41,7 +42,7 @@ export const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClos
     };
 
     if (done) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-[9999] flex justify-end">
                 <div className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in" onClick={onSuccess} />
                 <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
@@ -74,11 +75,12 @@ export const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClos
                         <button onClick={onSuccess} className="btn-vercel-primary">Entendido</button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end">
             <div className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in" onClick={onClose} />
             <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
@@ -201,7 +203,8 @@ export const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClos
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
