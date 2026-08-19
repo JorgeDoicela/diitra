@@ -284,6 +284,7 @@ builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<diitra_application.Research.IGroupsQueryService, GroupsQueryService>();
 builder.Services.AddScoped<diitra_application.Research.IGroupsWorkflowService, GroupsWorkflowService>();
 builder.Services.AddScoped<IGroupsService, GroupsService>();
+builder.Services.AddScoped<diitra_application.Research.IGroupDocumentOrchestrator, diitra_infrastructure.Research.GroupDocumentOrchestrator>();
 builder.Services.AddScoped<ICalendarioService, diitra_infrastructure.Research.CalendarioService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();

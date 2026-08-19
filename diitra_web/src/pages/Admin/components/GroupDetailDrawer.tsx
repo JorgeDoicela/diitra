@@ -5,6 +5,7 @@ import {
 import { useGroupDetail } from './GroupDetail/useGroupDetail';
 import type { Group, Career, ResearchLine } from './GroupDetail/useGroupDetail';
 import { GroupInfoTab } from './GroupDetail/GroupInfoTab';
+import { GroupDocumentsTab } from './GroupDetail/GroupDocumentsTab';
 import { GroupChatTab } from './GroupDetail/GroupChatTab';
 import { GroupProjectsTab } from './GroupDetail/GroupProjectsTab';
 import { FieldFeedbackDrawer } from './GroupDetail/FieldFeedbackDrawer';
@@ -174,6 +175,16 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         >
                             Información
                         </button>
+                        <button
+                            onClick={() => setDetailTab('documento')}
+                            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all border-b-2 ${
+                                detailTab === 'documento'
+                                    ? 'border-brand text-text-main bg-brand/5'
+                                    : 'border-transparent text-text-dim/60 hover:text-text-main'
+                            }`}
+                        >
+                            Documento Oficial
+                        </button>
                         {isMember && (
                             <button
                                 onClick={() => setDetailTab('feedback')}
@@ -208,6 +219,12 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         lines={lines}
                         formatCareerName={formatCareerName}
                         renderFieldFeedbackButton={renderFieldFeedbackButton}
+                    />
+                )}
+
+                {detailTab === 'documento' && (
+                    <GroupDocumentsTab
+                        hook={hook}
                     />
                 )}
 

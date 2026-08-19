@@ -840,10 +840,13 @@ export const useDocumentTemplatesPage = () => {
     const handleCellChange = (blockId: string, rowIndex: number, cellIndex: number, val: string) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId && b.type === 'advanced_table') {
-                const newRows = [...(b.config.rows || [])];
-                const newCells = [...newRows[rowIndex].cells];
-                newCells[cellIndex] = val;
-                newRows[rowIndex] = { cells: newCells };
+                const rawRows = b.config.rows || [];
+                const newRows = rawRows.map((r: any, rIdx: number) => {
+                    if (rIdx !== rowIndex) return r;
+                    const cells = Array.isArray(r) ? [...r] : [...(r?.cells || [])];
+                    cells[cellIndex] = val;
+                    return Array.isArray(r) ? cells : { ...r, cells };
+                });
                 return { ...b, config: { ...b.config, rows: newRows } };
             }
             return b;
@@ -854,9 +857,13 @@ export const useDocumentTemplatesPage = () => {
     const handleAddRow = (blockId: string) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId && b.type === 'advanced_table') {
-                const colCount = b.config.headers?.length || b.config.rows?.[0]?.cells.length || 2;
-                const newRow = { cells: Array(colCount).fill('') };
-                return { ...b, config: { ...b.config, rows: [...(b.config.rows || []), newRow] } };
+                const rawRows = b.config.rows || [];
+                const firstRow = rawRows[0];
+                const firstRowLen = Array.isArray(firstRow) ? firstRow.length : (firstRow?.cells?.length || 0);
+                const colCount = b.config.headers?.length || firstRowLen || 2;
+                const isArrayFormat = rawRows.length > 0 && Array.isArray(firstRow);
+                const newRow = isArrayFormat ? Array(colCount).fill('') : { cells: Array(colCount).fill('') };
+                return { ...b, config: { ...b.config, rows: [...rawRows, newRow] } };
             }
             return b;
         }));
@@ -866,7 +873,7 @@ export const useDocumentTemplatesPage = () => {
     const handleRemoveRow = (blockId: string, rowIndex: number) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId && b.type === 'advanced_table') {
-                const newRows = (b.config.rows || []).filter((_, idx) => idx !== rowIndex);
+                const newRows = (b.config.rows || []).filter((_: any, idx: number) => idx !== rowIndex);
                 return { ...b, config: { ...b.config, rows: newRows } };
             }
             return b;

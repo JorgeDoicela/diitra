@@ -370,7 +370,7 @@ const ArbitrajePage: React.FC = () => {
                                                                     )}
                                                                     {tieneExterno && (
                                                                         <span className="text-[10px] text-success font-medium flex items-center gap-0.5">
-                                                                            <Building size={9} />ext. ✓
+                                                                            <Building size={9} />ext. asignado
                                                                         </span>
                                                                     )}
                                                                 </div>

@@ -65,7 +65,7 @@ class ErrorBoundary extends Component<Props, State> {
                         </p>
                         {isDomError && (
                             <div className="text-[10px] text-[#71717a] bg-[#18181b] p-2.5 rounded border border-[#27272a] text-left w-full">
-                                💡 <strong>Tip:</strong> Prueba desactivando la traducción automática o extensiones bloqueadoras para este sitio.
+                                <strong>Tip:</strong> Prueba desactivando la traducción automática o extensiones bloqueadoras para este sitio.
                             </div>
                         )}
                         <button

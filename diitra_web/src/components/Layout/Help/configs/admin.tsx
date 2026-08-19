@@ -364,7 +364,7 @@ export const EMAILS_CONFIG: HelpConfig = {
                 </div>
                 <div className="flex gap-1">
                     <div className="px-1.5 py-0.5 bg-brand text-white rounded text-[5px] font-bold shadow-sm">
-                        ⚡ Enviar prueba
+                        Enviar prueba
                     </div>
                 </div>
             </div>
@@ -376,13 +376,13 @@ export const EMAILS_CONFIG: HelpConfig = {
                     <span className="text-[4.5px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Plantillas</span>
                     <div className="space-y-0.5 overflow-y-auto pr-0.5">
                         <div className="p-0.5 border border-brand bg-surface rounded-[3px] text-[4px] leading-tight font-semibold text-brand">
-                            📧 inv_evaluacion
+                            inv_evaluacion
                         </div>
                         <div className="p-0.5 border border-border-thin/40 bg-surface/40 rounded-[3px] text-[4px] leading-tight text-text-dim">
-                            📧 firma_pendiente
+                            firma_pendiente
                         </div>
                         <div className="p-0.5 border border-border-thin/40 bg-surface/40 rounded-[3px] text-[4px] leading-tight text-text-dim">
-                            📧 proyecto_devuelto
+                            proyecto_devuelto
                         </div>
                     </div>
                 </div>
@@ -454,7 +454,7 @@ export const GRUPOS_CONFIG: HelpConfig = {
                 </div>
                 <div className="flex gap-1">
                     <div className="flex-1 h-3.5 bg-surface-hover/20 border border-border-thin rounded-md px-1 flex items-center gap-1 text-[5px] text-text-dim">
-                        🔍 <span className="truncate">Buscar grupos por nombre, siglas...</span>
+                        <span className="truncate">Buscar grupos por nombre, siglas...</span>
                     </div>
                 </div>
             </div>
@@ -494,7 +494,7 @@ export const GRUPOS_CONFIG: HelpConfig = {
                                 </div>
                             </td>
                             <td className="py-1 text-right">
-                                <span className="text-text-dim font-mono">👁 ⚙ 🗑</span>
+                                <span className="text-text-dim font-mono text-[3.5px]">Ver</span>
                             </td>
                         </tr>
                         <tr className="hover:bg-surface/30">
@@ -519,7 +519,7 @@ export const GRUPOS_CONFIG: HelpConfig = {
                                 </div>
                             </td>
                             <td className="py-1 text-right">
-                                <span className="text-text-dim font-mono">👁 ⚙ 🗑</span>
+                                <span className="text-text-dim font-mono text-[3.5px]">Ver</span>
                             </td>
                         </tr>
                     </tbody>

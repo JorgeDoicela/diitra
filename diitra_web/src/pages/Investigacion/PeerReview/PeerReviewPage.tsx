@@ -111,7 +111,7 @@ const PeerReviewPage: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4 my-6">
                                     <span className="section-label text-warning font-bold shrink-0">
-                                        ⚠ Pendientes de Evaluación ({reviewsPendientes.length})
+                                        Pendientes de Evaluación ({reviewsPendientes.length})
                                     </span>
                                     <div className="flex-1 h-[1px] bg-border-thin" />
                                 </div>
@@ -215,7 +215,7 @@ const PeerReviewPage: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4 my-6">
                                     <span className="section-label text-success font-bold shrink-0">
-                                        ✓ Evaluaciones Completadas ({reviewsCompletadas.length})
+                                        Evaluaciones Completadas ({reviewsCompletadas.length})
                                     </span>
                                     <div className="flex-1 h-[1px] bg-border-thin" />
                                 </div>

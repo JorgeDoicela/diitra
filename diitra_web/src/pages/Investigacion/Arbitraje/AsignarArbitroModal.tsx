@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, UserCheck, AlertCircle, Loader2, CalendarDays } from 'lucide-react';
+import { X, UserCheck, AlertCircle, Loader2, CalendarDays, Check } from 'lucide-react';
 import { searchRevisores, asignarArbitro } from '../../../services/peerReviewService';
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
 import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
@@ -234,7 +234,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
                                                         isSelected ? 'border-text-main bg-text-main text-bg-deep' : 'border-border-thin'
                                                     }`}>
-                                                        {isSelected && <span className="text-[10px] font-semibold">✓</span>}
+                                                        {isSelected && <Check size={10} strokeWidth={3} />}
                                                     </div>
                                                     <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-semibold flex items-center justify-center shrink-0`}>
                                                         {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}

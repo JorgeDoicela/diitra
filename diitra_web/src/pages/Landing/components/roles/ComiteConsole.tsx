@@ -128,7 +128,7 @@ export const ComiteConsole: React.FC<ComiteConsoleProps> = ({
                                 : 'bg-warning/10 border-warning/30 text-warning'
                         }`}>
                             <p className="font-bold">
-                                {gradeEtica === false ? '✗ DICTAMEN DE RECHAZO EMITIDO' : '⚠ RETORNADO PARA CORRECCIONES'}
+                                {gradeEtica === false ? 'DICTAMEN DE RECHAZO EMITIDO' : 'RETORNADO PARA CORRECCIONES'}
                             </p>
                             <p className="text-[7.5px] md:text-[8px] opacity-90">
                                 {gradeEtica === false 

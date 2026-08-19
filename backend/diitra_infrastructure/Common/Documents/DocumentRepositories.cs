@@ -18,10 +18,29 @@ namespace Diitra.Infrastructure.Common.Documents
                 .FirstOrDefaultAsync(t => t.Code == code && t.IsActive, ct);
 
         public async Task<IEnumerable<DocumentTemplate>> GetAllActiveAsync(CancellationToken ct = default)
-            => await _context.Set<DocumentTemplate>()
+        {
+            var existing = await _context.Set<DocumentTemplate>()
                 .Where(t => t.IsActive)
                 .OrderBy(t => t.Category)
                 .ToListAsync(ct);
+
+            var existingCodes = new HashSet<string>(existing.Select(e => e.Code), StringComparer.OrdinalIgnoreCase);
+            var missingSeeds = DocumentTemplateRegistry.GetSeedTemplates()
+                .Where(s => !existingCodes.Contains(s.Code))
+                .ToList();
+
+            if (missingSeeds.Any())
+            {
+                foreach (var seed in missingSeeds)
+                {
+                    _context.Set<DocumentTemplate>().Add(seed);
+                }
+                await _context.SaveChangesAsync(ct);
+                existing.AddRange(missingSeeds);
+            }
+
+            return existing.OrderBy(t => t.Category);
+        }
 
         public async Task SaveAsync(DocumentTemplate template, CancellationToken ct = default)
         {

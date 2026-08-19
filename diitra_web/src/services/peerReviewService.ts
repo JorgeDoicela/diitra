@@ -279,16 +279,16 @@ export const ESTADO_ARBITRAJE_CONFIG: Record<string, { label: string; badge: str
 };
 
 export const DICTAMEN_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    'Aprobado':  { label: '✓ APROBADO',  color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-    'Rechazado': { label: '✗ RECHAZADO', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-    'Desempate': { label: '⚖ DESEMPATE', color: '#f0a500', bg: 'rgba(240,165,0,0.1)' },
+    'Aprobado':  { label: 'APROBADO',  color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+    'Rechazado': { label: 'RECHAZADO', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+    'Desempate': { label: 'DESEMPATE', color: '#f0a500', bg: 'rgba(240,165,0,0.1)' },
 };
 
 /** Config de dictamen individual del evaluador */
 export const DICTAMEN_REVISOR_CONFIG: Record<string, { label: string; badge: string }> = {
-    'Aprueba':   { label: '✓ Aprueba',   badge: 'badge-vercel-success' },
-    'Rechaza':   { label: '✗ Rechaza',   badge: 'badge-vercel-error' },
-    'Pendiente': { label: '– Pendiente', badge: 'badge-vercel-warning' },
+    'Aprueba':   { label: 'Aprueba',   badge: 'badge-vercel-success' },
+    'Rechaza':   { label: 'Rechaza',   badge: 'badge-vercel-error' },
+    'Pendiente': { label: 'Pendiente', badge: 'badge-vercel-warning' },
 };
 
 export const getDictamenPreview = (puntaje: number, minimo: number): 'Aprobado' | 'Rechazado' =>

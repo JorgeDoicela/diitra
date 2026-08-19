@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 export const useRevisionTecnicaLayout = () => {
-    const [viewMode, setViewMode] = useState<'interactive' | 'pdf'>('interactive');
+    const [viewMode, setViewMode] = useState<'interactive' | 'pdf' | 'history'>('interactive');
     const [activeSection, setActiveSection] = useState<string>('identificacion');
     const [activeCommentField, setActiveCommentField] = useState<string>('titulo');
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);

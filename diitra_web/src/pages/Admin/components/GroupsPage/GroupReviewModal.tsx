@@ -6,6 +6,7 @@ import {
 import { AudioBubblePlayer } from '../AudioBubblePlayer';
 import { formatNombre } from './utils';
 import type { useGroupsReview } from './hooks/useGroupsReview';
+import api from '../../../../api/axios_config';
 
 interface GroupReviewModalProps {
     review: ReturnType<typeof useGroupsReview>;
@@ -30,6 +31,19 @@ export const GroupReviewModal: React.FC<GroupReviewModalProps> = ({ review }) =>
     } = review;
 
     if (!isReviewModalOpen || !reviewingGroup) return null;
+
+    const handleOpenProposalPdf = async () => {
+        try {
+            const response = await api.get(`/groups/${reviewingGroup.uuid}/proposal-document/pdf`, {
+                responseType: 'blob'
+            });
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (e) {
+            console.error('Error al abrir propuesta:', e);
+        }
+    };
 
     const {
         isRecording,
@@ -92,8 +106,19 @@ export const GroupReviewModal: React.FC<GroupReviewModalProps> = ({ review }) =>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    <div className="bg-bg-deep/30 border border-border-thin rounded-2xl p-4 space-y-2">
-                        <span className="text-[8px] font-black uppercase text-text-dim tracking-widest block">Propuesta Bajo Revisión</span>
+                    <div className="bg-bg-deep/30 border border-border-thin rounded-2xl p-4 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-black uppercase text-text-dim tracking-widest block">Propuesta Bajo Revisión</span>
+                            <button
+                                type="button"
+                                onClick={handleOpenProposalPdf}
+                                className="btn-vercel-secondary text-[10px] py-1 px-2.5 flex items-center gap-1.5 font-bold"
+                                title="Ver documento oficial que se firmará"
+                            >
+                                <FileText size={12} className="text-brand" />
+                                <span>Ver PDF Oficial</span>
+                            </button>
+                        </div>
                         <h4 className="text-sm font-semibold text-text-main">{reviewingGroup.nombre}</h4>
                         <div className="flex gap-2 text-[9px] font-mono text-text-dim font-bold uppercase">
                             <span>Siglas: {reviewingGroup.siglas || 'S/S'}</span>

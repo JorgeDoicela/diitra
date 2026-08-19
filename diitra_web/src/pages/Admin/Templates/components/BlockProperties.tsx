@@ -514,7 +514,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 onClick={() => {
                                                     const h = [...(activeBlock.config.headers ?? []), `Col ${(activeBlock.config.headers?.length ?? 0) + 1}`];
                                                     const w = Array(h.length).fill(`${Math.floor(100 / h.length)}%`);
-                                                    const r = (activeBlock.config.rows ?? []).map(row => ({ cells: [...row.cells, ''] }));
+                                                    const r = (activeBlock.config.rows ?? []).map((row: any) => {
+                                                        const cells = Array.isArray(row) ? [...row] : [...(row?.cells || [])];
+                                                        return Array.isArray(row) ? [...cells, ''] : { ...row, cells: [...cells, ''] };
+                                                    });
                                                     onUpdateConfig(activeBlock.id, 'headers', h);
                                                     onUpdateConfig(activeBlock.id, 'colWidths', w);
                                                     onUpdateConfig(activeBlock.id, 'rows', r);
@@ -542,7 +545,10 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                             onClick={() => {
                                                                 const h = (activeBlock.config.headers ?? []).filter((_, i) => i !== hIdx);
                                                                 const w = Array(h.length).fill(`${Math.floor(100 / h.length)}%`);
-                                                                const r = (activeBlock.config.rows ?? []).map(row => ({ cells: row.cells.filter((_, i) => i !== hIdx) }));
+                                                                const r = (activeBlock.config.rows ?? []).map((row: any) => {
+                                                                    const cells = (Array.isArray(row) ? row : (row?.cells || [])).filter((_: any, i: number) => i !== hIdx);
+                                                                    return Array.isArray(row) ? cells : { ...row, cells };
+                                                                });
                                                                 onUpdateConfig(activeBlock.id, 'headers', h);
                                                                 onUpdateConfig(activeBlock.id, 'colWidths', w);
                                                                 onUpdateConfig(activeBlock.id, 'rows', r);
@@ -571,25 +577,28 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             </button>
                                         </div>
                                         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                                            {activeBlock.config.rows?.map((row, rIdx) => (
-                                                <div key={rIdx} className="flex gap-1 items-center group/row">
-                                                    {row.cells.map((cell, cIdx) => (
-                                                        <input
-                                                            key={cIdx}
-                                                            value={cell}
-                                                            onChange={e => onCellChange(activeBlock.id, rIdx, cIdx, e.target.value)}
-                                                            className="flex-1 min-w-0 text-[10px] bg-surface border border-border-thin rounded-md px-1.5 py-1 text-text-main focus:outline-none"
-                                                            placeholder={`Celda ${cIdx + 1}`}
-                                                        />
-                                                    ))}
-                                                    <button
-                                                        onClick={() => onRemoveRow(activeBlock.id, rIdx)}
-                                                        className="p-1 rounded hover:bg-error/10 text-text-dim hover:text-error opacity-0 group-hover/row:opacity-100 transition-all"
-                                                    >
-                                                        <Trash2 className="w-2.5 h-2.5" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                            {activeBlock.config.rows?.map((row: any, rIdx: number) => {
+                                                const cells: string[] = Array.isArray(row) ? row : (row?.cells || []);
+                                                return (
+                                                    <div key={rIdx} className="flex gap-1 items-center group/row">
+                                                        {cells.map((cell: string, cIdx: number) => (
+                                                            <input
+                                                                key={cIdx}
+                                                                value={cell}
+                                                                onChange={e => onCellChange(activeBlock.id, rIdx, cIdx, e.target.value)}
+                                                                className="flex-1 min-w-0 text-[10px] bg-surface border border-border-thin rounded-md px-1.5 py-1 text-text-main focus:outline-none"
+                                                                placeholder={`Celda ${cIdx + 1}`}
+                                                            />
+                                                        ))}
+                                                        <button
+                                                            onClick={() => onRemoveRow(activeBlock.id, rIdx)}
+                                                            className="p-1 rounded hover:bg-error/10 text-text-dim hover:text-error opacity-0 group-hover/row:opacity-100 transition-all"
+                                                        >
+                                                            <Trash2 className="w-2.5 h-2.5" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>

@@ -430,7 +430,94 @@ export function generateDefaultBlocksForTemplate(
         ];
     }
 
-    // H. CERTIFICADOS
+    // H. PROPUESTA DE GRUPO DE INVESTIGACIÓN
+    if (code === 'PROPUESTA_GRUPO_INVESTIGACION' || code.includes('GRUPO') && !code.includes('CERTIFICADO') || category === 40 || category === 44) {
+        return [
+            createBaseCoverBlock('PROPUESTA DE CREACIÓN DE GRUPO DE INVESTIGACIÓN', { colorTitle: 'navy' }),
+            {
+                id: 'block-title-1',
+                type: 'title' as BlockType,
+                title: '1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN',
+                isActive: true,
+                config: { text: '1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN', fontSize: 'H2', color: '#1e2a4a' }
+            },
+            {
+                id: 'block-table-datos',
+                type: 'advanced_table' as BlockType,
+                title: 'Ficha de Identificación del Grupo',
+                isActive: true,
+                config: {
+                    headers: ['Parámetro Institucional', 'Detalle de la Propuesta'],
+                    rows: [
+                        ['Nombre Oficial del Grupo', '{{nombre_grupo}}'],
+                        ['Siglas / Acrónimo', '{{siglas}}'],
+                        ['Tipo de Grupo', '{{tipo_grupo}}'],
+                        ['Docente Coordinador / Líder', '{{coordinador_nombre}} (C.I. {{coordinador_cedula}} | Email: {{coordinador_email}} | Tel: {{coordinador_telefono}})'],
+                        ['Dominio Académico Vinculado', '{{dominio_nombre}}'],
+                        ['Líneas de Investigación', '{{lineas_investigacion}}'],
+                        ['Carreras Vinculadas', '{{carreras_vinculadas}}'],
+                        ['Categoría de Consolidación', '{{categoria_consolidacion}}'],
+                        ['Fecha de Presentación', '{{fecha_presentacion}}']
+                    ],
+                    headerColor: 'navy',
+                    borderStyle: 'solid'
+                }
+            },
+            {
+                id: 'block-title-2',
+                type: 'title' as BlockType,
+                title: '2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO',
+                isActive: true,
+                config: { text: '2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO', fontSize: 'H2', color: '#1e2a4a' }
+            },
+            {
+                id: 'block-mision-vision',
+                type: 'two_column' as BlockType,
+                title: 'Misión y Visión',
+                isActive: true,
+                config: {
+                    leftTitle: 'MISIÓN DEL GRUPO',
+                    leftContent: '{{mision}}',
+                    rightTitle: 'VISIÓN DEL GRUPO',
+                    rightContent: '{{vision}}'
+                }
+            },
+            {
+                id: 'block-title-3',
+                type: 'title' as BlockType,
+                title: '3. OBJETIVO GENERAL DEL GRUPO',
+                isActive: true,
+                config: { text: '3. OBJETIVO GENERAL DEL GRUPO', fontSize: 'H2', color: '#1e2a4a' }
+            },
+            {
+                id: 'block-objetivo',
+                type: 'rich_text' as BlockType,
+                title: 'Objetivo General',
+                isActive: true,
+                config: { content: '<p>{{objetivo_general}}</p>' }
+            },
+            {
+                id: 'block-pagebreak-1',
+                type: 'page_break' as BlockType,
+                title: 'Salto de Página',
+                isActive: true,
+                config: {}
+            },
+            {
+                id: 'block-title-4',
+                type: 'title' as BlockType,
+                title: '4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS',
+                isActive: true,
+                config: { text: '4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS', fontSize: 'H2', color: '#1e2a4a' }
+            },
+            createBaseSignaturesBlock([
+                { label: 'Docente Coordinador del Grupo', name: '{{coordinador_nombre}}', role: 'Coordinador / Líder' },
+                { label: 'Dirección de Investigación (DIITRA)', name: 'DIITRA - ISTPET', role: 'Revisión y Registro Institucional' }
+            ])
+        ];
+    }
+
+    // I. CERTIFICADOS
     if (code.includes('CERTIFICADO') || category === 6 || category === 7) {
         const isCompletacion = code.includes('COMPLETACION');
         return [

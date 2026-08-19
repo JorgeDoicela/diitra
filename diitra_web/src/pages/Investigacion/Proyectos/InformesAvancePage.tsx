@@ -397,7 +397,7 @@ const InformesAvancePage: React.FC = () => {
                                     <div className="flex items-center gap-3 shrink-0">
                                         {inf.es_firmado_digital && (
                                             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest hidden sm:block">
-                                                Firmado ✓
+                                                Firmado
                                             </span>
                                         )}
                                         <div className={`badge-vercel ${cfg.badge} flex items-center gap-1.5`}>

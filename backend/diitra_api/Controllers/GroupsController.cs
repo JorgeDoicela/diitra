@@ -15,11 +15,16 @@ public partial class GroupsController : ControllerBase
 {
     private readonly IGroupsService _groupsService;
     private readonly DiitraContext _context;
+    private readonly IGroupDocumentOrchestrator _groupDocumentOrchestrator;
 
-    public GroupsController(IGroupsService groupsService, DiitraContext context)
+    public GroupsController(
+        IGroupsService groupsService, 
+        DiitraContext context,
+        IGroupDocumentOrchestrator groupDocumentOrchestrator)
     {
         _groupsService = groupsService;
         _context = context;
+        _groupDocumentOrchestrator = groupDocumentOrchestrator;
     }
 
     [HttpGet]
@@ -222,6 +227,49 @@ public partial class GroupsController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("{uuid}/proposal-document/pdf")]
+    public async Task<IActionResult> GetProposalDocumentPdf(string uuid, [FromQuery] bool isDraft = false)
+    {
+        try
+        {
+            var requestedBy = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value ?? "Usuario";
+            var result = await _groupDocumentOrchestrator.GenerateProposalDocumentAsync(uuid, requestedBy, isDraft);
+
+            if (result?.PdfBytes == null || result.PdfBytes.Length == 0)
+            {
+                return StatusCode(500, new { message = "Error al generar el PDF de la propuesta de grupo." });
+            }
+
+            return File(result.PdfBytes, "application/pdf", $"Propuesta_Grupo_{uuid}.pdf");
+        }
+        catch (KeyNotFoundException knf)
+        {
+            return NotFound(new { message = knf.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, detail = ex.InnerException?.Message });
+        }
+    }
+
+    [HttpGet("{uuid}/proposal-document/data")]
+    public async Task<IActionResult> GetProposalDocumentData(string uuid)
+    {
+        try
+        {
+            var data = await _groupDocumentOrchestrator.BuildGroupDocumentDataAsync(uuid);
+            return Ok(data);
+        }
+        catch (KeyNotFoundException knf)
+        {
+            return NotFound(new { message = knf.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, detail = ex.InnerException?.Message });
         }
     }
 }

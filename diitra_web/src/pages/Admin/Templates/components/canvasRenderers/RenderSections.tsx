@@ -67,7 +67,7 @@ export const RenderProjectGeneralSection: React.FC<{
             : f.fieldType === 'select_catalog'
                 ? `[Catálogo: ${f.catalogUrl || 'sin url'}]`
                 : f.fieldType === 'date'
-                    ? '[dd/mm/aaaa 📅]'
+                    ? '[dd/mm/aaaa]'
                     : `[${f.placeholder || f.label}]`;
         rawItems.push({ id: f.fieldKey, key: f.fieldKey, label: f.label, value: val, isCustom: true, colSpan: (f.colSpan as 1 | 2) || 1 });
     });

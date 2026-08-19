@@ -1,5 +1,5 @@
 import { 
-    PenTool, BookOpen, Award, Activity
+    PenTool, BookOpen, Award, Activity, Folder, FileText, Search
 } from 'lucide-react';
 import type { HelpConfig, MockupProps } from '../types';
 
@@ -25,21 +25,23 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Alineado con el Criterio B.1.2 (Proyectos de Investigación Científica y Tecnológica) del CACES, asegurando que cada propuesta siga un flujo formal de validación, aprobación colegiada, presupuesto delimitado y asignación clara de metas e investigadores institucionales.",
+    compliance: "Alineado con el Criterio B.1 del CACES (Planificación y Producción Científica Institucional), garantizando la trazabilidad integral de los fondos y los compromisos de entrega de los investigadores.",
     tips: [
-        "Guarda borradores de tus propuestas de manera local utilizando el guardado automático integrado antes de realizar el envío formal, ya que una vez enviada, la propuesta entrará en estado de bloqueo para edición.",
-        "Puedes asociar estudiantes colaboradores en tu postulación para sumar puntos en el indicador de semilleros y fomento a la investigación formativa."
+        "Asegúrate de que las partidas presupuestarias no superen los topes máximos establecidos en las bases de la convocatoria antes de enviar tu propuesta a revisión.",
+        "Descarga una copia de seguridad de tu contrato firmado una vez que el estado del proyecto cambie a 'Aprobado y en Ejecución'."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
-            {/* Header / Top Content */}
-            <div className={`rounded-lg border p-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+            {/* Header & Controls Area */}
+            <div className={`rounded-lg border p-1.5 flex justify-between items-center transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[5px] text-brand uppercase font-mono tracking-wider font-semibold">Mis Investigaciones</span>
-                    <span className="text-[8px] text-text-main font-semibold leading-tight">Proyectos de investigación</span>
+                    <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Investigación</span>
+                    <span className="text-[7px] text-text-main font-bold">Consola del Investigador</span>
                 </div>
-                <div className="h-5 px-2 bg-brand text-white rounded flex items-center justify-center text-[6px] font-bold shadow-sm">
-                    + Nueva Postulación
+                <div className="flex gap-1">
+                    <div className="px-1.5 py-0.5 bg-brand text-white rounded text-[5px] font-bold shadow-sm">
+                        + Nueva Postulación
+                    </div>
                 </div>
             </div>
 
@@ -48,12 +50,16 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
                 {/* Bento Cards Row */}
                 <div className="grid grid-cols-2 gap-1.5 shrink-0">
                     <div className="rounded-md border border-border-thin bg-surface-hover/10 p-1.5 flex flex-col gap-1">
-                        <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center text-[7px]">📁</div>
+                        <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center">
+                            <Folder size={8} />
+                        </div>
                         <span className="text-[7px] font-bold text-text-main leading-tight uppercase">Mis Proyectos</span>
                         <span className="text-[5px] text-text-dim leading-none uppercase">Mis proyectos</span>
                     </div>
                     <div className="rounded-md border border-border-thin bg-surface-hover/10 p-1.5 flex flex-col gap-1">
-                        <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center text-[7px]">📄</div>
+                        <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center">
+                            <FileText size={8} />
+                        </div>
                         <span className="text-[7px] font-bold text-text-main leading-tight uppercase">Informe Final</span>
                         <span className="text-[5px] text-text-dim leading-none uppercase">Informe final</span>
                     </div>
@@ -65,14 +71,14 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
                     <div className="flex-1 border border-dashed border-border-thin rounded bg-surface p-1 space-y-1 overflow-hidden">
                         <div className="flex justify-between items-center py-0.5 border-b border-border-thin/40 text-[5px]">
                             <div className="flex items-center gap-1">
-                                <span className="text-brand">📄</span>
+                                <FileText size={7} className="text-brand shrink-0" />
                                 <span className="text-text-main font-medium truncate max-w-[120px]">CONTRATO_FONDOS_2026.pdf</span>
                             </div>
                             <span className="px-1 py-0.2 bg-success/15 border border-success/35 text-success rounded text-[4px] font-semibold">FIRMADO</span>
                         </div>
                         <div className="flex justify-between items-center py-0.5 border-b border-border-thin/40 text-[5px]">
                             <div className="flex items-center gap-1">
-                                <span className="text-brand">📄</span>
+                                <FileText size={7} className="text-brand shrink-0" />
                                 <span className="text-text-main font-medium truncate max-w-[120px]">RESOLUCION_DI-008.pdf</span>
                             </div>
                             <span className="px-1 py-0.2 bg-success/15 border border-success/35 text-success rounded text-[4px] font-semibold">FIRMADO</span>
@@ -85,36 +91,36 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
 };
 
 export const MIS_PROYECTOS_CONFIG: HelpConfig = {
-    ...INVESTIGACION_CONFIG,
-    title: "Mis Proyectos Académicos",
-    summary: "Historial personal de tus postulaciones e investigaciones activas.",
-    description: "Espacio de trabajo personal donde puedes realizar el seguimiento pormenorizado del estado de tus propuestas de investigación. Permite editar borradores inconclusos, revisar las observaciones detalladas emitidas por los revisores pares, cargar los entregables periódicos definidos en tu cronograma y consultar resoluciones oficiales.",
+    icon: <BookOpen size={24} className="text-brand" />,
+    title: "Mis Proyectos de Investigación",
+    summary: "Gestión centralizada, edición de protocolos y seguimiento del ciclo de vida de los proyectos postulados.",
+    description: "Tablero principal para la administración de todas las propuestas enviadas y proyectos activos. Muestra tarjetas con métricas en tiempo real sobre el porcentaje de ejecución presupuestaria, estados de revisión por pares, nivel de madurez tecnológica (TRL) y accesos directos al editor interactivo del protocolo institucional.",
     steps: [
         {
-            title: "Ciclo de vida y estados del proyecto",
-            description: "Monitorea la columna de estados en la tabla de proyectos. Los estados incluyen: 'Borrador' (permite edición completa y carga de archivos), 'Enviado' (bloqueado para edición, bajo revisión técnica), 'En Ejecución' (aprobado formalmente con presupuesto asignado y cronograma activo), 'Devuelto con Observaciones' (requiere modificaciones del docente) y 'Finalizado' (con informe final aprobado).",
+            title: "Listado interactivo de proyectos y estado de dictamen",
+            description: "Visualiza de forma clara el estado actual de cada propuesta (Borrador, En Revisión, En Corrección, Aprobado o En Ejecución). El distintivo de color te permite identificar de un vistazo si se requieren ajustes solicitados por los revisores pares.",
             highlight: 'content-bottom'
         },
         {
-            title: "Acceso al espacio de trabajo colaborativo en tiempo real",
-            description: "Haz clic sobre cualquier proyecto en estado 'En Ejecución' para abrir tu área de trabajo colaborativa. En esta sección podrás registrar las bitácoras de avance semanal, subir informes de hitos del cronograma, cargar facturas de presupuesto y chatear con los miembros del equipo y coinvestigadores asignados.",
+            title: "Acceso al espacio de trabajo y editor del protocolo",
+            description: "Haz clic en cualquier tarjeta de proyecto para abrir el Espacio de Trabajo. Podrás acceder al editor TipTap en tiempo real, visualizar el diagrama de Gantt de entregables, y verificar la consistencia de las horas asignadas a los investigadores.",
             highlight: 'content-bottom'
         },
         {
-            title: "Gestión y descarte de borradores",
-            description: "En caso de propuestas desestimadas o creadas por error, puedes descartarlas permanentemente directamente desde el menú de acciones de la fila, siempre y cuando se encuentren en estado de 'Borrador'. Esta acción es irreversible y liberará el código temporal del sistema.",
+            title: "Seguimiento presupuestario y madurez TRL",
+            description: "Monitorea la barra de progreso financiero y el indicador de TRL estimado para comprobar que tu proyecto avanza de acuerdo a los plazos previstos en la planificación inicial.",
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Garantiza el registro permanente de los informes de avance de investigación exigidos por los comités de evaluación del CES y CACES, demostrando el cumplimiento de las horas docentes dedicadas al desarrollo científico.",
+    compliance: "Garantiza el cumplimiento de las metas anuales de producción científica y vinculación según la normativa institucional y los estándares CACES.",
     tips: [
-        "Cuando tu propuesta reciba observaciones, haz clic en el botón amarillo de alerta para ver la rúbrica detallada del revisor paso a paso con los comentarios específicos de lo que debes reformular.",
-        "Mantén al día la carga de evidencias de avance en tu cronograma para evitar bloqueos administrativos automáticos al final del periodo académico."
+        "Revisa periódicamente la pestaña 'En Corrección' para responder a tiempo a las observaciones de los pares y no perder la postulación.",
+        "Utiliza la opción de descarga rápida para exportar el protocolo completo en formato PDF oficial en cualquier momento."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
-            {/* Header & Search/Filters Area */}
-            <div className={`rounded-lg border p-1.5 flex flex-col gap-1.5 transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+            {/* Top Toolbar */}
+            <div className={`rounded-lg border p-1.5 flex flex-col gap-1 transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                         <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Mis Investigaciones</span>
@@ -126,7 +132,8 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                 </div>
                 <div className="flex gap-1">
                     <div className="flex-1 h-3.5 bg-surface-hover/20 border border-border-thin rounded-md px-1 flex items-center gap-1 text-[5px] text-text-dim">
-                        🔍 <span className="truncate">Buscar por título...</span>
+                        <Search size={7} className="shrink-0" />
+                        <span className="truncate">Buscar por título...</span>
                     </div>
                     <div className="w-16 h-3.5 bg-surface-hover/20 border border-border-thin rounded-md px-1 flex items-center justify-between text-[4.5px] text-text-main">
                         <span>Todos los estados</span>
@@ -142,7 +149,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                     <div className="space-y-1">
                         <div className="flex justify-between items-center text-[4px] font-mono text-text-dim font-bold">
                             <span>PROY-SOFT-2026-001</span>
-                            <span>➔</span>
+                            <span>&rarr;</span>
                         </div>
                         <h4 className="text-[5.5px] font-semibold text-text-main leading-tight line-clamp-2">
                             Plataforma IoT con IA para Monitoreo de Consumo...
@@ -152,7 +159,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                             <span>En Ejecución · IP</span>
                         </div>
                         <div className="text-[4px] text-text-dim truncate">
-                            📚 IA y Aprendizaje Automático
+                            IA y Aprendizaje Automático
                         </div>
                     </div>
 
@@ -191,8 +198,8 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
 
                     {/* Footer */}
                     <div className="border-t border-border-thin/40 pt-1 mt-1.5 flex justify-between items-center text-[4px] text-text-dim">
-                        <span>📅 4/15/2026</span>
-                        <span className="text-warning">⚡ TRL 5/6</span>
+                        <span>4/15/2026</span>
+                        <span className="text-warning">TRL 5/6</span>
                         <span className="px-0.5 rounded bg-success/15 text-success border border-success/35 font-bold">85.5/100</span>
                     </div>
                 </div>
@@ -202,7 +209,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                     <div className="space-y-1">
                         <div className="flex justify-between items-center text-[4px] font-mono text-text-dim font-bold">
                             <span>PROY-ADM-2026-003</span>
-                            <span>➔</span>
+                            <span>&rarr;</span>
                         </div>
                         <h4 className="text-[5.5px] font-semibold text-text-main leading-tight line-clamp-2">
                             Impacto del Teletrabajo en la Productividad...
@@ -212,7 +219,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                             <span>En Ejecución · Dir</span>
                         </div>
                         <div className="text-[4px] text-text-dim truncate">
-                            📚 Gestión del Talento Humano
+                            Gestión del Talento Humano
                         </div>
                     </div>
 
@@ -251,8 +258,8 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
 
                     {/* Footer */}
                     <div className="border-t border-border-thin/40 pt-1 mt-1.5 flex justify-between items-center text-[4px] text-text-dim">
-                        <span>📅 4/15/2026</span>
-                        <span className="text-warning">⚡ TRL 2/4</span>
+                        <span>4/15/2026</span>
+                        <span className="text-warning">TRL 2/4</span>
                         <span className="px-0.5 rounded bg-success/15 text-success border border-success/35 font-bold">78/100</span>
                     </div>
                 </div>
@@ -295,7 +302,7 @@ export const ADOPCION_CONFIG: HelpConfig = {
                 </div>
                 <div className="flex gap-1 text-[4.5px]">
                     <div className="flex-1 h-3.5 bg-surface-hover/20 border border-border-thin rounded px-1 flex items-center gap-1 text-text-dim">
-                        🔍 <span className="truncate">Buscar propuestas elegibles...</span>
+                        <span className="truncate">Buscar propuestas elegibles...</span>
                     </div>
                 </div>
             </div>

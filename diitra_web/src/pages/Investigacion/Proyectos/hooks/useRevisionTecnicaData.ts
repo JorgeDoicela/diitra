@@ -148,16 +148,39 @@ export const useRevisionTecnicaData = ({
         }
     }, []);
 
-    const calculateMetrics = useCallback(async (uuid: string) => {
+    const calculateMetrics = useCallback(async (uuid: string, projectData?: any) => {
         try {
             const instanceRes = await api.get(`/documents/instances/resolve`, {
                 params: { templateCode: 'PROTOCOLO_INVESTIGACION', entityUuid: uuid }
             });
             const dataJson = instanceRes.data?.dataSnapshotJson || instanceRes.data?.data_snapshot_json || '{}';
-            const metadata = JSON.parse(dataJson);
+            let metadata = JSON.parse(dataJson);
+
+            // Si el snapshot del editor tiene datos, combinarlos con los datos del proyecto base
+            if (projectData) {
+                metadata = {
+                    Titulo: projectData.titulo || metadata.Titulo,
+                    DescripcionProyecto: projectData.descripcion_proyecto || projectData.descripcionProyecto || metadata.DescripcionProyecto,
+                    Antecedentes: metadata.Antecedentes || projectData.antecedentes,
+                    Justificacion: metadata.Justificacion || projectData.justificacion,
+                    ObjetivoGeneral: metadata.ObjetivoGeneral || projectData.objetivo_general || projectData.objetivoGeneral,
+                    ObjetivosEspecificos: metadata.ObjetivosEspecificos || projectData.objetivos_especificos || projectData.objetivosEspecificos,
+                    Metodologia: metadata.Metodologia || projectData.metodologia,
+                    CostoTotal: metadata.CostoTotal || projectData.costo_total || projectData.costoTotal,
+                    Presupuesto: metadata.Presupuesto || metadata.RecursosNecesarios || [],
+                    RecursosNecesarios: metadata.RecursosNecesarios || metadata.Presupuesto || [],
+                    Cronograma: metadata.Cronograma || projectData.cronograma || [],
+                    Dominio: metadata.Dominio || projectData.dominio,
+                    LineaInvestigacion: metadata.LineaInvestigacion || projectData.linea_investigacion,
+                    SublineaInvestigacion: metadata.SublineaInvestigacion || projectData.sublinea_investigacion,
+                    Carrera: metadata.Carrera || projectData.carrera,
+                    ...metadata
+                };
+            }
+
             setDocSnapshot(metadata);
         } catch (e) {
-            console.error('[DIITRA] Error al cargar snapshot:', e);
+            console.error('[DIITRA] Error al cargar snapshot colaborativo:', e);
         }
     }, []);
 
@@ -197,7 +220,7 @@ export const useRevisionTecnicaData = ({
             }
 
             loadPdf(projectUuid);
-            await calculateMetrics(projectUuid);
+            await calculateMetrics(projectUuid, res.data);
             await loadTemplateBlocks(projectUuid);
 
             try {

@@ -87,7 +87,7 @@ export const useGroupDetail = ({
 
     // Base States
     const [detailMembers, setDetailMembers] = useState<GroupMember[]>([]);
-    const [detailTab, setDetailTab] = useState<'info' | 'feedback' | 'proyectos'>('info');
+    const [detailTab, setDetailTab] = useState<'info' | 'documento' | 'feedback' | 'proyectos'>('info');
     const openTimeRef = useRef<number>(0);
 
     // Audio recorder sub-hook

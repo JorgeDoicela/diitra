@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import type { CriterioRubricaDto } from '../../../../services/peerReviewService';
 import type { EvaluacionDetalle } from '../hooks/useEvaluacionPage';
 import { DEFAULT_RANGES } from '../hooks/useEvaluacionPage';
@@ -123,7 +124,7 @@ export const CriterioCard: React.FC<CriterioCardProps> = ({
                                 onClick={() => onPuntajeChange(targetScore)}
                                 className={`bg-surface border border-border-thin text-text-dim font-sans text-[10px] font-semibold uppercase tracking-wider py-1 px-2.5 rounded transition-all cursor-pointer inline-flex items-center gap-1 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-text-main hover:enabled:bg-surface-hover hover:enabled:text-text-main ${isSelected ? 'bg-text-main text-bg-deep border-text-main' : ''}`}
                             >
-                                {isSelected && <span className="mr-0.5 font-bold">✓</span>}
+                                {isSelected && <Check size={10} className="mr-0.5" />}
                                 {p.label.split(' ')[0]}
                             </button>
                         );

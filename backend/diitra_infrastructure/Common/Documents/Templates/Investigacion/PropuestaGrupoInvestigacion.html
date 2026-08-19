@@ -1,0 +1,382 @@
+<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1jb3Zlci1ncm91cCIsInR5cGUiOiJjb3ZlciIsInRpdGxlIjoiUG9ydGFkYSBJbnN0aXR1Y2lvbmFsIC0gUHJvcHVlc3RhIGRlIEdydXBvIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0aXR1bG9TdXBlcmlvciI6IlBST1BVRVNUQSBERSBDUkVBQ0nDl04gREUgR1JVUE8gREUgSU5WRVNUSUdBQ0nDl04iLCJjb2xvclRpdHVsb1N1cGVyaW9yIjoiIzFlMmE0YSIsImNhcnJlcmFQb3JEZWZlY3RvIjoie3tjYXJyZXJhc190ZXh0b319IiwicGVyaW9kb1BvckRlZmVjdG8iOiJESVJFQ0NJw5NOIERFIElOVkVTVElHQUNJw5NOLCBJTk5PVkFDScOTTiBZIFRSQU5TRkVSRU5DSUEgVEVDTk9Mw5NHSUNBIChESUlUUkEpIiwiY29sb3JUZW1hIjoiIzFlMmE0YSIsInNob3dJbnN0aXR1dGlvbiI6ZmFsc2UsInNob3dUaXRsZSI6dHJ1ZSwic2hvd0NhcnJlcmEiOnRydWUsInNob3dQZXJpb2RvIjp0cnVlLCJ4VGl0bGUiOjUwLCJ5VGl0bGUiOjM1LCJ4Q2FycmVyYSI6NTAsInlDYXJyZXJhIjo1NSwieFBlcmlvZG8iOjUwLCJ5UGVyaW9kbyI6Njh9fSx7ImlkIjoiYmxvY2stdGl0bGUtMSIsInR5cGUiOiJ0aXRsZSIsInRpdGxlIjoiMS4gREFUT1MgR0VORVJBTEVTIERFTCBHUlVQTyBERSBJTlZFU1RJR0FDScOTTiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjEuIERBVE9TIEdFTkVSQUxFUyBERUwgR1JVUE8gREUgSU5WRVNUSUdBQ0nDl04iLCJmb250U2l6ZSI6IkgyIiwiY29sb3IiOiIjMWUyYTRhIn19LHsiaWQiOiJibG9jay10YWJsZS1kYXRvcyIsInR5cGUiOiJhZHZhbmNlZF90YWJsZSIsInRpdGxlIjoiRmljaGEgZGUgSWRlbnRpZmljYWNpw7NuIGRlbCBHcnVwbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiaGVhZGVycyI6WyJQYXLDgW1ldHJvIEluc3RpdHVjaW9uYWwiLCJEZXRhbGxlIGRlIGxhIFByb3B1ZXN0YSJdLCJyb3dzIjpbWyJOb21icmUgT2ZpY2lhbCBkZWwgR3J1cG8iLCJ7e25vbWJyZV9ncnVwb319Il0sWyJTaWdsYXMgLyBBY3LDs25pbW8iLCJ7e3NpZ2xhc319Il0sWyJUaXBvIGRlIEdydXBvIiwie3t0aXBvX2dydXBvfX0iXSxbIkRvY2VudGUgQ29vcmRpbmFkb3IgLyBMw61kZXIiLCJ7e2Nvb3JkaW5hZG9yX25vbWJyZX19IChDLkkuIHt7Y29vcmRpbmFkb3JfY2VkdWxhfX0gfCBFbWFpbDoge3tjb29yZGluYWRvcl9lbWFpbH19IHwgVGVsOiB7e2Nvb3JkaW5hZG9yX3RlbGVmb25vfX0pIl0sWyJEb21pbmlvIEFjYWTDqW1pY28gVmluY3VsYWRvIiwie3tkb21pbmlvX25vbWJyZX19Il0sWyJMw61uZWFzIGRlIEludmVzdGlnYWNpw7NuIiwie3tsaW5lYXNfaW52ZXN0aWdhY2lvbn19Il0sWyJDYXJyZXJhcyBWaW5jdWxhZGFzIiwie3tjYXJyZXJhc192aW5jdWxhZGFzfX0iXSxbIkNhdGVnb3LDrWEgZGUgQ29uc29saWRhY2nDs24iLCJ7e2NhdGVnb3JpYV9jb25zb2xpZGFjaW9ufX0iXSxbIkZlY2hhIGRlIFByZXNlbnRhY2nDs24iLCJ7e2ZlY2hhX3ByZXNlbnRhY2lvbn19Il1dLCJoZWFkZXJDb2xvciI6Im5hdnkiLCJib3JkZXJTdHlsZSI6InNvbGlkIn19LHsiaWQiOiJibG9jay10aXRsZS0yIiwidHlwZSI6InRpdGxlIiwidGl0bGUiOiIyLiBJREVOVElEQUQgRVNUUkFURSdHSUNBIFkgUFJPUMOJU0lUTyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjIuIElERU5USURBRCBFU1RSQVRFz0dJQ0EgWSBQUk9Qw5NTSVRPIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSJ9fSx7ImlkIjoiYmxvY2stbWlzaW9uLXZpc2lvbiIsInR5cGUiOiJ0d29fY29sdW1uIiwidGl0bGUiOiJNaXNpw7NuIHkgVmlzacOzbiIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsibGVmdFRpdGxlIjoiTUlTScOTTiBERUwgR1JVUE8iLCJsZWZ0Q29udGVudCI6Int7bWlzaW9ufX0iLCJyaWdodFRpdGxlIjoiVklTScOTTiBERUwgR1JVUE8iLCJyaWdodENvbnRlbnQiOiJ7e3Zpc2lvbn19In19LHsiaWQiOiJibG9jay10aXRsZS0zIiwidHlwZSI6InRpdGxlIiwidGl0bGUiOiIzLiBPQkpFVElWTyBHRU5FUkFMIERFTCBHUlVQTyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsidGV4dCI6IjMuIE9CSkVUSVZPIEdFTkVSQUwgREVMIEdSVVBPIiwiZm9udFNpemUiOiJIMiIsImNvbG9yIjoiIzFlMmE0YSJ9fSx7ImlkIjoiYmxvY2stb2JqZXRpdm8iLCJ0eXBlIjoicmljaF90ZXh0IiwidGl0bGUiOiJPYmpldGl2byBHZW5lcmFsIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJjb250ZW50IjoiPHA+e3tvYmpldGl2b19nZW5lcmFsfX08L3A+In19LHsiaWQiOiJibG9jay1wYWdlYnJlYWstMSIsInR5cGUiOiJwYWdlX2JyZWFrIiwidGl0bGUiOiJTYWx0byBkZSBQw6FnaW5hIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6e319LHsiaWQiOiJibG9jay10aXRsZS00IiwidHlwZSI6InRpdGxlIiwidGl0bGUiOiI0LiBFUVVJUE8gREUgSU5WRVNUSUdBRE9SRVMgWSBTRU1JTExFUklTVEFTIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJ0ZXh0IjoiNC4gRVFVSVBPIERFIElOVkVTVElHQURPUkVTIFkgU0VNSUxMRVJJU1RBUyIsImZvbnRTaXplIjoiSDIiLCJjb2xvciI6IiMxZTJhNGEifX0seyJpZCI6ImJsb2NrLXNpZ25hdHVyZXMtZ3JvdXAiLCJ0eXBlIjoic2lnbmF0dXJlcyIsInRpdGxlIjoiRmlybWFzIGRlIFJlc3BvbnNhYmlsaWRhZCIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsic2lnbmF0b3JpZXMiOlt7ImxhYmVsIjoiRG9jZW50ZSBDb29yZGluYWRvciBkZWwgR3J1cG8iLCJuYW1lIjoie3tjb29yZGluYWRvcl9ub21icmV9fSIsInJvbGUiOiJDb29yZGluYWRvciAvIEzDrWRlciJ9LHsibGFiZWwiOiJEaXJlY2Npw7NuIGRlIEludmVzdGlnYWNpw7NuIChESUlUUkEpIiwibmFtZSI6IkRJSVRSQSAtIElTVFBFVCIsInJvbGUiOiJSZXZpc2nDs24geSBSZWdpc3RybyBJbnN0aXR1Y2lvbmFsIn1dLCJ0ZXh0b1BpZUZpcm1hIjoiSU5TVElUVVRPIFNVUEVSSU9SIFRFQ05PTEzHR0lDTyBNQVlPUiBQRURSTyBUUkFWRVJTQVJJIn19XQ== -->
+<style>
+  * { box-sizing: border-box; }
+  
+  @page {
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
+  }
+
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+  
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      max-height: 296.5mm;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      {{#if portada_base64}}
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      {{/if}}
+      color: {{ theme.colors.primary }};
+      z-index: 1000;
+      overflow: hidden;
+      page-break-inside: avoid;
+      page-break-after: always;
+  }
+
+  .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 3cm 2cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: space-around;
+  }
+
+  .main-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 22pt;
+      font-weight: bold;
+      color: {{ theme.colors.secondary }};
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0;
+      width: 100%;
+  }
+
+  .group-theme {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 18pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin: 1.5cm 0;
+      line-height: 1.3;
+      width: 100%;
+      word-wrap: break-word;
+  }
+
+  .sub-box {
+      border-top: 2px solid {{ theme.colors.secondary }};
+      padding-top: 0.8cm;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4cm;
+  }
+
+  .carrera-text {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+  }
+
+  .periodo-text {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 10pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+  }
+
+  .section-h2 {
+      font-size: {{default theme.typography.h2_size "13pt"}};
+      font-weight: 700;
+      color: {{ theme.colors.primary }};
+      border-bottom: 2px solid {{ theme.colors.secondary }};
+      padding-bottom: 4px;
+      margin-top: 18px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      page-break-after: avoid;
+  }
+
+  .table-data {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 9.5pt;
+  }
+
+  .table-data th {
+      background-color: {{ theme.colors.primary }};
+      color: #ffffff;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+  }
+
+  .table-data td {
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+  }
+
+  .table-data tr:nth-child(even) td {
+      background-color: #f8fafc;
+  }
+
+  .two-col-container {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+  }
+
+  .col-box {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 12px;
+      background-color: #ffffff;
+  }
+
+  .col-box-title {
+      font-weight: 700;
+      color: {{ theme.colors.primary }};
+      font-size: 10pt;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+  }
+
+  .badge-role {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background-color: #e0e7ff;
+      color: #3730a3;
+  }
+
+  .page-break {
+      page-break-before: always;
+  }
+
+  .signatures-container {
+      margin-top: 30px;
+      page-break-inside: avoid;
+  }
+
+  .signatures-grid {
+      display: flex;
+      justify-content: space-around;
+      gap: 20px;
+      margin-top: 40px;
+  }
+
+  .sig-box {
+      flex: 1;
+      text-align: center;
+      border-top: 1px solid #0f172a;
+      padding-top: 8px;
+  }
+
+  .sig-name {
+      font-weight: 700;
+      font-size: 9.5pt;
+      color: #0f172a;
+  }
+
+  .sig-role {
+      font-size: 8.5pt;
+      color: #64748b;
+  }
+</style>
+
+<div class="doc-container">
+    <!-- PORTADA INSTITUCIONAL -->
+    <div class="cover-page">
+        <div class="cover-overlay">
+            <div class="main-label">PROPUESTA DE CREACIÓN DE GRUPO DE INVESTIGACIÓN</div>
+            <div class="group-theme">{{ nombre_grupo }}</div>
+            <div class="sub-box">
+                <div class="carrera-text">{{ default carreras_texto "INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI" }}</div>
+                <div class="periodo-text">DIRECCIÓN DE INVESTIGACIÓN, INNOVACIÓN Y TRANSFERENCIA TECNOLÓGICA (DIITRA)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 1: DATOS GENERALES -->
+    <div class="section-h2">1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN</div>
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th style="width: 35%;">Parámetro Institucional</th>
+                <th style="width: 65%;">Detalle de la Propuesta</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Nombre Oficial del Grupo</strong></td>
+                <td>{{ nombre_grupo }}</td>
+            </tr>
+            <tr>
+                <td><strong>Siglas / Acrónimo</strong></td>
+                <td>{{ default siglas "—" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Tipo de Grupo</strong></td>
+                <td>{{ default tipo_grupo "Investigación" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Docente Coordinador / Líder</strong></td>
+                <td>
+                    <strong>{{ coordinador_nombre }}</strong><br>
+                    <span style="font-size: 8.5pt; color: #475569;">C.I. {{ coordinador_cedula }} | Email: {{ coordinador_email }} | Tel: {{ default coordinador_telefono "—" }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Dominio Académico Vinculado</strong></td>
+                <td>{{ default dominio_nombre "No especificado" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Líneas de Investigación</strong></td>
+                <td>{{ default lineas_investigacion "—" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Carreras Vinculadas</strong></td>
+                <td>{{ default carreras_vinculadas "—" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Categoría de Consolidación</strong></td>
+                <td>{{ default categoria_consolidacion "En Formación" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Fecha de Presentación</strong></td>
+                <td>{{ default fecha_presentacion "—" }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SECCIÓN 2: IDENTIDAD ESTRATÉGICA -->
+    <div class="section-h2">2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO</div>
+    <div class="two-col-container">
+        <div class="col-box">
+            <div class="col-box-title">Misión del Grupo</div>
+            <div style="font-size: 9.5pt; line-height: 1.45; color: #334155;">{{ default mision "Misión no registrada" }}</div>
+        </div>
+        <div class="col-box">
+            <div class="col-box-title">Visión del Grupo</div>
+            <div style="font-size: 9.5pt; line-height: 1.45; color: #334155;">{{ default vision "Visión no registrada" }}</div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 3: OBJETIVO GENERAL -->
+    <div class="section-h2">3. OBJETIVO GENERAL Y PROPÓSITO</div>
+    <div style="font-size: 10pt; line-height: 1.5; color: #1e293b; background: #f8fafc; border-left: 3px solid {{ theme.colors.primary }}; padding: 10px 14px; margin-bottom: 18px;">
+        {{ default objetivo_general "Objetivo general no registrado." }}
+    </div>
+
+    <!-- SALTO DE PÁGINA PARA EQUIPO -->
+    <div class="page-break"></div>
+
+    <!-- SECCIÓN 4: EQUIPO DE INVESTIGADORES Y SEMILLERISTAS -->
+    <div class="section-h2">4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS</div>
+    
+    <p style="font-weight: 700; font-size: 10pt; color: {{ theme.colors.primary }}; margin-bottom: 6px;">4.1. Nómina de Docentes Investigadores</p>
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th style="width: 5%;">N°</th>
+                <th style="width: 35%;">Docente Investigador</th>
+                <th style="width: 20%;">Cédula</th>
+                <th style="width: 25%;">Email</th>
+                <th style="width: 15%;">Rol</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#if miembros_docentes}}
+                {{#each miembros_docentes}}
+                <tr>
+                    <td style="text-align: center;">{{ @index + 1 }}</td>
+                    <td><strong>{{ nombre }}</strong></td>
+                    <td>{{ cedula }}</td>
+                    <td>{{ email }}</td>
+                    <td><span class="badge-role">{{ default rol "Investigador" }}</span></td>
+                </tr>
+                {{/each}}
+            {{else}}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic;">No se registran otros docentes miembros.</td>
+                </tr>
+            {{/if}}
+        </tbody>
+    </table>
+
+    <p style="font-weight: 700; font-size: 10pt; color: {{ theme.colors.primary }}; margin-top: 14px; margin-bottom: 6px;">4.2. Estudiantes Semilleristas</p>
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th style="width: 5%;">N°</th>
+                <th style="width: 35%;">Estudiante Semillerista</th>
+                <th style="width: 20%;">Cédula</th>
+                <th style="width: 25%;">Carrera</th>
+                <th style="width: 15%;">Rol</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#if miembros_estudiantes}}
+                {{#each miembros_estudiantes}}
+                <tr>
+                    <td style="text-align: center;">{{ @index + 1 }}</td>
+                    <td><strong>{{ nombre }}</strong></td>
+                    <td>{{ cedula }}</td>
+                    <td>{{ carrera }}</td>
+                    <td><span class="badge-role" style="background-color: #fef3c7; color: #92400e;">{{ default rol "Semillerista" }}</span></td>
+                </tr>
+                {{/each}}
+            {{else}}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic;">No se registran estudiantes semilleristas al momento.</td>
+                </tr>
+            {{/if}}
+        </tbody>
+    </table>
+
+    <!-- SECCIÓN 5: FIRMAS DE RESPONSABILIDAD -->
+    <div class="signatures-container">
+        <div class="section-h2" style="font-size: 11pt; border-bottom: 1px solid #cbd5e1;">5. FIRMAS DE RESPONSABILIDAD Y AVAL INSTITUCIONAL</div>
+        <div class="signatures-grid">
+            <div class="sig-box">
+                <div class="sig-name">{{ coordinador_nombre }}</div>
+                <div class="sig-role">Docente Coordinador / Líder del Grupo</div>
+                <div style="font-size: 8pt; color: #94a3b8; margin-top: 4px;">C.I. {{ coordinador_cedula }}</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-name">DIITRA - ISTPET</div>
+                <div class="sig-role">Dirección de Investigación, Innovación y Transferencia Tecnológica</div>
+                <div style="font-size: 8pt; color: #94a3b8; margin-top: 4px;">Recepción y Trámite Documental</div>
+            </div>
+        </div>
+    </div>
+</div>

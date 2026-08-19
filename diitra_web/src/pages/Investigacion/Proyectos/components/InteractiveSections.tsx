@@ -143,11 +143,11 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                             <div className="grid grid-cols-3 gap-3 select-text">
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Dominio Académico</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(project.dominio) || 'Tecnologías de la Información'}</p>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(project.dominio) || stripHtml(docSnapshot.Dominio) || 'No especificado'}</p>
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Línea de Investigación</span>
-                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(project.linea)}</p>
+                                    <p className="text-xs font-medium text-text-main mt-0.5 truncate">{stripHtml(project.linea) || stripHtml(docSnapshot.LineaInvestigacion) || 'No definida'}</p>
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Sublínea</span>
@@ -205,11 +205,11 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                             <div className="grid grid-cols-2 gap-4 select-text">
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Carrera / Unidad</span>
-                                    <p className="text-xs font-semibold text-text-main mt-0.5">{project.carrera || 'DESARROLLO DE SOFTWARE'}</p>
+                                    <p className="text-xs font-semibold text-text-main mt-0.5">{project.carrera || docSnapshot.Carrera || 'Institucional'}</p>
                                 </div>
                                 <div>
                                     <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Convocatoria</span>
-                                    <p className="text-xs font-semibold text-text-main mt-0.5 truncate">{project.convocatoria}</p>
+                                    <p className="text-xs font-semibold text-text-main mt-0.5 truncate">{project.convocatoria || 'Convocatoria Regular'}</p>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +314,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 {renderCommentButton('justificacion', 'Justificación')}
                             </div>
-                            {renderHtml(docSnapshot.Justificacion, 'No especificada en el protocolo')}
+                            {renderHtml(docSnapshot.Justificacion || docSnapshot.JustificacionInnovacion, 'No especificada en el protocolo')}
                         </div>
 
                         {/* OBJETIVOS GENERAL Y ESPECÍFICOS */}
@@ -364,8 +364,16 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 {renderCommentButton('metodologia', 'Metodología')}
                             </div>
-                            {renderHtml(docSnapshot.Metodologia, 'No registrada')}
+                            {renderHtml(docSnapshot.Metodologia || docSnapshot.MarcoTeorico, 'No registrada')}
                         </div>
+
+                        {/* OBJETIVOS DE DESARROLLO SOSTENIBLE (ODS) */}
+                        {docSnapshot.ObjetivosDesarrolloSostenible && (
+                            <div className="p-4 rounded-xl border border-border-thin bg-surface space-y-2">
+                                <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Alineación con ODS</span>
+                                {renderHtml(docSnapshot.ObjetivosDesarrolloSostenible, 'No registrados')}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -382,10 +390,10 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                     </div>
 
                     {/* CONTROL PRESUPUESTAL */}
-                    <div className="grid grid-cols-3 gap-4 select-none">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 select-none">
                         <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
                             <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Presupuesto Propuesto</span>
-                            <span className="text-lg font-mono font-bold text-text-main mt-2 select-text">${project.presupuesto.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="text-lg font-mono font-bold text-text-main mt-2 select-text">${(project.presupuesto || docSnapshot.CostoTotal || 0).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
                             <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Límite Convocatoria</span>
@@ -398,34 +406,79 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                         <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
                             <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Diferencia / Margen</span>
                             <span className={`text-lg font-mono font-bold mt-2 select-text ${
-                                project.convocatoriaMontoMaximo && project.presupuesto > project.convocatoriaMontoMaximo 
+                                project.convocatoriaMontoMaximo && (project.presupuesto || docSnapshot.CostoTotal || 0) > project.convocatoriaMontoMaximo 
                                     ? 'text-error animate-pulse' 
                                     : 'text-emerald-500'
                             }`}>
                                 {project.convocatoriaMontoMaximo 
-                                    ? `$${(project.convocatoriaMontoMaximo - project.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                    ? `$${(project.convocatoriaMontoMaximo - (project.presupuesto || docSnapshot.CostoTotal || 0)).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                                     : 'N/D'}
                             </span>
                         </div>
                     </div>
 
                     {/* ITEMS PRESUPUESTARIOS */}
-                    <div className="border border-border-thin rounded-xl overflow-hidden bg-surface select-none">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-surface-hover/30 border-b border-border-thin text-[8px] font-bold text-text-dim uppercase tracking-widest">
-                                    <th className="p-3">Partida</th>
-                                    <th className="p-3">Detalle del Recurso</th>
-                                    <th className="p-3 text-center">Cant.</th>
-                                    <th className="p-3 text-right">Unit.</th>
-                                    <th className="p-3 text-right">Total</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <div className="p-8 text-center text-text-dim text-xs font-mono select-text">
-                            Visualice el desglose de recursos detallados directamente en la pestaña del Visor PDF (Lado Izquierdo).
-                        </div>
-                    </div>
+                    {(() => {
+                        const items = [
+                            ...getSafeArray(docSnapshot.RecursosNecesarios),
+                            ...getSafeArray(docSnapshot.RecursosDisponibles),
+                            ...getSafeArray(docSnapshot.Presupuesto),
+                            ...getSafeArray(docSnapshot.ItemsPresupuesto)
+                        ];
+
+                        return (
+                            <div className="border border-border-thin rounded-xl overflow-hidden bg-surface select-none">
+                                <div className="px-4 py-2.5 bg-surface-hover/30 border-b border-border-thin flex justify-between items-center">
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim font-mono">
+                                        Desglose de Partidas y Rubros Planificados ({items.length} ítems)
+                                    </span>
+                                    {docSnapshot.FinanciamientoIstpet !== undefined && (
+                                        <span className="text-[8px] font-mono font-semibold text-brand">
+                                            Financiamiento ISTPET: {docSnapshot.FinanciamientoIstpet ? 'SÍ' : 'NO'}
+                                        </span>
+                                    )}
+                                </div>
+                                {items.length > 0 ? (
+                                    <div className="overflow-x-auto custom-scrollbar">
+                                        <table className="w-full text-left border-collapse text-xs">
+                                            <thead>
+                                                <tr className="bg-surface-hover/20 border-b border-border-thin text-[8px] font-bold text-text-dim uppercase tracking-widest">
+                                                    <th className="p-3">Partida / Tipo</th>
+                                                    <th className="p-3">Detalle del Recurso</th>
+                                                    <th className="p-3 text-center">Cant.</th>
+                                                    <th className="p-3 text-right">V. Unitario</th>
+                                                    <th className="p-3 text-right">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border-thin/40 font-mono text-[11px]">
+                                                {items.map((item: any, idx: number) => {
+                                                    const partida = item.partida || item.tipo || item.rubro || `Item ${idx + 1}`;
+                                                    const detalle = item.detalle || item.descripcion || item.nombre || '-';
+                                                    const cantidad = item.cantidad || 1;
+                                                    const unitario = item.costoUnitario || item.valorUnitario || item.unitario || (item.total ? item.total / cantidad : 0);
+                                                    const total = item.subtotal || item.total || item.valor || (cantidad * unitario);
+
+                                                    return (
+                                                        <tr key={idx} className="hover:bg-surface-hover/30 transition-colors">
+                                                            <td className="p-3 font-semibold text-text-main uppercase font-sans text-xs">{partida}</td>
+                                                            <td className="p-3 text-text-dim font-sans">{detalle}</td>
+                                                            <td className="p-3 text-center font-bold text-text-main">{cantidad}</td>
+                                                            <td className="p-3 text-right text-text-dim">${Number(unitario).toLocaleString('es-EC', { minimumFractionDigits: 2 })}</td>
+                                                            <td className="p-3 text-right font-bold text-text-main">${Number(total).toLocaleString('es-EC', { minimumFractionDigits: 2 })}</td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="p-6 text-center text-text-dim text-xs font-mono select-text">
+                                        Total consolidado: ${(project.presupuesto || docSnapshot.CostoTotal || 0).toLocaleString('es-EC', { minimumFractionDigits: 2 })} USD. Puede verificar el desglose completo en el Visor PDF.
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 

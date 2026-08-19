@@ -160,6 +160,22 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: true,
                 version: 10);
 
+            // ══════════════════════════════════════════════════════════════
+            // GRUPOS Y SEMILLEROS DE INVESTIGACIÓN
+            // ══════════════════════════════════════════════════════════════
+            yield return DocumentTemplate.Create(
+                code: "PROPUESTA_GRUPO_INVESTIGACION",
+                name: "Formato Propuesta de Creación de Grupo de Investigación",
+                description: "Documento oficial para formulación, postulación y trámite de conformación de grupos y semilleros de investigación - ISTPET.",
+                category: DocumentCategory.PropuestaGrupoInvestigacion,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/PropuestaGrupoInvestigacion.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"nombre_grupo\", \"siglas\", \"tipo_grupo\", \"dominio\", \"lineas_investigacion\", \"carreras_vinculadas\", \"mision\", \"vision\", \"objetivo_general\", \"coordinador_nombre\", \"coordinador_cedula\", \"coordinador_email\", \"coordinador_telefono\", \"miembros_docentes\", \"miembros_estudiantes\"]",
+                version: 10);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()

@@ -29,7 +29,6 @@ export const RevisionTecnicaPage: React.FC = () => {
     // Modo auditoría activo SOLO para admin con proyecto aún en revisión
     const isAuditActive = isAdmin &&
         (data.project?.status === 'Enviado' || data.project?.status === 'En Corrección');
-    // Modo solo lectura: no-admin, o admin viendo resultado de revisión ya concluida
     const isReadonlyResult = !isAuditActive;
 
     if (data.loading || !data.project) {
@@ -78,119 +77,119 @@ export const RevisionTecnicaPage: React.FC = () => {
 
             {/* Layout Principal */}
             <div className="flex-1 flex overflow-hidden relative">
-                {isReadonlyResult ? (
-                    /* ── MODO SOLO LECTURA: Historial de revisión diferenciado por rol ── */
-                    <AdminRevisionHistoryPanel projectUuid={projectUuid ?? ''} />
+                {layout.viewMode === 'history' ? (
+                    /* ── VISTA DE HISTORIAL Y DICTAMEN OFICIAL ── */
+                    <div className="flex-1 h-full bg-bg-deep overflow-hidden">
+                        <AdminRevisionHistoryPanel projectUuid={projectUuid ?? ''} />
+                    </div>
                 ) : (
-                    /* ── MODO AUDITORÍA: Visor interactivo completo para admin activo ── */
-                    <>
-                        <div className="flex-1 h-full bg-bg-deep flex overflow-hidden relative">
-                            {/* Panel Izquierdo: Secciones (en modo interactivo) */}
-                            {layout.viewMode === 'interactive' && (
-                                <SectionsSidebar
-                                    isOpen={layout.isLeftSidebarOpen}
-                                    width={layout.leftSidebarWidth}
-                                    isDraggingLeft={layout.isDraggingLeft}
-                                    leftSidebarRef={layout.leftSidebarRef}
-                                    activeSection={layout.activeSection}
-                                    setActiveSection={layout.setActiveSection}
-                                    onClose={() => layout.setIsLeftSidebarOpen(false)}
-                                    startDraggingLeft={layout.startDraggingLeft}
-                                    comments={commentsState.comments}
-                                    templateBlocks={data.templateBlocks}
-                                    templateSections={data.templateSections}
-                                    onOpenFinalizeModal={() => layout.setIsFinalizeModalOpen(true)}
-                                />
-                            )}
-
-                            {/* Área Central: Visor PDF o Secciones Interactivas */}
-                            <div className="flex-1 h-full overflow-hidden relative bg-bg-deep transition-colors duration-300">
-                                {layout.viewMode === 'pdf' ? (
-                                    data.loadingPdf ? (
-                                        <div className="flex-1 h-full flex items-center justify-center text-text-dim text-xs gap-2 font-mono">
-                                            <Loader2 size={16} className="animate-spin text-brand" /> Generando vista previa del PDF...
-                                        </div>
-                                    ) : data.pdfUrl ? (
-                                        <div className="w-full h-full flex items-center justify-center p-3 sm:p-5 bg-zinc-200/60 dark:bg-zinc-950/80 transition-colors duration-300">
-                                            <iframe
-                                                src={`${data.pdfUrl}#toolbar=0`}
-                                                className="w-full h-full bg-white rounded-2xl border border-border-thin shadow-2xl transition-all"
-                                                title="Visor PDF Protocolo"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex-1 h-full flex flex-col items-center justify-center p-12 text-center text-text-dim gap-3 bg-zinc-200/60 dark:bg-zinc-950/80">
-                                            <AlertCircle size={24} className="text-warning" />
-                                            <p className="text-xs font-semibold">No se pudo cargar el PDF del protocolo.</p>
-                                        </div>
-                                    )
-                                ) : (
-                                    <InteractiveSections
-                                        activeSection={layout.activeSection}
-                                        project={data.project}
-                                        investigadores={data.investigadores}
-                                        docSnapshot={data.docSnapshot}
-                                        templateBlocks={data.templateBlocks}
-                                        isLeftSidebarOpen={layout.isLeftSidebarOpen}
-                                        setIsLeftSidebarOpen={layout.setIsLeftSidebarOpen}
-                                        isHoursOk={data.isHoursOk}
-                                        teachersWithExceedingHours={data.teachersWithExceedingHours}
-                                        getFieldCardClasses={getFieldCardClasses}
-                                        renderFieldStatusBadge={renderFieldStatusBadge}
-                                        renderCommentButton={renderCommentButton}
-                                        setActiveCommentField={layout.setActiveCommentField}
-                                        setIsRightSidebarOpen={layout.setIsRightSidebarOpen}
-                                        getSafeArray={getSafeArray}
-                                    />
-                                )}
-                            </div>
-
-                            {/* Panel Derecho: Auditoría & Observaciones (SIEMPRE DISPONIBLE en PDF e Interactivo) */}
-                            <ObservationsSidebar
-                                isOpen={layout.isRightSidebarOpen}
-                                width={layout.rightSidebarWidth}
-                                isDragging={layout.isDraggingRight}
-                                startDragging={layout.startDraggingRight}
-                                toggleOpen={() => layout.setIsRightSidebarOpen(false)}
-                                activeCommentField={layout.activeCommentField}
-                                setActiveCommentField={layout.setActiveCommentField}
+                    /* ── VISTA DE DOCUMENTO (INTERACTIVA O PDF) CON PANELES LATERALES ── */
+                    <div className="flex-1 h-full bg-bg-deep flex overflow-hidden relative">
+                        {/* Panel Izquierdo: Secciones (en modo interactivo) */}
+                        {layout.viewMode === 'interactive' && (
+                            <SectionsSidebar
+                                isOpen={layout.isLeftSidebarOpen}
+                                width={layout.leftSidebarWidth}
+                                isDraggingLeft={layout.isDraggingLeft}
+                                leftSidebarRef={layout.leftSidebarRef}
                                 activeSection={layout.activeSection}
                                 setActiveSection={layout.setActiveSection}
-                                projectUuid={projectUuid ?? ''}
+                                onClose={() => layout.setIsLeftSidebarOpen(false)}
+                                startDraggingLeft={layout.startDraggingLeft}
                                 comments={commentsState.comments}
-                                contextualInput={commentsState.contextualInput}
-                                setContextualInput={commentsState.setContextualInput}
-                                isListening={commentsState.isListening}
-                                submitting={data.submitting}
-                                editingCommentId={commentsState.editingCommentId}
-                                setEditingCommentId={commentsState.setEditingCommentId}
-                                saveContextualComment={commentsState.saveContextualComment}
-                                handleStartListening={commentsState.handleStartListening}
-                                removeCommentLocal={commentsState.removeCommentLocal}
-                                FIELD_LABELS={FIELD_LABELS}
                                 templateBlocks={data.templateBlocks}
+                                templateSections={data.templateSections}
+                                onOpenFinalizeModal={() => layout.setIsFinalizeModalOpen(true)}
                             />
+                        )}
 
-                            {/* Pestañas Flotantes de Reapertura */}
-                            <FloatingSidebarButtons
-                                isLeftSidebarOpen={layout.viewMode === 'pdf' ? true : layout.isLeftSidebarOpen}
-                                seccionesButtonTop={layout.seccionesButtonTop}
-                                seccionesButtonLeft={layout.seccionesButtonLeft}
-                                isDraggingSeccionesButton={layout.isDraggingSeccionesButton}
-                                handleSeccionesButtonDragStart={layout.handleSeccionesButtonDragStart}
-                                isRightSidebarOpen={layout.isRightSidebarOpen}
-                                auditoriaButtonTop={layout.auditoriaButtonTop}
-                                auditoriaButtonLeft={layout.auditoriaButtonLeft}
-                                isDraggingButton={layout.isDraggingButton}
-                                handleButtonDragStart={layout.handleButtonDragStart}
-                            />
+                        {/* Área Central: Visor PDF o Secciones Interactivas */}
+                        <div className="flex-1 h-full overflow-hidden relative bg-bg-deep transition-colors duration-300">
+                            {layout.viewMode === 'pdf' ? (
+                                data.loadingPdf ? (
+                                    <div className="flex-1 h-full flex items-center justify-center text-text-dim text-xs gap-2 font-mono">
+                                        <Loader2 size={16} className="animate-spin text-brand" /> Generando vista previa del PDF...
+                                    </div>
+                                ) : data.pdfUrl ? (
+                                    <div className="w-full h-full flex items-center justify-center p-3 sm:p-5 bg-zinc-200/60 dark:bg-zinc-950/80 transition-colors duration-300">
+                                        <iframe
+                                            src={`${data.pdfUrl}#toolbar=0`}
+                                            className="w-full h-full bg-white rounded-2xl border border-border-thin shadow-2xl transition-all"
+                                            title="Visor PDF Protocolo"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 h-full flex flex-col items-center justify-center p-12 text-center text-text-dim gap-3 bg-zinc-200/60 dark:bg-zinc-950/80">
+                                        <AlertCircle size={24} className="text-warning" />
+                                        <p className="text-xs font-semibold">No se pudo cargar el PDF del protocolo.</p>
+                                    </div>
+                                )
+                            ) : (
+                                <InteractiveSections
+                                    activeSection={layout.activeSection}
+                                    project={data.project}
+                                    investigadores={data.investigadores}
+                                    docSnapshot={data.docSnapshot}
+                                    templateBlocks={data.templateBlocks}
+                                    isLeftSidebarOpen={layout.isLeftSidebarOpen}
+                                    setIsLeftSidebarOpen={layout.setIsLeftSidebarOpen}
+                                    isHoursOk={data.isHoursOk}
+                                    teachersWithExceedingHours={data.teachersWithExceedingHours}
+                                    getFieldCardClasses={getFieldCardClasses}
+                                    renderFieldStatusBadge={renderFieldStatusBadge}
+                                    renderCommentButton={renderCommentButton}
+                                    setActiveCommentField={layout.setActiveCommentField}
+                                    setIsRightSidebarOpen={layout.setIsRightSidebarOpen}
+                                    getSafeArray={getSafeArray}
+                                />
+                            )}
                         </div>
-                    </>
+
+                        {/* Panel Derecho: Auditoría & Observaciones */}
+                        <ObservationsSidebar
+                            isOpen={layout.isRightSidebarOpen}
+                            width={layout.rightSidebarWidth}
+                            isDragging={layout.isDraggingRight}
+                            startDragging={layout.startDraggingRight}
+                            toggleOpen={() => layout.setIsRightSidebarOpen(false)}
+                            activeCommentField={layout.activeCommentField}
+                            setActiveCommentField={layout.setActiveCommentField}
+                            activeSection={layout.activeSection}
+                            setActiveSection={layout.setActiveSection}
+                            projectUuid={projectUuid ?? ''}
+                            comments={commentsState.comments}
+                            contextualInput={commentsState.contextualInput}
+                            setContextualInput={commentsState.setContextualInput}
+                            isListening={commentsState.isListening}
+                            submitting={data.submitting}
+                            editingCommentId={commentsState.editingCommentId}
+                            setEditingCommentId={commentsState.setEditingCommentId}
+                            saveContextualComment={commentsState.saveContextualComment}
+                            handleStartListening={commentsState.handleStartListening}
+                            removeCommentLocal={commentsState.removeCommentLocal}
+                            FIELD_LABELS={FIELD_LABELS}
+                            templateBlocks={data.templateBlocks}
+                        />
+
+                        {/* Pestañas Flotantes de Reapertura */}
+                        <FloatingSidebarButtons
+                            isLeftSidebarOpen={layout.viewMode === 'pdf' ? true : layout.isLeftSidebarOpen}
+                            seccionesButtonTop={layout.seccionesButtonTop}
+                            seccionesButtonLeft={layout.seccionesButtonLeft}
+                            isDraggingSeccionesButton={layout.isDraggingSeccionesButton}
+                            handleSeccionesButtonDragStart={layout.handleSeccionesButtonDragStart}
+                            isRightSidebarOpen={layout.isRightSidebarOpen}
+                            auditoriaButtonTop={layout.auditoriaButtonTop}
+                            auditoriaButtonLeft={layout.auditoriaButtonLeft}
+                            isDraggingButton={layout.isDraggingButton}
+                            handleButtonDragStart={layout.handleButtonDragStart}
+                        />
+                    </div>
                 )}
             </div>
 
             {/* Modal de Finalización de Auditoría (solo en modo auditoría activo) */}
-            {!isReadonlyResult && (
+            {isAuditActive && (
                 <FinalizeAuditModal
                     isOpen={layout.isFinalizeModalOpen}
                     onClose={() => layout.setIsFinalizeModalOpen(false)}

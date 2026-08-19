@@ -209,6 +209,7 @@ namespace Diitra.Domain.Common.Documents
         CertificadoParticipacion = 41,
         CertificadoCompletacion = 42,
         CertificadoGrupo = 43,
+        PropuestaGrupoInvestigacion = 44,
 
         // Convenios y redes
         ConvenioMarco = 50,

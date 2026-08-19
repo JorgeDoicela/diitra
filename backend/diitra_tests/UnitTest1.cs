@@ -176,9 +176,10 @@ public class UnitTest1
         var mockWorkflow = new Mock<IWorkflowEngineService>();
         var mockLogger = new Mock<ILogger<PeerReviewService>>();
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        var mockAppUrlService = new Mock<diitra_application.Common.IAppUrlService>();
 
         var portalService = new PeerReviewPortalService(context, mockAudit.Object, mockNotification.Object, new Mock<ILogger<PeerReviewPortalService>>().Object);
-        var adminService = new PeerReviewAdminService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, mockConfig.Object, mockHttpContextAccessor.Object);
+        var adminService = new PeerReviewAdminService(context, mockAuth.Object, mockAudit.Object, mockNotification.Object, mockAppUrlService.Object);
         var workflowService = new PeerReviewWorkflowService(context, mockAudit.Object, mockDocEngine.Object, mockNotification.Object, mockWorkflow.Object, new Mock<ILogger<PeerReviewWorkflowService>>().Object);
 
         var service = new PeerReviewService(
@@ -540,17 +541,20 @@ public class UnitTest1
             Diitra.Domain.Common.Documents.DocumentCategory.Protocolo,
             requiresLopdp: false
         );
+        testTemplate.UpdateCustomCssOnly(".cover-page { margin: 0; }");
 
         mockTemplateRepo.Setup(r => r.FindByCodeAsync("PROTOCOLO_INVESTIGACION", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testTemplate);
 
+        var mockAppUrlService = new Mock<diitra_application.Common.IAppUrlService>();
         var engine = new DocumentEngine(
             mockTemplateRepo.Object,
             mockAuditRepo.Object,
             mockLogger.Object,
             mockConfig.Object,
             mockEnv.Object,
-            context
+            context,
+            mockAppUrlService.Object
         );
 
         var request = new DocumentRequest

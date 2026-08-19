@@ -46,7 +46,7 @@ export const REVISIONES_CONFIG: HelpConfig = {
             <div className="flex-1 flex gap-1.5 min-h-0">
                 {/* Left Column - List of Reviews */}
                 <div className={`flex-[2.8] rounded-lg border p-1.5 flex flex-col gap-1.5 transition-all duration-300 min-h-0 overflow-hidden ${highlightBottomClass}`}>
-                    <span className="text-[5px] text-warning font-bold">⚠ Pendientes de Evaluación (1)</span>
+                    <span className="text-[5px] text-warning font-bold">Pendientes de Evaluación (1)</span>
                     <div className="rounded border border-border-thin bg-surface p-1 flex justify-between items-center">
                         <div className="space-y-0.5">
                             <div className="flex items-center gap-1 text-[3.5px]">
@@ -54,7 +54,7 @@ export const REVISIONES_CONFIG: HelpConfig = {
                                 <span className="px-0.5 bg-warning/10 border border-warning/30 text-warning rounded-sm">Pendiente</span>
                             </div>
                             <span className="text-[5px] font-semibold text-text-main block truncate max-w-[120px]">Plataforma IoT con Inteligencia Artificial...</span>
-                            <span className="text-[3.5px] text-error font-mono">📅 Vence en 3 días</span>
+                            <span className="text-[3.5px] text-error font-mono">Vence en 3 días</span>
                         </div>
                         <div className="px-1 py-0.5 bg-brand text-white text-[4px] rounded font-bold">Evaluar</div>
                     </div>

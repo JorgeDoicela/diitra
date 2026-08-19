@@ -147,7 +147,7 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
                         const count = comments[key]?.length || 0;
                         return (
                             <option key={key} value={key} className="bg-bg-deep text-text-main py-1">
-                                {count > 0 ? `⚠️ [${count}] ` : ''}{label}
+                                {count > 0 ? `(${count}) ` : ''}{label}
                             </option>
                         );
                     })}

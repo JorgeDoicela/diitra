@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FileText, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+    FileText, X, Plus, ChevronDown, ChevronUp,
+    Folder, Megaphone, BarChart3, FlaskConical, Calendar, TrendingUp, Settings
+} from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
 import './StickyNotesFloatingButton.css';
 
@@ -9,14 +12,14 @@ interface StickyNotesFloatingButtonProps {
 }
 
 /** Deriva un label corto de la pathname actual para mostrar como chip de contexto */
-const getContextoLabel = (pathname: string): { label: string; icon: string } | null => {
-    if (pathname.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: '📁' };
-    if (pathname.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: '📢' };
-    if (pathname.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: '📊' };
-    if (pathname.startsWith('/investigacion')) return { label: 'Investigación', icon: '🔬' };
-    if (pathname.startsWith('/agenda')) return { label: 'Agenda', icon: '📅' };
-    if (pathname.startsWith('/analiticas')) return { label: 'Analíticas', icon: '📈' };
-    if (pathname.startsWith('/admin')) return { label: 'Admin', icon: '⚙️' };
+const getContextoLabel = (pathname: string): { label: string; Icon: React.ComponentType<{ size?: number }> } | null => {
+    if (pathname.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', Icon: Folder };
+    if (pathname.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', Icon: Megaphone };
+    if (pathname.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', Icon: BarChart3 };
+    if (pathname.startsWith('/investigacion')) return { label: 'Investigación', Icon: FlaskConical };
+    if (pathname.startsWith('/agenda')) return { label: 'Agenda', Icon: Calendar };
+    if (pathname.startsWith('/analiticas')) return { label: 'Analíticas', Icon: TrendingUp };
+    if (pathname.startsWith('/admin')) return { label: 'Admin', Icon: Settings };
     return null;
 };
 
@@ -103,7 +106,7 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                     {/* Chip de contexto de página */}
                     {contexto && (
                         <div className="sticky-context-chip">
-                            <span>{contexto.icon}</span>
+                            <contexto.Icon size={12} />
                             <span>{contexto.label}</span>
                         </div>
                     )}

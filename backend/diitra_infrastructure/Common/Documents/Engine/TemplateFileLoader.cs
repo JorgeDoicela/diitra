@@ -126,6 +126,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 ["OFICIO_APROBACION"]             = "Investigacion/OficioAprobacion.html",
                 ["CERTIFICADO_COMPLETACION"]      = "Investigacion/CertificadoCompletacion.html",
                 ["CERTIFICADO_PARTICIPACION_GRUPO"] = "Investigacion/CertificadoGrupo.html",
+                ["PROPUESTA_GRUPO_INVESTIGACION"] = "Investigacion/PropuestaGrupoInvestigacion.html",
             };
 
             if (map.TryGetValue(templateCode, out var relativePath))

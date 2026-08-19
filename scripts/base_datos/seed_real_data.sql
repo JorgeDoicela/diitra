@@ -424,5 +424,44 @@ INSERT INTO inv_proyectos_carreras (idProyecto, idCarrera, modalidad) VALUES
 INSERT INTO inv_proyecto_participantes (idProyecto, idUsuario, tipoParticipante, esDirector, rol, nivelAcademico, telefono, horasSemanales, activo) VALUES
 (8, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 'Docente', 1, 'Director de Proyecto', 'Magíster en Software', '0999999992', 15.0, 1);
  
+-- 28. Plantillas Oficiales del Motor de Documentos DIITRA
+INSERT INTO inv_document_templates (
+    code,
+    name,
+    description,
+    category,
+    html_content,
+    custom_css,
+    version,
+    requires_lopdp,
+    supports_blind_mode,
+    requires_traceability,
+    requires_signature,
+    signature_type,
+    collaborative_fields_json,
+    is_active,
+    created_at,
+    updated_at,
+    updated_by
+) VALUES (
+    'PROPUESTA_GRUPO_INVESTIGACION',
+    'Formato Propuesta de Creación de Grupo de Investigación',
+    'Documento oficial para formulación, postulación y trámite de conformación de grupos y semilleros de investigación - ISTPET.',
+    44,
+    '<!-- Cargado desde Templates/Investigacion/PropuestaGrupoInvestigacion.html -->',
+    NULL,
+    10,
+    1,
+    0,
+    1,
+    1,
+    'DIITRA',
+    '["nombre_grupo", "siglas", "tipo_grupo", "dominio", "lineas_investigacion", "carreras_vinculadas", "mision", "vision", "objetivo_general", "coordinador_nombre", "coordinador_cedula", "coordinador_email", "coordinador_telefono", "miembros_docentes", "miembros_estudiantes"]',
+    1,
+    NOW(),
+    NOW(),
+    'Sistema'
+) ON DUPLICATE KEY UPDATE updated_at = NOW();
+
 -- Re-activar verificación de llaves foráneas
 SET FOREIGN_KEY_CHECKS = 1;

@@ -23,24 +23,13 @@ export const useRevisionTecnicaComments = ({
     const commentsLoadedRef = useRef(false);
 
     useEffect(() => {
-        const hasComments = Object.keys(comments).length > 0;
         const fieldChanged = prevActiveFieldRef.current !== activeCommentField;
-        
-        if (fieldChanged || (hasComments && !commentsLoadedRef.current)) {
-            const fieldComments = comments[activeCommentField];
-            if (fieldComments && fieldComments.length > 0) {
-                setContextualInput(fieldComments[0].text || '');
-            } else {
-                setContextualInput('');
-            }
+        if (fieldChanged) {
             setEditingCommentId(null);
-            
+            setContextualInput('');
             prevActiveFieldRef.current = activeCommentField;
-            if (hasComments) {
-                commentsLoadedRef.current = true;
-            }
         }
-    }, [activeCommentField, comments, setContextualInput]);
+    }, [activeCommentField, setContextualInput]);
 
 
     const addCommentLocal = (section: string, comment: SectionComment) => {
