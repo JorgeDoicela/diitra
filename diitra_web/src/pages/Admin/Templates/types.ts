@@ -242,6 +242,14 @@ export interface DocumentBlock {
         showInstitution?: boolean;
         textoInstitucion?: string;
         coverImage?: string;
+        // Opciones avanzadas de Institución / Logo
+        institutionMode?: 'text' | 'image' | 'hybrid';
+        institutionImage?: string;
+        institutionLogoHeight?: number;
+        institutionLogoRadius?: 'none' | 'sm' | 'md' | 'full';
+        institutionLogoInvert?: boolean;
+        institutionVariant?: 'pill' | 'clean' | 'bordered';
+        bgInstitution?: string;
         // posicionamiento libre (% relativo al canvas A4 210×297mm)
         xInstitution?: number; yInstitution?: number;  // default: x=10, y=4
         xTitle?: number; yTitle?: number;         // default: x=10, y=35

@@ -60,13 +60,13 @@ namespace Diitra.Infrastructure.Common.Documents
                 name: "Plan de Aprendizaje de Proyecto (Docencia - APE)",
                 description: "Planificación de articulación de la investigación con la docencia y prácticas formativas APE - ISTPET.",
                 category: DocumentCategory.Protocolo,
-                htmlContent: "<!-- Cargado desde Templates/Investigacion/PlanAprendizaje.html -->",
+                htmlContent: "<!-- Cargado desde Templates/PLAN_APRENDIZAJE.html -->",
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: true,
-                collaborativeFields: "[\"TituloProyecto\", \"Carrera\", \"PeriodoAcademico\", \"DirectorProyecto\", \"DocentesParticipantes\", \"AsignaturasVinculadas\", \"EstudiantesParticipantes\", \"MetodologiaAprendizaje\", \"CriteriosEvaluacion\", \"CronogramaTutorias\", \"FirmasResponsabilidad\"]",
-                version: 1);
+                collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"NumeroEstudiantes\", \"FechaAprobacion\", \"FechaTerminacion\", \"PeriodoAcademico\", \"NombreEstudiante\", \"ObjetivoGeneral\", \"PrerrequisitosCognitivos\", \"PrerrequisitosProcedimentales\", \"ActividadesPlan\", \"FirmasResponsabilidad\"]",
+                version: 200);
 
             // 4. INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE (REVISIÓN ADMINISTRADOR)
             yield return DocumentTemplate.Create(
@@ -80,7 +80,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"PeriodoAcademico\", \"EstudiantesEvaluaciones\", \"FirmasResponsabilidad\"]",
-                version: 1);
+                version: 200);
 
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)

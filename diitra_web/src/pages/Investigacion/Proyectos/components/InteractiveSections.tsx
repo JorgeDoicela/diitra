@@ -108,7 +108,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 {renderCommentButton('programa', 'Programa del Proyecto')}
                             </div>
-                            <p className="text-xs font-semibold text-text-main mt-1 select-text">{stripHtml(docSnapshot.ProgramaProyecto) || 'No definido o no requerido'}</p>
+                            <p className="text-xs font-semibold text-text-main mt-1 select-text">{stripHtml(docSnapshot.ProgramaProyecto) || stripHtml(docSnapshot.Programa) || 'No definido o no requerido'}</p>
                         </div>
 
                         {/* GRUPO */}
@@ -124,7 +124,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                 </div>
                                 {renderCommentButton('grupo', 'Grupo de Investigación')}
                             </div>
-                            <p className="text-xs font-semibold text-text-main mt-1 select-text">{stripHtml(docSnapshot.GrupoInvestigacion) || 'No definido o sin grupo asociado'}</p>
+                            <p className="text-xs font-semibold text-text-main mt-1 select-text">{stripHtml(docSnapshot.GrupoInvestigacion) || stripHtml(docSnapshot.GrupoInvestigacionNombre) || 'No definido o sin grupo asociado'}</p>
                         </div>
 
                         {/* DOMINIO Y LÍNEAS */}

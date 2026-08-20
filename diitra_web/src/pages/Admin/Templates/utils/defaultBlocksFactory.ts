@@ -32,22 +32,26 @@ export function createBaseCoverBlock(
         config: {
             tituloSuperior: title,
             colorTituloSuperior: options.colorTitle || 'navy',
-            carreraPorDefecto: options.carrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE',
-            periodoPorDefecto: options.periodo || 'PERIODO ACADÉMICO ABRIL 2025 – SEPTIEMBRE 2025',
+            prefijoCarrera: 'TECNOLOGÍA SUPERIOR EN',
+            prefijoPeriodo: 'PERIODO ACADÉMICO',
             colorTema: options.themeColor || '#1e2a4a',
+            colorCarrera: '#1e2a4a',
+            colorPeriodo: '#475569',
+            colorTemaProyecto: '#1e2a4a',
+            colorInstitution: '#ffffff',
             showInstitution: true,
             textoInstitucion: 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI',
-            posInstitution: 'top',
-            alignInstitution: 'center',
+            xInstitution: 10,
+            yInstitution: 4,
             showTitle: true,
-            posTitle: 'middle',
-            alignTitle: 'center',
+            xTitle: 10,
+            yTitle: 35,
             showCarrera: true,
-            posCarrera: 'bottom',
-            alignCarrera: 'center',
+            xCarrera: 10,
+            yCarrera: 70,
             showPeriodo: true,
-            posPeriodo: 'bottom',
-            alignPeriodo: 'center'
+            xPeriodo: 10,
+            yPeriodo: 80
         }
     };
 }
@@ -205,7 +209,7 @@ export function generateDefaultBlocksForTemplate(
     }
 
     // B. PROTOCOLO DE INVESTIGACIÓN (I+D+i)
-    if (code === 'PROTOCOLO_INVESTIGACION' || code === '1. FORMATO PROYECTO DE INVESTIGACIÓN' || category === 1) {
+    if (code === 'PROTOCOLO_INVESTIGACION' || code === '1. FORMATO PROYECTO DE INVESTIGACIÓN') {
         return [
             createBaseCoverBlock('PROYECTO DE INVESTIGACIÓN', { colorTitle: 'navy' }),
             {
@@ -292,7 +296,7 @@ export function generateDefaultBlocksForTemplate(
     }
 
     // C. INFORME DE AVANCE
-    if (code === 'INFORME_AVANCE' || category === 4) {
+    if (code === 'INFORME_AVANCE') {
         return [
             createBaseCoverBlock('INFORME DE AVANCE DE INVESTIGACIÓN', { colorTitle: 'navy' }),
             {
@@ -304,16 +308,20 @@ export function generateDefaultBlocksForTemplate(
                 config: { activityVariant: 'ejecutadas', activityTableTitle: 'MATRIZ DE ACTIVIDADES EJECUTADAS', activityHeaderColor: 'navy' }
             },
             {
-                id: 'block-progress-3', type: 'progress_activity_section' as BlockType, title: '3. Actividades No Previstas (NP)', isActive: true,
-                config: { activityVariant: 'no_previstas', activityTableTitle: 'ACTIVIDADES NO PREVISTAS (NP)', activityHeaderColor: 'navy' }
+                id: 'block-progress-3', type: 'progress_activity_section' as BlockType, title: '3. Actividades No Previstas y Replanificadas', isActive: true,
+                config: { activityVariant: 'no_previstas', activityTableTitle: 'ACTIVIDADES NO PREVISTAS', activityHeaderColor: 'gold' }
             },
             {
-                id: 'block-progress-4', type: 'progress_activity_section' as BlockType, title: '4. Obstáculos y Acciones Correctivas (OBS)', isActive: true,
-                config: { activityVariant: 'obstaculos', activityTableTitle: 'OBSTÁCULOS Y ACTIVIDADES CORRECTIVAS (OBS)', activityHeaderColor: 'gold' }
+                id: 'block-progress-4', type: 'progress_activity_section' as BlockType, title: '4. Obstáculos y Medidas Correctivas', isActive: true,
+                config: { activityVariant: 'obstaculos', activityTableTitle: 'OBSTÁCULOS Y DIFICULTADES ENCONTRADAS', activityHeaderColor: 'crimson' }
             },
             {
-                id: 'block-progress-5', type: 'progress_status_section' as BlockType, title: '5. Estado de Ejecución y Observaciones', isActive: true,
-                config: { progressStatusHeaderColor: 'navy' }
+                id: 'block-progress-5', type: 'progress_products_section' as BlockType, title: '5. Estado de Productos y Entregables', isActive: true,
+                config: { progressHeaderColor: 'navy' }
+            },
+            {
+                id: 'block-progress-6', type: 'progress_budget_section' as BlockType, title: '6. Ejecución Presupuestaria y Financiera', isActive: true,
+                config: { progressHeaderColor: 'navy' }
             },
             createBaseSignaturesBlock([
                 { label: 'Director del Proyecto', name: '{{director_proyecto}}', role: 'Director de Proyecto' },
@@ -323,15 +331,11 @@ export function generateDefaultBlocksForTemplate(
     }
 
     // D. INFORME FINAL DE INVESTIGACIÓN
-    if (code === 'INFORME_FINAL_INVESTIGACION' || category === 5) {
+    if (code === 'INFORME_FINAL_INVESTIGACION') {
         return [
-            createBaseCoverBlock('INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN', { colorTitle: 'gold' }),
-            {
-                id: 'block-final-1', type: 'final_report_header_section' as BlockType, title: '1. Datos del Proyecto de Investigación', isActive: true,
-                config: { finalReportTitle: 'DATOS DEL PROYECTO DE INVESTIGACIÓN', finalReportHeaderColor: 'navy', showTipoInvestigacion: true, showAlcanceProyecto: true, showFechasProyecto: true, showTablaInvestigadores: true }
-            },
-            { id: 'block-indice', type: 'rich_text' as BlockType, title: 'ÍNDICE', isActive: true, config: { text: 'ÍNDICE' } },
-            { id: 'block-resumen', type: 'rich_text' as BlockType, title: 'RESUMEN', isActive: true, config: { text: 'RESUMEN' } },
+            createBaseCoverBlock('INFORME FINAL DE INVESTIGACIÓN', { colorTitle: 'navy' }),
+            { id: 'block-indice', type: 'rich_text' as BlockType, title: 'ÍNDICE', isActive: true, config: { text: 'ÍNDICE GENERAL DEL INFORME' } },
+            { id: 'block-resumen', type: 'rich_text' as BlockType, title: 'RESUMEN', isActive: true, config: { text: 'RESUMEN EJECUTIVO' } },
             { id: 'block-introduccion', type: 'rich_text' as BlockType, title: 'INTRODUCCIÓN', isActive: true, config: { text: 'INTRODUCCIÓN' } },
             { id: 'block-objetivos', type: 'rich_text' as BlockType, title: 'OBJETIVOS', isActive: true, config: { text: 'OBJETIVO GENERAL Y OBJETIVOS ESPECÍFICOS' } },
             { id: 'block-fundamentos', type: 'rich_text' as BlockType, title: 'FUNDAMENTOS', isActive: true, config: { text: 'FUNDAMENTOS' } },
@@ -354,7 +358,6 @@ export function generateDefaultBlocksForTemplate(
     // E. PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
     if (code === 'PLAN_APRENDIZAJE') {
         return [
-            createBaseCoverBlock('PLAN DE APRENDIZAJE DE LOS ESTUDIANTES', { colorTitle: 'navy' }),
             {
                 id: 'block-plan-1', type: 'learning_plan_header_section' as BlockType, title: '1. Identificación del Proyecto & Estudiante', isActive: true,
                 config: { learningPlanHeaderColor: 'navy', showObjetivoGeneral: true, allowMultipleEstudiantes: true }
@@ -368,8 +371,8 @@ export function generateDefaultBlocksForTemplate(
                 config: { learningPlanHeaderColor: 'navy', showHorasTrabajo: true, showResultadosAprendizaje: true }
             },
             createBaseSignaturesBlock([
-                { label: 'Elaborado por', name: '{{director_proyecto}}', role: 'Director del Proyecto' },
-                { label: 'Revisado por', name: 'MSc. Christian Castro', role: 'Coordinador de la Unidad de Investigación' }
+                { label: 'Elaborado por:', name: 'Ing. {{director_proyecto}}', role: 'Director del Proyecto' },
+                { label: 'Revisado por:', name: 'MSc. Christian Castro', role: 'Coordinador de la Unidad de Investigación' }
             ])
         ];
     }
@@ -440,7 +443,7 @@ export function generateDefaultBlocksForTemplate(
     }
 
     // F. DICTAMEN DE ARBITRAJE
-    if (code === 'DICTAMEN_ARBITRAJE' || category === 2) {
+    if (code === 'DICTAMEN_ARBITRAJE') {
         return [
             createBaseCoverBlock('ACTA DE DICTAMEN DE ARBITRAJE', { colorTitle: 'navy' }),
             {
@@ -454,7 +457,7 @@ export function generateDefaultBlocksForTemplate(
     }
 
     // G. OFICIO DE APROBACIÓN
-    if (code === 'OFICIO_APROBACION' || category === 3) {
+    if (code === 'OFICIO_APROBACION') {
         return [
             {
                 id: 'block-1', type: 'title' as BlockType, title: 'Encabezado del Oficio', isActive: true,

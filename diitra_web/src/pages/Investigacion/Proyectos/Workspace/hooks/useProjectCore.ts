@@ -83,6 +83,7 @@ export function useProjectCore() {
     }, [editParam, templateCode, location.search, navigate]);
 
     const [currentProject, setCurrentProject] = useState<any>(null);
+    const [projectDocuments, setProjectDocuments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(projectUuid || null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
@@ -119,12 +120,18 @@ export function useProjectCore() {
         let retries = 3;
         let success = false;
         let res: any = null;
+        let resDocs: any = null;
         let forbidden = false;
         let isNotFound = false;
 
         while (retries > 0 && !success) {
             try {
-                res = await api.get(`/projects/${resolvedProjectUuid}/detail`);
+                const [projectDetailRes, docsRes] = await Promise.all([
+                    api.get(`/projects/${resolvedProjectUuid}/detail`),
+                    api.get(`/documents/instances/entity/${resolvedProjectUuid}`).catch(() => ({ data: [] }))
+                ]);
+                res = projectDetailRes;
+                resDocs = docsRes;
                 success = true;
             } catch (e: any) {
                 retries--;
@@ -203,6 +210,9 @@ export function useProjectCore() {
                 fechaLimiteSubsanacionFinal: res.data.fecha_limite_subsanacion_final || res.data.fechaLimiteSubsanacionFinal || null
             };
             setCurrentProject(projectData);
+            if (resDocs && Array.isArray(resDocs.data)) {
+                setProjectDocuments(resDocs.data);
+            }
             setIsNotFound(false);
             if (onProjectFetched) {
                 onProjectFetched(res.data);
@@ -210,6 +220,7 @@ export function useProjectCore() {
         } else if (isNotFound) {
             setIsNotFound(true);
             setCurrentProject(null);
+            setProjectDocuments([]);
             if (onProjectFetched) {
                 onProjectFetched(null);
             }
@@ -328,6 +339,7 @@ export function useProjectCore() {
         isSidebarCollapsed,
         currentProject,
         setCurrentProject,
+        projectDocuments,
         isLoading,
         resolvedProjectUuid,
         subDocumentUuids,

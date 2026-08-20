@@ -211,6 +211,9 @@ public class P12SignatureSubservice : IP12SignatureSubservice
                 idUsuario, idUsuario, "inv_documentos_firmas", "firma_code", "ESCRITURA",
                 $"Firma digital avanzada (.p12) de documento exitosa. Código: {firmaCode}.", ipAddress, userAgent);
 
+            // Persistir cambios de la instancia y firma antes de evaluar transiciones de workflow en la base de datos
+            await _context.SaveChangesAsync();
+
             // 12. Transición de Estado de Workflow (Requiere envío conjunto de Protocolo y Plan de Aprendizaje)
             if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION" || instancia.TemplateCode == "PLAN_APRENDIZAJE")
             {

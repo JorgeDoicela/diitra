@@ -796,6 +796,75 @@ namespace Diitra.Infrastructure.Common.Documents
                     Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] No se encontró el proyecto con EntityUuid: {instance.EntityUuid}");
                 }
             }
+            else if (instance.TemplateCode == "PLAN_APRENDIZAJE" || instance.TemplateCode == "EVALUACION_PLAN_APRENDIZAJE")
+            {
+                var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instance.EntityUuid, ct);
+                if (project != null)
+                {
+                    try
+                    {
+                        var orchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Research.IProjectOrchestrator>();
+                        var projectDetail = await orchestrator.GetProjectDetailAsync(project.Uuid);
+                        if (projectDetail != null)
+                        {
+                            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            Dictionary<string, object> merged;
+                            if (string.IsNullOrEmpty(instance.DataSnapshotJson))
+                            {
+                                merged = new Dictionary<string, object>();
+                            }
+                            else
+                            {
+                                var cleaned = Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(instance.DataSnapshotJson);
+                                var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleaned, options) ?? new();
+                                merged = existing.ToDictionary(k => k.Key, v => (object)v.Value);
+                            }
+
+                            // Sincronizar datos base del proyecto
+                            merged["NombreProyecto"] = projectDetail.Titulo ?? "";
+                            merged["TituloProyecto"] = projectDetail.Titulo ?? "";
+                            MergeField(merged, "Carrera", projectDetail.Carrera);
+                            MergeField(merged, "LineaInvestigacion", projectDetail.LineaInvestigacion);
+                            MergeField(merged, "SublineaInvestigacion", projectDetail.SublineaInvestigacion);
+                            MergeField(merged, "DirectorProyecto", projectDetail.DirectorProyecto);
+                            MergeField(merged, "PeriodoAcademico", projectDetail.Periodo);
+
+                            // Si es Evaluación y no tiene aún los estudiantes evaluados, heredar del PLAN_APRENDIZAJE
+                            if (instance.TemplateCode == "EVALUACION_PLAN_APRENDIZAJE")
+                            {
+                                bool hasEstudiantes = merged.TryGetValue("EstudiantesEvaluaciones", out var val) 
+                                    && val is JsonElement je && je.ValueKind == JsonValueKind.Array && je.GetArrayLength() > 0;
+
+                                if (!hasEstudiantes)
+                                {
+                                    var planDoc = await _context.DocumentInstances
+                                        .FirstOrDefaultAsync(i => i.EntityUuid == instance.EntityUuid && i.TemplateCode == "PLAN_APRENDIZAJE", ct);
+                                    if (planDoc != null && !string.IsNullOrEmpty(planDoc.DataSnapshotJson))
+                                    {
+                                        var cleanedPlan = Engine.HandlebarsTemplateEngine.CleanAndNormalizeJson(planDoc.DataSnapshotJson);
+                                        var planData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedPlan, options);
+                                        if (planData != null && planData.TryGetValue("EstudiantesEvaluaciones", out var planEsts))
+                                        {
+                                            merged["EstudiantesEvaluaciones"] = planEsts;
+                                            if (planData.TryGetValue("NumeroEstudiantes", out var numEsts)) merged["NumeroEstudiantes"] = numEsts;
+                                            if (planData.TryGetValue("EstudianteActivoId", out var estActivo)) merged["EstudianteActivoId"] = estActivo;
+                                            if (planData.TryGetValue("NombreEstudiante", out var nomEst)) merged["NombreEstudiante"] = nomEst;
+                                        }
+                                    }
+                                }
+                            }
+
+                            var json = JsonSerializer.Serialize(merged);
+                            instance.UpdateDataSnapshot(json);
+                            await _context.SaveChangesAsync(ct);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DIITRA] [SyncFromProjectAsync - Plan/Evaluacion] Error: {ex.Message}");
+                    }
+                }
+            }
         }
 
         private static void MergeField(Dictionary<string, object> target, string key, object? newValue)

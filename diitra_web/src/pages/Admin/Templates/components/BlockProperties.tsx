@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Palette, Layout, Plus, Trash2 } from 'lucide-react';
+import { Settings, Palette, Layout, Plus, Trash2, Image as ImageIcon, Type, Sparkles, Upload } from 'lucide-react';
 import type { DocumentBlock, DocumentTemplateDto } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
@@ -16,6 +16,7 @@ import { ProgressStatusProperties } from './properties/ProgressStatusProperties'
 import { ThemeEditorTab } from './ThemeEditorTab';
 import { RubricTableProperties } from './properties/RubricTableProperties';
 import { ArbitrationDictamenProperties } from './properties/ArbitrationDictamenProperties';
+import { CoverProperties } from './properties/CoverProperties';
 
 interface BlockPropertiesProps {
     selectedTemplate?: DocumentTemplateDto | null;
@@ -133,266 +134,16 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                         <div className="flex-1 p-4 space-y-5">
                             <div>
                                 <h4 className="font-bold text-xs text-text-main">{activeBlock.title}</h4>
-                                <p className="text-[10px] text-text-dim mt-0.5 leading-normal capitalize">
-                                    Tipo: <span className="text-text-main font-semibold">{(activeBlock.type || 'bloque').replace(/_/g, ' ')}</span>
-                                </p>
                             </div>
 
-                            {activeBlock.type === 'cover' && (() => {
-                                const isFreeForm = activeBlock.config.coverLayoutMode !== 'zones';
-                                const DEFAULT_POS: Record<string, { x: number; y: number }> = {
-                                    institution: { x: 10, y: 4 },
-                                    title: { x: 10, y: 35 },
-                                    carrera: { x: 10, y: 70 },
-                                    periodo: { x: 10, y: 80 },
-                                };
-
-                                const renderElementPanel = (
-                                    label: string,
-                                    showKey: string,
-                                    xKey: string,
-                                    yKey: string,
-                                    alignKey: string,
-                                    textKey: string,
-                                    textPlaceholder: string,
-                                    defPos: { x: number; y: number },
-                                    colorKey?: string
-                                ) => {
-                                    const isVisible = (activeBlock.config as any)[showKey] !== false;
-                                    const xVal: number = (activeBlock.config as any)[xKey] ?? defPos.x;
-                                    const yVal: number = (activeBlock.config as any)[yKey] ?? defPos.y;
-                                    const alignVal: string = (activeBlock.config as any)[alignKey] || 'center';
-                                    const textVal: string = (activeBlock.config as any)[textKey] || '';
-                                    const colorVal: string = colorKey ? ((activeBlock.config as any)[colorKey] || '#ffffff') : '#ffffff';
-
-                                    return (
-                                        <div key={showKey} className="border border-border-thin/40 rounded-lg p-3 bg-surface-hover/20 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold text-text-main">{label}</span>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isVisible}
-                                                    onChange={e => onUpdateConfig(activeBlock.id, showKey, e.target.checked)}
-                                                    className="w-4 h-4 accent-text-main rounded cursor-pointer"
-                                                />
-                                            </div>
-                                            {isVisible && (
-                                                <div className="space-y-2.5 pt-1 border-t border-border-thin/15">
-                                                    <LabeledField label="Texto">
-                                                        <input
-                                                            type="text"
-                                                            className={inputCls}
-                                                            value={textVal}
-                                                            onChange={e => onUpdateConfig(activeBlock.id, textKey, e.target.value)}
-                                                            placeholder={textPlaceholder}
-                                                        />
-                                                    </LabeledField>
-                                                    <LabeledField label="Alineacion">
-                                                        <select
-                                                            className={selectCls}
-                                                            value={alignVal}
-                                                            onChange={e => onUpdateConfig(activeBlock.id, alignKey, e.target.value)}
-                                                        >
-                                                            <option value="left">Izquierda</option>
-                                                            <option value="center">Centro</option>
-                                                            <option value="right">Derecha</option>
-                                                        </select>
-                                                    </LabeledField>
-                                                    {colorKey && (
-                                                        <LabeledField label="Color de Texto">
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="color"
-                                                                    value={colorVal.startsWith('#') ? colorVal : '#ffffff'}
-                                                                    onChange={e => onUpdateConfig(activeBlock.id, colorKey, e.target.value)}
-                                                                    className="w-7 h-7 rounded border border-border-thin p-0 cursor-pointer bg-transparent"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    className={`${inputCls} font-mono text-[10px] uppercase w-24`}
-                                                                    value={colorVal}
-                                                                    onChange={e => onUpdateConfig(activeBlock.id, colorKey, e.target.value)}
-                                                                    placeholder="#ffffff"
-                                                                />
-                                                                <div className="flex items-center gap-1 ml-auto">
-                                                                    {['#ffffff', '#facc15', '#b8912e', '#1e2a4a', '#000000'].map(preset => (
-                                                                        <button
-                                                                            key={preset}
-                                                                            type="button"
-                                                                            onClick={() => onUpdateConfig(activeBlock.id, colorKey, preset)}
-                                                                            className="w-4 h-4 rounded-full border border-black/20 transition-transform hover:scale-110 cursor-pointer"
-                                                                            style={{ backgroundColor: preset }}
-                                                                            title={preset}
-                                                                        />
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        </LabeledField>
-                                                    )}
-                                                    {isFreeForm && (
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Posicion en Canvas</span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        onUpdateConfig(activeBlock.id, xKey, defPos.x);
-                                                                        onUpdateConfig(activeBlock.id, yKey, defPos.y);
-                                                                    }}
-                                                                    className="text-[9px] text-indigo-500 hover:text-indigo-700 font-bold uppercase tracking-wide px-1.5 py-0.5 rounded hover:bg-indigo-50 transition-all cursor-pointer"
-                                                                    title="Restablecer posicion por defecto"
-                                                                >
-                                                                    Reset
-                                                                </button>
-                                                            </div>
-                                                            <div className="grid grid-cols-2 gap-2">
-                                                                <div>
-                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">X  {xVal.toFixed(1)}%</label>
-                                                                    <input
-                                                                        type="range"
-                                                                        min={0} max={95} step={0.5}
-                                                                        value={xVal}
-                                                                        onChange={e => onUpdateConfig(activeBlock.id, xKey, parseFloat(e.target.value))}
-                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer"
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="text-[9px] text-text-dim font-mono block mb-0.5">Y  {yVal.toFixed(1)}%</label>
-                                                                    <input
-                                                                        type="range"
-                                                                        min={0} max={97} step={0.5}
-                                                                        value={yVal}
-                                                                        onChange={e => onUpdateConfig(activeBlock.id, yKey, parseFloat(e.target.value))}
-                                                                        className="w-full h-1.5 rounded accent-indigo-600 cursor-pointer"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="grid grid-cols-2 gap-2 mt-1.5">
-                                                                <input
-                                                                    type="number"
-                                                                    min={0} max={95} step={0.5}
-                                                                    value={xVal}
-                                                                    onChange={e => onUpdateConfig(activeBlock.id, xKey, parseFloat(e.target.value))}
-                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full"
-                                                                />
-                                                                <input
-                                                                    type="number"
-                                                                    min={0} max={97} step={0.5}
-                                                                    value={yVal}
-                                                                    onChange={e => onUpdateConfig(activeBlock.id, yKey, parseFloat(e.target.value))}
-                                                                    className="text-[10px] font-mono border border-border-thin rounded px-1.5 py-0.5 bg-surface-hover text-text-main focus:outline-none w-full"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                };
-
-                                return (
-                                    <div className="space-y-5 border-t border-border-thin/20 pt-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
-                                                <Layout className="w-3.5 h-3.5" />
-                                                Modo de Composicion
-                                            </label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {[
-                                                    { value: 'freeform', label: 'Canvas Libre', desc: 'Arrastra a cualquier posicion' },
-                                                    { value: 'zones', label: 'Zonas Fijas', desc: 'Superior / Medio / Inferior' },
-                                                ].map(opt => (
-                                                    <button
-                                                        key={opt.value}
-                                                        type="button"
-                                                        onClick={() => onUpdateConfig(activeBlock.id, 'coverLayoutMode', opt.value)}
-                                                        className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${(isFreeForm ? 'freeform' : 'zones') === opt.value
-                                                            ? 'border-indigo-500 bg-indigo-50/30 text-text-main'
-                                                            : 'border-border-thin/40 bg-surface-hover/10 text-text-dim hover:border-border-thin'
-                                                            }`}
-                                                    >
-                                                        <div className="text-[10px] font-bold">{opt.label}</div>
-                                                        <div className="text-[9px] opacity-70 mt-0.5">{opt.desc}</div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wider">
-                                                <Palette className="w-3.5 h-3.5" />
-                                                Color del Tema Visual
-                                            </label>
-                                            <div className="flex items-center gap-3 bg-surface border border-border-thin rounded-md p-2 w-max">
-                                                {[
-                                                    { name: 'Azul Traversari', hex: '#1e2a4a' },
-                                                    { name: 'Dorado Acreditacion', hex: '#b8912e' },
-                                                    { name: 'Gris Oscuro', hex: '#334155' },
-                                                ].map(color => {
-                                                    const isSel = activeBlock.config.colorTema === color.hex;
-                                                    return (
-                                                        <button
-                                                            key={color.hex}
-                                                            type="button"
-                                                            onClick={() => onUpdateConfig(activeBlock.id, 'colorTema', color.hex)}
-                                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center cursor-pointer ${isSel
-                                                                ? 'ring-2 ring-black dark:ring-white ring-offset-2 ring-offset-surface scale-105'
-                                                                : 'hover:scale-105 opacity-80 hover:opacity-100'
-                                                                }`}
-                                                            title={color.name}
-                                                        >
-                                                            <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: color.hex }} />
-                                                            {isSel && <span className="absolute w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3 pt-2 border-t border-border-thin/20">
-                                            <LabeledField label="Tipo de Documento (Titulo Superior)">
-                                                <select
-                                                    className={selectCls}
-                                                    value={activeBlock.config.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN'}
-                                                    onChange={e => {
-                                                        const val = e.target.value;
-                                                        onUpdateConfig(activeBlock.id, 'tituloSuperior', val);
-                                                        if (val.includes('INFORME FINAL')) {
-                                                            onUpdateConfig(activeBlock.id, 'colorTituloSuperior', 'gold');
-                                                        }
-                                                    }}
-                                                >
-                                                    <option value="INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN">Informe Final del Proyecto de Investigación (Dorado / CACES)</option>
-                                                    <option value="PROYECTO DE INVESTIGACIÓN">Proyecto de Investigación (Protocolo)</option>
-                                                    <option value="INFORME DE AVANCE DE INVESTIGACIÓN">Informe de Avance de Investigación</option>
-                                                    <option value="ACTA DE DICTAMEN DE ARBITRAJE">Acta de Dictamen de Arbitraje</option>
-                                                    <option value="REPORTE DE ANALÍTICAS DE INVESTIGACIÓN">Reporte de Analíticas de Investigación</option>
-                                                </select>
-                                            </LabeledField>
-
-                                            <LabeledField label="Color del Título Documental">
-                                                <select
-                                                    className={selectCls}
-                                                    value={activeBlock.config.colorTituloSuperior || 'gold'}
-                                                    onChange={e => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', e.target.value)}
-                                                >
-                                                    <option value="gold">Dorado Acreditación (#b8912e / Itálica)</option>
-                                                    <option value="white">Blanco Pulcro (#ffffff)</option>
-                                                    <option value="navy">Azul Institucional (#1e2a4a)</option>
-                                                    <option value="slate">Gris Neutro (#475569)</option>
-                                                </select>
-                                            </LabeledField>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Elementos de la Portada</h5>
-                                            {renderElementPanel('Institución / Logo', 'showInstitution', 'xInstitution', 'yInstitution', 'alignInstitution', 'textoInstitucion', 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI', DEFAULT_POS.institution, 'colorInstitution')}
-                                            {renderElementPanel('Título de Portada (Edición Libre)', 'showTitle', 'xTitle', 'yTitle', 'alignTitle', 'tituloSuperior', 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN', DEFAULT_POS.title, 'colorTituloSuperior')}
-                                            {renderElementPanel('Carrera / Unidad', 'showCarrera', 'xCarrera', 'yCarrera', 'alignCarrera', 'carreraPorDefecto', 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', DEFAULT_POS.carrera, 'colorCarrera')}
-                                            {renderElementPanel('Periodo Académico', 'showPeriodo', 'xPeriodo', 'yPeriodo', 'alignPeriodo', 'periodoPorDefecto', 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025', DEFAULT_POS.periodo, 'colorPeriodo')}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
+                            {activeBlock.type === 'cover' && (
+                                <CoverProperties
+                                    activeBlock={activeBlock}
+                                    onUpdateConfig={onUpdateConfig}
+                                    inputCls={inputCls}
+                                    selectCls={selectCls}
+                                />
+                            )}
 
                             {/* ── TÍTULO ──────────────────────────────────────────────────── */}
                             {activeBlock.type === 'title' && (

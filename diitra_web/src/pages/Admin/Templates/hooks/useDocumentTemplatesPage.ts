@@ -285,10 +285,17 @@ export const useDocumentTemplatesPage = () => {
                         }
                     } catch { }
                 }
-            }
+                // Validar que los bloques correspondan al tipo de plantilla y no a un esquema incompatible heredado
+                if (loadedBlocks.length > 0) {
+                    const isProtocolBlock = loadedBlocks.some((b: any) => b.type === 'project_technical_section' || b.type === 'project_general_section');
+                    if ((tmpl.code === 'PLAN_APRENDIZAJE' || tmpl.code === 'EVALUACION_PLAN_APRENDIZAJE') && isProtocolBlock) {
+                        loadedBlocks = [];
+                    }
+                }
 
-            if (loadedBlocks.length === 0) {
-                loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
+                if (loadedBlocks.length === 0) {
+                    loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
+                }
             }
 
             setBlocks(loadedBlocks);

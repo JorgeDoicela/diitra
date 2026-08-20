@@ -115,20 +115,17 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                             v{template.version}
                         </span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-0.5">
                         {cat === 'INNOVACION' && (
-                            <span className="text-[8px] font-mono font-semibold uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                            <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
                                 Innovación
                             </span>
                         )}
                         {cat === 'CERTIFICADOS' && (
-                            <span className="text-[8px] font-mono font-semibold uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                            <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
                                 Certificado
                             </span>
                         )}
-                        <p className="text-[9px] text-text-dim font-mono tracking-tight select-all truncate">
-                            {template.code}
-                        </p>
                     </div>
                 </div>
             </button>

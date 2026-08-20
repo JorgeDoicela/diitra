@@ -118,6 +118,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["PROTOCOLO_INVESTIGACION"]       = "Investigacion/ProyectoInvestigacion.html",
+                ["PROTOCOLO_INNOVACION"]          = "Innovacion/ProyectoInnovacion.html",
+                ["PLAN_APRENDIZAJE"]              = "Investigacion/PlanAprendizaje.html",
+                ["EVALUACION_PLAN_APRENDIZAJE"]   = "Investigacion/EvaluacionPlanAprendizaje.html",
                 ["INFORME_FINAL_INVESTIGACION"]   = "Investigacion/InformeFinal.html",
                 ["RUBRICA_EVALUACION"]            = "Investigacion/RubricaEvaluacion.html",
                 ["INFORME_AVANCE"]                = "Investigacion/InformeAvance.html",
@@ -138,6 +141,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Si no está mapeado explícitamente, buscamos de forma recursiva en el árbol de directorios 
             // de templates si existe un archivo llamado "{templateCode}.html" (sin importar mayúsculas/minúsculas).
             var targetFileName = $"{templateCode}.html";
+            var normalizedTarget = targetFileName.Replace("_", "").Replace("-", "");
             try
             {
                 if (Directory.Exists(_sourceRoot))
@@ -146,7 +150,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     foreach (var file in files)
                     {
                         var name = Path.GetFileName(file);
-                        if (name.Equals(targetFileName, StringComparison.OrdinalIgnoreCase))
+                        var normalizedName = name.Replace("_", "").Replace("-", "");
+                        if (name.Equals(targetFileName, StringComparison.OrdinalIgnoreCase) ||
+                            normalizedName.Equals(normalizedTarget, StringComparison.OrdinalIgnoreCase))
                         {
                             return file;
                         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap } from 'lucide-react';
 import api from '../../../../../api/axios_config';
@@ -17,6 +17,7 @@ interface WorkspaceSidebarProps {
         fecha_limite_subsanacion?: string | null;
         [key: string]: any;
     };
+    projectDocuments?: any[];
     resolvedProjectUuid: string | null;
     setActiveDocument?: (doc: string) => void;
     isAdmin?: boolean;
@@ -24,40 +25,60 @@ interface WorkspaceSidebarProps {
 
 export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     currentProject,
+    projectDocuments,
     resolvedProjectUuid,
     setActiveDocument,
     isAdmin = false
 }) => {
-    const [isProtocoloSigned, setIsProtocoloSigned] = useState(false);
-    const [isPlanSigned, setIsPlanSigned] = useState(false);
+    const [asyncProtocoloSigned, setAsyncProtocoloSigned] = useState(false);
+    const [asyncPlanSigned, setAsyncPlanSigned] = useState(false);
+
+    const isDocValidlySigned = (doc: any): boolean => {
+        if (!doc) return false;
+        // Si el proyecto ya fue aprobado/ejecutado institucionalmente
+        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) return true;
+        // Verificación estricta de firma del documento
+        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
+        const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
+        return hasSignedState || hasSignedFile;
+    };
+
+    const derivedSignatures = useMemo(() => {
+        if (!projectDocuments || projectDocuments.length === 0) return null;
+        const protoDoc = projectDocuments.find(
+            (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
+                        d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
+        );
+        const planDoc = projectDocuments.find(
+            (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
+        );
+        return {
+            isProtocoloSigned: isDocValidlySigned(protoDoc),
+            isPlanSigned: isDocValidlySigned(planDoc)
+        };
+    }, [projectDocuments, currentProject.status]);
+
+    const isProtocoloSigned = derivedSignatures ? derivedSignatures.isProtocoloSigned : asyncProtocoloSigned;
+    const isPlanSigned = derivedSignatures ? derivedSignatures.isPlanSigned : asyncPlanSigned;
 
     useEffect(() => {
+        if (projectDocuments && projectDocuments.length > 0) return;
         let isMounted = true;
         const checkSignatures = async () => {
             if (!resolvedProjectUuid) return;
             try {
                 const res = await api.get(`/documents/instances/entity/${resolvedProjectUuid}`);
                 if (isMounted && Array.isArray(res.data)) {
-                    const isDocValidlySigned = (doc: any): boolean => {
-                        if (!doc) return false;
-                        // Si el proyecto ya fue aprobado/ejecutado institucionalmente
-                        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) return true;
-                        // Verificación estricta de firma del documento
-                        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
-                        const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
-                        return hasSignedState || hasSignedFile;
-                    };
-
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
                                     d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
-                    setIsProtocoloSigned(isDocValidlySigned(protoDoc));
+                    setAsyncProtocoloSigned(isDocValidlySigned(protoDoc));
 
                     const planDoc = res.data.find(
                         (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
                     );
-                    setIsPlanSigned(isDocValidlySigned(planDoc));
+                    setAsyncPlanSigned(isDocValidlySigned(planDoc));
                 }
             } catch {
                 // Silencioso
@@ -71,7 +92,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             isMounted = false;
             window.removeEventListener('diitra-projects-changed', onProjectsChanged);
         };
-    }, [resolvedProjectUuid, currentProject.status]);
+    }, [resolvedProjectUuid, currentProject.status, projectDocuments]);
 
     const isAllSigned = isProtocoloSigned && isPlanSigned;
 
@@ -144,7 +165,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                         Para habilitar la revisión del Administrador, el Director debe firmar y enviar ambos documentos.
                     </p>
                 </div>
-                <div className="mt-4 space-y-2.5">
+                <div className="mt-4 space-y-2">
                     {/* 1. Protocolo de Investigación */}
                     <div
                         {...(!isProtocoloSigned && setActiveDocument ? {
@@ -158,52 +179,35 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                                 }
                             }
                         } : {})}
-                        className={`p-3 rounded-lg bg-surface/50 border border-border-thin transition-all ${
+                        className={`p-2.5 rounded-lg bg-surface/40 border border-border-thin flex items-center justify-between gap-2.5 transition-all ${
                             !isProtocoloSigned
-                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/card outline-none focus-visible:ring-1 focus-visible:ring-brand'
+                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/item outline-none focus-visible:ring-1 focus-visible:ring-brand'
                                 : 'opacity-90'
                         }`}
                     >
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
-                                    !isProtocoloSigned ? 'group-hover/card:text-brand group-hover/card:border-brand/30' : ''
-                                }`}>
-                                    <FileText size={13} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className={`text-xs font-medium text-text-main truncate transition-colors ${
-                                        !isProtocoloSigned ? 'group-hover/card:text-brand' : ''
-                                    }`}>
-                                        Protocolo de Investigación
-                                    </p>
-                                    <p className="text-[11px] text-text-dim truncate">Documento base del proyecto</p>
-                                </div>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
+                                !isProtocoloSigned ? 'group-hover/item:text-brand group-hover/item:border-brand/30' : ''
+                            }`}>
+                                <FileText size={13} />
                             </div>
-                            {isProtocoloSigned ? (
-                                <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
-                                    <CheckCircle2 size={11} />
-                                    <span>Firmado</span>
-                                </span>
-                            ) : (
-                                <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
-                                    <span className="dot dot-warning dot-pulse" />
-                                    <span>Falta completar</span>
-                                </span>
-                            )}
+                            <span className={`text-xs font-medium text-text-main truncate transition-colors ${
+                                !isProtocoloSigned ? 'group-hover/item:text-brand' : ''
+                            }`}>
+                                Protocolo de Investigación
+                            </span>
                         </div>
-                        {!isProtocoloSigned && (
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (setActiveDocument) setActiveDocument('PROTOCOLO_INVESTIGACION');
-                                }}
-                                className="mt-2.5 w-full btn-vercel-secondary py-1.5 px-2.5 text-[9.5px] rounded-md"
-                            >
-                                <FileText size={11} />
-                                <span>Completar Protocolo</span>
-                            </button>
+
+                        {isProtocoloSigned ? (
+                            <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
+                                <CheckCircle2 size={11} />
+                                <span>Firmado</span>
+                            </span>
+                        ) : (
+                            <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
+                                <span className="dot dot-warning dot-pulse" />
+                                <span>Falta completar</span>
+                            </span>
                         )}
                     </div>
 
@@ -220,52 +224,35 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                                 }
                             }
                         } : {})}
-                        className={`p-3 rounded-lg bg-surface/50 border border-border-thin transition-all ${
+                        className={`p-2.5 rounded-lg bg-surface/40 border border-border-thin flex items-center justify-between gap-2.5 transition-all ${
                             !isPlanSigned
-                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/card outline-none focus-visible:ring-1 focus-visible:ring-brand'
+                                ? 'hover:border-border-hover hover:bg-surface/80 cursor-pointer group/item outline-none focus-visible:ring-1 focus-visible:ring-brand'
                                 : 'opacity-90'
                         }`}
                     >
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
-                                    !isPlanSigned ? 'group-hover/card:text-brand group-hover/card:border-brand/30' : ''
-                                }`}>
-                                    <GraduationCap size={13} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className={`text-xs font-medium text-text-main truncate transition-colors ${
-                                        !isPlanSigned ? 'group-hover/card:text-brand' : ''
-                                    }`}>
-                                        Plan de Aprendizaje
-                                    </p>
-                                    <p className="text-[11px] text-text-dim truncate">Articulación docencia (APE)</p>
-                                </div>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-7 h-7 rounded-md bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim shrink-0 transition-colors ${
+                                !isPlanSigned ? 'group-hover/item:text-brand group-hover/item:border-brand/30' : ''
+                            }`}>
+                                <GraduationCap size={13} />
                             </div>
-                            {isPlanSigned ? (
-                                <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
-                                    <CheckCircle2 size={11} />
-                                    <span>Firmado</span>
-                                </span>
-                            ) : (
-                                <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
-                                    <span className="dot dot-warning dot-pulse" />
-                                    <span>Falta completar</span>
-                                </span>
-                            )}
+                            <span className={`text-xs font-medium text-text-main truncate transition-colors ${
+                                !isPlanSigned ? 'group-hover/item:text-brand' : ''
+                            }`}>
+                                Plan de Aprendizaje
+                            </span>
                         </div>
-                        {!isPlanSigned && (
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (setActiveDocument) setActiveDocument('PLAN_APRENDIZAJE');
-                                }}
-                                className="mt-2.5 w-full btn-vercel-secondary py-1.5 px-2.5 text-[9.5px] rounded-md"
-                            >
-                                <GraduationCap size={11} />
-                                <span>Completar Plan de Aprendizaje</span>
-                            </button>
+
+                        {isPlanSigned ? (
+                            <span className="badge-vercel badge-vercel-success shrink-0 text-[10px]" title="Firmado">
+                                <CheckCircle2 size={11} />
+                                <span>Firmado</span>
+                            </span>
+                        ) : (
+                            <span className="badge-vercel badge-vercel-warning shrink-0 text-[10px]">
+                                <span className="dot dot-warning dot-pulse" />
+                                <span>Falta completar</span>
+                            </span>
                         )}
                     </div>
                 </div>

@@ -298,55 +298,8 @@ namespace diitra_api.Controllers
                 });
             }
 
-            // Generación Dinámica Genérica Simplificada (Cae aquí si no hay Base64 y no es una oficial)
-            var colFields = new List<string>();
-            if (!string.IsNullOrEmpty(template.CollaborativeFieldsJson))
-            {
-                try
-                {
-                    colFields = System.Text.Json.JsonSerializer.Deserialize<List<string>>(template.CollaborativeFieldsJson) ?? new List<string>();
-                }
-                catch { }
-            }
-
-            var dynamicSchema = new Dictionary<string, object>();
-            var dynamicFields = new List<object>();
-
-            foreach (var field in colFields)
-            {
-                dynamicSchema[field] = "";
-                var readableLabel = System.Text.RegularExpressions.Regex.Replace(field, @"([a-z])([A-Z])", "$1 $2");
-                readableLabel = readableLabel.Replace("_", " ");
-                readableLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(readableLabel.ToLower());
-
-                dynamicFields.Add(new
-                {
-                    name = field,
-                    label = readableLabel,
-                    type = "rich-text",
-                    collaborative = true,
-                    placeholder = $"Redacte colaborativamente la sección {readableLabel}..."
-                });
-            }
-
-            return Ok(new
-            {
-                title = template.Name,
-                subtitle = template.Description ?? "Formulario Dinámico de Colaboración",
-                signatureType = template.SignatureType,
-                schema = dynamicSchema,
-                lists = new string[] { },
-                sections = new[]
-                {
-                    new
-                    {
-                        id = "edicion_colaborativa",
-                        label = "Colaboración",
-                        iconName = "FileText",
-                        fields = dynamicFields.ToArray()
-                    }
-                }
-            });
+            // Si no se pudieron procesar bloques ni existe mapeo específico, responder error para que el frontend use su registro oficial
+            return BadRequest(new { message = $"No se encontraron bloques estructurados válidos para la plantilla '{code}'." });
         }
 
         [HttpGet("maintenance/diagnose")]

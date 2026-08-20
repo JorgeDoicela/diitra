@@ -49,6 +49,7 @@ export const ProjectWorkspace: React.FC = () => {
         isSidebarCollapsed,
         currentProject,
         setCurrentProject,
+        projectDocuments,
         isLoading,
         resolvedProjectUuid,
         subDocumentUuids,
@@ -231,7 +232,7 @@ export const ProjectWorkspace: React.FC = () => {
             readOnlyReason = 'state';
         }
 
-        const canSignDocument = (activeDocument === 'OFICIO_APROBACION')
+        const canSignDocument = (activeDocument === 'OFICIO_APROBACION' || activeDocument === 'EVALUACION_PLAN_APRENDIZAJE')
             ? isAdmin
             : (activeDocument === 'PLAN_APRENDIZAJE' ? (currentProject.puedeFirmar || isAdmin) : currentProject.puedeFirmar);
 
@@ -345,6 +346,7 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="flex flex-col gap-3">
                             <CacesWorkflow
                                 currentProject={currentProject}
+                                projectDocuments={projectDocuments}
                                 templateCode={templateCode}
                                 assignedRevisionUuid={assignedRevisionUuid}
                                 assignedRevisionStatus={assignedRevisionStatus}
@@ -403,6 +405,7 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="lg:sticky lg:top-0 flex flex-col gap-3">
                             <WorkspaceSidebar
                                 currentProject={currentProject}
+                                projectDocuments={projectDocuments}
                                 resolvedProjectUuid={resolvedProjectUuid}
                                 setActiveDocument={setActiveDocument}
                                 isAdmin={isAdmin}

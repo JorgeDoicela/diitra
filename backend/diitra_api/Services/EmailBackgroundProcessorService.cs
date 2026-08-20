@@ -173,9 +173,43 @@ namespace diitra_api.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Fallo al enviar correo ID {Id} por SMTP.", email.IdEmailHistorial);
+                    _logger.LogError(ex, "Fallo al enviar correo ID {Id} por SMTP hacia {To}.", email.IdEmailHistorial, email.Destinatario);
                     email.Estado = "Fallido";
-                    email.ErrorMensaje = ex.ToString();
+                    
+                    var cleanReason = ex switch
+                    {
+                        SmtpFailedRecipientException fre => $"Dirección rechazada ({fre.FailedRecipient}): {fre.Message}",
+                        SmtpException se => $"Error SMTP: {se.Message}",
+                        FormatException fe => $"Formato inválido: {fe.Message}",
+                        _ => ex.Message
+                    };
+                    email.ErrorMensaje = cleanReason;
+
+                    // Notificación en tiempo real a la campana del Administrador
+                    try
+                    {
+                        var notifService = scope.ServiceProvider.GetRequiredService<diitra_application.Common.Notifications.INotificationService>();
+                        var notifTitle = "Fallo en Entrega de Correo";
+                        var notifBody = $"No se pudo enviar el correo '{email.Asunto}' a <{email.Destinatario}>. Causa: {cleanReason}.";
+                        var notifUrl = $"/emails?search={Uri.EscapeDataString(email.Destinatario)}";
+                        var extraData = new Dictionary<string, string>
+                        {
+                            { "SkipEmail", "true" },
+                            { "LogId", email.IdEmailHistorial.ToString() }
+                        };
+
+                        await notifService.NotifyByRoleCodesAsync(
+                            title: notifTitle,
+                            body: notifBody,
+                            roleCodes: new[] { "DIITRA_ADMIN", "ADMINISTRADOR" },
+                            url: notifUrl,
+                            extraData: extraData
+                        );
+                    }
+                    catch (Exception notifEx)
+                    {
+                        _logger.LogWarning(notifEx, "Error al generar la notificación interna de fallo de correo.");
+                    }
                 }
                 finally
                 {

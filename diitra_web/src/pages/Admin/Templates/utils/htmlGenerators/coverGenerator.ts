@@ -3,164 +3,127 @@ import type { DocumentBlock } from '../../types';
 export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): string => {
     const c: any = block.config;
     const gCover = themeConfig?.brand?.coverConfig || {};
-    const isFreeForm = (c.coverLayoutMode !== undefined ? c.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
-
     const showInst    = c.showInstitution !== undefined ? c.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
     const showTitle   = c.showTitle !== undefined ? c.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
+    const showTema    = c.showTemaProyecto !== undefined ? c.showTemaProyecto : (gCover.showTemaProyecto !== undefined ? gCover.showTemaProyecto : true);
     const showCarrera = c.showCarrera !== undefined ? c.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
     const showPeriodo = c.showPeriodo !== undefined ? c.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-    const alignInst    = c.alignInstitution || gCover.alignInstitution || 'center';
-    const alignTitle   = c.alignTitle || gCover.alignTitle || 'center';
-    const alignCarrera = c.alignCarrera || gCover.alignCarrera || 'center';
-    const alignPeriodo = c.alignPeriodo || gCover.alignPeriodo || 'center';
-
     const textInst = c.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
     const textTitle = c.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
+    const placeholderTema = (c.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS').replace(/'/g, "\\'");
 
-    const colorTitleKey = c.colorTituloSuperior || gCover.colorTituloSuperior || 'gold';
+    const colorTitleKey = c.colorTituloSuperior || gCover.colorTituloSuperior || 'navy';
     const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '{{ theme.colors.primary }}' : colorTitleKey;
-    const isGoldTitle = colorTitleKey === 'gold' || titleColor === '#b8912e' || titleColor === '#d4af37';
+    const tituloFontSize = Number(c.tituloFontSize || gCover.tituloFontSize || 20);
+    const tituloItalica = Boolean(c.tituloItalica ?? gCover.tituloItalica);
 
-    const colorInst = c.colorInstitution || gCover.colorInstitution || '#ffffff';
-    const colorTema = c.colorTemaProyecto || gCover.colorTemaProyecto || '#ffffff';
-    const colorCar = c.colorCarrera || gCover.colorCarrera || '#ffffff';
-    const colorPer = c.colorPeriodo || gCover.colorPeriodo || '#ffffff';    const prefijoCarrera = c.prefijoCarrera !== undefined ? c.prefijoCarrera : '';
-    const cleanCarrera = (c.carreraPorDefecto || gCover.carreraPorDefecto || '').replace(/"/g, '\\"');
-    const cleanCarreraUpper = cleanCarrera.trim().toUpperCase();
-    const hasCarreraPrefixInText = cleanCarreraUpper.startsWith('TECNOLOGÍA SUPERIOR EN') || cleanCarreraUpper.startsWith('CARRERA');
-    const showCarreraPrefix = Boolean(prefijoCarrera && prefijoCarrera.trim().length > 0 && !hasCarreraPrefixInText);
+    const temaFontSize = Number(c.temaFontSize || gCover.temaFontSize || 13);
+    const temaItalica = Boolean(c.temaItalica ?? gCover.temaItalica);
 
+    const activeCoverImage = c.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
+    const isWhite = (colorStr?: string) => !colorStr || colorStr.toLowerCase() === '#ffffff' || colorStr.toLowerCase() === '#fff' || colorStr.toLowerCase() === 'white';
+
+    const rawColorInst = c.colorInstitution || gCover.colorInstitution;
+    const rawColorTema = c.colorTemaProyecto || gCover.colorTemaProyecto;
+    const rawColorCar = c.colorCarrera || gCover.colorCarrera;
+    const rawColorPer = c.colorPeriodo || gCover.colorPeriodo;
+
+    const colorInst = rawColorInst || '#ffffff';
+    const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '{{ theme.colors.primary }}');
+    const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '{{ theme.colors.primary }}');
+    const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
+    const prefijoCarrera = c.prefijoCarrera !== undefined ? c.prefijoCarrera : 'TECNOLOGÍA SUPERIOR EN';
     const prefijoPeriodo = c.prefijoPeriodo !== undefined ? c.prefijoPeriodo : 'PERIODO ACADÉMICO';
-    const cleanPeriodo = (c.periodoPorDefecto || gCover.periodoPorDefecto || '').replace(/"/g, '\\"');
-    const cleanPeriodoUpper = cleanPeriodo.trim().toUpperCase();
-    const hasPeriodoPrefixInText = cleanPeriodoUpper.startsWith('PERIODO ACADÉMICO') || cleanPeriodoUpper.startsWith('PERÍODO ACADÉMICO');
-    const showPeriodoPrefix = Boolean(prefijoPeriodo && prefijoPeriodo.trim().length > 0 && !hasPeriodoPrefixInText);
 
-    if (isFreeForm) {
-        const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
-        const yInst  = c.yInstitution ?? gCover.yInstitution ?? 4;
-        const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
-        const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
-        const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
-        const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
-        const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
-        const yPer   = c.yPeriodo     ?? gCover.yPeriodo     ?? 80;
+    const instMode = c.institutionMode || gCover.institutionMode || 'text';
+    const instImage = c.institutionImage || gCover.institutionImage || '';
+    const instLogoHeight = Number(c.institutionLogoHeight || gCover.institutionLogoHeight || 48);
+    const instLogoRadius = c.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
+    const instLogoInvert = c.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
+    const instVariant = c.institutionVariant || gCover.institutionVariant || 'pill';
+    const instBg = c.bgInstitution || gCover.bgInstitution || '{{ theme.colors.primary }}';
 
-        const toMmX = (pct: number) => `${(pct * 2.1).toFixed(1)}mm`;
-        const toMmY = (pct: number) => `${(Math.min(pct, 75) * 2.70).toFixed(1)}mm`;
-        const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
-        const alignStyle = (align: string) => `text-align:${align};`;
+    const radiusCss = instLogoRadius === 'full' ? 'border-radius:9999px;' : instLogoRadius === 'md' ? 'border-radius:8px;' : instLogoRadius === 'sm' ? 'border-radius:4px;' : '';
+    const invertCss = instLogoInvert ? 'filter:brightness(0) invert(1);' : '';
 
-        const instEl = showInst ? `
-        <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; ${alignStyle(alignInst)}">
-          <span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst}; background-color: {{ theme.colors.primary }}; padding:3px 10px; border-radius:9999px; display:inline-block;">
-            ${textInst}
-          </span>
-        </div>` : '';
+    const buildInstMarkup = () => {
+        if (!showInst) return '';
+        if (instMode === 'image' && instImage) {
+            return `<div><img src="${instImage}" alt="${textInst}" style="height:${instLogoHeight}px; max-width:280px; object-fit:contain; ${radiusCss} ${invertCss} display:inline-block;" /></div>`;
+        }
+        if (instMode === 'hybrid') {
+            const bgStyle = instVariant === 'pill' ? `background-color:${instBg}; padding:6px 14px; border-radius:9999px;` : instVariant === 'bordered' ? `background-color:rgba(30,42,74,0.08); border:1px solid ${instBg}; padding:6px 14px; border-radius:9999px;` : '';
+            const textColor = instVariant === 'clean' ? (!activeCoverImage && isWhite(colorInst) ? '{{ theme.colors.primary }}' : colorInst) : colorInst;
+            const imgTag = instImage ? `<img src="${instImage}" alt="${textInst}" style="height:${Math.min(instLogoHeight, 32)}px; max-width:120px; object-fit:contain; ${radiusCss} ${invertCss} vertical-align:middle; margin-right:8px; display:inline-block;" />` : '';
+            return `<div><div style="display:inline-flex; align-items:center; ${bgStyle}"><span style="font-family:{{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${textColor};">${imgTag}${textInst}</span></div></div>`;
+        }
+        if (instVariant === 'pill') {
+            return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst}; background-color:${instBg}; padding:3px 10px; border-radius:9999px; display:inline-block;">${textInst}</span></div>`;
+        }
+        if (instVariant === 'bordered') {
+            return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst === '#ffffff' && !activeCoverImage ? '{{ theme.colors.primary }}' : colorInst}; border:1px solid ${instBg}; background-color:rgba(30,42,74,0.08); padding:3px 10px; border-radius:9999px; display:inline-block;">${textInst}</span></div>`;
+        }
+        return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9.5pt; font-weight:bold; text-transform:uppercase; color:${colorInst === '#ffffff' && !activeCoverImage ? '{{ theme.colors.primary }}' : colorInst}; display:inline-block;">${textInst}</span></div>`;
+    };
 
-        const titleEl = showTitle ? `
-        <div style="position:absolute; left:${toMmX(xTitle)}; top:${toMmY(yTitle)}; width:${getWidthMm(xTitle)}; ${alignStyle(alignTitle)}">
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:20pt; font-weight:bold; ${isGoldTitle ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform:uppercase; line-height:1.2;">
-            ${textTitle}
-          </div>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:13pt; font-weight:bold; color: ${colorTema}; text-transform:uppercase; margin-top:12px; line-height:1.3; word-wrap:break-word;">
-            {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
-          </div>
-        </div>` : '';
+    const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
+    const yInst  = c.yInstitution ?? gCover.yInstitution ?? 4;
+    const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
+    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
+    const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
+    const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
+    const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
+    const yPer   = c.yPeriodo     ?? gCover.yPeriodo     ?? 80;
 
-        const carreraEl = showCarrera ? `
-        <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; ${alignStyle(alignCarrera)}">
-          ${showCarreraPrefix ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase;">${prefijoCarrera}</div>` : ''}
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:10pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase; margin-top:2px;">
-            {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
-          </div>
-        </div>` : '';
+    const toMmX = (pct: number) => `${(pct * 2.1).toFixed(1)}mm`;
+    const toMmY = (pct: number) => `${(Math.min(pct, 75) * 2.70).toFixed(1)}mm`;
+    const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
 
-        const periodoEl = showPeriodo ? `
-        <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; ${alignStyle(alignPeriodo)}">
-          ${showPeriodoPrefix ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; color: ${colorPer}; text-transform:uppercase;">${prefijoPeriodo}</div>` : ''}
-          <div style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:normal; color: ${colorPer}; text-transform:uppercase; margin-top:2px;">
-            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025'}"}}
-          </div>
-        </div>` : '';
+    const instEl = showInst ? `
+    <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; text-align:center;">
+      ${buildInstMarkup()}
+    </div>` : '';
 
-        return `
-  <!-- BLOQUE: PORTADA FREE-FORM -->
+    const titleEl = showTitle ? `
+    <div style="position:absolute; left:${toMmX(xTitle)}; top:${toMmY(yTitle)}; width:${getWidthMm(xTitle)}; text-align:center;">
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${tituloFontSize}pt; font-weight:bold; ${tituloItalica ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform:uppercase; line-height:1.2;">
+        ${textTitle}
+      </div>
+      ${showTema ? `
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${temaFontSize}pt; font-weight:bold; ${temaItalica ? 'font-style:italic;' : ''} color: ${colorTema}; text-transform:uppercase; margin-top:12px; line-height:1.3; word-wrap:break-word;">
+        {{default titulo '${placeholderTema}'}}
+      </div>` : ''}
+    </div>` : '';
+
+    const carreraFontSize = Number(c.carreraFontSize || gCover.carreraFontSize || 10);
+    const carreraItalica = Boolean(c.carreraItalica ?? gCover.carreraItalica);
+
+    const carreraEl = showCarrera ? `
+    <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; text-align:center;">
+      ${prefijoCarrera ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:${Math.max(8, Math.round(carreraFontSize * 0.85))}pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase;">${prefijoCarrera}</div>` : ''}
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${carreraFontSize}pt; font-weight:bold; ${carreraItalica ? 'font-style:italic;' : ''} color: ${colorCar}; text-transform:uppercase; margin-top:2px;">
+        {{default carrera "[NOMBRE DE LA CARRERA]"}}
+      </div>
+    </div>` : '';
+
+    const periodoFontSize = Number(c.periodoFontSize || gCover.periodoFontSize || 9);
+    const periodoItalica = Boolean(c.periodoItalica ?? gCover.periodoItalica);
+
+    const periodoEl = showPeriodo ? `
+    <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; text-align:center;">
+      ${prefijoPeriodo ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:${Math.max(8, Math.round(periodoFontSize * 0.85))}pt; font-weight:bold; color: ${colorPer}; text-transform:uppercase;">${prefijoPeriodo}</div>` : ''}
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${periodoFontSize}pt; font-weight:normal; ${periodoItalica ? 'font-style:italic;' : ''} color: ${colorPer}; text-transform:uppercase; margin-top:2px;">
+        {{default periodo "[PERIODO ACADÉMICO ACTIVO]"}}
+      </div>
+    </div>` : '';
+
+    return `
+  <!-- BLOQUE: PORTADA CANVAS LIBRE -->
   <div class="cover-page">
     ${instEl}
     ${titleEl}
     ${carreraEl}
     ${periodoEl}
-  </div>`;
-    }
-
-    const posInst    = c.posInstitution || gCover.posInstitution || 'top';
-    const posTitle   = c.posTitle || gCover.posTitle || 'middle';
-    const posCarrera = c.posCarrera || gCover.posCarrera || 'bottom';
-    const posPeriodo = c.posPeriodo || gCover.posPeriodo || 'bottom';
-
-    const instHtml = showInst ? `
-        <div style="text-align: ${alignInst}; width: 100%;">
-          <span style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: ${colorInst}; background-color: {{ theme.colors.primary }}; padding: 4px 12px; border-radius: 9999px; display: inline-block;">
-            ${textInst}
-          </span>
-        </div>` : '';
-
-    const titleHtml = showTitle ? `
-        <div style="text-align: ${alignTitle}; width: 100%;">
-          <h1 style="font-family: {{ theme.typography.font_family }}; font-size: 20pt; font-weight: bold; ${isGoldTitle ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform: uppercase; margin: 0; line-height: 1.2;">
-            ${textTitle}
-          </h1>
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 14pt; font-weight: bold; color: ${colorTema}; text-transform: uppercase; margin-top: 10px; line-height: 1.2; word-wrap: break-word;">
-            {{default titulo 'ESCRIBIR EL TEMA EN MAYÚSCULAS'}}
-          </div>
-        </div>` : '';
-
-    const carreraHtml = showCarrera ? `
-        <div style="text-align: ${alignCarrera}; width: 100%;">
-          ${prefijoCarrera ? `<div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: bold; color: ${colorCar}; text-transform: uppercase;">${prefijoCarrera}</div>` : ''}
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 11pt; font-weight: normal; color: ${colorCar}; text-transform: uppercase; margin-top: 4px;">
-            {{default carrera "${cleanCarrera || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE'}"}}
-          </div>
-        </div>` : '';
-
-    const periodoHtml = showPeriodo ? `
-        <div style="text-align: ${alignPeriodo}; width: 100%;">
-          ${prefijoPeriodo ? `<div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: bold; color: ${colorPer}; text-transform: uppercase;">${prefijoPeriodo}</div>` : ''}
-          <div style="font-family: {{ theme.typography.font_family }}; font-size: 10pt; font-weight: normal; color: ${colorPer}; text-transform: uppercase; margin-top: 2px;">
-            {{default periodo "${cleanPeriodo || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025'}"}}
-          </div>
-        </div>` : '';
-
-    const topElements = [
-        posInst === 'top' ? instHtml : '',
-        posTitle === 'top' ? titleHtml : '',
-        posCarrera === 'top' ? carreraHtml : '',
-        posPeriodo === 'top' ? periodoHtml : '',
-    ].filter(Boolean).join('\n');
-
-    const middleElements = [
-        posInst === 'middle' ? instHtml : '',
-        posTitle === 'middle' ? titleHtml : '',
-        posCarrera === 'middle' ? carreraHtml : '',
-        posPeriodo === 'middle' ? periodoHtml : '',
-    ].filter(Boolean).join('\n');
-
-    const bottomElements = [
-        posInst === 'bottom' ? instHtml : '',
-        posTitle === 'bottom' ? titleHtml : '',
-        posCarrera === 'bottom' ? carreraHtml : '',
-        posPeriodo === 'bottom' ? periodoHtml : '',
-    ].filter(Boolean).join('\n');
-
-    return `
-  <!-- BLOQUE: PORTADA ZONAS -->
-  <div class="cover-page">
-    <div class="cover-overlay">
-      ${topElements}
-      ${middleElements}
-      ${bottomElements}
-    </div>
   </div>`;
 };

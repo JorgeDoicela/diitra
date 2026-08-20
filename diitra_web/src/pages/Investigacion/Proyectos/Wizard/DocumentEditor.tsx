@@ -171,9 +171,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
-            // Aplicar config de plantilla (prioriza backend si retornó respuesta válida, de lo contrario cae en localConfig)
+            // Aplicar config de plantilla (prioriza backend si retornó respuesta con secciones válidas, de lo contrario cae en localConfig)
             const rawConfig = configResult?.data;
-            const isApiSuccess = rawConfig && typeof rawConfig === 'object' && ('sections' in rawConfig || 'title' in rawConfig);
+            const hasValidSections = Array.isArray(rawConfig?.sections) && rawConfig.sections.length > 0 && rawConfig.sections[0]?.id !== 'edicion_colaborativa';
+            const isApiSuccess = rawConfig && typeof rawConfig === 'object' && hasValidSections;
             const finalConfig = isApiSuccess ? rawConfig : (localConfig || rawConfig);
             setTemplateConfig(finalConfig);
             if (!finalConfig) {

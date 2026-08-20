@@ -43,6 +43,11 @@ namespace diitra_infrastructure.Common.Notifications
 
         public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
         {
+            if (extraData != null && extraData.TryGetValue("SkipEmail", out var skip) && skip.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             var absoluteUrl = url != null 
                 ? (url.StartsWith("http", StringComparison.OrdinalIgnoreCase) 
                     ? url 

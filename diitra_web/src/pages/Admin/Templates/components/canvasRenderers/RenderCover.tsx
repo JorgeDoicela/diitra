@@ -57,44 +57,51 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     themeConfig
 }) => {
     const gCover = themeConfig?.brand?.coverConfig || {};
-    const color = config.colorTema || gCover.colorTema || DYN_COLORS.blue;
-    const isFreeForm = (config.coverLayoutMode !== undefined ? config.coverLayoutMode : gCover.coverLayoutMode) !== 'zones';
-
     const activeCoverImage = coverImage || config.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
 
     const showInst = config.showInstitution !== undefined ? config.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
     const showTitle = config.showTitle !== undefined ? config.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
+    const showTema = config.showTemaProyecto !== undefined ? config.showTemaProyecto : (gCover.showTemaProyecto !== undefined ? gCover.showTemaProyecto : true);
     const showCarrera = config.showCarrera !== undefined ? config.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
     const showPeriodo = config.showPeriodo !== undefined ? config.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-    const alignInst = config.alignInstitution || gCover.alignInstitution || 'center';
-    const alignTitle = config.alignTitle || gCover.alignTitle || 'center';
-    const alignCarrera = config.alignCarrera || gCover.alignCarrera || 'center';
-    const alignPeriodo = config.alignPeriodo || gCover.alignPeriodo || 'center';
-
     const textInst = config.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
     const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
+    const placeholderTema = config.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
     const textCarrera = config.carreraPorDefecto || gCover.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
     const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025';
 
-    const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'gold';
+    const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'navy';
     const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '#1e2a4a' : colorTitleKey;
-    const isGoldTitle = colorTitleKey === 'gold' || titleColor === '#b8912e' || titleColor === '#d4af37';
+    const tituloFontSize = Number(config.tituloFontSize || 20);
+    const tituloItalica = Boolean(config.tituloItalica);
 
-    const colorInst = config.colorInstitution || gCover.colorInstitution || '#ffffff';
-    const colorTema = config.colorTemaProyecto || gCover.colorTemaProyecto || '#ffffff';
-    const colorCar = config.colorCarrera || gCover.colorCarrera || '#ffffff';
-    const colorPer = config.colorPeriodo || gCover.colorPeriodo || '#ffffff';
+    const temaFontSize = Number(config.temaFontSize || 13);
+    const temaItalica = Boolean(config.temaItalica);
 
-    const prefijoCarrera = config.prefijoCarrera !== undefined ? config.prefijoCarrera : '';
-    const cleanCarreraText = textCarrera.trim();
-    const hasCarreraPrefixInText = cleanCarreraText.toUpperCase().startsWith('TECNOLOGÍA SUPERIOR EN') || cleanCarreraText.toUpperCase().startsWith('CARRERA');
-    const showCarreraPrefix = Boolean(prefijoCarrera && prefijoCarrera.trim().length > 0 && !hasCarreraPrefixInText);
+    const carreraFontSize = Number(config.carreraFontSize || 11);
+    const carreraItalica = Boolean(config.carreraItalica);
 
+    const periodoFontSize = Number(config.periodoFontSize || 10);
+    const periodoItalica = Boolean(config.periodoItalica);
+
+    const rawColorInst = config.colorInstitution || gCover.colorInstitution;
+    const rawColorTema = config.colorTemaProyecto || gCover.colorTemaProyecto;
+    const rawColorCar = config.colorCarrera || gCover.colorCarrera;
+    const rawColorPer = config.colorPeriodo || gCover.colorPeriodo;
+
+    const colorInst = rawColorInst || '#ffffff';
+    const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '#1e2a4a');
+    const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '#1e2a4a');
+    const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
+
+    // Carrera
+    const prefijoCarrera = config.prefijoCarrera !== undefined ? config.prefijoCarrera : 'TECNOLOGÍA SUPERIOR EN';
+    const displayCarrera = '[NOMBRE DE LA CARRERA]';
+
+    // Periodo
     const prefijoPeriodo = config.prefijoPeriodo !== undefined ? config.prefijoPeriodo : 'PERIODO ACADÉMICO';
-    const cleanPeriodoText = textPeriodo.trim();
-    const hasPeriodoPrefixInText = cleanPeriodoText.toUpperCase().startsWith('PERIODO ACADÉMICO') || cleanPeriodoText.toUpperCase().startsWith('PERÍODO ACADÉMICO');
-    const showPeriodoPrefix = Boolean(prefijoPeriodo && prefijoPeriodo.trim().length > 0 && !hasPeriodoPrefixInText);
+    const displayPeriodo = '[PERIODO ACADÉMICO ACTIVO]';
 
     const positions: Record<CoverElementId, FreeFormPosition> = {
         institution: {
@@ -129,51 +136,42 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         }
     );
 
-    const getAlignStyle = (align: string): React.CSSProperties => {
-        const map: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end' };
-        return {
-            alignItems: map[align] || 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            textAlign: align as any
-        };
-    };
-
     const renderElement = (
         id: CoverElementId,
         visible: boolean,
-        align: string,
         children: React.ReactNode
     ) => {
         if (!visible) return null;
         const pos = positions[id];
         const isThisDragging = draggingId === id;
 
-        const style: React.CSSProperties = isFreeForm
-            ? { ...getElementStyle(pos, isThisDragging), ...getAlignStyle(align), maxWidth: '80%' }
-            : {};
+        const style: React.CSSProperties = {
+            ...getElementStyle(pos, isThisDragging),
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            maxWidth: '80%'
+        };
 
-        const handlers = isFreeForm ? dragHandlers(id, pos) : {};
+        const handlers = dragHandlers(id, pos);
 
         return (
             <div
                 key={id}
                 style={style}
                 {...handlers}
-                className={`group/item p-2 rounded-lg ${isFreeForm
-                    ? isThisDragging
-                        ? 'ring-2 ring-indigo-500 bg-indigo-50/20'
+                className={`group/item p-2 rounded-lg cursor-grab active:cursor-grabbing ${
+                    isThisDragging
+                        ? 'ring-2 ring-indigo-500 bg-indigo-50/20 shadow-md'
                         : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10 transition-all duration-200'
-                    : 'transition-all duration-200'
-                    }`}
-                title={isFreeForm ? `Arrastra para mover ${id}` : undefined}
+                }`}
+                title={`Arrastra para mover ${id}`}
             >
-                {isFreeForm && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none select-none whitespace-nowrap flex items-center gap-1">
-                        <Move className="w-2.5 h-2.5" />
-                        Mover
-                    </span>
-                )}
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none select-none whitespace-nowrap flex items-center gap-1">
+                    <Move className="w-2.5 h-2.5" />
+                    Mover
+                </span>
                 {children}
             </div>
         );
@@ -196,134 +194,162 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         </div>
     );
 
-    if (isFreeForm) {
-        return (
-            <div
-                ref={containerRef}
-                style={activeCoverImage ? { backgroundImage: `url(${activeCoverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-                className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
-            >
-                <GuideGrid />
-                <div className="absolute top-2 left-2 z-50 bg-indigo-600/80 backdrop-blur-sm text-white text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 pointer-events-none">
-                    <Move className="w-2.5 h-2.5" />
-                    Canvas Libre
-                </div>
+    const instMode = config.institutionMode || gCover.institutionMode || 'text';
+    const instImage = config.institutionImage || gCover.institutionImage || '';
+    const instLogoHeight = Number(config.institutionLogoHeight || gCover.institutionLogoHeight || 48);
+    const instLogoRadius = config.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
+    const instLogoInvert = config.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
+    const instVariant = config.institutionVariant || gCover.institutionVariant || 'pill';
+    const instBg = config.bgInstitution || gCover.bgInstitution || '#1e2a4a';
 
-                {renderElement('institution', showInst, alignInst,
-                    <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none flex items-center gap-1.5 shadow-sm" style={{ backgroundColor: color, color: colorInst }}>
+    const renderInstitutionContent = () => {
+        if (instMode === 'image' && instImage) {
+            return (
+                <div className="inline-flex items-center">
+                    <img
+                        src={instImage}
+                        alt={textInst}
+                        style={{
+                            height: `${instLogoHeight}px`,
+                            maxWidth: '280px',
+                            objectFit: 'contain',
+                            borderRadius: instLogoRadius === 'full' ? '9999px' : instLogoRadius === 'md' ? '8px' : instLogoRadius === 'sm' ? '4px' : '0px',
+                            filter: instLogoInvert ? 'brightness(0) invert(1)' : undefined
+                        }}
+                        className="pointer-events-none select-none drop-shadow-xs"
+                    />
+                </div>
+            );
+        }
+
+        if (instMode === 'hybrid') {
+            return (
+                <div
+                    className={`inline-flex items-center gap-3 ${
+                        instVariant === 'pill'
+                            ? 'px-4 py-1.5 rounded-full shadow-xs'
+                            : instVariant === 'bordered'
+                                ? 'px-4 py-1.5 rounded-full border shadow-xs'
+                                : 'p-1'
+                    }`}
+                    style={{
+                        backgroundColor: instVariant === 'pill' ? instBg : instVariant === 'bordered' ? `${instBg}15` : 'transparent',
+                        borderColor: instVariant === 'bordered' ? instBg : undefined
+                    }}
+                >
+                    {instImage && (
+                        <img
+                            src={instImage}
+                            alt={textInst}
+                            style={{
+                                height: `${Math.min(instLogoHeight, 36)}px`,
+                                maxWidth: '120px',
+                                objectFit: 'contain',
+                                borderRadius: instLogoRadius === 'full' ? '9999px' : '4px',
+                                filter: instLogoInvert ? 'brightness(0) invert(1)' : undefined
+                            }}
+                            className="pointer-events-none select-none shrink-0"
+                        />
+                    )}
+                    <span
+                        className="text-[11px] font-black uppercase tracking-widest select-none"
+                        style={{ color: instVariant === 'clean' ? (!activeCoverImage && isWhite(colorInst) ? '#1e2a4a' : colorInst) : colorInst }}
+                    >
                         {textInst}
                     </span>
-                )}
+                </div>
+            );
+        }
 
-                {renderElement('title', showTitle, alignTitle,
-                    <div className="space-y-4">
-                        <h1 className={`text-xl tracking-tight uppercase leading-snug ${isGoldTitle ? 'italic font-black text-[#b8912e]' : 'font-extrabold'}`} style={{ color: titleColor }}>
-                            {textTitle}
-                        </h1>
-                        <div className="text-sm font-extrabold uppercase tracking-wide leading-tight" style={{ color: colorTema }}>
-                            ESCRIBIR EL TEMA EN MAYÚSCULAS
-                        </div>
-                    </div>
-                )}
+        if (instVariant === 'pill') {
+            return (
+                <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none inline-flex items-center gap-1.5 shadow-xs" style={{ backgroundColor: instBg, color: colorInst }}>
+                    {textInst}
+                </span>
+            );
+        }
 
-                {renderElement('carrera', showCarrera, alignCarrera,
-                    <div className="space-y-1" style={{ color: colorCar }}>
-                        {showCarreraPrefix && (
-                            <div className="text-xs font-black uppercase tracking-wider opacity-90">{prefijoCarrera}</div>
-                        )}
-                        <div className="text-sm font-bold uppercase tracking-wide">
-                            {textCarrera}
-                        </div>
-                    </div>
-                )}
-
-                {renderElement('periodo', showPeriodo, alignPeriodo,
-                    <div className="space-y-0.5" style={{ color: colorPer }}>
-                        {showPeriodoPrefix && (
-                            <div className="text-[11px] font-black uppercase tracking-wide opacity-90">{prefijoPeriodo}</div>
-                        )}
-                        <div className="text-xs font-semibold uppercase tracking-wide">
-                            {textPeriodo}
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    const posInst = config.posInstitution || 'top';
-    const posTitle = config.posTitle || 'middle';
-    const posCarrera = config.posCarrera || 'bottom';
-    const posPeriodo = config.posPeriodo || 'bottom';
-
-    const getHorizontalAlignmentStyle = (align: string) => {
-        if (align === 'left') return { textAlign: 'left' as const, alignSelf: 'flex-start' as const };
-        if (align === 'right') return { textAlign: 'right' as const, alignSelf: 'flex-end' as const };
-        return { textAlign: 'center' as const, alignSelf: 'center' as const };
-    };
-
-    const renderZoneSection = (sectionName: 'top' | 'middle' | 'bottom', mtClass: string) => {
-        const hasInst = posInst === sectionName && showInst;
-        const hasTitle = posTitle === sectionName && showTitle;
-        const hasCarrera = posCarrera === sectionName && showCarrera;
-        const hasPeriodo = posPeriodo === sectionName && showPeriodo;
-
-        if (!hasInst && !hasTitle && !hasCarrera && !hasPeriodo) return null;
+        if (instVariant === 'bordered') {
+            return (
+                <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none inline-flex items-center gap-1.5 border shadow-xs" style={{ borderColor: instBg, color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst, backgroundColor: `${instBg}15` }}>
+                    {textInst}
+                </span>
+            );
+        }
 
         return (
-            <div className={`flex flex-col gap-4 w-full px-12 ${mtClass}`}>
-                {hasInst && (
-                    <div style={getHorizontalAlignmentStyle(alignInst)} className="w-full">
-                        <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-white select-none inline-block shadow-sm" style={{ backgroundColor: color }}>
-                            {textInst}
-                        </span>
-                    </div>
-                )}
-
-                {hasTitle && (
-                    <div style={getHorizontalAlignmentStyle(alignTitle)} className="w-full space-y-4">
-                        <h1 className={`text-xl tracking-tight uppercase leading-snug ${isGoldTitle ? 'italic font-black text-[#b8912e]' : 'font-extrabold'}`} style={{ color: titleColor }}>
-                            {textTitle}
-                        </h1>
-                        <div className="text-sm font-extrabold uppercase tracking-wide leading-tight text-white/90">
-                            ESCRIBIR EL TEMA EN MAYÚSCULAS
-                        </div>
-                    </div>
-                )}
-
-                {hasCarrera && (
-                    <div style={getHorizontalAlignmentStyle(alignCarrera)} className="w-full space-y-1">
-                        {prefijoCarrera && (
-                            <div className="text-xs font-black text-white uppercase tracking-wider">{prefijoCarrera}</div>
-                        )}
-                        <div className="text-sm font-bold text-white uppercase tracking-wide">
-                            {textCarrera}
-                        </div>
-                    </div>
-                )}
-
-                {hasPeriodo && (
-                    <div style={getHorizontalAlignmentStyle(alignPeriodo)} className="w-full space-y-0.5">
-                        {prefijoPeriodo && (
-                            <div className="text-[11px] font-black text-white uppercase tracking-wide">{prefijoPeriodo}</div>
-                        )}
-                        <div className="text-xs font-semibold text-white uppercase tracking-wide">
-                            {textPeriodo}
-                        </div>
-                    </div>
-                )}
-            </div>
+            <span className="text-[11px] font-black uppercase tracking-widest select-none inline-flex items-center gap-1.5" style={{ color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst }}>
+                {textInst}
+            </span>
         );
     };
 
     return (
         <div
+            ref={containerRef}
             style={activeCoverImage ? { backgroundImage: `url(${activeCoverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-            className="relative w-full min-h-[1123px] flex-1 flex flex-col justify-between items-center py-16 bg-white border border-gray-200 select-none overflow-hidden"
+            className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
         >
-            {renderZoneSection('top', 'mt-4')}
-            {renderZoneSection('middle', 'my-auto')}
-            {renderZoneSection('bottom', 'mb-4')}
+            <GuideGrid />
+
+            {renderElement('institution', showInst, renderInstitutionContent())}
+
+            {renderElement('title', showTitle,
+                <div className="space-y-4">
+                    <h1
+                        className={`font-extrabold tracking-tight uppercase leading-snug ${tituloItalica ? 'italic' : ''}`}
+                        style={{ color: titleColor, fontSize: `${tituloFontSize * 1.33}px` }}
+                    >
+                        {textTitle}
+                    </h1>
+                    {showTema && (
+                        <div
+                            className={`font-extrabold uppercase tracking-wide leading-tight ${temaItalica ? 'italic' : ''}`}
+                            style={{ color: colorTema, fontSize: `${temaFontSize * 1.33}px` }}
+                        >
+                            {placeholderTema}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {renderElement('carrera', showCarrera,
+                <div className="space-y-1" style={{ color: colorCar }}>
+                    {prefijoCarrera && (
+                        <div
+                            className="font-bold uppercase tracking-wider opacity-85"
+                            style={{ fontSize: `${Math.max(10, Math.round(carreraFontSize * 1.1))}px` }}
+                        >
+                            {prefijoCarrera}
+                        </div>
+                    )}
+                    <div
+                        className={`font-extrabold uppercase tracking-wide ${carreraItalica ? 'italic' : ''}`}
+                        style={{ fontSize: `${carreraFontSize * 1.33}px` }}
+                    >
+                        {displayCarrera}
+                    </div>
+                </div>
+            )}
+
+            {renderElement('periodo', showPeriodo,
+                <div className="space-y-1" style={{ color: colorPer }}>
+                    {prefijoPeriodo && (
+                        <div
+                            className="font-bold uppercase tracking-wider opacity-85"
+                            style={{ fontSize: `${Math.max(10, Math.round(periodoFontSize * 1.1))}px` }}
+                        >
+                            {prefijoPeriodo}
+                        </div>
+                    )}
+                    <div
+                        className={`font-semibold uppercase tracking-wide ${periodoItalica ? 'italic' : ''}`}
+                        style={{ fontSize: `${periodoFontSize * 1.33}px` }}
+                    >
+                        {displayPeriodo}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

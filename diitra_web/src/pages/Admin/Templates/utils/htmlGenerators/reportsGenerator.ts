@@ -800,57 +800,82 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
  */
 export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string => {
     return `
-  <!-- BLOQUE: IDENTIFICACIÓN DEL PROYECTO & ESTUDIANTE (PLAN DE APRENDIZAJE) -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+  <!-- CABECERA INSTITUCIONAL ISTPET Y PLAN DE APRENDIZAJE -->
+  <div style="margin-top: 5px; page-break-inside: avoid; font-family: Arial, sans-serif;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+      <tr>
+        <td style="width: 28%; vertical-align: middle; text-align: left;">
+          {{#if theme.brand.logo_url}}
+            <img src="{{theme.brand.logo_url}}" style="max-height: 45px; max-width: 180px;" alt="ISTPET" />
+          {{else}}
+            <div style="font-size: 16pt; font-weight: bold; color: #1e2a4a; letter-spacing: 1px;">ISTPET</div>
+            <div style="font-size: 6.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">INSTITUTO TRAVERSARI</div>
+          {{/if}}
+        </td>
+        <td style="width: 72%; text-align: center; vertical-align: middle;">
+          <div style="font-size: 13pt; font-weight: bold; color: #000000; letter-spacing: 0.5px; text-transform: uppercase;">
+            UNIDAD DE INVESTIGACIÓN
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
         <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="4" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+          <th colspan="6" style="padding: 6px 8px; text-align: center; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000; letter-spacing: 0.5px;">
+            PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
+          </th>
+        </tr>
+        <tr style="background-color: #f1f5f9; color: #000000;">
+          <th colspan="6" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             1. IDENTIFICACIÓN DEL PROYECTO
           </th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td style="width: 25%; font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">NOMBRE DEL PROYECTO:</td>
-          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold;">{{default NombreProyecto Titulo title ""}}</td>
+          <td style="width: 22%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">NOMBRE DEL PROYECTO</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000; font-weight: bold;">{{default NombreProyecto Titulo title ""}}</td>
         </tr>
         <tr>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">LÍNEA DE INVESTIGACIÓN:</td>
-          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default LineaInvestigacion linea ""}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">LÍNEA DE INVESTIGACIÓN</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default LineaInvestigacion linea ""}}</td>
         </tr>
         <tr>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">SUBLÍNEA DE INVESTIGACIÓN:</td>
-          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default SublineaInvestigacion sublinea ""}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">SUBLÍNEA DE INVESTIGACIÓN</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default SublineaInvestigacion sublinea ""}}</td>
         </tr>
         <tr>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">CARRERA:</td>
-          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">{{default Carrera carrera ""}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">CARRERA</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default Carrera carrera ""}}</td>
         </tr>
         <tr>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">DIRECTOR DEL PROYECTO:</td>
-          <td style="width: 35%; padding: 5px 8px; border: 1px solid #000000;">{{default DirectorProyecto director_proyecto ""}}</td>
-          <td style="width: 25%; font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">N° ESTUDIANTES:</td>
-          <td style="width: 15%; padding: 5px 8px; border: 1px solid #000000; text-align: center;">{{default NumeroEstudiantes "1"}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">DIRECTOR DEL PROYECTO</td>
+          <td colspan="2" style="padding: 4px 6px; border: 1px solid #000000;">{{default DirectorProyecto director_proyecto ""}}</td>
+          <td colspan="2" style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000; font-size: 7.5pt;">NÚMERO DE ESTUDIANTES QUE PARTICIPAN EN EL PROYECTO DE INVESTIGACIÓN</td>
+          <td style="width: 10%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default NumeroEstudiantes "1"}}</td>
         </tr>
         <tr>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">FECHA APROBACIÓN:</td>
-          <td style="padding: 5px 8px; border: 1px solid #000000;">{{default FechaAprobacion "N/A"}}</td>
-          <td style="font-weight: bold; background-color: #f8fafc; padding: 5px 8px; border: 1px solid #000000;">PERIODO ACADÉMICO:</td>
-          <td style="padding: 5px 8px; border: 1px solid #000000;">{{default PeriodoAcademico periodo ""}}</td>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">FECHA DE APROBACIÓN</td>
+          <td style="width: 16%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default FechaAprobacion "N/A"}}</td>
+          <td style="width: 18%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">FECHA DE TERMINACIÓN</td>
+          <td style="width: 16%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default FechaTerminacion "N/A"}}</td>
+          <td style="width: 16%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">PERIODO ACADÉMICO</td>
+          <td style="width: 14%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default PeriodoAcademico periodo ""}}</td>
         </tr>
-        <tr style="background-color: #e0f2fe;">
-          <td style="font-weight: bold; padding: 5px 8px; border: 1px solid #000000; color: #0369a1;">NOMBRE DEL ESTUDIANTE:</td>
-          <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000; font-weight: bold; color: #0c4a6e;">{{default NombreEstudiante "[ESTUDIANTE SELECCIONADO]"}}</td>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">NOMBRE DEL ESTUDIANTE</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000; font-weight: bold;">{{default NombreEstudiante "[ESTUDIANTE SELECCIONADO]"}}</td>
         </tr>
       </tbody>
     </table>
 
-    <div style="margin-top: 15px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+    <div style="margin-top: 10px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
         <thead>
-          <tr style="background-color: #002060; color: #FFFFFF;">
-            <th style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+          <tr style="background-color: #f1f5f9; color: #000000;">
+            <th style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
               2. OBJETIVO GENERAL DEL PROYECTO DE INVESTIGACIÓN
             </th>
           </tr>
@@ -873,22 +898,22 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
 export const generateLearningPlanEvalParametersHtml = (_block?: DocumentBlock): string => {
     return `
   <!-- BLOQUE: 2. PARÁMETROS DE EVALUACIÓN CUALITATIVA -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
         <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="3" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+          <th colspan="3" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             2. PARÁMETROS DE EVALUACIÓN
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr style="background-color: #f8fafc; font-size: 8pt; color: #334155;">
+        <tr style="background-color: #f8fafc; font-size: 7.5pt; color: #334155;">
           <td colspan="3" style="padding: 5px 8px; border: 1px solid #000000;">
             La evaluación de la participación del estudiante en el proyecto de investigación tiene un enfoque cualitativo y se centra en identificar los resultados de aprendizaje de las actividades que los estudiantes deben realizar en conjunto con las asignaturas asociadas.
           </td>
         </tr>
-        <tr style="background-color: #f1f5f9; font-weight: bold; font-size: 8pt;">
+        <tr style="background-color: #f1f5f9; font-weight: bold; font-size: 7.5pt;">
           <td style="width: 8%; padding: 4px; border: 1px solid #000000; text-align: center;">ESCALA</td>
           <td style="width: 24%; padding: 4px 8px; border: 1px solid #000000;">NIVEL CUALITATIVO</td>
           <td style="width: 68%; padding: 4px 8px; border: 1px solid #000000;">DESCRIPTOR OFICIAL ISTPET</td>
@@ -928,13 +953,19 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
     if (isEvaluacion) {
         return `
   <!-- BLOQUE: 3. EVALUACIÓN DE PRERREQUISITOS CUALITATIVOS -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
+  <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="10" style="padding: 6px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+        <tr style="background-color: #f1f5f9; color: #000000;">
+          <th colspan="10" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
           </th>
+        </tr>
+        <tr style="background-color: #f8fafc; font-size: 7pt; color: #334155;">
+          <td colspan="10" style="padding: 4px 6px; border: 1px solid #000000;">
+            <strong>Cognitivos:</strong> Conocimientos generales sobre el área de estudio, capacidad de análisis y síntesis, habilidades de investigación, conocimiento básico de la profesión, Comunicación oral y escrita, y pensamiento analítico (mínimo tres).<br/>
+            <strong>Procedimentales:</strong> Capacidad de trabajar en un equipo interdisciplinar, capacidad de aplicar los conocimientos en la práctica, capacidad de aprender, Capacidad crítica y autocrítica, compromiso ético, responsabilidad social y compromiso ciudadano, Capacidad para plantear, identificar y resolver problemas, y Capacidad para organizar y planificar el tiempo. (mínimo cinco)
+          </td>
         </tr>
         <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
           <th style="padding: 4px; border: 1px solid #000000; width: 28%; text-align: left;">COGNITIVOS</th>
@@ -943,12 +974,12 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
           <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
         </tr>
         <tr style="background-color: #f8fafc; font-size: 6.5pt; text-align: center;">
-          <th style="border-r: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
           <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
           <th style="padding: 2px; border: 1px solid #000000;">ADEC (3)</th>
           <th style="padding: 2px; border: 1px solid #000000;">POCO (2)</th>
           <th style="padding: 2px; border: 1px solid #000000;">NO (1)</th>
-          <th style="border-r: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
           <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
           <th style="padding: 2px; border: 1px solid #000000;">ADEC (3)</th>
           <th style="padding: 2px; border: 1px solid #000000;">POCO (2)</th>
@@ -962,7 +993,7 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
-          <td style="padding: 4px 6px; border: 1px solid #000000;">1. Trabajo en equipo interdisciplinar</td>
+          <td style="padding: 4px 6px; border: 1px solid #000000;">1. Capacidad de trabajar en equipo interdisciplinar</td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">X</td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
@@ -975,47 +1006,47 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
 
     return `
   <!-- BLOQUE: 3. PRERREQUISITOS PREVIOS A LA VINCULACIÓN -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="2" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+        <tr style="background-color: #f1f5f9; color: #000000;">
+          <th colspan="2" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
           </th>
         </tr>
-      </thead>
-      <tbody>
-        <tr style="background-color: #f8fafc; font-size: 7.5pt; color: #475569;">
-          <td colspan="2" style="padding: 4px 8px; border: 1px solid #000000;">
-            <strong>Cognitivos:</strong> Conocimientos generales sobre el área de estudio, capacidad de análisis y síntesis, habilidades de investigación (mínimo 3).<br/>
-            <strong>Procedimentales:</strong> Trabajo en equipo interdisciplinar, aplicación práctica, responsabilidad social y gestión del tiempo (mínimo 5).
+        <tr style="background-color: #f8fafc; font-size: 7.2pt; color: #1e293b;">
+          <td colspan="2" style="padding: 5px 8px; border: 1px solid #000000; line-height: 1.35;">
+            <strong>Cognitivos:</strong> Conocimientos generales sobre el área de estudio, capacidad de análisis y síntesis, habilidades de investigación, conocimiento básico de la profesión, Comunicación oral y escrita, y pensamiento analítico (mínimo tres).<br/>
+            <strong>Procedimentales:</strong> Capacidad de trabajar en un equipo interdisciplinar, capacidad de aplicar los conocimientos en la práctica, capacidad de aprender, Capacidad crítica y autocrítica, compromiso ético, responsabilidad social y compromiso ciudadano, Capacidad para plantear, identificar y resolver problemas, y Capacidad para organizar y planificar el tiempo. (mínimo cinco)
           </td>
         </tr>
         <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
-          <td style="width: 50%; padding: 5px; border: 1px solid #000000;">COGNITIVOS</td>
-          <td style="width: 50%; padding: 5px; border: 1px solid #000000;">PROCEDIMENTALES</td>
+          <td style="width: 50%; padding: 4px; border: 1px solid #000000;">COGNITIVOS</td>
+          <td style="width: 50%; padding: 4px; border: 1px solid #000000;">PROCEDIMENTALES</td>
         </tr>
+      </thead>
+      <tbody>
         <tr>
           <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
             {{#if PrerrequisitosCognitivos}}
-              <ul style="margin: 0; padding-left: 15px;">
+              <ol style="margin: 0; padding-left: 16px;">
                 {{#each PrerrequisitosCognitivos}}
                   <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
                 {{/each}}
-              </ul>
+              </ol>
             {{else}}
-              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Conocimientos generales en el área temática<br/>2. Capacidad de síntesis bibliográfica<br/>3. Redacción técnica</p>
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Conocimientos generales sobre el área de estudio<br/>2. Capacidad de análisis y síntesis<br/>3. Habilidades de investigación</p>
             {{/if}}
           </td>
           <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
             {{#if PrerrequisitosProcedimentales}}
-              <ul style="margin: 0; padding-left: 15px;">
+              <ol style="margin: 0; padding-left: 16px;">
                 {{#each PrerrequisitosProcedimentales}}
                   <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
                 {{/each}}
-              </ul>
+              </ol>
             {{else}}
-              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Trabajo en equipo interdisciplinar<br/>2. Manejo de herramientas metodológicas<br/>3. Organización de cronograma</p>
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Capacidad de trabajar en un equipo interdisciplinar<br/>2. Capacidad de aplicar los conocimientos en la práctica<br/>3. Capacidad de aprender<br/>4. Compromiso ético y responsabilidad social<br/>5. Capacidad para organizar y planificar el tiempo</p>
             {{/if}}
           </td>
         </tr>
@@ -1034,26 +1065,28 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
     if (isEvaluacion) {
         return `
   <!-- BLOQUE: 4. EVALUACIÓN DE ACTIVIDADES EJECUTADAS -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
+  <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="10" style="padding: 6px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+        <tr style="background-color: #f1f5f9; color: #000000;">
+          <th colspan="10" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             4. PLAN DE APRENDIZAJE (EVALUACIÓN DE ACTIVIDADES EJECUTADAS)
           </th>
         </tr>
         <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
-          <th style="padding: 4px; border: 1px solid #000000; width: 18%; text-align: left;">OBJETIVOS DEL PROYECTO</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 13%; text-align: left;">ASIGNATURA</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 15%; text-align: left;">RdA ASOCIADO</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="2">ACTIVIDAD EJECUTADA</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 20%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 12%; text-align: left;">OBSERVACIONES</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 18%; text-align: left;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 13%; text-align: left;">LÍNEA DE INVESTIGACIÓN</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 12%; text-align: left;">ASIGNATURA</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 14%; text-align: left;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 22%;" colspan="2">ACTIVIDADES A EJECUTAR</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 13%;" colspan="4">NIVEL DE CUMPLIMIENTO</th>
+          <th style="padding: 4px; border: 1px solid #000000; width: 8%; text-align: left;">OBSERVACIONES</th>
         </tr>
         <tr style="background-color: #f8fafc; font-size: 6.5pt; text-align: center;">
-          <th style="border-r: 1px solid #000000;"></th>
-          <th style="border-r: 1px solid #000000;"></th>
-          <th style="border-r: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
+          <th style="border-right: 1px solid #000000;"></th>
           <th style="padding: 2px; border: 1px solid #000000;">ACTIVIDAD</th>
           <th style="padding: 2px; border: 1px solid #000000;">FECHA</th>
           <th style="padding: 2px; border: 1px solid #000000;">MUY (4)</th>
@@ -1066,6 +1099,7 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
       <tbody>
         <tr>
           <td style="padding: 4px; border: 1px solid #000000;">[Objetivo Específico 1]</td>
+          <td style="padding: 4px; border: 1px solid #000000;">[Línea]</td>
           <td style="padding: 4px; border: 1px solid #000000;">[Asignatura]</td>
           <td style="padding: 4px; border: 1px solid #000000;">[RdA Asociado]</td>
           <td style="padding: 4px; border: 1px solid #000000;">[Tarea de campo]</td>
@@ -1074,7 +1108,7 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
           <td style="padding: 4px; border: 1px solid #000000; text-align: center;"></td>
-          <td style="padding: 4px; border: 1px solid #000000;">[Cumplió satisfactoriamente]</td>
+          <td style="padding: 4px; border: 1px solid #000000;">[Cumplió]</td>
         </tr>
       </tbody>
     </table>
@@ -1083,23 +1117,26 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
 
     return `
   <!-- BLOQUE: 4. MATRIZ DEL PLAN DE APRENDIZAJE APE -->
-  <div style="margin-top: 15px; page-break-inside: avoid;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
-          <th colspan="8" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
-            4. PLAN DE APRENDIZAJE (ACTIVIDADES A EJECUTAR)
+        <tr style="background-color: #f1f5f9; color: #000000;">
+          <th colspan="8" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            4. PLAN DE APRENDIZAJE
           </th>
         </tr>
-        <tr style="background-color: #f1f5f9; color: #000000; font-weight: bold; text-align: center; font-size: 7.5pt;">
-          <th style="padding: 4px; border: 1px solid #000000; width: 18%;">OBJETIVOS DEL PROYECTO</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 14%;">LÍNEA DE INVESTIGACIÓN</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 14%;">ASIGNATURA</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 18%;">ACTIVIDAD A EJECUTAR</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 7%;">FECHA</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 5%;">HORAS</th>
-          <th style="padding: 4px; border: 1px solid #000000; width: 9%;">OBSERVACIONES</th>
+        <tr style="background-color: #f1f5f9; color: #000000; font-weight: bold; text-align: center; font-size: 7.2pt;">
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 17%;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">LÍNEA DE INVESTIGACIÓN</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">ASIGNATURA</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
+          <th colspan="3" style="padding: 3px; border: 1px solid #000000;">ACTIVIDADES A EJECUTAR</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 10%;">OBSERVACIONES</th>
+        </tr>
+        <tr style="background-color: #f8fafc; color: #000000; font-weight: bold; text-align: center; font-size: 6.8pt;">
+          <th style="padding: 3px; border: 1px solid #000000; width: 18%;">ACTIVIDAD</th>
+          <th style="padding: 3px; border: 1px solid #000000; width: 7%;">FECHA</th>
+          <th style="padding: 3px; border: 1px solid #000000; width: 7%;">HORAS DE TRABAJO</th>
         </tr>
       </thead>
       <tbody>

@@ -283,6 +283,9 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             };
             _context.InvLopdpAuditoriaDatos.Add(successAudit);
 
+            // Persistir cambios de la instancia y firma antes de evaluar transiciones de workflow en la base de datos
+            await _context.SaveChangesAsync();
+
             // Transición de Estado de Workflow (Requiere envío conjunto de Protocolo y Plan de Aprendizaje)
             if (instancia.TemplateCode == "PROTOCOLO_INVESTIGACION" || instancia.TemplateCode == "PROTOCOLO_INNOVACION" || instancia.TemplateCode == "PLAN_APRENDIZAJE")
             {

@@ -850,6 +850,199 @@ namespace Diitra.Infrastructure.Common.Documents
                         }
                     }
                 }
+                else if (template.Code == "PLAN_APRENDIZAJE" || template.Code == "EVALUACION_PLAN_APRENDIZAJE")
+                {
+                    try
+                    {
+                        var rawText = renderData is System.Text.Json.JsonElement je 
+                            ? je.GetRawText() 
+                            : System.Text.Json.JsonSerializer.Serialize(renderData);
+
+                        using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                        var root = doc.RootElement;
+                        if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                            (root.TryGetProperty("Data", out var dProp) || root.TryGetProperty("data", out dProp)) &&
+                            dProp.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            root = dProp;
+                        }
+
+                        // Pasar campos base
+                        Action<string, string> mapProp = (src, dest) => {
+                            if (root.TryGetProperty(src, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String) {
+                                extraImageVars[dest] = v.GetString() ?? "";
+                            }
+                        };
+                        mapProp("NombreProyecto", "NombreProyecto");
+                        mapProp("nombre_proyecto", "NombreProyecto");
+                        mapProp("Titulo", "NombreProyecto");
+                        mapProp("titulo", "NombreProyecto");
+                        mapProp("TituloProyecto", "NombreProyecto");
+                        mapProp("LineaInvestigacion", "LineaInvestigacion");
+                        mapProp("linea_investigacion", "LineaInvestigacion");
+                        mapProp("SublineaInvestigacion", "SublineaInvestigacion");
+                        mapProp("sublinea_investigacion", "SublineaInvestigacion");
+                        mapProp("Carrera", "Carrera");
+                        mapProp("carrera", "Carrera");
+                        mapProp("DirectorProyecto", "DirectorProyecto");
+                        mapProp("director_proyecto", "DirectorProyecto");
+                        mapProp("PeriodoAcademico", "PeriodoAcademico");
+                        mapProp("periodo_academico", "PeriodoAcademico");
+                        mapProp("Periodo", "PeriodoAcademico");
+                        mapProp("FechaAprobacion", "FechaAprobacion");
+                        mapProp("FechaTerminacion", "FechaTerminacion");
+
+                        // Extraer EstudiantesEvaluaciones si existe
+                        JsonElement estArray = default;
+                        if (root.TryGetProperty("EstudiantesEvaluaciones", out var e1) && e1.ValueKind == JsonValueKind.Array) estArray = e1;
+                        else if (root.TryGetProperty("estudiantesEvaluaciones", out var e2) && e2.ValueKind == JsonValueKind.Array) estArray = e2;
+                        else if (root.TryGetProperty("estudiantes_evaluaciones", out var e3) && e3.ValueKind == JsonValueKind.Array) estArray = e3;
+
+                        if (estArray.ValueKind == JsonValueKind.Array && estArray.GetArrayLength() > 0)
+                        {
+                            extraImageVars["NumeroEstudiantes"] = estArray.GetArrayLength();
+                            var student = estArray[0];
+                            if (root.TryGetProperty("EstudianteActivoId", out var actIdProp) || root.TryGetProperty("estudianteActivoId", out actIdProp))
+                            {
+                                var actId = actIdProp.GetString();
+                                foreach (var s in estArray.EnumerateArray())
+                                {
+                                    if (s.TryGetProperty("id", out var sid) && sid.GetString() == actId)
+                                    {
+                                        student = s;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (student.TryGetProperty("nombreEstudiante", out var nomEst) || student.TryGetProperty("NombreEstudiante", out nomEst))
+                            {
+                                extraImageVars["NombreEstudiante"] = nomEst.GetString() ?? "";
+                                extraImageVars["nombre_estudiante"] = nomEst.GetString() ?? "";
+                            }
+
+                            // Prerrequisitos Cognitivos y Procedimentales
+                            var cognitivos = new List<(string desc, int nivel)>();
+                            var procedimentales = new List<(string desc, int nivel)>();
+
+                            JsonElement cogArr = default;
+                            if (student.TryGetProperty("prerrequisitosCognitivos", out var c1) && c1.ValueKind == JsonValueKind.Array) cogArr = c1;
+                            else if (student.TryGetProperty("PrerrequisitosCognitivos", out var c2) && c2.ValueKind == JsonValueKind.Array) cogArr = c2;
+
+                            if (cogArr.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in cogArr.EnumerateArray())
+                                {
+                                    string desc = item.TryGetProperty("descripcion", out var d) ? (d.GetString() ?? "") : (item.TryGetProperty("Descripcion", out var d2) ? (d2.GetString() ?? "") : "");
+                                    int lvl = item.TryGetProperty("nivel", out var n) && n.TryGetInt32(out var nv) ? nv : 3;
+                                    cognitivos.Add((desc, lvl));
+                                }
+                            }
+
+                            JsonElement procArr = default;
+                            if (student.TryGetProperty("prerrequisitosProcedimentales", out var p1) && p1.ValueKind == JsonValueKind.Array) procArr = p1;
+                            else if (student.TryGetProperty("PrerrequisitosProcedimentales", out var p2) && p2.ValueKind == JsonValueKind.Array) procArr = p2;
+
+                            if (procArr.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in procArr.EnumerateArray())
+                                {
+                                    string desc = item.TryGetProperty("descripcion", out var d) ? (d.GetString() ?? "") : (item.TryGetProperty("Descripcion", out var d2) ? (d2.GetString() ?? "") : "");
+                                    int lvl = item.TryGetProperty("nivel", out var n) && n.TryGetInt32(out var nv) ? nv : 3;
+                                    procedimentales.Add((desc, lvl));
+                                }
+                            }
+
+                            // Generar PrerrequisitosFilas (zip)
+                            var filasPrerreq = new List<Dictionary<string, object>>();
+                            int maxRows = Math.Max(cognitivos.Count, procedimentales.Count);
+                            for (int i = 0; i < maxRows; i++)
+                            {
+                                (string desc, int nivel) cog = i < cognitivos.Count ? cognitivos[i] : ("", 0);
+                                (string desc, int nivel) proc = i < procedimentales.Count ? procedimentales[i] : ("", 0);
+                                filasPrerreq.Add(new Dictionary<string, object>
+                                {
+                                    ["cognitivoDesc"] = cog.desc,
+                                    ["cog4"] = cog.nivel == 4,
+                                    ["cog3"] = cog.nivel == 3,
+                                    ["cog2"] = cog.nivel == 2,
+                                    ["cog1"] = cog.nivel == 1,
+                                    ["procedimentalDesc"] = proc.desc,
+                                    ["proc4"] = proc.nivel == 4,
+                                    ["proc3"] = proc.nivel == 3,
+                                    ["proc2"] = proc.nivel == 2,
+                                    ["proc1"] = proc.nivel == 1,
+                                });
+                            }
+                            extraImageVars["PrerrequisitosFilas"] = filasPrerreq;
+                            extraImageVars["prerrequisitos_filas"] = filasPrerreq;
+                            extraImageVars["PrerrequisitosCognitivos"] = cognitivos.Select(c => new { descripcion = c.desc, nivel = c.nivel }).ToList();
+                            extraImageVars["PrerrequisitosProcedimentales"] = procedimentales.Select(p => new { descripcion = p.desc, nivel = p.nivel }).ToList();
+
+                            // Actividades del Plan
+                            JsonElement actArr = default;
+                            if (student.TryGetProperty("actividadesPlan", out var a1) && a1.ValueKind == JsonValueKind.Array) actArr = a1;
+                            else if (student.TryGetProperty("ActividadesPlan", out var a2) && a2.ValueKind == JsonValueKind.Array) actArr = a2;
+
+                            var filasAct = new List<Dictionary<string, object>>();
+                            var nivelesAct = new List<int>();
+
+                            if (actArr.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var act in actArr.EnumerateArray())
+                                {
+                                    string obj = act.TryGetProperty("objetivoProyecto", out var op) ? (op.GetString() ?? "") : (act.TryGetProperty("ObjetivoProyecto", out var op2) ? (op2.GetString() ?? "") : "");
+                                    string asig = act.TryGetProperty("asignatura", out var asg) ? (asg.GetString() ?? "") : (act.TryGetProperty("Asignatura", out var asg2) ? (asg2.GetString() ?? "") : "");
+                                    string rda = act.TryGetProperty("resultadoAprendizaje", out var rd) ? (rd.GetString() ?? "") : (act.TryGetProperty("ResultadoAprendizaje", out var rd2) ? (rd2.GetString() ?? "") : "");
+                                    string actText = act.TryGetProperty("actividad", out var ac) ? (ac.GetString() ?? "") : (act.TryGetProperty("Actividad", out var ac2) ? (ac2.GetString() ?? "") : "");
+                                    string fecha = act.TryGetProperty("fecha", out var fc) ? (fc.GetString() ?? "") : (act.TryGetProperty("Fecha", out var fc2) ? (fc2.GetString() ?? "") : "");
+                                    int lvl = act.TryGetProperty("nivel", out var n) && n.TryGetInt32(out var nv) ? nv : 3;
+                                    string obs = act.TryGetProperty("observaciones", out var ob) ? (ob.GetString() ?? "") : (act.TryGetProperty("Observaciones", out var ob2) ? (ob2.GetString() ?? "") : "");
+
+                                    nivelesAct.Add(lvl);
+                                    filasAct.Add(new Dictionary<string, object>
+                                    {
+                                        ["objetivoProyecto"] = obj,
+                                        ["asignatura"] = asig,
+                                        ["resultadoAprendizaje"] = rda,
+                                        ["actividad"] = actText,
+                                        ["fecha"] = fecha,
+                                        ["lvl4"] = lvl == 4,
+                                        ["lvl3"] = lvl == 3,
+                                        ["lvl2"] = lvl == 2,
+                                        ["lvl1"] = lvl == 1,
+                                        ["observaciones"] = obs
+                                    });
+                                }
+                            }
+                            extraImageVars["ActividadesPlanFilas"] = filasAct;
+                            extraImageVars["actividades_plan_filas"] = filasAct;
+                            extraImageVars["ActividadesPlan"] = filasAct;
+
+                            // Promedios
+                            string GetScaleLabel(double val)
+                            {
+                                if (val >= 3.5) return $"{val:0.00} - MUY ADECUADO (4)";
+                                if (val >= 2.5) return $"{val:0.00} - ADECUADO (3)";
+                                if (val >= 1.5) return $"{val:0.00} - POCO ADECUADO (2)";
+                                if (val > 0) return $"{val:0.00} - NO ADECUADO (1)";
+                                return "0.00 - SIN EVALUAR";
+                            }
+
+                            double promCog = cognitivos.Count > 0 ? cognitivos.Average(c => c.nivel) : 0;
+                            double promProc = procedimentales.Count > 0 ? procedimentales.Average(p => p.nivel) : 0;
+                            double promAct = nivelesAct.Count > 0 ? nivelesAct.Average() : 0;
+
+                            extraImageVars["PromedioCognitivos"] = GetScaleLabel(promCog);
+                            extraImageVars["PromedioProcedimentales"] = GetScaleLabel(promProc);
+                            extraImageVars["PromedioActividades"] = GetScaleLabel(promAct);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al formatear datos para {Code}", template.Code);
+                    }
+                }
 
                 // 5. Inyectar datos + imágenes con Handlebars
                 var renderedHtml = await _handlebarsEngine.RenderAsync(htmlToRender ?? string.Empty, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);

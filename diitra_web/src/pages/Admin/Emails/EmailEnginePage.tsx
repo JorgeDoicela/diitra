@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Mail, Send, History, Layers, Loader2 } from 'lucide-react';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import { useEmailEngineData } from './hooks/useEmailEngineData';
@@ -14,8 +15,9 @@ import EmailHistorySection from './components/EmailHistorySection';
 import EmailHistoryDrawer from './components/EmailHistoryDrawer';
 
 const EmailEnginePage: React.FC = () => {
-    // Tab State: 'send' | 'templates' | 'history'
-    const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>('send');
+    const [searchParams] = useSearchParams();
+    const initialTab = (searchParams.get('tab') === 'history' || searchParams.get('search') || searchParams.get('logId')) ? 'history' : 'send';
+    const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>(initialTab);
 
     // 1. Data Orchestration Hook
     const dataHook = useEmailEngineData();

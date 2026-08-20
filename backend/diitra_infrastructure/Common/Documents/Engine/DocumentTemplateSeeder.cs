@@ -50,10 +50,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
                 else
                 {
-                    // Comprobar si el HTML en BD está corrupto o vacío (e.g. <div class="doc-container"></div> sin hijos)
+                    // Comprobar si el HTML en BD está corrupto, vacío o con bloques de otra plantilla heredada
+                    bool isMismatchedContent = (seed.Code == "PLAN_APRENDIZAJE" && (template.HtmlContent?.Contains("project_technical_section") == true || template.HtmlContent?.Contains("project_general_section") == true));
                     bool dbHtmlIsEmptyOrCorrupt = string.IsNullOrWhiteSpace(template.HtmlContent) || 
                                                  template.HtmlContent.Contains("<div class=\"doc-container\">\n</div>") ||
-                                                 template.HtmlContent.Contains("<div class=\"doc-container\"></div>");
+                                                 template.HtmlContent.Contains("<div class=\"doc-container\"></div>") ||
+                                                 isMismatchedContent;
 
                     // Comprobar si el contenido en disco difiere del almacenado en MySQL
                     bool htmlDiffers = fileHtml != null && template.HtmlContent != fileHtml;
@@ -71,7 +73,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     if (dbHtmlIsEmptyOrCorrupt || versionBumped || (contentDiffers && !isUserCustomized))
                     {
                         var reason = dbHtmlIsEmptyOrCorrupt 
-                            ? "Reparación de HTML incompleto en BD" 
+                            ? (isMismatchedContent ? "Corrección de bloques incompatibles heredados" : "Reparación de HTML incompleto en BD")
                             : (versionBumped ? $"Versión mayor v{seed.Version} > v{template.Version}" : "Sincronización de archivos físicos");
                         
                         logger.LogInformation("DIITRA DocumentSeeder: Actualizando plantilla [{Code}] ({Reason})...", seed.Code, reason);
