@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, AlertTriangle,
     Loader2, Users, Building, GraduationCap, FileDown,
-    CalendarDays, X, Trash2, Scale, Award,
+    CalendarDays, X, Trash2, Scale,
     ExternalLink, RotateCw, UserPlus
 } from 'lucide-react';
 import {
@@ -263,11 +263,10 @@ const ArbitrajeProyecto: React.FC = () => {
                 <td className="px-5 py-4">
                     <div className="flex items-center gap-3 min-w-0">
                         {/* Avatar temático diferenciado */}
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-mono text-xs font-bold border transition-colors ${
-                            rev.es_externo
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-mono text-xs font-bold border transition-colors ${rev.es_externo
                                 ? 'bg-brand/10 border-brand/30 text-brand shadow-xs'
                                 : 'bg-surface border-border-thin text-text-main shadow-2xs'
-                        }`}>
+                            }`}>
                             {rev.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
 
