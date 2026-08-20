@@ -14,6 +14,7 @@ namespace diitra_infrastructure.Common.Notifications.Hubs
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
             }
+            await Groups.AddToGroupAsync(Context.ConnectionId, "GlobalNotifications");
             await base.OnConnectedAsync();
         }
 

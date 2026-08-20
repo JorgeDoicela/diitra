@@ -450,8 +450,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 newConnection.on('ReceiveNotification', (payload?: any) => {
                     fetchNotifications();
                     
-                    // Dispatch custom event to notify components that projects state might have changed
+                    // Dispatch custom event to notify components that projects or emails state might have changed
                     window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                    window.dispatchEvent(new CustomEvent('diitra-emails-changed'));
 
                     if (payload && payload.title && payload.body) {
                         // Mapear categoría si viene en el payload o usar 'default'
@@ -463,6 +464,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
                         addToast(payload.title, payload.body, type, payload.url || undefined);
                     }
+                });
+
+                newConnection.on('EmailQueueUpdated', (payload?: any) => {
+                    window.dispatchEvent(new CustomEvent('diitra-emails-changed', { detail: payload }));
                 });
             })
             .catch(err => {

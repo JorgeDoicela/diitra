@@ -303,6 +303,8 @@ builder.Services.AddSingleton<diitra_api.Services.DocumentGarbageCollectorBackgr
 builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.DocumentGarbageCollectorBackgroundService>());
 builder.Services.AddSingleton<diitra_api.Services.EmailBackgroundProcessorService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.EmailBackgroundProcessorService>());
+builder.Services.AddSingleton<diitra_api.Services.EmailBounceListenerService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.EmailBounceListenerService>());
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");

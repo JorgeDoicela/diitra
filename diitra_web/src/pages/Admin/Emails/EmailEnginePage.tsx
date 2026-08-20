@@ -15,9 +15,38 @@ import EmailHistorySection from './components/EmailHistorySection';
 import EmailHistoryDrawer from './components/EmailHistoryDrawer';
 
 const EmailEnginePage: React.FC = () => {
-    const [searchParams] = useSearchParams();
-    const initialTab = (searchParams.get('tab') === 'history' || searchParams.get('search') || searchParams.get('logId')) ? 'history' : 'send';
-    const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>(initialTab);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const getTabFromUrl = (): 'send' | 'templates' | 'history' => {
+        const rawTab = (searchParams.get('tab') || '').toLowerCase();
+        if (rawTab === 'historial' || rawTab === 'history' || searchParams.get('search') || searchParams.get('logId')) return 'history';
+        if (rawTab === 'plantillas' || rawTab === 'templates') return 'templates';
+        return 'send';
+    };
+
+    const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>(getTabFromUrl);
+
+    // Sincronizar estado cuando cambie la URL (ej. popstate o navegación externa)
+    useEffect(() => {
+        const tabFromUrl = getTabFromUrl();
+        if (tabFromUrl !== activeTab) {
+            setActiveTab(tabFromUrl);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (tab: 'send' | 'templates' | 'history') => {
+        setActiveTab(tab);
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            const tabParam = tab === 'history' ? 'historial' : tab === 'templates' ? 'plantillas' : 'redactar';
+            next.set('tab', tabParam);
+            if (tab !== 'history') {
+                next.delete('search');
+                next.delete('logId');
+            }
+            return next;
+        }, { replace: true });
+    };
 
     // 1. Data Orchestration Hook
     const dataHook = useEmailEngineData();
@@ -41,10 +70,14 @@ const EmailEnginePage: React.FC = () => {
     const historyHook = useEmailHistory();
     const { fetchHistory } = historyHook;
 
-    // Load history when tab changes to 'history'
+    // Load history when tab changes to 'history' and maintain a gentle background heartbeat failsafe
     useEffect(() => {
         if (activeTab === 'history') {
             fetchHistory();
+            const timer = setInterval(() => {
+                fetchHistory(undefined, true);
+            }, 15000);
+            return () => clearInterval(timer);
         }
     }, [activeTab, fetchHistory]);
 
@@ -61,7 +94,7 @@ const EmailEnginePage: React.FC = () => {
                     {/* Tabs Control */}
                     <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none">
                         <button
-                            onClick={() => setActiveTab('send')}
+                            onClick={() => handleTabChange('send')}
                             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'send'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
@@ -71,7 +104,7 @@ const EmailEnginePage: React.FC = () => {
                             Redactar
                         </button>
                         <button
-                            onClick={() => setActiveTab('templates')}
+                            onClick={() => handleTabChange('templates')}
                             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'templates'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
@@ -81,7 +114,7 @@ const EmailEnginePage: React.FC = () => {
                             Plantillas
                         </button>
                         <button
-                            onClick={() => setActiveTab('history')}
+                            onClick={() => handleTabChange('history')}
                             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'history'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'

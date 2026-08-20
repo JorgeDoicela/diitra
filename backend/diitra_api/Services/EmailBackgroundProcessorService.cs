@@ -14,6 +14,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.Common.Notifications;
+using Microsoft.AspNetCore.SignalR;
+using diitra_infrastructure.Common.Notifications.Hubs;
 
 namespace diitra_api.Services
 {
@@ -222,6 +224,25 @@ namespace diitra_api.Services
 
                 email.FechaEnvio = DateTime.UtcNow;
                 await context.SaveChangesAsync(stoppingToken);
+
+                // Notificar en tiempo real a la interfaz web (WebSocket SignalR)
+                try
+                {
+                    var hubContext = scope.ServiceProvider.GetService<Microsoft.AspNetCore.SignalR.IHubContext<diitra_infrastructure.Common.Notifications.Hubs.NotificationHub>>();
+                    if (hubContext != null)
+                    {
+                        await hubContext.Clients.All.SendAsync("EmailQueueUpdated", new
+                        {
+                            emailId = email.IdEmailHistorial,
+                            estado = email.Estado,
+                            destinatario = email.Destinatario
+                        }, stoppingToken);
+                    }
+                }
+                catch (Exception hubEx)
+                {
+                    _logger.LogWarning(hubEx, "Error emitiendo evento SignalR de cola de correos.");
+                }
 
                 // Rate limiting: retardo controlado de 1.5 segundos entre cada envío para evitar marcar spam
                 await Task.Delay(1500, stoppingToken);
