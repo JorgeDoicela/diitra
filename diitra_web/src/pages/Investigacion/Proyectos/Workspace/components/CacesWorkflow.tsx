@@ -596,30 +596,9 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             <FileSignature size={14} />
                                             <span>Ver Oficio de Aprobación</span>
                                         </Link>
-                                        {currentProject.status === 'Aprobado' && isAdmin && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); handleIniciarEjecucion(); }}
-                                                disabled={iniciandoEjecucion}
-                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <Settings size={14} className={iniciandoEjecucion ? 'animate-spin' : ''} />
-                                                <span>{iniciandoEjecucion ? 'Iniciando...' : 'Iniciar Ejecución'}</span>
-                                            </button>
-                                        )}
                                     </div>
                                 )}
 
-                                {phase.id === 'Aprobado' && currentProject.status === 'Aprobado' && (
-                                    <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center mt-2 animate-fade-in">
-                                        <p className="text-[11px] font-semibold text-amber-500 flex items-center justify-center gap-1.5">
-                                            <AlertCircle size={13} /> Pendiente Firma Electrónica
-                                        </p>
-                                        <p className="text-[10px] text-text-dim mt-0.5">
-                                            La Coordinación debe firmar el Oficio de Aprobación para habilitar la etapa de Ejecución.
-                                        </p>
-                                    </div>
-                                )}
 
                                 {/* 5. EJECUCIÓN Y AVANCE */}
                                 {phase.id === 'En Ejecución' && (

@@ -34,6 +34,8 @@ namespace diitra_infrastructure.Research.Subservices
                 .Where(p => p.Estado == "En Revisión" || p.Estado == "Enviado" || 
                            ((p.Estado == "Aprobado" || p.Estado == "En Ejecución" || p.Estado == "Rechazado") && 
                             _context.Set<InvRevisionesPares>().Any(r => r.IdProyecto == p.IdProyecto)))
+                .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro ?? DateTime.MinValue)
+                .ThenByDescending(p => p.IdProyecto)
                 .ToListAsync();
 
             var result = new List<ArbitrajeProyectoDto>();

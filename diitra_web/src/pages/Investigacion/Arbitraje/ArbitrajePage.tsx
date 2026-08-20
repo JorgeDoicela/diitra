@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
@@ -75,6 +75,26 @@ const FILTROS = [
     { key: 'Desempate',   label: 'Desempate' },
 ];
 
+type SortField = 'urgencia' | 'proyecto' | 'convocatoria' | 'progreso' | 'puntaje' | 'estado';
+type SortDirection = 'asc' | 'desc';
+
+// Ponderación de urgencia operativa (CACES y cuellos de botella)
+const getUrgencyScore = (p: ArbitrajeProyectoDto): number => {
+    const tieneExterno = p.revisiones.some(r => r.es_externo);
+    // 1. Crítico: Desempate pendiente (bloquea dictamen)
+    if (p.estado_arbitraje === 'Desempate') return 100;
+    // 2. Advertencia CACES: Sin árbitros, panel incompleto o sin revisor externo
+    if (p.estado_arbitraje === 'SinArbitros' || (p.total_arbitros > 0 && !tieneExterno) || (p.total_arbitros < 2 && p.estado_arbitraje !== 'Completado')) return 80;
+    // 3. En Proceso / Pendiente (priorizar los que tienen menor avance para empujarlos)
+    if (p.estado_arbitraje === 'EnProceso' || p.estado_arbitraje === 'Pendiente') {
+        const ratio = p.total_arbitros > 0 ? (p.arbitros_completados / p.total_arbitros) : 0;
+        return 50 - (ratio * 15);
+    }
+    // 4. Completado / Dictaminado
+    if (p.estado_arbitraje === 'Completado') return 10;
+    return 0;
+};
+
 // ─────────────────────────────────────────────────────────────
 //  ArbitrajePage
 // ─────────────────────────────────────────────────────────────
@@ -86,6 +106,9 @@ const ArbitrajePage: React.FC = () => {
     const [stats, setStats]         = useState<ArbitrajeStatsDto | null>(null);
     const [loading, setLoading]     = useState(true);
     const [filtro, setFiltro]       = useState('todos');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortField, setSortField]     = useState<SortField>('urgencia');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [showExterno, setShowExterno]  = useState(false);
     const [asignarA, setAsignarA]        = useState<ArbitrajeProyectoDto | null>(null);
     const [descargando, setDescargando]  = useState<string | null>(null);
@@ -108,7 +131,59 @@ const ArbitrajePage: React.FC = () => {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    const filtrados = proyectos.filter(p => filtro === 'todos' || p.estado_arbitraje === filtro);
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortField(field);
+            setSortDirection(field === 'puntaje' || field === 'progreso' || field === 'urgencia' ? 'desc' : 'asc');
+        }
+    };
+
+    const filtrados = useMemo(() => {
+        let list = proyectos.filter(p => filtro === 'todos' || p.estado_arbitraje === filtro);
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list.filter(p =>
+                p.proyecto_titulo.toLowerCase().includes(q) ||
+                (p.codigo_institucional && p.codigo_institucional.toLowerCase().includes(q)) ||
+                (p.convocatoria && p.convocatoria.toLowerCase().includes(q))
+            );
+        }
+
+        return list.sort((a, b) => {
+            if (sortField === 'urgencia') {
+                const diff = getUrgencyScore(b) - getUrgencyScore(a);
+                if (diff !== 0) return sortDirection === 'asc' ? -diff : diff;
+                return a.proyecto_titulo.localeCompare(b.proyecto_titulo);
+            }
+            if (sortField === 'proyecto') {
+                const cmp = a.proyecto_titulo.localeCompare(b.proyecto_titulo);
+                return sortDirection === 'asc' ? cmp : -cmp;
+            }
+            if (sortField === 'convocatoria') {
+                const cmp = (a.convocatoria ?? '').localeCompare(b.convocatoria ?? '');
+                return sortDirection === 'asc' ? cmp : -cmp;
+            }
+            if (sortField === 'progreso') {
+                const pctA = a.total_arbitros > 0 ? a.arbitros_completados / a.total_arbitros : -1;
+                const pctB = b.total_arbitros > 0 ? b.arbitros_completados / b.total_arbitros : -1;
+                return sortDirection === 'asc' ? pctA - pctB : pctB - pctA;
+            }
+            if (sortField === 'puntaje') {
+                const scoreA = a.puntaje_promedio ?? -1;
+                const scoreB = b.puntaje_promedio ?? -1;
+                return sortDirection === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+            }
+            if (sortField === 'estado') {
+                const cmp = a.estado_arbitraje.localeCompare(b.estado_arbitraje);
+                return sortDirection === 'asc' ? cmp : -cmp;
+            }
+            return 0;
+        });
+    }, [proyectos, filtro, searchQuery, sortField, sortDirection]);
+
     const alertasVisibles = alertas.filter(a => !dismissed.has(a.id));
 
     const handlePdf = async (e: React.MouseEvent, uuid: string) => {
@@ -142,6 +217,15 @@ const ArbitrajePage: React.FC = () => {
         tiempoPromText = `${(ms / completadas.length / 86400000).toFixed(1)} d`;
     }
 
+    const renderSortIndicator = (field: SortField) => {
+        if (sortField !== field) return null;
+        return (
+            <span className="text-[10px] font-mono font-semibold text-brand ml-1">
+                {sortDirection === 'asc' ? '↑' : '↓'}
+            </span>
+        );
+    };
+
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
 
@@ -158,33 +242,55 @@ const ArbitrajePage: React.FC = () => {
                 </button>
             </PageHeader>
 
+            {/* Tabs filtro con conteos precisos */}
+            <div className="tabs-vercel">
+                {FILTROS.map(f => {
+                    const count = f.key === 'todos'
+                        ? proyectos.length
+                        : proyectos.filter(p => p.estado_arbitraje === f.key).length;
+                    return (
+                        <button
+                            key={f.key}
+                            className={`tab-vercel-item flex items-center gap-1.5 ${filtro === f.key ? 'active' : ''}`}
+                            onClick={() => setFiltro(f.key)}
+                        >
+                            {f.label}
+                            {count > 0 && !loading && (
+                                <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-0.5">
+                                    {count}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
             {/* ── TWO-COLUMN LAYOUT ─── */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:100ms] relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start animate-fade-up [animation-delay:100ms] relative z-10">
 
                 {/* ── Columna principal: tabla ─────────────────── */}
-                <div className="lg:col-span-3 space-y-0">
+                <div className="lg:col-span-3 space-y-3">
 
-                    {/* Tabs filtro con conteos precisos */}
-                    <div className="tabs-vercel">
-                        {FILTROS.map(f => {
-                            const count = f.key === 'todos'
-                                ? proyectos.length
-                                : proyectos.filter(p => p.estado_arbitraje === f.key).length;
-                            return (
+                    {/* Barra de búsqueda justo encima de la tabla */}
+                    <div className="flex items-center justify-between">
+                        <div className="relative w-full sm:w-72">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Buscar código o proyecto..."
+                                className="w-full bg-surface border border-border-thin rounded-md px-3 py-1.5 text-xs text-text-main placeholder:text-text-dim/50 focus:outline-none focus:border-text-main/40 transition-colors"
+                            />
+                            {searchQuery && (
                                 <button
-                                    key={f.key}
-                                    className={`tab-vercel-item flex items-center gap-1.5 ${filtro === f.key ? 'active' : ''}`}
-                                    onClick={() => setFiltro(f.key)}
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-main text-xs font-mono transition-colors"
+                                    title="Limpiar"
                                 >
-                                    {f.label}
-                                    {count > 0 && !loading && (
-                                        <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-0.5">
-                                            {count}
-                                        </span>
-                                    )}
+                                    ×
                                 </button>
-                            );
-                        })}
+                            )}
+                        </div>
                     </div>
 
                     {/* Tabla de Proyectos */}
@@ -199,20 +305,82 @@ const ArbitrajePage: React.FC = () => {
                                 <div className="icon-circle icon-circle-neutral !p-4 mb-4">
                                     <Users size={24} strokeWidth={1.5} />
                                 </div>
-                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin proyectos en esta categoría</p>
-                                <p className="text-text-dim text-xs mt-2 max-w-sm">Cambia el filtro o asigna evaluadores a los proyectos.</p>
+                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">
+                                    {searchQuery ? 'No se encontraron coincidencias' : 'Sin proyectos en esta categoría'}
+                                </p>
+                                <p className="text-text-dim text-xs mt-2 max-w-sm">
+                                    {searchQuery ? `No hay resultados para "${searchQuery}". Intenta con otro término.` : 'Cambia el filtro o asigna evaluadores a los proyectos.'}
+                                </p>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="btn-vercel-secondary text-xs mt-4 py-1 px-3"
+                                    >
+                                        Limpiar búsqueda
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="w-full overflow-hidden">
                                 <table className="w-full sm:table-fixed">
                                     <thead>
                                         <tr className="border-b border-border-thin">
-                                            <th className="text-left px-5 py-3.5 sm:w-[38%]"><span className="section-label !tracking-[0.12em]">Proyecto</span></th>
-                                            <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[20%]"><span className="section-label !tracking-[0.12em]">Convocatoria</span></th>
-                                            <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label justify-center !tracking-[0.12em]">Progreso</span></th>
-                                            <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[8%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
-                                            <th className="text-left px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label !tracking-[0.12em]">Estado</span></th>
-                                            <th className="px-4 py-3.5 sm:w-[10%] w-[80px]" />
+                                            <th className="text-left px-5 py-3 sm:w-[38%]">
+                                                <button
+                                                    onClick={() => handleSort('proyecto')}
+                                                    className="inline-flex items-center text-left focus:outline-none cursor-pointer"
+                                                >
+                                                    <span className={`section-label !tracking-[0.12em] transition-colors ${sortField === 'proyecto' ? '!text-text-main font-bold' : ''}`}>
+                                                        Proyecto
+                                                    </span>
+                                                    {renderSortIndicator('proyecto')}
+                                                </button>
+                                            </th>
+                                            <th className="text-left px-4 py-3 hidden md:table-cell md:w-[20%]">
+                                                <button
+                                                    onClick={() => handleSort('convocatoria')}
+                                                    className="inline-flex items-center text-left focus:outline-none cursor-pointer"
+                                                >
+                                                    <span className={`section-label !tracking-[0.12em] transition-colors ${sortField === 'convocatoria' ? '!text-text-main font-bold' : ''}`}>
+                                                        Convocatoria
+                                                    </span>
+                                                    {renderSortIndicator('convocatoria')}
+                                                </button>
+                                            </th>
+                                            <th className="text-center px-4 py-3 hidden sm:table-cell sm:w-[12%]">
+                                                <button
+                                                    onClick={() => handleSort('progreso')}
+                                                    className="inline-flex items-center justify-center text-center focus:outline-none cursor-pointer"
+                                                >
+                                                    <span className={`section-label justify-center !tracking-[0.12em] transition-colors ${sortField === 'progreso' ? '!text-text-main font-bold' : ''}`}>
+                                                        Progreso
+                                                    </span>
+                                                    {renderSortIndicator('progreso')}
+                                                </button>
+                                            </th>
+                                            <th className="text-center px-4 py-3 hidden lg:table-cell lg:w-[8%]">
+                                                <button
+                                                    onClick={() => handleSort('puntaje')}
+                                                    className="inline-flex items-center justify-center text-center focus:outline-none cursor-pointer"
+                                                >
+                                                    <span className={`section-label justify-center !tracking-[0.12em] transition-colors ${sortField === 'puntaje' ? '!text-text-main font-bold' : ''}`}>
+                                                        Puntaje
+                                                    </span>
+                                                    {renderSortIndicator('puntaje')}
+                                                </button>
+                                            </th>
+                                            <th className="text-left px-4 py-3 hidden sm:table-cell sm:w-[12%]">
+                                                <button
+                                                    onClick={() => handleSort('estado')}
+                                                    className="inline-flex items-center text-left focus:outline-none cursor-pointer"
+                                                >
+                                                    <span className={`section-label !tracking-[0.12em] transition-colors ${sortField === 'estado' ? '!text-text-main' : ''}`}>
+                                                        Estado
+                                                    </span>
+                                                    {renderSortIndicator('estado')}
+                                                </button>
+                                            </th>
+                                            <th className="px-4 py-3 sm:w-[10%] w-[80px]" />
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -237,14 +405,12 @@ const ArbitrajePage: React.FC = () => {
                                                                     </span>
                                                                 )}
                                                                 {!tieneExterno && p.total_arbitros > 0 && (
-                                                                    <span className="badge-vercel badge-vercel-warning text-[10px] !py-0.5 !px-1.5 font-medium">
-                                                                        <AlertTriangle size={9} className="mr-0.5" />
+                                                                    <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                                                                         Requiere Externo
                                                                     </span>
                                                                 )}
                                                                 {tieneExterno && (
-                                                                    <span className="badge-vercel badge-vercel-violet text-[10px] !py-0.5 !px-1.5 font-medium">
-                                                                        <Building size={9} className="mr-0.5" />
+                                                                    <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium">
                                                                         Par Externo
                                                                     </span>
                                                                 )}
@@ -316,7 +482,7 @@ const ArbitrajePage: React.FC = () => {
                 </div>
 
                 {/* ── Sidebar: VercelUsageCard ─────────────────── */}
-                <div className="space-y-6 lg:pt-[54px]">
+                <div className="space-y-6 lg:pt-[44px]">
                     {stats && (
                         <VercelUsageCard
                             title="Métricas del Periodo"

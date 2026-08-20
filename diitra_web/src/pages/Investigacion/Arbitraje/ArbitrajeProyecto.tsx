@@ -278,13 +278,11 @@ const ArbitrajeProyecto: React.FC = () => {
                                     {formatNombre(rev.revisor_nombre)}
                                 </p>
                                 {rev.es_externo ? (
-                                    <span className="badge-vercel badge-vercel-violet text-[10px] !py-0.5 !px-2 font-medium">
-                                        <Building size={10} className="mr-1" />
+                                    <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium">
                                         Par Externo (CACES)
                                     </span>
                                 ) : (
-                                    <span className="badge-vercel badge-vercel-neutral text-[10px] !py-0.5 !px-2 font-medium">
-                                        <Users size={10} className="mr-1" />
+                                    <span className="text-[11px] text-text-dim font-medium">
                                         Docente Interno
                                     </span>
                                 )}
@@ -329,9 +327,9 @@ const ArbitrajeProyecto: React.FC = () => {
                     )}
                 </td>
                 <td className="px-4 py-4">
-                    <div className={`badge-vercel ${cfg.badge}`}>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-text-main">
                         <span className={`dot ${cfg.dot}`} />
-                        {cfg.label}
+                        <span>{cfg.label}</span>
                     </div>
                 </td>
                 <td className="px-4 py-4">
@@ -385,29 +383,42 @@ const ArbitrajeProyecto: React.FC = () => {
                     <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-main leading-snug">
                         {arbitraje.proyecto_titulo}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-text-dim">
                         {arbitraje.codigo_institucional && (
                             <button
                                 onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
-                                className="inline-flex items-center gap-1.5 text-[11px] font-mono bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover rounded px-2 py-0.5 text-text-dim hover:text-text-main transition-colors cursor-pointer group"
+                                className="inline-flex items-center gap-1.5 font-mono bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover rounded px-2 py-0.5 text-text-dim hover:text-text-main transition-colors cursor-pointer group"
                                 title="Ver ficha del proyecto en el Workspace"
                             >
                                 <span>{arbitraje.codigo_institucional}</span>
                                 <ExternalLink size={10} className="text-text-dim/60 group-hover:text-text-main transition-colors" />
                             </button>
                         )}
-                        <div className={`badge-vercel ${projectStatusCfg.badge} text-[11px] !py-0.5 !px-2.5 font-medium`} style={projectStatusCfg.style}>
-                            <span className={`dot ${projectStatusCfg.dot}`} style={projectStatusCfg.dotStyle} />
-                            {projectStatusCfg.label}
-                        </div>
-                        <div className={`badge-vercel ${estadoCfg.badge} text-[11px] !py-0.5 !px-2 font-medium`}>
-                            <span className={`dot ${estadoCfg.dot}`} />
-                            Arbitraje: {estadoCfg.label}
-                        </div>
-                        {arbitraje.convocatoria && (
-                            <span className="text-[11px] text-text-dim bg-surface border border-border-thin rounded px-2 py-0.5">
-                                {arbitraje.convocatoria}
+
+                        {/* Estado General del Proyecto */}
+                        <div className="flex items-center gap-1.5">
+                            <span>Proyecto:</span>
+                            <span className="font-medium" style={{ color: projectStatusCfg.style?.color }}>
+                                {projectStatusCfg.label}
                             </span>
+                        </div>
+
+                        <span className="text-border-thin select-none">|</span>
+
+                        {/* Fase de Arbitraje */}
+                        <div className="flex items-center gap-1.5 font-medium text-text-main">
+                            <span className={`dot ${estadoCfg.dot}`} />
+                            <span>Arbitraje: {estadoCfg.label}</span>
+                        </div>
+
+                        {/* Convocatoria */}
+                        {arbitraje.convocatoria && (
+                            <>
+                                <span className="text-border-thin select-none">|</span>
+                                <span className="text-text-dim max-w-sm truncate" title={arbitraje.convocatoria}>
+                                    {arbitraje.convocatoria}
+                                </span>
+                            </>
                         )}
                     </div>
                 </div>
@@ -440,16 +451,6 @@ const ArbitrajeProyecto: React.FC = () => {
                         >
                             {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
                             <span>Cerrar Evaluación</span>
-                        </button>
-                    )}
-                    {arbitraje.estado_proyecto === 'Aprobado' && (
-                        <button
-                            onClick={handleIniciarEjecucion}
-                            disabled={iniciandoEjecucion}
-                            className="btn-vercel-secondary flex items-center gap-2 shrink-0 border-brand/40 text-brand hover:bg-brand/5"
-                        >
-                            {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
-                            <span>Iniciar Ejecución</span>
                         </button>
                     )}
                 </div>
@@ -513,17 +514,14 @@ const ArbitrajeProyecto: React.FC = () => {
 
                     {/* Avisos de Cumplimiento CACES */}
                     {(arbitraje.total_arbitros < 2 || externos.length === 0) && (
-                        <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 text-warning text-xs flex items-start gap-2.5">
-                            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <span className="font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5):</span>
-                                {' '}
-                                <span className="text-text-dim">
-                                    {arbitraje.total_arbitros < 2 && "Se requiere un mínimo de 2 evaluadores por propuesta para cumplir con los estándares mínimos. "}
-                                    {externos.length === 0 && "Es obligatorio contar con al menos 1 evaluador externo a la institución para la evaluación de proyectos."}
-                                </span>
-                            </div>
-                        </div>
+                        <p className="text-[11.5px] text-amber-600/90 dark:text-amber-400/90 pt-2 leading-relaxed">
+                            <span className="font-medium text-amber-600 dark:text-amber-400">Cumplimiento CACES (Indicador I5):</span>
+                            {' '}
+                            <span className="text-amber-700/80 dark:text-amber-300/80 font-normal">
+                                {arbitraje.total_arbitros < 2 && "Se requiere un mínimo de 2 evaluadores por propuesta para cumplir con los estándares mínimos. "}
+                                {externos.length === 0 && "Es obligatorio contar con al menos 1 evaluador externo a la institución para la evaluación de proyectos."}
+                            </span>
+                        </p>
                     )}
                 </div>
 
