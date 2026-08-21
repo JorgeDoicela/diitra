@@ -45,25 +45,68 @@ export const RevisionInformeFinalPage: React.FC = () => {
             setProject(pData);
             setInvestigadores(pRes.data?.investigadores || pRes.data?.participantes || pData?.investigadores || []);
 
-            // 3. Cargar snapshot del informe final
+            const isInnovacion = pData?.tipo_proyecto === 'Innovación' || pData?.tipoProyecto === 'Innovación' || pData?.categoria === 'INNOVACION';
+            const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
+
+            // 2. Cargar instancia y snapshot del informe final
+            let finalDocInstance: any = null;
             try {
                 const docRes = await api.get('/documents/instances/resolve', {
                     params: {
-                        templateCode: 'INFORME_FINAL_INVESTIGACION',
+                        templateCode: finalReportTemplateCode,
                         entityUuid: projectUuid
                     }
                 });
-                if (docRes.data) {
-                    if (docRes.data.dataSnapshotJson) {
-                        try {
-                            setDocSnapshot(JSON.parse(docRes.data.dataSnapshotJson));
-                        } catch {}
+                finalDocInstance = docRes.data;
+            } catch {}
+
+            if (!finalDocInstance) {
+                try {
+                    const docRes = await api.get('/documents/instances/resolve', {
+                        params: {
+                            templateCode: 'INFORME_FINAL',
+                            entityUuid: projectUuid
+                        }
+                    });
+                    finalDocInstance = docRes.data;
+                } catch {}
+            }
+
+            if (finalDocInstance) {
+                let parsedSnapshot: any = {};
+                const snapshotStr = finalDocInstance.dataSnapshotJson || finalDocInstance.data_snapshot_json || finalDocInstance.DataSnapshotJson;
+                if (snapshotStr) {
+                    try {
+                        parsedSnapshot = JSON.parse(snapshotStr);
+                        setDocSnapshot(parsedSnapshot);
+                    } catch {}
+                }
+
+                const finalPath = finalDocInstance.finalPdfPath || finalDocInstance.final_pdf_path || finalDocInstance.FinalPdfPath;
+                if (finalPath) {
+                    const cleanPath = finalPath.replace(/\\/g, '/');
+                    try {
+                        const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
+                        const blobUrl = URL.createObjectURL(new Blob([fileRes.data], { type: 'application/pdf' }));
+                        setPdfUrl(blobUrl);
+                    } catch (storageErr) {
+                        console.error('[DIITRA] El documento final/firmado no se encuentra en storage:', storageErr);
                     }
-                    if (docRes.data.finalPdfPath) {
-                        setPdfUrl(`${api.defaults.baseURL || ''}/documents/instances/${docRes.data.uuid}/pdf?t=${Date.now()}`);
+                } else {
+                    // Fallback: Generar render del informe final si aún no tiene archivo físico en storage
+                    try {
+                        const renderRes = await api.post(
+                            `/documents/render?templateCode=${finalReportTemplateCode}&isDraft=false`,
+                            parsedSnapshot || {},
+                            { responseType: 'blob' }
+                        );
+                        const blobUrl = URL.createObjectURL(new Blob([renderRes.data], { type: 'application/pdf' }));
+                        setPdfUrl(blobUrl);
+                    } catch (renderErr) {
+                        console.warn('[DIITRA] No se pudo generar preview del informe final:', renderErr);
                     }
                 }
-            } catch {}
+            }
         } catch (e: any) {
             console.error('[DIITRA] Error al cargar revisión de informe final:', e);
             addToast('Error', 'No se pudo cargar la información del informe final.', 'error');
@@ -74,6 +117,11 @@ export const RevisionInformeFinalPage: React.FC = () => {
 
     useEffect(() => {
         loadData();
+        return () => {
+            if (pdfUrl && pdfUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(pdfUrl);
+            }
+        };
     }, [loadData]);
 
     const handleAprobarCierre = async (): Promise<boolean> => {
@@ -347,6 +395,7 @@ export const RevisionInformeFinalPage: React.FC = () => {
                     }}
                     FIELD_LABELS={FIELD_LABELS}
                     templateBlocks={[]}
+                    readOnly={!isAdmin}
                 />
             </div>
 

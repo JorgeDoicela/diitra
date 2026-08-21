@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, FileText, Eye, Scale, History, Download, Sun, Moon, Edit3, LayoutDashboard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, FileText, Eye, Scale, History, Download, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 
 interface RevisionHeaderProps {
     projectTitle: string;
-    projectUuid: string | undefined;
+    projectUuid?: string;
     projectStatus?: string;
     viewMode: 'interactive' | 'pdf' | 'history';
     setViewMode: (mode: 'interactive' | 'pdf' | 'history') => void;
@@ -17,7 +16,6 @@ interface RevisionHeaderProps {
 
 export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
     projectTitle,
-    projectUuid,
     projectStatus,
     viewMode,
     setViewMode,
@@ -27,8 +25,7 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
     pdfUrl
 }) => {
     const { isAdmin } = useAuth();
-    const navigate = useNavigate();
-    const isAuditActive = isAdmin && (projectStatus === 'Enviado' || projectStatus === 'En Corrección');
+    const isAuditActive = isAdmin && !isReadonly && (projectStatus === 'Enviado' || projectStatus === 'En Corrección');
 
     const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
         return document.documentElement.getAttribute('data-theme') !== 'light';
@@ -103,28 +100,6 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-                {/* Enlaces Rápidos a Workspace y Editor */}
-                {projectUuid && (
-                    <div className="flex items-center gap-1 border border-border-thin bg-surface p-1 rounded-xl shadow-2xs">
-                        <button
-                            onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`)}
-                            className="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider text-text-dim hover:text-text-main hover:bg-surface-hover transition-all flex items-center gap-1 cursor-pointer"
-                            title="Ir al Workspace del Proyecto"
-                        >
-                            <LayoutDashboard size={11} />
-                            <span className="hidden sm:inline">Workspace</span>
-                        </button>
-                        <button
-                            onClick={() => navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}?edit=protocolo-investigacion`)}
-                            className="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider text-brand hover:text-brand/90 hover:bg-brand/10 transition-all flex items-center gap-1 cursor-pointer"
-                            title="Abrir en Editor Colaborativo"
-                        >
-                            <Edit3 size={11} />
-                            <span>Abrir Editor</span>
-                        </button>
-                    </div>
-                )}
-
                 {/* Selector de Vistas Tri-estado */}
                 <div className="flex items-center gap-1 border border-border-thin bg-surface p-1 rounded-xl shadow-2xs">
                     <button

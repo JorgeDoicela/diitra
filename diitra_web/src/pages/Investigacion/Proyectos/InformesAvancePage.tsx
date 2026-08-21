@@ -61,8 +61,11 @@ const InformesAvancePage: React.FC = () => {
     const activeInformeIdParam = queryParams.get('informeId');
     const activeInformeId = activeInformeIdParam ? Number(activeInformeIdParam) : null;
     const activeInformeUuid = queryParams.get('informeUuid');
-
     const [openingEditor, setOpeningEditor] = useState(false);
+
+    // Contexto de rutas dinámico
+    const isResearcherRoute = location.pathname.includes('/mis-proyectos');
+    const urlPrefix = isResearcherRoute || !isAdmin ? '/investigacion/mis-proyectos' : '/investigacion';
 
     // Modal: nuevo informe
     const [showCreate, setShowCreate] = useState(false);
@@ -243,7 +246,7 @@ const InformesAvancePage: React.FC = () => {
             <DocumentEditor
                 templateCode="INFORME_AVANCE"
                 initialData={{ Uuid: editorInstanceUuid }}
-                entityUuid={activeInformeUuid || ''}
+                entityUuid={projectId || activeInformeUuid || ''}
                 onClose={() => {
                     const searchParams = new URLSearchParams(location.search);
                     searchParams.delete('edit');
@@ -289,7 +292,7 @@ const InformesAvancePage: React.FC = () => {
                 >
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Link
-                            to={`/investigacion/monitoreo/${projectId}`}
+                            to={`${urlPrefix}/monitoreo/${projectId}`}
                             className="btn-vercel-secondary flex items-center gap-2 no-underline"
                         >
                             <Activity size={13} />
@@ -552,185 +555,264 @@ const InformesAvancePage: React.FC = () => {
                 </div>
             )}
 
-            {/* ── Modal: Crear informe ─────────────────────────────────── */}
+            {/* ── Drawer: Crear informe ─────────────────────────────────── */}
             {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-lg p-6 space-y-5 animate-fade-in">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
+                <div className="fixed inset-0 z-[100] flex justify-end select-none">
+                    <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300" 
+                        onClick={() => setShowCreate(false)}
+                    />
+                    <div className="relative flex h-full w-full max-w-lg bg-surface border-l border-border-thin shadow-2xl flex-col z-10 animate-fade-in-right overflow-hidden font-sans">
+                        {/* Header */}
+                        <div className="border-b border-border-thin flex justify-between items-start p-5 sm:p-6 shrink-0 bg-surface">
+                            <div className="flex flex-col gap-1 min-w-0 pr-4">
+                                <h3 className="text-base sm:text-lg font-bold tracking-tight text-text-main font-sans truncate">
                                     Nuevo Informe de Avance
                                 </h3>
-                                <p className="text-[10px] text-text-dim mt-1">
-                                    Registra el período y un resumen inicial. Luego completa las 4 secciones CACES en el editor.
+                                <p className="section-label text-text-dim">
+                                    Registro inicial · DIITRA CACES
                                 </p>
                             </div>
-                            <button onClick={() => setShowCreate(false)} className="text-text-dim hover:text-text-main">
-                                <X size={16} />
+                            <button
+                                type="button"
+                                onClick={() => setShowCreate(false)}
+                                className="p-1.5 hover:bg-surface-hover rounded-xl text-text-dim hover:text-text-main transition-all cursor-pointer shrink-0"
+                                title="Cerrar panel"
+                            >
+                                <X size={18} />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
-                                    Período del Informe
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.fecha_reporte}
-                                    onChange={e => setFormData(f => ({ ...f, fecha_reporte: e.target.value }))}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-text-main/40"
-                                />
+                        {/* Body */}
+                        <div className="flex-1 p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5">
+                            <div className="p-4 bg-surface border border-border-thin rounded-2xl">
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    Registra el período y un resumen inicial de ejecución. Posteriormente podrás completar la bitácora científica, cronograma, evidencias y presupuesto detallado dentro del editor CACES.
+                                </p>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
-                                    Resumen Inicial de Actividades
-                                </label>
-                                <textarea
-                                    rows={4}
-                                    placeholder="Describa brevemente el período. Podrá ampliar con bitácora, cronograma, evidencias y presupuesto en el editor del informe..."
-                                    value={formData.resumen_actividades}
-                                    onChange={e => setFormData(f => ({ ...f, resumen_actividades: e.target.value }))}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"
-                                />
+
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="section-label text-text-dim block">
+                                        Período del Informe
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData.fecha_reporte}
+                                        onChange={e => setFormData(f => ({ ...f, fecha_reporte: e.target.value }))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-text-main/40 font-sans"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="section-label text-text-dim block">
+                                        Resumen Inicial de Actividades
+                                    </label>
+                                    <textarea
+                                        rows={5}
+                                        placeholder="Describa brevemente el período. Podrá ampliar con bitácora, cronograma, evidencias y presupuesto en el editor del informe..."
+                                        value={formData.resumen_actividades}
+                                        onChange={e => setFormData(f => ({ ...f, resumen_actividades: e.target.value }))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40 font-sans"
+                                    />
+                                </div>
                             </div>
+
+                            {createError && (
+                                <div className="flex items-center gap-2 bg-error/10 border border-error/20 rounded-xl p-3">
+                                    <AlertCircle size={14} className="text-error shrink-0" />
+                                    <p className="text-xs text-error">{createError}</p>
+                                </div>
+                            )}
                         </div>
 
-                        {createError && (
-                            <div className="flex items-center gap-2 bg-error/10 border border-error/20 rounded-xl p-3">
-                                <AlertCircle size={13} className="text-error shrink-0" />
-                                <p className="text-xs text-error">{createError}</p>
-                            </div>
-                        )}
-
-                        <div className="flex gap-2 justify-end">
+                        {/* Footer */}
+                        <div className="p-4 sm:p-5 border-t border-border-thin bg-surface shrink-0 flex items-center justify-end gap-3">
                             <button
+                                type="button"
                                 onClick={() => setShowCreate(false)}
-                                className="btn-vercel-secondary !py-2 !px-4 !text-xs"
+                                className="py-2 px-4 btn-vercel-secondary text-xs font-semibold rounded-xl transition-all cursor-pointer"
                             >
                                 Cancelar
                             </button>
                             <button
+                                type="button"
                                 onClick={handleCreate}
                                 disabled={creating}
-                                className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
+                                className="py-2 px-5 btn-vercel-primary text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
-                                {creating ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
-                                Crear y abrir editor
+                                {creating ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                                <span>Crear y abrir editor</span>
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ── Modal: Firmar digitalmente ─────────────────────────── */}
+            {/* ── Drawer: Firmar digitalmente ─────────────────────────── */}
             {firmarTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-md p-6 space-y-5 animate-fade-in">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
-                                Firma digital · Informe #{firmarTarget.numero_informe}
-                            </h3>
-                            <button onClick={() => setFirmarTarget(null)} className="text-text-dim hover:text-text-main">
-                                <X size={16} />
+                <div className="fixed inset-0 z-[100] flex justify-end select-none">
+                    <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300" 
+                        onClick={() => setFirmarTarget(null)}
+                    />
+                    <div className="relative flex h-full w-full max-w-lg bg-surface border-l border-border-thin shadow-2xl flex-col z-10 animate-fade-in-right overflow-hidden font-sans">
+                        {/* Header */}
+                        <div className="border-b border-border-thin flex justify-between items-start p-5 sm:p-6 shrink-0 bg-surface">
+                            <div className="flex flex-col gap-1 min-w-0 pr-4">
+                                <h3 className="text-base sm:text-lg font-bold tracking-tight text-text-main font-sans truncate">
+                                    Firma Digital · Informe #{firmarTarget.numero_informe}
+                                </h3>
+                                <p className="section-label text-text-dim">
+                                    Certificación CACES PAdES
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFirmarTarget(null)}
+                                className="p-1.5 hover:bg-surface-hover rounded-xl text-text-dim hover:text-text-main transition-all cursor-pointer shrink-0"
+                                title="Cerrar panel"
+                            >
+                                <X size={18} />
                             </button>
                         </div>
-                        <p className="text-xs text-text-dim leading-relaxed">
-                            Cargue su certificado digital (.p12 o .pfx) para sellar el informe aprobado conforme CACES.
-                        </p>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
-                                Certificado digital
-                            </label>
-                            <label className="flex items-center gap-2 w-full bg-bg-deep border border-dashed border-border-thin rounded-xl px-4 py-3 cursor-pointer hover:border-text-main/30 transition-colors">
-                                <Upload size={14} className="text-text-dim shrink-0" />
-                                <span className="text-xs text-text-dim truncate">
-                                    {certFile ? certFile.name : 'Seleccionar archivo .p12 / .pfx'}
-                                </span>
-                                <input
-                                    type="file"
-                                    accept=".p12,.pfx"
-                                    className="hidden"
-                                    onChange={e => setCertFile(e.target.files?.[0] ?? null)}
-                                />
-                            </label>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
-                                Contraseña del certificado
-                            </label>
-                            <input
-                                type="password"
-                                value={certPassword}
-                                onChange={e => setCertPassword(e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-text-main/40"
-                            />
-                        </div>
-                        {firmarError && (
-                            <div className="flex items-center gap-2 bg-error/10 border border-error/20 rounded-xl p-3">
-                                <AlertCircle size={13} className="text-error shrink-0" />
-                                <p className="text-xs text-error">{firmarError}</p>
+
+                        {/* Body */}
+                        <div className="flex-1 p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5">
+                            <div className="p-4 bg-surface border border-border-thin rounded-2xl">
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    Cargue su certificado digital (.p12 o .pfx) para sellar formalmente el informe de avance aprobado con trazabilidad inmutable.
+                                </p>
                             </div>
-                        )}
-                        <div className="flex gap-2 justify-end">
-                            <button onClick={() => setFirmarTarget(null)} className="btn-vercel-secondary !py-2 !px-4 !text-xs">
+
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="section-label text-text-dim block">
+                                        Certificado Digital (.p12 / .pfx)
+                                    </label>
+                                    <label className="flex items-center gap-2.5 w-full bg-bg-deep border border-dashed border-border-thin rounded-xl px-4 py-3 cursor-pointer hover:border-text-main/30 transition-colors">
+                                        <Upload size={15} className="text-text-dim shrink-0" />
+                                        <span className="text-xs text-text-dim truncate">
+                                            {certFile ? certFile.name : 'Seleccionar archivo .p12 / .pfx'}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept=".p12,.pfx"
+                                            className="hidden"
+                                            onChange={e => setCertFile(e.target.files?.[0] ?? null)}
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="section-label text-text-dim block">
+                                        Contraseña del Certificado
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={certPassword}
+                                        onChange={e => setCertPassword(e.target.value)}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-text-main/40 font-sans"
+                                    />
+                                </div>
+                            </div>
+
+                            {firmarError && (
+                                <div className="flex items-center gap-2 bg-error/10 border border-error/20 rounded-xl p-3">
+                                    <AlertCircle size={14} className="text-error shrink-0" />
+                                    <p className="text-xs text-error">{firmarError}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 sm:p-5 border-t border-border-thin bg-surface shrink-0 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setFirmarTarget(null)}
+                                className="py-2 px-4 btn-vercel-secondary text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                            >
                                 Cancelar
                             </button>
                             <button
+                                type="button"
                                 onClick={handleFirmar}
                                 disabled={actioning === firmarTarget.id_informe}
-                                className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
+                                className="py-2 px-5 btn-vercel-primary text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
                                 {actioning === firmarTarget.id_informe
-                                    ? <RefreshCw size={12} className="animate-spin" />
-                                    : <FileSignature size={12} />}
-                                Aplicar firma
+                                    ? <RefreshCw size={14} className="animate-spin" />
+                                    : <FileSignature size={14} />}
+                                <span>Aplicar firma</span>
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ── Modal: Observar ───────────────────────────────────── */}
+            {/* ── Drawer: Observar ───────────────────────────────────── */}
             {observarTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-md p-6 space-y-5 animate-fade-in">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
-                                Observar Informe #{observarTarget.numero_informe}
-                            </h3>
-                            <button onClick={() => setObservarTarget(null)} className="text-text-dim hover:text-text-main">
-                                <X size={16} />
+                <div className="fixed inset-0 z-[100] flex justify-end select-none">
+                    <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300" 
+                        onClick={() => setObservarTarget(null)}
+                    />
+                    <div className="relative flex h-full w-full max-w-lg bg-surface border-l border-border-thin shadow-2xl flex-col z-10 animate-fade-in-right overflow-hidden font-sans">
+                        {/* Header */}
+                        <div className="border-b border-border-thin flex justify-between items-start p-5 sm:p-6 shrink-0 bg-surface">
+                            <div className="flex flex-col gap-1 min-w-0 pr-4">
+                                <h3 className="text-base sm:text-lg font-bold tracking-tight text-text-main font-sans truncate">
+                                    Observar Informe #{observarTarget.numero_informe}
+                                </h3>
+                                <p className="section-label text-text-dim">
+                                    Requerimiento de subsanación
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setObservarTarget(null)}
+                                className="p-1.5 hover:bg-surface-hover rounded-xl text-text-dim hover:text-text-main transition-all cursor-pointer shrink-0"
+                                title="Cerrar panel"
+                            >
+                                <X size={18} />
                             </button>
                         </div>
-                        <div>
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
-                                Motivo / Correcciones Solicitadas
-                            </label>
-                            <textarea
-                                rows={4}
-                                placeholder="Indique qué correcciones debe realizar el Director de Proyecto en el editor del informe..."
-                                value={observacion}
-                                onChange={e => setObservacion(e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"
-                            />
+
+                        {/* Body */}
+                        <div className="flex-1 p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="section-label text-text-dim block">
+                                    Motivo / Correcciones Solicitadas
+                                </label>
+                                <textarea
+                                    rows={6}
+                                    placeholder="Indique qué correcciones debe realizar el Director de Proyecto en el editor del informe..."
+                                    value={observacion}
+                                    onChange={e => setObservacion(e.target.value)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40 font-sans"
+                                />
+                            </div>
                         </div>
-                        <div className="flex gap-2 justify-end">
+
+                        {/* Footer */}
+                        <div className="p-4 sm:p-5 border-t border-border-thin bg-surface shrink-0 flex items-center justify-end gap-3">
                             <button
+                                type="button"
                                 onClick={() => setObservarTarget(null)}
-                                className="btn-vercel-secondary !py-2 !px-4 !text-xs"
+                                className="py-2 px-4 btn-vercel-secondary text-xs font-semibold rounded-xl transition-all cursor-pointer"
                             >
                                 Cancelar
                             </button>
                             <button
+                                type="button"
                                 onClick={handleObservar}
                                 disabled={actioning === observarTarget.id_informe || !observacion.trim()}
-                                className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
+                                className="py-2 px-5 btn-vercel-primary text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
                                 {actioning === observarTarget.id_informe
-                                    ? <RefreshCw size={12} className="animate-spin" />
-                                    : <AlertCircle size={12} />}
-                                Enviar Observación
+                                    ? <RefreshCw size={14} className="animate-spin" />
+                                    : <AlertCircle size={14} />}
+                                <span>Enviar Observación</span>
                             </button>
                         </div>
                     </div>

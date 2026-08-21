@@ -56,14 +56,6 @@ export const FinalizeFinalReportModal: React.FC<FinalizeFinalReportModalProps> =
                     </button>
                 </div>
 
-                <div className="p-3.5 bg-brand/10 border border-brand/20 rounded-xl space-y-1">
-                    <p className="text-xs font-bold text-text-main flex items-center gap-1.5">
-                        <AlertTriangle size={14} className="text-brand" /> Resolución Oficial CACES
-                    </p>
-                    <p className="text-[11px] text-text-dim leading-relaxed">
-                        Al aprobar el cierre, el proyecto pasará al estado inmutable <strong>Finalizado</strong>, se emitirá el Acta de Cierre y se generarán los certificados de acreditación institucional para todo el equipo.
-                    </p>
-                </div>
 
                 <div className="space-y-2">
                     <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block font-mono">

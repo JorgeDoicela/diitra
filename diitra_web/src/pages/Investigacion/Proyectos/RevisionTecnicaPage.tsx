@@ -169,6 +169,7 @@ export const RevisionTecnicaPage: React.FC = () => {
                             removeCommentLocal={commentsState.removeCommentLocal}
                             FIELD_LABELS={FIELD_LABELS}
                             templateBlocks={data.templateBlocks}
+                            readOnly={!isAdmin || isReadonlyResult}
                         />
 
                         {/* Pestañas Flotantes de Reapertura */}

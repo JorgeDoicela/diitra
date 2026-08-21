@@ -250,7 +250,7 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
             var registroFirma = new InvDocumentoFirma
             {
                 Uuid = Guid.NewGuid().ToString(),
-                DocumentoUuid = dto.DocumentoUuid,
+                DocumentoUuid = instancia.Uuid,
                 FirmanteId = firmanteIdStr,
                 FirmanteRol = dto.RolFirmante ?? "Firmante",
                 FechaFirma = firmadoEn,
@@ -320,6 +320,20 @@ public class DiitraInternalSignerSubservice : IDiitraInternalSignerSubservice
                 var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instancia.EntityUuid);
                 if (project != null)
                 {
+                    project.FechaLimiteSubsanacionFinal = null;
+
+                    var trazabilidad = new InvTrazabilidadProyecto
+                    {
+                        Uuid = Guid.NewGuid().ToString(),
+                        IdProyecto = project.IdProyecto,
+                        IdUsuario = idUsuario,
+                        EstadoAnterior = project.Estado,
+                        EstadoNuevo = project.Estado,
+                        Observacion = $"Firma y postulación del Informe Final para revisión y dictamen institucional de cierre (Código: {firmaCode})",
+                        FechaTransicion = DateTime.UtcNow
+                    };
+                    _context.InvTrazabilidadProyectos.Add(trazabilidad);
+
                     await notifService.NotifyByRoleCodesAsync(
                         "Informe Final Postulado",
                         $"El Director del proyecto '{project.Titulo}' ha firmado el Informe Final. Requiere revisión técnica y dictamen institucional de cierre.",

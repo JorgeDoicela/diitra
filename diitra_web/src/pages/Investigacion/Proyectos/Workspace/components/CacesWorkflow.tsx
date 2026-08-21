@@ -94,9 +94,23 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
         const planLearningDoc = projectDocuments.find(
             (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
         );
-        const finalDoc = projectDocuments.find(
-            (d: any) => d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode
-        );
+        const isAnyFinalDocSigned = (docs: any[]): boolean => {
+            if (!docs || docs.length === 0) return false;
+            return docs.some((doc: any) => {
+                const isMatch = doc.template_code === finalReportTemplateCode || doc.templateCode === finalReportTemplateCode ||
+                    doc.template_code === 'INFORME_FINAL_INVESTIGACION' || doc.templateCode === 'INFORME_FINAL_INVESTIGACION' ||
+                    doc.template_code === 'INFORME_FINAL_INNOVACION' || doc.templateCode === 'INFORME_FINAL_INNOVACION' ||
+                    doc.template_code === 'INFORME_FINAL' || doc.templateCode === 'INFORME_FINAL';
+                if (!isMatch) return false;
+                return (
+                    doc.is_signed === true || doc.isSigned === true ||
+                    doc.state === 3 || doc.state === '3' || doc.state === 'Signed' ||
+                    doc.estado === 3 || doc.estado === '3' || doc.estado === 'Firmado' ||
+                    Boolean(doc.final_pdf_path || doc.finalPdfPath)
+                );
+            });
+        };
+
         const evalDoc = projectDocuments.find(
             (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE'
         );
@@ -117,7 +131,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
         return {
             isProtocoloSigned: isDocValidlySigned(protoDoc, currentProject.status),
             isPlanAprendizajeSigned: isDocValidlySigned(planLearningDoc, currentProject.status),
-            isFinalReportSigned: finalDoc ? (finalDoc.is_signed === true || finalDoc.isSigned === true) : false,
+            isFinalReportSigned: isAnyFinalDocSigned(projectDocuments),
             isPlanAprendizajeApproved: approved
         };
     }, [projectDocuments, currentProject.status, finalReportTemplateCode]);
@@ -192,12 +206,22 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     );
                     setAsyncPlanAprendizajeSigned(isDocValidlySigned(planLearningDoc, currentProject.status));
 
-                    const finalDoc = res.data.find(
-                        (d: any) => d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode
+                    const hasSignedFinal = res.data.some(
+                        (d: any) => {
+                            const isMatch = d.template_code === finalReportTemplateCode || d.templateCode === finalReportTemplateCode ||
+                                d.template_code === 'INFORME_FINAL_INVESTIGACION' || d.templateCode === 'INFORME_FINAL_INVESTIGACION' ||
+                                d.template_code === 'INFORME_FINAL_INNOVACION' || d.templateCode === 'INFORME_FINAL_INNOVACION' ||
+                                d.template_code === 'INFORME_FINAL' || d.templateCode === 'INFORME_FINAL';
+                            if (!isMatch) return false;
+                            return (
+                                d.is_signed === true || d.isSigned === true ||
+                                d.state === 3 || d.state === '3' || d.state === 'Signed' ||
+                                d.estado === 3 || d.estado === '3' || d.estado === 'Firmado' ||
+                                Boolean(d.final_pdf_path || d.finalPdfPath)
+                            );
+                        }
                     );
-                    if (finalDoc) {
-                        setAsyncFinalReportSigned(finalDoc.is_signed === true || finalDoc.isSigned === true);
-                    }
+                    setAsyncFinalReportSigned(hasSignedFinal);
 
                     const evalDoc = res.data.find(
                         (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE'
@@ -251,7 +275,6 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     let isRevisionDone = false;
 
                     const status = currentProject.status;
-                    const isBothInstrumentsSubmitted = (isProtocoloSigned && isPlanAprendizajeSigned) || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
 
                     if (phase.id === 'Borrador') {
                         isPast = isProtocoloSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
@@ -262,22 +285,23 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                         isCurrent = !isPlanAprendizajeSigned;
                         isFuture = false;
                     } else if (phase.id === 'Enviado') {
-                        // Fase 3: La revisión del Administrador se abre ÚNICAMENTE cuando el director ha enviado AMBOS instrumentos
-                        isCurrent = isBothInstrumentsSubmitted && (status === 'Enviado' || status === 'Borrador' || status === 'En Corrección');
+                        // Fase 3: La revisión técnica del Administrador del Protocolo (solo activa si el protocolo está formalmente firmado/enviado)
                         isPast = ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isFuture = !isBothInstrumentsSubmitted;
+                        isCurrent = isProtocoloSigned && (status === 'Enviado' || status === 'Borrador') && !isPast;
+                        isFuture = !isCurrent && !isPast;
                     } else if (phase.id === 'EvaluacionPlanAprendizaje') {
-                        // Fase 4: Evaluación del Plan por el Administrador una vez remitido el expediente completo
-                        isCurrent = isBothInstrumentsSubmitted && (status === 'Enviado') && !isPlanAprendizajeApproved;
+                        // Fase 4: Evaluación del Plan por el Administrador: se habilita de forma independiente en cuanto el Plan de Aprendizaje esté firmado
                         isPast = isPlanAprendizajeApproved || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isFuture = !isBothInstrumentsSubmitted;
+                        isCurrent = isPlanAprendizajeSigned && !isPast;
+                        isFuture = !isPlanAprendizajeSigned && !isPast;
                     } else if (phase.id === 'En Revisión') {
                         isRevisionDone = (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
-                        // COMPUERTA: Solo se habilita si el plan de aprendizaje fue aprobado y el proyecto avanzó a revisión
-                        const canOpenPeerReview = isPlanAprendizajeApproved || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isCurrent = (status === 'En Revisión' || (status === 'Enviado' && isPlanAprendizajeApproved)) && canOpenPeerReview;
-                        isPast = status === 'Aprobado' || status === 'En Ejecución' || status === 'Finalizado';
-                        isFuture = !canOpenPeerReview || status === 'Borrador' || status === 'En Corrección' || (status === 'Enviado' && !isPlanAprendizajeApproved);
+                        // COMPUERTA CACES ESTRICTA: Solo se habilita si AMBOS instrumentos han sido aprobados por el administrador
+                        // (El proyecto debe estar formalmente en 'En Revisión' tras aprobar la revisión técnica del protocolo Y contar con Plan de Aprendizaje aprobado)
+                        const isBothApproved = status === 'En Revisión' && isPlanAprendizajeApproved;
+                        isPast = ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = isBothApproved && !isPast;
+                        isFuture = !isCurrent && !isPast;
                     } else if (phase.id === 'Aprobado') {
                         isCurrent = status === 'Aprobado';
                         isPast = status === 'En Ejecución' || status === 'Finalizado';
@@ -354,11 +378,17 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
                                         }
                                     } else if (phase.id === 'Enviado' && (isCurrent || isPast)) {
-                                        navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                        if (isAdmin) {
+                                            navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
+                                        } else if (currentProject.status === 'En Corrección') {
+                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix));
+                                        }
                                     } else if (phase.id === 'PlanAprendizaje' && (isCurrent || isPast)) {
                                         navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix));
                                     } else if (phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast)) {
-                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix));
+                                        if (isAdmin || isPlanAprendizajeApproved) {
+                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix));
+                                        }
                                     } else if (phase.id === 'En Revisión' && (isCurrent || isPast)) {
                                         if (assignedRevisionUuid) {
                                             navigate(`/revisiones/${assignedRevisionUuid}`);
@@ -443,16 +473,19 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 {/* 2. REVISIÓN ADMINISTRADOR (PROTOCOLO) */}
                                 {phase.id === 'Enviado' && (isCurrent || isPast) && (
                                     <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        {isCurrentActive && isAdmin ? (
+                                        {isAdmin ? (
                                             <Link
                                                 to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
                                                 onClick={(e) => { e.stopPropagation(); }}
-                                                className="w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                                className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                    ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    : 'btn-vercel-secondary'
+                                                    }`}
                                             >
                                                 <Shield size={14} />
-                                                <span>Iniciar Revisión Técnica</span>
+                                                <span>{isCurrentActive ? 'Iniciar Revisión Técnica' : 'Ver Revisión Técnica'}</span>
                                             </Link>
-                                        ) : isCurrentActive && !isAdmin && currentProject.status === 'En Corrección' ? (
+                                        ) : currentProject.status === 'En Corrección' ? (
                                             <Link
                                                 to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix)}
                                                 onClick={(e) => { e.stopPropagation(); }}
@@ -462,14 +495,10 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                 <span>Atender Observaciones del Admin</span>
                                             </Link>
                                         ) : (
-                                            <Link
-                                                to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <Shield size={14} />
-                                                <span>Ver Revisión Técnica</span>
-                                            </Link>
+                                            <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                                <Clock size={14} className="text-brand animate-pulse" />
+                                                <span>En espera de dictamen institucional</span>
+                                            </div>
                                         )}
                                     </div>
                                 )}
@@ -487,7 +516,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                         >
                                             <GraduationCap size={14} />
                                             <span>
-                                                {currentProject.status === 'Finalizado'
+                                                {isPlanAprendizajeSigned || currentProject.status === 'Finalizado'
                                                     ? 'Ver Plan de Aprendizaje'
                                                     : 'Plan de Aprendizaje (Docencia - APE)'}
                                             </span>
@@ -498,21 +527,37 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 {/* 2.6 EVALUACIÓN PLAN DE APRENDIZAJE */}
                                 {phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast) && (
                                     <div className="mt-4 animate-fade-in">
-                                        <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive && isAdmin
-                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                : 'btn-vercel-secondary'
-                                                }`}
-                                        >
-                                            <Award size={14} />
-                                            <span>
-                                                {isAdmin
-                                                    ? 'Evaluar Plan de Aprendizaje'
-                                                    : 'Ver Evaluación del Plan'}
-                                            </span>
-                                        </Link>
+                                        {isAdmin ? (
+                                            <Link
+                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
+                                                onClick={(e) => { e.stopPropagation(); }}
+                                                className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                    ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    : 'btn-vercel-secondary'
+                                                    }`}
+                                            >
+                                                <Award size={14} />
+                                                <span>
+                                                    {isCurrentActive
+                                                        ? 'Evaluar Plan de Aprendizaje'
+                                                        : 'Ver Evaluación del Plan'}
+                                                </span>
+                                            </Link>
+                                        ) : isPlanAprendizajeApproved ? (
+                                            <Link
+                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
+                                                onClick={(e) => { e.stopPropagation(); }}
+                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                            >
+                                                <Award size={14} />
+                                                <span>Ver Evaluación del Plan</span>
+                                            </Link>
+                                        ) : (
+                                            <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                                <Clock size={14} className="text-brand animate-pulse" />
+                                                <span>En espera de evaluación por el Administrador</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -611,14 +656,6 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             >
                                                 <BarChart size={14} />
                                                 <span>Informes de Avance</span>
-                                            </Link>
-                                            <Link
-                                                to={`${urlPrefix}/monitoreo/${currentProject.uuid}`}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <Activity size={14} className="text-brand animate-pulse" />
-                                                <span>Ver Monitoreo Financiero</span>
                                             </Link>
                                         </div>
                                     )

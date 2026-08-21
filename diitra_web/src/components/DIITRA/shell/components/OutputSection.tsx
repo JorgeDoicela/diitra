@@ -10,6 +10,7 @@ import api from '../../../../api/axios_config';
 
 export interface OutputSectionProps {
     title: string;
+    templateCode?: string;
     projectStatus?: string;
     canSign?: boolean;
     signatureType?: string;
@@ -41,6 +42,7 @@ export interface OutputSectionProps {
 
 export const OutputSection: React.FC<OutputSectionProps> = ({
     title,
+    templateCode,
     projectStatus,
     canSign = true,
     signatureType = 'DIITRA',
@@ -72,23 +74,36 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     const [isPlanSigned, setIsPlanSigned] = React.useState<boolean | null>(null);
 
     const projectUuid = formData?.EntityUuid || formData?.entityUuid || formData?.Uuid || formData?.uuid;
+    const directDocId = documentUuid || formData?.Uuid || formData?.uuid;
 
     React.useEffect(() => {
         let isMounted = true;
-        const docId = documentUuid || formData.Uuid || formData.uuid;
-        if (docId && !docId.startsWith('temp_')) {
-            getDocumentSignatures(docId)
-                .then(data => {
+        const fetchSignatures = async () => {
+            let targetDocId = directDocId;
+            if ((!targetDocId || targetDocId.startsWith('temp_')) && projectUuid && templateCode) {
+                try {
+                    const instRes = await api.get('/documents/instances/resolve', {
+                        params: { templateCode, entityUuid: projectUuid }
+                    });
+                    targetDocId = instRes.data?.uuid || instRes.data?.Uuid;
+                } catch {}
+            }
+
+            if (targetDocId && !targetDocId.startsWith('temp_')) {
+                try {
+                    const data = await getDocumentSignatures(targetDocId);
                     if (isMounted) {
                         setSignatures(data || []);
                     }
-                })
-                .catch(() => {
+                } catch {
                     if (isMounted) setSignatures([]);
-                });
-        }
+                }
+            }
+        };
+
+        fetchSignatures();
         return () => { isMounted = false; };
-    }, [documentUuid, formData.Uuid, formData.uuid, signatureRefreshTrigger]);
+    }, [directDocId, projectUuid, templateCode, signatureRefreshTrigger]);
 
     React.useEffect(() => {
         let isMounted = true;
@@ -100,7 +115,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                     const isDocValidlySigned = (doc: any): boolean => {
                         if (!doc) return false;
                         if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(projectStatus || '')) return true;
-                        const hasSignedState = doc.state === 3 || doc.state === 'Signed' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
+                        const hasSignedState = doc.state === 3 || doc.state === '3' || doc.state === 'Signed' || doc.estado === 3 || doc.estado === '3' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
                         const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
                         return hasSignedState || hasSignedFile;
                     };
@@ -120,29 +135,12 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
             .catch(() => {});
 
         return () => { isMounted = false; };
-    }, [projectUuid, signatureRefreshTrigger]);
+    }, [projectUuid, projectStatus, signatureRefreshTrigger]);
 
-    const isEditingOrCorrection = React.useMemo(() => {
-        if (!projectStatus) return true;
-        const normalized = projectStatus.toLowerCase().trim();
-        return (
-            normalized === 'borrador' ||
-            normalized === 'en edición' ||
-            normalized === 'en edicion' ||
-            normalized === 'en corrección' ||
-            normalized === 'en correccion' ||
-            normalized === 'corregir' ||
-            normalized === 'con observaciones' ||
-            normalized === 'devuelto' ||
-            normalized === 'prepropuesta' ||
-            normalized === 'prepropuesta rechazada'
-        );
-    }, [projectStatus]);
-
-    const activeSignatures = signatures.filter(s => s.esValida !== false && s.estado !== 2);
+    const activeSignatures = signatures.filter(s => (s.esValida !== false && (s as any).es_valida !== false) && (s.estado !== 2 && (s as any).estado !== 2));
     const isDocumentSigned = activeSignatures.length > 0;
-    const isCurrentPlan = title.toLowerCase().includes('plan de aprendizaje');
-    const isCurrentProtocolo = title.toLowerCase().includes('protocolo') || title.toLowerCase().includes('formato proyecto');
+    const isCurrentPlan = (templateCode?.toUpperCase().includes('PLAN_APRENDIZAJE')) || title.toLowerCase().includes('plan de aprendizaje');
+    const isCurrentProtocolo = (templateCode?.toUpperCase().includes('PROTOCOLO')) || title.toLowerCase().includes('protocolo') || title.toLowerCase().includes('formato proyecto');
     const isExpedienteCompleto = (isProtocoloSigned && isPlanSigned) || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(projectStatus || '');
 
     return (
@@ -202,17 +200,6 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                     {/* Sección 2: Firmas */}
                     <div className="p-5 flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
                         <div className="space-y-4">
-                            {isEditingOrCorrection && signatures.length > 0 && (
-                                <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1.5 animate-fade-in">
-                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                                        <Clock size={14} /> Documento en Corrección
-                                    </p>
-                                    <p className="text-[11px] text-text-dim leading-relaxed">
-                                        El proyecto fue devuelto para ajustes por el revisor. Una vez completadas las correcciones solicitadas, aplique su firma a continuación para certificar y reenviar el protocolo.
-                                    </p>
-                                </div>
-                            )}
-
                             {isDocumentSigned ? (
                                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-3 animate-fade-in">
                                     <div className="flex justify-center">
@@ -223,7 +210,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-text-main">Documento Firmado Oficialmente</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
-                                            {isExpedienteCompleto
+                                            {(isCurrentProtocolo || isCurrentPlan) && isExpedienteCompleto && projectStatus === 'Enviado'
                                                 ? 'El expediente completo cuenta con firmas electrónicas y ha sido remitido a la etapa de Revisión del Administrador.'
                                                 : isCurrentProtocolo && isPlanSigned === false
                                                     ? 'Protocolo firmado digitalmente con éxito. Para habilitar la Revisión del Administrador, debe firmar también el Plan de Aprendizaje.'
@@ -234,14 +221,14 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                     </div>
 
                                     <div className="pt-1 flex flex-col gap-2">
-                                        {/* Si falta el otro documento, dar acceso directo */}
-                                        {isCurrentProtocolo && isPlanSigned === false && projectUuid && (
+                                        {/* Botón inteligente bidireccional: Si estás en Protocolo y falta Plan de Aprendizaje */}
+                                        {isCurrentProtocolo && isPlanSigned === false && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}?edit=plan-aprendizaje`);
+                                                    navigate({ pathname: window.location.pathname, search: '?edit=plan-aprendizaje' });
                                                 }}
-                                                className="w-full py-2 px-3 btn-vercel-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                className="w-full py-2.5 px-3 btn-vercel-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                                             >
                                                 <GraduationCap size={14} />
                                                 <span>Ir al Plan de Aprendizaje</span>
@@ -249,13 +236,15 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                             </button>
                                         )}
 
-                                        {isCurrentPlan && isProtocoloSigned === false && projectUuid && (
+                                        {/* Botón inteligente bidireccional: Si estás en Plan de Aprendizaje y falta Protocolo */}
+                                        {isCurrentPlan && isProtocoloSigned === false && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}?edit=protocolo-investigacion`);
+                                                    const targetEdit = templateCode?.toUpperCase().includes('INNOVACION') ? 'formato-proyecto-innovacion' : 'protocolo-investigacion';
+                                                    navigate({ pathname: window.location.pathname, search: `?edit=${targetEdit}` });
                                                 }}
-                                                className="w-full py-2 px-3 btn-vercel-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                className="w-full py-2.5 px-3 btn-vercel-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                                             >
                                                 <FileText size={14} />
                                                 <span>Ir al Protocolo</span>
@@ -263,7 +252,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                             </button>
                                         )}
 
-                                        {isAdmin && isExpedienteCompleto && (
+                                        {isAdmin && (isCurrentProtocolo || isCurrentPlan) && isExpedienteCompleto && projectStatus === 'Enviado' && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -286,7 +275,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                                 url.searchParams.delete('section');
                                                 navigate(url.pathname);
                                             }}
-                                            className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-[0.98] cursor-pointer"
+                                            className="w-full py-2 px-3 btn-vercel-secondary text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                         >
                                             <Settings size={14} />
                                             <span>Ver Proyecto</span>

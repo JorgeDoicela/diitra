@@ -443,16 +443,16 @@ namespace Diitra.Infrastructure.Research
             {
                 try
                 {
-                    // 1. Invalidar firmas previas del protocolo devuelto para permitir re-firma
-                    var docInstances = await _context.DocumentInstances
-                        .Where(d => d.EntityUuid == proyecto.Uuid)
+                    // 1. Invalidar firmas previas ÚNICAMENTE del protocolo devuelto para permitir re-firma, preservando el Plan de Aprendizaje intacto
+                    var protocolInstances = await _context.DocumentInstances
+                        .Where(d => d.EntityUuid == proyecto.Uuid && 
+                                   (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION"))
                         .ToListAsync();
 
-                    var docUuids = docInstances.Select(d => d.Uuid).ToList();
-                    docUuids.Add(proyecto.Uuid);
+                    var protocolUuids = protocolInstances.Select(d => d.Uuid).ToList();
 
                     var existingFirmas = await _context.InvDocumentoFirmas
-                        .Where(f => docUuids.Contains(f.DocumentoUuid) && f.EsValida)
+                        .Where(f => protocolUuids.Contains(f.DocumentoUuid) && f.EsValida)
                         .ToListAsync();
 
                     foreach (var firma in existingFirmas)
@@ -460,7 +460,7 @@ namespace Diitra.Infrastructure.Research
                         firma.EsValida = false;
                     }
 
-                    foreach (var docInst in docInstances)
+                    foreach (var docInst in protocolInstances)
                     {
                         docInst.ReopenForRevision();
                     }

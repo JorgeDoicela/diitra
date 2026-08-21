@@ -98,7 +98,7 @@ namespace diitra_api.Controllers
                 });
             }
 
-            return BadRequest(new { message = $"No se pudo generar la configuración de la interfaz para la plantilla '{code}'." });
+            return Ok(new { hasDynamicConfig = false, message = $"La plantilla '{code}' utiliza componentes de diseño nativos oficiales." });
         }
         /// <summary>
         /// RETORNA LA CONFIGURACIÓN DE LA INTERFAZ DE USUARIO BASADA EN EL SNAPSHOT DE LA INSTANCIA.
@@ -298,8 +298,8 @@ namespace diitra_api.Controllers
                 });
             }
 
-            // Si no se pudieron procesar bloques ni existe mapeo específico, responder error para que el frontend use su registro oficial
-            return BadRequest(new { message = $"No se encontraron bloques estructurados válidos para la plantilla '{code}'." });
+            // Si no se pudieron procesar bloques dinámicos ni existe mapeo específico, responder indicando que utiliza la plantilla oficial nativa
+            return Ok(new { hasDynamicConfig = false, message = $"La instancia de la plantilla '{code}' utiliza componentes de diseño nativos oficiales." });
         }
 
         [HttpGet("maintenance/diagnose")]

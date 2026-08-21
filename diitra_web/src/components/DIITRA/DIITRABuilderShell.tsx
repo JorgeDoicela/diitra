@@ -259,6 +259,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                         /* ── Panel de Finalización y Firma ── */
                                         <OutputSection
                                             title={title}
+                                            templateCode={templateCode}
                                             projectStatus={projectStatus}
                                             canSign={canSign}
                                             signatureType={signatureType}

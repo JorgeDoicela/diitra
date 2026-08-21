@@ -52,50 +52,63 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
         <div className="sig-block-container">
             <h4 className="sig-block-title">Firmas del Documento ({signatures.length})</h4>
             <div className="sig-block-list">
-                {signatures.map((sig) => (
-                    <div 
-                        key={sig.idFirma} 
-                        className={`sig-card-item ${sig.estado === 2 ? 'sig-revoked' : ''}`}
-                    >
-                        <div className="sig-card-header">
-                            <span className="sig-signer-name">{sig.firmanteNombre}</span>
-                            <span className={`sig-card-badge ${sig.estado === 2 ? 'badge-revoked' : 'badge-valid'}`}>
-                                {sig.estado === 2 ? 'Revocada' : 'Firma Válida'}
-                            </span>
-                        </div>
+                {signatures.map((sig: any) => {
+                    const idFirma = sig.idFirma ?? sig.id_firma;
+                    const firmanteNombre = sig.firmanteNombre ?? sig.firmante_nombre ?? sig.firmanteId ?? sig.firmante_id ?? 'Firmante';
+                    const firmanteRol = sig.firmanteRol ?? sig.firmante_rol ?? 'Firmante';
+                    const fechaFirma = sig.fechaFirma ?? sig.fecha_firma;
+                    const firmaCode = sig.firmaCode ?? sig.firma_code ?? '';
+                    const estado = sig.estado ?? 1;
+                    const docHash = sig.docHash ?? sig.doc_hash;
+                    const motivoRevocacion = sig.motivoRevocacion ?? sig.motivo_revocacion;
 
-                        <div className="sig-card-meta">
-                            <div className="sig-meta-row">
-                                <span className="meta-label">Rol:</span>
-                                <span className="meta-val">{sig.firmanteRol}</span>
-                            </div>
-                            <div className="sig-meta-row">
-                                <span className="meta-label">Fecha:</span>
-                                <span className="meta-val">
-                                    {new Date(sig.fechaFirma).toLocaleString()}
+                    return (
+                        <div 
+                            key={idFirma || firmaCode} 
+                            className={`sig-card-item ${estado === 2 ? 'sig-revoked' : ''}`}
+                        >
+                            <div className="sig-card-header">
+                                <span className="sig-signer-name">{firmanteNombre}</span>
+                                <span className={`sig-card-badge ${estado === 2 ? 'badge-revoked' : 'badge-valid'}`}>
+                                    {estado === 2 ? 'Revocada' : 'Firma Válida'}
                                 </span>
                             </div>
-                            <div className="sig-meta-row">
-                                <span className="meta-label">Código:</span>
-                                <span className="meta-val code-text">{sig.firmaCode}</span>
+
+                            <div className="sig-card-meta">
+                                <div className="sig-meta-row">
+                                    <span className="meta-label">Rol:</span>
+                                    <span className="meta-val">{firmanteRol}</span>
+                                </div>
+                                {fechaFirma && (
+                                    <div className="sig-meta-row">
+                                        <span className="meta-label">Fecha:</span>
+                                        <span className="meta-val">
+                                            {new Date(fechaFirma).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="sig-meta-row">
+                                    <span className="meta-label">Código:</span>
+                                    <span className="meta-val code-text">{firmaCode}</span>
+                                </div>
+                                {docHash && (
+                                    <div className="sig-meta-row flex-column">
+                                        <span className="meta-label">SHA-256 (Integridad):</span>
+                                        <span className="meta-val hash-text" title={docHash}>
+                                            {docHash}
+                                        </span>
+                                    </div>
+                                )}
+                                {estado === 2 && motivoRevocacion && (
+                                    <div className="sig-meta-row flex-column revocation-reason">
+                                        <span className="meta-label text-error">Motivo de Anulación:</span>
+                                        <span className="meta-val text-error-dark">{motivoRevocacion}</span>
+                                    </div>
+                                )}
                             </div>
-                            {sig.docHash && (
-                                <div className="sig-meta-row flex-column">
-                                    <span className="meta-label">SHA-256 (Integridad):</span>
-                                    <span className="meta-val hash-text" title={sig.docHash}>
-                                        {sig.docHash}
-                                    </span>
-                                </div>
-                            )}
-                            {sig.estado === 2 && sig.motivoRevocacion && (
-                                <div className="sig-meta-row flex-column revocation-reason">
-                                    <span className="meta-label text-error">Motivo de Anulación:</span>
-                                    <span className="meta-val text-error-dark">{sig.motivoRevocacion}</span>
-                                </div>
-                            )}
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

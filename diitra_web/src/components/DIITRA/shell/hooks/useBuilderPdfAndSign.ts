@@ -81,10 +81,25 @@ export const useBuilderPdfAndSign = ({
         if (!targetUuid || targetUuid.startsWith('temp_')) return false;
 
         try {
-            const instanceRes = await api.get(`/documents/instances/resolve`, {
-                params: { templateCode, entityUuid: targetUuid }
-            });
-            const finalPath = instanceRes.data?.finalPdfPath || instanceRes.data?.final_pdf_path || instanceRes.data?.FinalPdfPath;
+            let instanceData: any = null;
+            const currentDocId = documentUuid || formData.Uuid || formData.uuid;
+            if (currentDocId && !currentDocId.startsWith('temp_')) {
+                try {
+                    const directRes = await api.get(`/documents/instances/${currentDocId}`);
+                    if (directRes?.data?.finalPdfPath || directRes?.data?.final_pdf_path) {
+                        instanceData = directRes.data;
+                    }
+                } catch { }
+            }
+
+            if (!instanceData) {
+                const instanceRes = await api.get(`/documents/instances/resolve`, {
+                    params: { templateCode, entityUuid: targetUuid }
+                });
+                instanceData = instanceRes.data;
+            }
+
+            const finalPath = instanceData?.finalPdfPath || instanceData?.final_pdf_path || instanceData?.FinalPdfPath;
 
             if (finalPath) {
                 const cleanPath = finalPath.replace(/\\/g, '/');
@@ -99,45 +114,24 @@ export const useBuilderPdfAndSign = ({
         return false;
     }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, templateCode]);
 
-    // ── Verificar si el proyecto está en fase de edición o corrección activa ──
-    const isEditingOrCorrectionState = useCallback(() => {
-        if (!projectStatus) return true;
-        const normalized = projectStatus.toLowerCase().trim();
-        return (
-            normalized === 'borrador' ||
-            normalized === 'en edición' ||
-            normalized === 'en edicion' ||
-            normalized === 'en corrección' ||
-            normalized === 'en correccion' ||
-            normalized === 'corregir' ||
-            normalized === 'con observaciones' ||
-            normalized === 'devuelto' ||
-            normalized === 'rechazado' ||
-            normalized.includes('edici') ||
-            normalized.includes('correc')
-        );
-    }, [projectStatus]);
-
-    // Autocargar PDF firmado únicamente si el proyecto está emitido u oficial.
-    // Si está en borrador o corrección activa, mantenemos el estado inicial "Listo para generar" hasta que el usuario presione la vista previa.
+    // Autocargar PDF firmado si existe; si no, mantener estado inicial en borrador
     useEffect(() => {
         let isMounted = true;
         const initPdf = async () => {
-            if (isEditingOrCorrectionState()) {
-                setIsDraftMode(true);
-                setPdfBlob(null);
+            const hasSigned = await fetchSignedPdf();
+            if (hasSigned) {
+                if (isMounted) setIsDraftMode(false);
                 return;
             }
 
-            // Si el proyecto se encuentra emitido u oficial (Enviado, Aprobado, etc.), cargamos el PDF oficial firmado.
-            const hasSigned = await fetchSignedPdf();
-            if (!hasSigned && isMounted) {
+            if (isMounted) {
+                setIsDraftMode(true);
                 setPdfBlob(null);
             }
         };
         initPdf();
         return () => { isMounted = false; };
-    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, projectStatus, isEditingOrCorrectionState, fetchSignedPdf]);
+    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, projectStatus, signatureRefreshTrigger, fetchSignedPdf]);
 
     // ── Firma Electrónica PAdES — Upload-on-Demand ──
     const handleSign = async () => {
@@ -153,10 +147,22 @@ export const useBuilderPdfAndSign = ({
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 
+            let targetDocUuid = documentUuid || formData?.Uuid || formData?.uuid;
+            const pUuid = entityUuid || formData?.EntityUuid || formData?.entityUuid;
+
+            if ((!targetDocUuid || targetDocUuid.startsWith('temp_') || targetDocUuid === pUuid) && pUuid && templateCode) {
+                try {
+                    const res = await api.get('/documents/instances/resolve', {
+                        params: { templateCode, entityUuid: pUuid }
+                    });
+                    targetDocUuid = res.data?.uuid || res.data?.Uuid || targetDocUuid;
+                } catch {}
+            }
+
             const formDataObj = new FormData();
             formDataObj.append('certificate', signatureCertFile);
             formDataObj.append('password', signaturePassword || '');
-            formDataObj.append('documentoUuid', documentUuid || formData.Uuid || formData.uuid || '');
+            formDataObj.append('documentoUuid', targetDocUuid || '');
             formDataObj.append('rolFirmante', calculatedRol);
 
             await api.post(
@@ -195,7 +201,6 @@ export const useBuilderPdfAndSign = ({
             setIsSignedModalOpen(true);
 
             if (templateCode === 'OFICIO_APROBACION') {
-                const pUuid = entityUuid || formData.EntityUuid || formData.entityUuid;
                 if (pUuid && !pUuid.startsWith('temp_')) {
                     try {
                         await api.post(`/PeerReviews/project/${pUuid}/iniciar-ejecucion`);
@@ -266,8 +271,20 @@ export const useBuilderPdfAndSign = ({
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 
+            let targetDocUuid = documentUuid || formData?.Uuid || formData?.uuid;
+            const pUuid = entityUuid || formData?.EntityUuid || formData?.entityUuid;
+
+            if ((!targetDocUuid || targetDocUuid.startsWith('temp_') || targetDocUuid === pUuid) && pUuid && templateCode) {
+                try {
+                    const res = await api.get('/documents/instances/resolve', {
+                        params: { templateCode, entityUuid: pUuid }
+                    });
+                    targetDocUuid = res.data?.uuid || res.data?.Uuid || targetDocUuid;
+                } catch {}
+            }
+
             const dto = {
-                documento_uuid: documentUuid || formData.Uuid || formData.uuid || '',
+                documento_uuid: targetDocUuid || '',
                 rol_firmante: calculatedRol,
                 password: institutionalPassword
             };

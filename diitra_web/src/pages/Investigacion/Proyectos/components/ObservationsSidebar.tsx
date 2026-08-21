@@ -42,6 +42,7 @@ interface ObservationsSidebarProps {
     removeCommentLocal: (section: string, id: number) => void;
     FIELD_LABELS: Record<string, string>;
     templateBlocks?: any[];
+    readOnly?: boolean;
 }
 
 export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
@@ -63,7 +64,8 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
     handleStartListening,
     removeCommentLocal,
     FIELD_LABELS,
-    templateBlocks
+    templateBlocks,
+    readOnly = false
 }) => {
     const availableFields = useMemo(() => {
         const fields: Record<string, string> = { ...FIELD_LABELS };
@@ -230,60 +232,62 @@ export const ObservationsSidebar: React.FC<ObservationsSidebarProps> = ({
                     )}
                 </div>
 
-                {/* Input de Feedback Inferior */}
-                <div className="shrink-0 p-4 border-t border-border-thin bg-surface/30 space-y-2">
-                    {editingCommentId && (
-                        <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-lg">
-                            <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider font-mono">
-                                Modo de edición activo
-                            </span>
-                            <button
-                                onClick={() => {
-                                    setEditingCommentId(null);
-                                    setContextualInput('');
-                                }}
-                                className="text-[9px] font-bold uppercase text-text-dim hover:text-text-main cursor-pointer bg-transparent border-0"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    )}
+                {/* Input de Feedback Inferior (solo administradores / revisores activos) */}
+                {!readOnly && (
+                    <div className="shrink-0 p-4 border-t border-border-thin bg-surface/30 space-y-2">
+                        {editingCommentId && (
+                            <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-lg">
+                                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider font-mono">
+                                    Modo de edición activo
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        setEditingCommentId(null);
+                                        setContextualInput('');
+                                    }}
+                                    className="text-[9px] font-bold uppercase text-text-dim hover:text-text-main cursor-pointer bg-transparent border-0"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        )}
 
-                    <div className="flex items-end gap-2 bg-surface border border-border-thin rounded-2xl p-2.5 focus-within:border-text-main transition-all shadow-xs">
-                        <textarea
-                            value={contextualInput}
-                            onChange={(e) => setContextualInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Escribe una observación... (Enter para enviar)"
-                            className="flex-1 bg-transparent border-0 outline-none text-xs text-text-main placeholder:text-text-dim/60 resize-none max-h-24 min-h-[36px] font-sans leading-relaxed custom-scrollbar py-1 px-1"
-                            disabled={submitting}
-                            rows={1}
-                        />
-                        <div className="flex items-center gap-1.5 shrink-0 pb-0.5">
-                            <button
-                                type="button"
-                                onClick={handleStartListening}
-                                className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                                    isListening
-                                        ? 'bg-error/15 text-error border-error/30 animate-pulse'
-                                        : 'bg-bg-deep hover:bg-surface-hover border-border-thin text-text-dim hover:text-text-main'
-                                }`}
-                                title={isListening ? "Detener grabación" : "Dictar por voz"}
-                            >
-                                {isListening ? <MicOff size={14} /> : <Mic size={14} />}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={saveContextualComment}
-                                disabled={!contextualInput.trim() || submitting}
-                                className="p-2 rounded-xl bg-text-main hover:opacity-90 text-bg-deep disabled:opacity-30 transition-all cursor-pointer shadow-xs active:scale-95"
-                                title="Registrar observación"
-                            >
-                                <Send size={14} />
-                            </button>
+                        <div className="flex items-end gap-2 bg-surface border border-border-thin rounded-2xl p-2.5 focus-within:border-text-main transition-all shadow-xs">
+                            <textarea
+                                value={contextualInput}
+                                onChange={(e) => setContextualInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Escribe una observación... (Enter para enviar)"
+                                className="flex-1 bg-transparent border-0 outline-none text-xs text-text-main placeholder:text-text-dim/60 resize-none max-h-24 min-h-[36px] font-sans leading-relaxed custom-scrollbar py-1 px-1"
+                                disabled={submitting}
+                                rows={1}
+                            />
+                            <div className="flex items-center gap-1.5 shrink-0 pb-0.5">
+                                <button
+                                    type="button"
+                                    onClick={handleStartListening}
+                                    className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                                        isListening
+                                            ? 'bg-error/15 text-error border-error/30 animate-pulse'
+                                            : 'bg-bg-deep hover:bg-surface-hover border-border-thin text-text-dim hover:text-text-main'
+                                    }`}
+                                    title={isListening ? "Detener grabación" : "Dictar por voz"}
+                                >
+                                    {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={saveContextualComment}
+                                    disabled={!contextualInput.trim() || submitting}
+                                    className="p-2 rounded-xl bg-text-main hover:opacity-90 text-bg-deep disabled:opacity-30 transition-all cursor-pointer shadow-xs active:scale-95"
+                                    title="Registrar observación"
+                                >
+                                    <Send size={14} />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

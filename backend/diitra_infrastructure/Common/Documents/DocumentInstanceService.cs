@@ -150,6 +150,11 @@ namespace Diitra.Infrastructure.Common.Documents
                 .OrderByDescending(i => i.CreatedAt)
                 .ToListAsync(ct);
 
+            foreach (var doc in directDocs)
+            {
+                await ValidateStorageIntegrityAsync(doc, ct);
+            }
+
             // 2. Agregar documentos de revisiones (RUBRICA_EVALUACION por árbitro).
             //    Al cerrar arbitraje, cada árbitro genera su propia rúbrica con EntityUuid = revision.Uuid
             //    y EntityType = "Revision". Las recuperamos aquí para que el workspace del proyecto
@@ -170,6 +175,11 @@ namespace Diitra.Infrastructure.Common.Documents
                         .Where(i => revisionUuids.Contains(i.EntityUuid))
                         .OrderByDescending(i => i.CreatedAt)
                         .ToListAsync(ct);
+
+                    foreach (var doc in revisionDocs)
+                    {
+                        await ValidateStorageIntegrityAsync(doc, ct);
+                    }
 
                     return directDocs.Concat(revisionDocs)
                         .OrderByDescending(i => i.CreatedAt)
@@ -597,10 +607,8 @@ namespace Diitra.Infrastructure.Common.Documents
 
         private async Task ValidateStorageIntegrityAsync(DocumentInstance instance, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(instance.FinalPdfPath)) return;
-
             // 0. Detectar contaminación cruzada: Si otra instancia de diferente plantilla para la misma entidad tiene exactamente la misma ruta de PDF
-            if (!string.IsNullOrWhiteSpace(instance.EntityUuid))
+            if (!string.IsNullOrWhiteSpace(instance.EntityUuid) && !string.IsNullOrWhiteSpace(instance.FinalPdfPath))
             {
                 var contaminatedByOther = await _context.DocumentInstances
                     .AnyAsync(other => other.EntityUuid == instance.EntityUuid
@@ -615,7 +623,7 @@ namespace Diitra.Infrastructure.Common.Documents
 
                     // Si no tiene firmas propias en InvDocumentoFirmas, la limpieza termina aquí
                     var tieneFirmasPropias = await _context.InvDocumentoFirmas
-                        .AnyAsync(f => f.DocumentoUuid == instance.Uuid, ct);
+                        .AnyAsync(f => f.DocumentoUuid == instance.Uuid && f.EsValida, ct);
 
                     if (!tieneFirmasPropias)
                     {
@@ -624,17 +632,18 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
             }
 
-            if (!_storageService.FileExists(instance.FinalPdfPath))
-            {
-                Console.WriteLine($"[DIITRA Autosanación] Archivo faltante detectado en storage: '{instance.FinalPdfPath}'. Verificando firmas en BD...");
+            bool isFileMissing = string.IsNullOrWhiteSpace(instance.FinalPdfPath) || !_storageService.FileExists(instance.FinalPdfPath);
 
+            if (isFileMissing)
+            {
                 var firmasDb = await _context.InvDocumentoFirmas
-                    .Where(f => f.DocumentoUuid == instance.Uuid || (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" && f.DocumentoUuid == instance.EntityUuid))
+                    .Where(f => (f.DocumentoUuid == instance.Uuid || (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" && f.DocumentoUuid == instance.EntityUuid)) && f.EsValida)
                     .OrderBy(f => f.FechaFirma)
                     .ToListAsync(ct);
 
                 if (firmasDb.Any())
                 {
+                    Console.WriteLine($"[DIITRA Autosanación] Firmas activas detectadas para documento '{instance.Uuid}' ({instance.TemplateCode}). Regenerando PDF oficial...");
                     try
                     {
                         var orchestrator = _serviceProvider.GetRequiredService<IDocumentDataOrchestrator>();
@@ -692,11 +701,13 @@ namespace Diitra.Infrastructure.Common.Documents
                         Console.WriteLine($"[DIITRA Autosanación] Error al intentar autosanar el PDF firmado: {ex.Message}");
                     }
                 }
-
-                // Si no había firmas o falló la re-generación, se limpia la ruta huérfana para evitar el 404
-                instance.SetFinalPdfPath(null);
-                await _context.SaveChangesAsync(ct);
-                Console.WriteLine($"[DIITRA Autosanación] Referencia huérfana de PDF saneada a NULL en BD.");
+                else if (!string.IsNullOrWhiteSpace(instance.FinalPdfPath))
+                {
+                    // Si no había firmas válidas y el archivo no existe, se limpia la ruta huérfana
+                    instance.SetFinalPdfPath(null);
+                    await _context.SaveChangesAsync(ct);
+                    Console.WriteLine($"[DIITRA Autosanación] Referencia huérfana de PDF saneada a NULL en BD.");
+                }
             }
         }
 
@@ -708,16 +719,22 @@ namespace Diitra.Infrastructure.Common.Documents
                 var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instance.EntityUuid, ct);
                 if (project != null)
                 {
-                    // Si el proyecto se encuentra en estado de corrección o edición activa, desvinculamos el PDF congelado anterior
+                    // La reapertura formal de documentos por corrección solo debe activarse si el proyecto está explícitamente devuelto/en corrección formal
+                    // Y no cuenta con firmas activas recién estampadas por el usuario.
                     var stateLower = project.Estado?.ToLower().Trim() ?? "";
-                    var isFinalLockedState = stateLower == "enviado" || stateLower == "aprobado" || stateLower == "en ejecución" || stateLower == "en ejecucion" || stateLower == "finalizado";
-                    var isCorrectionMode = !isFinalLockedState || stateLower.Contains("devuelt") || stateLower.Contains("correc") || stateLower.Contains("observac") || stateLower.Contains("edici");
+                    var isExplicitCorrectionMode = stateLower.Contains("devuelt") || stateLower.Contains("correc") || stateLower.Contains("observac");
 
-                    if (isCorrectionMode && (instance.State == DocumentState.Signed || !string.IsNullOrEmpty(instance.FinalPdfPath)))
+                    if (isExplicitCorrectionMode && (instance.State == DocumentState.Signed || !string.IsNullOrEmpty(instance.FinalPdfPath)))
                     {
-                        Console.WriteLine($"[DIITRA] Proyecto en estado de corrección ('{project.Estado}'). Reabriendo instancia para edición viva.");
-                        instance.ReopenForRevision();
-                        await _context.SaveChangesAsync(ct);
+                        var hasActiveSignatures = await _context.InvDocumentoFirmas
+                            .AnyAsync(f => (f.DocumentoUuid == instance.Uuid || f.DocumentoUuid == instance.EntityUuid) && f.EsValida, ct);
+
+                        if (!hasActiveSignatures)
+                        {
+                            Console.WriteLine($"[DIITRA] Proyecto en estado de corrección ('{project.Estado}') sin firmas activas. Reabriendo instancia para edición viva.");
+                            instance.ReopenForRevision();
+                            await _context.SaveChangesAsync(ct);
+                        }
                     }
 
                     try

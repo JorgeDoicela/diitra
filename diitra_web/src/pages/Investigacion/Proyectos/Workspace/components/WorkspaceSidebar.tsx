@@ -60,15 +60,28 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         const oficioDoc = projectDocuments.find(
             (d: any) => d.template_code === 'OFICIO_APROBACION' || d.templateCode === 'OFICIO_APROBACION'
         );
-        const finalDoc = projectDocuments.find(
-            (d: any) => d.template_code === finalReportCode || d.templateCode === finalReportCode
-        );
+        const isAnyFinalDocSigned = (docs: any[]): boolean => {
+            if (!docs || docs.length === 0) return false;
+            return docs.some((doc: any) => {
+                const isMatch = doc.template_code === finalReportCode || doc.templateCode === finalReportCode ||
+                    doc.template_code === 'INFORME_FINAL_INVESTIGACION' || doc.templateCode === 'INFORME_FINAL_INVESTIGACION' ||
+                    doc.template_code === 'INFORME_FINAL_INNOVACION' || doc.templateCode === 'INFORME_FINAL_INNOVACION' ||
+                    doc.template_code === 'INFORME_FINAL' || doc.templateCode === 'INFORME_FINAL';
+                if (!isMatch) return false;
+                return (
+                    doc.is_signed === true || doc.isSigned === true ||
+                    doc.state === 3 || doc.state === '3' || doc.state === 'Signed' ||
+                    doc.estado === 3 || doc.estado === '3' || doc.estado === 'Firmado' ||
+                    Boolean(doc.final_pdf_path || doc.finalPdfPath)
+                );
+            });
+        };
 
         return {
             isProtocoloSigned: isDocValidlySigned(protoDoc),
             isPlanSigned: isDocValidlySigned(planDoc),
-            isOficioSigned: Boolean(oficioDoc && (oficioDoc.is_signed || oficioDoc.isSigned || oficioDoc.state === 3 || oficioDoc.final_pdf_path)),
-            isFinalReportSigned: Boolean(finalDoc && (finalDoc.is_signed || finalDoc.isSigned || finalDoc.state === 3 || finalDoc.final_pdf_path))
+            isOficioSigned: Boolean(oficioDoc && (oficioDoc.is_signed || oficioDoc.isSigned || oficioDoc.state === 3 || oficioDoc.state === 'Signed' || oficioDoc.estado === 'Firmado' || oficioDoc.final_pdf_path || oficioDoc.finalPdfPath)),
+            isFinalReportSigned: isAnyFinalDocSigned(projectDocuments)
         };
     }, [projectDocuments, currentProject.status, finalReportCode]);
 
@@ -99,12 +112,24 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                     const oficioDoc = res.data.find(
                         (d: any) => d.template_code === 'OFICIO_APROBACION' || d.templateCode === 'OFICIO_APROBACION'
                     );
-                    setAsyncOficioSigned(Boolean(oficioDoc && (oficioDoc.is_signed || oficioDoc.isSigned || oficioDoc.state === 3 || oficioDoc.final_pdf_path)));
+                    setAsyncOficioSigned(Boolean(oficioDoc && (oficioDoc.is_signed || oficioDoc.isSigned || oficioDoc.state === 3 || oficioDoc.state === 'Signed' || oficioDoc.estado === 'Firmado' || oficioDoc.final_pdf_path || oficioDoc.finalPdfPath)));
 
-                    const finalDoc = res.data.find(
-                        (d: any) => d.template_code === finalReportCode || d.templateCode === finalReportCode
+                    const hasSignedFinal = res.data.some(
+                        (d: any) => {
+                            const isMatch = d.template_code === finalReportCode || d.templateCode === finalReportCode ||
+                                d.template_code === 'INFORME_FINAL_INVESTIGACION' || d.templateCode === 'INFORME_FINAL_INVESTIGACION' ||
+                                d.template_code === 'INFORME_FINAL_INNOVACION' || d.templateCode === 'INFORME_FINAL_INNOVACION' ||
+                                d.template_code === 'INFORME_FINAL' || d.templateCode === 'INFORME_FINAL';
+                            if (!isMatch) return false;
+                            return (
+                                d.is_signed === true || d.isSigned === true ||
+                                d.state === 3 || d.state === '3' || d.state === 'Signed' ||
+                                d.estado === 3 || d.estado === '3' || d.estado === 'Firmado' ||
+                                Boolean(d.final_pdf_path || d.finalPdfPath)
+                            );
+                        }
                     );
-                    setAsyncFinalReportSigned(Boolean(finalDoc && (finalDoc.is_signed || finalDoc.isSigned || finalDoc.state === 3 || finalDoc.final_pdf_path)));
+                    setAsyncFinalReportSigned(hasSignedFinal);
                 }
             } catch {
                 // Silencioso

@@ -108,21 +108,6 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
             {/* 0. SECCIÓN: DATOS GENERALES DEL PROYECTO (ENCABEZADO INFORME AVANCE) */}
             {showHeader && (
                 <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
-                    <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <h3 className="text-sm font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
-                                <FileText size={18} />
-                                1. DATOS GENERALES DEL PROYECTO (AUTO-POBLADOS)
-                            </h3>
-                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold mt-0.5">
-                                Identificación Institucional ISTPET — Datos heredados de la propuesta aprobada
-                            </p>
-                        </div>
-                        <span className="text-[10px] font-black text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full uppercase border border-amber-500/30">
-                            Oficial ISTPET
-                        </span>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
                             <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Número de Informe</label>
