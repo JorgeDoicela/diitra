@@ -89,7 +89,7 @@ namespace diitra_api.Services
             }
             var smtpUser = _configuration["Email:Username"];
             var smtpPass = _configuration["Email:Password"];
-            var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
+            var fromEmail = _configuration["Email:FromEmail"] ?? _configuration["Email:Username"] ?? "no-reply@diitra.local";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
             var storagePath = _configuration["Storage:BasePath"] ?? Path.Combine(AppContext.BaseDirectory, "diitra_data");
 

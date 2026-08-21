@@ -8,7 +8,7 @@ namespace diitra_application.Common;
 public interface IAppUrlService
 {
     /// <summary>
-    /// Obtiene la URL base del frontend sin barra al final (ej: "http://localhost:3000" o "https://diitra.istpet.edu.ec").
+    /// Obtiene la URL base del frontend sin barra al final (ej: "http://localhost:3000" o "http://192.168.7.239/diitra").
     /// </summary>
     string GetFrontendUrl();
 

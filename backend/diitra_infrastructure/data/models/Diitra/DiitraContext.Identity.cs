@@ -351,7 +351,7 @@ public partial class DiitraContext
             entity.Property(e => e.IdUsuarioDestinatario).HasColumnName("idUsuarioDestinatario");
             entity.Property(e => e.Asunto).HasColumnName("asunto").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Cuerpo).HasColumnName("cuerpo").HasColumnType("longtext").IsRequired();
-            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Pendiente','Enviado','Fallido')").HasDefaultValueSql("'Pendiente'");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Pendiente','Enviado','Fallido','Rebotado')").HasDefaultValueSql("'Pendiente'");
             entity.Property(e => e.ErrorMensaje).HasColumnName("errorMensaje").HasColumnType("text");
             entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.AdjuntosJson).HasColumnName("adjuntosJson").HasColumnType("json");

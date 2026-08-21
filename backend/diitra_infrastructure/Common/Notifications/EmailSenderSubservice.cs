@@ -180,7 +180,7 @@ namespace diitra_infrastructure.Common.Notifications
             var port = int.Parse(_configuration["Email:Port"] ?? "587");
             var smtpUser = _configuration["Email:Username"];
             var smtpPass = _configuration["Email:Password"];
-            var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
+            var fromEmail = _configuration["Email:FromEmail"] ?? _configuration["Email:Username"] ?? "no-reply@diitra.local";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
 
             var frontendUrl = _appUrlService.GetFrontendUrl();

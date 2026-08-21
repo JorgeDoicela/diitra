@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DIITRA — Tests: useICalSync.ts (Sincronización iCal)
  *
  * Valida la lógica de generación y formateo de URLs de suscripción iCal:
@@ -19,8 +19,8 @@ function validarTokenIcal(token: string): boolean {
 
 describe("useICalSync — suscripción iCal", () => {
     it("genera la URL con protocolo webcal://", () => {
-        const url = generarUrlWebcal("https://diitra.istpet.edu.ec", "token1234567890abc");
-        expect(url).toContain("webcal://diitra.istpet.edu.ec/api/v1/calendario/feed.ics?token=token1234567890abc");
+        const url = generarUrlWebcal("http://192.168.7.239/diitra", "token1234567890abc");
+        expect(url).toContain("webcal://192.168.7.239/diitra/api/v1/calendario/feed.ics?token=token1234567890abc");
     });
 
     it("valida tokens de sincronización seguros", () => {

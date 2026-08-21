@@ -136,9 +136,11 @@ namespace diitra_api.Services
 
                             var humanizedReason = HumanizeBounceReason(bounceReason);
 
+                            var cleanTarget = bouncedEmail.Trim().ToLowerInvariant();
+
                             // Buscar el último correo enviado a esa dirección en inv_email_historial
                             var emailRecord = await context.InvEmailHistorials
-                                .Where(e => e.Destinatario == bouncedEmail)
+                                .Where(e => e.Destinatario.ToLower() == cleanTarget || e.Destinatario.ToLower().Contains(cleanTarget))
                                 .OrderByDescending(e => e.FechaEnvio)
                                 .FirstOrDefaultAsync(stoppingToken);
 
@@ -205,72 +207,113 @@ namespace diitra_api.Services
             }
         }
 
-        private static (string? email, string reason) ExtractBounceDetails(MimeMessage message)
+        private (string? email, string reason) ExtractBounceDetails(MimeMessage message)
         {
             string? targetEmail = null;
             string reason = "La dirección de correo electrónico no existe o rechazó la entrega (Rebote DSN).";
 
-            // 1. Soporte Nativo RFC 3464 / multipart/report de MimeKit (Google, Microsoft 365, Exchange)
-            if (message.Body is MultipartReport report)
+            // 1. Recorrer todos los BodyParts en busca de MessageDeliveryStatus (RFC 3464) y MessagePart (correo original adjunto)
+            foreach (var part in message.BodyParts)
             {
-                foreach (var part in report)
+                if (part is MessageDeliveryStatus deliveryStatus)
                 {
-                    if (part is MessageDeliveryStatus deliveryStatus)
+                    for (int i = 0; i < deliveryStatus.StatusGroups.Count; i++)
                     {
-                        for (int i = 0; i < deliveryStatus.StatusGroups.Count; i++)
+                        var group = deliveryStatus.StatusGroups[i];
+                        var recipient = group["Final-Recipient"] ?? group["Original-Recipient"];
+                        if (!string.IsNullOrEmpty(recipient))
                         {
-                            var group = deliveryStatus.StatusGroups[i];
-                            var recipient = group["Final-Recipient"] ?? group["Original-Recipient"];
-                            if (!string.IsNullOrEmpty(recipient))
+                            var clean = Regex.Replace(recipient, @"^[a-zA-Z0-9_-]+;\s*", "", RegexOptions.IgnoreCase).Trim();
+                            clean = clean.Trim('<', '>', ' ', '"', '\'');
+                            if (!string.IsNullOrEmpty(clean) && clean.Contains('@'))
                             {
-                                var clean = recipient.Replace("rfc822;", "", StringComparison.OrdinalIgnoreCase).Trim();
-                                if (!string.IsNullOrEmpty(clean)) targetEmail = clean;
-                            }
-                            var diagnostic = group["Diagnostic-Code"];
-                            if (!string.IsNullOrEmpty(diagnostic))
-                            {
-                                reason = diagnostic.Trim();
+                                targetEmail = clean;
                             }
                         }
+                        var diagnostic = group["Diagnostic-Code"];
+                        if (!string.IsNullOrEmpty(diagnostic))
+                        {
+                            reason = diagnostic.Trim();
+                        }
+                    }
+                }
+                else if (part is MessagePart messagePart && messagePart.Message != null)
+                {
+                    // Si el reporte adjunta el mensaje original reenviado, extraer el destinatario directo
+                    var originalTo = messagePart.Message.To.Mailboxes.FirstOrDefault()?.Address;
+                    if (!string.IsNullOrEmpty(originalTo) && string.IsNullOrEmpty(targetEmail))
+                    {
+                        targetEmail = originalTo.Trim();
                     }
                 }
             }
 
-            var fullText = message.TextBody ?? message.HtmlBody ?? "";
+            var fullText = (message.TextBody ?? "") + "\n" + (message.HtmlBody ?? "");
 
-            // 2. Buscar patrones estándar RFC 3464 en texto plano (Final-Recipient / Original-Recipient)
+            // 2. Patrones estándar RFC 3464 en texto plano (Final-Recipient / Original-Recipient)
             if (string.IsNullOrEmpty(targetEmail))
             {
-                var recipientMatch = Regex.Match(fullText, @"(?:Final-Recipient|Original-Recipient):\s*(?:rfc822;)?\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", RegexOptions.IgnoreCase);
+                var recipientMatch = Regex.Match(fullText, @"(?:Final-Recipient|Original-Recipient):\s*(?:rfc822;)?\s*<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?", RegexOptions.IgnoreCase);
                 if (recipientMatch.Success)
                 {
                     targetEmail = recipientMatch.Groups[1].Value.Trim();
                 }
             }
 
-            // 3. Buscar patrones comunes de Google / Microsoft ("The email account that you tried to reach does not exist", etc.)
+            // 3. Patrones comunes de Google Mail / Gmail DSN ("wasn't delivered to ...", "Address not found")
             if (string.IsNullOrEmpty(targetEmail))
             {
-                var generalMatch = Regex.Match(fullText, @"(?:to|hacia|destinatario|account|casilla):\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", RegexOptions.IgnoreCase);
+                var gmailMatch = Regex.Match(fullText, @"(?:wasn't delivered to|could not be delivered to|no se pudo entregar a|falló la entrega a|delivered to)\s+<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?", RegexOptions.IgnoreCase);
+                if (gmailMatch.Success)
+                {
+                    targetEmail = gmailMatch.Groups[1].Value.Trim();
+                }
+            }
+
+            // 4. Patrones de cabeceras de reenvío en texto plano (To: / Para: / Destinatario:)
+            if (string.IsNullOrEmpty(targetEmail))
+            {
+                var generalMatch = Regex.Match(fullText, @"(?:to|para|hacia|destinatario|account|casilla):\s*<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?", RegexOptions.IgnoreCase);
                 if (generalMatch.Success)
                 {
-                    targetEmail = generalMatch.Groups[1].Value.Trim();
-                }
-                else
-                {
-                    var anyEmailMatch = Regex.Match(fullText, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}");
-                    if (anyEmailMatch.Success)
+                    var found = generalMatch.Groups[1].Value.Trim();
+                    if (!IsSystemOrSenderEmail(found))
                     {
-                        var found = anyEmailMatch.Value.Trim();
-                        if (!found.Contains("google") && !found.Contains("postmaster") && !found.Contains("mailer-daemon") && !found.Contains("microsoft"))
-                        {
-                            targetEmail = found;
-                        }
+                        targetEmail = found;
                     }
                 }
             }
 
-            // 4. Extraer código de diagnóstico / motivo específico
+            // 5. Patrones 550 con correo entre corchetes angulares <correo@dominio.com>
+            if (string.IsNullOrEmpty(targetEmail))
+            {
+                var code550Match = Regex.Match(fullText, @"55\d\s+[\d\.]*\s*<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>", RegexOptions.IgnoreCase);
+                if (code550Match.Success)
+                {
+                    var found = code550Match.Groups[1].Value.Trim();
+                    if (!IsSystemOrSenderEmail(found))
+                    {
+                        targetEmail = found;
+                    }
+                }
+            }
+
+            // 6. Fallback final: Cualquier dirección de correo que no sea de la infraestructura ni remitente
+            if (string.IsNullOrEmpty(targetEmail))
+            {
+                var matches = Regex.Matches(fullText, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}");
+                foreach (Match m in matches)
+                {
+                    var cand = m.Value.Trim();
+                    if (!IsSystemOrSenderEmail(cand))
+                    {
+                        targetEmail = cand;
+                        break;
+                    }
+                }
+            }
+
+            // 7. Extraer código de diagnóstico / motivo específico
             if (reason == "La dirección de correo electrónico no existe o rechazó la entrega (Rebote DSN).")
             {
                 var diagnosticMatch = Regex.Match(fullText, @"Diagnostic-Code:\s*([^\r\n]+)", RegexOptions.IgnoreCase);
@@ -278,7 +321,7 @@ namespace diitra_api.Services
                 {
                     reason = diagnosticMatch.Groups[1].Value.Trim();
                 }
-                else if (fullText.Contains("550 5.1.1") || fullText.Contains("does not exist") || fullText.Contains("no existe"))
+                else if (fullText.Contains("550 5.1.1") || fullText.Contains("does not exist") || fullText.Contains("no existe") || fullText.Contains("Address not found") || fullText.Contains("couldn't be found"))
                 {
                     reason = "Error 550 5.1.1: La cuenta de correo no existe en el servidor destinatario.";
                 }
@@ -289,6 +332,26 @@ namespace diitra_api.Services
             }
 
             return (targetEmail, reason);
+        }
+
+        private bool IsSystemOrSenderEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return true;
+            var lower = email.ToLowerInvariant();
+            var fromEmail = _configuration["Email:FromEmail"]?.ToLowerInvariant();
+            var username = _configuration["Email:Username"]?.ToLowerInvariant();
+
+            if (!string.IsNullOrEmpty(fromEmail) && (lower == fromEmail || lower.Contains(fromEmail)))
+                return true;
+            if (!string.IsNullOrEmpty(username) && (lower == username || lower.Contains(username)))
+                return true;
+
+            return lower.Contains("google") ||
+                   lower.Contains("postmaster") ||
+                   lower.Contains("mailer-daemon") ||
+                   lower.Contains("microsoft") ||
+                   lower.Contains("no-reply") ||
+                   lower.Contains("noreply");
         }
 
         private static string HumanizeBounceReason(string rawReason)
