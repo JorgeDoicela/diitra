@@ -143,7 +143,7 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica...');
         try {
-            const calculatedRol = templateCode === 'OFICIO_APROBACION'
+            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 
@@ -267,7 +267,7 @@ export const useBuilderPdfAndSign = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma institucional DIITRA...');
         try {
-            const calculatedRol = templateCode === 'OFICIO_APROBACION'
+            const calculatedRol = (templateCode === 'OFICIO_APROBACION' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')
                 ? 'Coordinador de Investigación'
                 : 'Director de Proyecto';
 

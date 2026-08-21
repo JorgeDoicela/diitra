@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Settings, CheckCircle2, FileText, FileSignature, CheckSquare,
-    AlertCircle, BarChart, Activity, Shield, Clock, Award, GraduationCap
+    AlertCircle, BarChart, Shield, Clock, Award, GraduationCap
 } from 'lucide-react';
 import api from '../../../../../api/axios_config';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
@@ -77,19 +77,18 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     const [asyncPlanAprendizajeSigned, setAsyncPlanAprendizajeSigned] = useState(false);
     const [asyncPlanAprendizajeApproved, setAsyncPlanAprendizajeApproved] = useState(false);
 
-    const isDocValidlySigned = (doc: any, projectStatus?: string): boolean => {
+    const isDocValidlySigned = (doc: any): boolean => {
         if (!doc) return false;
-        if (['Aprobado', 'En Ejecución', 'Finalizado'].includes(projectStatus || '')) return true;
         const hasSignedState = doc.state === 3 || doc.state === '3' || doc.state === 'Signed' || doc.estado === 3 || doc.estado === '3' || doc.estado === 'Firmado' || doc.is_signed === true || doc.isSigned === true;
         const hasSignedFile = Boolean(doc.final_pdf_path || doc.finalPdfPath);
-        return hasSignedState || hasSignedFile;
+        return Boolean(hasSignedState || hasSignedFile);
     };
 
     const derivedSignatures = useMemo(() => {
         if (!projectDocuments || projectDocuments.length === 0) return null;
         const protoDoc = projectDocuments.find(
             (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
-                        d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
+                d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
         );
         const planLearningDoc = projectDocuments.find(
             (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
@@ -114,25 +113,16 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
         const evalDoc = projectDocuments.find(
             (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE'
         );
-        let approved = false;
-        if (evalDoc) {
-            let contentData: any = null;
-            try {
-                if (evalDoc.content_json) contentData = JSON.parse(evalDoc.content_json);
-            } catch { }
 
-            approved = isDocValidlySigned(evalDoc, currentProject.status)
-                || contentData?.EstadoAprobacion === 'Aprobado'
-                || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
-        } else if (['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) {
-            approved = true;
-        }
+        const isEvalDocSigned = isDocValidlySigned(evalDoc);
+        const isLegacyProjectApproved = ['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
+        const isPlanAprendizajeApproved = isEvalDocSigned || isLegacyProjectApproved;
 
         return {
-            isProtocoloSigned: isDocValidlySigned(protoDoc, currentProject.status),
-            isPlanAprendizajeSigned: isDocValidlySigned(planLearningDoc, currentProject.status),
+            isProtocoloSigned: isDocValidlySigned(protoDoc) || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status),
+            isPlanAprendizajeSigned: isDocValidlySigned(planLearningDoc) || isLegacyProjectApproved,
             isFinalReportSigned: isAnyFinalDocSigned(projectDocuments),
-            isPlanAprendizajeApproved: approved
+            isPlanAprendizajeApproved
         };
     }, [projectDocuments, currentProject.status, finalReportTemplateCode]);
 
@@ -143,7 +133,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
 
     const renderDeadlineBadge = (dateStr?: string | null, prefix: string = 'Plazo') => {
         if (!dateStr) return null;
-        
+
         let targetDate: Date;
         if (dateStr.includes('/')) {
             const [d, m, y] = dateStr.split('/').map(Number);
@@ -197,14 +187,15 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                 if (isMounted && Array.isArray(res.data)) {
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
-                                    d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
+                            d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
-                    setAsyncProtocoloSigned(isDocValidlySigned(protoDoc, currentProject.status));
+                    setAsyncProtocoloSigned(isDocValidlySigned(protoDoc) || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status));
 
                     const planLearningDoc = res.data.find(
                         (d: any) => d.template_code === 'PLAN_APRENDIZAJE' || d.templateCode === 'PLAN_APRENDIZAJE'
                     );
-                    setAsyncPlanAprendizajeSigned(isDocValidlySigned(planLearningDoc, currentProject.status));
+                    const isLegacyProjectApproved = ['Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
+                    setAsyncPlanAprendizajeSigned(isDocValidlySigned(planLearningDoc) || isLegacyProjectApproved);
 
                     const hasSignedFinal = res.data.some(
                         (d: any) => {
@@ -226,20 +217,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     const evalDoc = res.data.find(
                         (d: any) => d.template_code === 'EVALUACION_PLAN_APRENDIZAJE' || d.templateCode === 'EVALUACION_PLAN_APRENDIZAJE'
                     );
-                    let approved = false;
-                    if (evalDoc) {
-                        let contentData: any = null;
-                        try {
-                            if (evalDoc.content_json) contentData = JSON.parse(evalDoc.content_json);
-                        } catch { }
-
-                        approved = isDocValidlySigned(evalDoc, currentProject.status)
-                            || contentData?.EstadoAprobacion === 'Aprobado'
-                            || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status);
-                    } else if (['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(currentProject.status)) {
-                        approved = true;
-                    }
-                    setAsyncPlanAprendizajeApproved(approved);
+                    const isEvalDocSigned = isDocValidlySigned(evalDoc);
+                    setAsyncPlanAprendizajeApproved(isEvalDocSigned || isLegacyProjectApproved);
                 }
             } catch {
                 // Silencioso si aún no existe la instancia
@@ -275,30 +254,31 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                     let isRevisionDone = false;
 
                     const status = currentProject.status;
+                    const isBothApproved = status === 'En Revisión' && isPlanAprendizajeApproved;
+                    const isAllFormulationSigned = isProtocoloSigned && isPlanAprendizajeSigned;
 
                     if (phase.id === 'Borrador') {
                         isPast = isProtocoloSigned || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
                         isCurrent = !isPast && (status === 'Borrador' || status === 'En Corrección' || status === 'Enviado');
                     } else if (phase.id === 'PlanAprendizaje') {
                         // Fase 2: Plan de Aprendizaje elaborado y firmado por el docente
-                        isPast = isPlanAprendizajeSigned || isPlanAprendizajeApproved || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isCurrent = !isPlanAprendizajeSigned;
+                        isPast = isPlanAprendizajeSigned || isPlanAprendizajeApproved || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = !isPast && !isPlanAprendizajeSigned;
                         isFuture = false;
                     } else if (phase.id === 'Enviado') {
-                        // Fase 3: La revisión técnica del Administrador del Protocolo (solo activa si el protocolo está formalmente firmado/enviado)
+                        // Fase 3: Revisión técnica exclusiva del Administrador (solo activa cuando el expediente está formalmente enviado)
                         isPast = ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isCurrent = isProtocoloSigned && (status === 'Enviado' || status === 'Borrador') && !isPast;
+                        isCurrent = !isPast && (status === 'Enviado' || (isAllFormulationSigned && status === 'Borrador'));
                         isFuture = !isCurrent && !isPast;
                     } else if (phase.id === 'EvaluacionPlanAprendizaje') {
-                        // Fase 4: Evaluación del Plan por el Administrador: se habilita de forma independiente en cuanto el Plan de Aprendizaje esté firmado
-                        isPast = isPlanAprendizajeApproved || ['En Revisión', 'Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
-                        isCurrent = isPlanAprendizajeSigned && !isPast;
+                        // Fase 4: Evaluación del Plan por el Administrador: se habilita de forma autónoma en cuanto el Plan de Aprendizaje esté firmado
+                        isPast = isPlanAprendizajeApproved || ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
+                        isCurrent = !isPast && isPlanAprendizajeSigned;
                         isFuture = !isPlanAprendizajeSigned && !isPast;
                     } else if (phase.id === 'En Revisión') {
                         isRevisionDone = (assignedRevisionStatus === 'Completada' || currentProject.puntajeEvaluacion !== null);
                         // COMPUERTA CACES ESTRICTA: Solo se habilita si AMBOS instrumentos han sido aprobados por el administrador
                         // (El proyecto debe estar formalmente en 'En Revisión' tras aprobar la revisión técnica del protocolo Y contar con Plan de Aprendizaje aprobado)
-                        const isBothApproved = status === 'En Revisión' && isPlanAprendizajeApproved;
                         isPast = ['Aprobado', 'En Ejecución', 'Finalizado'].includes(status);
                         isCurrent = isBothApproved && !isPast;
                         isFuture = !isCurrent && !isPast;
@@ -484,15 +464,6 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                             >
                                                 <Shield size={14} />
                                                 <span>{isCurrentActive ? 'Iniciar Revisión Técnica' : 'Ver Revisión Técnica'}</span>
-                                            </Link>
-                                        ) : currentProject.status === 'En Corrección' ? (
-                                            <Link
-                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix)}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.2)] !bg-amber-500 hover:!bg-amber-600 !text-white"
-                                            >
-                                                <AlertCircle size={14} className="animate-pulse" />
-                                                <span>Atender Observaciones del Admin</span>
                                             </Link>
                                         ) : (
                                             <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
@@ -731,23 +702,9 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                                     <span>Auditar y Dictaminar Informe Final</span>
                                                 </Link>
                                             ) : (
-                                                <div className="space-y-2">
-                                                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1 text-center">
-                                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1.5">
-                                                            <Clock size={14} /> Informe en Revisión por Coordinación
-                                                        </p>
-                                                        <p className="text-[10px] text-text-dim leading-relaxed">
-                                                            Su Informe Final ha sido remitido. La Coordinación de Investigación está auditando los resultados.
-                                                        </p>
-                                                    </div>
-                                                    <Link
-                                                        to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
-                                                        onClick={(e) => { e.stopPropagation(); }}
-                                                        className="btn-vercel-secondary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5"
-                                                    >
-                                                        <Shield size={14} />
-                                                        <span>Ver Revisión Técnica</span>
-                                                    </Link>
+                                                <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                                    <Clock size={14} className="text-brand animate-pulse" />
+                                                    <span>En espera de auditoría por Coordinación</span>
                                                 </div>
                                             )}
                                         </div>
