@@ -1511,7 +1511,7 @@ CREATE TABLE inv_email_historial (
     idUsuarioDestinatario INT(11) NULL COMMENT 'Vínculo al usuario en la tabla usuarios si aplica',
     asunto           VARCHAR(255) NOT NULL,
     cuerpo           LONGTEXT     NOT NULL,
-    estado           ENUM('Pendiente', 'Enviado', 'Fallido') NOT NULL DEFAULT 'Pendiente',
+    estado           ENUM('Pendiente', 'Enviado', 'Fallido', 'Rebotado') NOT NULL DEFAULT 'Pendiente',
     errorMensaje     TEXT         NULL,
     fechaEnvio       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     adjuntosJson     JSON         NULL COMMENT 'JSON array con metadatos de archivos adjuntos',
