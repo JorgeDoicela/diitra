@@ -109,13 +109,13 @@ namespace diitra_api.Controllers
             var product = await _context.InvProductos
                 .Include(p => p.IdTipoProductoNavigation)
                 .Include(p => p.IdProyectoNavigation)
-                    .ThenInclude(proj => proj.InvProyectoParticipantes)
+                    .ThenInclude(proj => proj!.InvProyectoParticipantes)
                         .ThenInclude(part => part.IdUsuarioNavigation)
                 .Include(p => p.IdProyectoNavigation)
-                    .ThenInclude(proj => proj.IdSublineaNavigation)
-                        .ThenInclude(sub => sub.IdLineaNavigation)
+                    .ThenInclude(proj => proj!.IdSublineaNavigation)
+                        .ThenInclude(sub => sub!.IdLineaNavigation)
                 .Include(p => p.IdProyectoNavigation)
-                    .ThenInclude(proj => proj.IdGrupoNavigation)
+                    .ThenInclude(proj => proj!.IdGrupoNavigation)
                 .Include(p => p.InvTransferencias)
                 .FirstOrDefaultAsync(p => p.Uuid == assetUuid);
 

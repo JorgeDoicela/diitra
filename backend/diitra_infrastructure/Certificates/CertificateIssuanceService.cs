@@ -189,7 +189,7 @@ namespace Diitra.Infrastructure.Certificates
                         entityType: "Certificado",
                         dataSnapshotJson: JsonSerializer.Serialize(certificateData)
                     );
-                    inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+                    inst.Finalize(string.Empty, docResult.FileHash ?? string.Empty, docResult.TraceabilityCode);
                     _db.DocumentInstances.Add(inst);
 
                     Console.WriteLine($"[DIITRA] [CertificateService] Certificado emitido exitosamente. TraceabilityCode: {docResult.TraceabilityCode}");
@@ -291,7 +291,7 @@ namespace Diitra.Infrastructure.Certificates
                         entityType: "Certificado",
                         dataSnapshotJson: JsonSerializer.Serialize(certificateData)
                     );
-                    inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+                    inst.Finalize(string.Empty, docResult.FileHash ?? string.Empty, docResult.TraceabilityCode);
                     _db.DocumentInstances.Add(inst);
 
                     results.Add(new IssuedCertificateResultDto
@@ -379,7 +379,7 @@ namespace Diitra.Infrastructure.Certificates
                 entityType: "Certificado",
                 dataSnapshotJson: JsonSerializer.Serialize(certificateData)
             );
-            inst.Finalize(string.Empty, docResult.FileHash, docResult.TraceabilityCode);
+            inst.Finalize(string.Empty, docResult.FileHash ?? string.Empty, docResult.TraceabilityCode);
             _db.DocumentInstances.Add(inst);
             await _db.SaveChangesAsync(ct);
 

@@ -96,6 +96,12 @@ namespace diitra_api.Services
                 await client.AuthenticateAsync(username, password, stoppingToken);
 
                 var inbox = client.Inbox;
+                if (inbox == null)
+                {
+                    await client.DisconnectAsync(true, stoppingToken);
+                    return;
+                }
+
                 await inbox.OpenAsync(FolderAccess.ReadWrite, stoppingToken);
 
                 // Buscar mensajes no leídos que correspondan a reportes de entrega (Mailer-Daemon, Postmaster, DSN)
