@@ -1,4 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragOverlay,
+    type DragStartEvent,
+    type DragEndEvent
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    rectSortingStrategy,
+    useSortable,
+    arrayMove
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { GanttObjective } from '../../types';
 import { DYN_COLORS } from './RenderCover';
 
@@ -47,10 +64,6 @@ export const RenderRichText: React.FC<{ config: any }> = ({ config }) => {
                 className="prose max-w-none text-xs leading-relaxed text-[#1e2a4a]/90 tiptap-editor"
                 dangerouslySetInnerHTML={{ __html: html }}
             />
-            <p className="text-[8px] text-pink-500 font-black border-t border-dashed border-pink-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-                Los investigadores completarán este apartado en la pestaña "Plan Técnico" del Workspace.
-            </p>
         </div>
     );
 };
@@ -87,11 +100,24 @@ export const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
 };
 
 export const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
-    const months = config.ganttMonths || [
-        'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
-        'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'
+    const totalMonths = config.totalMonths || 6;
+    const months = config.months || ['Mes 1', 'Mes 2', 'Mes 3', 'Mes 4', 'Mes 5', 'Mes 6'].slice(0, totalMonths);
+    const objectives: GanttObjective[] = config.objectives || [
+        {
+            name: 'Objetivo 1: Diagnóstico y Fundamentación',
+            activities: [
+                { id: '1', name: 'Revisión sistemática de literatura', resources: 'Laptop, Papers IEEE/Scopus', startMonth: 0, startWeek: 0, endMonth: 1, endWeek: 2, color: '#3b82f6' },
+                { id: '2', name: 'Diseño de instrumentos metodológicos', resources: 'Encuestas, Guías de entrevista', startMonth: 1, startWeek: 1, endMonth: 2, endWeek: 3, color: '#6366f1' },
+            ]
+        },
+        {
+            name: 'Objetivo 2: Desarrollo y Experimentación',
+            activities: [
+                { id: '3', name: 'Implementación del prototipo / modelo', resources: 'Servidor, Entorno de pruebas', startMonth: 2, startWeek: 0, endMonth: 4, endWeek: 2, color: '#10b981' },
+                { id: '4', name: 'Pruebas de validación y métricas', resources: 'Población objetivo, Software estadístico', startMonth: 4, startWeek: 1, endMonth: 5, endWeek: 3, color: '#f59e0b' },
+            ]
+        }
     ];
-    const objectives: GanttObjective[] = config.ganttObjectives || [];
 
     const isInRange = (startMonth: number, startWeek: number, endMonth: number, endWeek: number, mIdx: number, wIdx: number): boolean => {
         const startGlobal = startMonth * 4 + startWeek;
@@ -116,9 +142,9 @@ export const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                         ))}
                     </tr>
                     <tr>
-                        {months.map(() =>
+                        {months.map((_, mIdx) =>
                             [1, 2, 3, 4].map((w) => (
-                                <th key={w} className="border border-slate-300 p-0.5 text-[7px] text-center font-semibold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}>
+                                <th key={`${mIdx}-${w}`} className="border border-slate-300 p-0.5 text-[7px] text-center font-semibold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}>
                                     {w}
                                 </th>
                             ))
@@ -159,33 +185,196 @@ export const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
                     })}
                 </tbody>
             </table>
-            <p className="text-[8px] text-indigo-500 font-black border-t border-dashed border-indigo-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                Los investigadores gestionarán el cronograma en la pestaña "Cronograma (Gantt)" del Workspace.
-            </p>
         </div>
     );
 };
 
-export const RenderSignatures: React.FC<{ config: any }> = ({ config }) => {
-    const signatories = config.signatories || [
-        { label: 'Elaborado por:', name: '[Director de Proyecto]', role: 'Docente Investigador' },
-        { label: 'Aprobado por:', name: '[Rector/Director]', role: 'Comisión de Investigación' }
-    ];
+interface SignerCard {
+    id: string;
+    label: string;
+    name: string;
+    role: string;
+    isDynamic?: boolean;
+}
+
+const SignatureCardView: React.FC<{ sig: SignerCard; isDragging?: boolean }> = ({ sig, isDragging }) => (
+    <div
+        className={`w-full max-w-[200px] text-center flex flex-col items-center justify-between p-3.5 rounded-lg border transition-all duration-200 select-none ${
+            isDragging
+                ? 'shadow-2xl border-brand ring-2 ring-brand/20 bg-surface scale-105 z-50 cursor-grabbing'
+                : 'border-border-thin bg-surface/50 hover:bg-surface hover:border-border-hover hover:shadow-xs cursor-grab active:cursor-grabbing'
+        }`}
+    >
+        <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider block mb-3 pointer-events-none truncate max-w-full">
+            {sig.label}
+        </span>
+        
+        {/* Línea horizontal de firma formal y limpia */}
+        <div className="w-4/5 border-t border-border-hover/70 mb-2.5 pointer-events-none" />
+
+        <div className="space-y-0.5 pointer-events-none w-full">
+            <span className="text-[10px] font-semibold text-text-main block truncate">
+                {sig.name}
+            </span>
+            <span className="text-[8.5px] text-text-dim block truncate font-medium">
+                {sig.role}
+            </span>
+        </div>
+    </div>
+);
+
+const SortableSignatureCard: React.FC<{ sig: SignerCard; isInteractive: boolean }> = ({ sig, isInteractive }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: sig.id, disabled: !isInteractive });
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+    };
+
     return (
-        <div className="mt-8 select-none">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 justify-center">
-                {signatories.map((sig: any, idx: number) => (
-                    <div key={idx} className="text-center pt-8 border-t border-slate-300 max-w-[180px] mx-auto flex flex-col gap-0.5">
-                        <span className="text-[7.5px] font-black uppercase text-slate-400 tracking-wider mb-1">{sig.label}</span>
-                        <span className="text-[9.5px] font-black text-slate-800 leading-snug">{sig.name}</span>
-                        <span className="text-[8.5px] font-medium text-slate-500 leading-snug">{sig.role}</span>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="w-full flex justify-center">
+            <SignatureCardView sig={sig} isDragging={false} />
+        </div>
+    );
+};
+
+export const RenderSignatures: React.FC<{
+    config: any;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config = {}, blockId, onUpdateConfig }) => {
+    const mode = config.signaturesMode || 'team_dynamic';
+    const [activeId, setActiveId] = useState<string | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 4 },
+        })
+    );
+
+    let displaySignatories: SignerCard[] = [];
+
+    if (mode === 'custom_manual') {
+        const rawSigs = config.signatories || [
+            { label: 'Elaborado por:', name: '[Director de Proyecto]', role: 'Docente Investigador' },
+            { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinación de Carrera' }
+        ];
+        displaySignatories = rawSigs.map((s: any, i: number) => ({
+            id: s._id || `manual_${i}_${s.role}`,
+            label: s.label || 'Firmante:',
+            name: s.name || '',
+            role: s.role || '',
+            isDynamic: false
+        }));
+    } else {
+        const dynamicMap: Record<string, SignerCard> = {
+            director: { id: 'director', label: 'DIRECTOR DEL PROYECTO', name: '[Director del Proyecto]', role: 'Director de Proyecto', isDynamic: true },
+            docentes: { id: 'docentes', label: 'DOCENTE INVESTIGADOR', name: '[Docente Investigador]', role: 'Docente Investigador', isDynamic: true },
+            estudiantes: { id: 'estudiantes', label: 'ESTUDIANTE INVESTIGADOR', name: '[Estudiante Auxiliar]', role: 'Auxiliar de Investigación', isDynamic: true },
+            coordinador_carrera: { id: 'coordinador_carrera', label: 'COORDINACIÓN DE CARRERA', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera', isDynamic: true },
+            coordinador_diitra: { id: 'coordinador_diitra', label: 'COMISIÓN DE EVALUACIÓN', name: '[Coordinador de Investigación]', role: 'Coordinación de Investigación', isDynamic: true },
+            vicerrectorado: { id: 'vicerrectorado', label: 'RESOLUCIÓN INSTITUCIONAL', name: '[Vicerrector Académico]', role: 'Vicerrectorado Académico', isDynamic: true }
+        };
+
+        const activeDynamicIds = new Set<string>();
+        if (config.includeDirector !== false) activeDynamicIds.add('director');
+        if (config.includeDocentes !== false) activeDynamicIds.add('docentes');
+        if (config.includeEstudiantes) activeDynamicIds.add('estudiantes');
+        if (config.includeCoordinadorCarrera !== false) activeDynamicIds.add('coordinador_carrera');
+        if (config.includeCoordinadorDiitra || mode === 'institutional_chain') activeDynamicIds.add('coordinador_diitra');
+        if (config.includeVicerrectorado) activeDynamicIds.add('vicerrectorado');
+
+        const defaultOrder = ['director', 'docentes', 'estudiantes', 'coordinador_carrera', 'coordinador_diitra', 'vicerrectorado'];
+        const configuredOrder: string[] = config.signaturesOrder || defaultOrder;
+        const fullOrder = Array.from(new Set([...configuredOrder, ...defaultOrder]));
+
+        displaySignatories = fullOrder
+            .filter(id => activeDynamicIds.has(id))
+            .map(id => dynamicMap[id])
+            .filter(Boolean);
+
+        if (displaySignatories.length === 0) {
+            displaySignatories = [
+                dynamicMap.director,
+                dynamicMap.coordinador_carrera
+            ];
+        }
+    }
+
+    const activeSig = activeId ? displaySignatories.find((s) => s.id === activeId) : null;
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (!over || active.id === over.id || !blockId || !onUpdateConfig) return;
+
+        const oldIndex = displaySignatories.findIndex((s) => s.id === active.id);
+        const newIndex = displaySignatories.findIndex((s) => s.id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const reordered = arrayMove(displaySignatories, oldIndex, newIndex);
+            if (mode === 'custom_manual') {
+                onUpdateConfig(blockId, 'signatories', reordered.map(s => ({
+                    label: s.label,
+                    name: s.name,
+                    role: s.role,
+                    _id: s.id
+                })));
+            } else {
+                const newOrder = reordered.map(s => s.id);
+                onUpdateConfig(blockId, 'signaturesOrder', newOrder);
+            }
+        }
+    };
+
+    return (
+        <div
+            className="mt-8 select-none"
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+        >
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={displaySignatories.map((s) => s.id)}
+                    strategy={rectSortingStrategy}
+                >
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 justify-center">
+                        {displaySignatories.map((sig) => (
+                            <SortableSignatureCard
+                                key={sig.id}
+                                sig={sig}
+                                isInteractive={Boolean(onUpdateConfig && displaySignatories.length > 1)}
+                            />
+                        ))}
                     </div>
-                ))}
-            </div>
-            <div className="text-center text-[8px] font-mono text-slate-400 mt-4 border-t border-dashed border-slate-200 pt-2">
-                {config.textoPieFirma || 'Comisión de Acreditación e Investigación IST Traversari'}
-            </div>
+                </SortableContext>
+
+                <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
+                    {activeSig ? (
+                        <div className="w-[180px]">
+                            <SignatureCardView sig={activeSig} isDragging={true} />
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
         </div>
     );
 };

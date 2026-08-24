@@ -147,55 +147,66 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
     }
 
+    const docTitle = selectedTemplate?.name || templateName || 'Documento';
+
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-bg-deep border border-border-thin rounded-md overflow-hidden">
-            {/* Header del panel */}
-            <div className="p-3 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 shadow-none">
-                <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-text-main" />
-                    {templateName || 'Lienzo de Maquetación (Edición Directa A4)'}
-                </span>
-                <span className="text-[10px] font-medium text-text-dim transform -translate-x-10">
-                    {activeCount} / {blocks.length} visibles
-                </span>
-                <div className="flex items-center gap-3.5 shrink-0">
-                    {rightActions}
+            {/* Header del panel alineado con el sistema de diseño Vercel Geist */}
+            <div className="h-11 px-3.5 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 select-none">
+                <div className="flex items-center gap-2 min-w-0 max-w-[60%]">
+                    <FileText className="w-3.5 h-3.5 text-text-main shrink-0" />
+                    <span className="text-xs font-semibold text-text-main truncate" title={docTitle}>
+                        {docTitle}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[10px] text-text-dim font-medium">
+                        {activeCount} / {blocks.length} visibles
+                    </span>
+
                     {rightActions && <div className="w-px h-3.5 bg-border-thin" />}
+                    {rightActions}
+
                     {toggleHeaderFn && (
-                        <button
-                            type="button"
-                            onClick={toggleHeaderFn}
-                            className="p-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-medium"
-                            title={headerCollapsed ? "Mostrar cabecera de la página" : "Ocultar cabecera (Modo Enfoque)"}
-                        >
-                            {headerCollapsed ? (
-                                <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m18 15-6-6-6 6" /></svg>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold">Mostrar Cabecera</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m6 9 6 6 6-6" /></svg>
-                                    <span className="text-[9px] uppercase tracking-wider font-bold text-text-dim/60">Ocultar Cabecera</span>
-                                </>
-                            )}
-                        </button>
+                        <>
+                            <div className="w-px h-3.5 bg-border-thin" />
+                            <button
+                                type="button"
+                                onClick={toggleHeaderFn}
+                                className="px-2 py-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-medium"
+                                title={headerCollapsed ? "Mostrar cabecera de la página" : "Ocultar cabecera (Modo Enfoque)"}
+                            >
+                                {headerCollapsed ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m18 15-6-6-6 6" /></svg>
+                                        <span className="text-[9px] uppercase tracking-wider font-bold">Mostrar Cabecera</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m6 9 6 6 6-6" /></svg>
+                                        <span className="text-[9px] uppercase tracking-wider font-bold text-text-dim/60">Ocultar Cabecera</span>
+                                    </>
+                                )}
+                            </button>
+                        </>
                     )}
 
-                    {toggleHeaderFn && <div className="w-px h-3.5 bg-border-thin" />}
-
                     {isDirty !== undefined && (
-                        isDirty ? (
-                            <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                Cambios sin guardar
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                Todo guardado
-                            </span>
-                        )
+                        <>
+                            <div className="w-px h-3.5 bg-border-thin" />
+                            {isDirty ? (
+                                <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    Cambios sin guardar
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1.5 text-[10px] text-text-dim">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Todo guardado
+                                </span>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

@@ -225,6 +225,7 @@ const DocumentTemplatesPage: React.FC = () => {
                     <div className={`flex-1 min-w-0 flex-col min-h-0 md:flex ${activeMobileTab === 'canvas' ? 'flex w-full md:w-auto' : 'hidden'}`}>
                         <BlockCanvas
                             selectedTemplate={selectedTemplate}
+                            templateName={selectedTemplate?.name}
                             blocks={blocks}
                             activeBlockId={activeBlockId}
                             onSelectBlock={setActiveBlockId}

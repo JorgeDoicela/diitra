@@ -23,7 +23,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
-import type { DocumentTemplateDto, DocumentBlock, BlockType, TableRow } from '../types';
+import { type DocumentTemplateDto, type DocumentBlock, type BlockType, type TableRow, BLOCK_METADATA } from '../types';
 import {
     DEFAULT_TECHNICAL_SUBSECTIONS,
     DEFAULT_IMPACT_CATEGORIES,
@@ -417,13 +417,12 @@ export const useDocumentTemplatesPage = () => {
                 break;
             case 'signatures':
                 newBlock = {
-                    id: newId, type, title: 'Bloque de Firmas y Trazabilidad', isActive: true,
+                    id: newId, type, title: BLOCK_METADATA.signatures.defaultTitle, isActive: true,
                     config: {
                         signatories: [
                             { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
                             { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' }
-                        ],
-                        textoPieFirma: 'Comisión de Acreditación e Investigación IST Traversari'
+                        ]
                     }
                 };
                 break;
@@ -431,7 +430,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Ficha de Identificación del Proyecto',
+                    title: BLOCK_METADATA.project_general_section.defaultTitle,
                     isActive: true,
                     config: {
                         showTitulo: true,
@@ -451,7 +450,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Plan Técnico de Redacción',
+                    title: BLOCK_METADATA.project_technical_section.defaultTitle,
                     isActive: true,
                     config: {
                         technicalSections: DEFAULT_TECHNICAL_SUBSECTIONS,
@@ -465,7 +464,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Recursos y Financiamiento del Proyecto',
+                    title: BLOCK_METADATA.project_budget_section.defaultTitle,
                     isActive: true,
                     config: {
                         showRecursosDisponibles: true,
@@ -478,7 +477,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Avance de Ejecución y Monitoreo',
+                    title: BLOCK_METADATA.project_progress_report.defaultTitle,
                     isActive: true,
                     config: {
                         showHitosCompletados: true,
@@ -491,10 +490,10 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Productos Esperados',
+                    title: BLOCK_METADATA.expected_products.defaultTitle,
                     isActive: true,
                     config: {
-                        productosTitle: '5. Productos Esperados',
+                        productosTitle: '5. PRODUCTOS ESPERADOS',
                         productsLayoutMode: 'table_detailed',
                         productColumns: {
                             showCategory: true,
@@ -512,7 +511,7 @@ export const useDocumentTemplatesPage = () => {
                 newBlock = {
                     id: newId,
                     type,
-                    title: 'Matriz de Impactos',
+                    title: BLOCK_METADATA.impacts.defaultTitle,
                     isActive: true,
                     config: {
                         impactCategories: DEFAULT_IMPACT_CATEGORIES,

@@ -172,6 +172,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     const fieldName = currentTab.fieldKey || currentTab.id;
                     const reqText = currentTab.requirementText;
+                    const toolbarMode = (currentTab as any)?.toolbarMode || 'apa_full';
 
                     // 0. Renderizado para Encabezado de Categoría / Grupo Unificado (isGroupHeader o hasContent: false)
                     if (currentTab.isGroupHeader || currentTab.hasContent === false || matchKey(['BannerObjetivos', 'sec_banner_objetivos'])) {
@@ -216,6 +217,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivoGeneral"
                                                 cowork={cowork}
+                                                toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
                                                 className="min-h-[220px] border-none"
@@ -238,6 +240,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivosEspecificos"
                                                 cowork={cowork}
+                                                toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                                 className="min-h-[260px] border-none"
@@ -270,6 +273,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Escriba los antecedentes del proyecto..."}
                                             className="min-h-[400px] border-none"
@@ -301,6 +305,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Describa el propósito y el alcance de la investigación..."}
                                             className="min-h-[400px] border-none"
@@ -332,6 +337,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Escriba la justificación del proyecto aquí..."}
                                             className="min-h-[400px] border-none"
@@ -362,6 +368,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field="ObjetivoGeneral"
                                             cowork={cowork}
+                                            toolbarMode="standard"
                                             onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                             placeholder="El objetivo general del proyecto de investigación consiste en..."
                                             className="min-h-[400px] border-none"
@@ -392,6 +399,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field="ObjetivosEspecificos"
                                             cowork={cowork}
+                                            toolbarMode="standard"
                                             onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                             placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                             className="min-h-[400px] border-none"
@@ -437,6 +445,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivoGeneral"
                                                 cowork={cowork}
+                                                toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
                                                 className="min-h-[180px] border-none"
@@ -459,6 +468,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivosEspecificos"
                                                 cowork={cowork}
+                                                toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                                 className="min-h-[220px] border-none"
@@ -519,6 +529,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Escriba el fundamento teórico del proyecto..."}
                                             className="min-h-[400px] border-none"
@@ -550,6 +561,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Describa la metodología científica, fases del estudio e instrumentación técnica..."}
                                             className="min-h-[400px] border-none"
@@ -581,6 +593,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field={fieldName}
                                             cowork={cowork}
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                             placeholder={currentTab.placeholder || "Escriba los criterios, métricas e instrumentos de evaluación..."}
                                             className="min-h-[400px] border-none"
@@ -618,6 +631,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     <CoWorkEditor
                                         field={fieldName}
                                         cowork={cowork}
+                                        toolbarMode={toolbarMode}
                                         onChange={(html, meta) => onUpdate(fieldName, html, meta)}
                                         placeholder={currentTab.placeholder || `Redactar ${currentTab.label}...`}
                                         className="min-h-[400px] border-none"

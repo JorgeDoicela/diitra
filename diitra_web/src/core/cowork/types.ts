@@ -82,3 +82,11 @@ export interface CoWorkHandle {
     onCommentUpdated: (handler: (data: any) => void) => void;
     onCommentDeleted: (handler: (data: any) => void) => void;
 }
+
+/**
+ * Modos de barra de herramientas para el editor colaborativo:
+ * - 'apa_full': Suite académica completa (Niveles APA N1-N5, Tablas APA, Figuras, Citas y Referencias).
+ * - 'standard': Redacción estándar (Formato básico B/I/S, listas, citas en bloque y deshacer/rehacer).
+ * - 'compact': Texto directo (Solo negrita, cursiva, listas simples y deshacer/rehacer).
+ */
+export type ToolbarMode = 'apa_full' | 'standard' | 'compact';

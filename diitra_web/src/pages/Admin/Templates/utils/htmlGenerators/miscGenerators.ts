@@ -59,16 +59,19 @@ export const generateTwoColumnHtml = (block: DocumentBlock): string => {
 
 export const generateSignaturesHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const sigs = (c.signatories && Array.isArray(c.signatories) && c.signatories.length > 0)
-        ? c.signatories
-        : [
-            { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
-            { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' },
-        ];
+    const mode = c.signaturesMode || 'team_dynamic';
 
-    const colWidthPct = Math.floor(100 / sigs.length);
+    if (mode === 'custom_manual') {
+        const sigs = (c.signatories && Array.isArray(c.signatories) && c.signatories.length > 0)
+            ? c.signatories
+            : [
+                { label: 'Elaborado por:', name: '[Director del Proyecto]', role: 'Director de Proyecto' },
+                { label: 'Aprobado por:', name: '[Coordinador de Carrera]', role: 'Coordinador de Carrera' },
+            ];
 
-    const sigCells = sigs.map((s: any) => `
+        const colWidthPct = Math.floor(100 / Math.max(sigs.length, 1));
+
+        const sigCells = sigs.map((s: any) => `
       <td style="width: ${colWidthPct}%; vertical-align: top; text-align: center; padding: 0 15px; border: none;">
         <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
         <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">${s.label}</div>
@@ -76,18 +79,98 @@ export const generateSignaturesHtml = (block: DocumentBlock): string => {
         <div style="color: #64748b; font-size: 8.5pt;">${s.role}</div>
       </td>`).join('');
 
-    return `
-  <!-- BLOQUE: FIRMAS -->
+        return `
+  <!-- BLOQUE: FIRMAS MANUALES -->
   <table style="width: 100%; border-collapse: collapse; margin-top: 50px; border: none; page-break-inside: avoid;">
     <tbody>
       <tr>
         ${sigCells}
       </tr>
     </tbody>
-  </table>
-  <div style="text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 25px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-    ${c.textoPieFirma || 'Comisión de Acreditación e Investigación IST Traversari'}
-  </div>`;
+  </table>`;
+    }
+
+    // Modo Dinámico por Equipo / Institucional
+    const includeDirector = c.includeDirector !== false;
+    const includeDocentes = c.includeDocentes !== false;
+    const includeEstudiantes = Boolean(c.includeEstudiantes);
+    const includeCoordCarrera = c.includeCoordinadorCarrera !== false;
+    const includeCoordDiitra = Boolean(c.includeCoordinadorDiitra) || mode === 'institutional_chain';
+    const includeVicerrector = Boolean(c.includeVicerrectorado);
+
+    const dynamicSnippets: Record<string, string> = {
+        director: includeDirector ? `
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">DIRECTOR DEL PROYECTO</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default director_proyecto DirectorProyecto }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Director de Proyecto</div>
+        </td>` : '',
+        docentes: includeDocentes ? `
+        {{ for inv in investigadores || Investigadores }}
+          {{ if inv.rol != "DIRECTOR" && inv.rol != "ESTUDIANTE" && inv.rol != "AUXILIAR" && inv.Rol != "DIRECTOR" && inv.Rol != "ESTUDIANTE" && inv.Rol != "AUXILIAR" }}
+          <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+            <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+            <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">DOCENTE INVESTIGADOR</div>
+            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default inv.nombre inv.Nombre }}</div>
+            <div style="color: #64748b; font-size: 8.5pt;">{{ default inv.carrera inv.Carrera "Docente Investigador" }}</div>
+          </td>
+          {{ end }}
+        {{ end }}` : '',
+        estudiantes: includeEstudiantes ? `
+        {{ for inv in investigadores || Investigadores }}
+          {{ if inv.rol == "ESTUDIANTE" || inv.rol == "AUXILIAR" || inv.Rol == "ESTUDIANTE" || inv.Rol == "AUXILIAR" }}
+          <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+            <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+            <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">ESTUDIANTE INVESTIGADOR</div>
+            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default inv.nombre inv.Nombre }}</div>
+            <div style="color: #64748b; font-size: 8.5pt;">Auxiliar de Investigación</div>
+          </td>
+          {{ end }}
+        {{ end }}` : '',
+        coordinador_carrera: includeCoordCarrera ? `
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">COORDINACIÓN DE CARRERA</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default coordinador_carrera CoordinadorCarrera "[Coordinador de Carrera]" }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Coordinador de Carrera</div>
+        </td>` : '',
+        coordinador_diitra: includeCoordDiitra ? `
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">COMISIÓN DE EVALUACIÓN</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default coordinador_investigacion "Ing. Estefani Sánchez Mgtr." }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Coordinadora de Investigación DIITRA</div>
+        </td>` : '',
+        vicerrectorado: includeVicerrector ? `
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">RESOLUCIÓN INSTITUCIONAL</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default vicerrector_academico "[Vicerrectorado Académico]" }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Vicerrectorado Académico</div>
+        </td>` : '',
+    };
+
+    const defaultOrder = ['director', 'docentes', 'estudiantes', 'coordinador_carrera', 'coordinador_diitra', 'vicerrectorado'];
+    const configuredOrder: string[] = c.signaturesOrder || defaultOrder;
+    const fullOrder = Array.from(new Set([...configuredOrder, ...defaultOrder]));
+
+    const cellsHtml = fullOrder
+        .map(id => dynamicSnippets[id] || '')
+        .filter(Boolean)
+        .join('');
+
+    return `
+  <!-- BLOQUE: FIRMAS DE RESPONSABILIDAD Y TRAZABILIDAD DINÁMICAS -->
+  <table style="width: 100%; border-collapse: collapse; margin-top: 40px; border: none; page-break-inside: avoid;">
+    <tbody>
+      <tr>
+        ${cellsHtml}
+      </tr>
+    </tbody>
+  </table>`;
+
+    return html;
 };
 
 export const generatePageBreakHtml = (): string => {

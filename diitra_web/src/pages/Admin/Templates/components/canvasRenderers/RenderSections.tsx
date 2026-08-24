@@ -140,12 +140,12 @@ export const RenderProjectGeneralSection: React.FC<{
     }
 
     const renderCellControls = (item: TableItem, itemIdx: number) => (
-        <div className="absolute -top-3.5 right-1 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-slate-900 text-white rounded px-1.5 py-0.5 shadow-md flex items-center gap-1 text-[8px] z-20">
+        <div className="absolute -top-3.5 right-1 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 rounded-md px-1.5 py-0.5 shadow-sm flex items-center gap-1 text-[8px] z-20 font-sans">
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'up'); }}
                 disabled={itemIdx === 0}
-                className="hover:text-amber-400 disabled:opacity-30 disabled:hover:text-white cursor-pointer px-0.5"
+                className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded px-0.5 py-0.2 disabled:opacity-20 cursor-pointer transition-colors"
                 title="Mover elemento arriba"
             >
                 ▲
@@ -154,17 +154,21 @@ export const RenderProjectGeneralSection: React.FC<{
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'down'); }}
                 disabled={itemIdx === rawItems.length - 1}
-                className="hover:text-amber-400 disabled:opacity-30 disabled:hover:text-white cursor-pointer px-0.5"
+                className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded px-0.5 py-0.2 disabled:opacity-20 cursor-pointer transition-colors"
                 title="Mover elemento abajo"
             >
                 ▼
             </button>
-            <span className="text-slate-600 font-bold">|</span>
-            <span className="text-slate-400 font-bold">Ancho:</span>
+            <span className="text-slate-200 dark:text-slate-700 font-bold">|</span>
+            <span className="text-[7.5px] uppercase font-bold text-slate-400 tracking-wider">Ancho:</span>
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 1); }}
-                className={`px-1 rounded cursor-pointer transition-colors ${item.colSpan === 1 ? 'bg-indigo-500 text-white font-bold' : 'hover:bg-slate-700 text-slate-300'}`}
+                className={`px-1.5 py-0.5 rounded text-[8px] cursor-pointer transition-all ${
+                    item.colSpan === 1
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 font-bold shadow-2xs'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800'
+                }`}
                 title="Ocupar la mitad de la fila (50%)"
             >
                 Mitad
@@ -172,7 +176,11 @@ export const RenderProjectGeneralSection: React.FC<{
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 2); }}
-                className={`px-1 rounded cursor-pointer transition-colors ${item.colSpan === 2 ? 'bg-indigo-500 text-white font-bold' : 'hover:bg-slate-700 text-slate-300'}`}
+                className={`px-1.5 py-0.5 rounded text-[8px] cursor-pointer transition-all ${
+                    item.colSpan === 2
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 font-bold shadow-2xs'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800'
+                }`}
                 title="Ocupar la fila completa (100%)"
             >
                 Completo
@@ -181,17 +189,7 @@ export const RenderProjectGeneralSection: React.FC<{
     );
 
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white select-none space-y-2 shadow-xs">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    FICHA DE IDENTIFICACIÓN DEL PROYECTO
-                </span>
-                <span className="text-[8px] text-slate-500 font-normal">
-                    Pasa el cursor sobre cualquier celda para reordenar o cambiar su ancho
-                </span>
-            </div>
-
+        <div className="my-2 select-none">
             <table className={`w-full border-collapse text-[10px] ${borderCss}`}>
                 <tbody>
                     {rows.map((row, rIdx) => {
@@ -357,12 +355,12 @@ export const RenderProjectTechnicalSection: React.FC<{
     }
 
     const renderDirectControlsPill = (sub: any, isFirst: boolean, isLast: boolean) => (
-        <div className="inline-flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto bg-slate-900/90 px-1.5 py-0.5 rounded-md shadow-md backdrop-blur-xs font-sans text-white border border-slate-700/50">
+        <div className="absolute -top-3.5 left-2 z-30 opacity-0 group-hover/cell:opacity-100 transition-opacity duration-150 flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full shadow-md border border-slate-200/90 dark:border-slate-700 font-sans text-slate-700 dark:text-slate-200 text-[8.5px] pointer-events-none group-hover/cell:pointer-events-auto shrink-0 select-none">
             <button
                 type="button"
                 onClick={(e) => handleMoveDirect(sub.key, 'up', e)}
                 disabled={isFirst}
-                className="p-0.5 rounded hover:bg-white/20 text-white disabled:opacity-20 cursor-pointer"
+                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 cursor-pointer transition-colors"
                 title="Mover subsección arriba"
             >
                 <ArrowUp className="w-2.5 h-2.5" />
@@ -371,25 +369,38 @@ export const RenderProjectTechnicalSection: React.FC<{
                 type="button"
                 onClick={(e) => handleMoveDirect(sub.key, 'down', e)}
                 disabled={isLast}
-                className="p-0.5 rounded hover:bg-white/20 text-white disabled:opacity-20 cursor-pointer"
+                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 cursor-pointer transition-colors"
                 title="Mover subsección abajo"
             >
                 <ArrowDown className="w-2.5 h-2.5" />
             </button>
-            <span className="w-px h-2.5 bg-white/20 my-auto" />
+            <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+            <span className="text-[7.5px] uppercase font-bold text-slate-400">Ancho:</span>
             <button
                 type="button"
                 onClick={(e) => handleToggleColSpanDirect(sub.key, e)}
-                className="px-1.5 py-0.5 text-[7.5px] font-black rounded bg-amber-500/30 text-amber-300 border border-amber-500/40 hover:bg-amber-500/50 transition-all cursor-pointer"
-                title="Hacer clic directo para cambiar ancho (50% / 100%)"
+                className={`px-1.5 py-0.2 text-[8px] font-bold rounded transition-all cursor-pointer ${
+                    sub.colSpan === 1
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs font-bold'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+                title="Cambiar ancho (Mitad 50% / Completo 100%)"
             >
-                {sub.colSpan === 1 ? '50%' : '100%'}
+                {sub.colSpan === 1 ? 'Mitad' : 'Completo'}
             </button>
+            <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+            <span className="text-[7.5px] uppercase font-bold text-slate-400">Estilo:</span>
             <button
                 type="button"
                 onClick={(e) => handleCycleVariantDirect(sub.key, e)}
-                className="px-1.5 py-0.5 text-[7.5px] font-black rounded bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 hover:bg-indigo-500/50 transition-all cursor-pointer"
-                title="Hacer clic directo para cambiar estilo (Dorado / Azul / Normal)"
+                className={`px-1.5 py-0.2 text-[8px] font-bold rounded border transition-all cursor-pointer ${
+                    sub.variant === 'banner_gold'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800'
+                        : sub.variant === 'banner_navy'
+                        ? 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+                title="Cambiar estilo (Dorado / Azul / Estándar)"
             >
                 {sub.variant === 'banner_gold' ? 'Dorado' : sub.variant === 'banner_navy' ? 'Azul' : 'Estándar'}
             </button>
@@ -397,19 +408,9 @@ export const RenderProjectTechnicalSection: React.FC<{
     );
 
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-2 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    Plan Técnico ({layoutMode === 'table_2col' ? 'Matriz Reticular Interactiva' : 'Secciones Consecutivas'})
-                </span>
-                <span className="text-[8px] font-mono text-indigo-500 font-bold bg-indigo-50 px-1.5 py-0.5 rounded">
-                    {subs.length} SUB-SECCIONES (EDICIÓN EN CANVAS)
-                </span>
-            </div>
-
+        <div className="my-2 select-none">
             {layoutMode === 'table_2col' ? (
-                <div className="overflow-hidden border border-slate-300 rounded-lg shadow-xs">
+                <div className="border border-slate-300 rounded-lg shadow-xs">
                     <table className="w-full border-collapse text-[9px]">
                         <tbody>
                             {(() => {
@@ -445,17 +446,13 @@ export const RenderProjectTechnicalSection: React.FC<{
                                             rows.push(
                                                 <React.Fragment key={sub.key}>
                                                     <tr className="border-b border-slate-300">
-                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer group" style={{ backgroundColor: bg1 }}>
-                                                            <span className="flex items-center justify-center gap-1">
-                                                                {displayTitle}
-                                                                {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                            </span>
+                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
+                                                            <span>{displayTitle}</span>
+                                                            {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
                                                         </td>
-                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-slate-300 text-[8.5px] cursor-pointer group" style={{ backgroundColor: bg2 }}>
-                                                            <span className="flex items-center justify-center gap-1">
-                                                                {nextDisplayTitle}
-                                                                {renderDirectControlsPill(nextSub, idx + 1 === 0, idx + 1 === subs.length - 1)}
-                                                            </span>
+                                                        <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg2 }}>
+                                                            <span>{nextDisplayTitle}</span>
+                                                            {renderDirectControlsPill(nextSub, idx + 1 === 0, idx + 1 === subs.length - 1)}
                                                         </td>
                                                     </tr>
                                                     <tr className="border-b border-slate-200">
@@ -473,11 +470,9 @@ export const RenderProjectTechnicalSection: React.FC<{
                                             const bg1 = sub.variant === 'banner_gold' ? goldColor : headerBg;
                                             rows.push(
                                                 <tr key={sub.key} className="border-b border-slate-200">
-                                                    <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer group" style={{ backgroundColor: bg1 }}>
-                                                        <span className="flex items-center justify-between gap-1">
-                                                            <span>{displayTitle}</span>
-                                                            {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                        </span>
+                                                    <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
+                                                        <span>{displayTitle}</span>
+                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
                                                     </td>
                                                     <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
                                                         {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
@@ -491,7 +486,7 @@ export const RenderProjectTechnicalSection: React.FC<{
                                             <tr key={sub.key} className="border-b border-slate-300">
                                                 <td
                                                     colSpan={2}
-                                                    className="p-1.5 text-center font-bold text-slate-900 uppercase text-[9px] tracking-wider cursor-pointer group"
+                                                    className="p-1.5 text-center font-bold text-slate-900 uppercase text-[9px] tracking-wider cursor-pointer relative group/cell"
                                                     style={{ backgroundColor: goldColor }}
                                                     onClick={() => {
                                                         setEditingKey(sub.key);
@@ -509,10 +504,10 @@ export const RenderProjectTechnicalSection: React.FC<{
                                                             className="w-full px-2 py-0.5 bg-white text-slate-900 font-bold border rounded focus:outline-none text-center"
                                                         />
                                                     ) : (
-                                                        <span className="flex items-center justify-center gap-1">
-                                                            {displayTitle}
+                                                        <>
+                                                            <span>{displayTitle}</span>
                                                             {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                        </span>
+                                                        </>
                                                     )}
                                                 </td>
                                             </tr>
@@ -521,11 +516,9 @@ export const RenderProjectTechnicalSection: React.FC<{
                                     } else {
                                         rows.push(
                                             <tr key={sub.key} className="border-b border-slate-200">
-                                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer group" style={{ backgroundColor: headerBg }}>
-                                                    <span className="flex items-center justify-between gap-1">
-                                                        <span>{displayTitle}</span>
-                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                    </span>
+                                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: headerBg }}>
+                                                    <span>{displayTitle}</span>
+                                                    {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
                                                 </td>
                                                 <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
                                                     {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
@@ -543,7 +536,7 @@ export const RenderProjectTechnicalSection: React.FC<{
             ) : (
                 <div className="space-y-3">
                     {subs.map((sub, sIdx) => (
-                        <div key={sub.key} className="border border-slate-200 rounded-lg overflow-hidden group">
+                        <div key={sub.key} className="border border-slate-200 rounded-lg overflow-hidden relative group/cell">
                             <div className="p-2 font-bold text-white text-[9px] uppercase flex items-center justify-between" style={{ backgroundColor: sub.variant === 'banner_gold' ? '#b8912e' : headerBg }}>
                                 <span>{sub.numberPrefix ? `${sub.numberPrefix} ${sub.title}` : sub.title}</span>
                                 {renderDirectControlsPill(sub, sIdx === 0, sIdx === subs.length - 1)}
@@ -635,37 +628,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
     };
 
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            {/* Cabecera del Lienzo con Selector Directo de Layout */}
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex flex-wrap items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100 gap-2">
-                <span className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    PRODUCTOS Y ENTREGABLES ESPERADOS
-                </span>
-
-                {/* PILLS INTERACTIVAS DE CAMBIO DE LAYOUT DIRECTO EN LIENZO */}
-                <div className="flex items-center gap-1 bg-white p-0.5 rounded-md border border-slate-200 shadow-2xs shrink-0">
-                    <span className="text-[8px] font-bold text-slate-400 uppercase px-1">Layout:</span>
-                    {[
-                        { id: 'table_detailed', label: 'Tabla CACES' },
-                        { id: 'table_simple', label: 'Tabla Simple' },
-                        { id: 'grouped_sections', label: 'Secciones' },
-                    ].map(mode => (
-                        <button
-                            key={mode.id}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSelectLayout(mode.id); }}
-                            className={`px-2 py-0.5 rounded text-[8.5px] font-bold transition-all cursor-pointer ${layoutMode === mode.id
-                                ? 'bg-emerald-600 text-white shadow-xs scale-102'
-                                : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                        >
-                            <span>{mode.label}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
+        <div className="my-2 space-y-2 select-none">
             {/* BARRA DE BOTONES CHIP EN LIENZO PARA TOGGLE DIRECTO DE COLUMNAS */}
             {onUpdateConfig && blockId && (layoutMode === 'table_detailed' || layoutMode === 'grouped_sections') && (
                 <div className="flex flex-wrap items-center gap-1 p-1.5 bg-emerald-50/50 border border-emerald-100 rounded-md text-[8.5px]">
@@ -808,17 +771,7 @@ export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
     const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
 
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    MATRIZ DE IMPACTOS DEL PROYECTO
-                </span>
-                <span className="text-[8px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                    MODO: {layoutMode === 'cards' ? 'TARJETAS BENTO' : layoutMode === 'sections' ? 'CONSECUTIVO' : 'TABLA CLÁSICA'}
-                </span>
-            </div>
-
+        <div className="my-2 space-y-2 select-none">
             {/* MATRIZ DE IMPACTOS SEGÚN LAYOUT MODE */}
             <div className="space-y-2">
                 <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">6. Matriz de Impactos</h5>
@@ -828,9 +781,8 @@ export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
                     <div className="grid grid-cols-2 gap-2">
                         {categories.map((cat, idx) => (
                             <div key={cat.id || idx} className={`border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs ${cat.colSpan === 2 ? 'col-span-2' : 'col-span-1'}`}>
-                                <div className="p-1.5 bg-[#1e2a4a] text-white font-bold text-[9px] uppercase tracking-wider flex items-center justify-between">
+                                <div className="p-1.5 bg-[#1e2a4a] text-white font-bold text-[9px] uppercase tracking-wider">
                                     <span>{cat.title}</span>
-                                    <span className="text-[7.5px] font-mono opacity-70">{cat.scribanVariable || `impacto.${cat.key}`}</span>
                                 </div>
                                 <div className="p-2 text-[9px] text-slate-600 bg-slate-50/50 leading-relaxed italic">
                                     {cat.placeholder || 'Descripción del impacto asignado al proyecto...'}
@@ -860,7 +812,7 @@ export const RenderImpacts: React.FC<{ config: any }> = ({ config }) => {
                                         {cat.title}
                                     </td>
                                     <td className="p-2 text-slate-700 bg-white align-top border border-slate-300 leading-relaxed italic text-[9px]">
-                                        {cat.placeholder || `{{default ${cat.scribanVariable || `impacto.${cat.key}`} "Descripción del impacto..."}}`}
+                                        {cat.placeholder || 'Descripción del impacto asignado al proyecto...'}
                                     </td>
                                 </tr>
                             ))}

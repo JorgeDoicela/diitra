@@ -44,7 +44,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const { isAuthenticated, isLoading, user } = useAuth();
     const location = useLocation();
     const isWorkspace = location.pathname.includes('/workspace/');
-    const isFullHeightPage = isWorkspace || location.pathname === '/admin/plantillas';
+    const isFullHeightPage = isWorkspace || location.pathname === '/plantillas' || location.pathname === '/admin/plantillas';
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showHeader, setShowHeader] = useState(true);

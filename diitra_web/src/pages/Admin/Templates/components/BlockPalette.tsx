@@ -65,42 +65,42 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
         {
             title: 'Bloques de Base de Datos (Dinámicos)',
             items: [
-                { type: 'project_general_section', icon: BookOpen, label: 'Ficha de Identificación', desc: 'Metadatos (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
-                { type: 'researchers_table', icon: Users, label: 'Equipo de Investigadores', desc: 'Participantes del proyecto científico.', color: 'text-emerald-500 bg-emerald-500/5' },
-                { type: 'project_technical_section', icon: FileText, label: 'Plan Técnico', desc: '8 sub-secciones de redacción (Antecedentes, Metodología, etc.).', color: 'text-emerald-500 bg-emerald-500/5' },
+                { type: 'project_general_section', icon: BookOpen, label: 'Identificación del Proyecto', desc: 'Metadatos institucionales (título, carrera, plazos).', color: 'text-emerald-500 bg-emerald-500/5' },
+                { type: 'researchers_table', icon: Users, label: 'Investigadores', desc: 'Participantes y docentes del proyecto científico.', color: 'text-emerald-500 bg-emerald-500/5' },
+                { type: 'project_technical_section', icon: FileText, label: 'Especificación Técnica', desc: 'Sub-secciones de redacción científica y técnica.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'project_budget_section', icon: DollarSign, label: 'Recursos y Presupuesto', desc: 'Tablas de recursos y financiamiento del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
-                { type: 'project_progress_report', icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'expected_products', icon: Target, label: 'Productos Esperados', desc: 'Tabla de entregables, patentes o publicaciones.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'impacts', icon: Target, label: 'Matriz de Impactos', desc: 'Áreas e impactos del proyecto.', color: 'text-emerald-500 bg-emerald-500/5' },
+                { type: 'project_progress_report', icon: BarChart2, label: 'Avance de Ejecución', desc: 'Hitos, evidencias y avance presupuestario.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'rubric_table', icon: Award, label: 'Rúbrica de Calificación', desc: 'Criterios para los revisores pares.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'project_approval_notice', icon: FileText, label: 'Oficio de Aprobación', desc: 'Metadatos y dictamen formal de aprobación legal.', color: 'text-emerald-500 bg-emerald-500/5' },
                 { type: 'arbitration_dictamen_section', icon: Award, label: 'Dictamen de Arbitraje', desc: 'Matriz de pares evaluadores, promedio y resolución CACES.', color: 'text-emerald-500 bg-emerald-500/5' },
-                { type: 'signatures', icon: PenLine, label: 'Bloque de Firmas', desc: 'Firmas físicas o electrónica CACES.', color: 'text-emerald-500 bg-emerald-500/5' }
+                { type: 'signatures', icon: PenLine, label: 'Firmas de Responsabilidad', desc: 'Firmas de docentes, directores y autoridades institucionales.', color: 'text-emerald-500 bg-emerald-500/5' }
             ]
         },
         {
             title: 'Bloques de Plan de Aprendizaje & Evaluación (APE)',
             items: [
-                { type: 'learning_plan_header_section', icon: GraduationCap, label: '1. Ficha Plan y Estudiante', desc: 'Metadatos del proyecto, estudiante asignado y objetivo general (ISTPET).', color: 'text-emerald-600 bg-emerald-600/5' },
-                { type: 'learning_plan_eval_parameters_section', icon: Award, label: '2. Parámetros de Evaluación', desc: 'Escala cualitativa oficial ISTPET (4 Muy Adecuado a 1 No Adecuado).', color: 'text-purple-600 bg-purple-600/5' },
-                { type: 'learning_plan_prerequisites_section', icon: ClipboardCheck, label: '3. Matriz de Prerrequisitos', desc: 'Prerrequisitos cognitivos y procedimentales (Modo Plan o Evaluación).', color: 'text-teal-600 bg-teal-600/5' },
-                { type: 'learning_plan_activities_section', icon: Table, label: '4. Matriz de Actividades APE', desc: 'Planificación o evaluación de actividades ejecutadas y RdA asociados.', color: 'text-blue-600 bg-blue-600/5' },
-                { type: 'learning_plan_evaluation_table', icon: Award, label: '5. Resultados Generales (Admin)', desc: 'Consolidado de promedios cognitivos, procedimentales y dictamen final.', color: 'text-amber-600 bg-amber-600/5' }
+                { type: 'learning_plan_header_section', icon: GraduationCap, label: 'Ficha Plan y Estudiante', desc: 'Metadatos del proyecto, estudiante asignado y objetivo general (ISTPET).', color: 'text-emerald-600 bg-emerald-600/5' },
+                { type: 'learning_plan_eval_parameters_section', icon: Award, label: 'Parámetros de Evaluación', desc: 'Escala cualitativa oficial ISTPET (4 Muy Adecuado a 1 No Adecuado).', color: 'text-purple-600 bg-purple-600/5' },
+                { type: 'learning_plan_prerequisites_section', icon: ClipboardCheck, label: 'Prerrequisitos de la Actividad', desc: 'Prerrequisitos cognitivos y procedimentales (Modo Plan o Evaluación).', color: 'text-teal-600 bg-teal-600/5' },
+                { type: 'learning_plan_activities_section', icon: Table, label: 'Planificación de Actividades (APE)', desc: 'Planificación o evaluación de actividades ejecutadas y RdA asociados.', color: 'text-blue-600 bg-blue-600/5' },
+                { type: 'learning_plan_evaluation_table', icon: Award, label: 'Resultados de Evaluación', desc: 'Consolidado de promedios cognitivos, procedimentales y dictamen final.', color: 'text-amber-600 bg-amber-600/5' }
             ]
         },
         {
             title: 'Bloques de Informe de Avance',
             items: [
-                { type: 'progress_header_section', icon: FileText, label: 'Encabezado Informe Avance', desc: 'Datos generales auto-poblados del proyecto (ISTPET).', color: 'text-blue-500 bg-blue-500/5' },
-                { type: 'progress_activity_section', icon: Table, label: 'Matriz Actividades Avance', desc: 'Tabla configurable (Ejecutadas, NP u Obstáculos).', color: 'text-amber-500 bg-amber-500/5' },
+                { type: 'progress_header_section', icon: FileText, label: 'Datos Generales del Proyecto', desc: 'Datos generales auto-poblados del proyecto (ISTPET).', color: 'text-blue-500 bg-blue-500/5' },
+                { type: 'progress_activity_section', icon: Table, label: 'Matriz de Actividades y Avance', desc: 'Tabla configurable (Ejecutadas, NP u Obstáculos).', color: 'text-amber-500 bg-amber-500/5' },
                 { type: 'progress_status_section', icon: Layout, label: 'Estado y Observaciones', desc: 'Estado del proyecto y redacción con permisos de rol.', color: 'text-indigo-500 bg-indigo-500/5' }
             ]
         },
         {
             title: 'Bloques de Informe Final',
             items: [
-                { type: 'final_report_header_section', icon: BookOpen, label: 'Encabezado Informe Final', desc: 'Datos del proyecto, tipo de investigación, alcance, plazos e investigadores.', color: 'text-purple-500 bg-purple-500/5' },
-                { type: 'final_report_writing_section', icon: FileText, label: 'Plan de Redacción Informe Final', desc: '15 sub-secciones de redacción científica pre-cargadas.', color: 'text-indigo-500 bg-indigo-500/5' }
+                { type: 'final_report_header_section', icon: BookOpen, label: 'Información General del Proyecto', desc: 'Datos del proyecto, tipo de investigación, alcance, plazos e investigadores.', color: 'text-purple-500 bg-purple-500/5' },
+                { type: 'final_report_writing_section', icon: FileText, label: 'Plan de Redacción Científica', desc: '15 sub-secciones de redacción científica pre-cargadas.', color: 'text-indigo-500 bg-indigo-500/5' }
             ]
         },
         {

@@ -200,7 +200,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     let unreadCount = 0;
     let markAsRead = async (_uuid: string) => {};
     let markAllAsRead = async () => {};
-    let addToast = (_title: string, _body: string, _type?: any) => {};
+    let addToast: ReturnType<typeof useNotifications>['addToast'] = (_title: string, _body: string, _type?: any, _url?: string, _onUndo?: any, _actionLabel?: string, _silent?: boolean) => {};
 
     try {
         const notificationsData = useNotifications();
@@ -275,7 +275,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN'], group: 2, hasChevron: true },
         // ── Administración del sistema ──────────────────────────────────────
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
-        { name: 'Plantillas', icon: FileCode2, path: '/admin/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
+        { name: 'Plantillas', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
     ];

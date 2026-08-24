@@ -7,7 +7,7 @@ import * as Y from 'yjs';
 import { useEditor, EditorContent } from '@tiptap/react';
 import api from '../../../api/axios_config';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
-import type { CoWorkHandle } from '../types';
+import type { CoWorkHandle, ToolbarMode } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
 import { DocumentDataContext, DocumentMetadataContext, SectionGuardContext, SectionLockContext } from '../../documents/context/DocumentDataContext';
@@ -25,6 +25,7 @@ interface CoWorkEditorProps {
     placeholder?: string;
     readonly?: boolean;
     className?: string;
+    toolbarMode?: ToolbarMode;
 }
 
 interface InnerCoWorkEditorProps extends CoWorkEditorProps {
@@ -93,6 +94,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     placeholder,
     readonly = false,
     className = '',
+    toolbarMode = 'apa_full',
     useCollaboration,
     dbValue,
 }) => {
@@ -269,7 +271,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
     return (
         <div className={`flex flex-col w-full h-full bg-surface rounded-lg border border-border-thin overflow-hidden ${className}`}>
-            <CoWorkToolbar editor={editor} readonly={readonly || session.readOnly} />
+            <CoWorkToolbar editor={editor} readonly={readonly || session.readOnly} toolbarMode={toolbarMode} />
 
             {session.isBlindMode && (
                 <div className="px-5 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2 text-amber-500 text-[10px] font-semibold tracking-wide uppercase select-none">

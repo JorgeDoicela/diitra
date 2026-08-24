@@ -1,3 +1,6 @@
+export type ToolbarMode = 'apa_full' | 'standard' | 'compact';
+export type SignaturesMode = 'team_dynamic' | 'institutional_chain' | 'custom_manual';
+
 export interface DocumentTemplateDto {
     id: number;
     code: string;
@@ -69,6 +72,48 @@ export type BlockType =
     | 'learning_plan_evaluation_table'
     | 'project_budget_section';
 
+export interface BlockMetaInfo {
+    label: string;
+    defaultTitle: string;
+    category: string;
+}
+
+export const BLOCK_METADATA: Record<BlockType, BlockMetaInfo> = {
+    cover: { label: 'Portada Institucional', defaultTitle: 'Portada Institucional', category: 'Estructural' },
+    title: { label: 'Título de Sección', defaultTitle: 'Título de Sección', category: 'Estructural' },
+    rich_text: { label: 'Párrafo Enriquecido', defaultTitle: 'Párrafo Enriquecido', category: 'Contenido' },
+    advanced_table: { label: 'Tabla Avanzada', defaultTitle: 'Tabla de Datos', category: 'Tablas' },
+    multi_section_table: { label: 'Tabla Multi-Sección', defaultTitle: 'Tabla Multi-Sección', category: 'Tablas' },
+    two_column: { label: 'Dos Columnas', defaultTitle: 'Dos Columnas', category: 'Estructural' },
+    page_break: { label: 'Salto de Página', defaultTitle: 'Salto de Página', category: 'Estructural' },
+    gantt: { label: 'Cronograma de Actividades (Gantt)', defaultTitle: 'Cronograma de Actividades (Gantt)', category: 'Planificación' },
+    project_general_section: { label: 'Identificación del Proyecto', defaultTitle: '1. IDENTIFICACIÓN DEL PROYECTO', category: 'Base de Datos' },
+    researchers_table: { label: 'Investigadores', defaultTitle: '2. INVESTIGADORES', category: 'Base de Datos' },
+    project_technical_section: { label: 'Especificación Técnica', defaultTitle: '3. ESPECIFICACIÓN TÉCNICA', category: 'Base de Datos' },
+    project_budget_section: { label: 'Recursos y Presupuesto', defaultTitle: '4. RECURSOS Y PRESUPUESTO', category: 'Base de Datos' },
+    resources: { label: 'Recursos y Presupuesto', defaultTitle: '4. RECURSOS Y PRESUPUESTO', category: 'Base de Datos' },
+    expected_products: { label: 'Productos Esperados', defaultTitle: '5. PRODUCTOS ESPERADOS', category: 'Base de Datos' },
+    impacts: { label: 'Matriz de Impactos', defaultTitle: '6. MATRIZ DE IMPACTOS', category: 'Base de Datos' },
+    project_progress_report: { label: 'Avance de Ejecución', defaultTitle: '7. AVANCE DE EJECUCIÓN', category: 'Base de Datos' },
+    signatures: { label: 'Firmas de Responsabilidad', defaultTitle: 'FIRMAS DE RESPONSABILIDAD', category: 'Base de Datos' },
+    rubric_table: { label: 'Rúbrica de Calificación', defaultTitle: 'RÚBRICA DE CALIFICACIÓN', category: 'Base de Datos' },
+    project_approval_notice: { label: 'Oficio de Aprobación', defaultTitle: 'OFICIO DE APROBACIÓN INSTITUCIONAL', category: 'Base de Datos' },
+    arbitration_dictamen_section: { label: 'Dictamen de Arbitraje', defaultTitle: 'DICTAMEN DE ARBITRAJE CIENTÍFICO', category: 'Base de Datos' },
+    learning_plan_header_section: { label: 'Ficha Plan y Estudiante', defaultTitle: '1. FICHA DEL PLAN Y ESTUDIANTE', category: 'Plan de Aprendizaje' },
+    learning_plan_eval_parameters_section: { label: 'Parámetros de Evaluación', defaultTitle: '2. PARÁMETROS DE EVALUACIÓN', category: 'Plan de Aprendizaje' },
+    learning_plan_prerequisites_section: { label: 'Prerrequisitos de la Actividad', defaultTitle: '3. PRERREQUISITOS DE LA ACTIVIDAD', category: 'Plan de Aprendizaje' },
+    learning_plan_activities_section: { label: 'Planificación de Actividades (APE)', defaultTitle: '4. PLANIFICACIÓN DE ACTIVIDADES (APE)', category: 'Plan de Aprendizaje' },
+    learning_plan_evaluation_table: { label: 'Resultados de Evaluación', defaultTitle: '5. RESULTADOS DE EVALUACIÓN', category: 'Plan de Aprendizaje' },
+    progress_header_section: { label: 'Datos Generales del Proyecto', defaultTitle: '1. DATOS GENERALES DEL PROYECTO', category: 'Informe de Avance' },
+    progress_activity_section: { label: 'Matriz de Actividades y Avance', defaultTitle: '2. MATRIZ DE ACTIVIDADES Y AVANCE', category: 'Informe de Avance' },
+    progress_status_section: { label: 'Estado y Observaciones', defaultTitle: '3. ESTADO Y OBSERVACIONES GENERALES', category: 'Informe de Avance' },
+    final_report_header_section: { label: 'Información General del Proyecto', defaultTitle: '1. INFORMACIÓN GENERAL DEL PROYECTO', category: 'Informe Final' },
+    final_report_writing_section: { label: 'Plan de Redacción Científica', defaultTitle: '2. PLAN DE REDACCIÓN CIENTÍFICA', category: 'Informe Final' },
+    certificate_header: { label: 'Encabezado de Certificado', defaultTitle: 'CERTIFICADO INSTITUCIONAL', category: 'Certificado' },
+    certificate_recipient_badge: { label: 'Destinatario y Rol', defaultTitle: 'DESTINATARIO', category: 'Certificado' },
+    certificate_body: { label: 'Cuerpo del Certificado', defaultTitle: 'TEXTO DEL CERTIFICADO', category: 'Certificado' }
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuraciones de bloques específicos
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +150,7 @@ export interface TechnicalSubsection {
     headerColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
     isGroupHeader?: boolean;    // true = actúa como categoría/grupo de subsecciones
     parentId?: string;          // ID o fieldKey de la subsección padre
+    toolbarMode?: ToolbarMode;  // 'apa_full' | 'standard' | 'compact'
 }
 
 export const DEFAULT_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
@@ -278,6 +324,7 @@ export interface DocumentBlock {
         html?: string;             // Contenido HTML serializado por Tiptap
         title?: string;            // Título opcional de sección para bloque rich_text
         placeholder?: string;      // Placeholder o guía de redacción institucional
+        toolbarMode?: ToolbarMode; // 'apa_full' (defecto) | 'standard' | 'compact'
 
         // ── advanced_table ─────────────────────────────────────────────────
         headerStyle?: 'blue' | 'gold' | 'gray' | 'none';
@@ -324,8 +371,15 @@ export interface DocumentBlock {
         mostrarCertificacionInstitucional?: boolean;
 
         // ── signatures ─────────────────────────────────────────────────────
+        signaturesMode?: SignaturesMode;
+        signaturesOrder?: string[];
+        includeDirector?: boolean;
+        includeDocentes?: boolean;
+        includeEstudiantes?: boolean;
+        includeCoordinadorCarrera?: boolean;
+        includeCoordinadorDiitra?: boolean;
+        includeVicerrectorado?: boolean;
         signatories?: Signatory[];
-        textoPieFirma?: string;    // Pie de página institucional
 
         // ── project_general_section ────────────────────────────────────────
         identificationMode?: 'catalogs' | 'fields';

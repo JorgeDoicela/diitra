@@ -27,6 +27,7 @@ import {
     Calendar,
     Tag,
     BookOpen,
+    FileCode2,
     ArrowRight,
     Hash,
     Zap,
@@ -221,6 +222,7 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'arbitraje', label: 'Evaluación por Pares', description: 'Gestión de evaluaciones por pares y resoluciones', category: 'Administración', icon: Gavel, path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], keywords: ['arbitraje', 'conflicto', 'disputa', 'apelacion', 'evaluacion', 'pares', 'evaluadores'], boost: isAdmin ? 6 : 0 },
         { id: 'auditoria', label: 'Auditoría del Sistema', description: 'Registro de acciones y cambios en el sistema', category: 'Administración', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], keywords: ['auditoria', 'logs', 'forense', 'eventos', 'historial'], boost: isAdmin ? 7 : 0 },
         { id: 'lopdp-admin', label: 'Panel LOPDP', description: 'Gestión de consentimientos y cumplimiento de protección de datos', category: 'Administración', icon: ShieldCheck, path: '/lopdp', roles: ['DIITRA_ADMIN'], keywords: ['lopdp', 'proteccion datos', 'consentimiento', 'rgpd'], boost: 4 },
+        { id: 'plantillas', label: 'Editor de Plantillas', description: 'Diseñar y maquetar plantillas de documentos oficiales', category: 'Administración', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], keywords: ['plantillas', 'templates', 'formatos', 'editor', 'documentos'], boost: isAdmin ? 6 : 0 },
         { id: 'correos', label: 'Correos institucionales', description: 'Administrar y enviar plantillas de correo del sistema', category: 'Administración', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], keywords: ['correos', 'emails', 'plantillas', 'smtp'], boost: 4 },
         // ── Parámetros Normativos ───────────────────────────────────────
         { id: 'parametros-normativos', label: 'Parámetros Normativos', description: 'Líneas de investigación, períodos académicos e indicadores CACES', category: 'Parámetros Normativos', icon: Settings, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], keywords: ['parametros', 'normativos', 'caces', 'lineas', 'periodos', 'catalogos'], boost: isAdmin ? 6 : 0 },

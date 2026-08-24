@@ -788,6 +788,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                     <CoWorkEditor
                                         field="DescripcionFaseActual"
                                         cowork={cowork}
+                                        toolbarMode="standard"
                                         onChange={(html, meta) => onUpdate('DescripcionFaseActual', html, meta)}
                                     />
                                 </div>
@@ -807,6 +808,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                 <CoWorkEditor
                                     field="ObservacionesDirector"
                                     cowork={cowork}
+                                    toolbarMode="standard"
                                     onChange={(html, meta) => onUpdate('ObservacionesDirector', html, meta)}
                                 />
                             </div>
@@ -822,6 +824,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                 <CoWorkEditor
                                     field="ObservacionesCoordinador"
                                     cowork={cowork}
+                                    toolbarMode="standard"
                                     onChange={(html, meta) => onUpdate('ObservacionesCoordinador', html, meta)}
                                 />
                             </div>

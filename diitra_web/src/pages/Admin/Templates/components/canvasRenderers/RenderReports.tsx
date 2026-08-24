@@ -3,16 +3,7 @@ import React from 'react';
 export const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    RECURSOS Y PRESUPUESTO DETALLADO DEL PROYECTO
-                </span>
-                <span className="text-[8px] font-mono text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">
-                    PRESUPUESTO A4
-                </span>
-            </div>
+        <div className="my-2 space-y-3 select-none">
 
             {c.showRecursosDisponibles !== false && (
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
@@ -83,17 +74,7 @@ export const RenderProjectBudgetSection: React.FC<{ config: any }> = ({ config }
 export const RenderProjectProgressReport: React.FC<{ config: any }> = ({ config }) => {
     const c = config || {};
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs select-none">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    INFORME PARCIAL DE AVANCES & RESULTADOS
-                </span>
-                <span className="text-[8px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                    SEGUIMIENTO
-                </span>
-            </div>
-
+        <div className="my-2 space-y-3 select-none">
             {c.showEvidencias !== false && (
                 <div className="p-2.5 border border-slate-200 rounded-lg bg-slate-50/50 space-y-1 text-[8.5px]">
                     <strong className="text-slate-700 block font-bold">Bitácora Científica & Conclusiones Parciales:</strong>
@@ -154,25 +135,7 @@ export const RenderProjectApprovalNotice: React.FC<{
     };
 
     return (
-        <div className="my-2 p-3.5 border border-slate-200 rounded-xl bg-white space-y-3 shadow-xs">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    OFICIO DE APROBACIÓN DE PROYECTO DE INVESTIGACIÓN
-                </span>
-                <span className="text-[8px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-1">
-                    <span className="text-slate-400 font-normal">Ciudad:</span>
-                    <input
-                        type="text"
-                        className="bg-transparent border-b border-dashed border-emerald-400 focus:border-emerald-600 focus:outline-none text-emerald-700 font-bold text-[8px] px-0.5 w-16"
-                        value={ciudad}
-                        onChange={(e) => handleUpdate('ciudad_emision', e.target.value)}
-                        placeholder="Quito"
-                    />
-                    <span>D.M.</span>
-                </span>
-            </div>
-
+        <div className="my-2 space-y-3 select-none">
             {mostrarLogoHeader && (
                 <div className="text-left text-[8px] text-slate-400 font-mono italic">
                     [Encabezado con Logo ISTPET Activado]

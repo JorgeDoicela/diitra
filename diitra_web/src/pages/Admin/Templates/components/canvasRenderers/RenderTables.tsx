@@ -98,10 +98,7 @@ export const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) =
 
 export const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) => {
     return (
-        <div className="overflow-x-auto my-2">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Tabla de Participantes (Investigadores del Proyecto)</span>
-            </div>
+        <div className="overflow-x-auto my-2 select-none">
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
                     <tr>
@@ -135,20 +132,13 @@ export const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) =>
                     </tr>
                 </tbody>
             </table>
-            <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Los investigadores se cargarán dinámicamente desde la base de datos al seleccionar el proyecto.
-            </p>
         </div>
     );
 };
 
 export const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
     return (
-        <div className="overflow-x-auto my-2">
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 bg-slate-50 p-1.5 rounded">
-                <span>Rúbrica de Evaluación del Documento</span>
-            </div>
+        <div className="overflow-x-auto my-2 select-none">
             <table className="w-full border-collapse text-[10px] border border-slate-200">
                 <thead>
                     <tr>
@@ -194,10 +184,6 @@ export const RenderRubricTable: React.FC<{ config: any }> = ({ config }) => {
                     </tr>
                 </tbody>
             </table>
-            <p className="text-[8px] text-emerald-600 font-black border-t border-dashed border-emerald-200/40 pt-1.5 mt-2 flex items-center gap-1 select-none uppercase tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Los criterios de la rúbrica se vincularán automáticamente desde el módulo de configuración de evaluación par.
-            </p>
         </div>
     );
 };

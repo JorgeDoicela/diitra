@@ -141,7 +141,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'rubric_table':
                 return <RenderRubricTable config={block.config} />;
             case 'signatures':
-                return <RenderSignatures config={block.config} />;
+                return <RenderSignatures config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_general_section':
                 return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section':
@@ -188,11 +188,11 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'page_break':
                 return (
                     <div className="w-full flex items-center justify-between py-2 select-none">
-                        <div className="flex-1 border-t-2 border-dashed border-indigo-400 dark:border-indigo-600" />
-                        <div className="mx-3 flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-bold shadow-md">
+                        <div className="flex-1 border-t-2 border-dashed border-border-thin" />
+                        <div className="mx-3 flex items-center gap-2 px-3 py-1 bg-surface border border-border-thin text-text-dim rounded-full text-[9.5px] font-bold shadow-xs">
                             <span className="uppercase tracking-wider">Salto de Página A4</span>
                         </div>
-                        <div className="flex-1 border-t-2 border-dashed border-indigo-400 dark:border-indigo-600" />
+                        <div className="flex-1 border-t-2 border-dashed border-border-thin" />
                     </div>
                 );
             default:

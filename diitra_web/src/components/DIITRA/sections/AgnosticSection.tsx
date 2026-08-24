@@ -295,6 +295,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             <CoWorkEditor
                                 field={name}
                                 cowork={cowork}
+                                toolbarMode={(field as any).toolbarMode || config?.toolbarMode || 'apa_full'}
                                 onChange={(html, meta) => onUpdate(name, html, meta)}
                             />
                         </div>

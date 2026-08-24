@@ -302,6 +302,21 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                             </span>
                                         </div>
 
+                                        {editForm.hasContent !== false && (
+                                            <div className="border-t border-border-thin/20 pt-1.5 space-y-1">
+                                                <label className="text-[9px] font-bold text-text-dim block mb-0.5">Herramientas del Editor (Normas APA / Formato)</label>
+                                                <select
+                                                    value={editForm.toolbarMode || 'apa_full'}
+                                                    onChange={e => setEditForm(prev => ({ ...prev, toolbarMode: e.target.value as any }))}
+                                                    className="w-full text-[10px] px-2 py-1 bg-surface border border-border-thin rounded focus:outline-none focus:border-indigo-500 text-text-main"
+                                                >
+                                                    <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
+                                                    <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
+                                                    <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border-thin/20">
                                             <button
                                                 type="button"

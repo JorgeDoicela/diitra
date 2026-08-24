@@ -16,16 +16,22 @@ import {
     ImagePlus
 } from 'lucide-react';
 import { ApaReferencesPanel } from './ApaReferencesPanel';
+import type { ToolbarMode } from '../types';
 
 interface CoWorkToolbarProps {
     editor: Editor | null;
     readonly?: boolean;
+    toolbarMode?: ToolbarMode;
 }
 
 // Tipos de cita APA en texto
 type CitationType = 'parenthetical' | 'narrative' | 'et_al';
 
-export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly = false }) => {
+export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ 
+    editor, 
+    readonly = false,
+    toolbarMode = 'apa_full' 
+}) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [showCitationPanel, setShowCitationPanel] = useState(false);
     const [showReferencesPanel, setShowReferencesPanel] = useState(false);
@@ -36,6 +42,9 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
 
     if (!editor || readonly) return null;
 
+    const isApaFull = toolbarMode === 'apa_full';
+    const isStandard = toolbarMode === 'standard';
+    const isCompact = toolbarMode === 'compact';
 
     const countTables = (): number => {
         let count = 0;
@@ -46,7 +55,6 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
     };
 
     const countFigures = (): number => {
-        // Busca elementos con clase apa-figure en el HTML actual
         const html = editor.getHTML();
         const matches = html.match(/class="apa-figure"/g);
         return matches ? matches.length : 0;
@@ -115,9 +123,9 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
     const triggerFileSelect = () => fileInputRef.current?.click();
 
     const btn = (isActive: boolean) => `
-        p-1.5 rounded transition-all duration-200
+        p-1.5 rounded transition-all duration-200 cursor-pointer
         ${isActive
-            ? 'bg-indigo-600 text-white shadow-sm'
+            ? 'bg-text-main text-bg-deep shadow-sm'
             : 'text-text-dim hover:text-text-main hover:bg-bg-deep'
         }
     `;
@@ -138,73 +146,84 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({ editor, readonly =
             <div className="px-4 py-2 border-b border-border-thin bg-surface flex items-center justify-between gap-1.5 overflow-x-auto select-none flex-wrap">
                 <div className="flex items-center gap-1">
 
-                    {/* Texto */}
+                    {/* Grupo 1: Formato Básico de Texto */}
                     <button onClick={() => editor.chain().focus().toggleBold().run()} className={btn(editor.isActive('bold'))} title="Negrita (Ctrl+B)"><Bold size={13} /></button>
                     <button onClick={() => editor.chain().focus().toggleItalic().run()} className={btn(editor.isActive('italic'))} title="Cursiva (Ctrl+I)"><Italic size={13} /></button>
-                    <button onClick={() => editor.chain().focus().toggleStrike().run()} className={btn(editor.isActive('strike'))} title="Tachado"><Strikethrough size={13} /></button>
+                    {!isCompact && (
+                        <button onClick={() => editor.chain().focus().toggleStrike().run()} className={btn(editor.isActive('strike'))} title="Tachado"><Strikethrough size={13} /></button>
+                    )}
+
+                    {/* Grupo 2: Encabezados APA 7 (Solo en modo apa_full) */}
+                    {isApaFull && (
+                        <>
+                            <div className="w-px h-4 bg-border-thin mx-0.5" />
+                            <span className="text-[8px] font-black text-text-dim uppercase tracking-widest px-1">APA:</span>
+                            {headingBtn(1, 'N1', 'Nivel 1 APA — Negrita, centrado')}
+                            {headingBtn(2, 'N2', 'Nivel 2 APA — Negrita, izquierda')}
+                            {headingBtn(3, 'N3', 'Nivel 3 APA — Negrita cursiva, izquierda')}
+                            {headingBtn(4, 'N4', 'Nivel 4 APA — Negrita, sangría, inline')}
+                            {headingBtn(5, 'N5', 'Nivel 5 APA — Negrita cursiva, sangría, inline')}
+                        </>
+                    )}
 
                     <div className="w-px h-4 bg-border-thin mx-0.5" />
 
-                    {/* Encabezados APA 7 — 5 niveles */}
-                    <span className="text-[8px] font-black text-text-dim uppercase tracking-widest px-1">APA:</span>
-                    {headingBtn(1, 'N1', 'Nivel 1 APA — Negrita, centrado')}
-                    {headingBtn(2, 'N2', 'Nivel 2 APA — Negrita, izquierda')}
-                    {headingBtn(3, 'N3', 'Nivel 3 APA — Negrita cursiva, izquierda')}
-                    {headingBtn(4, 'N4', 'Nivel 4 APA — Negrita, sangría, inline')}
-                    {headingBtn(5, 'N5', 'Nivel 5 APA — Negrita cursiva, sangría, inline')}
-
-                    <div className="w-px h-4 bg-border-thin mx-0.5" />
-
-                    {/* Listas */}
+                    {/* Grupo 3: Listas */}
                     <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={btn(editor.isActive('bulletList'))} title="Lista con viñetas"><List size={13} /></button>
                     <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btn(editor.isActive('orderedList'))} title="Lista numerada"><ListOrdered size={13} /></button>
 
-                    <div className="w-px h-4 bg-border-thin mx-0.5" />
+                    {/* Grupo 4: Cita directa larga (En modo estándar y apa_full) */}
+                    {!isCompact && (
+                        <>
+                            <div className="w-px h-4 bg-border-thin mx-0.5" />
+                            <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={btn(editor.isActive('blockquote'))} title="Cita directa en bloque (>40 palabras)"><Quote size={13} /></button>
+                        </>
+                    )}
 
-                    {/* Cita directa larga (blockquote) */}
-                    <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={btn(editor.isActive('blockquote'))} title="Cita directa larga APA (>40 palabras)"><Quote size={13} /></button>
+                    {/* Grupo 5: Inserción de Tablas, Figuras e Imágenes (Solo en modo apa_full) */}
+                    {isApaFull && (
+                        <>
+                            <div className="w-px h-4 bg-border-thin mx-0.5" />
+                            <button onClick={handleInsertApaTable} className={btn(editor.isActive('table'))} title="Insertar Tabla APA 7"><Table size={13} /></button>
+                            <button onClick={handleInsertApaFigure} className={btn(false)} title="Insertar Figura APA 7"><ImagePlus size={13} /></button>
+                            <button onClick={triggerFileSelect} className={btn(false)} title="Insertar imagen/evidencia"><ImageIcon size={13} /></button>
+                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
 
-                    <div className="w-px h-4 bg-border-thin mx-0.5" />
+                            <div className="w-px h-4 bg-border-thin mx-0.5" />
 
-                    {/* Inserción APA */}
-                    <button onClick={handleInsertApaTable} className={btn(editor.isActive('table'))} title="Insertar Tabla APA"><Table size={13} /></button>
-                    <button onClick={handleInsertApaFigure} className={btn(false)} title="Insertar Figura APA"><ImagePlus size={13} /></button>
-                    <button onClick={triggerFileSelect} className={btn(false)} title="Insertar imagen/evidencia"><ImageIcon size={13} /></button>
-                    <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                            {/* Grupo 6: Citas y Referencias Bibliográficas APA */}
+                            <button
+                                onClick={() => { setShowCitationPanel(p => !p); setShowReferencesPanel(false); }}
+                                className={btn(showCitationPanel)}
+                                title="Insertar cita en texto APA"
+                            >
+                                <QuoteIcon size={13} />
+                            </button>
+                            <button
+                                onClick={() => { setShowReferencesPanel(p => !p); setShowCitationPanel(false); }}
+                                className={`${btn(showReferencesPanel)} flex items-center gap-1`}
+                                title="Gestionar lista de referencias APA"
+                            >
+                                <BookOpen size={13} />
+                                <span className="text-[9px] font-bold hidden sm:inline">Refs.</span>
+                            </button>
+                        </>
+                    )}
 
-                    <div className="w-px h-4 bg-border-thin mx-0.5" />
-
-                    {/* Citas y Referencias */}
-                    <button
-                        onClick={() => { setShowCitationPanel(p => !p); setShowReferencesPanel(false); }}
-                        className={btn(showCitationPanel)}
-                        title="Insertar cita en texto APA"
-                    >
-                        <QuoteIcon size={13} />
-                    </button>
-                    <button
-                        onClick={() => { setShowReferencesPanel(p => !p); setShowCitationPanel(false); }}
-                        className={`${btn(showReferencesPanel)} flex items-center gap-1`}
-                        title="Gestionar lista de referencias APA"
-                    >
-                        <BookOpen size={13} />
-                        <span className="text-[9px] font-bold hidden sm:inline">Refs.</span>
-                    </button>
-
-                    {/* Controles de tabla (contextual) */}
+                    {/* Controles contextuales de tabla activa */}
                     {editor.isActive('table') && (
-                        <div className="flex items-center gap-1 bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-950/30 ml-1">
-                            <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mr-0.5">Tabla:</span>
-                            <button onClick={() => editor.chain().focus().addRowAfter().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-indigo-500 hover:bg-indigo-100/50 text-[8px] font-bold" title="Añadir fila">+Fila</button>
-                            <button onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-indigo-500 hover:bg-indigo-100/50 text-[8px] font-bold" title="Añadir columna">+Col</button>
-                            <button onClick={() => editor.chain().focus().deleteRow().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-red-500 hover:bg-red-100/50 text-[8px] font-bold" title="Eliminar fila">-Fila</button>
-                            <button onClick={() => editor.chain().focus().deleteColumn().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-red-500 hover:bg-red-100/50 text-[8px] font-bold" title="Eliminar columna">-Col</button>
-                            <button onClick={() => editor.chain().focus().deleteTable().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-red-600 hover:bg-red-100/50 text-[8px] font-bold" title="Eliminar tabla">Borrar</button>
+                        <div className="flex items-center gap-1 bg-surface border border-border-thin px-2 py-0.5 rounded ml-1">
+                            <span className="text-[8px] font-black text-brand uppercase tracking-widest mr-0.5">Tabla:</span>
+                            <button onClick={() => editor.chain().focus().addRowAfter().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-text-main hover:bg-surface-hover text-[8px] font-bold" title="Añadir fila">+Fila</button>
+                            <button onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-text-main hover:bg-surface-hover text-[8px] font-bold" title="Añadir columna">+Col</button>
+                            <button onClick={() => editor.chain().focus().deleteRow().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-error hover:bg-error/10 text-[8px] font-bold" title="Eliminar fila">-Fila</button>
+                            <button onClick={() => editor.chain().focus().deleteColumn().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-error hover:bg-error/10 text-[8px] font-bold" title="Eliminar columna">-Col</button>
+                            <button onClick={() => editor.chain().focus().deleteTable().run()} className="px-1 py-0.5 rounded text-text-dim hover:text-error hover:bg-error/10 text-[8px] font-bold" title="Eliminar tabla">Borrar</button>
                         </div>
                     )}
                 </div>
 
-                {/* Historial */}
+                {/* Historial (Siempre disponible) */}
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => { if (typeof editor.commands.undo === 'function') editor.chain().focus().undo().run(); }}

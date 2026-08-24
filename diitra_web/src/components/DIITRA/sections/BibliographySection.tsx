@@ -59,10 +59,11 @@ export const BibliographySection: React.FC<BibliographySectionProps> = ({
             <SectionBlockGuard id="firmas" title={isBibliographyHidden ? sectionTitle : "9. Firmas de Responsabilidad"} showInlineLock={true}>
                 <FirmasBlock 
                     cowork={cowork}
+                    formData={formData}
                     onUpdate={onUpdate}
                     parentReadOnly={readOnly}
                     title={isBibliographyHidden ? sectionTitle : "9. Firmas de Responsabilidad"}
-                    signatories={config?.signatories}
+                    config={config}
                 />
             </SectionBlockGuard>
         </div>
@@ -71,16 +72,197 @@ export const BibliographySection: React.FC<BibliographySectionProps> = ({
 
 const FirmasBlock: React.FC<{
     cowork: CoWorkHandle;
+    formData: any;
     onUpdate: (field: string, value: any) => void;
     parentReadOnly?: boolean;
     title?: string;
-    signatories?: any[];
-}> = ({ cowork, onUpdate, parentReadOnly = false, title = "9. Firmas de Responsabilidad", signatories }) => {
+    config?: any;
+}> = ({ cowork, formData, onUpdate, parentReadOnly = false, title = "9. Firmas de Responsabilidad", config }) => {
     const { readOnly: blockReadOnly } = useContext(SectionGuardContext);
     const readOnly = parentReadOnly || blockReadOnly;
 
     const isCustomTitle = title !== "9. Firmas de Responsabilidad";
-    const hasCustomSignatories = Array.isArray(signatories) && signatories.length > 0;
+    const mode = config?.signaturesMode || 'team_dynamic';
+    const signatories = config?.signatories || [];
+    const hasCustomSignatories = mode === 'custom_manual' && Array.isArray(signatories) && signatories.length > 0;
+
+    // Extraer equipo del proyecto directamente de la fuente de verdad (formData)
+    const rawInvestigadores: any[] = formData?.Investigadores || formData?.investigadores || [];
+    const directorProyecto = formData?.DirectorProyecto || formData?.directorProyecto || '';
+
+    // Filtrar docentes y estudiantes
+    const docentes = rawInvestigadores.filter(inv => {
+        const rol = (inv.Rol || inv.rol || '').toUpperCase();
+        return rol !== 'DIRECTOR' && rol !== 'ESTUDIANTE' && rol !== 'AUXILIAR';
+    });
+
+    const estudiantes = rawInvestigadores.filter(inv => {
+        const rol = (inv.Rol || inv.rol || '').toUpperCase();
+        return rol === 'ESTUDIANTE' || rol === 'AUXILIAR';
+    });
+
+    const includeDirector = config?.includeDirector !== false;
+    const includeDocentes = config?.includeDocentes !== false;
+    const includeEstudiantes = Boolean(config?.includeEstudiantes);
+    const includeCoordCarrera = config?.includeCoordinadorCarrera !== false;
+    const includeCoordDiitra = Boolean(config?.includeCoordinadorDiitra) || mode === 'institutional_chain';
+    const includeVicerrector = Boolean(config?.includeVicerrectorado);
+
+    const defaultOrder = ['director', 'docentes', 'estudiantes', 'coordinador_carrera', 'coordinador_diitra', 'vicerrectorado'];
+    const order: string[] = config?.signaturesOrder || defaultOrder;
+    const fullOrder = Array.from(new Set([...order, ...defaultOrder]));
+
+    const renderDynamicSection = (sectionId: string) => {
+        switch (sectionId) {
+            case 'director':
+                if (!includeDirector) return null;
+                return (
+                    <div key="director" className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-brand block border-b border-border-thin/20 pb-1.5">
+                            Elaborado por: Director del Proyecto
+                        </span>
+                        <CoWorkField 
+                            name="Firmas_DirectorNombre" 
+                            cowork={cowork} 
+                            label="Título, Apellidos y Nombres" 
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorNombre: v }))}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                            placeholder={directorProyecto || "Ej: Mgs. Juan Pérez"}
+                            readOnly={readOnly}
+                        />
+                        <div>
+                            <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Cargo</label>
+                            <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">Director de Proyecto</span>
+                        </div>
+                    </div>
+                );
+
+            case 'docentes':
+                if (!includeDocentes) return null;
+                return docentes.map((inv, idx) => {
+                    const invNombre = inv.Nombre || inv.nombre || '';
+                    const invCarrera = inv.Carrera || inv.carrera || 'Docente Investigador';
+                    return (
+                        <div key={`docente_${idx}`} className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-text-dim block border-b border-border-thin/20 pb-1.5">
+                                Elaborado por: Docente Investigador #{idx + 1}
+                            </span>
+                            <CoWorkField 
+                                name={`Firmas_Docente_${idx}_Nombre`} 
+                                cowork={cowork} 
+                                label="Título, Apellidos y Nombres" 
+                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), [`Docente_${idx}_Nombre`]: v }))}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                                placeholder={invNombre || `Docente Investigador ${idx + 1}`}
+                                readOnly={readOnly}
+                            />
+                            <div>
+                                <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Afiliación / Cargo</label>
+                                <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">{invCarrera}</span>
+                            </div>
+                        </div>
+                    );
+                });
+
+            case 'estudiantes':
+                if (!includeEstudiantes) return null;
+                return estudiantes.map((inv, idx) => {
+                    const estNombre = inv.Nombre || inv.nombre || '';
+                    return (
+                        <div key={`estudiante_${idx}`} className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-text-dim block border-b border-border-thin/20 pb-1.5">
+                                Colaborador: Estudiante Auxiliar #{idx + 1}
+                            </span>
+                            <CoWorkField 
+                                name={`Firmas_Estudiante_${idx}_Nombre`} 
+                                cowork={cowork} 
+                                label="Apellidos y Nombres" 
+                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), [`Estudiante_${idx}_Nombre`]: v }))}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                                placeholder={estNombre || `Estudiante Auxiliar ${idx + 1}`}
+                                readOnly={readOnly}
+                            />
+                            <div>
+                                <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Rol</label>
+                                <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">Auxiliar de Investigación</span>
+                            </div>
+                        </div>
+                    );
+                });
+
+            case 'coordinador_carrera':
+                if (!includeCoordCarrera) return null;
+                return (
+                    <div key="coord_carrera" className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-text-dim block border-b border-border-thin/20 pb-1.5">
+                            Revisado por: Coordinación de Carrera
+                        </span>
+                        <CoWorkField 
+                            name="Firmas_CoordinadorNombre" 
+                            cowork={cowork} 
+                            label="Título, Apellidos y Nombres" 
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorNombre: v }))}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                            placeholder="Ej: Mgs. Carlos Gómez"
+                            readOnly={readOnly}
+                        />
+                        <div>
+                            <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Cargo</label>
+                            <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">Coordinador de Carrera</span>
+                        </div>
+                    </div>
+                );
+
+            case 'coordinador_diitra':
+                if (!includeCoordDiitra) return null;
+                return (
+                    <div key="coord_diitra" className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-amber-500 block border-b border-border-thin/20 pb-1.5">
+                            Aprobado por: Comisión de Investigación
+                        </span>
+                        <CoWorkField 
+                            name="Firmas_DiitraNombre" 
+                            cowork={cowork} 
+                            label="Título, Apellidos y Nombres" 
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DiitraNombre: v }))}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                            placeholder="Ing. Estefani Sánchez Mgtr."
+                            readOnly={readOnly}
+                        />
+                        <div>
+                            <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Cargo</label>
+                            <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">Coordinadora de Investigación DIITRA</span>
+                        </div>
+                    </div>
+                );
+
+            case 'vicerrectorado':
+                if (!includeVicerrector) return null;
+                return (
+                    <div key="vicerrectorado" className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-text-dim block border-b border-border-thin/20 pb-1.5">
+                            Resolución: Vicerrectorado Académico
+                        </span>
+                        <CoWorkField 
+                            name="Firmas_VicerrectorNombre" 
+                            cowork={cowork} 
+                            label="Título, Apellidos y Nombres" 
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), VicerrectorNombre: v }))}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                            placeholder="[Vicerrectorado Académico]"
+                            readOnly={readOnly}
+                        />
+                        <div>
+                            <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Cargo</label>
+                            <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">Vicerrectorado Académico</span>
+                        </div>
+                    </div>
+                );
+
+            default:
+                return null;
+        }
+    };
 
     return (
         <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-6 shadow-sm animate-fade-in">
@@ -90,81 +272,35 @@ const FirmasBlock: React.FC<{
                 </h3>
                 {!isCustomTitle && (
                     <p className="text-[10px] text-text-dim px-2 uppercase tracking-wider font-semibold">
-                        Complete los datos de los responsables de la elaboración y aprobación del protocolo de investigación.
+                        Firmas y trazabilidad institucional del documento según equipo y autoridades registradas.
                     </p>
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {hasCustomSignatories ? (
-                    signatories.map((sig, idx) => (
-                        <div key={idx} className="p-5 bg-bg-deep border border-border-thin rounded-xl space-y-4">
-                            <span className="text-[10px] font-black uppercase text-text-dim">
-                                {sig.label || "Firmante:"} {sig.role}
+                    signatories.map((sig: any, idx: number) => (
+                        <div key={idx} className="p-5 bg-surface border border-border-thin rounded-xl space-y-3 shadow-xs">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-text-dim block border-b border-border-thin/20 pb-1.5">
+                                {sig.label || "Firmante:"}
                             </span>
                             <CoWorkField 
                                 name={`Firmas_Firmante_${idx}_Nombre`} 
                                 cowork={cowork} 
-                                label="Título abreviado, Apellidos y Nombres" 
+                                label="Nombre y Apellidos" 
                                 onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), [`Firmante_${idx}_Nombre`]: v }))}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
                                 placeholder={sig.name || "Ej: Mgs. Juan Pérez"}
                                 readOnly={readOnly}
                             />
                             <div>
-                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block px-2">Cargo Oficial</label>
-                                <span className="text-[10px] text-text-main font-bold block mt-1 px-2">{sig.role}</span>
+                                <label className="text-[8.5px] font-bold text-text-dim uppercase tracking-widest block">Cargo Oficial</label>
+                                <span className="text-[9.5px] text-text-main font-semibold block mt-0.5">{sig.role}</span>
                             </div>
                         </div>
                     ))
                 ) : (
-                    <>
-                        {/* Director */}
-                        <div className="p-5 bg-bg-deep border border-border-thin rounded-xl space-y-4">
-                            <span className="text-[10px] font-black uppercase text-text-dim">Elaborado por: Director del Proyecto</span>
-                            <CoWorkField 
-                                name="Firmas_DirectorNombre" 
-                                cowork={cowork} 
-                                label="Título abreviado, Apellidos y Nombres Completos" 
-                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorNombre: v }))}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
-                                placeholder="Ej: Mgs. Juan Pérez"
-                                readOnly={readOnly}
-                            />
-                            <CoWorkField 
-                                name="Firmas_DirectorCargo" 
-                                cowork={cowork} 
-                                label="Cargo del Elaborador" 
-                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorCargo: v }))}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim outline-none focus:border-text-main transition-colors" 
-                                placeholder="Director del Proyecto"
-                                readOnly={readOnly}
-                            />
-                        </div>
-
-                        {/* Coordinador */}
-                        <div className="p-5 bg-bg-deep border border-border-thin rounded-xl space-y-4">
-                            <span className="text-[10px] font-black uppercase text-text-dim">Aprobado por: Coordinador de Carrera</span>
-                            <CoWorkField 
-                                name="Firmas_CoordinadorNombre" 
-                                cowork={cowork} 
-                                label="Título abreviado, Apellidos y Nombres Completos" 
-                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorNombre: v }))}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold outline-none focus:border-text-main transition-colors" 
-                                placeholder="Ej: Mgs. Carlos Gómez"
-                                readOnly={readOnly}
-                            />
-                            <CoWorkField 
-                                name="Firmas_CoordinadorCargo" 
-                                cowork={cowork} 
-                                label="Cargo del Aprobador" 
-                                onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorCargo: v }))}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim outline-none focus:border-text-main transition-colors" 
-                                placeholder="Coordinador de Carrera"
-                                readOnly={readOnly}
-                            />
-                        </div>
-                    </>
+                    fullOrder.map(sectionId => renderDynamicSection(sectionId))
                 )}
             </div>
         </div>

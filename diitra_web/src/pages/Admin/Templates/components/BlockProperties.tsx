@@ -1,6 +1,6 @@
 import React from 'react';
 import { Settings, Palette, Layout, Plus, Trash2, Image as ImageIcon, Type, Sparkles, Upload } from 'lucide-react';
-import type { DocumentBlock, DocumentTemplateDto } from '../types';
+import { type DocumentBlock, type DocumentTemplateDto, BLOCK_METADATA } from '../types';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
@@ -132,9 +132,18 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                         </div>
                     ) : (
                         <div className="flex-1 p-4 space-y-5">
-                            <div>
-                                <h4 className="font-bold text-xs text-text-main">{activeBlock.title}</h4>
-                            </div>
+                            {(() => {
+                                const meta = BLOCK_METADATA[activeBlock.type];
+                                const displayTitle = activeBlock.config?.title || activeBlock.title || meta?.defaultTitle || 'Configuración del Bloque';
+
+                                return (
+                                    <div className="pb-3 border-b border-border-thin">
+                                        <h4 className="font-bold text-xs text-text-main leading-snug">
+                                            {displayTitle}
+                                        </h4>
+                                    </div>
+                                );
+                            })()}
 
                             {activeBlock.type === 'cover' && (
                                 <CoverProperties
@@ -196,6 +205,30 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
                                             />
                                         </div>
+
+                                        {activeBlock.config.isEditableWorkspace !== false && (
+                                            <div className="border-t border-border-thin/15 pt-2.5 space-y-1.5">
+                                                <label className="text-[9.5px] font-black text-text-main uppercase tracking-wider block">
+                                                    Herramientas del Editor
+                                                </label>
+                                                <select
+                                                    className={selectCls}
+                                                    value={activeBlock.config.toolbarMode || 'apa_full'}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'toolbarMode', e.target.value)}
+                                                >
+                                                    <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
+                                                    <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
+                                                    <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
+                                                </select>
+                                                <span className="text-[8px] text-text-dim block leading-tight">
+                                                    {activeBlock.config.toolbarMode === 'compact'
+                                                        ? 'Solo herramientas esenciales de redacción para textos cortos o justificaciones.'
+                                                        : activeBlock.config.toolbarMode === 'standard'
+                                                        ? 'Formato enriquecido y listas sin componentes complejos de tablas o citas.'
+                                                        : 'Suite académica completa: Niveles APA, tablas con numeración, figuras, citas y referencias.'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-[9px] text-text-dim leading-relaxed">
                                         Editor con soporte de <strong>negritas</strong>, <em>cursiva</em>, listas, alineación y <u>tablas internas</u>.

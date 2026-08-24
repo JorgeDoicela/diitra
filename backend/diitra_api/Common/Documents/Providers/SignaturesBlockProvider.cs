@@ -68,10 +68,30 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            // Extraer firmantes para pasar al frontend
+            // Extraer modo y opciones dinámicas de firmas
+            string signaturesMode = "team_dynamic";
+            bool includeDirector = true;
+            bool includeDocentes = true;
+            bool includeEstudiantes = false;
+            bool includeCoordinadorCarrera = true;
+            bool includeCoordinadorDiitra = false;
+            bool includeVicerrectorado = false;
+
+            if (block.TryGetProperty("config", out var configProp))
+            {
+                if (configProp.TryGetProperty("signaturesMode", out var smProp)) signaturesMode = smProp.GetString() ?? "team_dynamic";
+                if (configProp.TryGetProperty("includeDirector", out var idProp)) includeDirector = idProp.GetBoolean();
+                if (configProp.TryGetProperty("includeDocentes", out var idocProp)) includeDocentes = idocProp.GetBoolean();
+                if (configProp.TryGetProperty("includeEstudiantes", out var ieProp)) includeEstudiantes = ieProp.GetBoolean();
+                if (configProp.TryGetProperty("includeCoordinadorCarrera", out var iccProp)) includeCoordinadorCarrera = iccProp.GetBoolean();
+                if (configProp.TryGetProperty("includeCoordinadorDiitra", out var icdProp)) includeCoordinadorDiitra = icdProp.GetBoolean();
+                if (configProp.TryGetProperty("includeVicerrectorado", out var ivProp)) includeVicerrectorado = ivProp.GetBoolean();
+            }
+
+            // Extraer firmantes manuales para modo custom
             var signatoriesList = new List<object>();
-            if (block.TryGetProperty("config", out var configProp) && 
-                configProp.TryGetProperty("signatories", out var sigsProp) && 
+            if (block.TryGetProperty("config", out var cfgProp) && 
+                cfgProp.TryGetProperty("signatories", out var sigsProp) && 
                 sigsProp.ValueKind == JsonValueKind.Array)
             {
                 foreach (var sig in sigsProp.EnumerateArray())
@@ -83,6 +103,17 @@ namespace diitra_api.Controllers
                 }
             }
 
+            var signaturesConfig = new {
+                signaturesMode,
+                includeDirector,
+                includeDocentes,
+                includeEstudiantes,
+                includeCoordinadorCarrera,
+                includeCoordinadorDiitra,
+                includeVicerrectorado,
+                signatories = signatoriesList.ToArray()
+            };
+
             if (templateCode == "PROTOCOLO_INVESTIGACION")
             {
                 if (!sectionsList.Any(s => s.Id == "bibliografia"))
@@ -92,9 +123,7 @@ namespace diitra_api.Controllers
                         Label = "Bibliografía & Firmas",
                         IconName = "Library",
                         ComponentName = "BibliographySection",
-                        Config = new {
-                            signatories = signatoriesList.ToArray()
-                        }
+                        Config = signaturesConfig
                     });
                 }
             }
@@ -110,6 +139,13 @@ namespace diitra_api.Controllers
                         Config = new {
                             isBibliographyHidden = true,
                             title = string.IsNullOrEmpty(title) ? "Firmas de Responsabilidad" : title,
+                            signaturesMode,
+                            includeDirector,
+                            includeDocentes,
+                            includeEstudiantes,
+                            includeCoordinadorCarrera,
+                            includeCoordinadorDiitra,
+                            includeVicerrectorado,
                             signatories = signatoriesList.ToArray()
                         }
                     });

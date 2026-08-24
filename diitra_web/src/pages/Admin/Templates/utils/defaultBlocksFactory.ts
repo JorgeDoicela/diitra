@@ -60,8 +60,7 @@ export function createBaseCoverBlock(
  * Genera el bloque de firmas institucional de cierre.
  */
 export function createBaseSignaturesBlock(
-    signatories: Array<{ label: string; name: string; role: string }>,
-    footerText = 'INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI'
+    signatories: Array<{ label: string; name: string; role: string }>
 ): DocumentBlock {
     return {
         id: `block-signatures-${Date.now()}`,
@@ -69,8 +68,7 @@ export function createBaseSignaturesBlock(
         title: 'Firmas de Responsabilidad y Trazabilidad',
         isActive: true,
         config: {
-            signatories,
-            textoPieFirma: footerText
+            signatories
         }
     };
 }
