@@ -3,7 +3,7 @@ import { DEFAULT_IMPACT_CATEGORIES, DEFAULT_TECHNICAL_SUBSECTIONS } from '../../
 import { COLORS, headerBg } from './generatorStyles';
 
 export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
-    const c: any = block.config;
+    const c: any = block.config || {};
     const headerColorMode = c.headerColor || 'blue';
     const borderStyleMode = c.borderStyle || 'solid';
 
@@ -17,77 +17,166 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         }
     };
 
-    const headerPair = resolveHeaderPair(headerColorMode);
+    const defaultHeaderPair = resolveHeaderPair(headerColorMode);
     const tableBorder = borderStyleMode === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
     const cellBorder = borderStyleMode === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
+
+    const resolveVariantPair = (variant?: string) => {
+        switch (variant) {
+            case 'banner_gold': return { bg: '#b8912e', fg: '#ffffff' };
+            case 'banner_navy': return { bg: '#1e2a4a', fg: '#ffffff' };
+            case 'banner_emerald': return { bg: '#065f46', fg: '#ffffff' };
+            default: return defaultHeaderPair;
+        }
+    };
 
     interface ItemRow {
         key: string;
         label: string;
         content: string;
+        isGroupHeader?: boolean;
+        variant?: string;
         colSpan: 1 | 2;
     }
 
     const items: ItemRow[] = [];
 
     if (c.showTitulo !== false) {
-        const lbl = c.customLabel_showTitulo || 'Título del Proyecto';
+        const lbl = c.customLabel_showTitulo || 'Nombre del Proyecto';
         const scr = c.customScriban_showTitulo || 'titulo';
-        items.push({ key: 'showTitulo', label: lbl, content: `<span style="font-weight: bold;">{{default ${scr} "[TEMA / NOMBRE DEL PROYECTO]"}}</span>`, colSpan: (c.colSpan_showTitulo as 1 | 2) || 2 });
+        items.push({
+            key: 'showTitulo',
+            label: lbl,
+            content: `<span style="font-weight: bold;">{{default ${scr} "[TEMA / NOMBRE DEL PROYECTO]"}}</span>`,
+            variant: c.variant_showTitulo || 'standard',
+            colSpan: (c.colSpan_showTitulo as 1 | 2) || 2,
+        });
     }
     if (c.showDirector !== false) {
         const lbl = c.customLabel_showDirector || 'Director del Proyecto';
         const scr = c.customScriban_showDirector || 'director_proyecto';
-        items.push({ key: 'showDirector', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showDirector as 1 | 2) || 1 });
+        items.push({
+            key: 'showDirector',
+            label: lbl,
+            content: `{{default ${scr} "No especificado"}}`,
+            variant: c.variant_showDirector || 'standard',
+            colSpan: (c.colSpan_showDirector as 1 | 2) || 1,
+        });
     }
     if (c.showCarrera !== false) {
         const lbl = c.customLabel_showCarrera || 'Carrera / Unidad Académica';
         const scr = c.customScriban_showCarrera || 'carrera';
-        items.push({ key: 'showCarrera', label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: (c.colSpan_showCarrera as 1 | 2) || 1 });
+        items.push({
+            key: 'showCarrera',
+            label: lbl,
+            content: `{{default ${scr} "No especificada"}}`,
+            variant: c.variant_showCarrera || 'standard',
+            colSpan: (c.colSpan_showCarrera as 1 | 2) || 1,
+        });
     }
     if (c.showConvocatoria !== false) {
-        const lbl = c.customLabel_showConvocatoria || 'Convocatoria';
+        const lbl = c.customLabel_showConvocatoria || 'Convocatoria Activa';
         const scr = c.customScriban_showConvocatoria || 'convocatoria';
-        items.push({ key: 'showConvocatoria', label: lbl, content: `{{default ${scr} "No especificada"}}`, colSpan: (c.colSpan_showConvocatoria as 1 | 2) || 1 });
+        items.push({
+            key: 'showConvocatoria',
+            label: lbl,
+            content: `{{default ${scr} "No especificada"}}`,
+            variant: c.variant_showConvocatoria || 'standard',
+            colSpan: (c.colSpan_showConvocatoria as 1 | 2) || 1,
+        });
     }
     if (c.showPrograma !== false) {
-        const lbl = c.customLabel_showPrograma || 'Programa';
+        const lbl = c.customLabel_showPrograma || 'Programa de Investigación';
         const scr = c.customScriban_showPrograma || 'programa';
-        items.push({ key: 'showPrograma', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showPrograma as 1 | 2) || 1 });
+        items.push({
+            key: 'showPrograma',
+            label: lbl,
+            content: `{{default ${scr} "No especificado"}}`,
+            variant: c.variant_showPrograma || 'standard',
+            colSpan: (c.colSpan_showPrograma as 1 | 2) || 1,
+        });
     }
     if (c.showGrupo !== false) {
         const lbl = c.customLabel_showGrupo || 'Grupo de Investigación';
         const scr = c.customScriban_showGrupo || 'grupo_investigacion';
-        items.push({ key: 'showGrupo', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showGrupo as 1 | 2) || 1 });
+        items.push({
+            key: 'showGrupo',
+            label: lbl,
+            content: `{{default ${scr} "No especificado"}}`,
+            variant: c.variant_showGrupo || 'standard',
+            colSpan: (c.colSpan_showGrupo as 1 | 2) || 1,
+        });
     }
     if (c.showLinea !== false) {
         const lbl = c.customLabel_showLinea || 'Línea de Investigación';
         const scr = c.customScriban_showLinea || 'linea_investigacion';
-        items.push({ key: 'showLinea', label: lbl, content: `<div><strong>Línea:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>`, colSpan: (c.colSpan_showLinea as 1 | 2) || 1 });
+        items.push({
+            key: 'showLinea',
+            label: lbl,
+            content: `<div><strong>Línea:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>`,
+            variant: c.variant_showLinea || 'standard',
+            colSpan: (c.colSpan_showLinea as 1 | 2) || 1,
+        });
     }
     if (c.showTipo !== false) {
         const lbl = c.customLabel_showTipo || 'Tipo de Investigación';
         const scr = c.customScriban_showTipo || 'tipo_investigacion';
-        items.push({ key: 'showTipo', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showTipo as 1 | 2) || 1 });
+        items.push({
+            key: 'showTipo',
+            label: lbl,
+            content: `{{default ${scr} "No especificado"}}`,
+            variant: c.variant_showTipo || 'standard',
+            colSpan: (c.colSpan_showTipo as 1 | 2) || 1,
+        });
     }
     if (c.showCaces !== false) {
         const lbl = c.customLabel_showCaces || 'Campo Detallado CACES';
         const scr = c.customScriban_showCaces || 'campo_detallado';
-        items.push({ key: 'showCaces', label: lbl, content: `{{default ${scr} "No especificado"}}`, colSpan: (c.colSpan_showCaces as 1 | 2) || 1 });
+        items.push({
+            key: 'showCaces',
+            label: lbl,
+            content: `{{default ${scr} "No especificado"}}`,
+            variant: c.variant_showCaces || 'standard',
+            colSpan: (c.colSpan_showCaces as 1 | 2) || 1,
+        });
     }
     if (c.showFechas !== false) {
         const lbl = c.customLabel_showFechas || 'Fechas y Plazos';
         const scr = c.customScriban_showFechas || 'fecha_inicio';
-        items.push({ key: 'showFechas', label: lbl, content: `<div><strong>Inicio:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div>`, colSpan: (c.colSpan_showFechas as 1 | 2) || 1 });
+        items.push({
+            key: 'showFechas',
+            label: lbl,
+            content: `<div><strong>Inicio:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div>`,
+            variant: c.variant_showFechas || 'standard',
+            colSpan: (c.colSpan_showFechas as 1 | 2) || 1,
+        });
     }
 
     const customFields: IdentificationField[] = c.customFields || [];
     customFields.forEach((f: IdentificationField) => {
+        if (f.isGroupHeader) {
+            items.push({
+                key: f.fieldKey,
+                label: f.label,
+                content: '',
+                isGroupHeader: true,
+                variant: f.variant || 'banner_gold',
+                colSpan: 2,
+            });
+            return;
+        }
+
         const scriban = f.scriptVariable || f.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
         const cellContent = f.scriptMode === 'static'
             ? (f.options?.[0] || f.label)
             : `{{default ${scriban} "No especificado"}}`;
-        items.push({ key: f.fieldKey, label: f.label, content: cellContent, colSpan: (f.colSpan as 1 | 2) || 1 });
+        items.push({
+            key: f.fieldKey,
+            label: f.label,
+            content: cellContent,
+            variant: f.variant || 'standard',
+            colSpan: (f.colSpan as 1 | 2) || 1,
+        });
     });
 
     const fieldsOrder: string[] = c.fieldsOrder || [];
@@ -104,18 +193,22 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
 
     if (items.length === 0) return '';
 
-    type RowGroup = { type: 'full'; item: ItemRow } | { type: 'pair'; item1: ItemRow; item2?: ItemRow };
+    // Layout Tabla Clásica Institucional
+    type RowGroup = { type: 'header'; item: ItemRow } | { type: 'full'; item: ItemRow } | { type: 'pair'; item1: ItemRow; item2?: ItemRow };
     const rows: RowGroup[] = [];
 
     let idx = 0;
     while (idx < items.length) {
         const current = items[idx];
-        if (current.colSpan === 2) {
+        if (current.isGroupHeader) {
+            rows.push({ type: 'header', item: current });
+            idx++;
+        } else if (current.colSpan === 2) {
             rows.push({ type: 'full', item: current });
             idx++;
         } else {
             const next = items[idx + 1];
-            if (next && next.colSpan === 1) {
+            if (next && !next.isGroupHeader && next.colSpan === 1) {
                 rows.push({ type: 'pair', item1: current, item2: next });
                 idx += 2;
             } else {
@@ -126,26 +219,35 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
     }
 
     const tableRowsHtml = rows.map(r => {
-        if (r.type === 'full') {
+        if (r.type === 'header') {
+            const pair = resolveVariantPair(r.item.variant);
             return `
-    <tr>
-      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 25%; vertical-align: top; ${cellBorder}">${r.item.label}</td>
+    <tr style="page-break-inside: avoid;">
+      <td colspan="4" style="background-color: ${pair.bg} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${r.item.label}</td>
+    </tr>`;
+        } else if (r.type === 'full') {
+            const pair = resolveVariantPair(r.item.variant);
+            return `
+    <tr style="page-break-inside: avoid;">
+      <td style="background-color: ${pair.bg} !important; color: ${pair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 25%; vertical-align: top; ${cellBorder}">${r.item.label}</td>
       <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${r.item.content}</td>
     </tr>`;
         } else {
             const { item1, item2 } = r;
-            if (item2) {
+            const pair1 = resolveVariantPair(item1.variant);
+            const pair2 = item2 ? resolveVariantPair(item2.variant) : null;
+            if (item2 && pair2) {
                 return `
-    <tr>
-      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
+    <tr style="page-break-inside: avoid;">
+      <td style="background-color: ${pair1.bg} !important; color: ${pair1.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
       <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item1.content}</td>
-      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item2.label}</td>
+      <td style="background-color: ${pair2.bg} !important; color: ${pair2.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item2.label}</td>
       <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item2.content}</td>
     </tr>`;
             } else {
                 return `
-    <tr>
-      <td style="background-color: ${headerPair.bg} !important; color: ${headerPair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
+    <tr style="page-break-inside: avoid;">
+      <td style="background-color: ${pair1.bg} !important; color: ${pair1.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
       <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${item1.content}</td>
     </tr>`;
             }
@@ -167,8 +269,9 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
 
 export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const layoutMode = c.technicalLayoutMode || 'table_2col';
     const headerColorKey = c.technicalHeaderColor || 'navy';
+    const borderStyleKey = c.technicalBorderStyle || 'solid';
+
     const resolveHeaderBg = (col: string) => {
         switch (col) {
             case 'gold': return '#b8912e';
@@ -180,6 +283,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     };
     const headerBgCol = resolveHeaderBg(headerColorKey);
     const goldColor = '#b8912e';
+    const tableBorder = borderStyleKey === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
+    const cellBorder = borderStyleKey === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
 
     const sanitizeScribanVar = (rawVar?: string, fallbackKey?: string) => {
         let raw = (rawVar || fallbackKey || 'contenido').trim();
@@ -201,6 +306,13 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         return p ? `${p} ${t}`.trim().toUpperCase() : t.toUpperCase();
     };
 
+    const resolveVariantColor = (v?: string) => {
+        if (v === 'banner_gold') return goldColor;
+        if (v === 'banner_navy') return '#1e2a4a';
+        if (v === 'banner_emerald') return '#065f46';
+        return headerBgCol;
+    };
+
     const rawSections = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
         ? c.technicalSections
         : DEFAULT_TECHNICAL_SUBSECTIONS;
@@ -209,137 +321,75 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 
     if (activeSections.length === 0) return '';
 
-    let bodyHtml = '';
+    // Matriz Reticular Interactiva Institucional (table_2col)
+    const renderedRows: string[] = [];
+    let i = 0;
 
-    if (layoutMode === 'bento_cards') {
-        const cardHtmlList = activeSections.map((sec: any) => {
-            const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
-            const pascalVar = (sec.fieldKey || sec.key || '').trim();
-            const isGroup = sec.isGroupHeader || sec.hasContent === false;
-            
-            if (isGroup) {
-                return `
-      <div style="margin-bottom: 12px; border: 1.5px solid ${goldColor}; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: ${goldColor}; color: #000000; padding: 8px 10px; font-weight: bold; font-size: 9pt; text-align: center; text-transform: uppercase;">
-        ${displayTitle}
-      </div>`;
-            }
+    while (i < activeSections.length) {
+        const sec = activeSections[i];
+        const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
+        const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
+        const pascalVar = (sec.fieldKey || sec.key || '').trim();
+        const colSpan = sec.colSpan || 2;
+        const variant = sec.variant || 'standard';
+        const isGroup = sec.isGroupHeader || sec.hasContent === false;
+        const breakBefore = sec.pageBreakBefore ? 'page-break-before: always;' : '';
+        const avoidInside = sec.avoidBreakInside !== false ? 'page-break-inside: avoid;' : '';
+        const color = resolveVariantColor(variant);
 
-            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+        if (isGroup || variant === 'banner_gold') {
+            renderedRows.push(`
+      <tr style="${avoidInside} ${breakBefore}">
+        <td colspan="2" style="background-color: ${color} !important; color: #ffffff !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; ${cellBorder} text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+      </tr>`);
+            i++;
+        } else if (colSpan === 1 || variant === 'banner_navy') {
+            const nextSec = activeSections[i + 1];
+            if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy') && !nextSec.isGroupHeader) {
+                const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
+                const nextVarName = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey || nextSec.key);
+                const nextPascalVar = (nextSec.fieldKey || nextSec.key || '').trim();
+                const color2 = resolveVariantColor(nextSec.variant);
 
-            return `
-      <div style="margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
-        <div style="background-color: ${sec.variant === 'banner_gold' ? goldColor : headerBgCol}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
-          ${displayTitle}
-        </div>
-        <div style="padding: 10px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
-          ${fieldScribanTag}
-        </div>
-      </div>`;
-        });
+                const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+                const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} "Sin contenido redactado."}}}`;
 
-        bodyHtml = `
-    <div style="margin-top: 10px;">
-      ${cardHtmlList.join('')}
-    </div>`;
-    } else if (layoutMode === 'headings_text') {
-        const secHtmlList = activeSections.map((sec: any) => {
-            const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
-            const pascalVar = (sec.fieldKey || sec.key || '').trim();
-            const isGroup = sec.isGroupHeader || sec.hasContent === false;
-
-            if (isGroup) {
-                return `
-      <div style="margin: 18px 0 10px 0; padding: 6px 10px; background-color: ${goldColor}; color: #000000; font-weight: bold; font-size: 9pt; text-transform: uppercase; text-align: center;">
-        ${displayTitle}
-      </div>`;
-            }
-
-            const fieldScribanTag = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
-
-            return `
-      <div style="margin-bottom: 16px; page-break-inside: avoid;">
-        <div style="padding: 4px 8px; background-color: #f1f5f9; border-left: 3px solid ${headerBgCol}; margin-bottom: 6px;">
-          <p style="margin: 0; font-weight: bold; font-size: 9pt; color: ${headerBgCol}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</p>
-        </div>
-        <div style="padding-left: 4px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
-          ${fieldScribanTag}
-        </div>
-      </div>`;
-        });
-
-        bodyHtml = `
-    <div style="margin-top: 10px;">
-      ${secHtmlList.join('')}
-    </div>`;
-    } else {
-        // Matriz Reticular Interactiva (table_2col)
-        const renderedRows: string[] = [];
-        let i = 0;
-
-        while (i < activeSections.length) {
-            const sec = activeSections[i];
-            const displayTitle = formatDisplayTitle(sec.numberPrefix, sec.title);
-            const varName = sanitizeScribanVar(sec.scribanVariable, sec.fieldKey || sec.key);
-            const pascalVar = (sec.fieldKey || sec.key || '').trim();
-            const colSpan = sec.colSpan || 2;
-            const variant = sec.variant || 'standard';
-            const isGroup = sec.isGroupHeader || sec.hasContent === false;
-
-            if (isGroup || variant === 'banner_gold') {
                 renderedRows.push(`
-      <tr style="page-break-inside: avoid;">
-        <td colspan="2" style="background-color: ${goldColor} !important; color: #000000 !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; border: 1px solid #cbd5e1; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-      </tr>`);
-                i++;
-            } else if (colSpan === 1 || variant === 'banner_navy') {
-                const nextSec = activeSections[i + 1];
-                if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy') && !nextSec.isGroupHeader) {
-                    const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
-                    const nextVarName = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey || nextSec.key);
-                    const nextPascalVar = (nextSec.fieldKey || nextSec.key || '').trim();
-
-                    const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
-                    const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} "Sin contenido redactado."}}}`;
-
-                    renderedRows.push(`
-      <tr style="page-break-inside: avoid;">
-        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${nextTitle}</td>
+      <tr style="${avoidInside} ${breakBefore}">
+        <td style="background-color: ${color} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="background-color: ${color2} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${nextTitle}</td>
       </tr>
-      <tr style="page-break-inside: avoid;">
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag2}</td>
+      <tr style="${avoidInside}">
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag2}</td>
       </tr>`);
-                    i += 2;
-                } else {
-                    const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
-                    renderedRows.push(`
-      <tr style="page-break-inside: avoid;">
-        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
-      </tr>`);
-                    i++;
-                }
+                i += 2;
             } else {
                 const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
                 renderedRows.push(`
-      <tr style="page-break-inside: avoid;">
-        <td style="background-color: ${headerBgCol} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; border: 1px solid #cbd5e1; font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+      <tr style="${avoidInside} ${breakBefore}">
+        <td style="background-color: ${color} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
       </tr>`);
                 i++;
             }
+        } else {
+            const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+            renderedRows.push(`
+      <tr style="${avoidInside} ${breakBefore}">
+        <td style="background-color: ${color} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+      </tr>`);
+            i++;
         }
+    }
 
-        bodyHtml = `
-    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
+    const bodyHtml = `
+    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder}">
       <tbody>
         ${renderedRows.join('\n')}
       </tbody>
     </table>`;
-    }
 
     return `
   <!-- BLOQUE: PROPUESTA TÉCNICA -->

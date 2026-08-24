@@ -39,6 +39,36 @@ namespace diitra_api.Controllers
             schemaDict["FechaPresentacion"] = "";
             schemaDict["FechaInicio"] = "";
             schemaDict["FechaFin"] = "";
+
+            // Dynamic Custom Fields support (Schema-Driven Engine)
+            if (block.TryGetProperty("config", out var configProp) &&
+                configProp.TryGetProperty("customFields", out var customFieldsProp) &&
+                customFieldsProp.ValueKind == JsonValueKind.Array &&
+                customFieldsProp.GetArrayLength() > 0)
+            {
+                foreach (var field in customFieldsProp.EnumerateArray())
+                {
+                    string fieldKey = "";
+                    if (field.TryGetProperty("fieldKey", out var fkProp)) fieldKey = fkProp.GetString() ?? "";
+                    if (string.IsNullOrEmpty(fieldKey) && field.TryGetProperty("id", out var idProp)) fieldKey = idProp.GetString() ?? "";
+
+                    if (!string.IsNullOrEmpty(fieldKey))
+                    {
+                        string fieldType = "text";
+                        if (field.TryGetProperty("fieldType", out var ftProp)) fieldType = ftProp.GetString() ?? "text";
+
+                        if (fieldType == "number")
+                        {
+                            schemaDict[fieldKey] = 0;
+                        }
+                        else
+                        {
+                            schemaDict[fieldKey] = "";
+                        }
+                        premiumFieldsCount++;
+                    }
+                }
+            }
         }
 
         public Task MapToUiSectionAsync(
@@ -65,11 +95,31 @@ namespace diitra_api.Controllers
                 {
                     configDict = new Dictionary<string, object>();
                 }
-                configDict["completionFields"] = new[] { "Titulo", "IdCarrera", "IdConvocatoria", "Periodo" };
+
+                var completionList = new List<string> { "Titulo", "IdCarrera", "IdConvocatoria", "Periodo" };
+
+                // Include custom fields in completion requirements if defined
+                if (block.TryGetProperty("config", out var cfg) &&
+                    cfg.TryGetProperty("customFields", out var fieldsProp) &&
+                    fieldsProp.ValueKind == JsonValueKind.Array &&
+                    fieldsProp.GetArrayLength() > 0)
+                {
+                    foreach (var field in fieldsProp.EnumerateArray())
+                    {
+                        string fieldKey = "";
+                        if (field.TryGetProperty("fieldKey", out var fkProp)) fieldKey = fkProp.GetString() ?? "";
+                        if (!string.IsNullOrEmpty(fieldKey) && !completionList.Contains(fieldKey))
+                        {
+                            completionList.Add(fieldKey);
+                        }
+                    }
+                }
+
+                configDict["completionFields"] = completionList.ToArray();
 
                 sectionsList.Add(new UiSectionDto {
                     Id = "identificacion",
-                    Label = string.IsNullOrEmpty(title) ? "Identificación del Proyecto" : title,
+                    Label = string.IsNullOrEmpty(title) ? "1. IDENTIFICACIÓN DEL PROYECTO" : title,
                     IconName = "BookOpen",
                     ComponentName = "GeneralSection",
                     Config = configDict

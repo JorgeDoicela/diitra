@@ -140,7 +140,7 @@ namespace diitra_api.Controllers
 
                 sectionsList.Add(new UiSectionDto {
                     Id = "tecnico",
-                    Label = string.IsNullOrEmpty(title) ? "Plan Técnico" : title,
+                    Label = string.IsNullOrEmpty(title) ? "3. ESPECIFICACIÓN TÉCNICA" : title,
                     IconName = "FileText",
                     ComponentName = "TechnicalSection",
                     Config = configDict

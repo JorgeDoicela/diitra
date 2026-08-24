@@ -722,10 +722,30 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             {activeOrder.map(key => renderBlockByKey(key))}
             {defaultCoreOrder.map(key => renderBlockByKey(key))}
 
-            {/* Campos Personalizados Adicionales (Composición Unificada) */}
+            {/* Campos Personalizados Adicionales y Banners Temáticos (Composición Unificada) */}
             {customFieldsList.length > 0 && (
                 <div className="space-y-5 sm:space-y-8 pt-4 border-t border-border-thin/20">
                     {customFieldsList.map((field) => {
+                        if (field.isGroupHeader) {
+                            const isGold = field.variant === 'banner_gold';
+                            const isNavy = field.variant === 'banner_navy';
+                            const isEmerald = field.variant === 'banner_emerald';
+                            const bannerBg = isGold ? 'bg-amber-500/10 border-amber-500/30 text-amber-600' : isNavy ? 'bg-blue-500/10 border-blue-500/30 text-blue-600' : isEmerald ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-surface-hover border-border-thin text-text-main';
+
+                            return (
+                                <div key={field.fieldKey} className={`p-3.5 rounded-xl border ${bannerBg} flex items-center justify-between my-3 shadow-2xs`}>
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider">
+                                        {field.label}
+                                    </h4>
+                                    {field.requirementText && (
+                                        <span className="text-[10px] text-text-dim/80 italic font-medium">
+                                            {field.requirementText}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         const options = field.fieldType === 'select_catalog'
                             ? (customCatalogs[field.catalogUrl!] || [])
                             : (field.options || []);
@@ -737,28 +757,35 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             ? 'grid-cols-1'
                             : 'grid-cols-1 md:grid-cols-2';
 
+                        const fieldHelper = field.requirementText ? (
+                            <p className="text-[10px] text-text-dim italic mt-1">{field.requirementText}</p>
+                        ) : null;
+
                         if (field.fieldType === 'select_inline' || field.fieldType === 'select_catalog') {
                             return (
                                 <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
-                                    <CoWorkField
-                                        name={field.fieldKey}
-                                        cowork={cowork}
-                                        type="select"
-                                        label={field.label}
-                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
-                                    >
-                                        <option value="">-- Seleccione {field.label} --</option>
-                                        {options.map((opt: any, optIdx: number) => {
-                                            const val = typeof opt === 'string' ? opt : (opt[valueKey] ?? opt[labelKey] ?? '');
-                                            const lbl = typeof opt === 'string' ? opt : (opt[labelKey] ?? opt[valueKey] ?? '');
-                                            return (
-                                                <option key={val || optIdx} value={val}>
-                                                    {lbl}
-                                                </option>
-                                            );
-                                        })}
-                                    </CoWorkField>
+                                    <div>
+                                        <CoWorkField
+                                            name={field.fieldKey}
+                                            cowork={cowork}
+                                            type="select"
+                                            label={field.label}
+                                            onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                        >
+                                            <option value="">-- Seleccione {field.label} --</option>
+                                            {options.map((opt: any, optIdx: number) => {
+                                                const val = typeof opt === 'string' ? opt : (opt[valueKey] ?? opt[labelKey] ?? '');
+                                                const lbl = typeof opt === 'string' ? opt : (opt[labelKey] ?? opt[valueKey] ?? '');
+                                                return (
+                                                    <option key={val || optIdx} value={val}>
+                                                        {lbl}
+                                                    </option>
+                                                );
+                                            })}
+                                        </CoWorkField>
+                                        {fieldHelper}
+                                    </div>
                                 </div>
                             );
                         }
@@ -766,31 +793,37 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         if (field.fieldType === 'textarea') {
                             return (
                                 <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
-                                    <CoWorkField
-                                        name={field.fieldKey}
-                                        cowork={cowork}
-                                        type="textarea"
-                                        label={field.label}
-                                        placeholder={field.placeholder}
-                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
-                                    />
+                                    <div>
+                                        <CoWorkField
+                                            name={field.fieldKey}
+                                            cowork={cowork}
+                                            type="textarea"
+                                            label={field.label}
+                                            placeholder={field.placeholder}
+                                            onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                        />
+                                        {fieldHelper}
+                                    </div>
                                 </div>
                             );
                         }
 
                         return (
                             <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
-                                <CoWorkField
-                                    name={field.fieldKey}
-                                    cowork={cowork}
-                                    label={field.label}
-                                    placeholder={field.placeholder}
-                                    uppercase={field.uppercase}
-                                    mask={field.fieldType === 'date' ? 'date' : undefined}
-                                    onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
-                                />
+                                <div>
+                                    <CoWorkField
+                                        name={field.fieldKey}
+                                        cowork={cowork}
+                                        label={field.label}
+                                        placeholder={field.placeholder}
+                                        uppercase={field.uppercase}
+                                        mask={field.fieldType === 'date' ? 'date' : undefined}
+                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                    />
+                                    {fieldHelper}
+                                </div>
                             </div>
                         );
                     })}

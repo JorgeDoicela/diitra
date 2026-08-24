@@ -151,6 +151,9 @@ export interface TechnicalSubsection {
     isGroupHeader?: boolean;    // true = actúa como categoría/grupo de subsecciones
     parentId?: string;          // ID o fieldKey de la subsección padre
     toolbarMode?: ToolbarMode;  // 'apa_full' | 'standard' | 'compact'
+    pageBreakBefore?: boolean;  // Forzar salto de página antes de esta subsección en PDF
+    avoidBreakInside?: boolean; // Evitar que la subsección se divida entre páginas en PDF
+    borderStyle?: 'solid' | 'accent_left' | 'none' | string;
 }
 
 export const DEFAULT_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
@@ -235,6 +238,10 @@ export interface IdentificationField {
     uppercase?: boolean;
     placeholder?: string;
     required?: boolean;
+    isGroupHeader?: boolean;    // true = actúa como banner/separador temático (ej. "A. DATOS INSTITUCIONALES")
+    variant?: 'standard' | 'banner_gold' | 'banner_navy' | 'banner_emerald' | string;
+    requirementText?: string;   // Texto de orientación para el docente
+    helpText?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -383,11 +390,9 @@ export interface DocumentBlock {
 
         // ── project_general_section ────────────────────────────────────────
         identificationMode?: 'catalogs' | 'fields';
-        tableStyle?: 'classic' | 'grid' | 'cards' | 'minimal' | string;
+        tableStyle?: 'classic' | 'grid' | string;
         borderStyle?: 'solid' | 'none' | string;
         headerColor?: 'navy' | 'primary' | 'emerald' | 'slate' | 'dark' | string;
-        bentoColumns?: 2 | 3;
-        bentoItems?: BentoGridItem[];
         fieldsOrder?: string[];
         customFields?: IdentificationField[];
         showTitulo?: boolean;
@@ -402,8 +407,8 @@ export interface DocumentBlock {
 
         // ── project_technical_section ──────────────────────────────────────
         technicalSections?: TechnicalSubsection[];
-        technicalLayoutMode?: 'table_2col' | 'consecutive_sections' | 'cards';
-        technicalHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald';
+        technicalHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        technicalBorderStyle?: 'solid' | 'none' | string;
         showAntecedentes?: boolean;
         showDescripcionProyecto?: boolean;
         showJustificacion?: boolean;
