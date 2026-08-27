@@ -76,6 +76,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     if (cleaned == templateHtml) break;
                     templateHtml = cleaned;
                 }
+
+                // Normalizar bucles legados Scriban/Liquid {{ for inv in ... }} a Handlebars {{#each ...}}
+                if (templateHtml.Contains("{{ for "))
+                {
+                    templateHtml = System.Text.RegularExpressions.Regex.Replace(
+                        templateHtml,
+                        @"\{\{\s*for\s+\w+\s+in\s+([^\}|]+)(?:\|\|[^\}]+)?\s*\}\}",
+                        "{{#each $1}}"
+                    );
+                    templateHtml = System.Text.RegularExpressions.Regex.Replace(
+                        templateHtml,
+                        @"\{\{\s*end\s*\}\}",
+                        "{{/each}}"
+                    );
+                }
             }
 
             HandlebarsTemplate<object, object> compiled;

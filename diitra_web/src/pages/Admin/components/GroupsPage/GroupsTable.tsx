@@ -81,7 +81,7 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
                                             onClick={() => onSelectDetail(g, false)}
                                             className={`transition-all duration-300 group cursor-pointer ${
                                                 detailGroup?.uuid === g.uuid
-                                                    ? 'bg-brand/[0.08] border-brand/35'
+                                                    ? 'bg-brand/[0.08]'
                                                     : (!detailGroup && lastActiveGroupId === g.uuid)
                                                         ? 'row-last-active'
                                                         : 'hover:bg-surface/30'

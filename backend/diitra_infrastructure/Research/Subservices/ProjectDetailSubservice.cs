@@ -295,6 +295,19 @@ namespace diitra_infrastructure.Research.Subservices
                     .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
             }
 
+            var participantUserIds = p.InvProyectoParticipantes.Select(pp => pp.IdUsuario).Distinct().ToList();
+            var userMetasDict = new Dictionary<int, InvUsuarioMetadata>();
+            if (participantUserIds.Any())
+            {
+                var metas = await _context.InvUsuariosMetadata
+                    .AsNoTracking()
+                    .Where(m => participantUserIds.Contains(m.IdUsuario))
+                    .ToListAsync();
+                userMetasDict = metas
+                    .GroupBy(m => m.IdUsuario)
+                    .ToDictionary(g => g.Key, g => g.First());
+            }
+
             var investigadoresList = new List<InvestigadorDto>();
 
             foreach (var pp in p.InvProyectoParticipantes.Where(pp => pp.TipoParticipante == "Docente"))
@@ -337,6 +350,8 @@ namespace diitra_infrastructure.Research.Subservices
                 var availableHours = researchHours.Where(pa => pa.IdProfesor.Trim() == cedula).Sum(pa => pa.HorasSemana ?? 0);
                 var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
 
+                userMetasDict.TryGetValue(pp.IdUsuario, out var meta);
+
                 investigadoresList.Add(new InvestigadorDto
                 {
                     Nombre = pp.IdUsuarioNavigation?.Nombre,
@@ -354,7 +369,11 @@ namespace diitra_infrastructure.Research.Subservices
                     HorasSemanales = pp.HorasSemanales,
                     HorasDisponibles = availableHours,
                     HorasAsignadas = assignedHours,
-                    EsDirector = pp.EsDirector
+                    EsDirector = pp.EsDirector,
+                    OrcidId = meta?.OrcidId,
+                    FirmaHabilitada = meta?.AceptoTerminosFirma,
+                    GradoAcademicoMaximo = meta?.GradoAcademicoMaximo,
+                    Especialidad = meta?.Especialidad
                 });
             }
 
@@ -416,6 +435,8 @@ namespace diitra_infrastructure.Research.Subservices
                     }
                 }
 
+                userMetasDict.TryGetValue(pa.IdUsuario, out var metaStudent);
+
                 investigadoresList.Add(new InvestigadorDto
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,
@@ -430,6 +451,10 @@ namespace diitra_infrastructure.Research.Subservices
                     MotivoCambio = pa.MotivoCambio,
                     Carrera = carreraNom,
                     CarrerasDisponibles = carrerasDisponibles,
+                    OrcidId = metaStudent?.OrcidId,
+                    FirmaHabilitada = metaStudent?.AceptoTerminosFirma,
+                    GradoAcademicoMaximo = metaStudent?.GradoAcademicoMaximo,
+                    Especialidad = metaStudent?.Especialidad
                 });
             }
 

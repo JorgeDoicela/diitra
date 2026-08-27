@@ -22,12 +22,18 @@ namespace diitra_api.Controllers
         private readonly IDocumentEngine _documentEngine;
         private readonly DiitraContext _db;
         private readonly IHubContext<CollaborationHub> _hubContext;
+        private readonly IHostEnvironment _environment;
 
-        public DocumentTemplatesController(IDocumentEngine documentEngine, DiitraContext db, IHubContext<CollaborationHub> hubContext)
+        public DocumentTemplatesController(
+            IDocumentEngine documentEngine, 
+            DiitraContext db, 
+            IHubContext<CollaborationHub> hubContext,
+            IHostEnvironment environment)
         {
             _documentEngine = documentEngine;
             _db = db;
             _hubContext = hubContext;
+            _environment = environment;
         }
 
         /// <summary>
@@ -99,6 +105,18 @@ namespace diitra_api.Controllers
             if (template == null)
                 return NotFound(new { error = $"Plantilla '{code}' no encontrada." });
 
+            var fileLoader = new Diitra.Infrastructure.Common.Documents.Engine.TemplateFileLoader(_environment);
+            var fileHtml = await fileLoader.LoadAsync(template.Code);
+            var fileCss = await fileLoader.LoadCssAsync(template.Code);
+
+            var effectiveHtml = !string.IsNullOrWhiteSpace(fileHtml) && (string.IsNullOrWhiteSpace(template.HtmlContent) || template.HtmlContent.StartsWith("<!-- Cargado desde") || template.Version < 400)
+                ? fileHtml
+                : (!string.IsNullOrWhiteSpace(template.HtmlContent) ? template.HtmlContent : fileHtml);
+
+            var effectiveCss = !string.IsNullOrWhiteSpace(fileCss) && string.IsNullOrWhiteSpace(template.CustomCss)
+                ? fileCss
+                : template.CustomCss;
+
             return Ok(new
             {
                 template.Id,
@@ -114,8 +132,8 @@ namespace diitra_api.Controllers
                 SignatureType = template.SignatureType,
                 template.CollaborativeFieldsJson,
                 template.ThemeConfigJson,
-                HtmlContent = template.HtmlContent,
-                CustomCss = template.CustomCss,
+                HtmlContent = effectiveHtml,
+                CustomCss = effectiveCss,
                 template.UpdatedAt
             });
         }

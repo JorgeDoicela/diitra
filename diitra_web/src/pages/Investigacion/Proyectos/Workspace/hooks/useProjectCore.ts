@@ -25,6 +25,10 @@ export const mapInvestigador = (inv: any) => {
         horasSemanales: inv.horasSemanales ?? inv.horas_semanales ?? null,
         horasDisponibles: inv.horasDisponibles ?? inv.horas_disponibles ?? null,
         horasAsignadas: inv.horasAsignadas ?? inv.horas_asignadas ?? null,
+        orcidId: inv.orcidId ?? inv.orcid_id ?? null,
+        firmaHabilitada: inv.firmaHabilitada ?? inv.firma_habilitada ?? null,
+        gradoAcademicoMaximo: inv.gradoAcademicoMaximo ?? inv.grado_academico_maximo ?? null,
+        especialidad: inv.especialidad ?? null,
     };
 };
 

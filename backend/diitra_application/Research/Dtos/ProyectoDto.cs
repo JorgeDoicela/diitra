@@ -276,6 +276,10 @@ namespace Diitra.Application.Research.Dtos
         public decimal? HorasDisponibles { get; set; }
         public decimal? HorasAsignadas { get; set; }
         public bool? EsDirector { get; set; }
+        public string? OrcidId { get; set; }
+        public bool? FirmaHabilitada { get; set; }
+        public string? GradoAcademicoMaximo { get; set; }
+        public string? Especialidad { get; set; }
     }
 
     public class RecursoDisponibleDto

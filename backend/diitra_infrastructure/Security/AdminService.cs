@@ -35,19 +35,18 @@ public class AdminService : IAdminService
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
 
-        // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
+        // Obtener periodo académico (Lógica Resiliente de Descubrimiento con AsNoTracking y Proyección Directa)
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var currentPeriod = await _context.Periodos
+        var periodId = await _context.Periodos.AsNoTracking()
             .Where(p => p.EsInstituto == 1)
             .OrderByDescending(p => p.Periodoactivoinstituto == 1) // 1. Marcado explícitamente para el sistema
             .ThenByDescending(p => p.Activo == true)             // 2. Marcado como activo genérico
             .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today) // 3. El que cubre la fecha de hoy
             .ThenByDescending(p => p.FechaInicial)               // 4. El más reciente cronológicamente
+            .Select(p => p.IdPeriodo)
             .FirstOrDefaultAsync();
 
-        var periodId = currentPeriod?.IdPeriodo;
-
-        var researchSubcatId = await _context.SubcategoriasActividades
+        var researchSubcatId = await _context.SubcategoriasActividades.AsNoTracking()
             .Where(s => s.Subcategoria == "INVESTIGACION")
             .Select(s => s.IdSubcategoria)
             .FirstOrDefaultAsync();
@@ -61,7 +60,7 @@ public class AdminService : IAdminService
 
         if (type == "ESTUDIANTE")
         {
-            var query = _context.Alumnos.AsQueryable();
+            var query = _context.Alumnos.AsNoTracking().AsQueryable();
 
             // Segmentación por estado de estudiante (Activo matriculado vs Graduado / Histórico)
             if (!string.IsNullOrEmpty(periodId) && estadoEstudiante == "ACTIVO")
@@ -132,7 +131,7 @@ public class AdminService : IAdminService
             if (!string.IsNullOrEmpty(carrera))
             {
                 var carreraLower = carrera.ToLower();
-                var matchingCarreraIds = await _context.Carreras
+                var matchingCarreraIds = await _context.Carreras.AsNoTracking()
                     .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
                     .Select(c => c.IdCarrera)
                     .ToListAsync();
@@ -172,41 +171,62 @@ public class AdminService : IAdminService
 
             var ids = students.Select(s => s.IdAlumno.Trim()).ToList();
 
-            // Obtener datos académicos extra (Matrícula actual para Nivel y Carrera)
-            var currentMatriculas = await _context.Matriculas
+            // Obtener datos académicos extra de forma optimizada
+            var currentMatriculas = await _context.Matriculas.AsNoTracking()
                 .Where(m => ids.Contains(m.IdAlumno) && (string.IsNullOrEmpty(periodId) || m.IdPeriodo == periodId) && m.Valida == 1)
+                .Select(m => new { m.IdAlumno, m.IdNivel })
                 .ToListAsync();
 
-            var careers = await _context.Carreras.ToListAsync();
-
-            // Pre-cargar información de Cursos (Niveles/Carreras operativos)
+            // Pre-cargar información de Cursos exclusivamente para los niveles presentes
             var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
                 .Concat(students.Select(s => s.IdNivel))
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .Distinct()
                 .ToList();
-            var relevantCursos = await _context.Cursos.Where(c => levelIds.Contains(c.IdNivel)).ToListAsync();
 
-            var userRoles = await _context.UserRoles
-                .Include(ur => ur.Role)
-                .Include(ur => ur.User)
+            var relevantCursos = await _context.Cursos.AsNoTracking()
+                .Where(c => levelIds.Contains(c.IdNivel))
+                .Select(c => new { c.IdNivel, c.IdCarrera, c.Nivel })
+                .ToListAsync();
+
+            var relevantCarreraIds = relevantCursos.Select(c => c.IdCarrera).Distinct().ToList();
+            var careers = await _context.Carreras.AsNoTracking()
+                .Where(c => relevantCarreraIds.Contains(c.IdCarrera))
+                .Select(c => new { c.IdCarrera, c.Carrera1, c.EsInstituto })
+                .ToListAsync();
+
+            var userRoles = await _context.UserRoles.AsNoTracking()
                 .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
+                .Select(ur => new {
+                    IdUsuario = ur.IdUsuario,
+                    IdSigafi = ur.User!.IdSigafi.Trim(),
+                    RoleNombre = ur.Role.Nombre,
+                    RoleCodigo = ur.Role.CodigoRol
+                })
                 .ToListAsync();
 
-            var linkedUsers = await _context.Users
+            var linkedUsers = await _context.Users.AsNoTracking()
                 .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                .Select(u => new { u.IdUsuario, IdSigafi = u.IdSigafi.Trim(), u.EmailInstitucional })
                 .ToListAsync();
 
-            var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
-            var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+            var userIds = linkedUsers.Select(u => u.IdUsuario)
+                .Concat(userRoles.Select(ur => ur.IdUsuario))
+                .Distinct()
+                .ToList();
+
+            var metadatas = await _context.InvUsuariosMetadata.AsNoTracking()
+                .Where(m => userIds.Contains(m.IdUsuario))
+                .Select(m => new { m.IdUsuario, m.Uuid, m.OrcidId, m.AceptoTerminosFirma })
+                .ToListAsync();
 
             result.Items = students.Select(s => {
                 var sId = s.IdAlumno.Trim();
-                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == sId).ToList();
-                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == sId);
-                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var roleInfo = userRoles.Where(ur => ur.IdSigafi == sId).ToList();
+                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi == sId);
+                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
                 var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
@@ -227,8 +247,8 @@ public class AdminService : IAdminService
                     Email = ResolveContactEmail(s.EmailInstitucional, s.Email, linkedUser?.EmailInstitucional),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "ESTUDIANTE",
-                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    Roles = roleInfo.Select(ur => ur.RoleNombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.RoleCodigo).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
                     Carrera = carreraNom ?? "No vinculada",
@@ -241,7 +261,7 @@ public class AdminService : IAdminService
         else if (type == "EXTERNO")
         {
             // Verdaderos externos: no están en profesores ni en alumnos del instituto
-            var query = _context.Users
+            var query = _context.Users.AsNoTracking()
                 .Where(u => (u.TablaSigafi == "otros" || u.TablaSigafi == "externo" || _context.UserRoles.Any(ur => ur.IdUsuario == u.IdUsuario && ur.Role.CodigoRol == "DIITRA_REVISOR_EXTERNO"))
                     && !_context.Profesores.Any(p => p.IdProfesor == u.IdSigafi)
                     && !_context.Alumnos.Any(a => a.IdAlumno == u.IdSigafi));
@@ -269,31 +289,51 @@ public class AdminService : IAdminService
 
             var ids = externalUsers.Select(u => u.IdUsuario).ToList();
 
-            var userRoles = await _context.UserRoles
-                .Include(ur => ur.Role)
+            var userRoles = await _context.UserRoles.AsNoTracking()
                 .Where(ur => ids.Contains(ur.IdUsuario) && (ur.EsActivo ?? true))
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
+                .Select(ur => new {
+                    IdUsuario = ur.IdUsuario,
+                    RoleNombre = ur.Role.Nombre,
+                    RoleCodigo = ur.Role.CodigoRol
+                })
                 .ToListAsync();
 
-            var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
+            var metadatas = await _context.InvUsuariosMetadata.AsNoTracking()
+                .Where(m => ids.Contains(m.IdUsuario))
+                .Select(m => new { m.IdUsuario, m.Uuid, m.OrcidId, m.AceptoTerminosFirma })
+                .ToListAsync();
 
             var externalIds = externalUsers.Select(u => u.IdSigafi.Trim()).ToList();
-            var fallbackProfs = await _context.Profesores.Where(p => externalIds.Contains(p.IdProfesor.Trim())).ToListAsync();
-            var fallbackStudents = await _context.Alumnos.Where(a => externalIds.Contains(a.IdAlumno.Trim())).ToListAsync();
+            var fallbackProfs = await _context.Profesores.AsNoTracking()
+                .Where(p => externalIds.Contains(p.IdProfesor.Trim()))
+                .Select(p => new {
+                    IdProfesor = p.IdProfesor.Trim(),
+                    NombreCompleto = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim()
+                })
+                .ToListAsync();
+
+            var fallbackStudents = await _context.Alumnos.AsNoTracking()
+                .Where(a => externalIds.Contains(a.IdAlumno.Trim()))
+                .Select(a => new {
+                    IdAlumno = a.IdAlumno.Trim(),
+                    NombreCompleto = $"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}".Replace("  ", " ").Trim()
+                })
+                .ToListAsync();
 
             result.Items = externalUsers.Select(u => {
                 var sId = u.IdSigafi.Trim();
                 var roleInfo = userRoles.Where(ur => ur.IdUsuario == u.IdUsuario).ToList();
                 var userMeta = metadatas.FirstOrDefault(m => m.IdUsuario == u.IdUsuario);
 
-                var prof = fallbackProfs.FirstOrDefault(p => p.IdProfesor.Trim() == sId);
-                var student = fallbackStudents.FirstOrDefault(a => a.IdAlumno.Trim() == sId);
+                var prof = fallbackProfs.FirstOrDefault(p => p.IdProfesor == sId);
+                var student = fallbackStudents.FirstOrDefault(a => a.IdAlumno == sId);
                 
                 string nombreCompleto = u.Nombre ?? "";
                 if (prof != null) {
-                    nombreCompleto = $"{prof.PrimerNombre} {prof.SegundoNombre} {prof.PrimerApellido} {prof.SegundoApellido}".Replace("  ", " ").Trim();
+                    nombreCompleto = prof.NombreCompleto;
                 } else if (student != null) {
-                    nombreCompleto = $"{student.PrimerNombre} {student.SegundoNombre} {student.ApellidoPaterno} {student.ApellidoMaterno}".Replace("  ", " ").Trim();
+                    nombreCompleto = student.NombreCompleto;
                 }
 
                 if (string.IsNullOrWhiteSpace(nombreCompleto)) {
@@ -308,8 +348,8 @@ public class AdminService : IAdminService
                     Email = ResolveContactEmail(u.EmailInstitucional, u.IdSigafi.Contains("@") ? u.IdSigafi : null),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "EXTERNO",
-                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    Roles = roleInfo.Select(ur => ur.RoleNombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.RoleCodigo).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false
                 };
@@ -318,7 +358,7 @@ public class AdminService : IAdminService
         else if (type == "ADMINISTRATIVO")
         {
             // Personal estrictamente administrativo o con funciones no docentes
-            var query = _context.Profesores.Where(p => p.Activo == 1 &&
+            var query = _context.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
                 !(_context.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) &&
                     c.DepartamentoNavigation != null && c.DepartamentoNavigation.NombreDepartamento == "DOCENCIA" &&
                     (c.CargoInstitutoNavigation == null || 
@@ -377,33 +417,48 @@ public class AdminService : IAdminService
 
             var ids = admins.Select(p => p.IdProfesor.Trim()).ToList();
 
-            var contracts = await _context.Contratos
-                .Include(c => c.DepartamentoNavigation)
-                .Include(c => c.CargoInstitutoNavigation)
-                .Include(c => c.TipoContratoNavigation)
+            var contracts = await _context.Contratos.AsNoTracking()
                 .Where(c => ids.Contains(c.IdProfesor.Trim()) && (c.EsActivo == 1 || c.EsActivo == null))
+                .Select(c => new {
+                    IdProfesor = c.IdProfesor.Trim(),
+                    Departamento = c.DepartamentoNavigation != null ? c.DepartamentoNavigation.NombreDepartamento : null,
+                    CargoInstituto = c.CargoInstitutoNavigation != null ? c.CargoInstitutoNavigation.Nombre : null,
+                    TipoContrato = c.TipoContratoNavigation != null ? c.TipoContratoNavigation.Nombre : null
+                })
                 .ToListAsync();
 
-            var linkedUsers = await _context.Users
+            var linkedUsers = await _context.Users.AsNoTracking()
                 .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                .Select(u => new { u.IdUsuario, IdSigafi = u.IdSigafi.Trim(), u.EmailInstitucional })
                 .ToListAsync();
 
-            var userRoles = await _context.UserRoles
-                .Include(ur => ur.Role)
-                .Include(ur => ur.User)
+            var userRoles = await _context.UserRoles.AsNoTracking()
                 .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
+                .Select(ur => new {
+                    IdUsuario = ur.IdUsuario,
+                    IdSigafi = ur.User!.IdSigafi.Trim(),
+                    RoleNombre = ur.Role.Nombre,
+                    RoleCodigo = ur.Role.CodigoRol
+                })
                 .ToListAsync();
 
-            var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
-            var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+            var userIds = linkedUsers.Select(u => u.IdUsuario)
+                .Concat(userRoles.Select(ur => ur.IdUsuario))
+                .Distinct()
+                .ToList();
+
+            var metadatas = await _context.InvUsuariosMetadata.AsNoTracking()
+                .Where(m => userIds.Contains(m.IdUsuario))
+                .Select(m => new { m.IdUsuario, m.Uuid, m.OrcidId, m.AceptoTerminosFirma })
+                .ToListAsync();
 
             result.Items = admins.Select(p => {
                 var pId = p.IdProfesor.Trim();
-                var contract = contracts.FirstOrDefault(c => c.IdProfesor.Trim() == pId);
-                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == pId).ToList();
-                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == pId);
-                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var contract = contracts.FirstOrDefault(c => c.IdProfesor == pId);
+                var roleInfo = userRoles.Where(ur => ur.IdSigafi == pId).ToList();
+                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi == pId);
+                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
                 return new UserManagementDto
@@ -414,13 +469,13 @@ public class AdminService : IAdminService
                     Email = ResolveContactEmail(p.EmailInstitucional, p.Email, linkedUser?.EmailInstitucional),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "ADMINISTRATIVO",
-                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    Roles = roleInfo.Select(ur => ur.RoleNombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.RoleCodigo).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
-                    Departamento = contract?.DepartamentoNavigation?.NombreDepartamento ?? "Sin departamento asignado",
-                    CargoInstituto = contract?.CargoInstitutoNavigation?.Nombre ?? "Personal Institucional",
-                    TipoContrato = contract?.TipoContratoNavigation?.Nombre ?? "Sin contrato registrado",
+                    Departamento = contract?.Departamento ?? "Sin departamento asignado",
+                    CargoInstituto = contract?.CargoInstituto ?? "Personal Institucional",
+                    TipoContrato = contract?.TipoContrato ?? "Sin contrato registrado",
                     Carrera = "Gestión Institucional",
                     Nivel = "N/A"
                 };
@@ -429,7 +484,7 @@ public class AdminService : IAdminService
         else // DOCENTE
         {
             // Planta docente: vinculados a Docencia, Carreras o Actividades Académicas
-            var query = _context.Profesores.Where(p => p.Activo == 1 &&
+            var query = _context.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
                 (_context.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) &&
                     ((c.DepartamentoNavigation != null && c.DepartamentoNavigation.NombreDepartamento == "DOCENCIA") ||
                      (c.CargoInstitutoNavigation != null && c.CargoInstitutoNavigation.Nombre != null && (c.CargoInstitutoNavigation.Nombre.ToLower().Contains("profesor") || c.CargoInstitutoNavigation.Nombre.ToLower().Contains("docente")))))
@@ -449,7 +504,7 @@ public class AdminService : IAdminService
             if (!string.IsNullOrEmpty(carrera))
             {
                 var carreraLower = carrera.ToLower();
-                var matchingCarreraIds = await _context.Carreras
+                var matchingCarreraIds = await _context.Carreras.AsNoTracking()
                     .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
                     .Select(c => c.IdCarrera)
                     .ToListAsync();
@@ -490,25 +545,30 @@ public class AdminService : IAdminService
 
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
-            var contracts = await _context.Contratos
-                .Include(c => c.DepartamentoNavigation)
-                .Include(c => c.CargoInstitutoNavigation)
-                .Include(c => c.TipoContratoNavigation)
+            var contracts = await _context.Contratos.AsNoTracking()
                 .Where(c => ids.Contains(c.IdProfesor.Trim()) && (c.EsActivo == 1 || c.EsActivo == null))
+                .Select(c => new {
+                    IdProfesor = c.IdProfesor.Trim(),
+                    Departamento = c.DepartamentoNavigation != null ? c.DepartamentoNavigation.NombreDepartamento : null,
+                    CargoInstituto = c.CargoInstitutoNavigation != null ? c.CargoInstitutoNavigation.Nombre : null,
+                    TipoContrato = c.TipoContratoNavigation != null ? c.TipoContratoNavigation.Nombre : null
+                })
                 .ToListAsync();
 
-            var linkedUsers = await _context.Users
+            var linkedUsers = await _context.Users.AsNoTracking()
                 .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                .Select(u => new { u.IdUsuario, IdSigafi = u.IdSigafi.Trim(), u.EmailInstitucional })
                 .ToListAsync();
 
             // Obtener horas de investigación (idSubcategoria = researchSubcatId)
-            var researchHours = await _context.ProfesoresActividades
+            var researchHours = await _context.ProfesoresActividades.AsNoTracking()
                 .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && (string.IsNullOrEmpty(periodId) || pa.IdPeriodo == periodId))
+                .Select(pa => new { IdProfesor = pa.IdProfesor.Trim(), pa.HorasSemana })
                 .ToListAsync();
 
             // Obtener horas comprometidas en proyectos activos/enviados
             var linkedUserIdsQuery = linkedUsers.Select(u => u.IdUsuario).ToList();
-            var estadosConCarga = await _context.InvConfigWorkflows
+            var estadosConCarga = await _context.InvConfigWorkflows.AsNoTracking()
                 .Where(w => w.Activo && w.ContabilizaCargaHoraria)
                 .Select(w => w.EstadoDestino)
                 .Distinct()
@@ -518,36 +578,49 @@ public class AdminService : IAdminService
                 estadosConCarga = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
             }
 
-            var assignedHoursList = await _context.InvProyectoParticipantes
-                .Include(pp => pp.IdProyectoNavigation)
+            var assignedHoursList = await _context.InvProyectoParticipantes.AsNoTracking()
                 .Where(pp => pp.TipoParticipante == "Docente" && linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
                              pp.IdProyectoNavigation != null && estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                 .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
                 .ToListAsync();
 
             // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación
-            var profCareers = await _context.ProfesoresCarrerasPeriodos
-                .Include(pc => pc.IdCarreraNavigation)
-                .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && (string.IsNullOrEmpty(periodId) || pc.IdPeriodo == periodId) && pc.EsActivo == 1)
+            var profCareers = await _context.ProfesoresCarrerasPeriodos.AsNoTracking()
+                .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && (string.IsNullOrEmpty(periodId) || pc.IdPeriodo == periodId) && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
+                .Select(pc => new {
+                    IdProfesor = pc.IdProfesor.Trim(),
+                    Carrera = pc.IdCarreraNavigation!.Carrera1
+                })
                 .ToListAsync();
 
-            var userRoles = await _context.UserRoles
-                .Include(ur => ur.Role)
-                .Include(ur => ur.User)
+            var userRoles = await _context.UserRoles.AsNoTracking()
                 .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
+                .Select(ur => new {
+                    IdUsuario = ur.IdUsuario,
+                    IdSigafi = ur.User!.IdSigafi.Trim(),
+                    RoleNombre = ur.Role.Nombre,
+                    RoleCodigo = ur.Role.CodigoRol
+                })
                 .ToListAsync();
 
-            var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
-            var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+            var userIds = linkedUsers.Select(u => u.IdUsuario)
+                .Concat(userRoles.Select(ur => ur.IdUsuario))
+                .Distinct()
+                .ToList();
+
+            var metadatas = await _context.InvUsuariosMetadata.AsNoTracking()
+                .Where(m => userIds.Contains(m.IdUsuario))
+                .Select(m => new { m.IdUsuario, m.Uuid, m.OrcidId, m.AceptoTerminosFirma })
+                .ToListAsync();
 
             result.Items = professors.Select(p => {
                 var pId = p.IdProfesor.Trim();
-                var contract = contracts.FirstOrDefault(c => c.IdProfesor.Trim() == pId);
-                var hours = researchHours.Where(h => h.IdProfesor.Trim() == pId).Sum(h => h.HorasSemana);
-                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == pId).ToList();
-                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == pId);
-                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var contract = contracts.FirstOrDefault(c => c.IdProfesor == pId);
+                var hours = researchHours.Where(h => h.IdProfesor == pId).Sum(h => h.HorasSemana);
+                var roleInfo = userRoles.Where(ur => ur.IdSigafi == pId).ToList();
+                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi == pId);
+                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
                 var assignedHours = firstUserId.HasValue
@@ -555,8 +628,8 @@ public class AdminService : IAdminService
                     : 0;
 
                 var linkedCareers = profCareers
-                    .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
-                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Where(pc => pc.IdProfesor == pId && !string.IsNullOrEmpty(pc.Carrera))
+                    .Select(pc => pc.Carrera!)
                     .Distinct()
                     .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
@@ -569,17 +642,17 @@ public class AdminService : IAdminService
                     Email = ResolveContactEmail(p.EmailInstitucional, p.Email, linkedUser?.EmailInstitucional),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "DOCENTE",
-                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    Roles = roleInfo.Select(ur => ur.RoleNombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.RoleCodigo).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
                     Carrera = carreraNom,
                     Nivel = "N/A",
                     HorasInvestigacion = hours,
                     HorasAsignadas = assignedHours,
-                    Departamento = contract?.DepartamentoNavigation?.NombreDepartamento,
-                    CargoInstituto = contract?.CargoInstitutoNavigation?.Nombre,
-                    TipoContrato = contract?.TipoContratoNavigation?.Nombre
+                    Departamento = contract?.Departamento,
+                    CargoInstituto = contract?.CargoInstituto,
+                    TipoContrato = contract?.TipoContrato
                 };
             }).ToList();
         }
@@ -589,7 +662,7 @@ public class AdminService : IAdminService
 
     public async Task<List<RoleDto>> GetAvailableRolesAsync()
     {
-        return await _context.Roles
+        return await _context.Roles.AsNoTracking()
             .Where(r => r.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
             .Select(r => new RoleDto {
                 IdRol = r.IdRol,
@@ -601,7 +674,7 @@ public class AdminService : IAdminService
 
     public async Task<List<string>> GetDepartmentsAsync()
     {
-        var list = await _context.Departamentos
+        var list = await _context.Departamentos.AsNoTracking()
             .Where(d => !string.IsNullOrEmpty(d.NombreDepartamento) && d.NombreDepartamento != "DOCENCIA")
             .Select(d => d.NombreDepartamento!.Trim())
             .Distinct()
@@ -614,7 +687,8 @@ public class AdminService : IAdminService
 
     public async Task<UserMetadataDto?> GetUserMetadataAsync(string userUuid)
     {
-        var meta = await _context.InvUsuariosMetadata.Include(m => m.User)
+        var meta = await _context.InvUsuariosMetadata.AsNoTracking()
+            .Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
 
         if (meta == null) return null;
@@ -925,7 +999,7 @@ public class AdminService : IAdminService
 
     public async Task<List<AuditLogDto>> GetRecentAuditLogsAsync()
     {
-        return await _context.Set<InvAuditAdmin>()
+        return await _context.Set<InvAuditAdmin>().AsNoTracking()
             .Include(a => a.UserAdmin)
             .Include(a => a.UserAfectado)
             .OrderByDescending(a => a.Fecha)
@@ -943,7 +1017,7 @@ public class AdminService : IAdminService
 
     public async Task<PagedResult<AuditLogDto>> GetAuditLogsPagedAsync(DateTime? from, DateTime? to, string? action, string? modulo, string? searchTerm, int page = 1, int pageSize = 20)
     {
-        var query = _context.Set<InvAuditAdmin>()
+        var query = _context.Set<InvAuditAdmin>().AsNoTracking()
             .Include(a => a.UserAdmin)
             .Include(a => a.UserAfectado)
             .AsQueryable();

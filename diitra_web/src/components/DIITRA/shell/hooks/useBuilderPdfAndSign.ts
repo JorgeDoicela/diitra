@@ -126,12 +126,11 @@ export const useBuilderPdfAndSign = ({
 
             if (isMounted) {
                 setIsDraftMode(true);
-                setPdfBlob(null);
             }
         };
         initPdf();
         return () => { isMounted = false; };
-    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, projectStatus, signatureRefreshTrigger, fetchSignedPdf]);
+    }, [entityUuid, documentUuid, projectStatus, signatureRefreshTrigger, fetchSignedPdf]);
 
     // ── Firma Electrónica PAdES — Upload-on-Demand ──
     const handleSign = async () => {

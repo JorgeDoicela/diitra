@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { SectionGuardContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
+import { useAuth } from '../../api/AuthContext';
 
 interface SectionBlockGuardProps {
     id: string;
@@ -15,6 +16,7 @@ export const SectionBlockGuard: React.FC<SectionBlockGuardProps> = ({
     children,
     showInlineLock = false
 }) => {
+    const { isAdmin } = useAuth();
     const lockContext = useContext(SectionLockContext);
     
     // Safety fallback if context is not loaded
@@ -38,6 +40,17 @@ export const SectionBlockGuard: React.FC<SectionBlockGuardProps> = ({
         }
     };
 
+    const shouldShowLock = React.useMemo(() => {
+        if (isBlocked) return true;
+        if (isAdmin) return true;
+        if (isDirectorOrAdmin) {
+            const hasMultipleResearchers = Array.isArray(formData?.Investigadores) && formData.Investigadores.length > 1;
+            const hasResearchGroup = formData?.GrupoInvestigacionTipo === 'SI' || formData?.TieneGrupoInvestigacion;
+            return hasMultipleResearchers || hasResearchGroup;
+        }
+        return false;
+    }, [isBlocked, isAdmin, isDirectorOrAdmin, formData?.Investigadores, formData?.GrupoInvestigacionTipo, formData?.TieneGrupoInvestigacion]);
+
     return (
         <SectionGuardContext.Provider value={{ 
             readOnly: isReadOnlyForUser,
@@ -46,7 +59,7 @@ export const SectionBlockGuard: React.FC<SectionBlockGuardProps> = ({
             isBlocked,
             handleToggleLock
         }}>
-            {showInlineLock && !readOnly && (
+            {showInlineLock && !readOnly && shouldShowLock && (
                 <div className="flex justify-end mb-2 select-none">
                     <div className="flex items-center gap-2 bg-surface/50 border border-border-thin px-3 py-1 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider">
                         {isBlocked ? (

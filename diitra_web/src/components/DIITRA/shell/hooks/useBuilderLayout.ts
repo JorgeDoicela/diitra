@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CoWorkHandle } from '../../../../core/cowork/types';
+import { useAuth } from '../../../../api/AuthContext';
 
 export interface BuilderSection {
     id: string;
@@ -25,13 +26,14 @@ export const useBuilderLayout = ({
     readOnly = false,
     canSign = true
 }: UseBuilderLayoutProps) => {
+    const { isAdmin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
     // ── Modo Oscuro / Claro ──
     const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-        return document.documentElement.getAttribute('data-theme') !== 'light';
+        return localStorage.getItem('theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'dark';
     });
 
     const toggleTheme = () => {
@@ -48,7 +50,7 @@ export const useBuilderLayout = ({
     const activeSection = sections.find(s => s.id === activeTab);
     const activeSectionLabel = activeSection?.label || (activeTab === 'output' ? 'Vista Previa & Firmas' : 'General');
     const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
-    const isDirectorOrAdmin = !!canSign;
+    const isDirectorOrAdmin = !!canSign || !!isAdmin;
 
     const setActiveTab = useCallback((tabId: string) => {
         const searchParams = new URLSearchParams(location.search);

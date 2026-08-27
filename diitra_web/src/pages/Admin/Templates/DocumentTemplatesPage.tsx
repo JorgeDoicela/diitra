@@ -17,7 +17,8 @@ import {
     Save,
     Plus,
     ChevronDown,
-    RefreshCw
+    RefreshCw,
+    RotateCcw
 } from 'lucide-react';
 import { DndContext, rectIntersection } from '@dnd-kit/core';
 import type { BlockType } from './types';
@@ -41,24 +42,31 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'resources',
     'expected_products',
     'project_approval_notice',
-    'arbitration_dictamen_section'
+    'arbitration_dictamen_section',
+    'signatures',
+    'learning_plan_header',
+    'learning_plan_eval_parameters',
+    'learning_plan_prerequisites',
+    'learning_plan_activities',
+    'learning_plan_evaluation'
 ];
 
-const DocumentTemplatesPage: React.FC = () => {
+export const DocumentTemplatesPage: React.FC = () => {
     const {
         templates,
         selectedTemplate,
-        saving,
-        isDirty,
-        isDark,
         blocks,
         activeBlockId,
         setActiveBlockId,
-        showPalette,
-        setShowPalette,
         activeMobileTab,
         setActiveMobileTab,
         paletteRef,
+        showPalette,
+        setShowPalette,
+        isDirty,
+        isDark,
+        loading,
+        saving,
         headerCollapsed,
         setHeaderCollapsed,
         isSidebarCollapsed,
@@ -73,6 +81,7 @@ const DocumentTemplatesPage: React.FC = () => {
         handleUpdateConfig,
         handleUpdateThemeConfig,
         handleSaveTemplate,
+        handleResetToDefault,
         handleCellChange,
         handleAddRow,
         handleRemoveRow,
@@ -101,26 +110,39 @@ const DocumentTemplatesPage: React.FC = () => {
                 {selectedTemplate && !headerCollapsed && (
                     <div className="absolute bottom-1 right-0 flex items-center gap-2.5 z-30 animate-fade-in">
                         {selectedTemplate.code !== 'GLOBAL_THEME' && (
-                            <div ref={paletteRef} className="relative">
+                            <>
                                 <button
                                     type="button"
-                                    onClick={() => setShowPalette(p => !p)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                                    onClick={handleResetToDefault}
+                                    disabled={loading || saving}
+                                    title="Restablecer la plantilla a la versión oficial de fábrica"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-muted hover:text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
                                 >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    Agregar Bloque
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${showPalette ? 'rotate-180' : ''}`} />
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    <span>Restablecer a Fábrica</span>
                                 </button>
 
-                                {showPalette && (
-                                    <BlockPalette
-                                        blocks={blocks}
-                                        uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
-                                        onAddBlock={handleAddBlock}
-                                        onClose={() => setShowPalette(false)}
-                                    />
-                                )}
-                            </div>
+                                <div ref={paletteRef} className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPalette(p => !p)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Agregar Bloque
+                                        <ChevronDown className={`w-3 h-3 transition-transform ${showPalette ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {showPalette && (
+                                        <BlockPalette
+                                            blocks={blocks}
+                                            uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
+                                            onAddBlock={handleAddBlock}
+                                            onClose={() => setShowPalette(false)}
+                                        />
+                                    )}
+                                </div>
+                            </>
                         )}
 
                         <button

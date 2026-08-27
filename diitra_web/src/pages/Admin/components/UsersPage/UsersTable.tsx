@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserIcon, Settings2 } from 'lucide-react';
+import { User as UserIcon, Settings2, ShieldCheck, Activity } from 'lucide-react';
 import type { ManagedUser, Role } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre, highlightText } from './utils';
 
@@ -45,54 +45,58 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     openedAtRef
 }) => {
     return (
-        <div className="card-vercel overflow-hidden border-border-thin shadow-2xl bg-surface/50 backdrop-blur-xl animate-fade-up">
-            <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse min-w-[800px]">
-                    <thead>
-                        <tr className="border-b border-border-thin bg-surface/30">
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">Usuario / Identificación</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">
-                                {userType === 'DOCENTE' ? 'Horas / Carrera' : userType === 'ADMINISTRATIVO' ? 'Departamento / Cargo' : userType === 'ESTUDIANTE' ? 'Carrera / Estado' : 'Validación Perfil'}
-                            </th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">Roles en el Sistema</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim text-right">Acciones</th>
+        <div className="overflow-x-auto custom-scrollbar border border-border-thin rounded-xl bg-surface/50">
+            <table className="w-full text-left border-collapse min-w-[850px]">
+                <thead>
+                    <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
+                        <th className="p-4 font-semibold tracking-widest">Usuario / Identificación</th>
+                        <th className="p-4 font-semibold tracking-widest">
+                            {userType === 'DOCENTE' ? 'Horas / Carrera' : userType === 'ADMINISTRATIVO' ? 'Departamento / Cargo' : userType === 'ESTUDIANTE' ? 'Carrera / Estado' : 'Validación Perfil'}
+                        </th>
+                        <th className="p-4 font-semibold tracking-widest">Roles en el Sistema</th>
+                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-border-thin text-xs">
+                    {loading ? (
+                        <tr>
+                            <td colSpan={4} className="p-8 text-center">
+                                <p className="section-label text-text-dim justify-center">Cargando Personal...</p>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-thin text-xs">
-                        {loading ? (
-                            <tr>
-                                <td colSpan={4} className="p-8 text-center">
-                                    <p className="section-label text-text-dim justify-center">Cargando Personal...</p>
-                                </td>
-                            </tr>
-                        ) : users.length === 0 ? (
-                            <tr>
-                                <td colSpan={4}>
-                                    <div className="empty-state py-20 text-center">
-                                        <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : users.map((u) => (
-                            <tr key={u.id_profesor}
-                                className={`transition-all duration-300 group cursor-pointer ${detailUser?.id_profesor === u.id_profesor
-                                    ? 'bg-brand/[0.08] border-brand/35'
-                                    : (!detailUser && lastActiveUserId === u.id_profesor)
-                                        ? 'row-last-active'
-                                        : 'hover:bg-surface/30'
-                                    }`}
+                    ) : users.length === 0 ? (
+                        <tr>
+                            <td colSpan={4}>
+                                <div className="empty-state py-20 text-center">
+                                    <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
+                                </div>
+                            </td>
+                        </tr>
+                    ) : users.map((u) => {
+                        const userActiveRoles = roles.filter(r => u.role_codes?.includes(r.codigo_rol));
+
+                        return (
+                            <tr
+                                key={u.id_profesor}
+                                className={`transition-colors duration-150 group cursor-pointer ${
+                                    detailUser?.id_profesor === u.id_profesor
+                                        ? 'bg-brand/[0.08]'
+                                        : (!detailUser && lastActiveUserId === u.id_profesor)
+                                            ? 'row-last-active'
+                                            : 'hover:bg-surface/30'
+                                }`}
                                 onClick={() => { setDetailUser(u); openedAtRef.current = Date.now(); setLastActiveUserId(null); }}
                             >
                                 <td className="p-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-dim group-hover:text-text-main group-hover:border-border-hover transition-all shrink-0">
-                                            <UserIcon size={18} />
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-9 h-9 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-dim group-hover:text-text-main group-hover:border-border transition-colors shrink-0">
+                                            <UserIcon size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-text-main tracking-tight">
+                                            <p className="text-xs font-semibold text-text-main tracking-tight group-hover:text-brand transition-colors">
                                                 {highlightText(formatNombre(u.nombre_completo), search)}
                                             </p>
-                                            <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">
+                                            <p className="text-[10px] text-text-dim font-mono mt-0.5">
                                                 {highlightText(u.id_profesor, search)} &bull; {highlightText(u.email, search)}
                                             </p>
                                         </div>
@@ -127,10 +131,10 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                             <p className="text-[11px] font-semibold text-text-main truncate max-w-[220px]" title={u.departamento}>
                                                 {highlightText(u.departamento || 'Administración General', search)}
                                             </p>
-                                            <p className="text-[10px] text-text-dim font-medium">
+                                            <p className="text-[10px] text-text-dim font-medium flex items-center gap-1.5">
                                                 <span>{u.cargo_instituto || 'Personal Administrativo'}</span>
                                                 {u.tipo_contrato && (
-                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-surface border border-border-thin text-text-dim/80 ml-1.5 font-mono">
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-bg-deep border border-border-thin text-text-dim/80 font-mono uppercase">
                                                         {u.tipo_contrato}
                                                     </span>
                                                 )}
@@ -146,20 +150,20 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                                     {u.nivel || 'Nivel no definido'}
                                                 </span>
                                                 {u.es_instituto === false ? (
-                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                    <span className="badge-vercel badge-vercel-info !text-[8px] !py-0 !px-1.5">
                                                         Conducción
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                                                    <span className="badge-vercel badge-vercel-violet !text-[8px] !py-0 !px-1.5">
                                                         ISTPET
                                                     </span>
                                                 )}
                                                 {u.es_graduado ? (
-                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                    <span className="badge-vercel badge-vercel-warning !text-[8px] !py-0 !px-1.5">
                                                         Graduado
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                                    <span className="badge-vercel badge-vercel-success !text-[8px] !py-0 !px-1.5">
                                                         Matriculado
                                                     </span>
                                                 )}
@@ -180,36 +184,50 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                     )}
                                 </td>
                                 <td className="p-4">
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {roles.map(r => {
-                                            const isActive = u.role_codes?.includes(r.codigo_rol);
-                                            const isUpdating = updating === `${u.id_profesor}-${r.codigo_rol}`;
-                                            return (
-                                                <button
-                                                    key={r.id_rol}
-                                                    onClick={(e) => { e.stopPropagation(); handleRoleToggle(u.id_profesor, u.nombre_completo, r.codigo_rol, r.nombre, isActive); }}
-                                                    className={`${isActive ? 'btn-vercel-primary' : 'btn-vercel-secondary'} !py-1 !px-2 !text-[8px] !tracking-tighter flex items-center gap-1.5 ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
-                                                >
-                                                    {r.nombre}
-                                                </button>
-                                            );
-                                        })}
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                        {userActiveRoles.length > 0 ? (
+                                            userActiveRoles.map(r => {
+                                                const isBrand = r.codigo_rol === 'DIITRA_ADMIN';
+                                                const isViolet = r.codigo_rol === 'DIITRA_DOCENTE';
+                                                const isInfo = r.codigo_rol === 'DIITRA_ESTUDIANTE';
+                                                const badgeClass = isBrand 
+                                                    ? 'badge-vercel-info' 
+                                                    : isViolet 
+                                                    ? 'badge-vercel-violet' 
+                                                    : isInfo 
+                                                    ? 'badge-vercel-success' 
+                                                    : 'badge-vercel-neutral';
+
+                                                return (
+                                                    <span
+                                                        key={r.id_rol}
+                                                        className={`badge-vercel ${badgeClass} text-[9px] font-bold tracking-wider uppercase py-0.5 px-2`}
+                                                    >
+                                                        {r.nombre}
+                                                    </span>
+                                                );
+                                            })
+                                        ) : (
+                                            <span className="text-[10px] text-text-dim/60 font-mono italic">
+                                                Sin roles asignados
+                                            </span>
+                                        )}
                                     </div>
                                 </td>
                                 <td className="p-4 text-right">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSelectedUser(u); }}
-                                        className="p-2 hover:bg-surface rounded-md text-text-dim hover:text-text-main transition-all ml-auto"
-                                        title="Editar Perfil Extendido"
+                                        className="btn-vercel-secondary !p-1.5 rounded-lg text-text-dim hover:text-text-main transition-colors ml-auto cursor-pointer"
+                                        title="Configurar Perfil y Roles"
                                     >
-                                        <Settings2 size={16} />
+                                        <Settings2 size={14} />
                                     </button>
                                 </td>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        );
+                    })}
+                </tbody>
+            </table>
 
             <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
                 <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
@@ -220,7 +238,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     <button
                         onClick={() => setPage(p => Math.max(1, (p as number) - 1))}
                         disabled={page === 1}
-                        className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <span className="hidden md:inline">Anterior</span>
                         <span className="md:hidden">{"<"}</span>
@@ -234,8 +252,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                 <button
                                     key={p}
                                     onClick={() => setPage(p)}
-                                    className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center ${page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
-                                        }`}
+                                    className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer ${
+                                        page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
+                                    }`}
                                 >
                                     {p}
                                 </button>
@@ -246,7 +265,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     <button
                         onClick={() => setPage(p => Math.min(totalPages, (p as number) + 1))}
                         disabled={page === totalPages || totalPages === 0}
-                        className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <span className="hidden md:inline">Siguiente</span>
                         <span className="md:hidden">{">"}</span>

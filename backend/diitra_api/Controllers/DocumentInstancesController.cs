@@ -25,19 +25,22 @@ namespace diitra_api.Controllers
         private readonly IDocumentDataOrchestrator _orchestrator;
         private readonly diitra_infrastructure.data.models.DiitraContext _context;
         private readonly IEnumerable<IDocumentBlockProvider> _blockProviders;
+        private readonly Microsoft.Extensions.Hosting.IHostEnvironment _environment;
 
         public DocumentInstancesController(
             IDocumentInstanceService instanceService,
             IDocumentEngine documentEngine,
             IDocumentDataOrchestrator orchestrator,
             diitra_infrastructure.data.models.DiitraContext context,
-            IEnumerable<IDocumentBlockProvider> blockProviders)
+            IEnumerable<IDocumentBlockProvider> blockProviders,
+            Microsoft.Extensions.Hosting.IHostEnvironment environment)
         {
             _instanceService = instanceService;
             _documentEngine = documentEngine;
             _orchestrator = orchestrator;
             _context = context;
             _blockProviders = blockProviders;
+            _environment = environment;
         }
 
         [HttpPost]

@@ -464,23 +464,8 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
     return (
         <aside className="w-full h-full bg-bg-deep flex flex-col z-40">
-            {/* Header */}
-            <div className="p-4 border-b border-border-thin flex items-center justify-between bg-bg-deep/50">
-                <div className="flex items-center gap-2">
-                    <Activity size={15} className="text-text-main animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-text-main">Actividad del equipo</span>
-                </div>
-                <button
-                    onClick={onClose}
-                    className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                    title="Cerrar panel lateral"
-                >
-                    <ChevronRight size={18} />
-                </button>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-border-thin bg-surface-hover/30">
+            {/* Tabs & Close Control */}
+            <div className="flex items-center border-b border-border-thin bg-surface-hover/30">
                 {isProtocolDocument && (projectStatus === 'En Corrección' || comments.some(c => parseAuditComment(c.contenido) !== null)) && (
                     <button
                         onClick={() => setActiveTab('correcciones')}
@@ -514,6 +499,14 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 >
                     <Clock size={14} />
                     <span>Actividad</span>
+                </button>
+                <button
+                    onClick={onClose}
+                    className="p-3 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors mr-1 cursor-pointer"
+                    title="Cerrar panel"
+                    aria-label="Cerrar panel"
+                >
+                    <ChevronRight size={18} />
                 </button>
             </div>
 

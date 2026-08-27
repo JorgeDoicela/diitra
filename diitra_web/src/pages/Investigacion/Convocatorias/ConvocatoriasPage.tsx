@@ -59,7 +59,6 @@ const ConvocatoriasPage = () => {
             <style>{`
                 .row-last-active {
                     background-color: rgba(0, 112, 243, 0.05) !important;
-                    border-color: rgba(0, 112, 243, 0.35) !important;
                     box-shadow: 0 0 12px rgba(0, 112, 243, 0.08) !important;
                     transition: all 0.2s ease-in-out;
                 }

@@ -531,8 +531,48 @@ namespace Diitra.Infrastructure.Common.Documents
 
                     if (projectDto != null)
                     {
-                         var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
-                                       ?? projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
+                        if (projectDto.Investigadores != null && projectDto.Investigadores.Any())
+                        {
+                            var cedulas = projectDto.Investigadores
+                                .Where(i => !string.IsNullOrEmpty(i.Cedula))
+                                .Select(i => i.Cedula!.Trim())
+                                .Distinct()
+                                .ToList();
+
+                            if (cedulas.Any())
+                            {
+                                var usersDb = await _db.Users
+                                    .AsNoTracking()
+                                    .Where(u => u.IdSigafi != null && cedulas.Contains(u.IdSigafi.Trim()))
+                                    .Select(u => new { u.IdSigafi, u.IdUsuario })
+                                    .ToListAsync(cancellationToken);
+
+                                var uIds = usersDb.Select(u => u.IdUsuario).Distinct().ToList();
+                                var metasDb = await _db.InvUsuariosMetadata
+                                    .AsNoTracking()
+                                    .Where(m => uIds.Contains(m.IdUsuario))
+                                    .ToDictionaryAsync(m => m.IdUsuario, cancellationToken);
+
+                                var metaByCedula = usersDb
+                                    .Where(u => u.IdSigafi != null && metasDb.ContainsKey(u.IdUsuario))
+                                    .GroupBy(u => u.IdSigafi!.Trim(), StringComparer.OrdinalIgnoreCase)
+                                    .ToDictionary(g => g.Key, g => metasDb[g.First().IdUsuario], StringComparer.OrdinalIgnoreCase);
+
+                                foreach (var inv in projectDto.Investigadores)
+                                {
+                                    if (!string.IsNullOrEmpty(inv.Cedula) && metaByCedula.TryGetValue(inv.Cedula.Trim(), out var m))
+                                    {
+                                        if (string.IsNullOrEmpty(inv.OrcidId)) inv.OrcidId = m.OrcidId;
+                                        if (!inv.FirmaHabilitada.HasValue) inv.FirmaHabilitada = m.AceptoTerminosFirma;
+                                        if (string.IsNullOrEmpty(inv.GradoAcademicoMaximo)) inv.GradoAcademicoMaximo = m.GradoAcademicoMaximo;
+                                        if (string.IsNullOrEmpty(inv.Especialidad)) inv.Especialidad = m.Especialidad;
+                                    }
+                                }
+                            }
+                        }
+
+                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
+                                      ?? projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
                         
                         var docentes = projectDto.Investigadores?.Where(i => i != director && 
                             (i.Rol?.Contains("Docente", StringComparison.OrdinalIgnoreCase) == true || 
@@ -692,6 +732,24 @@ namespace Diitra.Infrastructure.Common.Documents
                                 if (dbProject.FechaFin.HasValue)
                                     extraImageVars["fecha_fin"] = dbProject.FechaFin.Value.ToString("dd/MM/yyyy");
 
+                                var userIdsInDb = dbProject.InvProyectoParticipantes?
+                                    .Where(part => part.IdUsuarioNavigation != null)
+                                    .Select(part => part.IdUsuario)
+                                    .Distinct()
+                                    .ToList() ?? new List<int>();
+
+                                var userMetasInDb = new Dictionary<int, InvUsuarioMetadata>();
+                                if (userIdsInDb.Any())
+                                {
+                                    var metas = await _db.InvUsuariosMetadata
+                                        .AsNoTracking()
+                                        .Where(m => userIdsInDb.Contains(m.IdUsuario))
+                                        .ToListAsync(cancellationToken);
+                                    userMetasInDb = metas
+                                        .GroupBy(m => m.IdUsuario)
+                                        .ToDictionary(g => g.Key, g => g.First());
+                                }
+
                                 var directorPart = dbProject.InvProyectoParticipantes?.FirstOrDefault(p => p.EsDirector == true)
                                     ?? dbProject.InvProyectoParticipantes?.FirstOrDefault(p => p.Rol != null && p.Rol.Contains("Director", StringComparison.OrdinalIgnoreCase));
 
@@ -700,6 +758,23 @@ namespace Diitra.Infrastructure.Common.Documents
                                     var directorUser = directorPart.IdUsuarioNavigation;
                                     if (!string.IsNullOrEmpty(directorUser.Nombre))
                                         extraImageVars["director_nombre"] = directorUser.Nombre;
+
+                                    if (!string.IsNullOrEmpty(directorUser.IdSigafi))
+                                        extraImageVars["director_cedula"] = directorUser.IdSigafi;
+
+                                    if (!string.IsNullOrEmpty(directorUser.EmailInstitucional))
+                                        extraImageVars["director_email"] = directorUser.EmailInstitucional;
+
+                                    if (userMetasInDb.TryGetValue(directorUser.IdUsuario, out var dirMeta))
+                                    {
+                                        if (!string.IsNullOrEmpty(dirMeta.OrcidId))
+                                            extraImageVars["director_orcid"] = dirMeta.OrcidId;
+                                        extraImageVars["director_firma_habilitada"] = dirMeta.AceptoTerminosFirma;
+                                        if (!string.IsNullOrEmpty(dirMeta.GradoAcademicoMaximo))
+                                            extraImageVars["director_grado"] = dirMeta.GradoAcademicoMaximo;
+                                        if (!string.IsNullOrEmpty(dirMeta.Especialidad))
+                                            extraImageVars["director_especialidad"] = dirMeta.Especialidad;
+                                    }
                                 }
 
                                 var carreraObj = dbProject.InvProyectosCarreras?.FirstOrDefault()?.IdCarreraNavigation;
@@ -780,6 +855,21 @@ namespace Diitra.Infrastructure.Common.Documents
                         {
                             if (director != null && !string.IsNullOrEmpty(director.Nombre)) extraImageVars["director_nombre"] = director.Nombre;
                             else if (!string.IsNullOrEmpty(projectDto.DirectorProyecto)) extraImageVars["director_nombre"] = projectDto.DirectorProyecto;
+                        }
+                        if (director != null)
+                        {
+                            if (!extraImageVars.ContainsKey("director_orcid") && !string.IsNullOrEmpty(director.OrcidId))
+                                extraImageVars["director_orcid"] = director.OrcidId;
+                            if (!extraImageVars.ContainsKey("director_firma_habilitada") && director.FirmaHabilitada.HasValue)
+                                extraImageVars["director_firma_habilitada"] = director.FirmaHabilitada.Value;
+                            if (!extraImageVars.ContainsKey("director_cedula") && !string.IsNullOrEmpty(director.Cedula))
+                                extraImageVars["director_cedula"] = director.Cedula;
+                            if (!extraImageVars.ContainsKey("director_email") && !string.IsNullOrEmpty(director.Email))
+                                extraImageVars["director_email"] = director.Email;
+                            if (!extraImageVars.ContainsKey("director_grado") && !string.IsNullOrEmpty(director.GradoAcademicoMaximo))
+                                extraImageVars["director_grado"] = director.GradoAcademicoMaximo;
+                            if (!extraImageVars.ContainsKey("director_especialidad") && !string.IsNullOrEmpty(director.Especialidad))
+                                extraImageVars["director_especialidad"] = director.Especialidad;
                         }
                         if (!extraImageVars.ContainsKey("director_carrera") && !string.IsNullOrEmpty(projectDto.Carrera))
                             extraImageVars["director_carrera"] = projectDto.Carrera;

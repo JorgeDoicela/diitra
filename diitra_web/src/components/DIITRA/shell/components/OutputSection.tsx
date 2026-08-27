@@ -137,6 +137,15 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
         return () => { isMounted = false; };
     }, [projectUuid, projectStatus, signatureRefreshTrigger]);
 
+    // Autocargar vista previa con pantalla de carga al entrar a la sección
+    const hasInitialGeneratedRef = React.useRef(false);
+    React.useEffect(() => {
+        if (!pdfUrl && !isGenerating && !hasInitialGeneratedRef.current) {
+            hasInitialGeneratedRef.current = true;
+            handleGeneratePdf(false);
+        }
+    }, [pdfUrl, isGenerating, handleGeneratePdf]);
+
     const activeSignatures = signatures.filter(s => (s.esValida !== false && (s as any).es_valida !== false) && (s.estado !== 2 && (s as any).estado !== 2));
     const isDocumentSigned = activeSignatures.length > 0;
     const isCurrentPlan = (templateCode?.toUpperCase().includes('PLAN_APRENDIZAJE')) || title.toLowerCase().includes('plan de aprendizaje');

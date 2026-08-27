@@ -110,7 +110,8 @@ export const generateResearchersTableHtml = (block: DocumentBlock): string => {
     const c: any = block.config;
     return `
   <!-- BLOQUE: INVESTIGADORES -->
-  <table class="info-table">
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">2. Investigadores y Equipo de Trabajo</p>
+  <table class="info-table" style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
     <thead><tr>
       <th style="${headerBg('blue')}">Nombre Completo</th>
       <th style="${headerBg('blue')}">Rol en Proyecto</th>
@@ -121,15 +122,15 @@ export const generateResearchersTableHtml = (block: DocumentBlock): string => {
       ${c.mostrarHoras !== false ? `<th style="${headerBg('blue')}">Horas</th>` : ''}
     </tr></thead>
     <tbody>
-      {{#each participantes}}
-      <tr>
-        <td>{{this.nombre}}</td>
-        <td>{{this.rol}}</td>
-        ${c.mostrarCedula !== false ? '<td>{{this.cedula}}</td>' : ''}
-        ${c.mostrarEmail !== false ? '<td>{{this.email}}</td>' : ''}
-        ${c.mostrarTelefono !== false ? '<td>{{this.telefono}}</td>' : ''}
-        ${c.mostrarNivelAcademico !== false ? '<td>{{this.nivelAcademico}}</td>' : ''}
-        ${c.mostrarHoras !== false ? '<td>{{this.horas}} hs</td>' : ''}
+      {{#each (default investigadores participantes)}}
+      <tr style="page-break-inside: avoid;">
+        <td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.nombre this.Nombre}}</td>
+        <td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.rol this.Rol}}</td>
+        ${c.mostrarCedula !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.cedula this.Cedula}}</td>' : ''}
+        ${c.mostrarEmail !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.email this.Email}}</td>' : ''}
+        ${c.mostrarTelefono !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.telefono this.Telefono}}</td>' : ''}
+        ${c.mostrarNivelAcademico !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.nivelAcademico this.NivelAcademico}}</td>' : ''}
+        ${c.mostrarHoras !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1; text-align: center;">{{default this.horas this.Horas "0"}} hs</td>' : ''}
       </tr>
       {{/each}}
     </tbody>

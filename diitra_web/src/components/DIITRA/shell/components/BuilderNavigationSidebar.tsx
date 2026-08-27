@@ -83,29 +83,23 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
             className={`
                 overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
                 ${typeof window !== 'undefined' && window.innerWidth < 1024
-                    ? 'fixed inset-y-0 left-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-r border-border-thin !w-[85vw] sm:!w-[320px]'
+                    ? 'absolute inset-y-0 left-0 top-0 bottom-0 z-[70] h-full border-r border-border-thin !w-[85vw] sm:!w-[320px]'
                     : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
                 }
             `}
         >
-            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
-                <div className="flex lg:hidden justify-between items-center mb-4">
-                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
-                    <button
-                        onClick={() => setShowMobileSections(false)}
-                        className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
-                        aria-label="Cerrar menú"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                </div>
+            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-4 sm:p-5 md:p-6 flex flex-col gap-4 md:gap-5 h-full overflow-y-auto overflow-x-hidden shrink-0">
                 <div>
-                    <div className="flex justify-between items-center mb-4 lg:ml-2">
+                    <div className="flex justify-between items-center mb-2.5 lg:ml-1">
                         <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
                         <button
-                            onClick={() => setIsLeftSidebarOpen(false)}
-                            className="hidden lg:flex p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
+                            onClick={() => {
+                                setShowMobileSections(false);
+                                setIsLeftSidebarOpen(false);
+                            }}
+                            className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors cursor-pointer"
                             title="Contraer navegación"
+                            aria-label="Contraer navegación"
                         >
                             <ChevronLeft size={16} />
                         </button>
@@ -118,12 +112,13 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                                 <button
                                     key={section.id}
                                     onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                    className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-left ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
                                 >
-                                    <span className="flex items-center gap-4">
-                                        {section.icon} {section.label}
+                                    <span className="flex items-center gap-3 text-left min-w-0">
+                                        <span className="shrink-0 flex items-center">{section.icon}</span>
+                                        <span className="text-left leading-snug break-words">{section.label}</span>
                                     </span>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 shrink-0 ml-2">
                                         {progress !== null && (
                                             <span className={`text-[9px] font-black tracking-normal px-1.5 py-0.5 rounded-full border ${activeTab === section.id ? 'text-bg-deep border-bg-deep/20 bg-bg-deep/5' : 'text-text-dim border-border-thin bg-surface/30'}`}>
                                                 {progress}%
@@ -138,10 +133,11 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                         })}
                         <button
                             onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-4 border text-left ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
                         >
-                            <span className="flex items-center gap-4">
-                                <FileText size={18} /> Finalizar y Firmar
+                            <span className="flex items-center gap-3 text-left min-w-0">
+                                <span className="shrink-0 flex items-center"><FileText size={18} /></span>
+                                <span className="text-left leading-snug">Finalizar y Firmar</span>
                             </span>
                         </button>
                     </div>

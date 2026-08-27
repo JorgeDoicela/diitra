@@ -72,60 +72,61 @@ const UsersPage = () => {
             <style>{`
                 .row-last-active {
                     background-color: rgba(0, 112, 243, 0.08) !important;
-                    border-color: rgba(0, 112, 243, 0.35) !important;
-                    transition: all 0.2s ease-in-out;
+                    transition: background-color 0.2s ease-in-out;
                 }
             `}</style>
             
-            <UsersHeader
-                userType={userType}
-                setUserType={setUserType}
-                soloConHoras={soloConHoras}
-                setSoloConHoras={setSoloConHoras}
-                estadoEstudiante={estadoEstudiante}
-                setEstadoEstudiante={setEstadoEstudiante}
-                origenEstudiante={origenEstudiante}
-                setOrigenEstudiante={setOrigenEstudiante}
-                departamento={departamento}
-                setDepartamento={setDepartamento}
-                availableDepartments={availableDepartments}
-                search={search}
-                setSearch={setSearch}
-                loading={loading}
-                searchInputRef={searchInputRef}
-                setError={setError}
-                setShowExternalForm={setShowExternalForm}
-            />
+            <div className="space-y-6">
+                <UsersHeader
+                    userType={userType}
+                    setUserType={setUserType}
+                    soloConHoras={soloConHoras}
+                    setSoloConHoras={setSoloConHoras}
+                    estadoEstudiante={estadoEstudiante}
+                    setEstadoEstudiante={setEstadoEstudiante}
+                    origenEstudiante={origenEstudiante}
+                    setOrigenEstudiante={setOrigenEstudiante}
+                    departamento={departamento}
+                    setDepartamento={setDepartamento}
+                    availableDepartments={availableDepartments}
+                    search={search}
+                    setSearch={setSearch}
+                    loading={loading}
+                    searchInputRef={searchInputRef}
+                    setError={setError}
+                    setShowExternalForm={setShowExternalForm}
+                />
 
-            <DraftBanners
-                pendingUserDraft={pendingUserDraft}
-                handleRestoreUserDraft={handleRestoreUserDraft}
-                handleDiscardUserDraft={handleDiscardUserDraft}
-                pendingExternalDraft={pendingExternalDraft}
-                handleRestoreExternalDraft={handleRestoreExternalDraft}
-                handleDiscardExternalDraft={handleDiscardExternalDraft}
-            />
+                <DraftBanners
+                    pendingUserDraft={pendingUserDraft}
+                    handleRestoreUserDraft={handleRestoreUserDraft}
+                    handleDiscardUserDraft={handleDiscardUserDraft}
+                    pendingExternalDraft={pendingExternalDraft}
+                    handleRestoreExternalDraft={handleRestoreExternalDraft}
+                    handleDiscardExternalDraft={handleDiscardExternalDraft}
+                />
 
-            <UsersTable
-                users={users}
-                roles={roles}
-                search={search}
-                userType={userType}
-                page={page}
-                setPage={setPage}
-                pageSize={pageSize}
-                totalCount={totalCount}
-                totalPages={totalPages}
-                loading={loading}
-                updating={updating}
-                detailUser={detailUser}
-                setDetailUser={setDetailUser}
-                lastActiveUserId={lastActiveUserId}
-                setLastActiveUserId={setLastActiveUserId}
-                setSelectedUser={setSelectedUser}
-                handleRoleToggle={handleRoleToggle}
-                openedAtRef={openedAtRef}
-            />
+                <UsersTable
+                    users={users}
+                    roles={roles}
+                    search={search}
+                    userType={userType}
+                    page={page}
+                    setPage={setPage}
+                    pageSize={pageSize}
+                    totalCount={totalCount}
+                    totalPages={totalPages}
+                    loading={loading}
+                    updating={updating}
+                    detailUser={detailUser}
+                    setDetailUser={setDetailUser}
+                    lastActiveUserId={lastActiveUserId}
+                    setLastActiveUserId={setLastActiveUserId}
+                    setSelectedUser={setSelectedUser}
+                    handleRoleToggle={handleRoleToggle}
+                    openedAtRef={openedAtRef}
+                />
+            </div>
 
             <ExternalEvaluatorModal
                 showExternalForm={showExternalForm}

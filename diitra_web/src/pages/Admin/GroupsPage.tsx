@@ -53,8 +53,7 @@ const GroupsPage = () => {
             <style>{`
                 .row-last-active {
                     background-color: rgba(0, 112, 243, 0.08) !important;
-                    border-color: rgba(0, 112, 243, 0.35) !important;
-                    transition: all 0.2s ease-in-out;
+                    transition: background-color 0.2s ease-in-out;
                 }
             `}</style>
 

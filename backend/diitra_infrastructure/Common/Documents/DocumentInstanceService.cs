@@ -737,6 +737,34 @@ namespace Diitra.Infrastructure.Common.Documents
                         }
                     }
 
+                    // Si el documento está en borrador/revisión, asegurar que tenga la última configuración de bloques de la plantilla activa
+                    if (instance.State == DocumentState.Draft || instance.State == DocumentState.Review)
+                    {
+                        var activeTemplate = await _context.DocumentTemplates
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(t => t.Code == instance.TemplateCode && t.IsActive, ct);
+
+                        if (activeTemplate != null && !string.IsNullOrEmpty(activeTemplate.HtmlContent))
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(activeTemplate.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                            if (match.Success && match.Groups.Count > 1)
+                            {
+                                try
+                                {
+                                    var base64 = match.Groups[1].Value;
+                                    var bytes = System.Convert.FromBase64String(base64);
+                                    var activeConfig = System.Text.Encoding.UTF8.GetString(bytes);
+                                    if (instance.TemplateConfigSnapshotJson != activeConfig)
+                                    {
+                                        instance.UpdateTemplateConfigSnapshot(activeConfig);
+                                        await _context.SaveChangesAsync(ct);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+
                     try
                     {
                         var orchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Research.IProjectOrchestrator>();

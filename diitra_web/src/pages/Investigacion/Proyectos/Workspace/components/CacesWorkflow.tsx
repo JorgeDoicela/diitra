@@ -236,9 +236,8 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">
             <div className="flex items-center gap-2.5 mb-2">
-                <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                 <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">
-                    {isInnovacion ? 'Flujo de Innovación e i+TT' : 'Flujo Institucional CACES'}
+                    {isInnovacion ? 'Flujo de Innovación e i+TT' : 'Flujo Institucional'}
                 </h3>
             </div>
 

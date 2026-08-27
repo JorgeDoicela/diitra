@@ -107,27 +107,27 @@ export const generateSignaturesHtml = (block: DocumentBlock): string => {
           <div style="color: #64748b; font-size: 8.5pt;">Director de Proyecto</div>
         </td>` : '',
         docentes: includeDocentes ? `
-        {{ for inv in investigadores || Investigadores }}
-          {{ if inv.rol != "DIRECTOR" && inv.rol != "ESTUDIANTE" && inv.rol != "AUXILIAR" && inv.Rol != "DIRECTOR" && inv.Rol != "ESTUDIANTE" && inv.Rol != "AUXILIAR" }}
+        {{#each investigadores}}
+          {{#if (and (not (eq this.rol "DIRECTOR")) (not (eq this.rol "ESTUDIANTE")) (not (eq this.rol "AUXILIAR")))}}
           <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
             <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
             <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">DOCENTE INVESTIGADOR</div>
-            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default inv.nombre inv.Nombre }}</div>
-            <div style="color: #64748b; font-size: 8.5pt;">{{ default inv.carrera inv.Carrera "Docente Investigador" }}</div>
+            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default this.nombre this.Nombre }}</div>
+            <div style="color: #64748b; font-size: 8.5pt;">{{ default this.carrera this.Carrera "Docente Investigador" }}</div>
           </td>
-          {{ end }}
-        {{ end }}` : '',
+          {{/if}}
+        {{/each}}` : '',
         estudiantes: includeEstudiantes ? `
-        {{ for inv in investigadores || Investigadores }}
-          {{ if inv.rol == "ESTUDIANTE" || inv.rol == "AUXILIAR" || inv.Rol == "ESTUDIANTE" || inv.Rol == "AUXILIAR" }}
+        {{#each investigadores}}
+          {{#if (or (eq this.rol "ESTUDIANTE") (eq this.rol "AUXILIAR"))}}
           <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
             <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
             <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">ESTUDIANTE INVESTIGADOR</div>
-            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default inv.nombre inv.Nombre }}</div>
+            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default this.nombre this.Nombre }}</div>
             <div style="color: #64748b; font-size: 8.5pt;">Auxiliar de Investigación</div>
           </td>
-          {{ end }}
-        {{ end }}` : '',
+          {{/if}}
+        {{/each}}` : '',
         coordinador_carrera: includeCoordCarrera ? `
         <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
           <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>

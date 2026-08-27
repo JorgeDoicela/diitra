@@ -9,6 +9,7 @@ import { BuilderNavigationSidebar } from './shell/components/BuilderNavigationSi
 import { BuilderFloatingTab } from './shell/components/BuilderFloatingTab';
 import { OutputSection } from './shell/components/OutputSection';
 import type { BuilderSection } from './shell/hooks/useBuilderLayout';
+import { useAuth } from '../../api/AuthContext';
 
 export type { BuilderSection };
 
@@ -64,12 +65,28 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
         isUpgrading = false
     } = props;
 
+    const { isAdmin } = useAuth();
     const { layout, autoSave, pdfAndSign, network } = useDIITRABuilderShell(props);
     const [showUpdateModal, setShowUpdateModal] = useState<boolean>(hasTemplateUpdate);
 
     const showRightSidebar = useMemo(() => {
         return templateCode !== 'OFICIO_APROBACION';
     }, [templateCode]);
+
+    const shouldShowLockControl = useMemo(() => {
+        // 1. Si la sección está bloqueada, siempre se muestra para informar su estado a cualquier usuario
+        if (layout.isSectionBlocked) return true;
+        // 2. El Administrador siempre tiene disponible el control institucional de bloqueo en cualquier documento
+        if (isAdmin) return true;
+        // 3. El Director del Proyecto tiene control si el proyecto cuenta con equipo o es grupal
+        if (layout.isDirectorOrAdmin) {
+            const hasMultipleResearchers = Array.isArray(formData?.Investigadores) && formData.Investigadores.length > 1;
+            const hasResearchGroup = formData?.GrupoInvestigacionTipo === 'SI' || formData?.TieneGrupoInvestigacion;
+            return hasMultipleResearchers || hasResearchGroup;
+        }
+        // 4. Miembros regulares no ven el control si la sección está abierta
+        return false;
+    }, [isAdmin, layout.isDirectorOrAdmin, layout.isSectionBlocked, formData?.Investigadores, formData?.GrupoInvestigacionTipo, formData?.TieneGrupoInvestigacion]);
 
     useEffect(() => {
         if (hasTemplateUpdate) {
@@ -164,8 +181,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                         <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-2 md:mt-3 rounded-full" />
                                                     </div>
 
-                                                    {/* Compact Section Lock Control */}
-                                                    {!readOnly && layout.activeTab !== 'output' && (
+                                                    {/* Compact Section Lock Control — Gobernanza institucional y de equipo */}
+                                                    {!readOnly && layout.activeTab !== 'output' && shouldShowLockControl && (
                                                         <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
                                                             {layout.isSectionBlocked ? (
                                                                 <>
@@ -317,7 +334,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                         className={`
                                             overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
                                             ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                                ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
+                                                ? 'absolute inset-y-0 right-0 top-0 bottom-0 z-[70] h-full border-l border-border-thin !w-[85vw] sm:!w-[320px]'
                                                 : (layout.isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
                                             }
                                         `}

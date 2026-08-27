@@ -564,11 +564,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                     </>
                 )}
 
-                {type !== 'checkbox' && mask !== 'date' && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-40">
-                        <div className="w-1.5 h-1.5 rounded-full bg-text-main animate-pulse" />
-                    </div>
-                )}
+
             </div>
             {label && (
                 <label className={type === 'checkbox' 

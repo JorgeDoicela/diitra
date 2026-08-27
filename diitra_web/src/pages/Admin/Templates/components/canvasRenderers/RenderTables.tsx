@@ -1,6 +1,6 @@
 import React from 'react';
 import type { TableSection } from '../../types';
-import { getHeaderStylePair } from './RenderCover';
+import { getHeaderStylePair, DYN_COLORS } from './RenderCover';
 
 export const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
     const headers = config.headers || ['Columna 1', 'Columna 2'];

@@ -36,10 +36,17 @@ namespace diitra_api.Controllers
                 return NotFound(new { message = $"La plantilla '{code}' no está activa o no existe en la base de datos." });
             }
 
+            var fileLoader = new Diitra.Infrastructure.Common.Documents.Engine.TemplateFileLoader(_environment);
+            var fileHtml = await fileLoader.LoadAsync(template.Code);
+
+            var effectiveHtml = !string.IsNullOrWhiteSpace(fileHtml) && (string.IsNullOrWhiteSpace(template.HtmlContent) || template.HtmlContent.StartsWith("<!-- Cargado desde") || template.Version < 400)
+                ? fileHtml
+                : (!string.IsNullOrWhiteSpace(template.HtmlContent) ? template.HtmlContent : fileHtml);
+
             var blocksJson = "";
-            if (!string.IsNullOrEmpty(template.HtmlContent))
+            if (!string.IsNullOrEmpty(effectiveHtml))
             {
-                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                var match = System.Text.RegularExpressions.Regex.Match(effectiveHtml, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
                 if (match.Success && match.Groups.Count > 1)
                 {
                     try
@@ -124,11 +131,18 @@ namespace diitra_api.Controllers
                 return NotFound(new { message = $"La plantilla '{instance.TemplateCode}' no está activa o no existe en la base de datos." });
             }
 
-            // 1. Obtener la estructura de bloques más reciente desde la plantilla activa (HtmlContent Base64)
+            // 1. Obtener la estructura de bloques más reciente desde la plantilla activa (HtmlContent Base64 o Archivo Físico)
+            var fileLoader = new Diitra.Infrastructure.Common.Documents.Engine.TemplateFileLoader(_environment);
+            var fileHtml = await fileLoader.LoadAsync(template.Code);
+
+            var effectiveHtml = !string.IsNullOrWhiteSpace(fileHtml) && (string.IsNullOrWhiteSpace(template.HtmlContent) || template.HtmlContent.StartsWith("<!-- Cargado desde") || template.Version < 400)
+                ? fileHtml
+                : (!string.IsNullOrWhiteSpace(template.HtmlContent) ? template.HtmlContent : fileHtml);
+
             var blocksJson = "";
-            if (!string.IsNullOrEmpty(template.HtmlContent))
+            if (!string.IsNullOrEmpty(effectiveHtml))
             {
-                var match = System.Text.RegularExpressions.Regex.Match(template.HtmlContent, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
+                var match = System.Text.RegularExpressions.Regex.Match(effectiveHtml, @"<!-- DIITRA_SECTIONS_JSON: (.*?) -->");
                 if (match.Success && match.Groups.Count > 1)
                 {
                     try

@@ -247,24 +247,10 @@ export function generateDefaultBlocksForTemplate(
             {
                 id: 'block-technical',
                 type: 'project_technical_section' as BlockType,
-                title: '3. ESPECIFICACIÓN TÉCNICA',
+                title: '3. ESPECIFICACIÓN DEL PROYECTO',
                 isActive: true,
                 config: {
                     technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS
-                }
-            },
-            {
-                id: 'block-products',
-                type: 'expected_products' as BlockType,
-                title: 'RESULTADOS ESPERADOS',
-                isActive: true,
-                config: {
-                    productColumns: {
-                        showCategory: true,
-                        showQuantity: true,
-                        showVerificationMeans: true,
-                        showDeadline: true
-                    }
                 }
             },
             {
@@ -279,9 +265,23 @@ export function generateDefaultBlocksForTemplate(
                 }
             },
             {
+                id: 'block-products',
+                type: 'expected_products' as BlockType,
+                title: '5. PRODUCTOS ESPERADOS',
+                isActive: true,
+                config: {
+                    productColumns: {
+                        showCategory: true,
+                        showQuantity: true,
+                        showVerificationMeans: true,
+                        showDeadline: true
+                    }
+                }
+            },
+            {
                 id: 'block-impacts',
                 type: 'impacts' as BlockType,
-                title: '5. IMPACTO DEL PROYECTO',
+                title: '6. IMPACTO DEL PROYECTO',
                 isActive: true,
                 config: {
                     showImpactoSocial: true,
@@ -289,6 +289,35 @@ export function generateDefaultBlocksForTemplate(
                     showImpactoEconomico: true,
                     showImpactoPolitico: true,
                     showImpactoAmbiental: true
+                }
+            },
+            {
+                id: 'block-gantt',
+                type: 'gantt' as BlockType,
+                title: '7. CRONOGRAMA DE ACTIVIDADES',
+                isActive: true,
+                config: {
+                    ganttMonths: ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'],
+                    ganttObjectives: [
+                        {
+                            id: `obj-${Date.now()}`,
+                            name: 'OBJETIVO N° 1',
+                            activities: [
+                                { id: `act-${Date.now()}`, name: 'Especificar la actividad', resources: '', startMonth: 0, startWeek: 0, endMonth: 1, endWeek: 3, color: '#60a5fa' as const },
+                                { id: `act-${Date.now() + 1}`, name: 'Especificar la actividad', resources: '', startMonth: 2, startWeek: 0, endMonth: 3, endWeek: 3, color: '#f97316' as const },
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                id: 'block-bibliography',
+                type: 'rich_text' as BlockType,
+                title: '8. BIBLIOGRAFÍA',
+                isActive: true,
+                config: {
+                    title: '8. Bibliografía',
+                    placeholder: 'Registrar entre 10 y 15 fuentes bibliográficas con normas APA 7ma edición...'
                 }
             },
             createBaseSignaturesBlock([

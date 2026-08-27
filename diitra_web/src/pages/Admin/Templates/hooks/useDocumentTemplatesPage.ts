@@ -285,14 +285,6 @@ export const useDocumentTemplatesPage = () => {
                         }
                     } catch { }
                 }
-                // Validar que los bloques correspondan al tipo de plantilla y no a un esquema incompatible heredado
-                if (loadedBlocks.length > 0) {
-                    const isProtocolBlock = loadedBlocks.some((b: any) => b.type === 'project_technical_section' || b.type === 'project_general_section');
-                    if ((tmpl.code === 'PLAN_APRENDIZAJE' || tmpl.code === 'EVALUACION_PLAN_APRENDIZAJE') && isProtocolBlock) {
-                        loadedBlocks = [];
-                    }
-                }
-
                 if (loadedBlocks.length === 0) {
                     loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
                 }
@@ -904,6 +896,37 @@ export const useDocumentTemplatesPage = () => {
         }
     };
 
+    const handleResetToDefault = async () => {
+        if (!selectedTemplate || selectedTemplate.code === 'GLOBAL_THEME') return;
+        const ok = await confirm({
+            title: 'Restablecer Plantilla a Fábrica',
+            message: `¿Deseas restablecer la plantilla "${selectedTemplate.name}" a su estructura oficial institucional por defecto? Se cargarán todos los bloques y secciones estándar oficiales.`,
+            confirmText: 'Sí, Restablecer',
+            cancelText: 'Cancelar',
+            variant: 'warning'
+        });
+        if (!ok) return;
+
+        try {
+            setLoading(true);
+            try {
+                await api.post(`/admin/templates/${selectedTemplate.code}/reset-to-default`);
+            } catch { }
+
+            // Generar o recargar los bloques oficiales de fábrica
+            const defaultBlocks = generateDefaultBlocksForTemplate(selectedTemplate, selectedTemplate);
+            setBlocks(defaultBlocks);
+            setActiveBlockId(defaultBlocks[0]?.id || null);
+            setIsDirty(true);
+            addToast("Estructura Restablecida", `La plantilla "${selectedTemplate.name}" fue restablecida a sus bloques oficiales de fábrica. Haz clic en "Publicar Plantilla" para guardar.`, "success");
+        } catch (err: any) {
+            console.error(err);
+            addToast("Error al Restablecer", "No se pudo restablecer la plantilla.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleCellChange = (blockId: string, rowIndex: number, cellIndex: number, val: string) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId && b.type === 'advanced_table') {
@@ -992,6 +1015,7 @@ export const useDocumentTemplatesPage = () => {
         handleUpdateConfig,
         handleUpdateThemeConfig,
         handleSaveTemplate,
+        handleResetToDefault,
         handleCellChange,
         handleAddRow,
         handleRemoveRow,
