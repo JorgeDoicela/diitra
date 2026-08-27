@@ -417,26 +417,47 @@ export const GRUPOS_CONFIG: HelpConfig = {
     title: "Grupos de Investigación",
     summary: "Registro institucional, estructura colaborativa y proyectos de los grupos de investigación oficiales.",
     description: "Panel para la postulación, formalización y seguimiento de los grupos de investigación de la institución. Permite a los directores y coordinadores registrar líneas de investigación grupales, integrar miembros docentes y estudiantes, y reportar la producción colectiva.",
+    roleOverrides: {
+        estudiante: {
+            summary: "Directorio institucional de grupos de investigación y oportunidades de semilleros para estudiantes."
+        }
+    },
     steps: [
         {
             title: "Directorio y visualización de grupos activos",
             description: "Explora la lista completa de grupos de investigación aprobados por el consejo científico. Revisa sus líneas de acción, miembros activos y la producción científica acumulada durante el ciclo.",
-            highlight: 'content-bottom'
+            highlight: 'content-bottom',
+            roles: ['todos']
         },
         {
             title: "Creación y postulación de nuevo grupo",
             description: "Inicia una solicitud para la creación de un nuevo grupo de investigación completando los campos de justificación académica, plan de trabajo bienal, líneas de investigación institucionales y presupuesto estimado.",
-            highlight: 'content-top'
+            highlight: 'content-top',
+            roles: ['admin', 'docente']
         },
         {
             title: "Gestión de miembros y roles del grupo",
             description: "Configura el equipo de trabajo asignando el rol de Director de Grupo, Co-investigadores docentes o estudiantes colaboradores de semilleros para fortalecer el indicador de investigación formativa.",
-            highlight: 'content-bottom'
+            highlight: 'content-bottom',
+            roles: ['admin', 'docente']
+        },
+        {
+            title: "Vinculación y semilleros de investigación",
+            description: "Revisa las líneas de investigación activas de cada grupo para identificar oportunidades de titulación y postular a proyectos tutelados por docentes investigadores.",
+            highlight: 'content-bottom',
+            roles: ['estudiante']
         }
     ],
     compliance: "Mapea el Criterio B.1.2 del CACES sobre fomento a la investigación formativa y asociatividad científica, promoviendo la consolidación de redes de investigación internas y externas.",
     tips: [
-        "Asegúrate de incluir al menos un estudiante colaborador para cumplir con los requerimientos institucionales de semilleros de investigación.",
+        {
+            text: "Asegúrate de incluir al menos un estudiante colaborador para cumplir con los requerimientos institucionales de semilleros de investigación.",
+            roles: ['admin', 'docente']
+        },
+        {
+            text: "Si eres estudiante, tu participación activa en un grupo de investigación acredita horas de investigación formativa según el reglamento.",
+            roles: ['estudiante']
+        },
         "Actualiza el plan de trabajo bienal de tu grupo para evitar el estado de inactividad temporal en el sistema."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (

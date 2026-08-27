@@ -3,9 +3,10 @@ import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
-import { Menu, MoreHorizontal } from 'lucide-react';
+import { Menu, HelpCircle } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
 import { HelpModal } from './Help/HelpModal';
+import { WelcomeModal } from './WelcomeModal/WelcomeModal';
 import api from '../../api/axios_config';
 import { StickyNotesFloatingButton } from '../Common/StickyNotesFloatingButton';
 import { getStickyNotes } from '../../services/calendarioService';
@@ -46,6 +47,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const isWorkspace = location.pathname.includes('/workspace/');
     const isFullHeightPage = isWorkspace || location.pathname === '/plantillas' || location.pathname === '/admin/plantillas';
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showHeader, setShowHeader] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
@@ -54,6 +56,26 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         return saved === 'true';
     });
     const [topBarCollapsed, setTopBarCollapsed] = useState(false);
+
+    // ── Disparador de Pantalla de Bienvenida Personalizada Inicial ─────────────
+    useEffect(() => {
+        if (!user || !isAuthenticated || isLoading || isWorkspace) return;
+
+        const userKey = user.id_referencia || user.id_usuario || 'guest';
+        const dismissedKey = `diitra_welcome_dismissed_${userKey}`;
+        const sessionKey = `diitra_welcome_session_${userKey}`;
+
+        const hasDismissed = localStorage.getItem(dismissedKey);
+        const hasShownSession = sessionStorage.getItem(sessionKey);
+
+        if (!hasDismissed && !hasShownSession) {
+            const timer = setTimeout(() => {
+                setIsWelcomeOpen(true);
+                sessionStorage.setItem(sessionKey, 'true');
+            }, 600);
+            return () => clearTimeout(timer);
+        }
+    }, [user, isAuthenticated, isLoading, isWorkspace]);
 
     // ── Contador de notas rápidas sin planificar (badge del botón flotante) ─────
     const [pendingNotesCount, setPendingNotesCount] = useState(0);
@@ -284,10 +306,14 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             <div className="flex items-center">
                                 <button
                                     onClick={() => setIsHelpOpen(true)}
-                                    className="p-1 text-text-main transition-colors duration-150 cursor-pointer flex items-center justify-center bg-transparent border-0 outline-none hover:scale-110"
-                                    title="Ayuda e Información"
+                                    className="btn-vercel-secondary !text-[9.5px] !font-medium !py-1 !px-2.5 !gap-1.5 hover:!border-brand hover:!text-brand transition-all cursor-pointer"
+                                    title="Guía Interactiva del Módulo"
+                                    aria-label="Abrir guía interactiva"
                                 >
-                                    <MoreHorizontal size={18} />
+                                    <HelpCircle size={13} className="text-brand" />
+                                    <span className="tracking-wider uppercase font-sans">
+                                        Guía
+                                    </span>
                                 </button>
                             </div>
                         </div>
@@ -313,7 +339,17 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 className="h-7 w-auto object-contain"
                             />
                         </Link>
-                        <NotificationBell />
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setIsHelpOpen(true)}
+                                className="p-2 text-text-dim hover:text-brand transition-colors cursor-pointer"
+                                title="Guía Interactiva"
+                                aria-label="Abrir guía interactiva"
+                            >
+                                <HelpCircle size={20} className="text-brand" />
+                            </button>
+                            <NotificationBell />
+                        </div>
                     </header>
                 )}
 
@@ -331,6 +367,15 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 isOpen={isHelpOpen}
                 onClose={() => setIsHelpOpen(false)}
                 pathname={location.pathname}
+            />
+
+            <WelcomeModal
+                isOpen={isWelcomeOpen}
+                onClose={() => setIsWelcomeOpen(false)}
+                onOpenGuide={() => {
+                    setIsWelcomeOpen(false);
+                    setIsHelpOpen(true);
+                }}
             />
 
             <StickyNotesFloatingButton

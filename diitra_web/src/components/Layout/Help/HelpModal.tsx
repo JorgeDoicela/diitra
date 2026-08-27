@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     X, Award, Zap, ChevronLeft, ChevronRight, Check
 } from 'lucide-react';
-import type { HelpConfig } from './types';
+import type { HelpConfig, DiitraRole } from './types';
 import { HELP_MAP, DEFAULT_CONFIG, normalizePathname } from './configs';
+import { useAuth } from '../../../api/AuthContext';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -135,10 +136,50 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, confi
 };
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname }) => {
+    const { isAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName } = useAuth();
     const normalizedPathname = normalizePathname(pathname);
-    const config = HELP_MAP[normalizedPathname] || DEFAULT_CONFIG;
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState<'next' | 'prev'>('next');
+
+    // Identificar roles del usuario conectado
+    const activeRoles = useMemo<DiitraRole[]>(() => {
+        const list: DiitraRole[] = ['todos'];
+        if (isAdmin) list.push('admin');
+        if (isDocente) list.push('docente');
+        if (isEstudiante) list.push('estudiante');
+        if (isRevisor) list.push('revisor', 'externo');
+        return list;
+    }, [isAdmin, isDocente, isEstudiante, isRevisor]);
+
+    // Adaptar la configuración de la guía al rol del usuario
+    const config = useMemo<HelpConfig>(() => {
+        const rawConfig = HELP_MAP[normalizedPathname] || DEFAULT_CONFIG;
+        const primaryRole: DiitraRole = isAdmin ? 'admin' : isDocente ? 'docente' : isEstudiante ? 'estudiante' : isRevisor ? 'revisor' : 'todos';
+        const override = rawConfig.roleOverrides?.[primaryRole];
+
+        // Filtrar pasos que corresponden a este rol
+        const filteredSteps = rawConfig.steps.filter(step => {
+            if (!step.roles || step.roles.length === 0 || step.roles.includes('todos')) return true;
+            return step.roles.some(r => activeRoles.includes(r));
+        });
+
+        // Filtrar tips que corresponden a este rol
+        const filteredTips = (rawConfig.tips || []).filter(tip => {
+            if (typeof tip === 'string') return true;
+            if (!tip.roles || tip.roles.length === 0 || tip.roles.includes('todos')) return true;
+            return tip.roles.some(r => activeRoles.includes(r));
+        });
+
+        return {
+            ...rawConfig,
+            title: override?.title || rawConfig.title,
+            summary: override?.summary || rawConfig.summary,
+            description: override?.description || rawConfig.description,
+            compliance: override?.compliance || rawConfig.compliance,
+            steps: filteredSteps.length > 0 ? filteredSteps : rawConfig.steps,
+            tips: filteredTips.length > 0 ? filteredTips : rawConfig.tips
+        };
+    }, [normalizedPathname, isAdmin, isDocente, isEstudiante, isRevisor, activeRoles]);
 
     // Total steps = 1 (Summary) + config.steps.length + 1 (Compliance & Tips)
     const totalSteps = config.steps.length + 2;
@@ -150,6 +191,45 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
             setDirection('next');
         }
     }, [normalizedPathname, isOpen]);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isOpen]);
+
+    // Keyboard navigation (Escape to close, ArrowLeft/Right to step)
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                onClose();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (currentStep < totalSteps - 1) {
+                    setDirection('next');
+                    setCurrentStep(prev => prev + 1);
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentStep > 0) {
+                    setDirection('prev');
+                    setCurrentStep(prev => prev - 1);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, currentStep, totalSteps, onClose]);
 
     if (!isOpen) return null;
 
@@ -188,7 +268,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Guía Interactiva: ${config.title}`}
+        >
             {/* Backdrop Blur Overlay */}
             <div 
                 className="absolute inset-0 bg-bg-deep/75 backdrop-blur-md cursor-pointer animate-fade-in"
@@ -205,18 +290,26 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                             {config.icon}
                         </div>
                         <div>
-                            <h3 className="text-xs font-semibold tracking-widest text-text-main">
-                                Guía Interactiva
-                            </h3>
-                            <p className="text-[9px] text-text-dim tracking-wider font-semibold">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="section-label !text-brand leading-none">
+                                    Guía Interactiva
+                                </span>
+                                {roleDisplayName && (
+                                    <span className="text-[7.5px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border-thin text-text-dim uppercase tracking-wider font-semibold">
+                                        {roleDisplayName}
+                                    </span>
+                                )}
+                            </div>
+                            <h3 className="text-xs font-semibold tracking-wide text-text-main font-sans">
                                 {config.title}
-                            </p>
+                            </h3>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
                         className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
                         title="Cerrar Guía"
+                        aria-label="Cerrar Guía"
                     >
                         <X size={16} />
                     </button>
@@ -307,7 +400,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                             {config.tips.map((tip, idx) => (
                                                 <li key={idx} className="flex items-start gap-2 text-[10px] text-text-dim leading-relaxed font-medium">
                                                     <Zap size={10} className="text-amber-400 shrink-0 mt-0.5 animate-bounce" />
-                                                    <span>{tip}</span>
+                                                    <span>{typeof tip === 'string' ? tip : tip.text}</span>
                                                 </li>
                                             ))}
                                         </ul>
@@ -333,14 +426,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     <button
                         onClick={handlePrev}
                         disabled={currentStep === 0}
-                        className={`flex items-center gap-1 text-[10px] font-semibold tracking-wider transition-all duration-200 cursor-pointer ${
+                        className={`btn-vercel-secondary !text-[10px] !py-1 !px-3 !gap-1.5 ${
                             currentStep === 0 
-                                ? 'opacity-30 pointer-events-none text-text-dim' 
-                                : 'text-text-dim hover:text-text-main hover:translate-x-[-2px]'
+                                ? 'opacity-30 pointer-events-none' 
+                                : ''
                         }`}
-                        title="Anterior"
+                        title="Paso Anterior"
                     >
-                        <ChevronLeft size={14} />
+                        <ChevronLeft size={13} />
                         <span>Atrás</span>
                     </button>
 
@@ -354,8 +447,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                     idx === currentStep 
                                         ? 'w-4 bg-brand' 
                                         : 'w-1.5 bg-border-hover hover:bg-text-dim'
-                                }}`}
+                                }`}
                                 title={`Ir a la diapositiva ${idx + 1}`}
+                                aria-label={`Paso ${idx + 1}`}
                             />
                         ))}
                     </div>
@@ -364,20 +458,20 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     {currentStep === totalSteps - 1 ? (
                         <button
                             onClick={onClose}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-brand text-white rounded-lg text-[10px] font-semibold tracking-wider hover:bg-brand-dark transition-all duration-200 cursor-pointer hover:scale-[1.03] shadow-md shadow-brand/10"
-                            title="Finalizar"
+                            className="btn-brand !text-[10px] !py-1 !px-3.5 !gap-1.5"
+                            title="Finalizar Guía"
                         >
                             <span>Entendido</span>
-                            <Check size={12} />
+                            <Check size={13} />
                         </button>
                     ) : (
                         <button
                             onClick={handleNext}
-                            className="flex items-center gap-1 text-[10px] font-semibold tracking-wider text-brand hover:text-brand-light transition-all duration-200 cursor-pointer hover:translate-x-[2px]"
-                            title="Siguiente"
+                            className="btn-brand !text-[10px] !py-1 !px-3 !gap-1.5"
+                            title="Siguiente Paso"
                         >
                             <span>Siguiente</span>
-                            <ChevronRight size={14} />
+                            <ChevronRight size={13} />
                         </button>
                     )}
                 </div>
