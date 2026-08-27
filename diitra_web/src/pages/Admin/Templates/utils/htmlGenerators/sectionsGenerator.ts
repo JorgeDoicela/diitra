@@ -248,7 +248,8 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
                 return `
     <tr style="page-break-inside: avoid;">
       <td style="background-color: ${pair1.bg} !important; color: ${pair1.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
-      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${item1.content}</td>
+      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item1.content}</td>
+      <td colspan="2" style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
     </tr>`;
             }
         }
@@ -368,8 +369,12 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
                 const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
                 renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
-        <td style="background-color: ${color} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+        <td style="background-color: ${color} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
+      </tr>
+      <tr style="${avoidInside}">
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
+        <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
       </tr>`);
                 i++;
             }

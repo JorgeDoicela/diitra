@@ -3,6 +3,8 @@ import { Move } from 'lucide-react';
 import { useFreeFormDrag } from '../../hooks/useFreeFormDrag';
 import type { FreeFormPosition } from '../../hooks/useFreeFormDrag';
 
+import { resolveHeaderColor, getContrastFg } from '../properties/SharedColorPicker';
+
 export interface HeaderStylePair {
     id: string;
     label: string;
@@ -28,18 +30,38 @@ export const HEADER_STYLE_OPTIONS: HeaderStylePair[] = [
     { id: 'none', label: 'Sin fondo de encabezado', bg: 'transparent', fg: '#1e293b' },
 ];
 
-export const getHeaderStylePair = (id: string): HeaderStylePair => {
-    return HEADER_STYLE_OPTIONS.find(opt => opt.id === id) || HEADER_STYLE_OPTIONS[0];
+export const getHeaderStylePair = (id?: string): HeaderStylePair => {
+    if (!id) return HEADER_STYLE_OPTIONS[0];
+    const match = HEADER_STYLE_OPTIONS.find(opt => opt.id.toLowerCase() === id.toLowerCase());
+    if (match) return match;
+
+    const bg = resolveHeaderColor(id);
+    const fg = getContrastFg(bg);
+    return {
+        id,
+        label: id,
+        bg,
+        fg,
+    };
 };
 
 const DEFAULT_POSITIONS: Record<string, FreeFormPosition> = {
-    institution: { x: 10, y: 4 },
+    logo: { x: 10, y: 3 },
+    institution: { x: 10, y: 13 },
     title: { x: 10, y: 35 },
     carrera: { x: 10, y: 70 },
     periodo: { x: 10, y: 80 },
 };
 
-type CoverElementId = 'institution' | 'title' | 'carrera' | 'periodo';
+type CoverElementId = 'logo' | 'institution' | 'title' | 'carrera' | 'periodo';
+
+const ELEMENT_NAMES: Record<CoverElementId, string> = {
+    logo: 'Logo',
+    institution: 'Institución',
+    title: 'Título',
+    carrera: 'Carrera',
+    periodo: 'Periodo'
+};
 
 interface RenderCoverProps {
     config: any;
@@ -65,7 +87,9 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const showCarrera = config.showCarrera !== undefined ? config.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
     const showPeriodo = config.showPeriodo !== undefined ? config.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-    const textInst = config.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textInst = config.textoInstitucion !== undefined
+        ? config.textoInstitucion
+        : (gCover.textoInstitucion !== undefined ? gCover.textoInstitucion : 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI');
     const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
     const placeholderTema = config.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
     const textCarrera = config.carreraPorDefecto || gCover.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
@@ -85,12 +109,17 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const periodoFontSize = Number(config.periodoFontSize || 10);
     const periodoItalica = Boolean(config.periodoItalica);
 
+    const institutionFontSize = Number(config.institutionFontSize || gCover.institutionFontSize || 11);
+    const institutionItalica = Boolean(config.institutionItalica ?? gCover.institutionItalica);
+
+    const isWhite = (colorStr?: string) => !colorStr || colorStr.toLowerCase() === '#ffffff' || colorStr.toLowerCase() === '#fff' || colorStr.toLowerCase() === 'white';
+
     const rawColorInst = config.colorInstitution || gCover.colorInstitution;
     const rawColorTema = config.colorTemaProyecto || gCover.colorTemaProyecto;
     const rawColorCar = config.colorCarrera || gCover.colorCarrera;
     const rawColorPer = config.colorPeriodo || gCover.colorPeriodo;
 
-    const colorInst = rawColorInst || '#ffffff';
+    const colorInst = rawColorInst || (activeCoverImage ? '#ffffff' : '#1e2a4a');
     const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '#1e2a4a');
     const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '#1e2a4a');
     const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
@@ -103,7 +132,17 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const prefijoPeriodo = config.prefijoPeriodo !== undefined ? config.prefijoPeriodo : 'PERIODO ACADÉMICO';
     const displayPeriodo = '[PERIODO ACADÉMICO ACTIVO]';
 
+    const instMode = config.institutionMode || gCover.institutionMode || 'text';
+    const instImage = config.institutionImage || gCover.institutionImage || '';
+    const instLogoHeight = Number(config.institutionLogoHeight || gCover.institutionLogoHeight || 48);
+    const instLogoRadius = config.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
+    const instLogoInvert = config.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
+
     const positions: Record<CoverElementId, FreeFormPosition> = {
+        logo: {
+            x: config.xLogo ?? gCover.xLogo ?? (instMode === 'image' ? (config.xInstitution ?? gCover.xInstitution ?? DEFAULT_POSITIONS.logo.x) : DEFAULT_POSITIONS.logo.x),
+            y: config.yLogo ?? gCover.yLogo ?? (instMode === 'image' ? (config.yInstitution ?? gCover.yInstitution ?? DEFAULT_POSITIONS.logo.y) : DEFAULT_POSITIONS.logo.y)
+        },
         institution: {
             x: config.xInstitution ?? gCover.xInstitution ?? DEFAULT_POSITIONS.institution.x,
             y: config.yInstitution ?? gCover.yInstitution ?? DEFAULT_POSITIONS.institution.y
@@ -136,12 +175,20 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         }
     );
 
+    const tabMapping: Record<CoverElementId, 'institution' | 'title' | 'carrera' | 'periodo'> = {
+        logo: 'institution',
+        institution: 'institution',
+        title: 'title',
+        carrera: 'carrera',
+        periodo: 'periodo'
+    };
+
     const renderElement = (
         id: CoverElementId,
         visible: boolean,
         children: React.ReactNode
     ) => {
-        if (!visible) return null;
+        if (!visible || !children) return null;
         const pos = positions[id];
         const isThisDragging = draggingId === id;
 
@@ -156,21 +203,35 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
 
         const handlers = dragHandlers(id, pos);
 
+        const handleSelectSubtab = () => {
+            if (onUpdateConfig && blockId) {
+                onUpdateConfig(blockId, '_activeCoverTab', tabMapping[id]);
+            }
+        };
+
         return (
             <div
                 key={id}
                 style={style}
                 {...handlers}
+                onClick={(e) => {
+                    handlers.onClick?.(e);
+                    handleSelectSubtab();
+                }}
+                onPointerDown={(e) => {
+                    handlers.onPointerDown?.(e);
+                    handleSelectSubtab();
+                }}
                 className={`group/item p-2 rounded-lg cursor-grab active:cursor-grabbing ${
                     isThisDragging
                         ? 'ring-2 ring-indigo-500 bg-indigo-50/20 shadow-md'
                         : 'hover:ring-1 hover:ring-indigo-400/40 hover:bg-white/10 transition-all duration-200'
                 }`}
-                title={`Arrastra para mover ${id}`}
+                title={`Arrastra para mover ${ELEMENT_NAMES[id]} (Haz clic para editar sus propiedades)`}
             >
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none select-none whitespace-nowrap flex items-center gap-1">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none select-none whitespace-nowrap flex items-center gap-1 shadow-xs">
                     <Move className="w-2.5 h-2.5" />
-                    Mover
+                    {ELEMENT_NAMES[id]}
                 </span>
                 {children}
             </div>
@@ -194,95 +255,43 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         </div>
     );
 
-    const instMode = config.institutionMode || gCover.institutionMode || 'text';
-    const instImage = config.institutionImage || gCover.institutionImage || '';
-    const instLogoHeight = Number(config.institutionLogoHeight || gCover.institutionLogoHeight || 48);
-    const instLogoRadius = config.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
-    const instLogoInvert = config.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
-    const instVariant = config.institutionVariant || gCover.institutionVariant || 'pill';
-    const instBg = config.bgInstitution || gCover.bgInstitution || '#1e2a4a';
+    const renderLogoContent = () => {
+        if (!instImage) return null;
+        return (
+            <div className="inline-flex items-center">
+                <img
+                    src={instImage}
+                    alt={textInst || 'Logo'}
+                    style={{
+                        height: `${instLogoHeight}px`,
+                        maxWidth: '280px',
+                        objectFit: 'contain',
+                        borderRadius: instLogoRadius === 'full' ? '9999px' : instLogoRadius === 'md' ? '8px' : instLogoRadius === 'sm' ? '4px' : '0px',
+                        filter: instLogoInvert ? 'brightness(0) invert(1)' : undefined
+                    }}
+                    className="pointer-events-none select-none drop-shadow-xs"
+                />
+            </div>
+        );
+    };
 
     const renderInstitutionContent = () => {
-        if (instMode === 'image' && instImage) {
-            return (
-                <div className="inline-flex items-center">
-                    <img
-                        src={instImage}
-                        alt={textInst}
-                        style={{
-                            height: `${instLogoHeight}px`,
-                            maxWidth: '280px',
-                            objectFit: 'contain',
-                            borderRadius: instLogoRadius === 'full' ? '9999px' : instLogoRadius === 'md' ? '8px' : instLogoRadius === 'sm' ? '4px' : '0px',
-                            filter: instLogoInvert ? 'brightness(0) invert(1)' : undefined
-                        }}
-                        className="pointer-events-none select-none drop-shadow-xs"
-                    />
-                </div>
-            );
-        }
-
-        if (instMode === 'hybrid') {
-            return (
-                <div
-                    className={`inline-flex items-center gap-3 ${
-                        instVariant === 'pill'
-                            ? 'px-4 py-1.5 rounded-full shadow-xs'
-                            : instVariant === 'bordered'
-                                ? 'px-4 py-1.5 rounded-full border shadow-xs'
-                                : 'p-1'
-                    }`}
-                    style={{
-                        backgroundColor: instVariant === 'pill' ? instBg : instVariant === 'bordered' ? `${instBg}15` : 'transparent',
-                        borderColor: instVariant === 'bordered' ? instBg : undefined
-                    }}
-                >
-                    {instImage && (
-                        <img
-                            src={instImage}
-                            alt={textInst}
-                            style={{
-                                height: `${Math.min(instLogoHeight, 36)}px`,
-                                maxWidth: '120px',
-                                objectFit: 'contain',
-                                borderRadius: instLogoRadius === 'full' ? '9999px' : '4px',
-                                filter: instLogoInvert ? 'brightness(0) invert(1)' : undefined
-                            }}
-                            className="pointer-events-none select-none shrink-0"
-                        />
-                    )}
-                    <span
-                        className="text-[11px] font-black uppercase tracking-widest select-none"
-                        style={{ color: instVariant === 'clean' ? (!activeCoverImage && isWhite(colorInst) ? '#1e2a4a' : colorInst) : colorInst }}
-                    >
-                        {textInst}
-                    </span>
-                </div>
-            );
-        }
-
-        if (instVariant === 'pill') {
-            return (
-                <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none inline-flex items-center gap-1.5 shadow-xs" style={{ backgroundColor: instBg, color: colorInst }}>
-                    {textInst}
-                </span>
-            );
-        }
-
-        if (instVariant === 'bordered') {
-            return (
-                <span className="text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full select-none inline-flex items-center gap-1.5 border shadow-xs" style={{ borderColor: instBg, color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst, backgroundColor: `${instBg}15` }}>
-                    {textInst}
-                </span>
-            );
-        }
-
+        if (!textInst) return null;
         return (
-            <span className="text-[11px] font-black uppercase tracking-widest select-none inline-flex items-center gap-1.5" style={{ color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst }}>
+            <span
+                className={`font-black uppercase tracking-widest select-none inline-flex items-center gap-1.5 ${institutionItalica ? 'italic' : ''}`}
+                style={{
+                    fontSize: `${institutionFontSize}pt`,
+                    color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst
+                }}
+            >
                 {textInst}
             </span>
         );
     };
+
+    const showLogo = showInst && (instMode === 'image' || instMode === 'hybrid') && Boolean(instImage);
+    const showText = showInst && (instMode === 'text' || instMode === 'hybrid') && Boolean(textInst);
 
     return (
         <div
@@ -292,7 +301,8 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         >
             <GuideGrid />
 
-            {renderElement('institution', showInst, renderInstitutionContent())}
+            {renderElement('logo', showLogo, renderLogoContent())}
+            {renderElement('institution', showText, renderInstitutionContent())}
 
             {renderElement('title', showTitle,
                 <div className="space-y-4">

@@ -1,18 +1,12 @@
 import React from 'react';
 import { RichTextEditor } from './RichTextEditor';
 import type { DocumentBlock } from '../../types';
+import { ColorPickerField } from './SharedColorPicker';
 
 interface Props {
     block: DocumentBlock;
     onUpdateConfig: (blockId: string, key: string, value: any) => void;
 }
-
-const HEADER_STYLE_OPTIONS = [
-    { value: 'blue', label: 'Azul Institucional' },
-    { value: 'gold', label: 'Dorado Acreditación' },
-    { value: 'gray', label: 'Gris Neutro' },
-    { value: 'none', label: 'Sin fondo' },
-] as const;
 
 export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) => {
     return (
@@ -53,16 +47,11 @@ export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) 
                         className="w-full text-xs bg-surface border border-border-thin rounded-md p-2 text-text-main focus:outline-none"
                     />
                 </div>
-                <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-text-dim uppercase block">Estilo de Encabezado</label>
-                    <select
-                        value={block.config.leftHeaderStyle ?? 'blue'}
-                        onChange={e => onUpdateConfig(block.id, 'leftHeaderStyle', e.target.value)}
-                        className="w-full text-xs bg-surface border border-border-thin rounded-md p-2 text-text-main focus:outline-none"
-                    >
-                        {HEADER_STYLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                </div>
+                <ColorPickerField
+                    label="Color de Encabezado"
+                    value={block.config.leftHeaderStyle ?? '#1e2a4a'}
+                    onChange={v => onUpdateConfig(block.id, 'leftHeaderStyle', v)}
+                />
                 <div className="space-y-1.5">
                     <label className="text-[9px] font-bold text-text-dim uppercase block">Contenido</label>
                     <RichTextEditor
@@ -88,16 +77,11 @@ export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) 
                         className="w-full text-xs bg-surface border border-border-thin rounded-md p-2 text-text-main focus:outline-none"
                     />
                 </div>
-                <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-text-dim uppercase block">Estilo de Encabezado</label>
-                    <select
-                        value={block.config.rightHeaderStyle ?? 'blue'}
-                        onChange={e => onUpdateConfig(block.id, 'rightHeaderStyle', e.target.value)}
-                        className="w-full text-xs bg-surface border border-border-thin rounded-md p-2 text-text-main focus:outline-none"
-                    >
-                        {HEADER_STYLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                </div>
+                <ColorPickerField
+                    label="Color de Encabezado"
+                    value={block.config.rightHeaderStyle ?? '#1e2a4a'}
+                    onChange={v => onUpdateConfig(block.id, 'rightHeaderStyle', v)}
+                />
                 <div className="space-y-1.5">
                     <label className="text-[9px] font-bold text-text-dim uppercase block">Contenido</label>
                     <RichTextEditor

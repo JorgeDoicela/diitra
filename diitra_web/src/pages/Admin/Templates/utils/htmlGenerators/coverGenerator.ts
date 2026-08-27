@@ -9,7 +9,9 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const showCarrera = c.showCarrera !== undefined ? c.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
     const showPeriodo = c.showPeriodo !== undefined ? c.showPeriodo : (gCover.showPeriodo !== undefined ? gCover.showPeriodo : true);
 
-    const textInst = c.textoInstitucion || gCover.textoInstitucion || 'INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI';
+    const textInst = c.textoInstitucion !== undefined
+        ? c.textoInstitucion
+        : (gCover.textoInstitucion !== undefined ? gCover.textoInstitucion : 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI');
     const textTitle = c.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
     const placeholderTema = (c.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS').replace(/'/g, "\\'");
 
@@ -29,7 +31,7 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const rawColorCar = c.colorCarrera || gCover.colorCarrera;
     const rawColorPer = c.colorPeriodo || gCover.colorPeriodo;
 
-    const colorInst = rawColorInst || '#ffffff';
+    const colorInst = rawColorInst || (activeCoverImage ? '#ffffff' : '{{ theme.colors.primary }}');
     const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '{{ theme.colors.primary }}');
     const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '{{ theme.colors.primary }}');
     const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
@@ -41,34 +43,19 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const instLogoHeight = Number(c.institutionLogoHeight || gCover.institutionLogoHeight || 48);
     const instLogoRadius = c.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
     const instLogoInvert = c.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
-    const instVariant = c.institutionVariant || gCover.institutionVariant || 'pill';
+    const instVariant = c.institutionVariant || gCover.institutionVariant || 'clean';
     const instBg = c.bgInstitution || gCover.bgInstitution || '{{ theme.colors.primary }}';
+    const institutionFontSize = Number(c.institutionFontSize || gCover.institutionFontSize || 10);
+    const institutionItalica = Boolean(c.institutionItalica ?? gCover.institutionItalica);
+    const instFontStyleCss = institutionItalica ? 'font-style:italic;' : '';
 
     const radiusCss = instLogoRadius === 'full' ? 'border-radius:9999px;' : instLogoRadius === 'md' ? 'border-radius:8px;' : instLogoRadius === 'sm' ? 'border-radius:4px;' : '';
     const invertCss = instLogoInvert ? 'filter:brightness(0) invert(1);' : '';
 
-    const buildInstMarkup = () => {
-        if (!showInst) return '';
-        if (instMode === 'image' && instImage) {
-            return `<div><img src="${instImage}" alt="${textInst}" style="height:${instLogoHeight}px; max-width:280px; object-fit:contain; ${radiusCss} ${invertCss} display:inline-block;" /></div>`;
-        }
-        if (instMode === 'hybrid') {
-            const bgStyle = instVariant === 'pill' ? `background-color:${instBg}; padding:6px 14px; border-radius:9999px;` : instVariant === 'bordered' ? `background-color:rgba(30,42,74,0.08); border:1px solid ${instBg}; padding:6px 14px; border-radius:9999px;` : '';
-            const textColor = instVariant === 'clean' ? (!activeCoverImage && isWhite(colorInst) ? '{{ theme.colors.primary }}' : colorInst) : colorInst;
-            const imgTag = instImage ? `<img src="${instImage}" alt="${textInst}" style="height:${Math.min(instLogoHeight, 32)}px; max-width:120px; object-fit:contain; ${radiusCss} ${invertCss} vertical-align:middle; margin-right:8px; display:inline-block;" />` : '';
-            return `<div><div style="display:inline-flex; align-items:center; ${bgStyle}"><span style="font-family:{{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${textColor};">${imgTag}${textInst}</span></div></div>`;
-        }
-        if (instVariant === 'pill') {
-            return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst}; background-color:${instBg}; padding:3px 10px; border-radius:9999px; display:inline-block;">${textInst}</span></div>`;
-        }
-        if (instVariant === 'bordered') {
-            return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9pt; font-weight:bold; text-transform:uppercase; color:${colorInst === '#ffffff' && !activeCoverImage ? '{{ theme.colors.primary }}' : colorInst}; border:1px solid ${instBg}; background-color:rgba(30,42,74,0.08); padding:3px 10px; border-radius:9999px; display:inline-block;">${textInst}</span></div>`;
-        }
-        return `<div><span style="font-family: {{ theme.typography.font_family }}; font-size:9.5pt; font-weight:bold; text-transform:uppercase; color:${colorInst === '#ffffff' && !activeCoverImage ? '{{ theme.colors.primary }}' : colorInst}; display:inline-block;">${textInst}</span></div>`;
-    };
-
+    const xLogo  = c.xLogo        ?? gCover.xLogo        ?? (instMode === 'image' ? (c.xInstitution ?? gCover.xInstitution ?? 10) : 10);
+    const yLogo  = c.yLogo        ?? gCover.yLogo        ?? (instMode === 'image' ? (c.yInstitution ?? gCover.yInstitution ?? 3) : 3);
     const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
-    const yInst  = c.yInstitution ?? gCover.yInstitution ?? 4;
+    const yInst  = c.yInstitution ?? gCover.yInstitution ?? 13;
     const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
     const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
     const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
@@ -80,9 +67,17 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const toMmY = (pct: number) => `${(Math.min(pct, 75) * 2.70).toFixed(1)}mm`;
     const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
 
-    const instEl = showInst ? `
+    const showLogo = showInst && (instMode === 'image' || instMode === 'hybrid') && Boolean(instImage);
+    const showText = showInst && (instMode === 'text' || instMode === 'hybrid') && Boolean(textInst);
+
+    const logoEl = showLogo ? `
+    <div style="position:absolute; left:${toMmX(xLogo)}; top:${toMmY(yLogo)}; width:${getWidthMm(xLogo)}; text-align:center;">
+      <img src="${instImage}" alt="${textInst || 'Logo'}" style="height:${instLogoHeight}px; max-width:280px; object-fit:contain; ${radiusCss} ${invertCss} display:inline-block;" />
+    </div>` : '';
+
+    const instEl = showText ? `
     <div style="position:absolute; left:${toMmX(xInst)}; top:${toMmY(yInst)}; width:${getWidthMm(xInst)}; text-align:center;">
-      ${buildInstMarkup()}
+      <span style="font-family: {{ theme.typography.font_family }}; font-size:${institutionFontSize}pt; ${instFontStyleCss} font-weight:bold; text-transform:uppercase; color:${colorInst === '#ffffff' && !activeCoverImage ? '{{ theme.colors.primary }}' : colorInst}; display:inline-block;">${textInst}</span>
     </div>` : '';
 
     const titleEl = showTitle ? `
@@ -121,6 +116,7 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     return `
   <!-- BLOQUE: PORTADA CANVAS LIBRE -->
   <div class="cover-page">
+    ${logoEl}
     ${instEl}
     ${titleEl}
     ${carreraEl}

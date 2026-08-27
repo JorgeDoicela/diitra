@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ArrowUp, ArrowDown, Pencil, Check, X, RotateCcw } from 'lucide-react';
 import type { DocumentBlock, ProgressHeaderField } from '../../types';
 import { DEFAULT_PROGRESS_HEADER_FIELDS } from '../../types';
+import { ColorPickerField } from './SharedColorPicker';
 
 interface ProgressHeaderPropertiesProps {
     block: DocumentBlock;
@@ -10,7 +11,7 @@ interface ProgressHeaderPropertiesProps {
 
 export const ProgressHeaderProperties: React.FC<ProgressHeaderPropertiesProps> = ({ block, onUpdateConfig }) => {
     const config = block.config || {};
-    const headerColor = config.progressHeaderColor || 'navy';
+    const headerColor = config.progressHeaderColor || '#1e2a4a';
     const borderStyle = config.progressHeaderBorder || 'solid';
 
     const getActiveFields = (): ProgressHeaderField[] => {
@@ -51,31 +52,13 @@ export const ProgressHeaderProperties: React.FC<ProgressHeaderPropertiesProps> =
     };
 
     return (
-        <div className="space-y-6 text-xs">
+        <div className="space-y-6 text-xs font-sans">
             {/* Color del Encabezado */}
-            <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Color del Encabezado
-                </label>
-                <div className="flex items-center gap-2">
-                    {[
-                        { id: 'navy', label: 'Azul Marino', bg: 'bg-slate-900' },
-                        { id: 'gold', label: 'Dorado', bg: 'bg-amber-600' },
-                        { id: 'slate', label: 'Gris Ejecutivo', bg: 'bg-slate-600' },
-                    ].map(c => (
-                        <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => onUpdateConfig(block.id, 'progressHeaderColor', c.id)}
-                            className={`px-3 py-1.5 rounded text-[10px] font-bold text-white transition-all flex items-center gap-1.5 ${c.bg} ${
-                                headerColor === c.id ? 'ring-2 ring-indigo-500 ring-offset-1 scale-105' : 'opacity-70 hover:opacity-100'
-                            }`}
-                        >
-                            <span>{c.label}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
+            <ColorPickerField
+                label="Color del Encabezado"
+                value={headerColor}
+                onChange={val => onUpdateConfig(block.id, 'progressHeaderColor', val)}
+            />
 
             {/* Subsecciones / Campos de Identificación */}
             <div>

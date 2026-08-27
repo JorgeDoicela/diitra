@@ -1,12 +1,13 @@
 import React from 'react';
 import type { TableSection } from '../../types';
-import { DYN_COLORS } from './RenderCover';
+import { getHeaderStylePair } from './RenderCover';
 
 export const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
     const headers = config.headers || ['Columna 1', 'Columna 2'];
     const rows = config.rows || [{ cells: ['Dato A', 'Dato B'] }];
     const headerStyle = config.headerStyle || 'blue';
     const colWidths = config.colWidths || [];
+    const headerPair = getHeaderStylePair(headerStyle);
 
     return (
         <div className="overflow-x-auto my-2">
@@ -18,8 +19,8 @@ export const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
                                 key={i}
                                 className="border border-slate-300 p-2 font-bold text-left uppercase text-[9px]"
                                 style={{
-                                    backgroundColor: headerStyle === 'blue' ? DYN_COLORS.tableHeaderBg : headerStyle === 'gold' ? DYN_COLORS.gold : headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                                    color: headerStyle !== 'none' ? DYN_COLORS.tableHeaderColor : '#1e2a4a',
+                                    backgroundColor: headerPair.bg,
+                                    color: headerPair.fg,
                                     width: colWidths[i] || 'auto'
                                 }}
                             >
@@ -60,19 +61,22 @@ export const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) =
                     <table className="w-full border-collapse text-[10px] border border-slate-200">
                         <thead>
                             <tr>
-                                {sec.headers.map((h, i) => (
-                                    <th
-                                        key={i}
-                                        className="border border-slate-300 p-1.5 font-bold text-left uppercase text-[8.5px]"
-                                        style={{
-                                            backgroundColor: sec.headerStyle === 'blue' ? DYN_COLORS.tableHeaderBg : sec.headerStyle === 'gold' ? DYN_COLORS.gold : sec.headerStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                                            color: sec.headerStyle !== 'none' ? DYN_COLORS.tableHeaderColor : '#1e2a4a',
-                                            width: sec.colWidths?.[i] || 'auto'
-                                        }}
-                                    >
-                                        {h}
-                                    </th>
-                                ))}
+                                {sec.headers.map((h, i) => {
+                                    const secPair = getHeaderStylePair(sec.headerStyle || 'blue');
+                                    return (
+                                        <th
+                                            key={i}
+                                            className="border border-slate-300 p-1.5 font-bold text-left uppercase text-[8.5px]"
+                                            style={{
+                                                backgroundColor: secPair.bg,
+                                                color: secPair.fg,
+                                                width: sec.colWidths?.[i] || 'auto'
+                                            }}
+                                        >
+                                            {h}
+                                        </th>
+                                    );
+                                })}
                             </tr>
                         </thead>
                         <tbody>

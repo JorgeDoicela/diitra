@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { GanttObjective } from '../../types';
-import { DYN_COLORS } from './RenderCover';
+import { DYN_COLORS, getHeaderStylePair } from './RenderCover';
 
 export const RenderTitle: React.FC<{ config: any; themeConfig?: any }> = ({ config, themeConfig }) => {
     const text = config.text || 'TÍTULO DE SECCIÓN';
@@ -69,12 +69,15 @@ export const RenderRichText: React.FC<{ config: any }> = ({ config }) => {
 };
 
 export const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
+    const leftPair = getHeaderStylePair(config.leftHeaderStyle || 'blue');
+    const rightPair = getHeaderStylePair(config.rightHeaderStyle || 'blue');
+
     return (
         <div className="grid grid-cols-2 gap-3 my-2 border border-slate-200 rounded-lg overflow-hidden bg-white">
             <div className="flex flex-col border-r border-slate-200">
-                <div className="p-2 font-bold text-[9px] uppercase text-white" style={{
-                    backgroundColor: config.leftHeaderStyle === 'blue' ? DYN_COLORS.blue : config.leftHeaderStyle === 'gold' ? DYN_COLORS.gold : config.leftHeaderStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                    color: config.leftHeaderStyle !== 'none' ? 'white' : '#1e2a4a'
+                <div className="p-2 font-bold text-[9px] uppercase" style={{
+                    backgroundColor: leftPair.bg,
+                    color: leftPair.fg
                 }}>
                     {config.leftTitle || 'COLUMNA IZQUIERDA'}
                 </div>
@@ -84,9 +87,9 @@ export const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
                 />
             </div>
             <div className="flex flex-col">
-                <div className="p-2 font-bold text-[9px] uppercase text-white" style={{
-                    backgroundColor: config.rightHeaderStyle === 'blue' ? DYN_COLORS.blue : config.rightHeaderStyle === 'gold' ? DYN_COLORS.gold : config.rightHeaderStyle === 'gray' ? DYN_COLORS.gray : '#f8fafc',
-                    color: config.rightHeaderStyle !== 'none' ? 'white' : '#1e2a4a'
+                <div className="p-2 font-bold text-[9px] uppercase" style={{
+                    backgroundColor: rightPair.bg,
+                    color: rightPair.fg
                 }}>
                     {config.rightTitle || 'COLUMNA DERECHA'}
                 </div>

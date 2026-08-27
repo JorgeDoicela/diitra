@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, Palette, Layout, Plus, Trash2, Image as ImageIcon, Type, Sparkles, Upload } from 'lucide-react';
 import { type DocumentBlock, type DocumentTemplateDto, BLOCK_METADATA } from '../types';
+import { ColorPickerField } from './properties/SharedColorPicker';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
@@ -224,8 +225,8 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                     {activeBlock.config.toolbarMode === 'compact'
                                                         ? 'Solo herramientas esenciales de redacción para textos cortos o justificaciones.'
                                                         : activeBlock.config.toolbarMode === 'standard'
-                                                        ? 'Formato enriquecido y listas sin componentes complejos de tablas o citas.'
-                                                        : 'Suite académica completa: Niveles APA, tablas con numeración, figuras, citas y referencias.'}
+                                                            ? 'Formato enriquecido y listas sin componentes complejos de tablas o citas.'
+                                                            : 'Suite académica completa: Niveles APA, tablas con numeración, figuras, citas y referencias.'}
                                                 </span>
                                             </div>
                                         )}
@@ -280,13 +281,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             </div>
                                         )}
                                     </div>
-                                    <LabeledField label="Estilo de Encabezado">
-                                        <select className={selectCls}
-                                            value={activeBlock.config.headerStyle || 'blue'}
-                                            onChange={e => onUpdateConfig(activeBlock.id, 'headerStyle', e.target.value)}>
-                                            {HEADER_STYLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                        </select>
-                                    </LabeledField>
+                                    <ColorPickerField
+                                        label="Color de Encabezado"
+                                        value={activeBlock.config.headerStyle || '#1e2a4a'}
+                                        onChange={v => onUpdateConfig(activeBlock.id, 'headerStyle', v)}
+                                    />
 
                                     {/* Encabezados de columna */}
                                     <div className="space-y-1.5">
@@ -527,18 +526,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Tema</label>
-                                        <select
-                                            value={activeBlock.config.finalReportHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'finalReportHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="gold">Dorado Institucional</option>
-                                            <option value="slate">Gris Oscuro</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Tema"
+                                        value={activeBlock.config.finalReportHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'finalReportHeaderColor', val)}
+                                    />
                                     <div className="space-y-2 pt-2 border-t border-border-thin/10">
                                         {[
                                             { key: 'showTipoInvestigacion', label: 'Mostrar Tipo de Investigación', desc: 'Básica, Aplicada, Desarrollo Experimental (X)' },
@@ -565,19 +557,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {activeBlock.type === 'final_report_writing_section' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Tema de Encabezados</label>
-                                        <select
-                                            value={activeBlock.config.writingHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'writingHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="gold">Dorado Institucional</option>
-                                            <option value="slate">Gris Oscuro</option>
-                                            <option value="emerald">Verde Esmeralda</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Tema de Encabezados"
+                                        value={activeBlock.config.writingHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'writingHeaderColor', val)}
+                                    />
                                     <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
                                         <p className="text-xs font-semibold text-indigo-400">Sub-Secciones de Redacción Pre-Cargadas (15)</p>
                                         <p className="text-[10px] text-text-dim mt-1">Este bloque unificado administra automáticamente las 15 sub-secciones científicas con editores Tiptap colaborativos en tiempo real.</p>
@@ -588,19 +572,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             {/* ── BLOQUES DE PLAN DE APRENDIZAJE & EVALUACIÓN ─────────── */}
                             {activeBlock.type === 'learning_plan_header_section' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
-                                        <select
-                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="emerald">Verde Institucional</option>
-                                            <option value="gold">Dorado</option>
-                                            <option value="slate">Gris Oscuro</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Encabezado"
+                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
+                                    />
                                     <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
                                         <div>
                                             <label className="text-xs font-semibold text-text-main block">Mostrar Objetivo General</label>
@@ -618,18 +594,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {activeBlock.type === 'learning_plan_eval_parameters_section' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
-                                        <select
-                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="emerald">Verde Institucional</option>
-                                            <option value="slate">Gris Oscuro</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Encabezado"
+                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
+                                    />
                                     <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
                                         <p className="font-bold text-purple-600 dark:text-purple-400">Escala Cualitativa ISTPET:</p>
                                         <p>Muestra automáticamente los 4 niveles oficiales (4 Muy Adecuado, 3 Adecuado, 2 Poco Adecuado, 1 No Adecuado) con sus descriptores oficiales.</p>
@@ -650,18 +619,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             <option value="evaluacion">Evaluación (Cuadrícula 4 Columnas de Cumplimiento)</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
-                                        <select
-                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="emerald">Verde Institucional</option>
-                                            <option value="gold">Dorado</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Encabezado"
+                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
+                                    />
                                     <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
                                         <p className="font-bold text-teal-600 dark:text-teal-400">Reglas CACES / ISTPET:</p>
                                         <p>• Mínimo 3 prerrequisitos Cognitivos requeridos.</p>
@@ -683,17 +645,11 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             <option value="evaluacion">Evaluación (Con 4 Columnas de Cumplimiento)</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Color del Encabezado</label>
-                                        <select
-                                            value={activeBlock.config.learningPlanHeaderColor || 'navy'}
-                                            onChange={(e) => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', e.target.value)}
-                                            className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main"
-                                        >
-                                            <option value="navy">Azul Marino (Oficial ISTPET)</option>
-                                            <option value="emerald">Verde Institucional</option>
-                                        </select>
-                                    </div>
+                                    <ColorPickerField
+                                        label="Color del Encabezado"
+                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
+                                    />
                                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
                                         <p className="font-bold text-blue-600 dark:text-blue-400">Matriz APE:</p>
                                         <p>Articula cada actividad con los Resultados de Aprendizaje (RdA), horas o nivel de desempeño cualitativo.</p>

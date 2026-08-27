@@ -369,8 +369,7 @@ export const RenderProjectGeneralSection: React.FC<{
                                         {renderCellControls(item1, rawItems.findIndex(x => x.key === item1.key))}
                                     </td>
                                     <td
-                                        colSpan={item2 ? 1 : 3}
-                                        className={`p-2 text-slate-800 font-semibold bg-white align-top ${cellBorderCss} ${item2 ? 'w-3/10' : ''}`}
+                                        className={`p-2 text-slate-800 font-semibold bg-white align-top w-3/10 ${cellBorderCss}`}
                                     >
                                         {item1.value}
                                         {item1.requirementText && (
@@ -378,7 +377,7 @@ export const RenderProjectGeneralSection: React.FC<{
                                         )}
                                     </td>
 
-                                    {item2 && style2 && (
+                                    {item2 && style2 ? (
                                         <>
                                             <td
                                                 className={`group/cell relative p-2 font-bold text-[8.5px] uppercase w-1/5 align-top ${cellBorderCss}`}
@@ -394,6 +393,10 @@ export const RenderProjectGeneralSection: React.FC<{
                                                 )}
                                             </td>
                                         </>
+                                    ) : (
+                                        <td colSpan={2} className={`p-2 bg-slate-50/40 text-slate-300 italic text-[8px] text-center align-middle border-dashed ${cellBorderCss}`}>
+                                            [Espacio disponible (50%)]
+                                        </td>
                                     )}
                                 </tr>
                             );
@@ -663,15 +666,25 @@ export const RenderProjectTechnicalSection: React.FC<{
                                     } else {
                                         const bg1 = resolveBg(sub.variant);
                                         rows.push(
-                                            <tr key={sub.key} className="border-b border-slate-200">
-                                                <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
-                                                    <span>{displayTitle}</span>
-                                                    {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                </td>
-                                                <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
-                                                    {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
-                                                </td>
-                                            </tr>
+                                            <React.Fragment key={sub.key}>
+                                                <tr className="border-b border-slate-300">
+                                                    <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
+                                                        <span>{displayTitle}</span>
+                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                    </td>
+                                                    <td className="p-1.5 w-1/2 bg-slate-50/50 text-slate-300 font-normal italic text-center uppercase border-slate-300 text-[8px]">
+                                                        [Espacio disponible (50%)]
+                                                    </td>
+                                                </tr>
+                                                <tr className="border-b border-slate-200">
+                                                    <td className="p-2 w-1/2 text-slate-600 bg-white border-r border-slate-200 align-top text-[8.5px]">
+                                                        {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
+                                                    </td>
+                                                    <td className="p-2 w-1/2 bg-slate-50/30 text-slate-300 italic align-top text-[8px] text-center">
+                                                        —
+                                                    </td>
+                                                </tr>
+                                            </React.Fragment>
                                         );
                                         idx++;
                                     }

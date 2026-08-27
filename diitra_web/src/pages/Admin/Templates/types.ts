@@ -303,8 +303,19 @@ export interface DocumentBlock {
         institutionLogoInvert?: boolean;
         institutionVariant?: 'pill' | 'clean' | 'bordered';
         bgInstitution?: string;
+        institutionFontSize?: number;
+        institutionItalica?: boolean;
+        tituloFontSize?: number;
+        tituloItalica?: boolean;
+        temaFontSize?: number;
+        temaItalica?: boolean;
+        carreraFontSize?: number;
+        carreraItalica?: boolean;
+        periodoFontSize?: number;
+        periodoItalica?: boolean;
         // posicionamiento libre (% relativo al canvas A4 210×297mm)
-        xInstitution?: number; yInstitution?: number;  // default: x=10, y=4
+        xInstitution?: number; yInstitution?: number;  // default: x=10, y=13
+        xLogo?: number; yLogo?: number;                // default: x=10, y=3
         xTitle?: number; yTitle?: number;         // default: x=10, y=35
         xCarrera?: number; yCarrera?: number;       // default: x=10, y=70
         xPeriodo?: number; yPeriodo?: number;       // default: x=10, y=80

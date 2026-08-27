@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Type,
     Image as ImageIcon,
@@ -23,13 +23,14 @@ interface CoverPropertiesProps {
 }
 
 const DEFAULT_POS: Record<string, { x: number; y: number }> = {
-    institution: { x: 10, y: 4 },
+    institution: { x: 10, y: 13 },
+    logo: { x: 10, y: 3 },
     title: { x: 10, y: 35 },
     carrera: { x: 10, y: 70 },
     periodo: { x: 10, y: 80 },
 };
 
-const COLOR_PRESETS = ['#1e2a4a', '#b8912e', '#334155', '#475569', '#ffffff', '#000000'];
+import { ColorPickerField } from './SharedColorPicker';
 
 const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <div className="space-y-1.5">
@@ -37,66 +38,6 @@ const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ 
         {children}
     </div>
 );
-
-const ColorPickerField: React.FC<{
-    label: string;
-    value: string;
-    onChange: (color: string) => void;
-    fallback?: string;
-    presets?: string[];
-    inputCls: string;
-}> = ({ label, value, onChange, fallback = '#1e2a4a', presets = COLOR_PRESETS, inputCls }) => {
-    // Mapeo transparente para compatibilidad con valores legacy
-    const normalizeHex = (v: string) => {
-        if (!v) return fallback;
-        if (v === 'navy') return '#1e2a4a';
-        if (v === 'gold') return '#b8912e';
-        if (v === 'slate') return '#475569';
-        if (v === 'white') return '#ffffff';
-        return v;
-    };
-
-    const currentHex = normalizeHex(value);
-    const safeColorVal = currentHex.startsWith('#') ? currentHex : fallback;
-
-    return (
-        <LabeledField label={label}>
-            <div className="flex items-center gap-2">
-                <input
-                    type="color"
-                    value={safeColorVal}
-                    onChange={e => onChange(e.target.value)}
-                    className="w-7 h-7 rounded border border-border p-0 cursor-pointer bg-transparent"
-                />
-                <input
-                    type="text"
-                    className={`${inputCls} font-mono text-[9px] uppercase w-24`}
-                    value={currentHex}
-                    onChange={e => onChange(e.target.value)}
-                />
-                <div className="flex items-center gap-1.5 ml-auto">
-                    {presets.map(preset => {
-                        const isSelected = safeColorVal.toLowerCase() === preset.toLowerCase();
-                        return (
-                            <button
-                                key={preset}
-                                type="button"
-                                onClick={() => onChange(preset)}
-                                className={`w-4 h-4 rounded-full border transition-transform hover:scale-110 cursor-pointer ${
-                                    isSelected
-                                        ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-110 border-black/20'
-                                        : 'border-black/15 dark:border-white/20'
-                                }`}
-                                style={{ backgroundColor: preset }}
-                                title={preset}
-                            />
-                        );
-                    })}
-                </div>
-            </div>
-        </LabeledField>
-    );
-};
 
 export const CoverProperties: React.FC<CoverPropertiesProps> = ({
     activeBlock,
@@ -106,7 +47,13 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
 }) => {
     const config = (activeBlock.config || {}) as any;
     const [activeTab, setActiveTab] = useState<'institution' | 'title' | 'carrera' | 'periodo'>('institution');
-    const [showPosAdjust, setShowPosAdjust] = useState(false);
+    const [openPosControls, setOpenPosControls] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        if (config._activeCoverTab && ['institution', 'title', 'carrera', 'periodo'].includes(config._activeCoverTab)) {
+            setActiveTab(config._activeCoverTab);
+        }
+    }, [config._activeCoverTab]);
 
     // Quick logos oficiales
     const quickLogos = [
@@ -125,20 +72,21 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
     ];
 
     // Renderizador de control de posición
-    const renderPositionControl = (xKey: string, yKey: string, defPos: { x: number; y: number }) => {
+    const renderPositionControl = (xKey: string, yKey: string, defPos: { x: number; y: number }, label = 'Ajuste de posición (X, Y)') => {
         const xVal: number = config[xKey] ?? defPos.x;
         const yVal: number = config[yKey] ?? defPos.y;
+        const isOpen = openPosControls[`${xKey}_${yKey}`] ?? false;
 
         return (
             <div className="pt-3 border-t border-border space-y-2.5">
                 <div className="flex items-center justify-between">
                     <button
                         type="button"
-                        onClick={() => setShowPosAdjust(prev => !prev)}
+                        onClick={() => setOpenPosControls(prev => ({ ...prev, [`${xKey}_${yKey}`]: !isOpen }))}
                         className="text-[10px] font-semibold text-text-dim hover:text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                         <SlidersHorizontal className="w-3 h-3 text-text-dim" />
-                        <span>{showPosAdjust ? 'Ocultar ajuste fino' : 'Ajuste de posición (X, Y)'}</span>
+                        <span>{isOpen ? `Ocultar ${label}` : label}</span>
                     </button>
                     <button
                         type="button"
@@ -154,7 +102,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     </button>
                 </div>
 
-                {showPosAdjust && (
+                {isOpen && (
                     <div className="p-3 rounded-lg bg-surface border border-border space-y-2.5 animate-fade-in">
                         <div className="grid grid-cols-2 gap-3">
                             <div>
@@ -238,9 +186,11 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     const instImage = config.institutionImage || '';
                     const instLogoHeight = Number(config.institutionLogoHeight || 48);
                     const instLogoInvert = Boolean(config.institutionLogoInvert);
-                    const instVariant = config.institutionVariant || 'pill';
+                    const instVariant = config.institutionVariant || 'clean';
                     const bgInstitution = config.bgInstitution || '#1e2a4a';
-                    const colorInstitution = config.colorInstitution || '#ffffff';
+                    const colorInstitution = config.colorInstitution || '#1e2a4a';
+                    const institutionFontSize = Number(config.institutionFontSize || 11);
+                    const institutionItalica = Boolean(config.institutionItalica);
                     const textVal = config.textoInstitucion || '';
 
                     return (
@@ -373,55 +323,63 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                                     />
                                                 </div>
                                             )}
+
+                                            {renderPositionControl('xLogo', 'yLogo', DEFAULT_POS.logo, 'Ajuste de posición del Logo')}
                                         </div>
                                     )}
 
                                     {/* Si tiene Texto */}
                                     {(instMode === 'text' || instMode === 'hybrid') && (
-                                        <div className="space-y-3">
+                                        <div className="space-y-3 p-3 rounded-lg bg-surface border border-border">
                                             <LabeledField label="Texto Institucional">
                                                 <input
                                                     type="text"
                                                     className={inputCls}
                                                     value={textVal}
                                                     onChange={e => onUpdateConfig(activeBlock.id, 'textoInstitucion', e.target.value)}
-                                                    placeholder="INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI"
+                                                    placeholder="Ej. INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI"
                                                 />
                                             </LabeledField>
-
-                                            <LabeledField label="Variante de Insignia">
-                                                <select
-                                                    className={selectCls}
-                                                    value={instVariant}
-                                                    onChange={e => onUpdateConfig(activeBlock.id, 'institutionVariant', e.target.value)}
-                                                >
-                                                    <option value="pill">Pastilla Sólida</option>
-                                                    <option value="clean">Texto Limpio</option>
-                                                    <option value="bordered">Delineada</option>
-                                                </select>
-                                            </LabeledField>
-
-                                            {instVariant !== 'clean' && (
-                                                <ColorPickerField
-                                                    label="Color de Fondo"
-                                                    value={bgInstitution}
-                                                    fallback="#1e2a4a"
-                                                    onChange={v => onUpdateConfig(activeBlock.id, 'bgInstitution', v)}
-                                                    inputCls={inputCls}
-                                                />
-                                            )}
 
                                             <ColorPickerField
                                                 label="Color de Texto"
                                                 value={colorInstitution}
-                                                fallback="#ffffff"
+                                                fallback="#1e2a4a"
                                                 onChange={v => onUpdateConfig(activeBlock.id, 'colorInstitution', v)}
                                                 inputCls={inputCls}
                                             />
+
+                                            {/* Formato y Tamaño de Institución (Línea Compacta) */}
+                                            <div className="flex items-center justify-between gap-2.5 pt-0.5">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
+                                                    <input
+                                                        type="range"
+                                                        min={8} max={22} step={1}
+                                                        value={institutionFontSize}
+                                                        onChange={e => onUpdateConfig(activeBlock.id, 'institutionFontSize', parseInt(e.target.value))}
+                                                        className="flex-1 h-1 rounded accent-foreground cursor-pointer"
+                                                    />
+                                                    <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{institutionFontSize}pt</span>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onUpdateConfig(activeBlock.id, 'institutionItalica', !institutionItalica)}
+                                                    className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                                                        institutionItalica
+                                                            ? 'bg-foreground text-background border-foreground shadow-xs'
+                                                            : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
+                                                    }`}
+                                                    title="Texto en cursiva / itálica"
+                                                >
+                                                    <Italic className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+
+                                            {renderPositionControl('xInstitution', 'yInstitution', DEFAULT_POS.institution, 'Ajuste de posición del Texto')}
                                         </div>
                                     )}
-
-                                    {renderPositionControl('xInstitution', 'yInstitution', DEFAULT_POS.institution)}
                                 </div>
                             )}
                         </div>
@@ -443,8 +401,8 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     const temaItalica = Boolean(config.temaItalica);
 
                     return (
-                        <div className="space-y-3.5">
-                            <div className="flex items-center justify-between">
+                        <div className="space-y-4 font-sans">
+                            <div className="flex items-center justify-between pb-2 border-b border-border">
                                 <span className="text-[11px] font-bold text-foreground">Mostrar Bloque de Título</span>
                                 <input
                                     type="checkbox"
@@ -455,10 +413,10 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                             </div>
 
                             {isVisible && (
-                                <div className="space-y-3.5 pt-2 border-t border-border">
-                                    {/* 1. Título Superior Editable */}
-                                    <div className="space-y-1.5">
-                                        <LabeledField label="Título / Tipo de Documento">
+                                <div className="space-y-4">
+                                    {/* 1. TÍTULO SUPERIOR */}
+                                    <div className="space-y-2.5">
+                                        <LabeledField label="1. Título / Tipo de Documento">
                                             <input
                                                 type="text"
                                                 className={inputCls}
@@ -467,7 +425,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                                 placeholder="PROYECTO DE INVESTIGACIÓN"
                                             />
                                         </LabeledField>
-                                        <div className="space-y-1 pt-1">
+                                        <div className="space-y-1">
                                             <span className="text-[8px] text-text-dim block">Sugerencias rápidas:</span>
                                             <div className="flex flex-wrap gap-1">
                                                 {titlePresets.map(preset => (
@@ -482,51 +440,50 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Color del Título Documental */}
-                                    <ColorPickerField
-                                        label="Color del Título Documental"
-                                        value={colorTitulo}
-                                        fallback="#1e2a4a"
-                                        onChange={v => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', v)}
-                                        inputCls={inputCls}
-                                    />
+                                        <ColorPickerField
+                                            label="Color del Título Documental"
+                                            value={colorTitulo}
+                                            fallback="#1e2a4a"
+                                            onChange={v => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', v)}
+                                            inputCls={inputCls}
+                                        />
 
-                                    {/* Formato y Tamaño del Título (Línea Compacta) */}
-                                    <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                            <input
-                                                type="range"
-                                                min={14} max={32} step={1}
-                                                value={tituloFontSize}
-                                                onChange={e => onUpdateConfig(activeBlock.id, 'tituloFontSize', parseInt(e.target.value))}
-                                                className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                            />
-                                            <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{tituloFontSize}pt</span>
+                                        {/* Formato y Tamaño del Título (Línea Compacta) */}
+                                        <div className="flex items-center justify-between gap-2.5 pt-0.5">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
+                                                <input
+                                                    type="range"
+                                                    min={14} max={32} step={1}
+                                                    value={tituloFontSize}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, 'tituloFontSize', parseInt(e.target.value))}
+                                                    className="flex-1 h-1 rounded accent-foreground cursor-pointer"
+                                                />
+                                                <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{tituloFontSize}pt</span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => onUpdateConfig(activeBlock.id, 'tituloItalica', !tituloItalica)}
+                                                className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                                                    tituloItalica
+                                                        ? 'bg-foreground text-background border-foreground shadow-xs'
+                                                        : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
+                                                }`}
+                                                title="Texto en cursiva / itálica"
+                                            >
+                                                <Italic className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => onUpdateConfig(activeBlock.id, 'tituloItalica', !tituloItalica)}
-                                            className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-                                                tituloItalica
-                                                    ? 'bg-foreground text-background border-foreground shadow-xs'
-                                                    : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
-                                            }`}
-                                            title="Texto en cursiva / itálica"
-                                        >
-                                            <Italic className="w-3.5 h-3.5" />
-                                        </button>
                                     </div>
 
-                                    {/* 2. Sección del Tema de Docentes / Investigadores */}
-                                    <div className="p-3 rounded-lg bg-surface border border-border space-y-2.5">
+                                    {/* 2. SECCIÓN DEL TEMA DEL PROYECTO */}
+                                    <div className="space-y-2.5 pt-3 border-t border-border">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <span className="text-[10px] font-bold text-foreground block">Campo de Tema del Proyecto</span>
-                                                <span className="text-[8px] text-text-dim">Texto dinámico que llenan los docentes/investigadores</span>
+                                                <span className="text-[10px] font-bold text-foreground block">2. Campo de Tema del Proyecto</span>
+                                                <span className="text-[8px] text-text-dim">Texto dinámico que completan los investigadores</span>
                                             </div>
                                             <input
                                                 type="checkbox"
@@ -537,7 +494,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                         </div>
 
                                         {showTemaProyecto && (
-                                            <div className="space-y-2.5 pt-2 border-t border-border">
+                                            <div className="space-y-2.5 pt-1">
                                                 <LabeledField label="Texto Guía / Placeholder">
                                                     <input
                                                         type="text"

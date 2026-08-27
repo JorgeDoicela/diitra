@@ -1,18 +1,12 @@
 import React from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import type { DocumentBlock, TableSection } from '../../types';
+import { ColorPickerField } from './SharedColorPicker';
 
 interface Props {
     block: DocumentBlock;
     onUpdateConfig: (blockId: string, key: string, value: any) => void;
 }
-
-const HEADER_STYLE_OPTIONS = [
-    { value: 'blue', label: 'Azul Institucional' },
-    { value: 'gold', label: 'Dorado Acreditación' },
-    { value: 'gray', label: 'Gris Neutro' },
-    { value: 'none', label: 'Sin fondo' },
-] as const;
 
 const newSection = (): TableSection => ({
     title: 'Nueva Sección',
@@ -129,18 +123,11 @@ export const MultiSectionTableProperties: React.FC<Props> = ({ block, onUpdateCo
 
                     <div className="p-3 space-y-3">
                         {/* Estilo de encabezado */}
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Estilo de Encabezado</label>
-                            <select
-                                value={section.headerStyle ?? 'blue'}
-                                onChange={e => updateSection(sIdx, { headerStyle: e.target.value as TableSection['headerStyle'] })}
-                                className="w-full text-xs bg-surface border border-border-thin rounded-md p-2 text-text-main focus:outline-none"
-                            >
-                                {HEADER_STYLE_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <ColorPickerField
+                            label="Estilo de Encabezado"
+                            value={section.headerStyle ?? '#1e2a4a'}
+                            onChange={val => updateSection(sIdx, { headerStyle: val as any })}
+                        />
 
                         {/* Encabezados de columna */}
                         <div>

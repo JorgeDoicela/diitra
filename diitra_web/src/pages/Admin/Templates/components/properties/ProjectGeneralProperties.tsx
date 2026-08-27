@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Database, Sliders, ChevronDown, ChevronUp, Pencil, Palette, RotateCcw, Bookmark } from 'lucide-react';
 import type { DocumentBlock, IdentificationField } from '../../types';
-import { HEADER_STYLE_OPTIONS } from '../canvasRenderers/RenderCover';
+import { ColorPickerField } from './SharedColorPicker';
 
 interface ProjectGeneralPropertiesProps {
     block: DocumentBlock;
@@ -242,19 +242,12 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                     Diseño y Estilo Visual
                 </span>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-wide block mb-1">Encabezado</label>
-                        <select
-                            value={config.headerColor || 'blue'}
-                            onChange={e => onUpdateConfig(block.id, 'headerColor', e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-2 py-1.5 text-xs text-text-main outline-none focus:border-text-main font-medium transition-colors cursor-pointer"
-                        >
-                            {HEADER_STYLE_OPTIONS.map(opt => (
-                                <option key={opt.id} value={opt.id}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                <div className="space-y-2.5 text-xs">
+                    <ColorPickerField
+                        label="Color de Encabezado"
+                        value={config.headerColor || '#1e2a4a'}
+                        onChange={val => onUpdateConfig(block.id, 'headerColor', val)}
+                    />
 
                     <div>
                         <label className="text-[9px] font-bold text-text-dim uppercase tracking-wide block mb-1">Bordes</label>
@@ -277,7 +270,6 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                         <Database className="w-3.5 h-3.5 text-text-main" />
                         Campos ({CORE_ITEMS.length})
                     </span>
-                    <span className="text-[9px] text-text-dim">Usa ↑ ↓ para reordenar</span>
                 </div>
 
                 {(() => {
@@ -292,31 +284,9 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                         return idxA - idxB;
                     });
 
-                    const handleMoveCoreItem = (itemKey: string, direction: 'up' | 'down') => {
-                        const allKeys = [...CORE_ITEMS.map(c => c.key), ...customFields.map(f => f.fieldKey)];
-                        const currentOrder = fieldsOrder.length > 0
-                            ? fieldsOrder.filter(k => allKeys.includes(k))
-                            : [...allKeys];
-
-                        allKeys.forEach(k => {
-                            if (!currentOrder.includes(k)) currentOrder.push(k);
-                        });
-
-                        const index = currentOrder.indexOf(itemKey);
-                        if (index === -1) return;
-                        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-                        if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
-
-                        const updated = [...currentOrder];
-                        const [moved] = updated.splice(index, 1);
-                        updated.splice(targetIndex, 0, moved);
-
-                        onUpdateConfig(block.id, 'fieldsOrder', updated);
-                    };
-
                     return (
                         <div className="space-y-1.5 max-h-[420px] overflow-y-auto pt-1 pr-1 pl-0.5 custom-scrollbar">
-                            {sortedCoreItems.map((item, idx) => {
+                            {sortedCoreItems.map((item) => {
                                 const isChecked = (config as any)[item.key] !== false;
                                 const customLabel = (config as any)[item.labelKey] || item.defaultLabel;
                                 const customScriban = (config as any)[item.scribanKey] || item.defaultScriban;
@@ -366,26 +336,8 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                             <div className="flex items-center gap-0.5 shrink-0">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleMoveCoreItem(item.key, 'up')}
-                                                    disabled={idx === 0}
-                                                    className="p-1 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                    title="Mover arriba"
-                                                >
-                                                    <ChevronUp className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleMoveCoreItem(item.key, 'down')}
-                                                    disabled={idx === sortedCoreItems.length - 1}
-                                                    className="p-1 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                    title="Mover abajo"
-                                                >
-                                                    <ChevronDown className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
                                                     onClick={() => setEditingCoreKey(isEditingThis ? null : item.key)}
-                                                    className={`p-1 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors ${isEditingThis ? 'text-text-main bg-surface-hover font-bold' : ''}`}
+                                                    className={`p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors ${isEditingThis ? 'text-text-main bg-surface-hover font-bold' : ''}`}
                                                     title="Personalizar campo"
                                                 >
                                                     <Pencil className="w-3.5 h-3.5" />
@@ -729,24 +681,6 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                                     title="Editar elemento"
                                                 >
                                                     <Pencil className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={idx === 0}
-                                                    onClick={() => handleMoveField(idx, 'up')}
-                                                    className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                    title="Mover arriba"
-                                                >
-                                                    <ChevronUp className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={idx === customFields.length - 1}
-                                                    onClick={() => handleMoveField(idx, 'down')}
-                                                    className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                    title="Mover abajo"
-                                                >
-                                                    <ChevronDown className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button
                                                     type="button"

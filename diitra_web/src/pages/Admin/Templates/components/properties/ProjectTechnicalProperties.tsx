@@ -245,7 +245,6 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                         <Layers className="w-3.5 h-3.5 text-text-main" />
                         Sub-secciones ({sections.length})
                     </span>
-                    <span className="text-[9px] text-text-dim">Usa ↑ ↓ para reordenar</span>
                 </div>
 
                 {/* Lista de Subsecciones con Reordenamiento y Edición */}
@@ -441,26 +440,8 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                             </div>
                                         </div>
 
-                                        {/* Botones de acción rápida: Subir, Bajar, Editar y Eliminar */}
+                                        {/* Botones de acción rápida: Editar y Eliminar */}
                                         <div className="flex items-center gap-0.5 shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleMoveSection(idx, 'up')}
-                                                disabled={idx === 0}
-                                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                title="Mover arriba"
-                                            >
-                                                <ChevronUp className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleMoveSection(idx, 'down')}
-                                                disabled={idx === sections.length - 1}
-                                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors"
-                                                title="Mover abajo"
-                                            >
-                                                <ChevronDown className="w-3.5 h-3.5" />
-                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleStartEdit(sec)}
