@@ -1,5 +1,5 @@
 ---
-name: diitra-frontend
+name: frontend-diitra
 description: Extiende la skill global de frontend con convenciones y patrones específicos de DIITRA (Yjs, CoWorkField, snake_case, Axios). Activa esta skill EN COMBINACIÓN CON `desarrollo-frontend` para tareas de UI, componentes React, estilos o integraciones del cliente en DIITRA.
 ---
 # Extensión de Frontend — DIITRA

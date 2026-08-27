@@ -1,5 +1,5 @@
 ---
-name: diitra-backend
+name: backend-diitra
 description: Extiende la skill global de backend con convenciones y restricciones específicas del proyecto DIITRA. Activa esta skill EN COMBINACIÓN CON `desarrollo-backend` para tareas de controladores, servicios C#, EF Core, DTOs o base de datos de DIITRA.
 ---
 # Extensión de Backend — DIITRA

@@ -1,5 +1,5 @@
-﻿---
-name: diitra-styles
+---
+name: styles-diitra
 description: >
   Activa esta skill para cualquier tarea que involucre el sistema de diseno visual de DIITRA:
   estilos CSS, tokens de diseno, paleta de colores, tipografia, animaciones, nuevos componentes

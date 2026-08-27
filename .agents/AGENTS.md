@@ -22,15 +22,15 @@ Para garantizar que el agente aplique tanto los estándares globales como los pa
 
 * **Tareas de Frontend (UI, componentes React, Yjs, cliente API):**
   1. Activar skill global `desarrollo-frontend` (reglas generales de UX/UI, React, Hooks y tipado estricto).
-  2. Activar skill local `diitra-frontend` (convenciones de CoWorkField, snake_case, umbral de 700 líneas y cliente Axios).
+  2. Activar skill local `frontend-diitra` (convenciones de CoWorkField, snake_case, umbral de 700 líneas y cliente Axios).
 
 * **Tareas de Sistema de Diseño Visual, Tokens CSS, Paleta de Colores, Animaciones o Estilo Vercel:**
   1. Activar skill global `desarrollo-frontend`.
-  2. Activar skill local `diitra-styles` (tokens, variables HSL, tipografía Geist y catálogo de clases semánticas).
+  2. Activar skill local `styles-diitra` (tokens, variables HSL, tipografía Geist y catálogo de clases semánticas).
 
 * **Tareas de Backend (API C#, EF Core, DTOs, migraciones, base de datos):**
   1. Activar skill global `desarrollo-backend` (arquitectura limpia, EF Core, SOLID, REST, logging).
-  2. Activar skill local `diitra-backend` (tablas `inv_`, esquemas `sigafi` de solo lectura, DTOs completos).
+  2. Activar skill local `backend-diitra` (tablas `inv_`, esquemas `sigafi` de solo lectura, DTOs completos).
 
 * **Tareas de Seguridad, Login, Credenciales o Base de Datos Sensible:**
   * Activar skill global `gobernanza-datos-segura`.
