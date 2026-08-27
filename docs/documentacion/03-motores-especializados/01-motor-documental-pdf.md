@@ -84,3 +84,27 @@ $$\text{URL de Validación} = \texttt{https://diitra.traversari.edu.ec/public/ve
 2. El cliente público consulta el endpoint de verificación de `DocumentInstancesController`.
 3. El servidor calcula el hash SHA-256 de la instancia guardada y lo contrasta con el código de trazabilidad.
 4. Se presenta en pantalla el estado del documento, la fecha de emisión y los firmantes sin requerir inicio de sesión.
+
+---
+
+## 5. Inmutabilidad y Ciclo de Vida: Patrón Molde vs Instancia
+
+Para garantizar que las actualizaciones visuales en el Administrador de Plantillas (`/admin/templates`) no alteren ni corrompan los documentos de los docentes en producción, el sistema implementa una separación estricta:
+
+```mermaid
+graph LR
+    subgraph Administración
+        T[Plantilla Maestra / inv_document_templates] -->|Seeder / Edición Admin| TVersion[Versión N]
+    end
+    subgraph Proyectos en Producción
+        TVersion -->|Clonación Inicial| Instance[Instancia Proyecto / inv_document_instances]
+        Instance --> Snapshot[template_config_snapshot_json]
+        Docente[Docente Redactando] -->|Escribe| CoWorkData[Datos Yjs / CoWorkField]
+    end
+```
+
+### Reglas de Negocio y Seguridad:
+1. **Molde Maestro (`inv_document_templates`)**: Es el diseño vivo que el administrador edita. Sus cambios aplican como base para futuras formulaciones.
+2. **Snapshot Inmutable (`template_config_snapshot_json`)**: Al crearse un proyecto o documento, `DocumentInstanceService` toma una fotografía exacta de los bloques y su versión.
+3. **Protección Histórica (`State != Draft`)**: Los documentos en revisión CACES, aprobados o firmados leen **exclusivamente su Snapshot**, conservando el formato con el que fueron oficializados.
+4. **Desacoplamiento de Datos**: Los textos de redacción colaborativa se indexan por clave de campo (`field_key`), permitiendo que mejoras visuales en borradores no borren el contenido redactado.

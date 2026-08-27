@@ -203,3 +203,22 @@ Para evaluaciones condicionales de igualdad, utilice la directiva resiliente `#i
 1. **Evitar Saltos de Página Huérfanos**: Todo contenedor de bloque principal debe incluir la propiedad CSS `page-break-inside: avoid;`.
 2. **Estilo de Bordes Oficiales**: Las tablas institucionales deben emplear bordes negros delgados `border: 1px solid #000000;` con colapso de bordes `border-collapse: collapse;`.
 3. **Encabezados de Tabla**: El color azul marino institucional oficial utilizado en los encabezados de tabla es `#1e2a4a`.
+
+---
+
+## 6. Sistema de Color Unificado y Selección Interactiva en Canvas
+
+### 6.1. Componente Reutilizable `ColorPickerField`
+Ubicación: `src/pages/Admin/Templates/components/properties/SharedColorPicker.tsx`
+
+Todos los paneles de propiedades deben implementar este componente para garantizar consistencia visual y soporte para paletas libres y predefinidas:
+
+* **Características:**
+  - Rueda de selección de color nativa (`<input type="color">`).
+  - Campo de entrada `#HEX` en mayúsculas (`w-20` con ancho estricto para evitar desbordamientos).
+  - Presets rápidos de la paleta institucional (`#1e2a4a`, `#b8912e`, `#475569`, `#065f46`, `#000000`, `#ffffff`).
+  - Compatibilidad transparente con tokens históricos mediante `resolveHeaderColor()`.
+  - Cálculo automático de contraste (`getContrastFg`) para alternar el texto del encabezado entre blanco y oscuro según la luminancia del fondo.
+
+### 6.2. Sincronización Bidireccional Canvas ↔ Propiedades
+Al hacer clic o arrastrar un elemento visual en el lienzo A4 (ej. en `RenderCover.tsx`), el renderizador emite `onUpdateConfig(blockId, '_activeCoverTab', targetTab)`. El panel de propiedades escucha este cambio mediante un `useEffect` y activa inmediatamente la subpestaña correspondiente (`institution`, `title`, `carrera` o `periodo`), agilizando el flujo de diseño del usuario.

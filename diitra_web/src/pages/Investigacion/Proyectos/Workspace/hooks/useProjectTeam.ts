@@ -138,11 +138,23 @@ export function useProjectTeam(
         const fetchAvailableUsers = async () => {
             try {
                 const [profRes, alumRes] = await Promise.all([
-                    api.get('/catalogs/search-users?tipo=profesor'),
-                    api.get('/catalogs/search-users?tipo=alumno')
+                    api.get('/Admin/users?type=DOCENTE&soloConHoras=true&pageSize=100'),
+                    api.get('/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&pageSize=100')
                 ]);
-                setAvailableProfessors(profRes.data || []);
-                setAvailableStudents(alumRes.data || []);
+                const mapUser = (u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: u.type === 'ESTUDIANTE' ? 'alumno' : 'profesor'
+                });
+                setAvailableProfessors((profRes.data?.items || []).map(mapUser));
+                setAvailableStudents((alumRes.data?.items || []).map(mapUser));
             } catch (err) {
                 console.error("[DIITRA] Error fetching available users for request form", err);
             }
@@ -168,8 +180,23 @@ export function useProjectTeam(
         const delayDebounceFn = setTimeout(async () => {
             setIsRequestSearching(true);
             try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(requestSearchQuery)}&tipo=${targetTipo}`);
-                setRequestSearchResults(res.data || []);
+                const endpoint = targetTipo === 'alumno'
+                    ? `/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&search=${encodeURIComponent(requestSearchQuery.trim())}&pageSize=30`
+                    : `/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(requestSearchQuery.trim())}&pageSize=30`;
+                const res = await api.get(endpoint);
+                const mapped = (res.data?.items || []).map((u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: targetTipo
+                }));
+                setRequestSearchResults(mapped);
                 setShowRequestSearchResults(true);
             } catch (err) {
                 console.error("[DIITRA] Error searching users", err);
@@ -188,8 +215,20 @@ export function useProjectTeam(
         const delayDebounceFn = setTimeout(async () => {
             setIsTransferSearching(true);
             try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(transferSearchQuery)}`);
-                setTransferSearchResults(res.data || []);
+                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(transferSearchQuery.trim())}&pageSize=30`);
+                const mapped = (res.data?.items || []).map((u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: 'profesor'
+                }));
+                setTransferSearchResults(mapped);
                 setShowTransferSearchResults(true);
             } catch (err) {
                 console.error("[DIITRA] Error al buscar directores", err);
@@ -210,7 +249,7 @@ export function useProjectTeam(
         if (byLegacyName?.uuid) {
             setGrupoInvestigacion(byLegacyName.uuid);
         }
-    }, [grupoInvestigacion, approvedGroups]);
+    }, [approvedGroups, grupoInvestigacion]);
 
     const handleSyncGroupMembers = useCallback(async (options?: { groupUuid?: string; silent?: boolean }) => {
         const targetGroupUuid = options?.groupUuid ?? grupoInvestigacion;
@@ -235,8 +274,7 @@ export function useProjectTeam(
         try {
             const res = await api.get(`/groups/${selectedGroup.uuid}`);
             const groupDetail = res.data;
-            const groupMembers = groupDetail.miembros || [];
-
+            const groupMembers = groupDetail?.miembros || [];
             if (groupMembers.length === 0) {
                 if (!silent) {
                     addToast("Sincronización", "El grupo seleccionado no tiene miembros activos registrados.", "warning");
@@ -251,14 +289,15 @@ export function useProjectTeam(
                 await Promise.all(activeMembers.map(async (m: any) => {
                     const ced = m.cedula.trim();
                     try {
-                        const searchRes = await api.get(`/catalogs/search-users`, {
-                            params: { q: ced }
+                        const searchRes = await api.get(`/Admin/users`, {
+                            params: { search: ced, pageSize: 5 }
                         });
-                        const found = (searchRes.data || []).find((u: any) => u.cedula === ced);
+                        const items = searchRes.data?.items || [];
+                        const found = items.find((u: any) => (u.id_profesor?.trim() === ced) || (u.id_sigafi?.trim() === ced));
                         if (found) {
                             memberHoursMap[ced] = {
-                                horasDisponibles: found.horasDisponibles ?? found.horas_disponibles ?? 0,
-                                horasAsignadas: found.horasAsignadas ?? found.horas_asignadas ?? 0
+                                horasDisponibles: found.horas_investigacion ?? 0,
+                                horasAsignadas: found.horas_asignadas ?? 0
                             };
                         }
                     } catch (e) {

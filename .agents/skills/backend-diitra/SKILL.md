@@ -34,4 +34,13 @@ description: Extiende la skill global de backend con convenciones y restriccione
 * **Verbos HTTP:** Respeta estrictamente los verbos REST estándar (`GET` para lectura, `POST` para creación, `PUT` para actualización completa, `PATCH` para parcial, `DELETE` para eliminación).
 * **Respuestas Uniformes:** Devuelve respuestas estructuradas con códigos HTTP adecuados (`200 OK`, `201 Created`, `400 BadRequest`, `404 NotFound`, `500 InternalServerError`).
 
+## 6. Motor Documental — Patrón Molde vs Instancia (Inmutabilidad)
+
+* **Separación Estricta:**
+  - `inv_document_templates` (Molde Maestro): Administrado en `/admin/templates`. Modificaciones aquí aplican como molde para futuros proyectos sin alterar documentos históricos.
+  - `inv_document_instances` (Instancia de Proyecto): Al crear un proyecto, `DocumentInstanceService` clona la versión y guarda el `TemplateConfigSnapshotJson`.
+* **Protección de Datos Docentes en Producción:**
+  - Los documentos en estados de revisión o aprobados (`State != Draft`) leen **exclusivamente su Snapshot**.
+  - Los datos de redacción colaborativa se almacenan indexados por claves de campo (`field_key`), desacoplados de la presentación visual, garantizando que futuras mejoras de diseño no destruyan el contenido de los docentes.
+
 

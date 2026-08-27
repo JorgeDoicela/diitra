@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserIcon, GraduationCap, Settings2 } from 'lucide-react';
+import { User as UserIcon, Settings2 } from 'lucide-react';
 import type { ManagedUser, Role } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre, highlightText } from './utils';
 
@@ -7,7 +7,7 @@ interface UsersTableProps {
     users: ManagedUser[];
     roles: Role[];
     search: string;
-    userType: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO';
+    userType: 'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO';
     page: number;
     setPage: React.Dispatch<React.SetStateAction<number>> | ((page: number | ((p: number) => number)) => void);
     pageSize: number;
@@ -45,18 +45,20 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     openedAtRef
 }) => {
     return (
-        <div className="bento-card static overflow-hidden animate-fade-up">
+        <div className="card-vercel overflow-hidden border-border-thin shadow-2xl bg-surface/50 backdrop-blur-xl animate-fade-up">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                            <th className="p-4 font-bold tracking-widest">Actor</th>
-                            <th className="p-4 font-bold tracking-widest">Capacidad (SIGAFI)</th>
-                            <th className="p-4 font-bold tracking-widest">Permisos / Roles</th>
-                            <th className="p-4 font-bold tracking-widest text-right">Gestión</th>
+                        <tr className="border-b border-border-thin bg-surface/30">
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">Usuario / Identificación</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">
+                                {userType === 'DOCENTE' ? 'Horas / Carrera' : userType === 'ADMINISTRATIVO' ? 'Departamento / Cargo' : userType === 'ESTUDIANTE' ? 'Carrera / Estado' : 'Validación Perfil'}
+                            </th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim">Roles en el Sistema</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-text-dim text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-thin">
+                    <tbody className="divide-y divide-border-thin text-xs">
                         {loading ? (
                             <tr>
                                 <td colSpan={4} className="p-8 text-center">
@@ -66,7 +68,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                         ) : users.length === 0 ? (
                             <tr>
                                 <td colSpan={4}>
-                                    <div className="empty-state py-20">
+                                    <div className="empty-state py-20 text-center">
                                         <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
                                     </div>
                                 </td>
@@ -98,39 +100,70 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                 </td>
                                 <td className="p-4">
                                     {u.type === 'DOCENTE' ? (
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-1">
                                             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
+                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo (SIGAFI)">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-text-dim/40'}`} />
                                                     SIGAFI: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
                                                 </span>
                                                 <span className="text-text-dim flex items-center gap-1.5" title="Horas Comprometidas en Proyectos (DIITRA)">
                                                     <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
                                                     Asig: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
                                                 </span>
-                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas Disponibles">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
-                                                    Disp: <span className="font-semibold text-text-main">{Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h</span>
-                                                </span>
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
-                                                <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
-                                                <span className="truncate max-w-[190px]" title={u.carrera}>
+                                            <div className="text-[10px] text-text-dim font-medium tracking-wide">
+                                                <span className="truncate max-w-[210px] inline-block align-bottom" title={u.carrera}>
                                                     {highlightText(formatCarrera(u.carrera), search)}
                                                 </span>
+                                                {u.cargo_instituto && (
+                                                    <span className="text-[9px] text-text-dim/60 font-mono ml-1.5">
+                                                        ({u.cargo_instituto})
+                                                    </span>
+                                                )}
                                             </div>
+                                        </div>
+                                    ) : u.type === 'ADMINISTRATIVO' ? (
+                                        <div className="space-y-0.5">
+                                            <p className="text-[11px] font-semibold text-text-main truncate max-w-[220px]" title={u.departamento}>
+                                                {highlightText(u.departamento || 'Administración General', search)}
+                                            </p>
+                                            <p className="text-[10px] text-text-dim font-medium">
+                                                <span>{u.cargo_instituto || 'Personal Administrativo'}</span>
+                                                {u.tipo_contrato && (
+                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-surface border border-border-thin text-text-dim/80 ml-1.5 font-mono">
+                                                        {u.tipo_contrato}
+                                                    </span>
+                                                )}
+                                            </p>
                                         </div>
                                     ) : u.type === 'ESTUDIANTE' ? (
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide pr-2">
-                                                <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
-                                                <span className="truncate max-w-[190px]" title={u.carrera}>
-                                                    {highlightText(formatCarrera(u.carrera), search)}
-                                                </span>
-                                            </div>
-                                            <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
-                                                {u.nivel || 'Nivel no definido'}
+                                            <p className="text-[10px] text-text-dim font-medium tracking-wide truncate max-w-[210px]" title={u.carrera}>
+                                                {highlightText(formatCarrera(u.carrera), search)}
                                             </p>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <span className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                    {u.nivel || 'Nivel no definido'}
+                                                </span>
+                                                {u.es_instituto === false ? (
+                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                        Conducción
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                                                        ISTPET
+                                                    </span>
+                                                )}
+                                                {u.es_graduado ? (
+                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                        Graduado
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                                        Matriculado
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2">

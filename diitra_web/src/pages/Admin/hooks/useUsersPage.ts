@@ -14,8 +14,14 @@ export interface ManagedUser {
     firma_habilitada: boolean;
     horas_investigacion?: number;
     horas_asignadas?: number;
+    tiene_horas_investigacion?: boolean;
+    departamento?: string;
+    cargo_instituto?: string;
+    tipo_contrato?: string;
     carrera?: string;
     nivel?: string;
+    es_graduado?: boolean;
+    es_instituto?: boolean;
 }
 
 export interface Role {
@@ -65,12 +71,20 @@ export const useUsersPage = () => {
     const openedAtRef = useRef<number>(0);
     const isOverlayMouseDownRef = useRef(false);
     const typeParam = searchParams.get('type');
-    const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
+    const userType: 'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO' = 
+        (typeParam === 'DOCENTE' || typeParam === 'ADMINISTRATIVO' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
     const openUuid = searchParams.get('open');
 
-    const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
+    // Subfiltros de segmentación
+    const [soloConHoras, setSoloConHoras] = useState(true);
+    const [estadoEstudiante, setEstadoEstudiante] = useState<'ACTIVO' | 'GRADUADO' | 'TODOS'>('ACTIVO');
+    const [origenEstudiante, setOrigenEstudiante] = useState<'INSTITUTO' | 'CONDUCCION' | 'TODOS'>('INSTITUTO');
+    const [departamento, setDepartamento] = useState('');
+
+    const setUserType = (type: 'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO') => {
         setSearch('');
         setDetailUser(null);
+        setPage(1);
         lastOpenedUuidRef.current = null;
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
@@ -123,7 +137,17 @@ export const useUsersPage = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/Admin/users?search=${search}&type=${userType}&page=${page}&pageSize=${pageSize}`);
+            const params = new URLSearchParams({
+                search,
+                type: userType,
+                page: String(page),
+                pageSize: String(pageSize),
+                soloConHoras: String(soloConHoras),
+                estadoEstudiante,
+                origenEstudiante,
+                departamento
+            });
+            const response = await api.get(`/Admin/users?${params.toString()}`);
             const items: ManagedUser[] = response.data.items;
             setUsers(items);
             setTotalCount(response.data.total_count);
@@ -195,6 +219,8 @@ export const useUsersPage = () => {
         }, { replace: true });
     };
 
+    const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
+
     const fetchRoles = async () => {
         try {
             const response = await api.get('/Admin/roles');
@@ -204,8 +230,18 @@ export const useUsersPage = () => {
         }
     };
 
+    const fetchDepartments = async () => {
+        try {
+            const response = await api.get('/Admin/departments');
+            setAvailableDepartments(response.data);
+        } catch (error) {
+            console.error('Error fetching departments:', error);
+        }
+    };
+
     useEffect(() => {
         fetchRoles();
+        fetchDepartments();
 
         // Check researcher draft
         const userMetaStr = localStorage.getItem('user_metadata_draft_metadata');
@@ -252,14 +288,14 @@ export const useUsersPage = () => {
 
     useEffect(() => {
         setPage(1);
-    }, [search, userType]);
+    }, [search, userType, soloConHoras, estadoEstudiante, origenEstudiante, departamento]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchUsers();
         }, 300);
         return () => clearTimeout(timer);
-    }, [search, userType, page]);
+    }, [search, userType, page, soloConHoras, estadoEstudiante, origenEstudiante, departamento]);
 
     // Auto-save externalForm
     useEffect(() => {
@@ -491,6 +527,15 @@ export const useUsersPage = () => {
         setSearch,
         userType,
         setUserType,
+        soloConHoras,
+        setSoloConHoras,
+        estadoEstudiante,
+        setEstadoEstudiante,
+        origenEstudiante,
+        setOrigenEstudiante,
+        departamento,
+        setDepartamento,
+        availableDepartments,
         page,
         setPage,
         pageSize,

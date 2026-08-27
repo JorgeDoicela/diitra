@@ -16,6 +16,15 @@ const UsersPage = () => {
         setSearch,
         userType,
         setUserType,
+        soloConHoras,
+        setSoloConHoras,
+        estadoEstudiante,
+        setEstadoEstudiante,
+        origenEstudiante,
+        setOrigenEstudiante,
+        departamento,
+        setDepartamento,
+        availableDepartments,
         page,
         setPage,
         pageSize,
@@ -71,6 +80,15 @@ const UsersPage = () => {
             <UsersHeader
                 userType={userType}
                 setUserType={setUserType}
+                soloConHoras={soloConHoras}
+                setSoloConHoras={setSoloConHoras}
+                estadoEstudiante={estadoEstudiante}
+                setEstadoEstudiante={setEstadoEstudiante}
+                origenEstudiante={origenEstudiante}
+                setOrigenEstudiante={setOrigenEstudiante}
+                departamento={departamento}
+                setDepartamento={setDepartamento}
+                availableDepartments={availableDepartments}
                 search={search}
                 setSearch={setSearch}
                 loading={loading}

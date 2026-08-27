@@ -35,9 +35,13 @@ public class AdminController : ControllerBase
         [FromQuery] string type = "DOCENTE",
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] string? carrera = null)
+        [FromQuery] string? carrera = null,
+        [FromQuery] bool soloConHoras = false,
+        [FromQuery] string estadoEstudiante = "ACTIVO",
+        [FromQuery] string origenEstudiante = "INSTITUTO",
+        [FromQuery] string? departamento = null)
     {
-        var users = await _adminService.GetUsersAsync(search, type, page, pageSize, carrera);
+        var users = await _adminService.GetUsersAsync(search, type, page, pageSize, carrera, soloConHoras, estadoEstudiante, origenEstudiante, departamento);
         return Ok(users);
     }
 
@@ -46,6 +50,13 @@ public class AdminController : ControllerBase
     {
         var roles = await _adminService.GetAvailableRolesAsync();
         return Ok(roles);
+    }
+
+    [HttpGet("departments")]
+    public async Task<IActionResult> GetDepartments()
+    {
+        var departments = await _adminService.GetDepartmentsAsync();
+        return Ok(departments);
     }
 
     [HttpGet("metadata/{uuid}")]

@@ -73,9 +73,21 @@ export const useGroupMemberSearch = ({
             try {
                 const queryParam = (!coordSearchQuery.trim() || coordSearchQuery === (detailGroup?.nombre_coordinador || ''))
                     ? ''
-                    : coordSearchQuery;
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(queryParam)}&tipo=profesor`);
-                setCoordSearchResults(res.data || []);
+                    : coordSearchQuery.trim();
+                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(queryParam)}&pageSize=30`);
+                const items = res.data?.items || [];
+                setCoordSearchResults(items.map((u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: 'profesor'
+                })));
             } catch (err) {
                 console.error("Error al buscar docentes coordinadores:", err);
             } finally {
@@ -91,8 +103,20 @@ export const useGroupMemberSearch = ({
         const delayDebounceFn = setTimeout(async () => {
             setIsTeacherSearching(true);
             try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(teacherSearchQuery)}&tipo=profesor`);
-                setTeacherSearchResults(res.data || []);
+                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(teacherSearchQuery.trim())}&pageSize=30`);
+                const items = res.data?.items || [];
+                setTeacherSearchResults(items.map((u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: 'profesor'
+                })));
             } catch (err) {
                 console.error("Error al buscar docentes investigadores:", err);
             } finally {
@@ -108,8 +132,20 @@ export const useGroupMemberSearch = ({
         const delayDebounceFn = setTimeout(async () => {
             setIsStudentSearching(true);
             try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(studentSearchQuery)}&tipo=alumno`);
-                setStudentSearchResults(res.data || []);
+                const res = await api.get(`/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&search=${encodeURIComponent(studentSearchQuery.trim())}&pageSize=30`);
+                const items = res.data?.items || [];
+                setStudentSearchResults(items.map((u: any) => ({
+                    cedula: u.id_profesor || u.id_sigafi || '',
+                    nombre: u.nombre_completo || u.nombre || '',
+                    email: u.email || u.email_institucional || '',
+                    carrera: u.carrera || '',
+                    telefono: '',
+                    nivelAcademico: 'Tercer Nivel',
+                    horasDisponibles: u.horas_investigacion || 0,
+                    horasAsignadas: u.horas_asignadas || 0,
+                    id_usuario: u.id_usuario || 0,
+                    tipo: 'alumno'
+                })));
             } catch (err) {
                 console.error("Error al buscar estudiantes:", err);
             } finally {
@@ -119,7 +155,7 @@ export const useGroupMemberSearch = ({
         return () => clearTimeout(delayDebounceFn);
     }, [studentSearchQuery, showStudentResults]);
 
-    const handleSelectCoordinator = (teacher: any, currentEditIdProfesorCoord?: string) => {
+    const handleSelectCoordinator = (teacher: any) => {
         if (detailMembers.some(m => m.cedula === teacher.cedula)) {
             alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
             return;

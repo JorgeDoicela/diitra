@@ -19,10 +19,18 @@ public class UserManagementDto
     public bool FirmaHabilitada { get; set; }
     public decimal? HorasInvestigacion { get; set; }
     public decimal? HorasAsignadas { get; set; }
+    public bool TieneHorasInvestigacion => (HorasInvestigacion ?? 0) > 0;
     
+    // Contexto Laboral e Institucional (Contratos / Cargos)
+    public string? Departamento { get; set; }
+    public string? CargoInstituto { get; set; }
+    public string? TipoContrato { get; set; }
+
     // Contexto Académico (Profesionalización)
     public string? Carrera { get; set; }
     public string? Nivel { get; set; }
+    public bool EsGraduado { get; set; }
+    public bool? EsInstituto { get; set; }
 }
 
 public class PagedResult<T>

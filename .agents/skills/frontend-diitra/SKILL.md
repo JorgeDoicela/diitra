@@ -30,10 +30,11 @@ description: Extiende la skill global de frontend con convenciones y patrones es
 * Los sidebars colapsables y arrastrables deben persistir su estado de visibilidad con `localStorage`.
 * En selects/dropdowns con catálogos relacionales, verifica que cada opción exponga el `id` local y las claves de vinculación externa necesarias (ej: `l.id` y `s.id_linea` para vincular líneas y sublíneas de forma reactiva).
 
-## 5. Estructura de Carpetas y Organización
+## 6. Sistema de Color y Selector Unificado de Plantillas
 
-* **Vistas / Páginas:** `src/pages/[NombreModulo]/` (contiene la página principal y su subcarpeta `components/` si supera el umbral de modularización).
-* **Componentes Compartidos:** `src/components/` (sólo componentes UI globales o reutilizables entre múltiples módulos).
-* **Servicios de API:** `src/api/` (instancia de Axios configurada, métodos de consumo modularizados por entidad).
-* **Hooks Personalizados:** `src/hooks/` (lógica de estado reusable o subscripciones en tiempo real).
+* **Componente Compartido (`ColorPickerField`):** Ubicado en `src/pages/Admin/Templates/components/properties/SharedColorPicker.tsx`. Debe usarse como el estándar único en todos los paneles de propiedades para selección de color (permite rueda nativa, entrada `#HEX` directa y presets institucionales ISTPET).
+* **Normalización y Contraste Automático:**
+  - `resolveHeaderColor(value)`: Asegura compatibilidad transparente con tokens antiguos (`navy`, `gold`, `slate`, `emerald`) convirtiéndolos a HEX utilizable.
+  - `getContrastFg(color)`: Calcula por luminancia si el texto del encabezado debe ser blanco (`#ffffff`) u oscuro (`#0f172a`), garantizando siempre legibilidad en exportaciones y previsualizaciones.
+* **Sincronización Bidireccional Canvas ↔ Propiedades:** Al hacer clic o arrastrar un elemento en el lienzo (`RenderCover`, etc.), debe emitirse `onUpdateConfig(blockId, '_activeCoverTab', targetTab)` para activar automáticamente la subpestaña correspondiente en el panel lateral de propiedades.
 
