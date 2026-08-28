@@ -1,11 +1,29 @@
-import React from 'react';
 import { DiitraRole } from '../Help/types';
 
-export interface WelcomeFeature {
-    icon: React.ReactNode;
+export interface SummaryMetricRow {
+    label: string;
+    value: string;
+    statusColor?: 'emerald' | 'blue' | 'amber' | 'neutral';
+}
+
+export interface ModuleActionPoint {
     title: string;
     description: string;
-    badge?: string;
+    tag?: string;
+}
+
+export interface WelcomeModule {
+    id: string;
+    title: string;
+    summary: string;
+    badge: string;
+    details: {
+        headline: string;
+        summaryTitle: string;
+        summaryRows: SummaryMetricRow[];
+        actionPoints: ModuleActionPoint[];
+        footerNote?: string;
+    };
 }
 
 export interface RoleWelcomeConfig {
@@ -13,9 +31,7 @@ export interface RoleWelcomeConfig {
     roleLabel: string;
     greeting: string;
     subtitle: string;
-    missionText: string;
-    features: WelcomeFeature[];
-    quote: string;
+    modules: WelcomeModule[];
     primaryActionLabel: string;
     secondaryActionLabel?: string;
 }

@@ -61,20 +61,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     useEffect(() => {
         if (!user || !isAuthenticated || isLoading || isWorkspace) return;
 
-        const userKey = user.id_referencia || user.id_usuario || 'guest';
-        const dismissedKey = `diitra_welcome_dismissed_${userKey}`;
-        const sessionKey = `diitra_welcome_session_${userKey}`;
-
-        const hasDismissed = localStorage.getItem(dismissedKey);
-        const hasShownSession = sessionStorage.getItem(sessionKey);
-
-        if (!hasDismissed && !hasShownSession) {
-            const timer = setTimeout(() => {
-                setIsWelcomeOpen(true);
-                sessionStorage.setItem(sessionKey, 'true');
-            }, 600);
-            return () => clearTimeout(timer);
-        }
+        // Modo pruebas: se dispara en cada inicio de sesión / recarga
+        const timer = setTimeout(() => {
+            setIsWelcomeOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
     }, [user, isAuthenticated, isLoading, isWorkspace]);
 
     // ── Contador de notas rápidas sin planificar (badge del botón flotante) ─────
