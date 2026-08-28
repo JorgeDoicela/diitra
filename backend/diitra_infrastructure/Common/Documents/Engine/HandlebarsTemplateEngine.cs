@@ -128,15 +128,31 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             return await Task.FromResult(rendered);
         }
 
+        private static bool IsEmptyValue(object? val)
+        {
+            if (val == null) return true;
+            if (val is string s) return string.IsNullOrWhiteSpace(s);
+            if (val is int i) return i == 0;
+            if (val is long l) return l == 0;
+            if (val is double d) return d == 0;
+            if (val is decimal dec) return dec == 0;
+            if (val is System.Collections.ICollection c) return c.Count == 0;
+            return false;
+        }
+
         private static object? CleanElement(JsonElement element)
         {
             if (element.ValueKind == JsonValueKind.Object)
             {
-                var dict = new Dictionary<string, object?>();
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                var keyCaseMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var prop in element.EnumerateObject())
                 {
                     var name = prop.Name;
                     var val = prop.Value;
+                    object? cleanedVal;
+
                     if (val.ValueKind == JsonValueKind.String)
                     {
                         var strVal = val.GetString()?.Trim();
@@ -147,19 +163,62 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                             try
                             {
                                 using var nestedDoc = JsonDocument.Parse(strVal);
-                                dict[name] = CleanElement(nestedDoc.RootElement);
-                                continue;
+                                cleanedVal = CleanElement(nestedDoc.RootElement);
                             }
                             catch
                             {
-                                // Dejar el string original si falla
+                                cleanedVal = strVal;
+                            }
+                        }
+                        else
+                        {
+                            cleanedVal = CleanElement(val);
+                        }
+                    }
+                    else
+                    {
+                        cleanedVal = CleanElement(val);
+                    }
+
+                    if (dict.TryGetValue(name, out var existingVal))
+                    {
+                        bool isExistingEmpty = IsEmptyValue(existingVal);
+                        bool isNewEmpty = IsEmptyValue(cleanedVal);
+
+                        if (isExistingEmpty && !isNewEmpty)
+                        {
+                            dict[name] = cleanedVal;
+                            keyCaseMap[name] = name;
+                        }
+                        else if (!isExistingEmpty && isNewEmpty)
+                        {
+                            // Conservar existingVal
+                        }
+                        else
+                        {
+                            if (!string.IsNullOrEmpty(name) && keyCaseMap.TryGetValue(name, out var currentKey) && !string.IsNullOrEmpty(currentKey))
+                            {
+                                if (char.IsUpper(name[0]) && !char.IsUpper(currentKey[0]))
+                                {
+                                    keyCaseMap[name] = name;
+                                }
                             }
                         }
                     }
-
-                    dict[name] = CleanElement(val);
+                    else
+                    {
+                        dict[name] = cleanedVal;
+                        keyCaseMap[name] = name;
+                    }
                 }
-                return dict;
+
+                var result = new Dictionary<string, object?>();
+                foreach (var kvp in dict)
+                {
+                    var properKey = keyCaseMap.TryGetValue(kvp.Key, out var k) ? k : kvp.Key;
+                    result[properKey] = kvp.Value;
+                }
+                return result;
             }
             else if (element.ValueKind == JsonValueKind.Array)
             {
