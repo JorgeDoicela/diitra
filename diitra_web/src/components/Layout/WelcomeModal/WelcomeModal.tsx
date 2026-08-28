@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../api/AuthContext';
 import { getWelcomeConfigByRole } from './welcomeConfigs';
-import type { WelcomeModule } from './types';
 
 interface WelcomeModalProps {
     isOpen: boolean;
@@ -16,106 +15,16 @@ const formatTitleCase = (str?: string): string => {
     return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 };
 
-const ModuleDetailsCard: React.FC<{
-    module: WelcomeModule;
-}> = ({ module }) => {
-    const details = module.details;
-
-    return (
-        <div className="h-full flex flex-col justify-between bg-[#ffffff] border border-[#eaeaea] rounded-lg p-4 shadow-sm select-none">
-            
-            <div className="space-y-3.5">
-                {/* Module Headline */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-[#f0f0f0]">
-                    <h3 className="text-[14px] font-semibold text-[#111111] tracking-tight">
-                        {details.headline}
-                    </h3>
-                    <span className="rounded-full border border-[#eaeaea] bg-[#fafafa] text-[11px] font-medium px-2.5 py-0.5 text-[#666666]">
-                        {module.badge}
-                    </span>
-                </div>
-
-                {/* DIITRA Summary List (Pattern Oficial DIITRA) */}
-                <div className="border border-[#eaeaea] rounded-lg p-3 bg-[#ffffff]">
-                    <h4 className="text-[12.5px] font-semibold text-[#111111] mb-2.5">
-                        {details.summaryTitle}
-                    </h4>
-                    <div className="space-y-2">
-                        {details.summaryRows.map((row, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[12px]">
-                                <div className="flex items-center gap-2">
-                                    {/* Indicador de anillo de progreso minimalista */}
-                                    <span className="w-3.5 h-3.5 rounded-full border border-[#eaeaea] flex items-center justify-center shrink-0">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${
-                                            row.statusColor === 'emerald'
-                                                ? 'bg-emerald-500'
-                                                : row.statusColor === 'blue'
-                                                    ? 'bg-[#0070f3]'
-                                                    : row.statusColor === 'amber'
-                                                        ? 'bg-amber-500'
-                                                        : 'bg-[#888888]'
-                                        }`} />
-                                    </span>
-                                    <span className="text-[#333333] font-medium">
-                                        {row.label}
-                                    </span>
-                                </div>
-                                <span className="text-[#111111] font-mono font-semibold text-[11.5px]">
-                                    {row.value}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Action Points / Key Capabilities List */}
-                <div className="space-y-2 pt-0.5">
-                    {details.actionPoints.map((point, idx) => (
-                        <div 
-                            key={idx}
-                            className="p-2.5 rounded-md border border-[#f0f0f0] bg-[#ffffff] hover:border-[#eaeaea] transition-colors"
-                        >
-                            <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <span className="text-[12px] font-medium text-[#111111]">
-                                    {point.title}
-                                </span>
-                                {point.tag && (
-                                    <span className="text-[10px] font-mono text-[#888888] bg-[#fafafa] border border-[#eaeaea] px-1.5 py-0.5 rounded">
-                                        {point.tag}
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-[11.5px] text-[#666666] leading-relaxed">
-                                {point.description}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Footer Note */}
-            {details.footerNote && (
-                <div className="pt-2.5 border-t border-[#f0f0f0] mt-3 text-[11px] text-[#888888]">
-                    {details.footerNote}
-                </div>
-            )}
-        </div>
-    );
-};
-
 export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     isOpen,
-    onClose,
-    onOpenGuide
+    onClose
 }) => {
     const { user, isAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName } = useAuth();
     const [dontShowAgain, setDontShowAgain] = useState(false);
-    const [activeIndex, setActiveIndex] = useState(0);
 
     const config = getWelcomeConfigByRole(isAdmin, isDocente, isEstudiante, isRevisor);
-    const totalModules = config.modules.length;
 
-    // Lock body scroll
+    // Bloquear scroll del fondo
     useEffect(() => {
         if (!isOpen) return;
         const originalOverflow = document.body.style.overflow;
@@ -125,24 +34,18 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         };
     }, [isOpen]);
 
-    // Keyboard support (Escape to close, Arrows to select tab)
+    // Navegación por teclado (Escape para cerrar)
     useEffect(() => {
         if (!isOpen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 e.preventDefault();
                 handleFinish();
-            } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                setActiveIndex(prev => (prev + 1) % totalModules);
-            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                setActiveIndex(prev => (prev - 1 + totalModules) % totalModules);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, totalModules, dontShowAgain, user?.id_referencia]);
+    }, [isOpen, dontShowAgain, user?.id_referencia]);
 
     if (!isOpen) return null;
 
@@ -157,51 +60,47 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         onClose();
     };
 
-    const handleOpenInteractiveGuide = () => {
-        handleFinish();
-        if (onOpenGuide) {
-            setTimeout(() => {
-                onOpenGuide();
-            }, 100);
-        }
-    };
-
     const userFirstName = formatTitleCase(user?.nombre_completo);
-    const activeModule = config.modules[activeIndex] || config.modules[0];
 
     return (
         <div 
-            className="modal-overlay !z-[9999] backdrop-blur-md"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-md animate-fade-in"
             role="dialog"
             aria-modal="true"
             aria-label="Bienvenida a DIITRA"
         >
-            {/* Modal Card Vercel */}
-            <div className="w-full max-w-4xl bg-white border border-[#eaeaea] rounded-xl shadow-2xl flex flex-col z-10 animate-scale-up overflow-hidden max-h-[92vh]">
+            {/* Modal Dialog Card Vercel Geist */}
+            <div className="relative w-full max-w-[680px] bg-white border border-zinc-200/80 rounded-2xl shadow-[0_20px_70px_rgba(0,0,0,0.15)] flex flex-col z-10 animate-scale-up overflow-hidden max-h-[92vh]">
                 
-                {/* Header Breadcrumb Vercel Style */}
-                <div className="p-5 pb-4 bg-white flex items-start justify-between border-b border-[#eaeaea] shrink-0">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-[12px] font-semibold text-[#111111]">
+                {/* Header Institucional */}
+                <div className="p-7 pb-5 bg-white flex items-start justify-between border-b border-zinc-100 shrink-0">
+                    <div className="space-y-1.5 pr-4">
+                        {/* Breadcrumb de rol */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-semibold text-zinc-900 tracking-tight">
                                 DIITRA
                             </span>
-                            <span className="text-[#888888]">/</span>
-                            <span className="rounded-full border border-[#eaeaea] bg-[#fafafa] text-[11px] font-medium px-2.5 py-0.5 text-[#666666]">
+                            <span className="text-zinc-300 font-light">/</span>
+                            <span className="rounded-full border border-zinc-200 bg-zinc-50/80 text-[10.5px] font-mono font-medium px-2.5 py-0.5 text-zinc-600">
                                 {roleDisplayName || config.roleLabel}
                             </span>
                         </div>
-                        <h2 className="text-[18px] font-semibold text-[#111111] tracking-tight">
-                            Bienvenido, {userFirstName}
+
+                        {/* Título de Bienvenida */}
+                        <h2 className="text-[26px] font-bold text-zinc-950 tracking-[-0.03em] leading-tight pt-1">
+                            Hola, {userFirstName}
                         </h2>
-                        <p className="text-[13px] text-[#666666] leading-relaxed mt-0.5 max-w-2xl">
-                            {config.subtitle}
+
+                        {/* Descripción concisa */}
+                        <p className="text-[13.5px] text-zinc-600 leading-relaxed font-normal pt-0.5">
+                            {config.systemDescription}
                         </p>
                     </div>
 
+                    {/* Botón Cerrar */}
                     <button
                         onClick={handleFinish}
-                        className="p-1.5 rounded-md text-[#888888] hover:text-[#111111] hover:bg-[#fafafa] transition-colors cursor-pointer"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer shrink-0 mt-0.5"
                         title="Cerrar"
                         aria-label="Cerrar"
                     >
@@ -209,108 +108,73 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     </button>
                 </div>
 
-                {/* Two-Column Body Grid */}
-                <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[380px] overflow-y-auto bg-[#fafafa]">
-                    
-                    {/* Left Column: Vercel Unified Navigation List (5 Cols) */}
-                    <div className="lg:col-span-5 flex flex-col justify-between gap-3">
-                        <div className="space-y-2">
-                            <span className="text-[12px] font-semibold text-[#111111] block">
-                                Módulos de tu Rol
-                            </span>
-
-                            {/* Unified High-Density Card List */}
-                            <div className="border border-[#eaeaea] rounded-lg divide-y divide-[#eaeaea] overflow-hidden bg-white shadow-sm">
-                                {config.modules.map((module, idx) => {
-                                    const isCurrent = idx === activeIndex;
-                                    return (
-                                        <button
-                                            key={module.id}
-                                            type="button"
-                                            onClick={() => setActiveIndex(idx)}
-                                            className={`w-full text-left p-3.5 transition-colors cursor-pointer block ${
-                                                isCurrent 
-                                                    ? 'bg-[#000000]/[0.04] border-l-2 border-l-[#000000] pl-3' 
-                                                    : 'hover:bg-[#fafafa] opacity-75 hover:opacity-100'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between gap-2 mb-1">
-                                                <span className={`text-[13px] font-medium truncate ${
-                                                    isCurrent ? 'text-[#111111]' : 'text-[#444444]'
-                                                }`}>
-                                                    {module.title}
-                                                </span>
-                                                <span className="rounded-full border border-[#eaeaea] bg-white text-[10px] font-medium px-2 py-0.5 text-[#666666] shrink-0">
-                                                    {module.badge}
-                                                </span>
-                                            </div>
-                                            
-                                            <p className="text-[12px] text-[#666666] leading-relaxed">
-                                                {module.summary}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Informative Status Footer */}
-                        <div className="text-[11.5px] text-[#888888] pt-1">
-                            Selecciona un módulo para explorar sus capacidades.
-                        </div>
+                {/* Body: Cuadrícula Bento 2x2 Espaciosa */}
+                <div className="p-7 space-y-4 overflow-y-auto custom-scrollbar flex-1 bg-zinc-50/40">
+                    <div className="flex items-center justify-between pb-0.5">
+                        <span className="text-[11.5px] font-mono uppercase tracking-wider font-semibold text-zinc-500">
+                            {config.sectionTitle}
+                        </span>
+                        <span className="text-[11px] font-mono text-zinc-400">
+                            Áreas Principales
+                        </span>
                     </div>
 
-                    {/* Right Column: Module Details & Capabilities Card (7 Cols) */}
-                    <div className="lg:col-span-7 flex flex-col min-h-[320px] lg:min-h-0">
-                        <ModuleDetailsCard
-                            module={activeModule}
-                        />
+                    {/* Bento Grid 2x2 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {config.benefits.map((benefit, idx) => (
+                            <div 
+                                key={idx}
+                                className="group bg-white border border-zinc-200/80 hover:border-zinc-400/80 rounded-xl p-4.5 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:-translate-y-[1px] transition-all duration-200 cursor-default"
+                            >
+                                <div>
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <h3 className="text-[13.5px] font-semibold text-zinc-900 tracking-tight group-hover:text-black">
+                                            {benefit.title}
+                                        </h3>
+                                        <span className="rounded-md border border-zinc-200/70 bg-zinc-50 text-[10px] font-mono font-medium px-2 py-0.5 text-zinc-500 shrink-0">
+                                            {benefit.tag}
+                                        </span>
+                                    </div>
+                                    <p className="text-[12.5px] text-zinc-500 leading-relaxed font-normal group-hover:text-zinc-600">
+                                        {benefit.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Footer Vercel */}
-                <div className="p-3.5 px-5 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#eaeaea] shrink-0">
+                {/* Footer Vercel Minimalista */}
+                <div className="p-4 px-7 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-zinc-100 shrink-0">
                     
                     {/* Checkbox persistencia */}
-                    <label className="flex items-center gap-2 cursor-pointer select-none group">
+                    <label 
+                        onClick={() => setDontShowAgain(v => !v)}
+                        className="flex items-center gap-2.5 cursor-pointer select-none group py-1"
+                    >
                         <div 
-                            onClick={() => setDontShowAgain(v => !v)}
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
                                 dontShowAgain 
-                                    ? 'bg-[#000000] border-[#000000] text-white' 
-                                    : 'border-[#eaeaea] bg-white hover:border-[#111111]'
+                                    ? 'bg-zinc-950 border-zinc-950 text-white shadow-xs' 
+                                    : 'border-zinc-300 bg-white group-hover:border-zinc-500'
                             }`}
                         >
                             {dontShowAgain && <Check size={11} strokeWidth={3} />}
                         </div>
-                        <span 
-                            onClick={() => setDontShowAgain(v => !v)}
-                            className="text-[12px] text-[#666666] group-hover:text-[#111111] font-medium transition-colors"
-                        >
+                        <span className="text-[12.5px] text-zinc-500 group-hover:text-zinc-900 font-medium transition-colors">
                             No volver a mostrar al iniciar sesión
                         </span>
                     </label>
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                        {onOpenGuide && (
-                            <button
-                                onClick={handleOpenInteractiveGuide}
-                                className="border border-[#eaeaea] bg-white text-[#111111] text-[13px] font-medium h-9 px-3.5 rounded-md hover:border-[#000000] transition-colors cursor-pointer"
-                                title="Abrir Guía Detallada"
-                            >
-                                <span>Ver Guía</span>
-                            </button>
-                        )}
-
-                        <button
-                            onClick={handleFinish}
-                            className="bg-[#000000] text-white text-[13px] font-medium h-9 px-4 rounded-md hover:bg-[#222222] active:scale-[0.98] transition-all cursor-pointer shadow-sm"
-                            title={config.primaryActionLabel}
-                        >
-                            <span>{config.primaryActionLabel}</span>
-                        </button>
-                    </div>
+                    {/* Botón Comenzar */}
+                    <button
+                        onClick={handleFinish}
+                        className="w-full sm:w-auto h-10 px-6 rounded-lg bg-zinc-950 text-white text-[13px] font-medium hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5"
+                        title="Comenzar"
+                    >
+                        <span>Comenzar</span>
+                        <ArrowRight size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </button>
                 </div>
             </div>
         </div>

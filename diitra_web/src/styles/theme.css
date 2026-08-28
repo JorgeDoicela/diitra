@@ -66,13 +66,13 @@
     --text-dim: #71717a;
     --accent: #09090b;
     --grid-color: rgba(0, 0, 0, 0.02);
-    --selection-bg: #6366f1;
+    --selection-bg: #0070f3;
     --selection-fg: #ffffff;
 
-    /* Marca corporativa */
-    --brand: #4f46e5;
-    --brand-dark: #3730a3;
-    --brand-light: #6366f1;
+    /* Marca corporativa (Vercel Blue auténtico) */
+    --brand: #0070f3;
+    --brand-dark: #0051c3;
+    --brand-light: #3291ff;
 
     /* Feedback adaptativo a fondos claros */
     --error: #e11d48;
@@ -84,7 +84,7 @@
     --error-subtle: rgba(225, 29, 72, 0.06);
     --warning-subtle: rgba(217, 119, 6, 0.06);
     --info-subtle: rgba(2, 132, 199, 0.06);
-    --brand-subtle: rgba(79, 70, 229, 0.06);
+    --brand-subtle: rgba(0, 112, 243, 0.06);
 
     --accents-1: #ffffff;
     --accents-2: #f4f4f5;

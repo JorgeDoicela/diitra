@@ -33,7 +33,7 @@ export const PublicGroupsImpact: React.FC<PublicGroupsImpactProps> = ({
                     <div className="space-y-6 pt-2">
                         {[
                             { title: 'Acreditación CACES', desc: 'Cumplimiento del modelo de evaluación para institutos tecnológicos en I+D+i.' },
-                            { title: 'Ecosistemas tecnológicos', desc: 'Proyectos en ciberseguridad, energías renovables, desarrollo de software y biotecnología.' },
+                            { title: 'Desarrollo tecnológico', desc: 'Proyectos en ciberseguridad, energías renovables, desarrollo de software y biotecnología.' },
                             { title: 'Propiedad intelectual', desc: 'Registro de patentes y derechos de autor a través del SENADI.' },
                         ].map(({ title, desc }) => (
                             <div key={title}>
@@ -48,7 +48,7 @@ export const PublicGroupsImpact: React.FC<PublicGroupsImpactProps> = ({
                 <div className="lg:col-span-7 bento-card static bg-surface/10 divide-y divide-border-thin/50 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
                     <div className="px-6 py-4 flex items-center justify-between bg-surface/20">
                         <span className="text-xs font-mono text-text-dim uppercase tracking-wider">// Líneas de Investigación</span>
-                        <span className="badge-vercel badge-vercel-success text-[9px] font-mono uppercase tracking-wide">Ecosistema</span>
+                        <span className="badge-vercel badge-vercel-success text-[9px] font-mono uppercase tracking-wide">Investigación</span>
                     </div>
                     {lineasStats.map((linea) => {
                         const pct = Math.min(100, (linea.projectsCount / Math.max(1, totalProyectos)) * 100);

@@ -2,444 +2,147 @@ import type { RoleWelcomeConfig } from './types';
 
 export const ADMIN_WELCOME: RoleWelcomeConfig = {
     role: 'admin',
-    roleLabel: 'Administrador del Ecosistema',
-    greeting: 'Bienvenido al Centro de Mando Institucional',
-    subtitle: 'Supervisión ejecutiva de proyectos, ciclo de vida documental y gobernanza integral del DIITRA.',
-    modules: [
+    roleLabel: 'Administrador Institucional',
+    greeting: 'Bienvenido a DIITRA',
+    systemDescription: 'DIITRA centraliza la investigación, desarrollo tecnológico e innovación del Tecnológico Traversari, asegurando la gobernanza científica, el cumplimiento normativo CACES y la preservación de la producción académica institucional.',
+    sectionTitle: 'Ejes Estratégicos de Gestión Institucional',
+    benefits: [
         {
-            id: 'analiticas',
-            title: 'Analíticas y KPIs',
-            summary: 'Supervisión integral de proyectos, ejecución presupuestaria y cumplimiento de estándares CACES.',
-            badge: 'Mando',
-            details: {
-                headline: 'Supervisión Estratégica Institucional',
-                summaryTitle: 'Resumen Institucional',
-                summaryRows: [
-                    { label: 'Proyectos Activos', value: '14 vigentes', statusColor: 'emerald' },
-                    { label: 'Investigadores Activos', value: '10 miembros', statusColor: 'blue' },
-                    { label: 'Productos Científicos', value: '2 validados', statusColor: 'emerald' },
-                    { label: 'Ejecución Presupuestaria', value: '100%', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Monitoreo de Proyectos I+D',
-                        description: 'Seguimiento en tiempo real de propuestas en fase de borrador, evaluación y acreditación final.',
-                        tag: 'Control'
-                    },
-                    {
-                        title: 'Ejecución Financiera',
-                        description: 'Control de partidas presupuestarias asignadas a convocatorias internas e innovación aplicada.',
-                        tag: 'Finanzas'
-                    }
-                ],
-                footerNote: 'Módulo optimizado para comités directivos y auditorías CACES.'
-            }
+            title: 'Investigación, Innovación y Banco de Proyectos',
+            description: 'Supervisión del ciclo de vida de proyectos I+D, transferencia tecnológica, convocatorias con financiamiento y analíticas de producción científica.',
+            tag: 'Investigación'
         },
         {
-            id: 'documentos',
-            title: 'Gestión Documental',
-            summary: 'Administración de plantillas oficiales, flujos de aprobación y resguardo de versiones institucionales.',
-            badge: 'Documentos',
-            details: {
-                headline: 'Ciclo de Vida Documental Normativo',
-                summaryTitle: 'Resumen de Plantillas y Firmas',
-                summaryRows: [
-                    { label: 'Plantillas Oficiales', value: '6 vigentes', statusColor: 'emerald' },
-                    { label: 'Firmas Digitales Activas', value: '100% validadas', statusColor: 'emerald' },
-                    { label: 'Versión Normativa', value: 'v2.4 ISTPET', statusColor: 'blue' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Plantillas Maestras Universales',
-                        description: 'Configuración de formatos institucionales para planes bienales, informes semestrales y rúbricas.',
-                        tag: 'Formatos'
-                    },
-                    {
-                        title: 'Aprobaciones con Firma Electrónica',
-                        description: 'Flujo estructurado de validación de documentos con certificado criptográfico oficial.',
-                        tag: 'Firmas'
-                    }
-                ],
-                footerNote: 'Formatos homologados según normativa institucional 2026.'
-            }
+            title: 'Evaluación por Pares y Baremos CACES',
+            description: 'Asignación de evaluadores ciegos, parametrización de rúbricas cuantitativas sobre 100 puntos y seguimiento de dictámenes formales.',
+            tag: 'Evaluación'
         },
         {
-            id: 'auditoria',
-            title: 'Auditoría y LOPDP',
-            summary: 'Trazabilidad criptográfica de eventos, protección de datos personales y gestión de derechos ARCO.',
-            badge: 'Seguridad',
-            details: {
-                headline: 'Seguridad Forense y Cumplimiento Legal',
-                summaryTitle: 'Trazabilidad y Privacidad',
-                summaryRows: [
-                    { label: 'Cumplimiento LOPDP', value: '100% conforme', statusColor: 'emerald' },
-                    { label: 'Integridad Criptográfica', value: 'SHA-256 válida', statusColor: 'emerald' },
-                    { label: 'Incidentes Detectados', value: '0 alertas', statusColor: 'neutral' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Registro Forense de Auditoría',
-                        description: 'Auditoría inmutable de accesos, modificaciones de estado, firmas estampadas y descargas.',
-                        tag: 'Auditoría'
-                    },
-                    {
-                        title: 'Derechos ARCO y Privacidad',
-                        description: 'Gestión formal de solicitudes de acceso, rectificación, cancelación y oposición de datos.',
-                        tag: 'LOPDP'
-                    }
-                ],
-                footerNote: 'Alineado con la Ley Orgánica de Protección de Datos Personales.'
-            }
+            title: 'Ciclo Documental, Plantillas y Firmas',
+            description: 'Gestión de plantillas maestras normativas, flujo de aprobaciones, firmas criptográficas y portal de verificación de autenticidad QR.',
+            tag: 'Documentos'
         },
         {
-            id: 'gobernanza',
-            title: 'Gobernanza y Roles',
-            summary: 'Administración de usuarios, asignación de permisos, baremos normativos y convocatorias institucionales.',
-            badge: 'Gobernanza',
-            details: {
-                headline: 'Parametrización del Ecosistema',
-                summaryTitle: 'Comunidad Académica DIITRA',
-                summaryRows: [
-                    { label: 'Docentes Investigadores', value: '32 activos', statusColor: 'emerald' },
-                    { label: 'Estudiantes en Semilleros', value: '120 vinculados', statusColor: 'blue' },
-                    { label: 'Revisores Pares Externos', value: '8 evaluadores', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Control de Accesos RBAC',
-                        description: 'Asignación granular de roles y facultades para docentes, estudiantes, revisores y directivos.',
-                        tag: 'Permisos'
-                    },
-                    {
-                        title: 'Baremos y Líneas de Investigación',
-                        description: 'Configuración de baremos cuantitativos CACES y áreas temáticas por carrera institucional.',
-                        tag: 'Baremos'
-                    }
-                ],
-                footerNote: 'Gobernanza alineada con el Plan Estratégico de Desarrollo Institucional.'
-            }
+            title: 'Gobernanza, Auditoría Forense y LOPDP',
+            description: 'Administración de usuarios y permisos (RBAC), bitácora inmutable SHA-256, gestión de derechos ARCO y motor de notificaciones.',
+            tag: 'Gobernanza'
         }
     ],
-    primaryActionLabel: 'Ingresar al Panel',
-    secondaryActionLabel: 'Ver Guía del Sistema'
+    primaryActionLabel: 'Comenzar'
 };
 
 export const DOCENTE_WELCOME: RoleWelcomeConfig = {
     role: 'docente',
     roleLabel: 'Docente Investigador',
-    greeting: 'Bienvenido a tu Espacio Científico',
-    subtitle: 'La plataforma unificada para formular proyectos en tiempo real, monitorear tu carga horaria y respaldar evidencias CACES.',
-    modules: [
+    greeting: 'Bienvenido a DIITRA',
+    systemDescription: 'DIITRA es tu entorno de trabajo científico institucional. Aquí podrás formular proyectos con tus colegas en tiempo real, respaldar tu carga horaria ante SIGAFI y automatizar tus evidencias para los procesos de acreditación CACES.',
+    sectionTitle: 'Ejes de Investigación y Docencia',
+    benefits: [
         {
-            id: 'workspace',
-            title: 'Workspace Colaborativo',
-            summary: 'Redacción en tiempo real con co-autores, matrices de coherencia y plantillas oficiales normativas.',
-            badge: 'Colaboración',
-            details: {
-                headline: 'Co-autoría en Tiempo Real y Metodología',
-                summaryTitle: 'Estado de Producción del Periodo',
-                summaryRows: [
-                    { label: 'Proyectos Activos', value: '1 en desarrollo', statusColor: 'emerald' },
-                    { label: 'Co-autores Conectados', value: '3 miembros', statusColor: 'blue' },
-                    { label: 'Sincronización en Vivo', value: 'Yjs WebSockets', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Edición Simultánea con Colegas',
-                        description: 'Trabaja en la misma propuesta científica con co-autores con cursores en vivo y sin bloqueos.',
-                        tag: 'En Vivo'
-                    },
-                    {
-                        title: 'Matriz de Coherencia Integrada',
-                        description: 'Alineación guiada de problemas, objetivos, metodología, resultados y presupuesto.',
-                        tag: 'Metodología'
-                    }
-                ],
-                footerNote: 'Tus avances se sincronizan y resguardan de forma automática.'
-            }
+            title: 'Workspace Colaborativo en Tiempo Real',
+            description: 'Co-autoría simultánea en vivo con colegas mediante cursores compartidos, matrices de coherencia metodológica y plantillas oficiales normativas.',
+            tag: 'Colaboración'
         },
         {
-            id: 'distributivo',
-            title: 'Distributivo y Horas',
-            summary: 'Monitoreo de horas asignadas a investigación científica, cronograma de hitos y sincronización SIGAFI.',
-            badge: 'Distributivo',
-            details: {
-                headline: 'Control de Carga Horaria y Dedicación',
-                summaryTitle: 'Resumen del Periodo',
-                summaryRows: [
-                    { label: 'Mis Proyectos Activos', value: '1 proyecto', statusColor: 'emerald' },
-                    { label: 'Horas de Investigación', value: '7 hrs / sem', statusColor: 'emerald' },
-                    { label: 'Informes Pendientes', value: '1 por entregar', statusColor: 'amber' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Horas Semanales Asignadas',
-                        description: 'Visualización clara de tu tiempo lectivo y no lectivo destinado al desarrollo científico.',
-                        tag: 'Horas'
-                    },
-                    {
-                        title: 'Hitos y Entregables',
-                        description: 'Planificación de entregas intermedias, informes de avance y defensas de proyecto.',
-                        tag: 'Calendario'
-                    }
-                ],
-                footerNote: 'Sincronizado directamente con las bases académicas SIGAFI.'
-            }
+            title: 'Proyectos de Innovación y Transferencia',
+            description: 'Formulación de proyectos de prototipado tecnológico, vinculación con el sector productivo y registro de patentes ante el SENADI.',
+            tag: 'Innovación'
         },
         {
-            id: 'grupos',
-            title: 'Grupos y Semilleros',
-            summary: 'Administración de líneas temáticas de investigación, formulación de planes bienales e integración de tesistas.',
-            badge: 'Semilleros',
-            details: {
-                headline: 'Liderazgo de Grupos y Formación de Talento',
-                summaryTitle: 'Resumen de Grupo Científico',
-                summaryRows: [
-                    { label: 'Líneas de Investigación', value: '4 acreditadas', statusColor: 'emerald' },
-                    { label: 'Tesistas Asignados', value: '6 estudiantes', statusColor: 'blue' },
-                    { label: 'Plan Bienal', value: '2026-2027 vigente', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Dirección de Grupos de Investigación',
-                        description: 'Gestión de los miembros docentes, líneas de acción y producción científica anual del colectivo.',
-                        tag: 'Grupos'
-                    },
-                    {
-                        title: 'Vinculación de Estudiantes',
-                        description: 'Incorpora tesistas y estudiantes de semillero para cumplir horas formativas en tus proyectos.',
-                        tag: 'Estudiantes'
-                    }
-                ],
-                footerNote: 'Fortalece la investigación formativa y la acreditación de la carrera.'
-            }
+            title: 'Control de Distributivo y Horas SIGAFI',
+            description: 'Seguimiento automático de la carga horaria semanal lectiva y no lectiva asignada a investigación, con calendario unificado de hitos.',
+            tag: 'Distributivo'
         },
         {
-            id: 'caces',
-            title: 'Informes CACES',
-            summary: 'Formularios estructurados para informes de avance técnico y financiero con trazabilidad a criterios CACES.',
-            badge: 'Acreditación',
-            details: {
-                headline: 'Evidencias y Cumplimiento Normativo',
-                summaryTitle: 'Acreditación CACES',
-                summaryRows: [
-                    { label: 'Criterio CACES Asignado', value: 'B.1.2 Conforme', statusColor: 'emerald' },
-                    { label: 'Informe Técnico Semestral', value: 'Aprobado', statusColor: 'emerald' },
-                    { label: 'Auditoría Institucional', value: '100% Conforme', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Informes Técnicos Semestrales',
-                        description: 'Generación ágil de reportes de avance con gráficos, anexos y actas de reunión.',
-                        tag: 'Informes'
-                    },
-                    {
-                        title: 'Rendición de Fondos y Gastos',
-                        description: 'Justificación financiera de insumos, equipos y publicaciones financiadas por convocatorias.',
-                        tag: 'Finanzas'
-                    }
-                ],
-                footerNote: 'Evidencias listas para procesos de acreditación y auditoría de calidad.'
-            }
+            title: 'Grupos, Planes Bienales y Acreditación',
+            description: 'Dirección de grupos científicos, vinculación de tesistas y generación ágil de informes semestrales CACES con firma electrónica.',
+            tag: 'Acreditación'
         }
     ],
-    primaryActionLabel: 'Comenzar a Investigar',
-    secondaryActionLabel: 'Ver Guía del Docente'
+    primaryActionLabel: 'Comenzar'
 };
 
 export const ESTUDIANTE_WELCOME: RoleWelcomeConfig = {
     role: 'estudiante',
     roleLabel: 'Estudiante / Semillero',
-    greeting: 'Bienvenido a tu Portal de Investigación',
-    subtitle: 'El espacio oficial para colaborar en proyectos científicos, vincularte a grupos y certificar tus horas de titulación.',
-    modules: [
+    greeting: 'Bienvenido a DIITRA',
+    systemDescription: 'DIITRA es el entorno oficial del instituto para impulsar tu formación científica. Aquí podrás vincularte a grupos de investigación de tu carrera, participar en proyectos reales y certificar tus horas de investigación para la titulación.',
+    sectionTitle: 'Ejes de Formación y Titulación',
+    benefits: [
         {
-            id: 'grupos',
-            title: 'Directorio de Semilleros',
-            summary: 'Explora las líneas de investigación activas de tu carrera y postula para colaborar en grupos tutelados.',
-            badge: 'Oportunidades',
-            details: {
-                headline: 'Convocatorias de Semillero y Tesis',
-                summaryTitle: 'Oportunidades Académicas',
-                summaryRows: [
-                    { label: 'Grupos Disponibles', value: '8 por carrera', statusColor: 'emerald' },
-                    { label: 'Proyectos con Vacantes', value: '12 activos', statusColor: 'blue' },
-                    { label: 'Modalidad de Tutoría', value: 'Docentes ISTPET', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Catálogo de Grupos Científicos',
-                        description: 'Revisa las áreas temáticas de tu carrera: Software, Energías, Automatización o Administración.',
-                        tag: 'Líneas'
-                    },
-                    {
-                        title: 'Postulación a Proyectos',
-                        description: 'Envía tu solicitud para integrarte como asistente de investigación en proyectos docentes vigentes.',
-                        tag: 'Postular'
-                    }
-                ],
-                footerNote: 'Desarrolla competencias científicas y técnicas de alto nivel.'
-            }
+            title: 'Directorio y Postulación a Semilleros',
+            description: 'Explora las líneas de investigación activas de tu carrera (Software, Energías, Automatización) y postula para colaborar en proyectos docentes.',
+            tag: 'Semilleros'
         },
         {
-            id: 'horas',
-            title: 'Horas de Titulación',
-            summary: 'Certificación digital y registro de horas de investigación formativa válidas para tu graduación.',
-            badge: 'Titulación',
-            details: {
-                headline: 'Acreditación y Certificación de Horas',
-                summaryTitle: 'Progreso de Titulación',
-                summaryRows: [
-                    { label: 'Horas Acreditadas', value: '80 horas', statusColor: 'emerald' },
-                    { label: 'Meta de Titulación', value: '120 horas', statusColor: 'blue' },
-                    { label: 'Avance Porcentual', value: '66.7% completado', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Registro de Actividades',
-                        description: 'Bitácora de tareas de campo, pruebas piloto y desarrollo técnico respaldado por tu tutor.',
-                        tag: 'Bitácora'
-                    },
-                    {
-                        title: 'Certificado Institucional',
-                        description: 'Descarga tu constancia oficial con código QR para el expediente de grado.',
-                        tag: 'Certificado'
-                    }
-                ],
-                footerNote: 'Tus horas quedan legalmente acreditadas ante secretaría académica.'
-            }
+            title: 'Acreditación de Horas de Titulación',
+            description: 'Bitácora digital de horas prácticas de investigación formativa y descarga de constancias oficiales certificadas con código QR para graduación.',
+            tag: 'Titulación'
         },
         {
-            id: 'workspace',
-            title: 'Espacio Asistido',
-            summary: 'Accede a plantillas normativas oficiales del instituto y redacta tus avances con retroalimentación del tutor.',
-            badge: 'Plantillas',
-            details: {
-                headline: 'Redacción Asistida y Tutoría',
-                summaryTitle: 'Entregables del Proyecto',
-                summaryRows: [
-                    { label: 'Formato Normativo', value: 'ISTPET 2026', statusColor: 'emerald' },
-                    { label: 'Tutoría Asignada', value: 'En Línea', statusColor: 'blue' },
-                    { label: 'Avances Revisados', value: '3 capítulos', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Plantillas Oficiales de Tesis',
-                        description: 'Estructuras listas con portada institucional, formato APA 7ma edición y secciones metodológicas.',
-                        tag: 'Formato'
-                    },
-                    {
-                        title: 'Comentarios del Docente Director',
-                        description: 'Recibe correcciones y sugerencias directamente en las secciones de tu trabajo.',
-                        tag: 'Tutoría'
-                    }
-                ],
-                footerNote: 'Garantiza el cumplimiento de los estándares de titulación institucional.'
-            }
+            title: 'Espacio de Redacción con Tutoría en Línea',
+            description: 'Redacta tu propuesta de grado con plantillas oficiales institucionales y recibe retroalimentación y correcciones directas de tu docente director.',
+            tag: 'Plantillas'
+        },
+        {
+            title: 'Portal de Verificación y Certificados',
+            description: 'Acceso a la validación pública de autenticidad de tus constancias y participación en semilleros de investigación científica institucional.',
+            tag: 'Verificación'
         }
     ],
-    primaryActionLabel: 'Explorar Oportunidades',
-    secondaryActionLabel: 'Ver Guía del Estudiante'
+    primaryActionLabel: 'Comenzar'
 };
 
 export const REVISOR_WELCOME: RoleWelcomeConfig = {
     role: 'revisor',
     roleLabel: 'Revisor Par Evaluador',
-    greeting: 'Bienvenido al Panel de Arbitraje Científico',
-    subtitle: 'Plataforma confidencial y rigurosa para la evaluación técnica, metodológica y presupuestaria de propuestas.',
-    modules: [
+    greeting: 'Bienvenido a DIITRA',
+    systemDescription: 'DIITRA provee un entorno riguroso, confidencial y transparente para la evaluación técnica, metodológica y presupuestaria de propuestas de investigación científica institucional.',
+    sectionTitle: 'Ejes de Arbitraje y Dictamen',
+    benefits: [
         {
-            id: 'evaluacion',
-            title: 'Rúbricas CACES',
-            summary: 'Calificación cuantitativa de rigor metodológico, pertinencia, viabilidad e impacto científico.',
-            badge: 'Rúbricas',
-            details: {
-                headline: 'Evaluación Cuantitativa Ponderada',
-                summaryTitle: 'Resumen de Rúbrica',
-                summaryRows: [
-                    { label: 'Escala de Calificación', value: 'Sobre 100 puntos', statusColor: 'emerald' },
-                    { label: 'Estándar Normativo', value: 'Criterios CACES', statusColor: 'blue' },
-                    { label: 'Dictamen Oficial', value: 'Estructurado', statusColor: 'emerald' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Criterios Metodológicos',
-                        description: 'Evaluación de planteamiento del problema, hipótesis, diseño experimental y referencias científicas.',
-                        tag: 'Metodología'
-                    },
-                    {
-                        title: 'Viabilidad Presupuestaria',
-                        description: 'Análisis de la coherencia entre actividades planificadas y recursos financieros solicitados.',
-                        tag: 'Presupuesto'
-                    }
-                ],
-                footerNote: 'Garantiza la imparcialidad y la calidad científica de las convocatorias.'
-            }
+            title: 'Panel de Arbitraje Doble Ciego',
+            description: 'Entorno confidencial y blindado con estricta reserva de identidades entre autores y evaluadores para garantizar absoluta objetividad.',
+            tag: 'Confidencial'
         },
         {
-            id: 'arbitraje',
-            title: 'Arbitraje Doble Ciego',
-            summary: 'Revisión técnica con estricta reserva de identidad de autores y trazabilidad transparente de dictámenes.',
-            badge: 'Confidencial',
-            details: {
-                headline: 'Confidencialidad e Integridad Ética',
-                summaryTitle: 'Panel de Dictamen',
-                summaryRows: [
-                    { label: 'Modalidad de Arbitraje', value: 'Doble Ciego', statusColor: 'emerald' },
-                    { label: 'Firma Digital', value: 'Habilitada', statusColor: 'emerald' },
-                    { label: 'Trazabilidad Forense', value: 'Inmutable', statusColor: 'blue' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Anonimato de Autores y Evaluadores',
-                        description: 'Proceso blindado contra sesgos personales para asegurar la máxima objetividad académica.',
-                        tag: 'Ética'
-                    },
-                    {
-                        title: 'Emisión de Dictamen Formal',
-                        description: 'Resoluciones formales estructuradas: Aprobado, Aprobado con Modificaciones, o No Aprobado.',
-                        tag: 'Dictamen'
-                    }
-                ],
-                footerNote: 'Tu evaluación respalda la toma de decisiones del comité científico.'
-            }
+            title: 'Evaluación Cuantitativa por Rúbricas CACES',
+            description: 'Calificación ponderada sobre 100 puntos evaluando rigor metodológico, pertinencia institucional y coherencia presupuestaria.',
+            tag: 'Rúbricas'
+        },
+        {
+            title: 'Emisión de Dictámenes con Firma Digital',
+            description: 'Emite resoluciones vinculantes (Aprobado, Aprobado con modificaciones, Rechazado) respaldadas con firma electrónica criptográfica.',
+            tag: 'Dictámenes'
+        },
+        {
+            title: 'Certificados Oficiales de Arbitraje',
+            description: 'Generación automática de constancias institucionales con código QR verificable para respaldo de tu trayectoria científica.',
+            tag: 'Certificados'
         }
     ],
-    primaryActionLabel: 'Ver Proyectos por Evaluar',
-    secondaryActionLabel: 'Ver Criterios de Evaluación'
+    primaryActionLabel: 'Comenzar'
 };
 
 export const DEFAULT_WELCOME: RoleWelcomeConfig = {
     role: 'todos',
     roleLabel: 'Miembro de la Comunidad',
-    greeting: 'Bienvenido al Ecosistema DIITRA',
-    subtitle: 'La plataforma integral de investigación, desarrollo tecnológico y producción académica del Tecnológico Traversari.',
-    modules: [
+    greeting: 'Bienvenido a DIITRA',
+    systemDescription: 'DIITRA centraliza la investigación, desarrollo tecnológico y producción académica del Tecnológico Traversari.',
+    sectionTitle: 'Módulos y Funciones Disponibles',
+    benefits: [
         {
-            id: 'plataforma',
-            title: 'Plataforma Científica',
-            summary: 'Herramientas modernas para la formulación, seguimiento y acreditación de proyectos científicos.',
-            badge: 'Ecosistema',
-            details: {
-                headline: 'Ecosistema de Investigación Aplicada',
-                summaryTitle: 'Resumen Institucional',
-                summaryRows: [
-                    { label: 'Proyectos Activos', value: '14 vigentes', statusColor: 'emerald' },
-                    { label: 'Investigadores', value: '32 docentes', statusColor: 'blue' }
-                ],
-                actionPoints: [
-                    {
-                        title: 'Investigación Aplicada',
-                        description: 'Acceso a convocatorias institucionales, banco de proyectos y catálogo de grupos científicos.',
-                        tag: 'Ciencia'
-                    }
-                ],
-                footerNote: 'ISTPET — Tecnológico Traversari 2026.'
-            }
+            title: 'Investigación Aplicada e Innovación',
+            description: 'Consulta convocatorias abiertas, banco de proyectos institucionales y líneas de investigación por carrera.',
+            tag: 'Ciencia'
+        },
+        {
+            title: 'Acreditación y Calidad Académica',
+            description: 'Acceso a normativas, formatos oficiales y respaldo de actividades de vinculación e investigación.',
+            tag: 'Calidad'
         }
     ],
-    primaryActionLabel: 'Comenzar Recorrido',
-    secondaryActionLabel: 'Ver Guía del Sistema'
+    primaryActionLabel: 'Comenzar'
 };
 
 export const getWelcomeConfigByRole = (

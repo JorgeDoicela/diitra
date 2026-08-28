@@ -28,27 +28,38 @@ En lugar de tarjetas de KPI rectangulares gigantes arriba (anti-patrón de IA), 
 
 ---
 
-## 2. Patrón: Modal de Onboarding y Bienvenida (Welcome Onboarding)
+## 2. Patrón: Modal de Bienvenida Oficial (Vercel Geist Bento 1-Capa)
 
-* **Columna Izquierda (Módulos del Rol):** Lista vertical con borde de 1px, división interna y línea de selección izquierda de 2px (`border-l-2 border-l-black`).
-* **Columna Derecha (Capacidades del Módulo + Resumen):** Lista de capacidades principales con sus tags normativos y bloque de resumen compacto.
-* **Footer:** Checkbox a la izquierda y botones Vercel a la derecha (`Ver Guía` + `Ingresar al Panel`).
+El modal de bienvenida oficial de DIITRA utiliza una arquitectura limpia de **1 sola capa espaciosa sin anidamientos pesados ni cajas dentro de cajas**:
+
+* **Contenedor:** `max-w-[680px] bg-white border border-zinc-200/80 rounded-2xl shadow-[0_20px_70px_rgba(0,0,0,0.15)]`.
+* **Header:**
+  * Breadcrumb: `DIITRA / [Rol]` (insignia en Geist Mono `text-[10.5px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-50 border border-zinc-200`).
+  * Título: `text-[26px] font-bold text-zinc-950 tracking-[-0.03em] leading-tight`.
+  * Subtítulo cálido con la misión institucional del sistema (`text-[13.5px] text-zinc-600 leading-relaxed max-w-xl`).
+* **Cuerpo (Bento Grid 2x2):**
+  * 4 tarjetas amplias de 1 solo nivel: `border border-zinc-200/80 bg-white rounded-xl p-4.5`.
+  * Micro-interacciones de elevación al hacer hover (`hover:border-zinc-400/80 hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:-translate-y-[1px]`).
+  * Título en Geist Sans 600 (`text-[13.5px]`), etiqueta temática en Geist Mono (`text-[10px]`) y texto explicativo del beneficio para el rol.
+* **Footer:**
+  * Checkbox estilizado de 4px con persistencia en `localStorage`.
+  * Botón primario negro sólido Vercel: `h-10 px-6 rounded-lg bg-zinc-950 text-white font-medium text-[13px] hover:bg-black active:scale-[0.98]`.
 
 ---
 
 ## 3. ANTI-PATRONES PROHIBIDOS
 
 ### ❌ AP1 — KPIs Gigantes Arriba (IA Genérica)
-* Prohibido poner 3 o 4 cajas gigantes con números sobredimensionados arriba de las vistas. Usa listas compactas de resumen.
+* Prohibido poner 3 o 4 cajas gigantes con números sobredimensionados arriba de las vistas. Usa listas compactas de resumen o tarjetas Bento de 1 capa.
 
-### ❌ AP2 — Jerga de Infraestructura / DevOps en UI Académica
+### ❌ AP2 — Anidamiento de Cajas dentro de Cajas (Cosas Aplastadas)
+* Prohibido meter dashboards en miniatura, dibujos o sub-contenedores dentro de un modal.
+
+### ❌ AP3 — Jerga de Infraestructura / DevOps en UI Académica
 * Prohibido mostrar `Rama: main`, `Commit -o-`, `Environment: Production` o `GET /api/... 200 OK`.
 
-### ❌ AP3 — Textos y Títulos Truncados con Elipsis (`...`)
+### ❌ AP4 — Textos y Títulos Truncados con Elipsis (`...`)
 * Prohibido diseñar tarjetas donde el texto se corte con `text-ellipsis`.
 
-### ❌ AP4 — Mezclar Pestañas con Carrusel Auto-Play
-* Prohibido agregar temporizadores automáticos en listas de pestañas.
-
 ### ❌ AP5 — Emojis o Iconos Decorativos Superfluos
-* Prohibido usar cualquier emoji en la interfaz.
+* Prohibido usar cualquier emoji o iconos no esenciales.

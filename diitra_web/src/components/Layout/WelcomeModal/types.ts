@@ -1,37 +1,17 @@
 import { DiitraRole } from '../Help/types';
 
-export interface SummaryMetricRow {
-    label: string;
-    value: string;
-    statusColor?: 'emerald' | 'blue' | 'amber' | 'neutral';
-}
-
-export interface ModuleActionPoint {
+export interface RoleBenefit {
     title: string;
     description: string;
-    tag?: string;
-}
-
-export interface WelcomeModule {
-    id: string;
-    title: string;
-    summary: string;
-    badge: string;
-    details: {
-        headline: string;
-        summaryTitle: string;
-        summaryRows: SummaryMetricRow[];
-        actionPoints: ModuleActionPoint[];
-        footerNote?: string;
-    };
+    tag: string;
 }
 
 export interface RoleWelcomeConfig {
     role: DiitraRole;
     roleLabel: string;
     greeting: string;
-    subtitle: string;
-    modules: WelcomeModule[];
+    systemDescription: string;
+    sectionTitle: string;
+    benefits: RoleBenefit[];
     primaryActionLabel: string;
-    secondaryActionLabel?: string;
 }

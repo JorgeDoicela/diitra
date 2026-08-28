@@ -43,8 +43,12 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, confi
     const renderContentMockup = () => {
         const isHighlightTop = highlight === 'content-top';
         const isHighlightBottom = highlight === 'content-bottom';
-        const highlightTopClass = isHighlightTop ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' : 'border-border-thin bg-surface';
-        const highlightBottomClass = isHighlightBottom ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)] border-2' : 'border-border-thin bg-surface';
+        const highlightTopClass = isHighlightTop 
+            ? 'border-[#0070f3] bg-[#0070f3]/10 shadow-[0_0_10px_rgba(0,112,243,0.2)]' 
+            : 'border-border-thin bg-surface';
+        const highlightBottomClass = isHighlightBottom 
+            ? 'border-[#0070f3] bg-[#0070f3]/10 shadow-[0_0_10px_rgba(0,112,243,0.2)] border-2' 
+            : 'border-border-thin bg-surface';
 
         const MockupComp = config.Mockup || DEFAULT_CONFIG.Mockup;
         if (MockupComp) {
@@ -54,18 +58,18 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, confi
     };
 
     return (
-        <div className="relative w-full max-w-[420px] aspect-[16/10] bg-bg-deep/40 border border-border-thin rounded-2xl p-2.5 shadow-inner select-none transition-all duration-300">
+        <div className="relative w-full max-w-[420px] aspect-[16/10] bg-surface-hover/50 border border-border-thin rounded-xl p-2.5 shadow-inner select-none transition-all duration-300">
             {/* Inner Mockup grid layout representing DIITRA */}
-            <div className={`w-full h-full flex flex-col gap-1.5 rounded-xl overflow-hidden p-1.5 transition-all duration-300 ${
+            <div className={`w-full h-full flex flex-col gap-1.5 rounded-lg overflow-hidden p-1.5 transition-all duration-300 ${
                 highlight === 'all' 
-                    ? 'border-2 border-brand shadow-[0_0_15px_rgba(0,112,243,0.35)] bg-brand/5' 
-                    : 'border border-border-thin'
+                    ? 'border-2 border-[#0070f3] bg-[#0070f3]/[0.03]' 
+                    : 'border border-border-thin bg-surface'
             }`}>
                 
                 {/* Simulated TopBar */}
-                <div className={`h-8 border rounded-lg px-2 flex items-center justify-between transition-all duration-300 ${
+                <div className={`h-8 border rounded-md px-2 flex items-center justify-between transition-all duration-300 ${
                     highlight === 'topbar' 
-                        ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' 
+                        ? 'border-[#0070f3] bg-[#0070f3]/10 shadow-[0_0_10px_rgba(0,112,243,0.2)]' 
                         : 'border-border-thin bg-surface'
                 }`}>
                     <div className="flex items-center gap-1.5">
@@ -84,16 +88,16 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, confi
                 <div className="flex-1 flex gap-1.5 min-h-0">
                     
                     {/* Simulated Sidebar */}
-                    <div className={`w-[22%] rounded-lg border p-1 flex flex-col justify-between transition-all duration-300 ${
+                    <div className={`w-[22%] rounded-md border p-1 flex flex-col justify-between transition-all duration-300 ${
                         highlight === 'sidebar' 
-                            ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' 
+                            ? 'border-[#0070f3] bg-[#0070f3]/10 shadow-[0_0_10px_rgba(0,112,243,0.2)]' 
                             : 'border-border-thin bg-surface'
                     }`}>
                         <div className="space-y-1.5">
                             {/* Logo */}
-                            <div className="w-8 h-2.5 bg-brand/35 rounded-sm mx-auto mb-2" />
+                            <div className="w-8 h-2.5 bg-text-main/20 rounded-sm mx-auto mb-2" />
                             {/* Items */}
-                            <div className="w-full h-2 bg-text-main/15 rounded-sm" />
+                            <div className={`w-full h-2 rounded-sm ${highlight === 'sidebar' ? 'bg-[#0070f3]' : 'bg-text-main/15'}`} />
                             <div className="w-4/5 h-2 bg-text-dim/10 rounded-sm" />
                             <div className="w-full h-2 bg-text-dim/10 rounded-sm" />
                             <div className="w-3/5 h-2 bg-text-dim/10 rounded-sm" />
@@ -116,19 +120,14 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, confi
                 >
                     {/* Ring Pointer pulse */}
                     <div className="relative flex items-center justify-center">
-                        <span className="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-brand opacity-60"></span>
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-brand border border-white shadow-md"></span>
+                        <span className="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-[#0070f3] opacity-60"></span>
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#0070f3] border-2 border-white shadow-md"></span>
                     </div>
 
                     {/* Floating Info Tag under the pointer */}
-                    <div className="mt-1 bg-brand text-[8px] font-semibold tracking-wider text-white px-1.5 py-0.5 rounded shadow-lg border border-brand-light whitespace-nowrap animate-fade-in">
+                    <div className="mt-1 bg-[#000000] text-[8.5px] font-mono font-semibold tracking-wider text-white px-2 py-0.5 rounded shadow-lg border border-[#333333] whitespace-nowrap animate-fade-in">
                         {stepTitle}
                     </div>
-
-                    {/* SVG Connector Arrow pointing to highlight */}
-                    <svg className="w-4 h-4 text-brand -mt-1.5 fill-current animate-bounce" viewBox="0 0 20 20">
-                        <path d="M10 5l-5 6h10l-5-6z" />
-                    </svg>
                 </div>
             )}
         </div>
@@ -260,11 +259,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
         return config.steps[stepIdx]?.highlight || 'none';
     };
 
-    // Get active step label for mockup tooltip
+    // Calculate active step title label for pointer
     const getActiveStepLabel = () => {
-        if (currentStep === 0) return 'Módulo General';
-        if (currentStep === totalSteps - 1) return 'Cumplimiento';
-        return `Paso ${currentStep}`;
+        if (currentStep === 0) return 'Visión General';
+        if (currentStep === totalSteps - 1) return 'Normativa CACES';
+        const stepIdx = currentStep - 1;
+        return config.steps[stepIdx]?.title || 'Paso';
     };
 
     return (
@@ -281,33 +281,37 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
             />
 
             {/* Modal Dialog Card */}
-            <div className="relative w-full max-w-3xl bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-up overflow-hidden max-h-[90vh]">
+            <div className="relative w-full max-w-3xl bg-surface border border-border-thin rounded-xl shadow-2xl flex flex-col z-10 animate-scale-up overflow-hidden max-h-[90vh]">
                 
-                {/* Header */}
+                {/* Header Vercel Geist */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-surface border border-border-thin flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-md bg-surface border border-border-thin flex items-center justify-center text-text-main">
                             {config.icon}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="section-label !text-brand leading-none">
-                                    Guía Interactiva
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-[11px] font-semibold text-text-main">
+                                    DIITRA
+                                </span>
+                                <span className="text-text-dim">/</span>
+                                <span className="text-[10px] font-mono text-text-dim px-2 py-0.5 rounded-full border border-border-thin bg-surface-hover">
+                                    Guía del Módulo
                                 </span>
                                 {roleDisplayName && (
-                                    <span className="text-[7.5px] font-mono px-1.5 py-0.5 rounded bg-surface border border-border-thin text-text-dim uppercase tracking-wider font-semibold">
+                                    <span className="text-[10px] font-mono text-text-dim px-2 py-0.5 rounded-full border border-border-thin bg-surface">
                                         {roleDisplayName}
                                     </span>
                                 )}
                             </div>
-                            <h3 className="text-xs font-semibold tracking-wide text-text-main font-sans">
+                            <h3 className="text-xs font-semibold tracking-tight text-text-main font-sans">
                                 {config.title}
                             </h3>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                        className="p-1.5 rounded-md text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
                         title="Cerrar Guía"
                         aria-label="Cerrar Guía"
                     >
@@ -316,10 +320,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                 </div>
 
                 {/* Two-Column Body Grid */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar relative min-h-[380px] flex flex-col md:flex-row border-b border-border-thin">
+                <div className="flex-1 overflow-y-auto custom-scrollbar relative min-h-[380px] flex flex-col md:flex-row border-b border-border-thin bg-surface">
                     
                     {/* Left Column: Explanations & Text Wizard */}
-                    <div className="w-full md:w-[45%] p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border-thin">
+                    <div className="w-full md:w-[45%] p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border-thin">
                         <div 
                             key={currentStep}
                             className={`flex-1 flex flex-col justify-center ${
@@ -328,22 +332,22 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                         >
                             {currentStep === 0 && (
                                 /* Step 0: Overview & Summary */
-                                <div className="space-y-4 py-2">
-                                    <div className="w-12 h-12 rounded-2xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand shadow-inner animate-pulse">
+                                <div className="space-y-3.5 py-1">
+                                    <div className="w-9 h-9 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-main shadow-sm">
                                         {config.icon}
                                     </div>
-                                    <div className="space-y-1">
-                                        <span className="text-[9px] font-semibold tracking-widest text-brand">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block">
                                             Introducción
                                         </span>
-                                        <h4 className="text-sm font-semibold tracking-wider text-text-main">
+                                        <h4 className="text-[14px] font-semibold text-text-main tracking-tight">
                                             {config.title}
                                         </h4>
                                     </div>
-                                    <p className="text-[11.5px] font-semibold text-text-main leading-snug">
+                                    <p className="text-[12px] font-medium text-text-main leading-snug">
                                         {config.summary}
                                     </p>
-                                    <p className="text-[11px] text-text-dim leading-relaxed font-medium">
+                                    <p className="text-[11.5px] text-text-dim leading-relaxed">
                                         {config.description}
                                     </p>
                                 </div>
@@ -354,19 +358,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                 const step = config.steps[stepIdx];
                                 return (
                                     /* Step 1 to N: Sequential Instructions */
-                                    <div className="space-y-4 py-2">
-                                        <div className="w-9 h-9 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-xs font-mono font-semibold text-brand">
+                                    <div className="space-y-3.5 py-1">
+                                        <div className="w-7 h-7 rounded-full bg-surface border border-border-thin flex items-center justify-center text-xs font-mono font-semibold text-text-main">
                                             {currentStep}
                                         </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-semibold tracking-widest text-brand">
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block">
                                                 Paso {currentStep} de {config.steps.length}
                                             </span>
-                                            <h4 className="text-xs font-semibold tracking-wider text-text-main">
+                                            <h4 className="text-[13px] font-semibold text-text-main tracking-tight">
                                                 {step.title}
                                             </h4>
                                         </div>
-                                        <p className="text-[11.5px] text-text-dim leading-relaxed font-medium">
+                                        <p className="text-[12px] text-text-dim leading-relaxed">
                                             {step.description}
                                         </p>
                                     </div>
@@ -375,17 +379,17 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
 
                             {currentStep === totalSteps - 1 && (
                                 /* Final Step: Compliance & Quick Tips */
-                                <div className="space-y-5 py-2">
+                                <div className="space-y-4 py-1">
                                     {/* Compliance Banner */}
-                                    <div className="p-3.5 rounded-xl bg-brand/5 border border-brand/10 flex items-start gap-3">
-                                        <div className="p-1.5 bg-brand/10 rounded-lg text-brand shrink-0">
-                                            <Award size={16} />
+                                    <div className="p-3 rounded-lg bg-surface-hover border border-border-thin flex items-start gap-2.5">
+                                        <div className="p-1 rounded bg-surface border border-border-thin text-text-main shrink-0 mt-0.5">
+                                            <Award size={14} />
                                         </div>
                                         <div className="space-y-0.5">
-                                            <h5 className="text-[9px] font-semibold tracking-widest text-text-main">
+                                            <h5 className="text-[11px] font-semibold text-text-main">
                                                 Cumplimiento CACES
                                             </h5>
-                                            <p className="text-[10px] text-text-dim leading-relaxed font-medium">
+                                            <p className="text-[11px] text-text-dim leading-relaxed">
                                                 {config.compliance}
                                             </p>
                                         </div>
@@ -393,13 +397,13 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
 
                                     {/* Tips list */}
                                     <div className="space-y-2">
-                                        <h5 className="text-[8px] font-semibold tracking-widest text-text-dim border-b border-border-thin pb-1">
+                                        <h5 className="text-[10px] font-mono text-text-dim uppercase tracking-wider border-b border-border-thin pb-1">
                                             Accesibilidad y Consejos
                                         </h5>
-                                        <ul className="space-y-2">
+                                        <ul className="space-y-1.5">
                                             {config.tips.map((tip, idx) => (
-                                                <li key={idx} className="flex items-start gap-2 text-[10px] text-text-dim leading-relaxed font-medium">
-                                                    <Zap size={10} className="text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+                                                <li key={idx} className="flex items-start gap-2 text-[11px] text-text-dim leading-relaxed">
+                                                    <Zap size={11} className="text-amber-500 shrink-0 mt-0.5" />
                                                     <span>{typeof tip === 'string' ? tip : tip.text}</span>
                                                 </li>
                                             ))}
@@ -411,7 +415,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     </div>
 
                     {/* Right Column: Interactive UI Mockup Simulator */}
-                    <div className="w-full md:w-[55%] p-6 md:p-8 bg-bg-deep/10 flex flex-col justify-center items-center select-none">
+                    <div className="w-full md:w-[55%] p-6 bg-surface-hover/30 flex flex-col justify-center items-center select-none">
                         <LayoutMockup 
                             highlight={getActiveHighlight()} 
                             stepTitle={getActiveStepLabel()}
@@ -421,19 +425,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                 </div>
 
                 {/* Footer Controls */}
-                <div className="px-6 py-4 border-t border-border-thin bg-surface/50 flex items-center justify-between shrink-0">
+                <div className="px-6 py-3.5 border-t border-border-thin bg-surface flex items-center justify-between shrink-0">
                     {/* Previous Button */}
                     <button
                         onClick={handlePrev}
                         disabled={currentStep === 0}
-                        className={`btn-vercel-secondary !text-[10px] !py-1 !px-3 !gap-1.5 ${
+                        className={`btn-vercel-secondary !text-[11px] !py-1.5 !px-3.5 !gap-1.5 ${
                             currentStep === 0 
                                 ? 'opacity-30 pointer-events-none' 
                                 : ''
                         }`}
                         title="Paso Anterior"
                     >
-                        <ChevronLeft size={13} />
+                        <ChevronLeft size={14} />
                         <span>Atrás</span>
                     </button>
 
@@ -445,8 +449,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                 onClick={() => handleDotClick(idx)}
                                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                                     idx === currentStep 
-                                        ? 'w-4 bg-brand' 
-                                        : 'w-1.5 bg-border-hover hover:bg-text-dim'
+                                        ? 'w-5 bg-text-main' 
+                                        : 'w-1.5 bg-border-thin hover:bg-text-dim'
                                 }`}
                                 title={`Ir a la diapositiva ${idx + 1}`}
                                 aria-label={`Paso ${idx + 1}`}
@@ -458,20 +462,20 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     {currentStep === totalSteps - 1 ? (
                         <button
                             onClick={onClose}
-                            className="btn-brand !text-[10px] !py-1 !px-3.5 !gap-1.5"
+                            className="btn-vercel-primary !text-[11px] !py-1.5 !px-4 !gap-1.5"
                             title="Finalizar Guía"
                         >
                             <span>Entendido</span>
-                            <Check size={13} />
+                            <Check size={14} />
                         </button>
                     ) : (
                         <button
                             onClick={handleNext}
-                            className="btn-brand !text-[10px] !py-1 !px-3 !gap-1.5"
+                            className="btn-vercel-primary !text-[11px] !py-1.5 !px-4 !gap-1.5"
                             title="Siguiente Paso"
                         >
                             <span>Siguiente</span>
-                            <ChevronRight size={13} />
+                            <ChevronRight size={14} />
                         </button>
                     )}
                 </div>

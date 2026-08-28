@@ -297,14 +297,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             <div className="flex items-center">
                                 <button
                                     onClick={() => setIsHelpOpen(true)}
-                                    className="btn-vercel-secondary !text-[9.5px] !font-medium !py-1 !px-2.5 !gap-1.5 hover:!border-brand hover:!text-brand transition-all cursor-pointer"
-                                    title="Guía Interactiva del Módulo"
+                                    className="p-1.5 rounded-md text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                                    title="Guía Interactiva"
                                     aria-label="Abrir guía interactiva"
                                 >
-                                    <HelpCircle size={13} className="text-brand" />
-                                    <span className="tracking-wider uppercase font-sans">
-                                        Guía
-                                    </span>
+                                    <HelpCircle size={16} className="text-text-main" />
                                 </button>
                             </div>
                         </div>
@@ -333,11 +330,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setIsHelpOpen(true)}
-                                className="p-2 text-text-dim hover:text-brand transition-colors cursor-pointer"
+                                className="p-2 text-text-main hover:bg-surface-hover rounded-md transition-colors cursor-pointer"
                                 title="Guía Interactiva"
                                 aria-label="Abrir guía interactiva"
                             >
-                                <HelpCircle size={20} className="text-brand" />
+                                <HelpCircle size={20} className="text-text-main" />
                             </button>
                             <NotificationBell />
                         </div>

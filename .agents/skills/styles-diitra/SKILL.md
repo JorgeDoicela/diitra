@@ -22,9 +22,9 @@ Esta skill documenta de forma exacta las convenciones de diseño del sistema DII
   * Título de sección sobrio en `text-[13px] font-semibold text-[#111]`.
   * Filas horizontales: indicador circular/progreso tenue a la izquierda + nombre del concepto (`Mis Proyectos Activos`, `Convocatorias Activas`) + valor tabular alineado a la derecha (`0 proyectos`, `1 vigentes`, `100%`).
 
-### 1.2. Propósito Único de Modales y Onboardings
-* Un modal de bienvenida NUNCA debe duplicar un dashboard complejo.
-* Debe orientar al usuario en 2-3 segundos, mostrar los módulos clave de su rol y ofrecer CTAs claros.
+### 1.2. Propósito Único y Arquitectura de 1 Sola Capa en Modales
+* Un modal NUNCA debe duplicar un dashboard complejo ni contener "cajas dentro de cajas" que aplasten los elementos.
+* Debe usar una arquitectura de **1 sola capa espaciosa** (ej. tarjetas Bento con micro-interacciones hover) que oriente en 2-3 segundos y ofrezca un CTA principal directo.
 
 ### 1.3. Lenguaje Exclusivo del Dominio Académico
 * Prohibido mostrar términos de DevOps/Git (`Rama: main`, `Commit -o-`, `Environment: Production`, `GET /api/... 200 OK`).
@@ -42,20 +42,20 @@ Esta skill documenta de forma exacta las convenciones de diseño del sistema DII
 ## 2. Paleta y Componentes Oficiales
 
 * **Fondo Principal:** `#ffffff` (Canvas claro: `#fafafa` / Dark base: `#000000`).
-* **Líneas y Bordes:** `#eaeaea` (1px sólido ultra-delgado).
+* **Líneas y Bordes:** `border-zinc-200/80` (1px sólido ultra-delgado).
 * **Superficies Hover / Activas:** `rgba(0, 0, 0, 0.04)` para hover; `rgba(0, 0, 0, 0.06)` para selección activa.
 * **Botones:**
-  * Primario: `bg-[#000000] text-[#ffffff] text-[13px] font-medium px-4 py-1.5 rounded-md hover:bg-[#222222] active:scale-[0.98]`.
-  * Secundario: `border border-[#eaeaea] bg-white text-[#111111] text-[13px] font-medium px-3.5 py-1.5 rounded-md hover:border-[#000000] active:scale-[0.98]`.
+  * Primario: `bg-zinc-950 text-[#ffffff] text-[13px] font-medium h-10 px-6 rounded-lg hover:bg-black active:scale-[0.98]`.
+  * Secundario: `border border-zinc-200 bg-white text-zinc-900 text-[13px] font-medium h-10 px-5 rounded-lg hover:border-zinc-400 active:scale-[0.98]`.
 
 ---
 
 ## 3. Checklist de Validación Obligatoria
 
 Antes de dar por finalizado cualquier componente visual:
-- [ ] ¿Se evitaron los KPIs gigantes arriba tipo IA genérica, usando en su lugar listas compactas de resumen?
+- [ ] ¿Se evitaron los KPIs gigantes arriba tipo IA genérica, usando listas de resumen o Bento cards de 1 capa?
+- [ ] ¿Se evitó el anidamiento de "cajas dentro de cajas" que hace ver las cosas aplastadas?
 - [ ] ¿Todos los textos y métricas se leen completos (0% de elipsis o truncamientos)?
 - [ ] ¿El lenguaje es 100% del dominio académico (cero jerga de Git/DevOps/APIs)?
-- [ ] ¿Se eliminaron los temporizadores de carrusel automático forzado?
-- [ ] ¿Hay CERO emojis en títulos y modales?
+- [ ] ¿Hay CERO emojis en títulos, tarjetas y modales?
 - [ ] ¿Los botones usan la geometría sobria de Vercel (Negro/Blanco sólido)?

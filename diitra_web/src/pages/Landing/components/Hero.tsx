@@ -66,9 +66,9 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
 
     const rightColumnData = [
         {
-            title: 'ECOSISTEMA INTELIGENTE',
+            title: 'PLATAFORMA INTELIGENTE',
             collapsed: 'TECNOLÓGICO TRAVERSARI',
-            expanded: 'DIITRA ES EL ECOSISTEMA INTELIGENTE DEL TECNOLÓGICO TRAVERSARI.'
+            expanded: 'DIITRA ES LA PLATAFORMA INTELIGENTE DEL TECNOLÓGICO TRAVERSARI.'
         },
         {
             title: 'GESTIÓN CIENTÍFICA',

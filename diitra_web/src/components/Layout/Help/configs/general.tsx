@@ -6,7 +6,7 @@ import type { HelpConfig, MockupProps } from '../types';
 export const DEFAULT_CONFIG: HelpConfig = {
     icon: <Settings2 size={24} className="text-brand" />,
     title: "Módulo General del Sistema",
-    summary: "Consola unificada de acceso y administración del ecosistema de investigación y desarrollo tecnológico DIITRA.",
+    summary: "Consola unificada de acceso y administración del sistema de investigación y desarrollo tecnológico DIITRA.",
     description: "Este módulo sirve como marco operativo para interactuar de forma segura con todas las funciones de investigación. Centraliza el panel de navegación de la plataforma, el lanzador de comandos de acceso global y el conmutador de visualización visual adaptativa para los perfiles académicos de la institución.",
     steps: [
         {

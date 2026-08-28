@@ -27,7 +27,7 @@ const Footer: React.FC<FooterProps> = ({ currentTheme }) => {
 
     const footerColumns = [
         {
-            title: 'Ecosistema',
+            title: 'Plataforma',
             links: [
                 { label: 'Workspace', href: '#workspace' },
                 { label: 'Acreditación', href: '#caces' },
