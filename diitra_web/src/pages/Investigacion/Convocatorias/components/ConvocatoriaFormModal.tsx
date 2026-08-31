@@ -8,9 +8,6 @@ interface FormData {
     titulo: string;
     id_periodo: string;
     anio: string;
-    descripcion: string;
-    url_bases: string;
-    requisitos_minimos: string;
     id_tipo_convocatoria: number | undefined;
     fecha_apertura: string;
     fecha_cierre: string;
@@ -67,9 +64,6 @@ export const ConvocatoriaFormModal = ({
                     titulo: conv.titulo,
                     id_periodo: conv.id_periodo,
                     anio: conv.anio,
-                    descripcion: conv.descripcion || '',
-                    url_bases: conv.url_bases || '',
-                    requisitos_minimos: conv.requisitos_minimos || '',
                     id_tipo_convocatoria: conv.id_tipo_convocatoria,
                     fecha_apertura: conv.fecha_apertura,
                     fecha_cierre: conv.fecha_cierre
@@ -81,9 +75,6 @@ export const ConvocatoriaFormModal = ({
                 titulo: '',
                 id_periodo: periodos[0]?.id_periodo || '',
                 anio: new Date().getFullYear().toString(),
-                descripcion: '',
-                url_bases: '',
-                requisitos_minimos: '',
                 id_tipo_convocatoria: undefined,
                 fecha_apertura: '',
                 fecha_cierre: ''

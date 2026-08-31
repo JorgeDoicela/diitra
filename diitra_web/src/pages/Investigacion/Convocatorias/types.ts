@@ -1,13 +1,11 @@
 export interface Convocatoria {
+    id_convocatoria?: number;
     uuid: string;
     codigo_convocatoria: string;
     titulo: string;
     id_periodo: string;
-    periodo_nombre: string;
+    periodo_nombre?: string;
     anio: string;
-    descripcion: string;
-    url_bases: string;
-    requisitos_minimos: string;
     id_tipo_convocatoria?: number;
     fecha_apertura: string;
     fecha_cierre: string;

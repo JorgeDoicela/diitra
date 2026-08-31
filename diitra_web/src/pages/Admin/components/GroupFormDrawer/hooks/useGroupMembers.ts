@@ -1,5 +1,6 @@
 import { useState, Dispatch, SetStateAction } from 'react';
 import type { GroupMember, Career, GroupFormData } from '../types';
+import type { SelectedMemberResult } from '../../../../../components/Common/MemberSearchSelector';
 
 interface UseGroupMembersProps {
     carreras: Career[];
@@ -8,14 +9,6 @@ interface UseGroupMembersProps {
     selectedCoordCareer: string;
     setSelectedCoordName: Dispatch<SetStateAction<string>>;
     setSelectedCoordCareer: Dispatch<SetStateAction<string>>;
-    setCoordSearchQuery: Dispatch<SetStateAction<string>>;
-    setShowCoordResults: Dispatch<SetStateAction<boolean>>;
-    setSelectedTeacher: Dispatch<SetStateAction<any | null>>;
-    setTeacherSearchQuery: Dispatch<SetStateAction<string>>;
-    setShowTeacherResults: Dispatch<SetStateAction<boolean>>;
-    setSelectedStudent: Dispatch<SetStateAction<any | null>>;
-    setStudentSearchQuery: Dispatch<SetStateAction<string>>;
-    setShowStudentResults: Dispatch<SetStateAction<boolean>>;
 }
 
 export function useGroupMembers({
@@ -24,21 +17,9 @@ export function useGroupMembers({
     setFormData,
     selectedCoordCareer,
     setSelectedCoordName,
-    setSelectedCoordCareer,
-    setCoordSearchQuery,
-    setShowCoordResults,
-    setSelectedTeacher,
-    setTeacherSearchQuery,
-    setShowTeacherResults,
-    setSelectedStudent,
-    setStudentSearchQuery,
-    setShowStudentResults
+    setSelectedCoordCareer
 }: UseGroupMembersProps) {
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
-    const [teacherPhone, setTeacherPhone] = useState('');
-    const [studentPhone, setStudentPhone] = useState('');
-    const [teacherRol, setTeacherRol] = useState('Co-Investigador');
-    const [studentRol, setStudentRol] = useState('Semillerista');
 
     const recalculateCarreras = (coordCareer: string, members: GroupMember[]) => {
         const uniqueIds = new Set<number>();
@@ -62,102 +43,55 @@ export function useGroupMembers({
         return Array.from(uniqueIds);
     };
 
-    const handleSelectCoordinator = (teacher: any) => {
-        if (groupMembers.some(m => m.cedula === teacher.cedula)) {
-            alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
+    const handleSelectCoordinator = (coord: SelectedMemberResult) => {
+        if (!coord) return;
+        const cedula = coord.cedula.trim();
+
+        if (groupMembers.some(m => m.cedula?.trim() === cedula)) {
+            alert("Esta persona ya es un integrante del grupo y no puede ser asignada como Coordinador Responsable.");
             return;
         }
 
-        const updatedCarreras = recalculateCarreras(teacher.carrera || '', groupMembers);
+        const updatedCarreras = recalculateCarreras(coord.carrera || '', groupMembers);
         setFormData(prev => ({
             ...prev,
-            id_profesor_coordinador: teacher.cedula,
+            id_profesor_coordinador: cedula,
             carreras_ids: updatedCarreras
         }));
 
-        setSelectedCoordName(teacher.nombre);
-        setSelectedCoordCareer(teacher.carrera || '');
-        setCoordSearchQuery('');
-        setShowCoordResults(false);
+        setSelectedCoordName(coord.nombre_completo);
+        setSelectedCoordCareer(coord.carrera || '');
     };
 
-    const handleSelectTeacher = (teacher: any) => {
-        setSelectedTeacher(teacher);
-        setTeacherSearchQuery(teacher.nombre);
-        setShowTeacherResults(false);
-        setTeacherRol('Co-Investigador');
-    };
+    const handleAddMember = (member: SelectedMemberResult) => {
+        if (!member) return;
+        const cedula = member.cedula.trim();
 
-    const handleSelectStudent = (student: any) => {
-        setSelectedStudent(student);
-        setStudentSearchQuery(student.nombre);
-        setShowStudentResults(false);
-        setStudentRol('Semillerista');
-    };
-
-    const handleAddTeacher = (selectedTeacher: any | null) => {
-        if (!selectedTeacher) return;
-
-        if (selectedTeacher.cedula === formData.id_profesor_coordinador) {
-            alert("No se puede agregar al Coordinador Responsable como integrante docente.");
+        if (cedula === formData.id_profesor_coordinador?.trim()) {
+            alert("No se puede agregar al Coordinador Responsable como integrante secundario.");
             return;
         }
 
-        if (groupMembers.some(m => m.cedula?.trim() === selectedTeacher.cedula?.trim())) {
-            alert("Este docente ya es integrante de la propuesta de grupo.");
+        if (groupMembers.some(m => m.cedula?.trim() === cedula)) {
+            alert("Esta persona ya es integrante de la propuesta de grupo.");
             return;
         }
 
         const newMember: GroupMember = {
             id_grupo_miembro: Date.now(),
-            id_usuario: 0,
-            cedula: selectedTeacher.cedula,
-            nombre_completo: selectedTeacher.nombre,
-            rol: teacherRol,
+            id_usuario: member.id_usuario || 0,
+            cedula: cedula,
+            nombre_completo: member.nombre_completo,
+            rol: member.rol || 'Co-Investigador',
             activo: true,
-            carrera: selectedTeacher.carrera,
-            telefono_contacto: teacherPhone
+            carrera: member.carrera || member.departamento || '',
+            telefono_contacto: member.telefono || ''
         };
 
         const updatedMembers = [...groupMembers, newMember];
         setGroupMembers(updatedMembers);
         const updatedCarreras = recalculateCarreras(selectedCoordCareer, updatedMembers);
         setFormData(prev => ({ ...prev, carreras_ids: updatedCarreras }));
-
-        setSelectedTeacher(null);
-        setTeacherSearchQuery('');
-        setTeacherPhone('');
-        setTeacherRol('Co-Investigador');
-    };
-
-    const handleAddStudent = (selectedStudent: any | null) => {
-        if (!selectedStudent) return;
-
-        if (groupMembers.some(m => m.cedula?.trim() === selectedStudent.cedula?.trim())) {
-            alert("Este estudiante ya es integrante de la propuesta de grupo.");
-            return;
-        }
-
-        const newMember: GroupMember = {
-            id_grupo_miembro: Date.now(),
-            id_usuario: 0,
-            cedula: selectedStudent.cedula,
-            nombre_completo: selectedStudent.nombre,
-            rol: studentRol,
-            activo: true,
-            carrera: selectedStudent.carrera,
-            telefono_contacto: studentPhone
-        };
-
-        const updatedMembers = [...groupMembers, newMember];
-        setGroupMembers(updatedMembers);
-        const updatedCarreras = recalculateCarreras(selectedCoordCareer, updatedMembers);
-        setFormData(prev => ({ ...prev, carreras_ids: updatedCarreras }));
-
-        setSelectedStudent(null);
-        setStudentSearchQuery('');
-        setStudentPhone('');
-        setStudentRol('Semillerista');
     };
 
     const handleRemoveMember = (idGrupoMiembro: number) => {
@@ -170,19 +104,8 @@ export function useGroupMembers({
     return {
         groupMembers,
         setGroupMembers,
-        teacherPhone,
-        setTeacherPhone,
-        studentPhone,
-        setStudentPhone,
-        teacherRol,
-        setTeacherRol,
-        studentRol,
-        setStudentRol,
         handleSelectCoordinator,
-        handleSelectTeacher,
-        handleSelectStudent,
-        handleAddTeacher,
-        handleAddStudent,
+        handleAddMember,
         handleRemoveMember
     };
 }

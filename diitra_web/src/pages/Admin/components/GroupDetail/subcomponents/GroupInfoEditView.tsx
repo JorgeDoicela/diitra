@@ -1,9 +1,11 @@
 import React from 'react';
 import {
-    Users, Shield, Calendar, AlertTriangle, BookOpen, User, Search, UserMinus, FileText, Plus, Loader2
+    Users, Shield, Calendar, AlertTriangle, BookOpen, User, UserMinus, FileText
 } from 'lucide-react';
 import type { useGroupDetail } from '../useGroupDetail';
 import { formatNombre } from '../utils/groupInfoHelpers';
+import { MemberSearchSelector } from '../../../../../components/Common/MemberSearchSelector';
+import { CoordinatorSection } from '../../GroupFormDrawer/components/CoordinatorSection';
 
 export interface Domain {
     id_dominio: number;
@@ -38,45 +40,16 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
     renderFieldFeedbackButton
 }) => {
     const {
+        detailGroup,
         detailMembers,
         isDraftRestored,
         clearDraft,
         editFormData,
         setEditFormData,
-        coordSearchQuery,
-        setCoordSearchQuery,
-        coordSearchResults,
-        isCoordSearching,
-        showCoordResults,
-        setShowCoordResults,
         selectedCoordName,
+        selectedCoordCareer,
         handleSelectCoordinator,
-        teacherSearchQuery,
-        setTeacherSearchQuery,
-        showTeacherResults,
-        setShowTeacherResults,
-        isTeacherSearching,
-        teacherSearchResults,
-        handleSelectTeacher,
-        teacherPhone,
-        setTeacherPhone,
-        teacherRol,
-        setTeacherRol,
-        selectedTeacher,
-        handleAddTeacher,
-        studentSearchQuery,
-        setStudentSearchQuery,
-        showStudentResults,
-        setShowStudentResults,
-        isStudentSearching,
-        studentSearchResults,
-        handleSelectStudent,
-        studentPhone,
-        setStudentPhone,
-        studentRol,
-        setStudentRol,
-        selectedStudent,
-        handleAddStudent,
+        handleAddMember,
         handleRemoveMember,
         toggleLine,
         isAdmin
@@ -93,7 +66,7 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                     <button
                         type="button"
                         onClick={clearDraft}
-                        className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-amber-500/20 hover:bg-amber-500/10 text-amber-500 active:scale-95 transition-all"
+                        className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-amber-500/20 hover:bg-amber-500/10 text-amber-500 active:scale-95 transition-all cursor-pointer"
                     >
                         Descartar Borrador
                     </button>
@@ -199,78 +172,21 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                         className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-medium"
                     />
                 </div>
-
-                {/* Coordinator Selection */}
-                <div className="space-y-2 md:col-span-2 relative">
-                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                        <User size={12} /> Coordinador Responsable
-                    </label>
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                        <input
-                            type="text"
-                            value={coordSearchQuery}
-                            onChange={(e) => {
-                                setCoordSearchQuery(e.target.value);
-                                setShowCoordResults(true);
-                            }}
-                            onFocus={() => setShowCoordResults(true)}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg pl-9 pr-4 py-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase placeholder:normal-case font-medium"
-                            placeholder={selectedCoordName ? selectedCoordName : "Buscar docente por nombre o cédula..."}
-                        />
-                        {showCoordResults && (
-                            <>
-                                <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
-                                <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[180px] overflow-y-auto z-30 custom-scrollbar">
-                                    {isCoordSearching ? (
-                                        <div className="p-3 text-center text-xs text-text-dim font-mono flex items-center justify-center gap-2">
-                                            <Loader2 size={12} className="animate-spin" /> Buscando docente...
-                                        </div>
-                                    ) : coordSearchResults.length === 0 ? (
-                                        <div className="p-3 text-center text-xs text-text-dim font-mono">
-                                            No se encontraron docentes con ese nombre o cédula.
-                                        </div>
-                                    ) : (
-                                        coordSearchResults.map((teacher: any) => (
-                                            <button
-                                                key={teacher.cedula}
-                                                type="button"
-                                                onClick={() => handleSelectCoordinator(teacher)}
-                                                className="w-full text-left p-2.5 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
-                                            >
-                                                <div className="space-y-0.5">
-                                                    <p className="font-semibold text-text-main text-xs flex items-center gap-2">
-                                                        <span>{formatNombre(teacher.nombre)}</span>
-                                                        {teacher.horas_disponibles !== undefined && (
-                                                            <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
-                                                                (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
-                                                                    ? 'badge-vercel-success' 
-                                                                    : 'badge-vercel-error'
-                                                            }`}>
-                                                                Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
-                                                </div>
-                                                <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
-                                                    Docente
-                                                </span>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
             </section>
+
+            {/* Coordinator Section */}
+            <CoordinatorSection
+                selectedCoordName={selectedCoordName || detailGroup?.nombre_coordinador || ''}
+                selectedCoordCedula={editFormData.id_profesor_coordinador || ''}
+                selectedCoordCareer={selectedCoordCareer}
+                handleSelectCoordinator={handleSelectCoordinator}
+            />
 
             {/* Linked Careers */}
             <section className="space-y-2 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
                 <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Carreras Vinculadas Automáticamente</label>
                 {(() => {
-                    const linkedCareers = editFormData.carreras_ids.map((carrId: number) => {
+                    const linkedCareers = (editFormData.carreras_ids || []).map((carrId: number) => {
                         const career = carreras.find(c => c.id_carrera === carrId);
                         return career ? career.carrera1 : null;
                     }).filter(c => c !== null) as string[];
@@ -300,22 +216,24 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                 })()}
             </section>
 
-            {/* Identity Statements */}
-            <section className="space-y-6 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
+            {/* Identity & Statements */}
+            <section className="space-y-4 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
                         {renderFieldFeedbackButton('objetivoGeneral', 'Objetivo General')}
                     </div>
                     <textarea
+                        required
                         rows={3}
                         value={editFormData.objetivo_general}
                         onChange={(e) => setEditFormData({ ...editFormData, objetivo_general: e.target.value })}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                        className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-xs text-text-main focus:outline-none transition-all font-medium leading-relaxed"
+                        placeholder="Describa el propósito principal del grupo..."
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
@@ -325,7 +243,8 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                             rows={3}
                             value={editFormData.mision}
                             onChange={(e) => setEditFormData({ ...editFormData, mision: e.target.value })}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-xs text-text-main focus:outline-none transition-all font-medium leading-relaxed"
+                            placeholder="Misión del grupo..."
                         />
                     </div>
 
@@ -338,13 +257,14 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                             rows={3}
                             value={editFormData.vision}
                             onChange={(e) => setEditFormData({ ...editFormData, vision: e.target.value })}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none font-medium"
+                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 text-xs text-text-main focus:outline-none transition-all font-medium leading-relaxed"
+                            placeholder="Visión del grupo..."
                         />
                     </div>
                 </div>
             </section>
 
-            {/* Research Lines */}
+            {/* Research lines selection */}
             <section className="space-y-4 p-4 bg-bg-deep/20 rounded-2xl border border-border-thin">
                 <div className="flex items-center justify-between">
                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
@@ -381,215 +301,45 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
 
                 {/* Existing members */}
                 <div className="space-y-3">
-                    {detailMembers.map(member => (
-                        <div key={member.id_grupo_miembro} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-thin">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-black bg-surface-hover text-text-dim">
-                                    {member.rol?.includes('Director') ? <Shield size={14} /> : <User size={14} />}
+                    {detailMembers.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-text-dim font-mono bg-bg-deep/30 rounded-xl border border-dashed border-border-thin">
+                            Sin integrantes adicionales registrados.
+                        </div>
+                    ) : (
+                        detailMembers.map(member => (
+                            <div key={member.id_grupo_miembro} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-thin">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-black bg-surface-hover text-text-dim">
+                                        {member.rol?.includes('Director') ? <Shield size={14} /> : <User size={14} />}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-text-main">{formatNombre(member.nombre_completo)}</p>
+                                        <p className="text-[9px] font-mono text-text-dim mt-0.5">
+                                            C.I. {member.cedula} &bull; <span className="font-bold uppercase text-brand">{member.rol}</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-semibold text-text-main">{formatNombre(member.nombre_completo)}</p>
-                                    <p className="text-[8px] font-bold uppercase text-text-dim mt-0.5">{member.rol}</p>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                    className="p-1.5 rounded-lg border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-all cursor-pointer"
+                                    title="Retirar Integrante"
+                                >
+                                    <UserMinus size={12} />
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveMember(member.id_grupo_miembro)}
-                                className="p-1.5 rounded-lg border border-red-500/25 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-all"
-                                title="Retirar Integrante"
-                            >
-                                <UserMinus size={12} />
-                            </button>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
 
-                {/* Add Teacher Investigator */}
-                <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
-                    <h5 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
-                        <Plus size={10} /> Añadir Docente Investigador
-                    </h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1 relative">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Docente</label>
-                            <div className="relative">
-                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
-                                <input
-                                    type="text"
-                                    value={teacherSearchQuery}
-                                    onChange={(e) => {
-                                        setTeacherSearchQuery(e.target.value);
-                                        setShowTeacherResults(true);
-                                    }}
-                                    onFocus={() => setShowTeacherResults(true)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
-                                    placeholder="Buscar por nombre o cédula..."
-                                />
-                                {showTeacherResults && (
-                                    <>
-                                        <div className="fixed inset-0 z-20" onClick={() => setShowTeacherResults(false)}></div>
-                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
-                                            {isTeacherSearching ? (
-                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                    Buscando...
-                                                </div>
-                                            ) : teacherSearchResults.length === 0 ? (
-                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                    No se encontraron resultados.
-                                                </div>
-                                            ) : (
-                                                teacherSearchResults.map((teacher: any) => (
-                                                    <button
-                                                        key={teacher.cedula}
-                                                        type="button"
-                                                        onClick={() => handleSelectTeacher(teacher)}
-                                                        className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors flex justify-between items-center"
-                                                    >
-                                                        <div className="space-y-0.5">
-                                                            <p className="font-semibold text-text-main text-xs flex items-center gap-2">
-                                                                <span>{formatNombre(teacher.nombre)}</span>
-                                                                {teacher.horas_disponibles !== undefined && (
-                                                                    <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
-                                                                        (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
-                                                                            ? 'badge-vercel-success' 
-                                                                            : 'badge-vercel-error'
-                                                                    }`}>
-                                                                        Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
-                                                                    </span>
-                                                                )}
-                                                            </p>
-                                                            <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
-                                                        </div>
-                                                        <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
-                                                            Docente
-                                                        </span>
-                                                    </button>
-                                                ))
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
-                            <input
-                                type="tel"
-                                value={teacherPhone}
-                                onChange={(e) => setTeacherPhone(e.target.value)}
-                                placeholder="Opcional"
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
-                            />
-                        </div>
-
-                        <div className="space-y-1 md:col-span-2">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
-                            <select
-                                value={teacherRol}
-                                onChange={(e) => setTeacherRol(e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
-                            >
-                                <option value="Co-Investigador">Co-Investigador</option>
-                                <option value="Director de Proyecto">Director de Proyecto</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleAddTeacher}
-                        disabled={!selectedTeacher}
-                        className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:hover:bg-emerald-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
-                    >
-                        Añadir Docente
-                    </button>
-                </div>
-
-                {/* Add Student Semillerista */}
-                <div className="p-4 bg-surface rounded-xl border border-border-thin space-y-4">
-                    <h5 className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                        <Plus size={10} /> Añadir Estudiante Semillerista
-                    </h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1 relative">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscar Estudiante</label>
-                            <div className="relative">
-                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60" />
-                                <input
-                                    type="text"
-                                    value={studentSearchQuery}
-                                    onChange={(e) => {
-                                        setStudentSearchQuery(e.target.value);
-                                        setShowStudentResults(true);
-                                    }}
-                                    onFocus={() => setShowStudentResults(true)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg pl-8 pr-3 py-2 text-xs text-text-main focus:outline-none transition-all uppercase placeholder:normal-case font-medium"
-                                    placeholder="Buscar por nombre o cédula..."
-                                />
-                                {showStudentResults && (
-                                    <>
-                                        <div className="fixed inset-0 z-20" onClick={() => setShowStudentResults(false)}></div>
-                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-lg p-1.5 shadow-xl max-h-[150px] overflow-y-auto z-30 custom-scrollbar">
-                                            {isStudentSearching ? (
-                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                    Buscando...
-                                                </div>
-                                            ) : studentSearchResults.length === 0 ? (
-                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                    No se encontraron resultados.
-                                                </div>
-                                            ) : (
-                                                studentSearchResults.map((student: any) => (
-                                                    <button
-                                                        key={student.cedula}
-                                                        type="button"
-                                                        onClick={() => handleSelectStudent(student)}
-                                                        className="w-full text-left p-2 rounded hover:bg-bg-deep/50 transition-colors"
-                                                    >
-                                                        <p className="font-semibold text-text-main text-xs">{formatNombre(student.nombre)}</p>
-                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {student.cedula} | {student.carrera || 'SIN CARRERA'}</p>
-                                                    </button>
-                                                ))
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Teléfono (WhatsApp)</label>
-                            <input
-                                type="tel"
-                                value={studentPhone}
-                                onChange={(e) => setStudentPhone(e.target.value)}
-                                placeholder="Opcional"
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-xs text-text-main focus:outline-none transition-all font-medium"
-                            />
-                        </div>
-
-                        <div className="space-y-1 md:col-span-2">
-                            <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
-                            <select
-                                value={studentRol}
-                                onChange={(e) => setStudentRol(e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
-                            >
-                                <option value="Semillerista">Semillerista</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleAddStudent}
-                        disabled={!selectedStudent}
-                        className="w-full py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-blue-500 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
-                    >
-                        Añadir Estudiante
-                    </button>
-                </div>
+                {/* Universal Member Addition */}
+                <MemberSearchSelector
+                    onAddMember={handleAddMember}
+                    existingCedulas={detailMembers.map(m => m.cedula).filter((c): c is string => !!c)}
+                    excludeCoordinatorCedula={editFormData.id_profesor_coordinador}
+                    title="Añadir Integrante al Grupo"
+                    subtitle="Seleccione docentes, administrativos, estudiantes activos/graduados o colaboradores externos."
+                />
             </section>
 
             {/* Admin approval fields */}

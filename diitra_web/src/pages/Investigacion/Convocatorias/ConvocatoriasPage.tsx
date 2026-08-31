@@ -17,6 +17,7 @@ import { VercelUsageCard } from './components/VercelUsageCard';
 import { DraftRestoreBanner } from './components/DraftRestoreBanner';
 import { ConvocatoriaFormModal } from './components/ConvocatoriaFormModal';
 import { ConvocatoriaDetailPanel } from './components/ConvocatoriaDetailPanel';
+import { PublishConvocatoriaDrawer } from './components/PublishConvocatoriaDrawer';
 
 const ConvocatoriasPage = () => {
     const {
@@ -42,8 +43,11 @@ const ConvocatoriasPage = () => {
         setFormData,
         convocatoriasAbiertas,
         proximasACerrar,
+        publishDrawerTarget,
+        isPublishDrawerOpen,
 
         // Handlers
+        fetchConvocatorias,
         handleRestoreDraft,
         handleDiscardDraft,
         handleNewConvocatoria,
@@ -51,7 +55,10 @@ const ConvocatoriasPage = () => {
         handleSave,
         handleEdit,
         handleDelete,
-        handleStatusChange
+        handleStatusChange,
+        handleOpenPublishDrawer,
+        handleClosePublishDrawer,
+        handlePublishSuccess
     } = useConvocatorias();
 
     return (
@@ -135,10 +142,10 @@ const ConvocatoriasPage = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleStatusChange(conv.uuid, 'Abierta');
+                                                handleOpenPublishDrawer(conv);
                                             }}
-                                            className="p-2 text-text-dim hover:text-success hover:bg-surface-hover rounded transition-colors"
-                                            title="Publicar Convocatoria"
+                                            className="p-2 text-text-dim hover:text-success hover:bg-surface-hover rounded transition-colors cursor-pointer"
+                                            title="Publicar y Difundir Convocatoria"
                                         >
                                             <CheckCircle size={18} />
                                         </button>
@@ -247,6 +254,16 @@ const ConvocatoriasPage = () => {
                 canEditConvocatoria={canEditConvocatoria}
                 handleEdit={handleEdit}
                 handleStatusChange={handleStatusChange}
+                handleOpenPublishDrawer={handleOpenPublishDrawer}
+            />
+
+            {/* Publish & Audience Drawer */}
+            <PublishConvocatoriaDrawer
+                isOpen={isPublishDrawerOpen}
+                onClose={handleClosePublishDrawer}
+                convocatoria={publishDrawerTarget}
+                tiposConv={tiposConv}
+                onPublishSuccess={handlePublishSuccess}
             />
         </main>
     );

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../../../../../api/axios_config';
 import type { Group, GroupMember, Career } from '../useGroupDetail';
+import type { SelectedMemberResult } from '../../../../../components/Common/MemberSearchSelector';
 
 interface UseGroupMemberSearchProps {
     detailGroup: Group | null;
@@ -19,29 +20,7 @@ export const useGroupMemberSearch = ({
     setSelectedCoordName,
     refreshGroupDetail
 }: UseGroupMemberSearchProps) => {
-    // Search and auto-completes: Coordinator
-    const [coordSearchQuery, setCoordSearchQuery] = useState('');
-    const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
-    const [isCoordSearching, setIsCoordSearching] = useState(false);
-    const [showCoordResults, setShowCoordResults] = useState(false);
-
-    // Search and auto-completes: Teachers
-    const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
-    const [teacherPhone, setTeacherPhone] = useState('');
-    const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
-    const [isTeacherSearching, setIsTeacherSearching] = useState(false);
-    const [showTeacherResults, setShowTeacherResults] = useState(false);
-    const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
-    const [teacherRol, setTeacherRol] = useState('Co-Investigador');
-
-    // Search and auto-completes: Students
-    const [studentSearchQuery, setStudentSearchQuery] = useState('');
-    const [studentPhone, setStudentPhone] = useState('');
-    const [studentSearchResults, setStudentSearchResults] = useState<any[]>([]);
-    const [isStudentSearching, setIsStudentSearching] = useState(false);
-    const [showStudentResults, setShowStudentResults] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
-    const [studentRol, setStudentRol] = useState('Semillerista');
+    const [selectedCoordCareer, setSelectedCoordCareer] = useState('');
 
     const recalculateCarreras = (coordCareer: string, members: GroupMember[]) => {
         const uniqueIds = new Set<number>();
@@ -65,190 +44,54 @@ export const useGroupMemberSearch = ({
         return Array.from(uniqueIds);
     };
 
-    // Auto-search coord
-    useEffect(() => {
-        if (!showCoordResults) return;
-        const delayDebounceFn = setTimeout(async () => {
-            setIsCoordSearching(true);
-            try {
-                const queryParam = (!coordSearchQuery.trim() || coordSearchQuery === (detailGroup?.nombre_coordinador || ''))
-                    ? ''
-                    : coordSearchQuery.trim();
-                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(queryParam)}&pageSize=30`);
-                const items = res.data?.items || [];
-                setCoordSearchResults(items.map((u: any) => ({
-                    cedula: u.id_profesor || u.id_sigafi || '',
-                    nombre: u.nombre_completo || u.nombre || '',
-                    email: u.email || u.email_institucional || '',
-                    carrera: u.carrera || '',
-                    telefono: '',
-                    nivelAcademico: 'Tercer Nivel',
-                    horasDisponibles: u.horas_investigacion || 0,
-                    horasAsignadas: u.horas_asignadas || 0,
-                    id_usuario: u.id_usuario || 0,
-                    tipo: 'profesor'
-                })));
-            } catch (err) {
-                console.error("Error al buscar docentes coordinadores:", err);
-            } finally {
-                setIsCoordSearching(false);
-            }
-        }, coordSearchQuery.trim() ? 300 : 0);
-        return () => clearTimeout(delayDebounceFn);
-    }, [coordSearchQuery, showCoordResults, detailGroup]);
+    const handleSelectCoordinator = (coord: SelectedMemberResult) => {
+        if (!coord) return;
+        const cedula = coord.cedula.trim();
 
-    // Auto-search teachers
-    useEffect(() => {
-        if (!showTeacherResults) return;
-        const delayDebounceFn = setTimeout(async () => {
-            setIsTeacherSearching(true);
-            try {
-                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(teacherSearchQuery.trim())}&pageSize=30`);
-                const items = res.data?.items || [];
-                setTeacherSearchResults(items.map((u: any) => ({
-                    cedula: u.id_profesor || u.id_sigafi || '',
-                    nombre: u.nombre_completo || u.nombre || '',
-                    email: u.email || u.email_institucional || '',
-                    carrera: u.carrera || '',
-                    telefono: '',
-                    nivelAcademico: 'Tercer Nivel',
-                    horasDisponibles: u.horas_investigacion || 0,
-                    horasAsignadas: u.horas_asignadas || 0,
-                    id_usuario: u.id_usuario || 0,
-                    tipo: 'profesor'
-                })));
-            } catch (err) {
-                console.error("Error al buscar docentes investigadores:", err);
-            } finally {
-                setIsTeacherSearching(false);
-            }
-        }, teacherSearchQuery.trim() ? 300 : 0);
-        return () => clearTimeout(delayDebounceFn);
-    }, [teacherSearchQuery, showTeacherResults]);
-
-    // Auto-search students
-    useEffect(() => {
-        if (!showStudentResults) return;
-        const delayDebounceFn = setTimeout(async () => {
-            setIsStudentSearching(true);
-            try {
-                const res = await api.get(`/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&search=${encodeURIComponent(studentSearchQuery.trim())}&pageSize=30`);
-                const items = res.data?.items || [];
-                setStudentSearchResults(items.map((u: any) => ({
-                    cedula: u.id_profesor || u.id_sigafi || '',
-                    nombre: u.nombre_completo || u.nombre || '',
-                    email: u.email || u.email_institucional || '',
-                    carrera: u.carrera || '',
-                    telefono: '',
-                    nivelAcademico: 'Tercer Nivel',
-                    horasDisponibles: u.horas_investigacion || 0,
-                    horasAsignadas: u.horas_asignadas || 0,
-                    id_usuario: u.id_usuario || 0,
-                    tipo: 'alumno'
-                })));
-            } catch (err) {
-                console.error("Error al buscar estudiantes:", err);
-            } finally {
-                setIsStudentSearching(false);
-            }
-        }, studentSearchQuery.trim() ? 300 : 0);
-        return () => clearTimeout(delayDebounceFn);
-    }, [studentSearchQuery, showStudentResults]);
-
-    const handleSelectCoordinator = (teacher: any) => {
-        if (detailMembers.some(m => m.cedula === teacher.cedula)) {
-            alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
+        if (detailMembers.some(m => m.cedula?.trim() === cedula)) {
+            alert("Esta persona ya es un integrante del grupo y no puede ser asignada como Coordinador Responsable.");
             return;
         }
-        
-        const updatedCarreras = recalculateCarreras(teacher.carrera || '', detailMembers);
+
+        const updatedCarreras = recalculateCarreras(coord.carrera || '', detailMembers);
         setEditFormData((prev: any) => ({
             ...prev,
-            id_profesor_coordinador: teacher.cedula,
+            id_profesor_coordinador: cedula,
             carreras_ids: updatedCarreras
         }));
 
-        setSelectedCoordName(teacher.nombre);
-        setCoordSearchQuery('');
-        setShowCoordResults(false);
+        setSelectedCoordName(coord.nombre_completo);
+        setSelectedCoordCareer(coord.carrera || '');
     };
 
-    const handleSelectTeacher = (teacher: any) => {
-        setSelectedTeacher(teacher);
-        setTeacherSearchQuery(teacher.nombre);
-        setShowTeacherResults(false);
-        setTeacherRol('Co-Investigador');
-    };
+    const handleAddMember = async (member: SelectedMemberResult) => {
+        if (!member || !detailGroup) return;
+        const cedula = member.cedula.trim();
 
-    const handleSelectStudent = (student: any) => {
-        setSelectedStudent(student);
-        setStudentSearchQuery(student.nombre);
-        setShowStudentResults(false);
-        setStudentRol('Semillerista');
-    };
-
-    const handleAddTeacher = async (currentIdProfesorCoord: string) => {
-        if (!selectedTeacher || !detailGroup) return;
-
-        if (selectedTeacher.cedula === currentIdProfesorCoord) {
-            alert("No se puede agregar al Coordinador Responsable como integrante docente.");
+        if (cedula === detailGroup.id_profesor_coordinador?.trim()) {
+            alert("No se puede agregar al Coordinador Responsable como integrante secundario.");
             return;
         }
 
-        if (detailMembers.some(m => m.cedula?.trim() === selectedTeacher.cedula?.trim())) {
-            alert("Este docente ya es integrante de la propuesta de grupo.");
+        if (detailMembers.some(m => m.cedula?.trim() === cedula)) {
+            alert("Esta persona ya es integrante del grupo.");
             return;
         }
 
         try {
             const memberDto = {
-                id_usuario: 0,
-                cedula: selectedTeacher.cedula,
-                nombre_completo: selectedTeacher.nombre,
-                rol: teacherRol,
+                id_usuario: member.id_usuario || 0,
+                cedula: cedula,
+                nombre_completo: member.nombre_completo,
+                rol: member.rol || 'Co-Investigador',
                 activo: true,
-                telefono_contacto: teacherPhone
+                telefono_contacto: member.telefono || ''
             };
             await api.post(`/Groups/${detailGroup.uuid}/members`, memberDto);
             await refreshGroupDetail();
-            
-            setSelectedTeacher(null);
-            setTeacherSearchQuery('');
-            setTeacherRol('Co-Investigador');
-            setTeacherPhone('');
         } catch (err: any) {
-            console.error("Error al agregar integrante docente:", err);
-            alert("No se pudo agregar al docente: " + (err.response?.data?.message || err.message));
-        }
-    };
-
-    const handleAddStudent = async () => {
-        if (!selectedStudent || !detailGroup) return;
-
-        if (detailMembers.some(m => m.cedula?.trim() === selectedStudent.cedula?.trim())) {
-            alert("Este estudiante ya es integrante de la propuesta de grupo.");
-            return;
-        }
-
-        try {
-            const memberDto = {
-                id_usuario: 0,
-                cedula: selectedStudent.cedula,
-                nombre_completo: selectedStudent.nombre,
-                rol: studentRol,
-                activo: true,
-                telefono_contacto: studentPhone
-            };
-            await api.post(`/Groups/${detailGroup.uuid}/members`, memberDto);
-            await refreshGroupDetail();
-            
-            setSelectedStudent(null);
-            setStudentSearchQuery('');
-            setStudentPhone('');
-            setStudentRol('Semillerista');
-        } catch (err: any) {
-            console.error("Error al agregar estudiante:", err);
-            alert("No se pudo agregar al estudiante: " + (err.response?.data?.message || err.message));
+            console.error("Error al agregar integrante:", err);
+            alert("No se pudo agregar al integrante: " + (err.response?.data?.message || err.message));
         }
     };
 
@@ -267,41 +110,9 @@ export const useGroupMemberSearch = ({
     };
 
     return {
-        coordSearchQuery,
-        setCoordSearchQuery,
-        coordSearchResults,
-        isCoordSearching,
-        showCoordResults,
-        setShowCoordResults,
-        teacherSearchQuery,
-        setTeacherSearchQuery,
-        teacherPhone,
-        setTeacherPhone,
-        studentPhone,
-        setStudentPhone,
-        teacherSearchResults,
-        isTeacherSearching,
-        showTeacherResults,
-        setShowTeacherResults,
-        selectedTeacher,
-        setSelectedTeacher,
-        teacherRol,
-        setTeacherRol,
-        studentSearchQuery,
-        setStudentSearchQuery,
-        studentSearchResults,
-        isStudentSearching,
-        showStudentResults,
-        setShowStudentResults,
-        selectedStudent,
-        setSelectedStudent,
-        studentRol,
-        setStudentRol,
+        selectedCoordCareer,
         handleSelectCoordinator,
-        handleSelectTeacher,
-        handleSelectStudent,
-        handleAddTeacher,
-        handleAddStudent,
+        handleAddMember,
         handleRemoveMember
     };
 };

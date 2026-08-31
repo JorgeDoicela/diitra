@@ -13,6 +13,7 @@ interface ConvocatoriaDetailPanelProps {
     canEditConvocatoria: (estado: Convocatoria['estado']) => boolean;
     handleEdit: (conv: Convocatoria) => void;
     handleStatusChange: (uuid: string, newStatus: string) => Promise<void>;
+    handleOpenPublishDrawer?: (conv: Convocatoria) => void;
 }
 
 export const ConvocatoriaDetailPanel = ({
@@ -22,7 +23,8 @@ export const ConvocatoriaDetailPanel = ({
     tiposConv,
     canEditConvocatoria,
     handleEdit,
-    handleStatusChange
+    handleStatusChange,
+    handleOpenPublishDrawer
 }: ConvocatoriaDetailPanelProps) => {
     if (!selectedConvocatoria) return null;
 
@@ -60,15 +62,10 @@ export const ConvocatoriaDetailPanel = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
                             {selectedConvocatoria.titulo}
                         </h2>
-                        {selectedConvocatoria.descripcion && (
-                            <p className="text-sm text-text-dim leading-relaxed font-medium">
-                                {selectedConvocatoria.descripcion}
-                            </p>
-                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -161,12 +158,16 @@ export const ConvocatoriaDetailPanel = ({
                     {selectedConvocatoria.estado === 'Borrador' && (
                         <button
                             onClick={() => {
-                                handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
+                                if (handleOpenPublishDrawer) {
+                                    handleOpenPublishDrawer(selectedConvocatoria);
+                                } else {
+                                    handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
+                                }
                                 setSelectedConvocatoria(null);
                             }}
                             className="btn-brand flex-1"
                         >
-                            Publicar Ahora
+                            Publicar y Difundir
                         </button>
                     )}
                 </div>

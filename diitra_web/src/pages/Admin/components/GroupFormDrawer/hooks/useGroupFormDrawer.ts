@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import api from '../../../../../api/axios_config';
 import type { GroupFormData, GroupFormDrawerProps } from '../types';
 import { useGroupFormDraft } from './useGroupFormDraft';
-import { useUserSearch } from './useUserSearch';
 import { useGroupMembers } from './useGroupMembers';
 
 export const formatNombre = (nombre: string | null | undefined) => {
@@ -41,24 +40,13 @@ export function useGroupFormDrawer({
     const [selectedCoordName, setSelectedCoordName] = useState('');
     const [selectedCoordCareer, setSelectedCoordCareer] = useState('');
 
-    // Specialized sub-hooks
-    const search = useUserSearch();
-
     const members = useGroupMembers({
         carreras,
         formData,
         setFormData,
         selectedCoordCareer,
         setSelectedCoordName,
-        setSelectedCoordCareer,
-        setCoordSearchQuery: search.setCoordSearchQuery,
-        setShowCoordResults: search.setShowCoordResults,
-        setSelectedTeacher: search.setSelectedTeacher,
-        setTeacherSearchQuery: search.setTeacherSearchQuery,
-        setShowTeacherResults: search.setShowTeacherResults,
-        setSelectedStudent: search.setSelectedStudent,
-        setStudentSearchQuery: search.setStudentSearchQuery,
-        setShowStudentResults: search.setShowStudentResults
+        setSelectedCoordCareer
     });
 
     const draft = useGroupFormDraft({
@@ -163,44 +151,9 @@ export function useGroupFormDrawer({
         setFormData,
         groupMembers: members.groupMembers,
         selectedCoordName,
-        coordSearchQuery: search.coordSearchQuery,
-        setCoordSearchQuery: search.setCoordSearchQuery,
-        coordSearchResults: search.coordSearchResults,
-        isCoordSearching: search.isCoordSearching,
-        showCoordResults: search.showCoordResults,
-        setShowCoordResults: search.setShowCoordResults,
+        selectedCoordCareer,
         handleSelectCoordinator: members.handleSelectCoordinator,
-
-        // Docente
-        teacherSearchQuery: search.teacherSearchQuery,
-        setTeacherSearchQuery: search.setTeacherSearchQuery,
-        teacherPhone: members.teacherPhone,
-        setTeacherPhone: members.setTeacherPhone,
-        teacherSearchResults: search.teacherSearchResults,
-        isTeacherSearching: search.isTeacherSearching,
-        showTeacherResults: search.showTeacherResults,
-        setShowTeacherResults: search.setShowTeacherResults,
-        handleSelectTeacher: members.handleSelectTeacher,
-        teacherRol: members.teacherRol,
-        setTeacherRol: members.setTeacherRol,
-        handleAddTeacher: () => members.handleAddTeacher(search.selectedTeacher),
-        selectedTeacher: search.selectedTeacher,
-
-        // Estudiante
-        studentSearchQuery: search.studentSearchQuery,
-        setStudentSearchQuery: search.setStudentSearchQuery,
-        studentPhone: members.studentPhone,
-        setStudentPhone: members.setStudentPhone,
-        studentSearchResults: search.studentSearchResults,
-        isStudentSearching: search.isStudentSearching,
-        showStudentResults: search.showStudentResults,
-        setShowStudentResults: search.setShowStudentResults,
-        handleSelectStudent: members.handleSelectStudent,
-        studentRol: members.studentRol,
-        setStudentRol: members.setStudentRol,
-        handleAddStudent: () => members.handleAddStudent(search.selectedStudent),
-        selectedStudent: search.selectedStudent,
-
+        handleAddMember: members.handleAddMember,
         handleRemoveMember: members.handleRemoveMember,
         toggleLine,
         handleSubmitForm,

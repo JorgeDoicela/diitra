@@ -2,61 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../../../../api/axios_config';
 import { useConfirm } from '../../../../api/ConfirmContext';
 import { useGroupAudioRecorder } from './hooks/useGroupAudioRecorder';
-import { useGroupMemberSearch } from './hooks/useGroupMemberSearch';
-import { useGroupEditDraft } from './hooks/useGroupEditDraft';
 import { useGroupFeedbackSignalR } from './hooks/useGroupFeedbackSignalR';
+import { useGroupEditDraft } from './hooks/useGroupEditDraft';
+import { useGroupMemberSearch } from './hooks/useGroupMemberSearch';
 
-export interface GroupMember {
-    id_grupo_miembro: number;
-    id_usuario: number;
-    nombre_completo: string;
-    cedula?: string;
-    rol: string;
-    activo: boolean;
-    fecha_inicio?: string;
-    fecha_fin?: string;
-    carrera?: string;
-    telefono_contacto?: string;
-}
-
-export interface Group {
-    id_grupo: number;
-    uuid: string;
-    nombre: string;
-    siglas: string;
-    id_coordinador: number | null;
-    id_profesor_coordinador: string | null;
-    nombre_coordinador: string;
-    carrera_coordinador?: string;
-    objetivo_general: string;
-    mision: string;
-    vision: string;
-    resolucion_aprobacion: string;
-    fecha_creacion: string;
-    tipo_grupo: string;
-    id_dominio: number | null;
-    categoria_consolidacion?: string;
-    activo: boolean;
-    estado?: string;
-    lineas_ids: number[];
-    carreras_ids: number[];
-    miembros?: GroupMember[];
-    proyectos?: any[];
-    Proyectos?: any[];
-    link_whatsapp?: string;
-    telefono_coordinador?: string;
-    teacherMemberCedulas?: string[];
-}
-
-export interface Career {
-    id_carrera: number;
-    carrera1: string;
-}
-
-export interface ResearchLine {
-    id: number;
-    nombre: string;
-}
+// Re-export types from the canonical source to avoid circular deps
+export type { Group, GroupMember, Career, ResearchLine } from '../GroupsPage/types';
+import type { Group, GroupMember, Career, ResearchLine } from '../GroupsPage/types';
 
 interface UseGroupDetailProps {
     isOpen: boolean;
@@ -190,36 +142,7 @@ export const useGroupDetail = ({
         setEditFormData: draft.setEditFormData,
         selectedCoordName: draft.selectedCoordName,
         setSelectedCoordName: draft.setSelectedCoordName,
-        coordSearchQuery: memberSearch.coordSearchQuery,
-        setCoordSearchQuery: memberSearch.setCoordSearchQuery,
-        coordSearchResults: memberSearch.coordSearchResults,
-        isCoordSearching: memberSearch.isCoordSearching,
-        showCoordResults: memberSearch.showCoordResults,
-        setShowCoordResults: memberSearch.setShowCoordResults,
-        teacherSearchQuery: memberSearch.teacherSearchQuery,
-        setTeacherSearchQuery: memberSearch.setTeacherSearchQuery,
-        teacherPhone: memberSearch.teacherPhone,
-        setTeacherPhone: memberSearch.setTeacherPhone,
-        studentPhone: memberSearch.studentPhone,
-        setStudentPhone: memberSearch.setStudentPhone,
-        teacherSearchResults: memberSearch.teacherSearchResults,
-        isTeacherSearching: memberSearch.isTeacherSearching,
-        showTeacherResults: memberSearch.showTeacherResults,
-        setShowTeacherResults: memberSearch.setShowTeacherResults,
-        selectedTeacher: memberSearch.selectedTeacher,
-        setSelectedTeacher: memberSearch.setSelectedTeacher,
-        teacherRol: memberSearch.teacherRol,
-        setTeacherRol: memberSearch.setTeacherRol,
-        studentSearchQuery: memberSearch.studentSearchQuery,
-        setStudentSearchQuery: memberSearch.setStudentSearchQuery,
-        studentSearchResults: memberSearch.studentSearchResults,
-        isStudentSearching: memberSearch.isStudentSearching,
-        showStudentResults: memberSearch.showStudentResults,
-        setShowStudentResults: memberSearch.setShowStudentResults,
-        selectedStudent: memberSearch.selectedStudent,
-        setSelectedStudent: memberSearch.setSelectedStudent,
-        studentRol: memberSearch.studentRol,
-        setStudentRol: memberSearch.setStudentRol,
+        selectedCoordCareer: memberSearch.selectedCoordCareer,
         activeFieldKey: feedback.activeFieldKey,
         setActiveFieldKey: feedback.setActiveFieldKey,
         activeFieldName: feedback.activeFieldName,
@@ -244,10 +167,7 @@ export const useGroupDetail = ({
 
         // Actions
         handleSelectCoordinator: memberSearch.handleSelectCoordinator,
-        handleSelectTeacher: memberSearch.handleSelectTeacher,
-        handleSelectStudent: memberSearch.handleSelectStudent,
-        handleAddTeacher: () => memberSearch.handleAddTeacher(draft.editFormData.id_profesor_coordinador),
-        handleAddStudent: memberSearch.handleAddStudent,
+        handleAddMember: memberSearch.handleAddMember,
         handleRemoveMember: memberSearch.handleRemoveMember,
         toggleLine: draft.toggleLine,
         clearDraft: draft.clearDraft,

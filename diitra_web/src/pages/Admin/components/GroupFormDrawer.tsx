@@ -22,39 +22,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = (props) => {
         setFormData,
         groupMembers,
         selectedCoordName,
-        coordSearchQuery,
-        setCoordSearchQuery,
-        coordSearchResults,
-        isCoordSearching,
-        showCoordResults,
-        setShowCoordResults,
+        selectedCoordCareer,
         handleSelectCoordinator,
-        teacherSearchQuery,
-        setTeacherSearchQuery,
-        teacherPhone,
-        setTeacherPhone,
-        teacherSearchResults,
-        isTeacherSearching,
-        showTeacherResults,
-        setShowTeacherResults,
-        handleSelectTeacher,
-        teacherRol,
-        setTeacherRol,
-        handleAddTeacher,
-        selectedTeacher,
-        studentSearchQuery,
-        setStudentSearchQuery,
-        studentPhone,
-        setStudentPhone,
-        studentSearchResults,
-        isStudentSearching,
-        showStudentResults,
-        setShowStudentResults,
-        handleSelectStudent,
-        studentRol,
-        setStudentRol,
-        handleAddStudent,
-        selectedStudent,
+        handleAddMember,
         handleRemoveMember,
         toggleLine,
         handleSubmitForm,
@@ -85,7 +55,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = (props) => {
                                 <p className="section-label text-text-dim">Configuración de propuesta y equipo inicial</p>
                             </div>
                         </div>
-                        <button onClick={handleCloseModal} className="text-text-dim hover:text-text-main transition-colors">
+                        <button onClick={handleCloseModal} className="text-text-dim hover:text-text-main transition-colors cursor-pointer">
                             <ChevronRight size={20} />
                         </button>
                     </div>
@@ -127,13 +97,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = (props) => {
                         />
 
                         <CoordinatorSection
-                            coordSearchQuery={coordSearchQuery}
-                            setCoordSearchQuery={setCoordSearchQuery}
                             selectedCoordName={selectedCoordName}
-                            showCoordResults={showCoordResults}
-                            setShowCoordResults={setShowCoordResults}
-                            isCoordSearching={isCoordSearching}
-                            coordSearchResults={coordSearchResults}
+                            selectedCoordCedula={formData.id_profesor_coordinador || ''}
+                            selectedCoordCareer={selectedCoordCareer}
                             handleSelectCoordinator={handleSelectCoordinator}
                         />
 
@@ -158,32 +124,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = (props) => {
                             groupMembers={groupMembers}
                             handleRemoveMember={handleRemoveMember}
                             formatCareerName={formatCareerName}
-                            teacherSearchQuery={teacherSearchQuery}
-                            setTeacherSearchQuery={setTeacherSearchQuery}
-                            teacherPhone={teacherPhone}
-                            setTeacherPhone={setTeacherPhone}
-                            teacherSearchResults={teacherSearchResults}
-                            isTeacherSearching={isTeacherSearching}
-                            showTeacherResults={showTeacherResults}
-                            setShowTeacherResults={setShowTeacherResults}
-                            handleSelectTeacher={handleSelectTeacher}
-                            teacherRol={teacherRol}
-                            setTeacherRol={setTeacherRol}
-                            handleAddTeacher={handleAddTeacher}
-                            selectedTeacher={selectedTeacher}
-                            studentSearchQuery={studentSearchQuery}
-                            setStudentSearchQuery={setStudentSearchQuery}
-                            studentPhone={studentPhone}
-                            setStudentPhone={setStudentPhone}
-                            studentSearchResults={studentSearchResults}
-                            isStudentSearching={isStudentSearching}
-                            showStudentResults={showStudentResults}
-                            setShowStudentResults={setShowStudentResults}
-                            handleSelectStudent={handleSelectStudent}
-                            studentRol={studentRol}
-                            setStudentRol={setStudentRol}
-                            handleAddStudent={handleAddStudent}
-                            selectedStudent={selectedStudent}
+                            handleAddMember={handleAddMember}
+                            coordinatorCedula={formData.id_profesor_coordinador}
                         />
                     </form>
 
@@ -193,14 +135,14 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = (props) => {
                             <button
                                 type="button"
                                 onClick={handleCloseModal}
-                                className="btn-vercel-secondary !py-2 !px-4"
+                                className="btn-vercel-secondary !py-2 !px-4 cursor-pointer"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSubmitForm}
-                                className="btn-vercel-primary !py-2 !px-5"
+                                className="btn-vercel-primary !py-2 !px-5 cursor-pointer"
                             >
                                 Enviar Propuesta
                             </button>

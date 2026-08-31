@@ -115,6 +115,22 @@ public class ConvocatoriasController : ControllerBase
         }
     }
 
+    [HttpPost("{uuid}/publish")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
+    public async Task<IActionResult> Publish(string uuid, [FromBody] PublishConvocatoriaRequest request)
+    {
+        try
+        {
+            var result = await _convocatoriaService.PublishWithAudienceAsync(uuid, request);
+            if (!result) return NotFound();
+            return Ok(new { message = "Convocatoria publicada y comunicados despachados con éxito." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("{uuid}")]
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Delete(string uuid)

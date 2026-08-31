@@ -12,25 +12,11 @@ public class ConvocatoriaDto
     public string IdPeriodo { get; set; } = null!;
     public string? PeriodoNombre { get; set; }
     public string Anio { get; set; } = null!;
-    public string? Descripcion { get; set; }
-    public decimal? PresupuestoTotal { get; set; }
-    public decimal? MontoMaximoProyecto { get; set; }
-    public string? UrlBases { get; set; }
-    public string? RequisitosMinimos { get; set; }
     public int? IdTipoConvocatoria { get; set; }
-    public int? IdAgendaZonal { get; set; }
-    public int? IdRubrica { get; set; }
-    public string? RubricaNombre { get; set; }
-    public decimal PuntajeMinimoAprobacion { get; set; } = 70.00m;
-    public bool FinanciamientoExt { get; set; }
-    public string? MetaProduccion { get; set; }
-    public List<int> LineasIds { get; set; } = new();
-    public List<ConvocatoriaHitoDto> Hitos { get; set; } = new();
-    public List<ConvocatoriaDocumentoReqDto> DocumentosReq { get; set; } = new();
-    public List<ConvocatoriaProyectoDto> Proyectos { get; set; } = new();
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
     public string Estado { get; set; } = "Borrador";
+    public List<ConvocatoriaProyectoDto> Proyectos { get; set; } = new();
 }
 
 public class ConvocatoriaProyectoDto
@@ -39,26 +25,6 @@ public class ConvocatoriaProyectoDto
     public string Titulo { get; set; } = null!;
     public string? CodigoInstitucional { get; set; }
     public string Estado { get; set; } = null!;
-}
-
-public class ConvocatoriaHitoDto
-{
-    public int IdHito { get; set; }
-    public string? Uuid { get; set; }
-    public string NombreHito { get; set; } = null!;
-    public DateOnly FechaHito { get; set; }
-    public bool EsCritico { get; set; }
-    public string? Descripcion { get; set; }
-}
-
-public class ConvocatoriaDocumentoReqDto
-{
-    public int IdDocReq { get; set; }
-    public string? Uuid { get; set; }
-    public string NombreDocumento { get; set; } = null!;
-    public string? Descripcion { get; set; }
-    public bool EsObligatorio { get; set; }
-    public string? FormatoAceptado { get; set; }
 }
 
 public class PeriodoDto
@@ -74,20 +40,16 @@ public class CreateConvocatoriaDto
     public string Titulo { get; set; } = null!;
     public string IdPeriodo { get; set; } = null!;
     public string Anio { get; set; } = null!;
-    public string? Descripcion { get; set; }
-    public decimal? PresupuestoTotal { get; set; }
-    public decimal? MontoMaximoProyecto { get; set; }
-    public string? UrlBases { get; set; }
-    public string? RequisitosMinimos { get; set; }
     public int? IdTipoConvocatoria { get; set; }
-    public int? IdAgendaZonal { get; set; }
-    public int? IdRubrica { get; set; }
-    public decimal PuntajeMinimoAprobacion { get; set; } = 70.00m;
-    public bool FinanciamientoExt { get; set; }
-    public string? MetaProduccion { get; set; }
-    public List<int> LineasIds { get; set; } = new();
-    public List<ConvocatoriaHitoDto> Hitos { get; set; } = new();
-    public List<ConvocatoriaDocumentoReqDto> DocumentosReq { get; set; } = new();
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
+}
+
+public class PublishConvocatoriaRequest
+{
+    public List<int> DestinatariosUserIds { get; set; } = new();
+    public List<string> DestinatariosEmails { get; set; } = new();
+    public bool IncluirDocentesConHoras { get; set; }
+    public bool IncluirAutoridadesYDepartamentos { get; set; }
+    public bool IncluirTodosDocentes { get; set; }
 }

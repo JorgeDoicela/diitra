@@ -138,8 +138,8 @@ export function useProjectTeam(
         const fetchAvailableUsers = async () => {
             try {
                 const [profRes, alumRes] = await Promise.all([
-                    api.get('/Admin/users?type=DOCENTE&soloConHoras=true&pageSize=100'),
-                    api.get('/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&pageSize=100')
+                    api.get('/Admin/users?type=DOCENTE&soloConHoras=false&pageSize=100'),
+                    api.get('/Admin/users?type=ESTUDIANTE&origenEstudiante=TODOS&estadoEstudiante=TODOS&pageSize=100')
                 ]);
                 const mapUser = (u: any) => ({
                     cedula: u.id_profesor || u.id_sigafi || '',
@@ -170,19 +170,17 @@ export function useProjectTeam(
             return;
         }
 
-        const targetTipo = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR') ? 'profesor' :
-            (['Semillerista', 'SEMILLERISTA'].includes(teamChangeForm.rolPropuesto) ? 'alumno' : 'profesor');
+        const isStudentRole = ['Semillerista', 'SEMILLERISTA', 'Auxiliar de Investigación', 'alumno'].some(r => teamChangeForm.rolPropuesto.toLowerCase().includes(r.toLowerCase()));
+        const targetType = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR') ? 'DOCENTE' : (isStudentRole ? 'ESTUDIANTE' : 'DOCENTE');
 
-        const isAlreadySelected = (targetTipo === 'profesor' ? availableProfessors : availableStudents)
+        const isAlreadySelected = (targetType === 'DOCENTE' ? availableProfessors : availableStudents)
             .some(u => u.nombre === requestSearchQuery);
         if (isAlreadySelected) return;
 
         const delayDebounceFn = setTimeout(async () => {
             setIsRequestSearching(true);
             try {
-                const endpoint = targetTipo === 'alumno'
-                    ? `/Admin/users?type=ESTUDIANTE&origenEstudiante=INSTITUTO&estadoEstudiante=ACTIVO&search=${encodeURIComponent(requestSearchQuery.trim())}&pageSize=30`
-                    : `/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(requestSearchQuery.trim())}&pageSize=30`;
+                const endpoint = `/Admin/users?type=${targetType}&soloConHoras=false&estadoEstudiante=TODOS&origenEstudiante=TODOS&search=${encodeURIComponent(requestSearchQuery.trim())}&pageSize=30`;
                 const res = await api.get(endpoint);
                 const mapped = (res.data?.items || []).map((u: any) => ({
                     cedula: u.id_profesor || u.id_sigafi || '',
@@ -194,7 +192,7 @@ export function useProjectTeam(
                     horasDisponibles: u.horas_investigacion || 0,
                     horasAsignadas: u.horas_asignadas || 0,
                     id_usuario: u.id_usuario || 0,
-                    tipo: targetTipo
+                    tipo: targetType === 'ESTUDIANTE' ? 'alumno' : 'profesor'
                 }));
                 setRequestSearchResults(mapped);
                 setShowRequestSearchResults(true);
@@ -215,7 +213,7 @@ export function useProjectTeam(
         const delayDebounceFn = setTimeout(async () => {
             setIsTransferSearching(true);
             try {
-                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=true&search=${encodeURIComponent(transferSearchQuery.trim())}&pageSize=30`);
+                const res = await api.get(`/Admin/users?type=DOCENTE&soloConHoras=false&search=${encodeURIComponent(transferSearchQuery.trim())}&pageSize=30`);
                 const mapped = (res.data?.items || []).map((u: any) => ({
                     cedula: u.id_profesor || u.id_sigafi || '',
                     nombre: u.nombre_completo || u.nombre || '',

@@ -13,8 +13,9 @@ export interface SelectedPerson {
 
 export const USER_TYPES = [
     { value: 'DOCENTE', label: 'Docente' },
+    { value: 'ADMINISTRATIVO', label: 'Personal Administrativo / Departamentos' },
     { value: 'ESTUDIANTE', label: 'Estudiante' },
-    { value: 'EXTERNO', label: 'Árbitro Externo' }
+    { value: 'EXTERNO', label: 'Árbitro / Colaborador Externo' }
 ];
 
 export const ROLE_OPTIONS = [
@@ -26,6 +27,7 @@ export const ROLE_OPTIONS = [
 
 export const TYPE_BADGE: Record<string, string> = {
     DOCENTE: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    ADMINISTRATIVO: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     ESTUDIANTE: 'bg-green-500/10 text-green-600 dark:text-green-400',
     EXTERNO: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
 };
@@ -45,7 +47,7 @@ const mapApiUserToPerson = (u: Record<string, unknown>): SelectedPerson => ({
     nombre: String(u.nombre_completo ?? u.nombreCompleto ?? u.nombre ?? 'Sin nombre').trim(),
     email: String(u.email ?? u.email_institucional ?? '').trim(),
     tipo: String(u.type ?? u.tipo ?? 'DOCENTE'),
-    carrera: String(u.carrera ?? '').trim()
+    carrera: String(u.departamento ?? u.carrera ?? u.cargo_instituto ?? '').trim()
 });
 
 const personKey = (p: SelectedPerson) =>
@@ -87,7 +89,7 @@ export const RecipientPicker: React.FC<RecipientPickerProps> = ({
         setSearching(true);
         setSearchError(null);
         try {
-            const typesToFetch = type ? [type] : (['DOCENTE', 'ESTUDIANTE', 'EXTERNO'] as const);
+            const typesToFetch = type ? [type] : (['DOCENTE', 'ADMINISTRATIVO', 'ESTUDIANTE', 'EXTERNO'] as const);
             const carreraLabel = carreraId
                 ? carreras.find(c => c.idCarrera.toString() === carreraId)?.carrera1
                 : '';

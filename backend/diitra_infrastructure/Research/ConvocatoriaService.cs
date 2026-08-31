@@ -61,9 +61,6 @@ public class ConvocatoriaService : IConvocatoriaService
                 IdPeriodo = c.IdPeriodo,
                 PeriodoNombre = c.IdPeriodoNavigation.Detalle,
                 Anio = c.Anio,
-                Descripcion = c.Descripcion,
-                UrlBases = c.UrlBases,
-                RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
@@ -92,9 +89,6 @@ public class ConvocatoriaService : IConvocatoriaService
                 IdPeriodo = c.IdPeriodo,
                 PeriodoNombre = c.IdPeriodoNavigation.Detalle,
                 Anio = c.Anio,
-                Descripcion = c.Descripcion,
-                UrlBases = c.UrlBases,
-                RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
@@ -150,12 +144,9 @@ public class ConvocatoriaService : IConvocatoriaService
         {
             Uuid = Guid.NewGuid().ToString(),
             CodigoConvocatoria = dto.CodigoConvocatoria.Trim(),
-            Titulo = dto.Titulo,
+            Titulo = dto.Titulo.Trim(),
             IdPeriodo = dto.IdPeriodo,
-            Anio = dto.Anio,
-            Descripcion = dto.Descripcion,
-            UrlBases = dto.UrlBases,
-            RequisitosMinimos = dto.RequisitosMinimos,
+            Anio = dto.Anio.Trim(),
             IdTipoConvocatoria = dto.IdTipoConvocatoria,
             FechaApertura = dto.FechaApertura,
             FechaCierre = dto.FechaCierre,
@@ -199,9 +190,6 @@ public class ConvocatoriaService : IConvocatoriaService
             conv.CodigoConvocatoria,
             conv.Titulo,
             conv.Anio,
-            conv.Descripcion,
-            conv.UrlBases,
-            conv.RequisitosMinimos,
             conv.IdTipoConvocatoria,
             conv.FechaApertura,
             conv.FechaCierre,
@@ -210,12 +198,9 @@ public class ConvocatoriaService : IConvocatoriaService
         string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
         conv.CodigoConvocatoria = dto.CodigoConvocatoria.Trim();
-        conv.Titulo = dto.Titulo;
+        conv.Titulo = dto.Titulo.Trim();
         conv.IdPeriodo = dto.IdPeriodo;
-        conv.Anio = dto.Anio;
-        conv.Descripcion = dto.Descripcion;
-        conv.UrlBases = dto.UrlBases;
-        conv.RequisitosMinimos = dto.RequisitosMinimos;
+        conv.Anio = dto.Anio.Trim();
         conv.IdTipoConvocatoria = dto.IdTipoConvocatoria;
         conv.FechaApertura = dto.FechaApertura;
         conv.FechaCierre = dto.FechaCierre;
@@ -227,9 +212,6 @@ public class ConvocatoriaService : IConvocatoriaService
             conv.CodigoConvocatoria,
             conv.Titulo,
             conv.Anio,
-            conv.Descripcion,
-            conv.UrlBases,
-            conv.RequisitosMinimos,
             conv.IdTipoConvocatoria,
             conv.FechaApertura,
             conv.FechaCierre,
@@ -238,6 +220,221 @@ public class ConvocatoriaService : IConvocatoriaService
         string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
 
         await _auditService.LogActionAsync(null, "EDITAR_CONVOCATORIA", $"Edición de convocatoria {conv.Titulo}", "CONVOCATORIAS", beforeJson, afterJson);
+
+        return true;
+    }
+
+    public async Task<bool> PublishWithAudienceAsync(string uuid, PublishConvocatoriaRequest request)
+    {
+        var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
+        if (conv == null) return false;
+
+        var oldState = conv.Estado;
+        conv.Estado = "Abierta";
+        await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            conv.Titulo,
+            conv.CodigoConvocatoria,
+            EstadoNuevo = conv.Estado,
+            AudienceRequest = request
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+        await _auditService.LogActionAsync(null, "PUBLICAR_CONVOCATORIA_CON_AUDIENCIA", $"Publicación y difusión de convocatoria \"{conv.Titulo}\"", "CONVOCATORIAS", null, afterJson);
+
+        try
+        {
+            var titulo = conv.Titulo;
+            var anio = conv.Anio.ToString();
+            var codigo = conv.CodigoConvocatoria ?? "N/A";
+            var fechaAperturaStr = conv.FechaApertura.ToString("dd/MM/yyyy");
+            var fechaCierreStr = conv.FechaCierre.ToString("dd/MM/yyyy");
+            var periodoId = conv.IdPeriodo;
+
+            DispatchNotificationsInBackground(async sp =>
+            {
+                var db = sp.GetRequiredService<DiitraContext>();
+                var drivers = sp.GetServices<INotificationDriver>();
+                var emailDriver = drivers.FirstOrDefault(d => d.Name == "Email");
+
+                var recipientList = new List<(string Email, int? UserId, string Name)>();
+
+                // 1. Destinatarios explícitos por User ID
+                if (request.DestinatariosUserIds != null && request.DestinatariosUserIds.Any())
+                {
+                    var users = await db.Users.AsNoTracking().Where(u => request.DestinatariosUserIds.Contains(u.IdUsuario)).ToListAsync();
+                    foreach (var u in users)
+                    {
+                        var email = u.EmailInstitucional?.Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email, u.IdUsuario, u.Nombre?.Trim() ?? "Docente Investigador"));
+                        }
+                    }
+                }
+
+                // 2. Destinatarios explícitos por Email
+                if (request.DestinatariosEmails != null && request.DestinatariosEmails.Any())
+                {
+                    foreach (var em in request.DestinatariosEmails)
+                    {
+                        var trimmed = em?.Trim();
+                        if (!string.IsNullOrEmpty(trimmed) && trimmed.Contains('@'))
+                        {
+                            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.EmailInstitucional == trimmed);
+                            recipientList.Add((trimmed, user?.IdUsuario, user?.Nombre?.Trim() ?? trimmed.Split('@')[0]));
+                        }
+                    }
+                }
+
+                // 3. Docentes con horas de investigación
+                if (request.IncluirDocentesConHoras)
+                {
+                    var researchSubcatId = await db.SubcategoriasActividades.AsNoTracking()
+                        .Where(s => s.Subcategoria != null && (s.Subcategoria.ToLower().Contains("investiga") || s.Subcategoria.ToLower().Contains("i+d")))
+                        .Select(s => (int?)s.IdSubcategoria)
+                        .FirstOrDefaultAsync();
+
+                    var profQuery = db.Profesores.AsNoTracking().Where(p => p.Activo == 1);
+                    if (researchSubcatId.HasValue && !string.IsNullOrEmpty(periodoId))
+                    {
+                        profQuery = profQuery.Where(p => db.ProfesoresActividades.Any(pa =>
+                            pa.IdProfesor == p.IdProfesor &&
+                            pa.IdSubcategoria == researchSubcatId.Value &&
+                            pa.IdPeriodo == periodoId));
+                    }
+
+                    var profs = await profQuery.ToListAsync();
+                    var profIds = profs.Select(p => p.IdProfesor.Trim()).ToList();
+                    var linkedUsers = await db.Users.AsNoTracking().Where(u => profIds.Contains(u.IdSigafi.Trim())).ToListAsync();
+
+                    foreach (var p in profs)
+                    {
+                        var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
+                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente Investigador" : name));
+                        }
+                    }
+                }
+
+                // 4. Todos los docentes
+                if (request.IncluirTodosDocentes)
+                {
+                    var allProfs = await db.Profesores.AsNoTracking().Where(p => p.Activo == 1).ToListAsync();
+                    var profIds = allProfs.Select(p => p.IdProfesor.Trim()).ToList();
+                    var linkedUsers = await db.Users.AsNoTracking().Where(u => profIds.Contains(u.IdSigafi.Trim())).ToListAsync();
+
+                    foreach (var p in allProfs)
+                    {
+                        var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
+                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente" : name));
+                        }
+                    }
+                }
+
+                // 5. Autoridades y Departamentos (Rectorado, Vicerrectorado, Comunicación, etc.)
+                if (request.IncluirAutoridadesYDepartamentos)
+                {
+                    var adminProfs = await db.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
+                        db.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) &&
+                            ((c.DepartamentoNavigation != null && (
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("rector") ||
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("vicerrector") ||
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("comunicaci") ||
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("investiga")
+                            )) ||
+                            (c.CargoInstitutoNavigation != null && (
+                                c.CargoInstitutoNavigation.Nombre.ToLower().Contains("rector") ||
+                                c.CargoInstitutoNavigation.Nombre.ToLower().Contains("vicerrector") ||
+                                c.CargoInstitutoNavigation.Nombre.ToLower().Contains("comunicaci") ||
+                                c.CargoInstitutoNavigation.Nombre.ToLower().Contains("director") ||
+                                c.CargoInstitutoNavigation.Nombre.ToLower().Contains("coordinador")
+                            )))))
+                        .ToListAsync();
+
+                    var adminIds = adminProfs.Select(p => p.IdProfesor.Trim()).ToList();
+                    var linkedUsers = await db.Users.AsNoTracking().Where(u => adminIds.Contains(u.IdSigafi.Trim())).ToListAsync();
+
+                    foreach (var p in adminProfs)
+                    {
+                        var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
+                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Autoridad Institucional" : name));
+                        }
+                    }
+                }
+
+                // Deduplicar por Email
+                var uniqueRecipients = new Dictionary<string, (string Email, int? UserId, string Name)>(StringComparer.OrdinalIgnoreCase);
+                foreach (var r in recipientList)
+                {
+                    if (!uniqueRecipients.ContainsKey(r.Email))
+                    {
+                        uniqueRecipients[r.Email] = r;
+                    }
+                }
+
+                var extraData = new Dictionary<string, string>
+                {
+                    { "Año", anio },
+                    { "Código", codigo },
+                    { "Fecha Apertura", fechaAperturaStr },
+                    { "Fecha Cierre", fechaCierreStr }
+                };
+
+                var title = $"Apertura Oficial: Convocatoria {codigo} - {titulo}";
+                var body = $"Estimado(a) colega, se ha publicado oficialmente la convocatoria {codigo}: \"{titulo}\". Las postulaciones para proyectos de investigación e innovación se encuentran formalmente habilitadas desde el {fechaAperturaStr} hasta el {fechaCierreStr}.";
+
+                foreach (var r in uniqueRecipients.Values)
+                {
+                    try
+                    {
+                        if (emailDriver != null)
+                        {
+                            await emailDriver.SendAsync(r.Email, title, body, "/convocatorias", r.Name, extraData);
+                        }
+
+                        if (r.UserId.HasValue)
+                        {
+                            var notif = new InvNotificacion
+                            {
+                                Uuid = Guid.NewGuid(),
+                                Destinatario = r.UserId.Value,
+                                Titulo = "Nueva Convocatoria Abierta",
+                                Mensaje = $"Se ha publicado la convocatoria: {titulo}. Ya puedes empezar a postular proyectos.",
+                                Categoria = "INVESTIGACION",
+                                UrlAccion = "/convocatorias",
+                                FechaEnvio = DateTime.UtcNow,
+                                Leido = false
+                            };
+                            db.InvNotificaciones.Add(notif);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al despachar notificación a {Email}", r.Email);
+                    }
+                }
+
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Convocatoria {Uuid} publicada. Total de destinatarios únicos notificados: {Count}", uuid, uniqueRecipients.Count);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al encolar despacho de convocatoria {Uuid}", uuid);
+        }
 
         return true;
     }
@@ -276,6 +473,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 var titulo = conv.Titulo;
                 var anio = conv.Anio.ToString();
                 var codigo = conv.CodigoConvocatoria ?? "N/A";
+                var fechaAperturaStr = conv.FechaApertura.ToString("dd/MM/yyyy");
                 var fechaCierreStr = conv.FechaCierre.ToString("dd/MM/yyyy");
 
                 DispatchNotificationsInBackground(async sp =>
@@ -290,6 +488,7 @@ public class ConvocatoriaService : IConvocatoriaService
                         {
                             { "Año", anio },
                             { "Código", codigo },
+                            { "Fecha Apertura", fechaAperturaStr },
                             { "Fecha Cierre", fechaCierreStr }
                         }
                     );

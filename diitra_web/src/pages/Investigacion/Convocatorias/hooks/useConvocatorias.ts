@@ -115,6 +115,10 @@ export const useConvocatorias = () => {
     const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
     const [formFieldErrors, setFormFieldErrors] = useState<{ codigo_convocatoria?: string; anio?: string }>({});
 
+    // Publish with audience drawer states
+    const [publishDrawerTarget, setPublishDrawerTarget] = useState<Convocatoria | null>(null);
+    const [isPublishDrawerOpen, setIsPublishDrawerOpen] = useState(false);
+
     // Draft management states
     const [isDraftRestored, setIsDraftRestored] = useState(false);
     const isInitializedRef = useRef(false);
@@ -130,9 +134,6 @@ export const useConvocatorias = () => {
         titulo: '',
         id_periodo: '',
         anio: new Date().getFullYear().toString(),
-        descripcion: '',
-        url_bases: '',
-        requisitos_minimos: '',
         id_tipo_convocatoria: undefined as number | undefined,
         fecha_apertura: '',
         fecha_cierre: ''
@@ -375,9 +376,6 @@ export const useConvocatorias = () => {
                         titulo: parsed.formData.titulo || '',
                         id_periodo: parsed.formData.id_periodo || '',
                         anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear().toString(),
-                        descripcion: parsed.formData.descripcion || '',
-                        url_bases: parsed.formData.url_bases || '',
-                        requisitos_minimos: parsed.formData.requisitos_minimos || '',
                         id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                         fecha_apertura: parsed.formData.fecha_apertura || '',
                         fecha_cierre: parsed.formData.fecha_cierre || ''
@@ -408,7 +406,7 @@ export const useConvocatorias = () => {
                     formData.titulo !== conv.titulo ||
                     formData.id_periodo !== conv.id_periodo ||
                     formData.anio !== conv.anio ||
-                    formData.descripcion !== (conv.descripcion || '') ||
+                    formData.id_tipo_convocatoria !== conv.id_tipo_convocatoria ||
                     formData.fecha_apertura !== conv.fecha_apertura ||
                     formData.fecha_cierre !== conv.fecha_cierre;
             }
@@ -416,7 +414,8 @@ export const useConvocatorias = () => {
             hasChanges =
                 formData.codigo_convocatoria.trim() !== '' ||
                 formData.titulo.trim() !== '' ||
-                formData.descripcion.trim() !== '';
+                formData.fecha_apertura.trim() !== '' ||
+                formData.fecha_cierre.trim() !== '';
         }
 
         if (hasChanges) {
@@ -541,9 +540,6 @@ export const useConvocatorias = () => {
                         titulo: parsed.formData.titulo || '',
                         id_periodo: parsed.formData.id_periodo || '',
                         anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear().toString(),
-                        descripcion: parsed.formData.descripcion || '',
-                        url_bases: parsed.formData.url_bases || '',
-                        requisitos_minimos: parsed.formData.requisitos_minimos || '',
                         id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                         fecha_apertura: parsed.formData.fecha_apertura || '',
                         fecha_cierre: parsed.formData.fecha_cierre || ''
@@ -565,9 +561,6 @@ export const useConvocatorias = () => {
                 titulo: conv.titulo,
                 id_periodo: conv.id_periodo,
                 anio: conv.anio,
-                descripcion: conv.descripcion || '',
-                url_bases: conv.url_bases || '',
-                requisitos_minimos: conv.requisitos_minimos || '',
                 id_tipo_convocatoria: conv.id_tipo_convocatoria,
                 fecha_apertura: conv.fecha_apertura,
                 fecha_cierre: conv.fecha_cierre
@@ -657,9 +650,6 @@ export const useConvocatorias = () => {
             titulo: '',
             id_periodo: periodos[0]?.id_periodo || '',
             anio: new Date().getFullYear().toString(),
-            descripcion: '',
-            url_bases: '',
-            requisitos_minimos: '',
             id_tipo_convocatoria: undefined,
             fecha_apertura: '',
             fecha_cierre: ''
@@ -667,6 +657,21 @@ export const useConvocatorias = () => {
         setIsEditing(false);
         setSelectedUuid(null);
         setIsDraftRestored(false);
+    };
+
+    const handleOpenPublishDrawer = (conv: Convocatoria) => {
+        setPublishDrawerTarget(conv);
+        setIsPublishDrawerOpen(true);
+    };
+
+    const handleClosePublishDrawer = () => {
+        setIsPublishDrawerOpen(false);
+        setPublishDrawerTarget(null);
+    };
+
+    const handlePublishSuccess = () => {
+        addToast('Convocatoria Publicada', 'La convocatoria ha sido abierta y los comunicados se han despachado a los destinatarios seleccionados.', 'success');
+        fetchConvocatorias();
     };
 
     const convocatoriasAbiertas = convocatorias.filter(c => c.estado === 'Abierta').length;
@@ -695,6 +700,8 @@ export const useConvocatorias = () => {
         setFormData,
         convocatoriasAbiertas,
         proximasACerrar,
+        publishDrawerTarget,
+        isPublishDrawerOpen,
 
         // Handlers
         fetchConvocatorias,
@@ -706,6 +713,9 @@ export const useConvocatorias = () => {
         handleEdit,
         handleDelete,
         handleStatusChange,
+        handleOpenPublishDrawer,
+        handleClosePublishDrawer,
+        handlePublishSuccess,
         resetForm
     };
 };
