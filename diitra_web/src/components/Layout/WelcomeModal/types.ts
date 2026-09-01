@@ -1,9 +1,10 @@
-import { DiitraRole } from '../Help/types';
+import type { DiitraRole } from '../Help/types';
 
 export interface RoleBenefit {
     title: string;
     description: string;
     tag: string;
+    path?: string;
 }
 
 export interface RoleWelcomeConfig {
@@ -14,4 +15,6 @@ export interface RoleWelcomeConfig {
     sectionTitle: string;
     benefits: RoleBenefit[];
     primaryActionLabel: string;
+    primaryActionPath?: string;
 }
+

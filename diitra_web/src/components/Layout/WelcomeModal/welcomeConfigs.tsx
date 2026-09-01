@@ -10,25 +10,30 @@ export const ADMIN_WELCOME: RoleWelcomeConfig = {
         {
             title: 'Investigación, Innovación y Banco de Proyectos',
             description: 'Supervisión del ciclo de vida de proyectos I+D, transferencia tecnológica, convocatorias con financiamiento y analíticas de producción científica.',
-            tag: 'Investigación'
+            tag: 'Investigación',
+            path: '/investigacion'
         },
         {
             title: 'Evaluación por Pares y Baremos CACES',
             description: 'Asignación de evaluadores ciegos, parametrización de rúbricas cuantitativas sobre 100 puntos y seguimiento de dictámenes formales.',
-            tag: 'Evaluación'
+            tag: 'Evaluación',
+            path: '/evaluacion-pares'
         },
         {
             title: 'Ciclo Documental, Plantillas y Firmas',
             description: 'Gestión de plantillas maestras normativas, flujo de aprobaciones, firmas criptográficas y portal de verificación de autenticidad QR.',
-            tag: 'Documentos'
+            tag: 'Documentos',
+            path: '/admin/documentos'
         },
         {
             title: 'Gobernanza, Auditoría Forense y LOPDP',
             description: 'Administración de usuarios y permisos (RBAC), bitácora inmutable SHA-256, gestión de derechos ARCO y motor de notificaciones.',
-            tag: 'Gobernanza'
+            tag: 'Gobernanza',
+            path: '/usuarios'
         }
     ],
-    primaryActionLabel: 'Comenzar'
+    primaryActionLabel: 'Comenzar',
+    primaryActionPath: '/investigacion'
 };
 
 export const DOCENTE_WELCOME: RoleWelcomeConfig = {
@@ -41,25 +46,30 @@ export const DOCENTE_WELCOME: RoleWelcomeConfig = {
         {
             title: 'Workspace Colaborativo en Tiempo Real',
             description: 'Co-autoría simultánea en vivo con colegas mediante cursores compartidos, matrices de coherencia metodológica y plantillas oficiales normativas.',
-            tag: 'Colaboración'
+            tag: 'Colaboración',
+            path: '/investigacion/mis-proyectos'
         },
         {
             title: 'Proyectos de Innovación y Transferencia',
             description: 'Formulación de proyectos de prototipado tecnológico, vinculación con el sector productivo y registro de patentes ante el SENADI.',
-            tag: 'Innovación'
+            tag: 'Innovación',
+            path: '/investigacion'
         },
         {
             title: 'Control de Distributivo y Horas SIGAFI',
             description: 'Seguimiento automático de la carga horaria semanal lectiva y no lectiva asignada a investigación, con calendario unificado de hitos.',
-            tag: 'Distributivo'
+            tag: 'Distributivo',
+            path: '/investigacion/mis-proyectos'
         },
         {
             title: 'Grupos, Planes Bienales y Acreditación',
             description: 'Dirección de grupos científicos, vinculación de tesistas y generación ágil de informes semestrales CACES con firma electrónica.',
-            tag: 'Acreditación'
+            tag: 'Acreditación',
+            path: '/grupos'
         }
     ],
-    primaryActionLabel: 'Comenzar'
+    primaryActionLabel: 'Comenzar',
+    primaryActionPath: '/investigacion/mis-proyectos'
 };
 
 export const ESTUDIANTE_WELCOME: RoleWelcomeConfig = {
@@ -72,25 +82,30 @@ export const ESTUDIANTE_WELCOME: RoleWelcomeConfig = {
         {
             title: 'Directorio y Postulación a Semilleros',
             description: 'Explora las líneas de investigación activas de tu carrera (Software, Energías, Automatización) y postula para colaborar en proyectos docentes.',
-            tag: 'Semilleros'
+            tag: 'Semilleros',
+            path: '/grupos'
         },
         {
             title: 'Acreditación de Horas de Titulación',
             description: 'Bitácora digital de horas prácticas de investigación formativa y descarga de constancias oficiales certificadas con código QR para graduación.',
-            tag: 'Titulación'
+            tag: 'Titulación',
+            path: '/investigacion/mis-proyectos'
         },
         {
             title: 'Espacio de Redacción con Tutoría en Línea',
             description: 'Redacta tu propuesta de grado con plantillas oficiales institucionales y recibe retroalimentación y correcciones directas de tu docente director.',
-            tag: 'Plantillas'
+            tag: 'Plantillas',
+            path: '/investigacion/mis-proyectos'
         },
         {
             title: 'Portal de Verificación y Certificados',
             description: 'Acceso a la validación pública de autenticidad de tus constancias y participación en semilleros de investigación científica institucional.',
-            tag: 'Verificación'
+            tag: 'Verificación',
+            path: '/verificacion'
         }
     ],
-    primaryActionLabel: 'Comenzar'
+    primaryActionLabel: 'Comenzar',
+    primaryActionPath: '/investigacion/mis-proyectos'
 };
 
 export const REVISOR_WELCOME: RoleWelcomeConfig = {
@@ -103,25 +118,30 @@ export const REVISOR_WELCOME: RoleWelcomeConfig = {
         {
             title: 'Panel de Arbitraje Doble Ciego',
             description: 'Entorno confidencial y blindado con estricta reserva de identidades entre autores y evaluadores para garantizar absoluta objetividad.',
-            tag: 'Confidencial'
+            tag: 'Confidencial',
+            path: '/evaluacion-pares'
         },
         {
             title: 'Evaluación Cuantitativa por Rúbricas CACES',
             description: 'Calificación ponderada sobre 100 puntos evaluando rigor metodológico, pertinencia institucional y coherencia presupuestaria.',
-            tag: 'Rúbricas'
+            tag: 'Rúbricas',
+            path: '/evaluacion-pares'
         },
         {
             title: 'Emisión de Dictámenes con Firma Digital',
             description: 'Emite resoluciones vinculantes (Aprobado, Aprobado con modificaciones, Rechazado) respaldadas con firma electrónica criptográfica.',
-            tag: 'Dictámenes'
+            tag: 'Dictámenes',
+            path: '/evaluacion-pares'
         },
         {
             title: 'Certificados Oficiales de Arbitraje',
             description: 'Generación automática de constancias institucionales con código QR verificable para respaldo de tu trayectoria científica.',
-            tag: 'Certificados'
+            tag: 'Certificados',
+            path: '/verificacion'
         }
     ],
-    primaryActionLabel: 'Comenzar'
+    primaryActionLabel: 'Comenzar',
+    primaryActionPath: '/evaluacion-pares'
 };
 
 export const DEFAULT_WELCOME: RoleWelcomeConfig = {
@@ -134,15 +154,18 @@ export const DEFAULT_WELCOME: RoleWelcomeConfig = {
         {
             title: 'Investigación Aplicada e Innovación',
             description: 'Consulta convocatorias abiertas, banco de proyectos institucionales y líneas de investigación por carrera.',
-            tag: 'Ciencia'
+            tag: 'Ciencia',
+            path: '/investigacion'
         },
         {
             title: 'Acreditación y Calidad Académica',
             description: 'Acceso a normativas, formatos oficiales y respaldo de actividades de vinculación e investigación.',
-            tag: 'Calidad'
+            tag: 'Calidad',
+            path: '/verificacion'
         }
     ],
-    primaryActionLabel: 'Comenzar'
+    primaryActionLabel: 'Comenzar',
+    primaryActionPath: '/investigacion'
 };
 
 export const getWelcomeConfigByRole = (
