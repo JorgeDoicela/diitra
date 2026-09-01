@@ -100,7 +100,14 @@ const ConvocatoriasPage = () => {
                     {convocatorias.map((conv) => (
                         <div
                             key={conv.uuid}
-                            onClick={() => { setSelectedConvocatoria(conv); setLastActiveUuid(null); }}
+                            onClick={() => {
+                                if (conv.estado === 'Borrador') {
+                                    handleOpenPublishDrawer(conv);
+                                } else {
+                                    setSelectedConvocatoria(conv);
+                                    setLastActiveUuid(null);
+                                }
+                            }}
                             className={`bento-card px-5 py-6 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 md:gap-0 group cursor-pointer transition-all ${selectedConvocatoria?.uuid === conv.uuid
                                     ? 'bg-brand/[0.05] border-brand/35 shadow-[0_0_12px_rgba(0,112,243,0.08)]'
                                     : (!selectedConvocatoria && lastActiveUuid === conv.uuid)
@@ -264,6 +271,7 @@ const ConvocatoriasPage = () => {
                 convocatoria={publishDrawerTarget}
                 tiposConv={tiposConv}
                 onPublishSuccess={handlePublishSuccess}
+                onEdit={handleEdit}
             />
         </main>
     );

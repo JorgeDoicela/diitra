@@ -145,8 +145,10 @@ export const useConvocatorias = () => {
             const response = await api.get('/Convocatorias');
             const data: Convocatoria[] = response.data;
             setConvocatorias(data);
+            return data;
         } catch (error) {
             console.error('Error fetching convocatorias:', error);
+            return [];
         } finally {
             setLoading(false);
         }
@@ -157,7 +159,11 @@ export const useConvocatorias = () => {
         if (!openUuid || convocatorias.length === 0) return;
         const target = convocatorias.find(c => c.uuid === openUuid);
         if (target) {
-            setSelectedConvocatoria(target);
+            if (target.estado === 'Borrador') {
+                handleOpenPublishDrawer(target);
+            } else {
+                setSelectedConvocatoria(target);
+            }
             setLastActiveUuid(null);
             setSearchParams(prev => {
                 const next = new URLSearchParams(prev);
@@ -505,13 +511,27 @@ export const useConvocatorias = () => {
             };
             if (isEditing && selectedUuid) {
                 await api.put(`/Convocatorias/${selectedUuid}`, payload);
+                clearDraft();
+                setShowModal(false);
+                fetchConvocatorias();
+                resetForm();
             } else {
-                await api.post('/Convocatorias', payload);
+                const res = await api.post('/Convocatorias', payload);
+                clearDraft();
+                setShowModal(false);
+                resetForm();
+                const updatedList = await fetchConvocatorias();
+                
+                const createdUuid = res.data?.uuid;
+                const createdConv = updatedList.find(c => 
+                    (createdUuid && c.uuid === createdUuid) || 
+                    c.codigo_convocatoria.trim().toLowerCase() === codigo.toLowerCase()
+                );
+
+                if (createdConv) {
+                    handleOpenPublishDrawer(createdConv);
+                }
             }
-            clearDraft();
-            setShowModal(false);
-            fetchConvocatorias();
-            resetForm();
         } catch (error: unknown) {
             console.error('Error saving convocatoria:', error);
             const message = getConvocatoriaSaveErrorMessage(error);

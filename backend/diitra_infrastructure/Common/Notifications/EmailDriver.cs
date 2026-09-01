@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using diitra_application.Common;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.Configuration;
@@ -59,11 +60,23 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 var htmlBody = await _layoutRenderer.RenderAsync(title, name, body, absoluteUrl, extraData);
 
+                int? targetUserId = null;
+                if (extraData != null && extraData.TryGetValue("UserId", out var uidStr) && int.TryParse(uidStr, out var uid))
+                {
+                    targetUserId = uid;
+                }
+                else
+                {
+                    var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.EmailInstitucional == recipient);
+                    targetUserId = user?.IdUsuario;
+                }
+
                 // Encolamos el correo en inv_email_historial para que el servicio EmailBackgroundProcessorService lo despache de forma asíncrona.
                 var emailHistorial = new InvEmailHistorial
                 {
                     Uuid = Guid.NewGuid().ToString(),
                     Destinatario = recipient,
+                    IdUsuarioDestinatario = targetUserId,
                     Asunto = title,
                     Cuerpo = htmlBody,
                     Estado = "Pendiente",

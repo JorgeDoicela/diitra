@@ -61,7 +61,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     useEffect(() => {
         if (!user || !isAuthenticated || isLoading || isWorkspace) return;
 
-        // Modo pruebas: se dispara en cada inicio de sesión / recarga
+        const userKey = user.id_referencia || user.id_usuario?.toString() || user.usuario || 'default';
+        const isDismissed = localStorage.getItem(`diitra_welcome_dismissed_${userKey}`) === 'true';
+
+        if (isDismissed) return;
+
         const timer = setTimeout(() => {
             setIsWelcomeOpen(true);
         }, 500);

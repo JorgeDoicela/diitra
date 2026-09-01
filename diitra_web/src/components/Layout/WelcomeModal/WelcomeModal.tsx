@@ -50,9 +50,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     if (!isOpen) return null;
 
     const handleFinish = () => {
-        if (dontShowAgain && user?.id_referencia) {
+        if (dontShowAgain && user) {
+            const userKey = user.id_referencia || user.id_usuario?.toString() || user.usuario || 'default';
             try {
-                localStorage.setItem(`diitra_welcome_dismissed_${user.id_referencia}`, 'true');
+                localStorage.setItem(`diitra_welcome_dismissed_${userKey}`, 'true');
             } catch {
                 // Silencioso en modo incógnito
             }

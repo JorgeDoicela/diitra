@@ -283,9 +283,22 @@ public class ConvocatoriaService : IConvocatoriaService
                         if (!string.IsNullOrEmpty(trimmed) && trimmed.Contains('@'))
                         {
                             var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.EmailInstitucional == trimmed);
-                            recipientList.Add((trimmed, user?.IdUsuario, user?.Nombre?.Trim() ?? trimmed.Split('@')[0]));
+                            var prof = user == null ? await db.Profesores.AsNoTracking().FirstOrDefaultAsync(p => p.EmailInstitucional == trimmed || p.Email == trimmed) : null;
+                            var name = user?.Nombre?.Trim() ?? (prof != null ? $"{prof.PrimerNombre} {prof.PrimerApellido}".Trim() : trimmed.Split('@')[0]);
+                            recipientList.Add((trimmed, user?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Estimado(a) Investigador(a)" : name));
                         }
                     }
+                }
+
+                // Si no se pasaron destinatarios explícitos ni flags, fallback resiliente a docentes con horas y autoridades
+                var hasExplicitSelection = (request.DestinatariosUserIds != null && request.DestinatariosUserIds.Any()) ||
+                                           (request.DestinatariosEmails != null && request.DestinatariosEmails.Any());
+                var hasFlags = request.IncluirDocentesConHoras || request.IncluirTodosDocentes || request.IncluirAutoridadesYDepartamentos;
+
+                if (!hasExplicitSelection && !hasFlags)
+                {
+                    request.IncluirDocentesConHoras = true;
+                    request.IncluirAutoridadesYDepartamentos = true;
                 }
 
                 // 3. Docentes con horas de investigación
@@ -435,9 +448,15 @@ public class ConvocatoriaService : IConvocatoriaService
                 {
                     try
                     {
+                        var personalExtraData = new Dictionary<string, string>(extraData);
+                        if (r.UserId.HasValue)
+                        {
+                            personalExtraData["UserId"] = r.UserId.Value.ToString();
+                        }
+
                         if (emailDriver != null)
                         {
-                            await emailDriver.SendAsync(r.Email, title, body, "/convocatorias", r.Name, extraData);
+                            await emailDriver.SendAsync(r.Email, title, body, "/convocatorias", r.Name, personalExtraData);
                         }
 
                         if (r.UserId.HasValue)

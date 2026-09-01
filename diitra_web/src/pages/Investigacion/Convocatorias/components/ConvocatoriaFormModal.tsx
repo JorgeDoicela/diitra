@@ -126,71 +126,26 @@ export const ConvocatoriaFormModal = ({
                             </button>
                         </div>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
-                            <input
-                                required
-                                className={`input-vercel ${formFieldErrors.codigo_convocatoria ? 'border-error focus:border-error' : ''}`}
-                                placeholder="EJ: CONV-2024-TEC"
-                                value={formData.codigo_convocatoria}
-                                onChange={e => {
-                                    setFormFieldErrors(prev => ({ ...prev, codigo_convocatoria: undefined }));
-                                    setFormData({ ...formData, codigo_convocatoria: e.target.value });
-                                }}
-                                aria-invalid={!!formFieldErrors.codigo_convocatoria}
-                            />
-                            {formFieldErrors.codigo_convocatoria && (
-                                <p className="text-[10px] text-error ml-1">{formFieldErrors.codigo_convocatoria}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Año Calendario</label>
-                            <input
-                                type="text"
-                                required
-                                className={`input-vercel ${formFieldErrors.anio ? 'border-error focus:border-error' : ''}`}
-                                placeholder="EJ: 2026 o 2026 - 2027"
-                                value={formData.anio}
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    setFormData({ ...formData, anio: val });
-                                    
-                                    const anioRegex = /^(?:19|20|21)\d{2}(?:\s*[-\/]\s*(?:19|20|21)\d{2})?$/;
-                                    if (val.trim() && !anioRegex.test(val.trim())) {
-                                        setFormFieldErrors(prev => ({ 
-                                            ...prev, 
-                                            anio: 'Formato inválido. Ejemplos válidos: 2026, 2026 - 2027, 2026/2027.' 
-                                        }));
-                                    } else {
-                                        setFormFieldErrors(prev => ({ 
-                                            ...prev, 
-                                            anio: undefined 
-                                        }));
-                                    }
-                                }}
-                                aria-invalid={!!formFieldErrors.anio}
-                            />
-                            {formFieldErrors.anio && (
-                                <p className="text-[10px] text-error ml-1 mt-1">{formFieldErrors.anio}</p>
-                            )}
-                            {formData.fecha_apertura && formData.fecha_cierre && (() => {
-                                try {
-                                    const startYear = new Date(formData.fecha_apertura).getFullYear();
-                                    const endYear = new Date(formData.fecha_cierre).getFullYear();
-                                    if (!Number.isNaN(startYear) && !Number.isNaN(endYear) && startYear !== endYear) {
-                                        return (
-                                            <p className="text-[10px] text-brand ml-1 mt-1 font-medium animate-fade-in">
-                                                Vigencia detectada: {startYear} - {endYear} (Plurianual)
-                                            </p>
-                                        );
-                                    }
-                                } catch (e) {}
-                                return null;
-                            })()}
-                        </div>
+                    {/* Fila 1: Código Identificador */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
+                        <input
+                            required
+                            className={`input-vercel ${formFieldErrors.codigo_convocatoria ? 'border-error focus:border-error' : ''}`}
+                            placeholder="EJ: CONV-2026-TEC"
+                            value={formData.codigo_convocatoria}
+                            onChange={e => {
+                                setFormFieldErrors(prev => ({ ...prev, codigo_convocatoria: undefined }));
+                                setFormData({ ...formData, codigo_convocatoria: e.target.value });
+                            }}
+                            aria-invalid={!!formFieldErrors.codigo_convocatoria}
+                        />
+                        {formFieldErrors.codigo_convocatoria && (
+                            <p className="text-[10px] text-error ml-1">{formFieldErrors.codigo_convocatoria}</p>
+                        )}
                     </div>
 
+                    {/* Fila 2: Título de la Convocatoria */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Título de la Convocatoria</label>
                         <input
@@ -202,6 +157,7 @@ export const ConvocatoriaFormModal = ({
                         />
                     </div>
 
+                    {/* Fila 3: Periodo SIGAFI y Tipo de Convocatoria */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
@@ -231,6 +187,7 @@ export const ConvocatoriaFormModal = ({
                         </div>
                     </div>
 
+                    {/* Fila 4: Fecha Apertura y Fecha Cierre */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
@@ -239,7 +196,13 @@ export const ConvocatoriaFormModal = ({
                                 required
                                 className="input-vercel"
                                 value={formData.fecha_apertura}
-                                onChange={e => setFormData({ ...formData, fecha_apertura: e.target.value })}
+                                onChange={e => {
+                                    const newApertura = e.target.value;
+                                    const sY = newApertura ? newApertura.split('-')[0] : '';
+                                    const cY = formData.fecha_cierre ? formData.fecha_cierre.split('-')[0] : '';
+                                    const newAnio = (sY && cY) ? (sY === cY ? sY : `${sY} - ${cY}`) : (sY || cY || formData.anio);
+                                    setFormData(prev => ({ ...prev, fecha_apertura: newApertura, anio: newAnio }));
+                                }}
                             />
                         </div>
                         <div className="space-y-2">
@@ -249,9 +212,48 @@ export const ConvocatoriaFormModal = ({
                                 required
                                 className="input-vercel"
                                 value={formData.fecha_cierre}
-                                onChange={e => setFormData({ ...formData, fecha_cierre: e.target.value })}
+                                onChange={e => {
+                                    const newCierre = e.target.value;
+                                    const sY = formData.fecha_apertura ? formData.fecha_apertura.split('-')[0] : '';
+                                    const cY = newCierre ? newCierre.split('-')[0] : '';
+                                    const newAnio = (sY && cY) ? (sY === cY ? sY : `${sY} - ${cY}`) : (sY || cY || formData.anio);
+                                    setFormData(prev => ({ ...prev, fecha_cierre: newCierre, anio: newAnio }));
+                                }}
                             />
                         </div>
+                    </div>
+
+                    {/* Fila 5: Año Calendario (Auto-calculado según las fechas de arriba) */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Año Calendario</label>
+                        <input
+                            type="text"
+                            required
+                            className={`input-vercel ${formFieldErrors.anio ? 'border-error focus:border-error' : ''}`}
+                            placeholder="EJ: 2026 o 2026 - 2027"
+                            value={formData.anio}
+                            onChange={e => {
+                                const val = e.target.value;
+                                setFormData({ ...formData, anio: val });
+                                
+                                const anioRegex = /^(?:19|20|21)\d{2}(?:\s*[-\/]\s*(?:19|20|21)\d{2})?$/;
+                                if (val.trim() && !anioRegex.test(val.trim())) {
+                                    setFormFieldErrors(prev => ({ 
+                                        ...prev, 
+                                        anio: 'Formato inválido. Ejemplos válidos: 2026, 2026 - 2027, 2026/2027.' 
+                                    }));
+                                } else {
+                                    setFormFieldErrors(prev => ({ 
+                                        ...prev, 
+                                        anio: undefined 
+                                    }));
+                                }
+                            }}
+                            aria-invalid={!!formFieldErrors.anio}
+                        />
+                        {formFieldErrors.anio && (
+                            <p className="text-[10px] text-error ml-1 mt-1">{formFieldErrors.anio}</p>
+                        )}
                     </div>
 
                     <div className="modal-footer">
