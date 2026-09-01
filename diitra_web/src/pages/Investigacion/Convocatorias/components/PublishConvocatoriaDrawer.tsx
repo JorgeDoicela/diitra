@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    X, Send, Users, ShieldCheck, Calendar, Search, Loader2, CheckCircle2,
-    Building2, GraduationCap, UserCheck, AlertCircle, UserMinus, Plus
+    X, Users, Calendar, Search, Loader2, CheckCircle2,
+    Building2, GraduationCap, AlertCircle, Layers, CheckSquare, Square
 } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import type { Convocatoria, Catalogo } from '../types';
 
-export interface PublishRecipient {
+export interface RecipientItem {
     id_usuario?: number;
     nombre_completo: string;
     email: string;
-    type: string;
+    type: 'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO';
     departamento?: string;
     carrera?: string;
     cargo_instituto?: string;
+    tiene_horas?: boolean;
 }
 
 interface PublishConvocatoriaDrawerProps {
@@ -25,6 +26,8 @@ interface PublishConvocatoriaDrawerProps {
     onPublishSuccess: () => void;
 }
 
+type TabCategory = 'CON_HORAS' | 'AUTORIDADES' | 'TODOS_DOCENTES' | 'SELECCIONADOS';
+
 export const PublishConvocatoriaDrawer: React.FC<PublishConvocatoriaDrawerProps> = ({
     isOpen,
     onClose,
@@ -32,102 +35,175 @@ export const PublishConvocatoriaDrawer: React.FC<PublishConvocatoriaDrawerProps>
     tiposConv,
     onPublishSuccess
 }) => {
-    // Segments
-    const [incluirDocentesConHoras, setIncluirDocentesConHoras] = useState(true);
-    const [incluirAutoridades, setIncluirAutoridades] = useState(true);
-    const [incluirTodosDocentes, setIncluirTodosDocentes] = useState(false);
+    // Current Active Tab
+    const [activeTab, setActiveTab] = useState<TabCategory>('CON_HORAS');
 
-    // Custom individual recipients
-    const [customRecipients, setCustomRecipients] = useState<PublishRecipient[]>([]);
+    // Loaded recipients pool
+    const [allRecipients, setAllRecipients] = useState<RecipientItem[]>([]);
+    const [isLoadingPool, setIsLoadingPool] = useState(false);
 
-    // Search state for ad-hoc users
+    // Selected Emails Set (100% Granular Control)
+    const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+
+    // Search filter
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<PublishRecipient[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const searchContainerRef = useRef<HTMLDivElement>(null);
-    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    // Sending state
+    // Submission state
     const [isPublishing, setIsPublishing] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Click outside search results
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-                setIsSearchOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // Load pool from backend when drawer opens
+    const loadRecipientsPool = useCallback(async () => {
+        if (!convocatoria) return;
+        setIsLoadingPool(true);
+        setErrorMessage(null);
 
-    // Search users
-    const searchUsers = useCallback(async (q: string) => {
-        if (!q.trim()) {
-            setSearchResults([]);
-            return;
-        }
-        setIsSearching(true);
         try {
-            const res = await api.get('/Admin/users', {
-                params: {
-                    search: q.trim(),
-                    pageSize: '25',
-                    page: '1'
-                }
-            });
-            const raw = res.data?.items ?? res.data ?? [];
-            const mapped: PublishRecipient[] = (Array.isArray(raw) ? raw : []).map((u: any) => ({
+            const [resDocentesConHoras, resDocentesAll, resAdmins] = await Promise.all([
+                api.get('/Admin/users', { params: { type: 'DOCENTE', soloConHoras: true, pageSize: '150' } }).catch(() => ({ data: { items: [] } })),
+                api.get('/Admin/users', { params: { type: 'DOCENTE', pageSize: '150' } }).catch(() => ({ data: { items: [] } })),
+                api.get('/Admin/users', { params: { type: 'ADMINISTRATIVO', pageSize: '150' } }).catch(() => ({ data: { items: [] } }))
+            ]);
+
+            const mapItem = (u: any, type: RecipientItem['type'], tieneHoras: boolean): RecipientItem => ({
                 id_usuario: u.id_usuario ?? u.idUsuario,
                 nombre_completo: String(u.nombre_completo ?? u.nombreCompleto ?? u.nombre ?? 'Sin nombre').trim(),
                 email: String(u.email ?? u.email_institucional ?? '').trim(),
-                type: String(u.type ?? u.tipo ?? 'DOCENTE'),
-                departamento: u.departamento ?? u.cargo_instituto,
+                type,
+                departamento: u.departamento ?? u.cargo_instituto ?? 'General',
                 carrera: u.carrera,
-                cargo_instituto: u.cargo_instituto
-            })).filter(u => Boolean(u.email && u.email.includes('@')));
-            setSearchResults(mapped);
+                cargo_instituto: u.cargo_instituto,
+                tiene_horas: tieneHoras
+            });
+
+            const rawConHoras = resDocentesConHoras.data?.items ?? resDocentesConHoras.data ?? [];
+            const rawAllDocentes = resDocentesAll.data?.items ?? resDocentesAll.data ?? [];
+            const rawAdmins = resAdmins.data?.items ?? resAdmins.data ?? [];
+
+            const conHorasEmails = new Set(rawConHoras.map((u: any) => String(u.email ?? u.email_institucional ?? '').trim().toLowerCase()));
+
+            const combinedMap = new Map<string, RecipientItem>();
+
+            rawConHoras.forEach((u: any) => {
+                const item = mapItem(u, 'DOCENTE', true);
+                if (item.email && item.email.includes('@')) {
+                    combinedMap.set(item.email.toLowerCase(), item);
+                }
+            });
+
+            rawAllDocentes.forEach((u: any) => {
+                const item = mapItem(u, 'DOCENTE', conHorasEmails.has(String(u.email ?? u.email_institucional ?? '').trim().toLowerCase()));
+                if (item.email && item.email.includes('@') && !combinedMap.has(item.email.toLowerCase())) {
+                    combinedMap.set(item.email.toLowerCase(), item);
+                }
+            });
+
+            rawAdmins.forEach((u: any) => {
+                const item = mapItem(u, 'ADMINISTRATIVO', false);
+                if (item.email && item.email.includes('@') && !combinedMap.has(item.email.toLowerCase())) {
+                    combinedMap.set(item.email.toLowerCase(), item);
+                }
+            });
+
+            const pool = Array.from(combinedMap.values());
+            setAllRecipients(pool);
+
+            // Pre-seleccionar por defecto: Docentes con horas + Autoridades clave
+            const defaultSelected = new Set<string>();
+            pool.forEach(item => {
+                if (item.tiene_horas) {
+                    defaultSelected.add(item.email.toLowerCase());
+                } else if (item.type === 'ADMINISTRATIVO') {
+                    const deptoLower = (item.departamento || '').toLowerCase();
+                    if (deptoLower.includes('rector') || deptoLower.includes('vicerrector') || deptoLower.includes('comunicaci') || deptoLower.includes('investiga')) {
+                        defaultSelected.add(item.email.toLowerCase());
+                    }
+                }
+            });
+
+            // Si ningún docente tiene horas en el periodo, pre-seleccionar todos los docentes por defecto
+            if (defaultSelected.size === 0 && pool.length > 0) {
+                pool.forEach(item => defaultSelected.add(item.email.toLowerCase()));
+            }
+
+            setSelectedEmails(defaultSelected);
         } catch {
-            setSearchResults([]);
+            setErrorMessage('No se pudieron cargar los destinatarios institucionales.');
         } finally {
-            setIsSearching(false);
+            setIsLoadingPool(false);
         }
-    }, []);
+    }, [convocatoria]);
 
     useEffect(() => {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(() => {
-            searchUsers(searchQuery);
-        }, 250);
-        return () => clearTimeout(debounceTimerRef.current);
-    }, [searchQuery, searchUsers]);
-
-    if (!isOpen || !convocatoria) return null;
-
-    const handleAddRecipient = (rec: PublishRecipient) => {
-        if (!customRecipients.some(r => r.email.toLowerCase() === rec.email.toLowerCase())) {
-            setCustomRecipients([...customRecipients, rec]);
+        if (isOpen) {
+            loadRecipientsPool();
         }
-        setSearchQuery('');
-        setIsSearchOpen(false);
+    }, [isOpen, loadRecipientsPool]);
+
+    // Filter recipients based on activeTab and search query
+    const filteredRecipients = useMemo(() => {
+        return allRecipients.filter(item => {
+            // Category Tab Filter
+            if (activeTab === 'CON_HORAS' && !item.tiene_horas) return false;
+            if (activeTab === 'AUTORIDADES' && item.type !== 'ADMINISTRATIVO') return false;
+            if (activeTab === 'TODOS_DOCENTES' && item.type !== 'DOCENTE') return false;
+            if (activeTab === 'SELECCIONADOS' && !selectedEmails.has(item.email.toLowerCase())) return false;
+
+            // Search Query Filter
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchName = item.nombre_completo.toLowerCase().includes(q);
+                const matchEmail = item.email.toLowerCase().includes(q);
+                const matchDept = (item.departamento || '').toLowerCase().includes(q);
+                return matchName || matchEmail || matchDept;
+            }
+
+            return true;
+        });
+    }, [allRecipients, activeTab, searchQuery, selectedEmails]);
+
+    const toggleRecipient = (email: string) => {
+        const next = new Set(selectedEmails);
+        const lower = email.toLowerCase();
+        if (next.has(lower)) {
+            next.delete(lower);
+        } else {
+            next.add(lower);
+        }
+        setSelectedEmails(next);
     };
 
-    const handleRemoveRecipient = (email: string) => {
-        setCustomRecipients(customRecipients.filter(r => r.email.toLowerCase() !== email.toLowerCase()));
+    const handleSelectAllVisible = () => {
+        const next = new Set(selectedEmails);
+        filteredRecipients.forEach(r => next.add(r.email.toLowerCase()));
+        setSelectedEmails(next);
+    };
+
+    const handleDeselectAllVisible = () => {
+        const next = new Set(selectedEmails);
+        filteredRecipients.forEach(r => next.delete(r.email.toLowerCase()));
+        setSelectedEmails(next);
     };
 
     const handleConfirmPublish = async () => {
+        if (selectedEmails.size === 0) {
+            setErrorMessage('Debes seleccionar al menos un destinatario para publicar.');
+            return;
+        }
+
+        if (!convocatoria) return;
+
         setIsPublishing(true);
         setErrorMessage(null);
 
+        const chosenRecipients = allRecipients.filter(r => selectedEmails.has(r.email.toLowerCase()));
+
         const payload = {
-            destinatariosUserIds: customRecipients.map(r => r.id_usuario).filter((id): id is number => typeof id === 'number' && id > 0),
-            destinatariosEmails: customRecipients.map(r => r.email).filter(Boolean),
-            incluirDocentesConHoras,
-            incluirAutoridadesYDepartamentos: incluirAutoridades,
-            incluirTodosDocentes
+            destinatariosUserIds: chosenRecipients.map(r => r.id_usuario).filter((id): id is number => typeof id === 'number' && id > 0),
+            destinatariosEmails: chosenRecipients.map(r => r.email).filter(Boolean),
+            incluirDocentesConHoras: false,
+            incluirAutoridadesYDepartamentos: false,
+            incluirTodosDocentes: false
         };
 
         try {
@@ -141,263 +217,271 @@ export const PublishConvocatoriaDrawer: React.FC<PublishConvocatoriaDrawerProps>
         }
     };
 
-    const tipoNombre = tiposConv.find(t => t.id === convocatoria.id_tipo_convocatoria)?.nombre || 'General';
+    if (!isOpen || !convocatoria) return null;
+
+    const tipoNombre = tiposConv.find(t => t.id === convocatoria.id_tipo_convocatoria)?.nombre || 'Estándar';
+
+    const countConHoras = allRecipients.filter(r => r.tiene_horas).length;
+    const countAdmins = allRecipients.filter(r => r.type === 'ADMINISTRATIVO').length;
+    const countDocentes = allRecipients.filter(r => r.type === 'DOCENTE').length;
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex justify-start">
+        <div className="fixed inset-0 z-[9999] flex justify-end">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm cursor-pointer"
+                className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
                 onClick={onClose}
             />
 
             {/* Side Drawer Panel */}
-            <div className="relative w-full max-w-xl h-full bg-surface border-r border-border-thin flex flex-col z-10 animate-fade-up shadow-2xl overflow-hidden">
+            <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
                 {/* Header */}
-                <div className="modal-header border-b border-border-thin bg-surface px-6 py-5 flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="badge-vercel !text-[9px] font-mono uppercase tracking-widest">
-                                {convocatoria.codigo_convocatoria}
-                            </span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-brand flex items-center gap-1">
-                                <Send size={11} /> Difusión Oficial
-                            </span>
+                <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                    <div className="flex items-center gap-3">
+                        <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
+                            {convocatoria.codigo_convocatoria}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-text-main">
+                            <span className="dot dot-pulse dot-brand" />
+                            <span>Difusión de Convocatoria</span>
                         </div>
-                        <h3 className="text-lg font-bold tracking-tight text-text-main">
-                            Publicar y Difundir Convocatoria
-                        </h3>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 {/* Body Content */}
-                <div className="modal-body flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface">
                     {errorMessage && (
-                        <div className="p-3.5 rounded-xl border border-error/25 bg-error/5 text-error flex items-start gap-2.5 text-xs animate-fade-in font-medium">
-                            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                        <div className="p-4 rounded-xl border border-error/25 bg-error/5 text-error flex items-start gap-2.5 text-xs animate-fade-in font-medium">
+                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
                             <span>{errorMessage}</span>
                         </div>
                     )}
 
-                    {/* Summary Card */}
-                    <div className="p-4 bg-bg-deep/40 rounded-xl border border-border-thin space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                            <h4 className="text-sm font-bold text-text-main leading-snug">
-                                {convocatoria.titulo}
-                            </h4>
-                            <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-brand/10 text-brand rounded border border-brand/20 shrink-0">
+                    {/* Title */}
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                            {convocatoria.titulo}
+                        </h2>
+                    </div>
+
+                    {/* Bento Cards: Dates & Type */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bento-card static p-5 space-y-1.5">
+                            <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                <Calendar size={12} /> Fecha de Apertura
+                            </div>
+                            <div className="text-sm font-bold text-text-main font-mono">
+                                {convocatoria.fecha_apertura}
+                            </div>
+                        </div>
+
+                        <div className="bento-card static p-5 space-y-1.5">
+                            <div className="text-[10px] font-bold text-error uppercase tracking-widest flex items-center gap-1.5">
+                                <Calendar size={12} /> Fecha de Cierre (Límite)
+                            </div>
+                            <div className="text-sm font-bold text-error font-mono">
+                                {convocatoria.fecha_cierre}
+                            </div>
+                        </div>
+
+                        <div className="bento-card static p-5 space-y-1.5 col-span-2">
+                            <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
+                                <Layers size={12} /> Tipo de Convocatoria
+                            </div>
+                            <div className="text-sm font-bold text-text-main">
                                 {tipoNombre}
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-[10px] text-text-dim font-medium uppercase tracking-tight pt-1 border-t border-border-thin/50">
-                            <span className="flex items-center gap-1">
-                                <Calendar size={11} className="text-text-dim" /> Apertura: <strong className="text-text-main font-mono">{convocatoria.fecha_apertura}</strong>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Calendar size={11} className="text-error" /> Cierre: <strong className="text-error font-mono">{convocatoria.fecha_cierre}</strong>
-                            </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Section 1: Audience Segments (Smart Toggles) */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                            <Users size={12} className="text-brand" /> Segmentación Institucional Automática
-                        </label>
-
-                        <div className="space-y-2">
-                            {/* Toggle 1: Docentes con Horas */}
-                            <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                                incluirDocentesConHoras
-                                    ? 'bg-brand/[0.04] border-brand/40 text-text-main'
-                                    : 'bg-surface border-border-thin text-text-dim hover:border-zinc-400'
-                            }`}>
-                                <input
-                                    type="checkbox"
-                                    checked={incluirDocentesConHoras}
-                                    onChange={e => setIncluirDocentesConHoras(e.target.checked)}
-                                    className="mt-0.5 rounded text-brand focus:ring-0 cursor-pointer"
-                                />
-                                <div className="space-y-0.5 flex-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <GraduationCap size={13} className="text-brand" />
-                                        <span className="text-xs font-bold">Docentes con Horas de Investigación (SIGAFI)</span>
-                                    </div>
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Profesores con carga horaria aprobada para actividades de investigación y proyectos en el periodo.
-                                    </p>
-                                </div>
-                            </label>
-
-                            {/* Toggle 2: Autoridades y Departamentos */}
-                            <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                                incluirAutoridades
-                                    ? 'bg-purple-500/[0.04] border-purple-500/40 text-text-main'
-                                    : 'bg-surface border-border-thin text-text-dim hover:border-zinc-400'
-                            }`}>
-                                <input
-                                    type="checkbox"
-                                    checked={incluirAutoridades}
-                                    onChange={e => setIncluirAutoridades(e.target.checked)}
-                                    className="mt-0.5 rounded text-purple-600 focus:ring-0 cursor-pointer"
-                                />
-                                <div className="space-y-0.5 flex-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <Building2 size={13} className="text-purple-600 dark:text-purple-400" />
-                                        <span className="text-xs font-bold">Autoridades y Departamentos Clave</span>
-                                    </div>
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Rectorado, Vicerrectorado Académico, Dirección de Comunicación y Coordinación de Investigación.
-                                    </p>
-                                </div>
-                            </label>
-
-                            {/* Toggle 3: Todos los Docentes */}
-                            <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                                incluirTodosDocentes
-                                    ? 'bg-blue-500/[0.04] border-blue-500/40 text-text-main'
-                                    : 'bg-surface border-border-thin text-text-dim hover:border-zinc-400'
-                            }`}>
-                                <input
-                                    type="checkbox"
-                                    checked={incluirTodosDocentes}
-                                    onChange={e => setIncluirTodosDocentes(e.target.checked)}
-                                    className="mt-0.5 rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                />
-                                <div className="space-y-0.5 flex-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <UserCheck size={13} className="text-blue-600 dark:text-blue-400" />
-                                        <span className="text-xs font-bold">Toda la Planta Docente Activa</span>
-                                    </div>
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Difusión masiva a todos los docentes titulares y contratados registrados en el sistema.
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Section 2: Ad-hoc recipient search and list */}
-                    <div className="space-y-3 pt-2">
+                    {/* Section: Recipients Control Panel */}
+                    <div className="space-y-4 pt-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                <Plus size={12} className="text-brand" /> Añadir Destinatarios Específicos
-                            </label>
-                            {customRecipients.length > 0 && (
-                                <span className="text-[9px] font-mono text-text-dim font-bold">
-                                    {customRecipients.length} adicional{customRecipients.length > 1 ? 'es' : ''}
-                                </span>
-                            )}
+                            <h4 className="text-xs font-bold text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                                <Users size={12} /> Destinatarios del Comunicado
+                            </h4>
+                            <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-brand/10 text-brand border border-brand/20">
+                                {selectedEmails.size} seleccionados
+                            </span>
                         </div>
 
-                        {/* Search Input 2-in-1 */}
-                        <div className="relative" ref={searchContainerRef}>
-                            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                            <input
-                                type="text"
-                                className="input-vercel !pl-8 !py-2 text-xs w-full font-sans"
-                                placeholder="Escriba nombre, correo o departamento..."
-                                value={searchQuery}
-                                onFocus={() => setIsSearchOpen(true)}
-                                onChange={e => {
-                                    setSearchQuery(e.target.value);
-                                    setIsSearchOpen(true);
-                                }}
-                            />
-                            {isSearching && (
-                                <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim animate-spin" />
-                            )}
+                        {/* Category Tabs */}
+                        <div className="flex flex-wrap gap-2 border-b border-border-thin pb-3">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('CON_HORAS')}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                    activeTab === 'CON_HORAS'
+                                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                                        : 'bg-bg-deep text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                <GraduationCap size={13} />
+                                Con Horas ({countConHoras})
+                            </button>
 
-                            {/* Dropdown search results */}
-                            {isSearchOpen && searchResults.length > 0 && (
-                                <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl shadow-xl z-30 max-h-56 overflow-y-auto p-1.5 space-y-1 animate-fade-in">
-                                    {searchResults.map(r => (
-                                        <button
-                                            key={r.email}
-                                            type="button"
-                                            onClick={() => handleAddRecipient(r)}
-                                            className="w-full text-left p-2 rounded-lg hover:bg-surface-hover flex items-center justify-between text-xs transition-colors cursor-pointer group"
-                                        >
-                                            <div className="min-w-0 pr-2">
-                                                <p className="font-bold text-text-main group-hover:text-brand transition-colors truncate">
-                                                    {r.nombre_completo}
-                                                </p>
-                                                <p className="text-[10px] text-text-dim font-mono truncate">
-                                                    {r.email} {r.departamento ? `• ${r.departamento}` : ''}
-                                                </p>
-                                            </div>
-                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-bg-deep text-text-dim group-hover:bg-brand/10 group-hover:text-brand transition-colors shrink-0">
-                                                Añadir
-                                            </span>
-                                        </button>
-                                    ))}
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('AUTORIDADES')}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                    activeTab === 'AUTORIDADES'
+                                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                                        : 'bg-bg-deep text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                <Building2 size={13} />
+                                Autoridades ({countAdmins})
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('TODOS_DOCENTES')}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                    activeTab === 'TODOS_DOCENTES'
+                                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                                        : 'bg-bg-deep text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                Docentes ({countDocentes})
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('SELECCIONADOS')}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                    activeTab === 'SELECCIONADOS'
+                                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                                        : 'bg-bg-deep text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                Confirmados ({selectedEmails.size})
+                            </button>
+                        </div>
+
+                        {/* Search and Bulk Actions */}
+                        <div className="flex items-center gap-3">
+                            <div className="relative flex-1">
+                                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-dim" />
+                                <input
+                                    type="text"
+                                    className="input-vercel !pl-9 !py-2 text-xs w-full font-sans"
+                                    placeholder="Buscar por nombre, correo o departamento..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSelectAllVisible}
+                                className="p-2 text-[11px] font-bold text-text-dim hover:text-text-main border border-border-thin rounded-lg hover:bg-surface-hover transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                                title="Seleccionar visibles"
+                            >
+                                <CheckSquare size={13} /> Todos
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleDeselectAllVisible}
+                                className="p-2 text-[11px] font-bold text-text-dim hover:text-error border border-border-thin rounded-lg hover:bg-surface-hover transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                                title="Deseleccionar visibles"
+                            >
+                                <Square size={13} /> Ninguno
+                            </button>
+                        </div>
+
+                        {/* Interactive Recipients List */}
+                        <div className="bento-card static p-2 max-h-72 overflow-y-auto space-y-1">
+                            {isLoadingPool ? (
+                                <div className="py-12 flex flex-col items-center justify-center gap-2 text-text-dim">
+                                    <Loader2 size={20} className="animate-spin text-brand" />
+                                    <span className="text-xs font-medium">Cargando nómina institucional...</span>
                                 </div>
-                            )}
-                        </div>
+                            ) : filteredRecipients.length === 0 ? (
+                                <div className="py-8 text-center text-xs text-text-dim space-y-1">
+                                    <p className="font-bold text-text-main">No se encontraron personas en este filtro.</p>
+                                    <p className="text-[11px]">Cambia de pestaña o ajusta el término de búsqueda.</p>
+                                </div>
+                            ) : (
+                                filteredRecipients.map(r => {
+                                    const isChecked = selectedEmails.has(r.email.toLowerCase());
+                                    return (
+                                        <div
+                                            key={r.email}
+                                            onClick={() => toggleRecipient(r.email)}
+                                            className={`p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs transition-colors cursor-pointer select-none ${
+                                                isChecked
+                                                    ? 'bg-brand/[0.05] border border-brand/20'
+                                                    : 'hover:bg-surface-hover border border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={() => {}} // Handled by parent div onClick
+                                                    className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer pointer-events-none"
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-text-main truncate">
+                                                            {r.nombre_completo}
+                                                        </span>
+                                                        {r.tiene_horas && (
+                                                            <span className="px-1.5 py-0.2 text-[8px] font-mono font-bold bg-brand/10 text-brand rounded border border-brand/20 shrink-0">
+                                                                Horas I+D
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] font-mono text-text-dim truncate block">
+                                                        {r.email} {r.departamento ? `• ${r.departamento}` : ''}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                        {/* Custom Recipients Chips */}
-                        {customRecipients.length > 0 && (
-                            <div className="space-y-1.5 max-h-48 overflow-y-auto p-1">
-                                {customRecipients.map(r => (
-                                    <div
-                                        key={r.email}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-bg-deep/40 border border-border-thin text-xs"
-                                    >
-                                        <div className="min-w-0 pr-2">
-                                            <span className="font-bold text-text-main text-[11px] block truncate">
-                                                {r.nombre_completo}
-                                            </span>
-                                            <span className="text-[9px] font-mono text-text-dim truncate block">
-                                                {r.email} {r.departamento ? `• ${r.departamento}` : ''}
+                                            <span className="badge-vercel !text-[8px] font-bold uppercase tracking-wider shrink-0">
+                                                {r.type}
                                             </span>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveRecipient(r.email)}
-                                            className="p-1 text-text-dim hover:text-error hover:bg-error/10 rounded transition-colors cursor-pointer shrink-0"
-                                            title="Remover"
-                                        >
-                                            <UserMinus size={13} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Footer Controls */}
-                <div className="modal-footer border-t border-border-thin bg-surface p-5 flex items-center justify-between gap-3">
+                <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={isPublishing}
-                        className="btn-vercel-secondary text-xs"
+                        className="btn-vercel-secondary flex-1"
                     >
                         Cancelar
                     </button>
                     <button
                         type="button"
                         onClick={handleConfirmPublish}
-                        disabled={isPublishing || (!incluirDocentesConHoras && !incluirAutoridades && !incluirTodosDocentes && customRecipients.length === 0)}
-                        className="btn-vercel-primary text-xs"
+                        disabled={isPublishing || selectedEmails.size === 0}
+                        className="btn-vercel-primary flex-1 justify-center flex items-center gap-2"
                     >
                         {isPublishing ? (
                             <>
-                                <Loader2 size={14} className="animate-spin" />
+                                <Loader2 size={16} className="animate-spin" />
                                 Publicando y Despachando...
                             </>
                         ) : (
                             <>
-                                <CheckCircle2 size={14} />
-                                Publicar y Enviar Comunicados
+                                <CheckCircle2 size={16} />
+                                Publicar a {selectedEmails.size} Destinatario{selectedEmails.size !== 1 ? 's' : ''}
                             </>
                         )}
                     </button>

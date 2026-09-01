@@ -4,30 +4,30 @@ export const ADMIN_WELCOME: RoleWelcomeConfig = {
     role: 'admin',
     roleLabel: 'Administrador Institucional',
     greeting: 'Bienvenido a DIITRA',
-    systemDescription: 'DIITRA centraliza la investigación, desarrollo tecnológico e innovación del Tecnológico Traversari, asegurando la gobernanza científica, el cumplimiento normativo CACES y la preservación de la producción académica institucional.',
-    sectionTitle: 'Ejes Estratégicos de Gestión Institucional',
+    systemDescription: '¡Qué gusto tenerte aquí! Desde este espacio lideras y potencias el crecimiento científico de nuestra comunidad. Cuentas con herramientas integrales para coordinar proyectos, velar por la excelencia académica y acompañar a nuestros investigadores en cada paso.',
+    sectionTitle: '¿Qué deseas gestionar hoy?',
     benefits: [
         {
-            title: 'Investigación, Innovación y Banco de Proyectos',
-            description: 'Supervisión del ciclo de vida de proyectos I+D, transferencia tecnológica, convocatorias con financiamiento y analíticas de producción científica.',
+            title: 'Proyectos e Innovación I+D',
+            description: 'Supervisa convocatorias, postulaciones y la producción científica institucional con total claridad y trazabilidad.',
             tag: 'Investigación',
             path: '/investigacion'
         },
         {
-            title: 'Evaluación por Pares y Baremos CACES',
-            description: 'Asignación de evaluadores ciegos, parametrización de rúbricas cuantitativas sobre 100 puntos y seguimiento de dictámenes formales.',
+            title: 'Evaluación por Pares y Baremos',
+            description: 'Asigna revisores ciegos y gestiona rúbricas CACES con procesos ágiles, transparentes y orientados a la calidad.',
             tag: 'Evaluación',
             path: '/evaluacion-pares'
         },
         {
-            title: 'Ciclo Documental, Plantillas y Firmas',
-            description: 'Gestión de plantillas maestras normativas, flujo de aprobaciones, firmas criptográficas y portal de verificación de autenticidad QR.',
+            title: 'Ciclo Documental y Plantillas',
+            description: 'Administra formatos oficiales, flujos de aprobación y emisión de constancias con firma digital y verificación QR.',
             tag: 'Documentos',
             path: '/admin/documentos'
         },
         {
-            title: 'Gobernanza, Auditoría Forense y LOPDP',
-            description: 'Administración de usuarios y permisos (RBAC), bitácora inmutable SHA-256, gestión de derechos ARCO y motor de notificaciones.',
+            title: 'Gobernanza y Comunidad',
+            description: 'Gestiona roles, accesos y seguridad de la información para brindar la mejor experiencia a docentes y estudiantes.',
             tag: 'Gobernanza',
             path: '/usuarios'
         }
@@ -40,31 +40,31 @@ export const DOCENTE_WELCOME: RoleWelcomeConfig = {
     role: 'docente',
     roleLabel: 'Docente Investigador',
     greeting: 'Bienvenido a DIITRA',
-    systemDescription: 'DIITRA es tu entorno de trabajo científico institucional. Aquí podrás formular proyectos con tus colegas en tiempo real, respaldar tu carga horaria ante SIGAFI y automatizar tus evidencias para los procesos de acreditación CACES.',
-    sectionTitle: 'Ejes de Investigación y Docencia',
+    systemDescription: '¡Te damos la bienvenida a tu espacio de creación e investigación! Aquí puedes dar vida a tus proyectos, colaborar en vivo con tus colegas y semilleristas, y respaldar tu labor académica de forma simple y organizada.',
+    sectionTitle: 'Espacios diseñados para tu labor',
     benefits: [
         {
-            title: 'Workspace Colaborativo en Tiempo Real',
-            description: 'Co-autoría simultánea en vivo con colegas mediante cursores compartidos, matrices de coherencia metodológica y plantillas oficiales normativas.',
+            title: 'Espacio Colaborativo en Vivo',
+            description: 'Escribe y estructura tus propuestas en tiempo real junto a tu equipo, con matrices metodológicas y plantillas oficiales.',
             tag: 'Colaboración',
             path: '/investigacion/mis-proyectos'
         },
         {
-            title: 'Proyectos de Innovación y Transferencia',
-            description: 'Formulación de proyectos de prototipado tecnológico, vinculación con el sector productivo y registro de patentes ante el SENADI.',
+            title: 'Proyectos y Convocatorias',
+            description: 'Formula ideas de innovación, prototipado y vinculación con la comunidad para participar en convocatorias abiertas.',
             tag: 'Innovación',
             path: '/investigacion'
         },
         {
-            title: 'Control de Distributivo y Horas SIGAFI',
-            description: 'Seguimiento automático de la carga horaria semanal lectiva y no lectiva asignada a investigación, con calendario unificado de hitos.',
-            tag: 'Distributivo',
+            title: 'Planificación y Carga Horaria',
+            description: 'Lleva el seguimiento tranquilo de tus horas dedicadas a investigación y las fechas clave de tus entregables.',
+            tag: 'Planificación',
             path: '/investigacion/mis-proyectos'
         },
         {
-            title: 'Grupos, Planes Bienales y Acreditación',
-            description: 'Dirección de grupos científicos, vinculación de tesistas y generación ágil de informes semestrales CACES con firma electrónica.',
-            tag: 'Acreditación',
+            title: 'Grupos, Semilleros y Acreditación',
+            description: 'Guía el talento de tus estudiantes, comparte avances y genera tus reportes para procesos CACES sin contratiempos.',
+            tag: 'Comunidad',
             path: '/grupos'
         }
     ],
@@ -76,31 +76,31 @@ export const ESTUDIANTE_WELCOME: RoleWelcomeConfig = {
     role: 'estudiante',
     roleLabel: 'Estudiante / Semillero',
     greeting: 'Bienvenido a DIITRA',
-    systemDescription: 'DIITRA es el entorno oficial del instituto para impulsar tu formación científica. Aquí podrás vincularte a grupos de investigación de tu carrera, participar en proyectos reales y certificar tus horas de investigación para la titulación.',
-    sectionTitle: 'Ejes de Formación y Titulación',
+    systemDescription: '¡Bienvenido a tu entorno de investigación y aprendizaje! Este es el lugar donde tus ideas se transforman en proyectos reales. Participa junto a tus profesores, desarrolla tu potencial y prepárate con éxito para tu titulación.',
+    sectionTitle: 'Oportunidades para explorar y crecer',
     benefits: [
         {
-            title: 'Directorio y Postulación a Semilleros',
-            description: 'Explora las líneas de investigación activas de tu carrera (Software, Energías, Automatización) y postula para colaborar en proyectos docentes.',
+            title: 'Semilleros de Investigación',
+            description: 'Únete a los grupos y líneas de investigación de tu carrera (Software, Energías, Automatización) y colabora en equipo.',
             tag: 'Semilleros',
             path: '/grupos'
         },
         {
-            title: 'Acreditación de Horas de Titulación',
-            description: 'Bitácora digital de horas prácticas de investigación formativa y descarga de constancias oficiales certificadas con código QR para graduación.',
+            title: 'Tus Horas de Titulación',
+            description: 'Registra tus avances en investigación formativa y obtén tus constancias oficiales certificadas para graduarte.',
             tag: 'Titulación',
             path: '/investigacion/mis-proyectos'
         },
         {
-            title: 'Espacio de Redacción con Tutoría en Línea',
-            description: 'Redacta tu propuesta de grado con plantillas oficiales institucionales y recibe retroalimentación y correcciones directas de tu docente director.',
-            tag: 'Plantillas',
+            title: 'Redacción con Asesoría Docente',
+            description: 'Redacta tu propuesta académica con plantillas guía y recibe retroalimentación y correcciones oportunas de tu tutor.',
+            tag: 'Asesoría',
             path: '/investigacion/mis-proyectos'
         },
         {
-            title: 'Portal de Verificación y Certificados',
-            description: 'Acceso a la validación pública de autenticidad de tus constancias y participación en semilleros de investigación científica institucional.',
-            tag: 'Verificación',
+            title: 'Logros y Certificados Oficiales',
+            description: 'Consulta y valida en cualquier momento la autenticidad de tus certificados y constancias con código QR.',
+            tag: 'Certificados',
             path: '/verificacion'
         }
     ],
@@ -112,30 +112,30 @@ export const REVISOR_WELCOME: RoleWelcomeConfig = {
     role: 'revisor',
     roleLabel: 'Revisor Par Evaluador',
     greeting: 'Bienvenido a DIITRA',
-    systemDescription: 'DIITRA provee un entorno riguroso, confidencial y transparente para la evaluación técnica, metodológica y presupuestaria de propuestas de investigación científica institucional.',
-    sectionTitle: 'Ejes de Arbitraje y Dictamen',
+    systemDescription: '¡Agradecemos y valoramos tu colaboración! Tu experiencia y criterio técnico son fundamentales para elevar el rigor y la calidad científica en nuestra institución. Hemos preparado un espacio cómodo, claro y confidencial para ti.',
+    sectionTitle: 'Herramientas para tu evaluación',
     benefits: [
         {
             title: 'Panel de Arbitraje Doble Ciego',
-            description: 'Entorno confidencial y blindado con estricta reserva de identidades entre autores y evaluadores para garantizar absoluta objetividad.',
+            description: 'Revisa propuestas asignadas con total tranquilidad bajo un entorno blindado que cuida la reserva y objetividad.',
             tag: 'Confidencial',
             path: '/evaluacion-pares'
         },
         {
-            title: 'Evaluación Cuantitativa por Rúbricas CACES',
-            description: 'Calificación ponderada sobre 100 puntos evaluando rigor metodológico, pertinencia institucional y coherencia presupuestaria.',
+            title: 'Rúbricas Claras y Cuantitativas',
+            description: 'Califica pertinencia, rigor metodológico y presupuesto mediante rúbricas institucionales paso a paso.',
             tag: 'Rúbricas',
             path: '/evaluacion-pares'
         },
         {
-            title: 'Emisión de Dictámenes con Firma Digital',
-            description: 'Emite resoluciones vinculantes (Aprobado, Aprobado con modificaciones, Rechazado) respaldadas con firma electrónica criptográfica.',
+            title: 'Emisión Ágil de Dictámenes',
+            description: 'Registra tus observaciones constructivas y resoluciones formales con respaldo de firma digital en pocos pasos.',
             tag: 'Dictámenes',
             path: '/evaluacion-pares'
         },
         {
-            title: 'Certificados Oficiales de Arbitraje',
-            description: 'Generación automática de constancias institucionales con código QR verificable para respaldo de tu trayectoria científica.',
+            title: 'Constancias de Arbitraje',
+            description: 'Descarga tus certificados de participación avalados con código QR para enriquecer tu trayectoria académica.',
             tag: 'Certificados',
             path: '/verificacion'
         }
@@ -148,19 +148,19 @@ export const DEFAULT_WELCOME: RoleWelcomeConfig = {
     role: 'todos',
     roleLabel: 'Miembro de la Comunidad',
     greeting: 'Bienvenido a DIITRA',
-    systemDescription: 'DIITRA centraliza la investigación, desarrollo tecnológico y producción académica del Tecnológico Traversari.',
-    sectionTitle: 'Módulos y Funciones Disponibles',
+    systemDescription: '¡Te damos la bienvenida a DIITRA! Te invitamos a conocer las investigaciones activas, proyectos de innovación y avances científicos del Tecnológico Traversari.',
+    sectionTitle: 'Descubre nuestros espacios',
     benefits: [
         {
-            title: 'Investigación Aplicada e Innovación',
-            description: 'Consulta convocatorias abiertas, banco de proyectos institucionales y líneas de investigación por carrera.',
+            title: 'Investigación e Innovación Abierta',
+            description: 'Explora convocatorias vigentes, el banco de proyectos institucionales y las líneas de investigación de cada carrera.',
             tag: 'Ciencia',
             path: '/investigacion'
         },
         {
-            title: 'Acreditación y Calidad Académica',
-            description: 'Acceso a normativas, formatos oficiales y respaldo de actividades de vinculación e investigación.',
-            tag: 'Calidad',
+            title: 'Acreditación y Recursos Oficiales',
+            description: 'Accede a normativas, formatos institucionales y herramientas de verificación de documentos académicos.',
+            tag: 'Recursos',
             path: '/verificacion'
         }
     ],

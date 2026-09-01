@@ -121,6 +121,19 @@ namespace diitra_infrastructure.Research.Subservices
             var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
             int? internalUserId = internalUser?.IdUsuario;
 
+            // Liberar el código institucional para que pueda ser reutilizado
+            if (!string.IsNullOrWhiteSpace(project.CodigoInstitucional) && !project.CodigoInstitucional.Contains("_del_"))
+            {
+                var stamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                var baseCode = project.CodigoInstitucional;
+                var maxBaseLen = 50 - ($"_del_{stamp}").Length;
+                if (maxBaseLen > 0 && baseCode.Length > maxBaseLen)
+                {
+                    baseCode = baseCode.Substring(0, maxBaseLen);
+                }
+                project.CodigoInstitucional = $"{baseCode}_del_{stamp}";
+            }
+
             project.Eliminado = true;
             project.FechaEliminacion = DateTime.UtcNow;
             project.EliminadoPorUsuarioId = internalUserId;
@@ -145,6 +158,32 @@ namespace diitra_infrastructure.Research.Subservices
 
             var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
             int? internalUserId = internalUser?.IdUsuario;
+
+            if (!string.IsNullOrWhiteSpace(project.CodigoInstitucional))
+            {
+                var originalCode = project.CodigoInstitucional;
+                var delIndex = originalCode.IndexOf("_del_");
+                if (delIndex > 0)
+                {
+                    originalCode = originalCode.Substring(0, delIndex);
+                }
+
+                var codeInUse = await _context.InvProyectos
+                    .AnyAsync(p => (p.Eliminado == false || p.Eliminado == null) && p.CodigoInstitucional == originalCode && p.IdProyecto != project.IdProyecto);
+
+                if (codeInUse)
+                {
+                    var restStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                    var shortStamp = restStamp.Length > 4 ? restStamp.Substring(restStamp.Length - 4) : restStamp;
+                    var maxLen = 50 - ($"_r{shortStamp}").Length;
+                    var prefix = originalCode.Length > maxLen ? originalCode.Substring(0, maxLen) : originalCode;
+                    project.CodigoInstitucional = $"{prefix}_r{shortStamp}";
+                }
+                else
+                {
+                    project.CodigoInstitucional = originalCode;
+                }
+            }
 
             project.Eliminado = false;
             project.FechaEliminacion = null;

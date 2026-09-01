@@ -110,7 +110,7 @@ public class ConvocatoriaService : IConvocatoriaService
             throw new InvalidOperationException("El código de convocatoria es obligatorio.");
 
         var exists = await _context.InvConvocatorias
-            .AnyAsync(c => c.CodigoConvocatoria == normalized && (excludeUuid == null || c.Uuid != excludeUuid));
+            .AnyAsync(c => (c.Eliminado == false || c.Eliminado == null) && c.CodigoConvocatoria == normalized && (excludeUuid == null || c.Uuid != excludeUuid));
 
         if (exists)
             throw new InvalidOperationException($"Ya existe una convocatoria con el código \"{normalized}\". Usa un código diferente.");
@@ -295,28 +295,34 @@ public class ConvocatoriaService : IConvocatoriaService
                         .Where(s => s.Subcategoria != null && (s.Subcategoria.ToLower().Contains("investiga") || s.Subcategoria.ToLower().Contains("i+d")))
                         .Select(s => (int?)s.IdSubcategoria)
                         .FirstOrDefaultAsync();
+                    if (!researchSubcatId.HasValue || researchSubcatId == 0) researchSubcatId = 7;
 
-                    var profQuery = db.Profesores.AsNoTracking().Where(p => p.Activo == 1);
-                    if (researchSubcatId.HasValue && !string.IsNullOrEmpty(periodoId))
-                    {
-                        profQuery = profQuery.Where(p => db.ProfesoresActividades.Any(pa =>
+                    var profsWithHours = await db.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
+                        db.ProfesoresActividades.Any(pa =>
                             pa.IdProfesor == p.IdProfesor &&
                             pa.IdSubcategoria == researchSubcatId.Value &&
-                            pa.IdPeriodo == periodoId));
+                            (string.IsNullOrEmpty(periodoId) || pa.IdPeriodo == periodoId)))
+                        .ToListAsync();
+
+                    // Fallback resiliente: Si no hay actividades cargadas aún en ese periodo específico, obtener docentes activos
+                    if (profsWithHours.Count == 0)
+                    {
+                        _logger.LogInformation("No se encontraron actividades de investigación específicas para el periodo {Periodo}. Aplicando fallback a docentes activos.", periodoId);
+                        profsWithHours = await db.Profesores.AsNoTracking().Where(p => p.Activo == 1).ToListAsync();
                     }
 
-                    var profs = await profQuery.ToListAsync();
-                    var profIds = profs.Select(p => p.IdProfesor.Trim()).ToList();
+                    var profIds = profsWithHours.Select(p => p.IdProfesor.Trim()).ToList();
                     var linkedUsers = await db.Users.AsNoTracking().Where(u => profIds.Contains(u.IdSigafi.Trim())).ToListAsync();
 
-                    foreach (var p in profs)
+                    foreach (var p in profsWithHours)
                     {
                         var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
-                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var email = (!string.IsNullOrWhiteSpace(linked?.EmailInstitucional) ? linked.EmailInstitucional :
+                                    !string.IsNullOrWhiteSpace(p.EmailInstitucional) ? p.EmailInstitucional : p.Email)?.Trim();
                         var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
                         if (!string.IsNullOrEmpty(email) && email.Contains('@'))
                         {
-                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente Investigador" : name));
+                            recipientList.Add((email, linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente Investigador" : name));
                         }
                     }
                 }
@@ -331,11 +337,25 @@ public class ConvocatoriaService : IConvocatoriaService
                     foreach (var p in allProfs)
                     {
                         var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
-                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var email = (!string.IsNullOrWhiteSpace(linked?.EmailInstitucional) ? linked.EmailInstitucional :
+                                    !string.IsNullOrWhiteSpace(p.EmailInstitucional) ? p.EmailInstitucional : p.Email)?.Trim();
                         var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
                         if (!string.IsNullOrEmpty(email) && email.Contains('@'))
                         {
-                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente" : name));
+                            recipientList.Add((email, linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Docente" : name));
+                        }
+                    }
+
+                    // Fallback directo desde tabla Users
+                    var usersDocentes = await db.Users.AsNoTracking()
+                        .Where(u => (u.TablaSigafi == "profesores" || u.TablaSigafi == "profesor") && u.Activo)
+                        .ToListAsync();
+                    foreach (var u in usersDocentes)
+                    {
+                        var email = u.EmailInstitucional?.Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email, u.IdUsuario, u.Nombre?.Trim() ?? "Docente"));
                         }
                     }
                 }
@@ -349,7 +369,8 @@ public class ConvocatoriaService : IConvocatoriaService
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("rector") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("vicerrector") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("comunicaci") ||
-                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("investiga")
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("investiga") ||
+                                c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("academ")
                             )) ||
                             (c.CargoInstitutoNavigation != null && (
                                 c.CargoInstitutoNavigation.Nombre.ToLower().Contains("rector") ||
@@ -366,11 +387,25 @@ public class ConvocatoriaService : IConvocatoriaService
                     foreach (var p in adminProfs)
                     {
                         var linked = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == p.IdProfesor.Trim());
-                        var email = linked?.EmailInstitucional ?? p.EmailInstitucional ?? p.Email;
+                        var email = (!string.IsNullOrWhiteSpace(linked?.EmailInstitucional) ? linked.EmailInstitucional :
+                                    !string.IsNullOrWhiteSpace(p.EmailInstitucional) ? p.EmailInstitucional : p.Email)?.Trim();
                         var name = $"{p.PrimerNombre} {p.PrimerApellido}".Trim();
                         if (!string.IsNullOrEmpty(email) && email.Contains('@'))
                         {
-                            recipientList.Add((email.Trim(), linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Autoridad Institucional" : name));
+                            recipientList.Add((email, linked?.IdUsuario, string.IsNullOrWhiteSpace(name) ? "Autoridad Institucional" : name));
+                        }
+                    }
+
+                    // Fallback directo para usuarios con roles administrativos clave en Users
+                    var adminUsers = await db.Users.AsNoTracking()
+                        .Where(u => (u.TablaSigafi == "administrativos" || u.TablaSigafi == "administrativo" || u.Administrador) && u.Activo)
+                        .ToListAsync();
+                    foreach (var u in adminUsers)
+                    {
+                        var email = u.EmailInstitucional?.Trim();
+                        if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                        {
+                            recipientList.Add((email, u.IdUsuario, u.Nombre?.Trim() ?? "Autoridad"));
                         }
                     }
                 }
@@ -528,6 +563,19 @@ public class ConvocatoriaService : IConvocatoriaService
         var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
         int? internalUserId = internalUser?.IdUsuario;
 
+        // Liberar el código para que pueda ser reutilizado inmediatamente sin conflictos únicos
+        var stamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        var baseCode = conv.CodigoConvocatoria;
+        if (!baseCode.Contains("_del_"))
+        {
+            var maxBaseLen = 30 - ($"_del_{stamp}").Length;
+            if (maxBaseLen > 0 && baseCode.Length > maxBaseLen)
+            {
+                baseCode = baseCode.Substring(0, maxBaseLen);
+            }
+            conv.CodigoConvocatoria = $"{baseCode}_del_{stamp}";
+        }
+
         conv.Eliminado = true;
         conv.FechaEliminacion = DateTime.UtcNow;
         conv.EliminadoPorUsuarioId = internalUserId;
@@ -548,6 +596,31 @@ public class ConvocatoriaService : IConvocatoriaService
 
         var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
         int? internalUserId = internalUser?.IdUsuario;
+
+        // Limpiar sufijo _del_
+        var originalCode = conv.CodigoConvocatoria;
+        var delIndex = originalCode.IndexOf("_del_");
+        if (delIndex > 0)
+        {
+            originalCode = originalCode.Substring(0, delIndex);
+        }
+
+        // Verificar si el código original está libre entre las convocatorias activas
+        var codeInUse = await _context.InvConvocatorias
+            .AnyAsync(c => (c.Eliminado == false || c.Eliminado == null) && c.CodigoConvocatoria == originalCode && c.IdConvocatoria != conv.IdConvocatoria);
+
+        if (codeInUse)
+        {
+            var restStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            var shortStamp = restStamp.Length > 4 ? restStamp.Substring(restStamp.Length - 4) : restStamp;
+            var maxLen = 30 - ($"_r{shortStamp}").Length;
+            var prefix = originalCode.Length > maxLen ? originalCode.Substring(0, maxLen) : originalCode;
+            conv.CodigoConvocatoria = $"{prefix}_r{shortStamp}";
+        }
+        else
+        {
+            conv.CodigoConvocatoria = originalCode;
+        }
 
         conv.Eliminado = false;
         conv.FechaEliminacion = null;

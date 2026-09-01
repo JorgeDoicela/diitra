@@ -47,6 +47,13 @@ namespace diitra_api.Controllers
             return User.IsInRole("DIITRA_ADMIN");
         }
 
+        private static string CleanDeletedSuffix(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return "";
+            var idx = code.IndexOf("_del_");
+            return idx > 0 ? code.Substring(0, idx) : code;
+        }
+
         [HttpGet("projects")]
         public async Task<IActionResult> GetDeletedProjects()
         {
@@ -66,12 +73,12 @@ namespace diitra_api.Controllers
                 projectsQuery = projectsQuery.Where(p => p.EliminadoPorUsuarioId == currentUserId);
             }
 
-            var projects = await projectsQuery
+            var rawProjects = await projectsQuery
                 .Select(p => new
                 {
                     p.Uuid,
                     p.Titulo,
-                    p.CodigoInstitucional,
+                    RawCodigoInstitucional = p.CodigoInstitucional,
                     p.Estado,
                     p.FechaEliminacion,
                     EliminadoPor = p.EliminadoPorUsuarioId != null
@@ -80,6 +87,16 @@ namespace diitra_api.Controllers
                 })
                 .ToListAsync();
 
+            var projects = rawProjects.Select(p => new
+            {
+                p.Uuid,
+                p.Titulo,
+                CodigoInstitucional = CleanDeletedSuffix(p.RawCodigoInstitucional),
+                p.Estado,
+                p.FechaEliminacion,
+                p.EliminadoPor
+            });
+
             return Ok(projects);
         }
 
@@ -87,14 +104,14 @@ namespace diitra_api.Controllers
         [Authorize(Roles = "DIITRA_ADMIN")]
         public async Task<IActionResult> GetDeletedConvocatorias()
         {
-            var convocatorias = await _context.InvConvocatorias
+            var rawConvocatorias = await _context.InvConvocatorias
                 .IgnoreQueryFilters()
                 .Where(c => c.Eliminado == true)
                 .Select(c => new
                 {
                     c.Uuid,
                     c.Titulo,
-                    c.CodigoConvocatoria,
+                    RawCodigoConvocatoria = c.CodigoConvocatoria,
                     c.Estado,
                     c.Anio,
                     c.FechaEliminacion,
@@ -103,6 +120,17 @@ namespace diitra_api.Controllers
                         : "Desconocido"
                 })
                 .ToListAsync();
+
+            var convocatorias = rawConvocatorias.Select(c => new
+            {
+                c.Uuid,
+                c.Titulo,
+                CodigoConvocatoria = CleanDeletedSuffix(c.RawCodigoConvocatoria),
+                c.Estado,
+                c.Anio,
+                c.FechaEliminacion,
+                c.EliminadoPor
+            });
 
             return Ok(convocatorias);
         }
