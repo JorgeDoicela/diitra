@@ -65,18 +65,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     );
                 }
 
-                // Aplanar sub-expresiones anidadas de default (ej: {{default A (default B "fallback")}})
-                while (templateHtml.Contains("(default "))
-                {
-                    var cleaned = System.Text.RegularExpressions.Regex.Replace(
-                        templateHtml,
-                        @"\(default\s+([^)]+)\)",
-                        "$1"
-                    );
-                    if (cleaned == templateHtml) break;
-                    templateHtml = cleaned;
-                }
-
                 // Normalizar bucles legados Scriban/Liquid {{ for inv in ... }} a Handlebars {{#each ...}}
                 if (templateHtml.Contains("{{ for "))
                 {
@@ -104,21 +92,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
                 catch (Exception ex)
                 {
-                    // Resiliencia ante plantillas guardadas previamente en BD con sintaxis anidada legacy (default a (default b c))
-                    try
-                    {
-                        var sanitizedHtml = System.Text.RegularExpressions.Regex.Replace(
-                            templateHtml,
-                            @"\(default\s+([^)]+)\)",
-                            "$1"
-                        );
-                        compiled = _handlebars.Compile(sanitizedHtml);
-                    }
-                    catch
-                    {
-                        throw new InvalidOperationException(
-                            $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
-                    }
+                    throw new InvalidOperationException(
+                        $"Error al compilar plantilla DIITRA: {ex.Message}", ex);
                 }
 
                 var context = BuildContext(data, extraVariables, isBlindMode);

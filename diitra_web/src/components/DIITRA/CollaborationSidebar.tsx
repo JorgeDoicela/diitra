@@ -788,7 +788,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                         )}
 
                         {activeTab === 'activity' && (
-                            <div className="space-y-4">
+                            <div>
                                 {activities.length === 0 ? (
                                     <div className="text-center py-12 opacity-50 flex flex-col items-center justify-center">
                                         <div className="p-3 bg-surface rounded-full border border-border-thin mb-3">
@@ -798,24 +798,27 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         <p className="text-[8px] text-text-dim mt-1 max-w-[150px] leading-relaxed">Los movimientos del equipo aparecerán en este panel en tiempo real.</p>
                                     </div>
                                 ) : (
-                                    activities.map((a, i) => (
-                                        <div key={i} className="flex items-start gap-3 border-l-2 border-border-hover pl-3 py-1 animate-fade-up">
-                                            <div className="mt-0.5 shrink-0">
-                                                <User size={12} className="text-text-dim" />
+                                    <div className="divide-y divide-border-thin/40 border-y border-border-thin/40">
+                                        {activities.map((a, i) => (
+                                            <div key={i} className="flex items-start gap-3 py-3 px-1 animate-fade-up">
+                                                <div className="mt-0.5 shrink-0 text-text-dim">
+                                                    <User size={13} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[11px] text-text-main leading-snug">
+                                                        <span className="font-bold text-text-main text-[10.5px] uppercase tracking-wider">{a.userName || 'Usuario'}</span>{' '}
+                                                        <span className="text-text-dim font-medium">{a.action}</span>
+                                                    </p>
+                                                    <p className="text-[9px] text-text-dim/80 font-bold uppercase tracking-wider mt-0.5">
+                                                        {(a.sectionName || '').replace(/_/g, ' ')}
+                                                    </p>
+                                                    <p className="text-[8.5px] text-text-dim/60 font-mono mt-1">
+                                                        {formatTime(a.timestamp)}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[11px] text-text-main leading-relaxed">
-                                                    <span className="font-black text-text-main text-[10px] uppercase tracking-wider">{a.userName || 'Usuario'}</span> {a.action}
-                                                </p>
-                                                <p className="text-[9px] text-text-dim/80 font-bold uppercase tracking-wider mt-0.5">
-                                                    {(a.sectionName || '').replace(/_/g, ' ')}
-                                                </p>
-                                                <p className="text-[8px] text-text-dim font-mono mt-1">
-                                                    {formatTime(a.timestamp)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         )}

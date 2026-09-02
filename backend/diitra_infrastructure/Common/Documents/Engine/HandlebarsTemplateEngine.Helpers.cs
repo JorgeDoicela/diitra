@@ -13,50 +13,34 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     {
         private void RegisterCustomHelpers(IHandlebars handlebars)
         {
-            // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback y colecciones Enumerable)
-            handlebars.RegisterHelper("default", (output, context, arguments) =>
+            // Helper: valor por defecto si la variable está vacía (soporta múltiples argumentos de fallback, colecciones y sub-expresiones)
+            handlebars.RegisterHelper("default", (context, arguments) =>
             {
-                bool isHtmlEmpty(string? val)
+                bool isHtmlEmpty(object? val)
                 {
-                    if (string.IsNullOrWhiteSpace(val)) return true;
-                    var clean = Regex.Replace(val, @"<[^>]*>", "").Trim();
-                    return string.IsNullOrWhiteSpace(clean);
+                    if (val == null || val.GetType().Name == "UndefinedBindingResult") return true;
+                    if (val is string s)
+                    {
+                        if (string.IsNullOrWhiteSpace(s)) return true;
+                        var clean = Regex.Replace(s, @"<[^>]*>", "").Trim();
+                        return string.IsNullOrWhiteSpace(clean);
+                    }
+                    if (val is IEnumerable enumerable && !(val is string))
+                    {
+                        var enumerator = enumerable.GetEnumerator();
+                        return !enumerator.MoveNext();
+                    }
+                    return false;
                 }
 
                 foreach (var arg in arguments)
                 {
-                    if (arg != null && arg.GetType().Name != "UndefinedBindingResult")
+                    if (!isHtmlEmpty(arg))
                     {
-                        if (arg is IEnumerable enumerable && !(arg is string))
-                        {
-                            var items = new List<string>();
-                            foreach (var item in enumerable)
-                            {
-                                if (item != null)
-                                {
-                                    var strItem = item.ToString()?.Trim();
-                                    if (!isHtmlEmpty(strItem)) items.Add(strItem!);
-                                }
-                            }
-                            var joined = string.Join("<br/>", items);
-                            if (!string.IsNullOrWhiteSpace(joined))
-                            {
-                                output.WriteSafeString(joined);
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            var str = arg.ToString();
-                            if (!isHtmlEmpty(str))
-                            {
-                                output.WriteSafeString(str!);
-                                return;
-                            }
-                        }
+                        return arg;
                     }
                 }
-                output.WriteSafeString("");
+                return string.Empty;
             });
 
             // Helper: if_eq (comparación de igualdad de bloque para resiliencia con plantillas legacy)
