@@ -22,6 +22,7 @@ export function createBaseCoverBlock(
         carrera?: string;
         periodo?: string;
         themeColor?: string;
+        showInstitution?: boolean;
     } = {}
 ): DocumentBlock {
     return {
@@ -42,7 +43,7 @@ export function createBaseCoverBlock(
             institutionVariant: 'clean',
             institutionFontSize: 11,
             institutionItalica: false,
-            showInstitution: true,
+            showInstitution: options.showInstitution !== undefined ? options.showInstitution : true,
             textoInstitucion: 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI',
             xLogo: 10,
             yLogo: 3,
@@ -50,7 +51,10 @@ export function createBaseCoverBlock(
             yInstitution: 13,
             showTitle: true,
             xTitle: 10,
-            yTitle: 35,
+            yTitle: 32,
+            showTemaProyecto: true,
+            xTema: 10,
+            yTema: 46,
             showCarrera: true,
             xCarrera: 10,
             yCarrera: 70,
@@ -214,7 +218,7 @@ export function generateDefaultBlocksForTemplate(
     // B. PROTOCOLO DE INVESTIGACIÓN (I+D+i)
     if (code === 'PROTOCOLO_INVESTIGACION' || code === '1. FORMATO PROYECTO DE INVESTIGACIÓN') {
         return [
-            createBaseCoverBlock('PROYECTO DE INVESTIGACIÓN', { colorTitle: 'navy' }),
+            createBaseCoverBlock('PROYECTO DE INVESTIGACIÓN', { colorTitle: 'navy', showInstitution: false }),
             {
                 id: 'block-general',
                 type: 'project_general_section' as BlockType,

@@ -137,13 +137,13 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'gantt':
                 return <RenderGantt config={block.config} />;
             case 'researchers_table':
-                return <RenderResearchersTable config={block.config} />;
+                return <RenderResearchersTable config={block.config} title={block.title} />;
             case 'rubric_table':
                 return <RenderRubricTable config={block.config} />;
             case 'signatures':
                 return <RenderSignatures config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_general_section':
-                return <RenderProjectGeneralSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+                return <RenderProjectGeneralSection config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section':
                 return <RenderProjectTechnicalSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_budget_section':

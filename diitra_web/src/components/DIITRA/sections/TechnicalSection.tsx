@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../../DIITRA/SectionBlockGuard';
+import api from '../../../api/axios_config';
 import {
     BookOpen,
     FileText,
@@ -14,8 +15,21 @@ import {
     ClipboardCheck,
     Info,
     Lock,
-    ArrowDown
+    ArrowDown,
+    Check,
+    Layers,
+    Sparkles,
+    X,
+    ChevronDown
 } from 'lucide-react';
+
+interface OdsItem {
+    idOds: number;
+    numeroOds: number;
+    titulo: string;
+    idEje: number;
+    eje: string;
+}
 
 interface TechnicalSectionProps {
     cowork: CoWorkHandle;
@@ -44,6 +58,24 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     formData,
     config
 }) => {
+    const [odsList, setOdsList] = useState<OdsItem[]>([]);
+    const [loadingOds, setLoadingOds] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingOds(true);
+        api.get('/catalogs/ods')
+            .then(res => {
+                if (isMounted && Array.isArray(res.data)) {
+                    setOdsList(res.data);
+                }
+            })
+            .catch(err => console.error("Error al cargar ODS:", err))
+            .finally(() => {
+                if (isMounted) setLoadingOds(false);
+            });
+        return () => { isMounted = false; };
+    }, []);
     const activeSubTabs = React.useMemo<TechnicalSubTab[]>(() => {
         const rawSections = config?.writingSections || config?.technicalSections;
         if (rawSections && Array.isArray(rawSections) && rawSections.length > 0) {
@@ -175,30 +207,21 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     const toolbarMode = (currentTab as any)?.toolbarMode || 'apa_full';
 
                     // 0. Renderizado para Encabezado de Categoría / Grupo Unificado (isGroupHeader o hasContent: false)
+                    // Manejo especial de Banner/Grupo de Objetivos (3.4)
                     if (currentTab.isGroupHeader || currentTab.hasContent === false || matchKey(['BannerObjetivos', 'sec_banner_objetivos'])) {
-                        const Icon = currentTab.icon || Target;
                         return (
                             <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
                                 <div className="space-y-8 animate-fade-in">
-                                    {/* Encabezado del grupo unificado */}
-                                    <div className="p-5 rounded-2xl bg-bg-deep/80 border border-border-thin shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3.5">
-                                            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
-                                                <Icon size={24} />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-base font-black text-text-main uppercase tracking-wider">
-                                                        {currentTab.label}
-                                                    </h3>
-                                                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                                        VISTA INTEGRADA
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-text-dim font-medium mt-0.5">
-                                                    Apartado completo de Objetivos. Redacte a continuación el Objetivo General y los Objetivos Específicos del proyecto.
-                                                </p>
-                                            </div>
+                                    {/* Encabezado principal sobrio oficial */}
+                                    <div className="space-y-1">
+                                        <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
+                                            <Target size={20} className="text-text-main" /> {currentTab.label}
+                                        </h3>
+                                        <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                            <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                            <p className="leading-relaxed font-medium">
+                                                Formular de manera clara y articulada el <strong>Objetivo General</strong> y los <strong>Objetivos Específicos</strong> que orientarán el desarrollo y los resultados del proyecto de investigación.
+                                            </p>
                                         </div>
                                     </div>
 
@@ -206,11 +229,14 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     <div className="space-y-4">
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-black text-text-main uppercase flex items-center gap-2">
-                                                <Target size={18} className="text-indigo-400" /> 3.4.1 Objetivo General
+                                                <Target size={18} className="text-text-main" /> 3.4.1 Objetivo General
                                             </h4>
-                                            <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
-                                                <Info size={14} className="text-text-main shrink-0 mt-0.5" />
-                                                <span className="font-bold">FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?</span>
+                                            <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                                <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                                <p className="leading-relaxed font-medium">
+                                                    Definir el propósito principal de la investigación respondiendo a: ¿Qué se investigará? + ¿Cómo se ejecutará? + ¿Para qué servirá? <br />
+                                                    <span className="text-text-main font-black">FÓRMULA: VERBO EN INFINITIVO + OBJETO DE ESTUDIO + MEDIO O MÉTODO + FINALIDAD</span>
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
@@ -220,7 +246,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                                 toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
-                                                className="min-h-[220px] border-none"
+                                                className="min-h-[260px] border-none"
                                             />
                                         </div>
                                     </div>
@@ -229,11 +255,14 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     <div className="space-y-4 pt-4 border-t border-border-thin/40">
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-black text-text-main uppercase flex items-center gap-2">
-                                                <Target size={18} className="text-indigo-400" /> 3.4.2 Objetivos Específicos
+                                                <Target size={18} className="text-text-main" /> 3.4.2 Objetivos Específicos
                                             </h4>
-                                            <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
-                                                <Info size={14} className="text-text-main shrink-0 mt-0.5" />
-                                                <span className="font-bold">FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO.</span>
+                                            <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                                <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                                <p className="leading-relaxed font-medium">
+                                                    Detallar secuencialmente las metas técnicas y metodológicas para cumplir el objetivo general. <br />
+                                                    <span className="text-text-main font-black">FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO</span>
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
@@ -243,7 +272,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                                 toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
-                                                className="min-h-[260px] border-none"
+                                                className="min-h-[300px] border-none"
                                             />
                                         </div>
                                     </div>
@@ -419,26 +448,14 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     <div className="space-y-4">
                                         <div className="space-y-1">
                                             <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
-                                                <Target size={20} /> Objetivo General
+                                                <Target size={20} className="text-text-main" /> Objetivo General
                                             </h3>
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim w-full sm:w-1/2">
-                                                    <Info size={14} className="text-text-main shrink-0 mt-0.5" />
-                                                    <span className="font-bold">FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?</span>
-                                                </div>
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const el = document.getElementById('objetivos-especificos-section');
-                                                        if (el) {
-                                                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                        }
-                                                    }}
-                                                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-dim hover:text-text-main transition-colors select-none shrink-0 pr-2"
-                                                >
-                                                    <span>Los objetivos específicos se encuentran abajo</span>
-                                                    <ArrowDown size={12} className="animate-bounce" />
-                                                </button>
+                                            <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                                <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                                <p className="leading-relaxed font-medium">
+                                                    Definir el propósito principal de la investigación respondiendo a: ¿Qué se investigará? + ¿Cómo se ejecutará? + ¿Para qué servirá? <br />
+                                                    <span className="text-text-main font-black">FÓRMULA: VERBO EN INFINITIVO + OBJETO DE ESTUDIO + MEDIO O MÉTODO + FINALIDAD</span>
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
@@ -448,20 +465,23 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                                 toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
-                                                className="min-h-[180px] border-none"
+                                                className="min-h-[260px] border-none"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Objetivos Específicos */}
-                                    <div id="objetivos-especificos-section" className="space-y-4 scroll-mt-6">
+                                    <div id="objetivos-especificos-section" className="space-y-4 pt-4 border-t border-border-thin/40">
                                         <div className="space-y-1">
                                             <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
-                                                <Target size={20} /> Objetivos Específicos
+                                                <Target size={20} className="text-text-main" /> Objetivos Específicos
                                             </h3>
-                                            <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
-                                                <Info size={14} className="text-text-main shrink-0 mt-0.5" />
-                                                <span className="font-bold">FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO.</span>
+                                            <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
+                                                <Info size={16} className="text-text-main shrink-0 mt-0.5" />
+                                                <p className="leading-relaxed font-medium">
+                                                    Detallar secuencialmente las metas técnicas y metodológicas para cumplir el objetivo general. <br />
+                                                    <span className="text-text-main font-black">FÓRMULA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO</span>
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
@@ -471,7 +491,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                                 toolbarMode="standard"
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
-                                                className="min-h-[220px] border-none"
+                                                className="min-h-[300px] border-none"
                                             />
                                         </div>
                                     </div>
@@ -482,27 +502,142 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 5. Objetivos de Desarrollo Sostenible (ODS)
                     if (matchKey(['ods', 'sec_ods', 'ObjetivosDesarrolloSostenible'])) {
+                        // Obtener array de ODS seleccionados de forma independiente
+                        const rawOds = formData?.OdsSeleccionados;
+                        const selectedOdsNums: number[] = Array.isArray(rawOds)
+                            ? rawOds.map(Number).filter(n => !isNaN(n))
+                            : (typeof rawOds === 'string' && rawOds.trim().length > 0
+                                ? rawOds.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n))
+                                : []);
+
+                        const handleSelectOds = (numeroOdsStr: string) => {
+                            if (!numeroOdsStr) return;
+                            const num = parseInt(numeroOdsStr, 10);
+                            if (isNaN(num)) return;
+
+                            if (!selectedOdsNums.includes(num)) {
+                                const nextList = [...selectedOdsNums, num].sort((a, b) => a - b);
+                                onUpdate('OdsSeleccionados', nextList);
+                            }
+                        };
+
+                        const handleRemoveOds = (odsNum: number) => {
+                            const nextList = selectedOdsNums.filter(n => n !== odsNum);
+                            onUpdate('OdsSeleccionados', nextList);
+                        };
+
+                        // Agrupar por Eje
+                        const groupedEjes = odsList.reduce((acc, item) => {
+                            const ejeName = item.eje || 'General';
+                            if (!acc[ejeName]) acc[ejeName] = [];
+                            acc[ejeName].push(item);
+                            return acc;
+                        }, {} as Record<string, OdsItem[]>);
+
+                        const ejesOrder = ['Personas', 'Planeta', 'Prosperidad', 'Paz', 'Alianzas'];
+                        const sortedEjeKeys = Object.keys(groupedEjes).sort((a, b) => {
+                            const ia = ejesOrder.indexOf(a);
+                            const ib = ejesOrder.indexOf(b);
+                            return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+                        });
+
                         return (
                             <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
-                                            <Globe size={20} /> Alineación con Objetivos de Desarrollo Sostenible (ODS)
+                                            <Globe size={20} className="text-text-main" /> Alineación con Objetivos de Desarrollo Sostenible (ODS)
                                         </h3>
                                         <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
                                             <Info size={16} className="text-text-main shrink-0 mt-0.5" />
                                             <p className="leading-relaxed font-medium">
-                                                Los objetivos de desarrollo sostenible de la ONU son 17. Especifique bajo qué objetivos y metas se alinea su proyecto de investigación (Ej: ODS 4 - Educación de Calidad, ODS 9 - Industria, Innovación e Infraestructura). Visite <a href="https://www.un.org/sustainabledevelopment/es/objetivos-de-desarrollo-sostenible/" target="_blank" rel="noopener noreferrer" className="text-text-main underline font-bold">Naciones Unidas ODS</a>.
+                                                Seleccione los <strong>ODS</strong> desde el selector desplegable oficial. Puede vincular múltiples ODS y redactar la justificación y metas específicas en el editor inferior.
                                             </p>
                                         </div>
                                     </div>
-                                    <CoWorkField
-                                        name="ObjetivosDesarrolloSostenible"
-                                        cowork={cowork}
-                                        label="Ejes y ODS Vinculados (Ej: ODS 4, ODS 9)"
-                                        onValueChange={(v) => onUpdate('ObjetivosDesarrolloSostenible', v)}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold text-text-main"
-                                    />
+
+                                    {/* Selector compacto estilo Vercel Geist con optgroups por Eje */}
+                                    <div className="space-y-3">
+                                        <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                                            <Layers size={13} className="text-zinc-400" /> Seleccionar Objetivos de Desarrollo Sostenible
+                                        </label>
+                                        
+                                        <div className="relative">
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleSelectOds(e.target.value)}
+                                                className="w-full h-10 pl-3.5 pr-9 appearance-none bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[13px] font-medium text-zinc-900 dark:text-zinc-100 shadow-sm focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-300 focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-300 transition-colors cursor-pointer"
+                                            >
+                                                <option value="" disabled>
+                                                    {loadingOds ? 'Cargando catálogo oficial...' : '+ Seleccionar y vincular un ODS...'}
+                                                </option>
+                                                {sortedEjeKeys.map(ejeName => (
+                                                    <optgroup key={ejeName} label={`Eje: ${ejeName}`}>
+                                                        {groupedEjes[ejeName].map(ods => (
+                                                            <option 
+                                                                key={ods.idOds} 
+                                                                value={ods.numeroOds}
+                                                                disabled={selectedOdsNums.includes(ods.numeroOds)}
+                                                            >
+                                                                {selectedOdsNums.includes(ods.numeroOds) ? '✓ ' : ''}ODS {ods.numeroOds} — {ods.titulo}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                                        </div>
+
+                                        {/* Chips / Badges de ODS Seleccionados estilo Vercel Geist */}
+                                        {selectedOdsNums.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                {selectedOdsNums.map(num => {
+                                                    const ods = odsList.find(o => o.numeroOds === num);
+                                                    return (
+                                                        <span
+                                                            key={num}
+                                                            className="inline-flex items-center gap-2 h-7 px-2.5 rounded-md bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/60 text-zinc-900 dark:text-zinc-100 text-[12px] font-medium transition-all hover:border-zinc-300"
+                                                        >
+                                                            <span className="w-4 h-4 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[10px] font-bold flex items-center justify-center">
+                                                                {num}
+                                                            </span>
+                                                            <span className="text-zinc-800 dark:text-zinc-200 font-medium">{ods ? ods.titulo : `ODS ${num}`}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveOds(num)}
+                                                                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors ml-0.5 p-0.5"
+                                                                title="Quitar ODS"
+                                                            >
+                                                                <X size={12} strokeWidth={2.5} />
+                                                            </button>
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Editor Enriquecido para Justificación y Metas Específicas ODS */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="space-y-1">
+                                            <h4 className="text-[13px] font-bold text-text-main uppercase tracking-tight flex items-center gap-2">
+                                                Justificación y Metas de Alineación ODS
+                                            </h4>
+                                            <p className="text-[11px] text-text-dim leading-snug">
+                                                Describa de forma argumentada la articulación del proyecto con los ODS seleccionados, señalando metas directas, beneficiarios o impacto esperado.
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
+                                            <CoWorkEditor
+                                                field={currentTab.fieldKey || "ObjetivosDesarrolloSostenible"}
+                                                cowork={cowork}
+                                                toolbarMode="standard"
+                                                onChange={(html, meta) => onUpdate(currentTab.fieldKey || 'ObjetivosDesarrolloSostenible', html, meta)}
+                                                placeholder="Describa la articulación de la propuesta con los ODS seleccionados, metas específicas e impacto esperado..."
+                                                className="min-h-[240px] border-none"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </SectionBlockGuard>
                         );

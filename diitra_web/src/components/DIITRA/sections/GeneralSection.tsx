@@ -48,12 +48,17 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     config
 }) => {
     const [misCarreras, setMisCarreras] = React.useState<any[]>([]);
+    const [programas, setProgramas] = React.useState<any[]>([]);
+
     React.useEffect(() => {
         if (!isAdmin) {
             api.get('/catalogs/mi-carrera')
                 .then(res => setMisCarreras(res.data || []))
                 .catch(err => console.error("Error al cargar carreras del docente:", err));
         }
+        api.get('/catalogs/programas')
+            .then(res => setProgramas(res.data || []))
+            .catch(err => console.error("Error al cargar programas de investigación:", err));
     }, [isAdmin]);
 
     const customFieldsList: IdentificationField[] = config?.customFields || [];
@@ -358,10 +363,22 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         <CoWorkField 
                             name="Programa" 
                             cowork={cowork} 
+                            type="select"
                             label={labelPrograma} 
                             onValueChange={(v, meta) => onUpdate('Programa', v, meta)}
                             className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                        />
+                        >
+                            <option value="">-- Seleccione un Programa de Investigación --</option>
+                            {programas.map((p: any) => (
+                                <option key={p.uuid || p.id_programa || p.idPrograma} value={p.nombre}>
+                                    {p.nombre}
+                                </option>
+                            ))}
+                            {/* Soporte para valor preexistente si no estuviera en el catálogo activo */}
+                            {formData.Programa && !programas.some((p: any) => p.nombre === formData.Programa) && (
+                                <option value={formData.Programa}>{formData.Programa}</option>
+                            )}
+                        </CoWorkField>
                     </div>
                 ) : null;
 
@@ -458,15 +475,26 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 cowork={cowork} 
                                 type="select"
                                 label="Sublínea de Investigación" 
+                                readOnly={!selectedLine}
                                 onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                                className={`w-full border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold outline-none transition-all ${
+                                    !selectedLine 
+                                        ? 'bg-bg-deep/50 border-border-thin/80 text-text-dim cursor-not-allowed opacity-50 select-none' 
+                                        : 'bg-bg-deep border-border-thin text-text-main focus:border-text-main'
+                                }`} 
                             >
-                                <option value="">Seleccione Sublínea...</option>
-                                {availableSublines.map((s: any) => (
-                                    <option key={s.idSublinea ?? s.id_sublinea} value={s.nombre}>
-                                        {s.nombre}
-                                    </option>
-                                ))}
+                                {!selectedLine ? (
+                                    <option value="">-- Primero seleccione una Línea --</option>
+                                ) : (
+                                    <>
+                                        <option value="">Seleccione Sublínea...</option>
+                                        {availableSublines.map((s: any) => (
+                                            <option key={s.idSublinea ?? s.id_sublinea} value={s.nombre}>
+                                                {s.nombre}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
                             </CoWorkField>
                         </div>
                     </div>

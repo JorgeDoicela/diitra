@@ -100,39 +100,78 @@ export const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) =
     );
 };
 
-export const RenderResearchersTable: React.FC<{ config: any }> = ({ config }) => {
+export const RenderResearchersTable: React.FC<{ config?: any; title?: string }> = ({ config, title }) => {
+    const displayTitle = config?.title || title || '2.  INVESTIGADORES';
     return (
-        <div className="overflow-x-auto my-2 select-none">
-            <table className="w-full border-collapse text-[10px] border border-slate-200">
+        <div className="overflow-x-auto my-2 select-none font-sans">
+            <p className="font-bold text-[10pt] uppercase text-[#1e2a4a] mb-2 tracking-wide font-sans">
+                {displayTitle}
+            </p>
+            <table className="w-full border-collapse text-[10px] border border-black">
                 <thead>
-                    <tr>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nombre Completo</th>
-                        <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Rol en Proyecto</th>
-                        {config.mostrarCedula !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Cédula</th>}
-                        {config.mostrarEmail !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Email</th>}
-                        {config.mostrarTelefono !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Teléfono</th>}
-                        {config.mostrarNivelAcademico !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Nivel Académico</th>}
-                        {config.mostrarHoras !== false && <th className="border border-slate-300 p-2 text-white font-bold text-left uppercase text-[9px]" style={{ backgroundColor: DYN_COLORS.blue }}>Horas</th>}
+                    <tr className="border-b border-black">
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[22%] bg-[#1e2a4a]">NOMBRE</th>
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[16%] bg-[#1e2a4a]">NÚMERO DE CÉDULA</th>
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[18%] bg-[#1e2a4a]">EMAIL</th>
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[14%] bg-[#1e2a4a]">TELEFONO</th>
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[16%] bg-[#1e2a4a]">NIVEL ACADÉMICO</th>
+                        <th className="p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[14%] bg-[#1e2a4a]">ROL</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr className="hover:bg-slate-50/50">
-                        <td className="border border-slate-200 p-2 text-slate-800 font-semibold">[Nombre del Director]</td>
-                        <td className="border border-slate-200 p-2 text-slate-600">Director de Proyecto</td>
-                        {config.mostrarCedula !== false && <td className="border border-slate-200 p-2 text-slate-500">17XXXXXX89</td>}
-                        {config.mostrarEmail !== false && <td className="border border-slate-200 p-2 text-slate-500">director@istpet.edu.ec</td>}
-                        {config.mostrarTelefono !== false && <td className="border border-slate-200 p-2 text-slate-500">0987654321</td>}
-                        {config.mostrarNivelAcademico !== false && <td className="border border-slate-200 p-2 text-slate-500">Magíster / PhD</td>}
-                        {config.mostrarHoras !== false && <td className="border border-slate-200 p-2 text-slate-600 font-bold">20 hs</td>}
+                    {/* Fila Director */}
+                    <tr className="border-b border-black hover:bg-slate-50/50">
+                        <td className="border-r border-black p-1.5 align-top">
+                            <div className="font-bold text-slate-900 text-[9px]">Director</div>
+                            <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar Título abreviado, nombres y apellidos completos]</div>
+                        </td>
+                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el número de cédula]</td>
+                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[ejemplo@istpet.edu]</td>
+                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Indicar su número de contacto]</td>
+                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el título más alto que está debidamente registrado en la Senescyt]</td>
+                        <td className="p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Indicar rol dentro del ISTPET]</td>
                     </tr>
-                    <tr className="hover:bg-slate-50/50">
-                        <td className="border border-slate-200 p-2 text-slate-800 font-semibold">[Nombre de Docente]</td>
-                        <td className="border border-slate-200 p-2 text-slate-600">Docente Colaborador</td>
-                        {config.mostrarCedula !== false && <td className="border border-slate-200 p-2 text-slate-500">17XXXXXX75</td>}
-                        {config.mostrarEmail !== false && <td className="border border-slate-200 p-2 text-slate-500">docente@istpet.edu.ec</td>}
-                        {config.mostrarTelefono !== false && <td className="border border-slate-200 p-2 text-slate-500">0981234567</td>}
-                        {config.mostrarNivelAcademico !== false && <td className="border border-slate-200 p-2 text-slate-500">Magíster</td>}
-                        {config.mostrarHoras !== false && <td className="border border-slate-200 p-2 text-slate-600 font-bold">10 hs</td>}
+                    {/* Fila Docentes */}
+                    <tr className="border-b border-black hover:bg-slate-50/50">
+                        <td className="border-r border-black p-1.5 align-top">
+                            <div className="font-bold text-slate-900 text-[9px]">Docentes</div>
+                            <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar Título abreviado, nombres y apellidos completos]</div>
+                        </td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="p-1.5 align-middle">&nbsp;</td>
+                    </tr>
+                    {/* Fila Estudiantes */}
+                    <tr className="border-b border-black hover:bg-slate-50/50">
+                        <td className="border-r border-black p-1.5 align-top">
+                            <div className="font-bold text-slate-900 text-[9px]">Estudiantes</div>
+                            <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar nombres y apellidos completos]</div>
+                        </td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        <td className="p-1.5 align-middle">&nbsp;</td>
+                    </tr>
+                    {/* Fila libre 1 */}
+                    <tr className="border-b border-black h-6 hover:bg-slate-50/50">
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="p-1.5">&nbsp;</td>
+                    </tr>
+                    {/* Fila libre 2 */}
+                    <tr className="h-6 hover:bg-slate-50/50">
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        <td className="p-1.5">&nbsp;</td>
                     </tr>
                 </tbody>
             </table>

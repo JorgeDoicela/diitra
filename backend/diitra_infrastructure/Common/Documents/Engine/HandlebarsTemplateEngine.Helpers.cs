@@ -108,9 +108,28 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 var a = arguments.ElementAtOrDefault(0);
                 var b = arguments.ElementAtOrDefault(1);
-                var aStr = (a == null || a.GetType().Name == "UndefinedBindingResult") ? string.Empty : a.ToString();
-                var bStr = (b == null || b.GetType().Name == "UndefinedBindingResult") ? string.Empty : b.ToString();
-                return aStr == bStr;
+                var aStr = (a == null || a.GetType().Name == "UndefinedBindingResult") ? string.Empty : a.ToString()?.Trim() ?? string.Empty;
+                var bStr = (b == null || b.GetType().Name == "UndefinedBindingResult") ? string.Empty : b.ToString()?.Trim() ?? string.Empty;
+
+                if (string.Equals(aStr, bStr, StringComparison.OrdinalIgnoreCase)) return true;
+
+                // Normalizar tildes para resiliencia total (ej: BASICA vs BÁSICA vs Básica)
+                string removeDiacritics(string text)
+                {
+                    var normalized = text.Normalize(NormalizationForm.FormD);
+                    var sb = new StringBuilder();
+                    foreach (var c in normalized)
+                    {
+                        var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                        if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                        {
+                            sb.Append(c);
+                        }
+                    }
+                    return sb.ToString().Normalize(NormalizationForm.FormC);
+                }
+
+                return string.Equals(removeDiacritics(aStr), removeDiacritics(bStr), StringComparison.OrdinalIgnoreCase);
             });
 
             // Helper: negación

@@ -107,32 +107,77 @@ export const generateMultiSectionTableHtml = (block: DocumentBlock): string => {
 };
 
 export const generateResearchersTableHtml = (block: DocumentBlock): string => {
-    const c: any = block.config;
+    const c: any = block.config || {};
+    const title = c.title || block.title || '2.  INVESTIGADORES';
     return `
-  <!-- BLOQUE: INVESTIGADORES -->
-  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">2. Investigadores y Equipo de Trabajo</p>
-  <table class="info-table" style="width: 100%; border-collapse: collapse; margin-top: 6px; border: 1px solid #cbd5e1;">
-    <thead><tr>
-      <th style="${headerBg('blue')}">Nombre Completo</th>
-      <th style="${headerBg('blue')}">Rol en Proyecto</th>
-      ${c.mostrarCedula !== false ? `<th style="${headerBg('blue')}">Cédula</th>` : ''}
-      ${c.mostrarEmail !== false ? `<th style="${headerBg('blue')}">Email</th>` : ''}
-      ${c.mostrarTelefono !== false ? `<th style="${headerBg('blue')}">Teléfono</th>` : ''}
-      ${c.mostrarNivelAcademico !== false ? `<th style="${headerBg('blue')}">Nivel Académico</th>` : ''}
-      ${c.mostrarHoras !== false ? `<th style="${headerBg('blue')}">Horas</th>` : ''}
-    </tr></thead>
-    <tbody>
-      {{#each (default investigadores participantes)}}
+  <!-- BLOQUE: 2. INVESTIGADORES -->
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #1e2a4a; margin-top: 18px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
+  <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
+    <thead>
       <tr style="page-break-inside: avoid;">
-        <td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.nombre this.Nombre}}</td>
-        <td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.rol this.Rol}}</td>
-        ${c.mostrarCedula !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.cedula this.Cedula}}</td>' : ''}
-        ${c.mostrarEmail !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.email this.Email}}</td>' : ''}
-        ${c.mostrarTelefono !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.telefono this.Telefono}}</td>' : ''}
-        ${c.mostrarNivelAcademico !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1;">{{default this.nivelAcademico this.NivelAcademico}}</td>' : ''}
-        ${c.mostrarHoras !== false ? '<td style="padding: 6px 10px; font-size: 9pt; color: #0f172a; border: 1px solid #cbd5e1; text-align: center;">{{default this.horas this.Horas "0"}} hs</td>' : ''}
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 22%;">NOMBRE</th>
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 16%;">NÚMERO DE CÉDULA</th>
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 18%;">EMAIL</th>
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 14%;">TELEFONO</th>
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 16%;">NIVEL ACADÉMICO</th>
+        <th style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 6px 4px; font-weight: bold; font-size: 8pt; text-align: center; text-transform: uppercase; border: 1px solid #000000; width: 14%;">ROL</th>
       </tr>
-      {{/each}}
+    </thead>
+    <tbody>
+      <!-- Fila Director -->
+      <tr style="page-break-inside: avoid;">
+        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+          <div style="font-weight: bold; color: #000000;">Director</div>
+          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">{{#if director_proyecto}}{{director_proyecto}}{{else}}[Indicar Título abreviado, nombres y apellidos completos]{{/if}}</div>
+        </td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_cedula "[Especificar el número de cédula]"}}</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_email "[ejemplo@istpet.edu]"}}</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_telefono "[Indicar su número de contacto]"}}</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_nivel_academico "[Especificar el título más alto que está debidamente registrado en la Senescyt]"}}</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_rol_institucional "[Indicar rol dentro del ISTPET]"}}</td>
+      </tr>
+      <!-- Fila Docentes -->
+      <tr style="page-break-inside: avoid;">
+        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+          <div style="font-weight: bold; color: #000000;">Docentes</div>
+          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">[Indicar Título abreviado, nombres y apellidos completos]</div>
+        </td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+      </tr>
+      <!-- Fila Estudiantes -->
+      <tr style="page-break-inside: avoid;">
+        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+          <div style="font-weight: bold; color: #000000;">Estudiantes</div>
+          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">[Indicar nombres y apellidos completos]</div>
+        </td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
+      </tr>
+      <!-- Fila libre 1 -->
+      <tr style="page-break-inside: avoid; height: 22px;">
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+      </tr>
+      <!-- Fila libre 2 -->
+      <tr style="page-break-inside: avoid; height: 22px;">
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+        <td style="border: 1px solid #000000;">&nbsp;</td>
+      </tr>
     </tbody>
   </table>`;
 };

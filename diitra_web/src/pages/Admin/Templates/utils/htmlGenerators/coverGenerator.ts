@@ -24,7 +24,6 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const temaItalica = Boolean(c.temaItalica ?? gCover.temaItalica);
 
     const activeCoverImage = c.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
-    const isWhite = (colorStr?: string) => !colorStr || colorStr.toLowerCase() === '#ffffff' || colorStr.toLowerCase() === '#fff' || colorStr.toLowerCase() === 'white';
 
     const rawColorInst = c.colorInstitution || gCover.colorInstitution;
     const rawColorTema = c.colorTemaProyecto || gCover.colorTemaProyecto;
@@ -43,8 +42,6 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const instLogoHeight = Number(c.institutionLogoHeight || gCover.institutionLogoHeight || 48);
     const instLogoRadius = c.institutionLogoRadius || gCover.institutionLogoRadius || 'none';
     const instLogoInvert = c.institutionLogoInvert ?? gCover.institutionLogoInvert ?? false;
-    const instVariant = c.institutionVariant || gCover.institutionVariant || 'clean';
-    const instBg = c.bgInstitution || gCover.bgInstitution || '{{ theme.colors.primary }}';
     const institutionFontSize = Number(c.institutionFontSize || gCover.institutionFontSize || 10);
     const institutionItalica = Boolean(c.institutionItalica ?? gCover.institutionItalica);
     const instFontStyleCss = institutionItalica ? 'font-style:italic;' : '';
@@ -57,7 +54,9 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
     const yInst  = c.yInstitution ?? gCover.yInstitution ?? 13;
     const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
-    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 35;
+    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 32;
+    const xTema  = c.xTema        ?? gCover.xTema        ?? (c.xTitle ?? 10);
+    const yTema  = c.yTema        ?? gCover.yTema        ?? (c.yTitle !== undefined ? Math.min(95, c.yTitle + 14) : 46);
     const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
     const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
     const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
@@ -85,10 +84,13 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
       <div style="font-family: {{ theme.typography.font_family }}; font-size:${tituloFontSize}pt; font-weight:bold; ${tituloItalica ? 'font-style:italic;' : ''} color: ${titleColor}; text-transform:uppercase; line-height:1.2;">
         ${textTitle}
       </div>
-      ${showTema ? `
-      <div style="font-family: {{ theme.typography.font_family }}; font-size:${temaFontSize}pt; font-weight:bold; ${temaItalica ? 'font-style:italic;' : ''} color: ${colorTema}; text-transform:uppercase; margin-top:12px; line-height:1.3; word-wrap:break-word;">
+    </div>` : '';
+
+    const temaEl = showTema ? `
+    <div style="position:absolute; left:${toMmX(xTema)}; top:${toMmY(yTema)}; width:${getWidthMm(xTema)}; text-align:center;">
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${temaFontSize}pt; font-weight:bold; ${temaItalica ? 'font-style:italic;' : ''} color: ${colorTema}; text-transform:uppercase; line-height:1.3; word-wrap:break-word;">
         {{default titulo '${placeholderTema}'}}
-      </div>` : ''}
+      </div>
     </div>` : '';
 
     const carreraFontSize = Number(c.carreraFontSize || gCover.carreraFontSize || 10);
@@ -119,6 +121,7 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     ${logoEl}
     ${instEl}
     ${titleEl}
+    ${temaEl}
     ${carreraEl}
     ${periodoEl}
   </div>`;

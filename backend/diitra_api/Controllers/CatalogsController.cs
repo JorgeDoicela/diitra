@@ -414,6 +414,24 @@ namespace diitra_api.Controllers
             await _context.SaveChangesAsync();
             return Created($"/api/catalogs/programas/{model.Uuid}", model);
         }
+
+        // --- Objetivos de Desarrollo Sostenible (ODS) ---
+        [HttpGet("ods")]
+        public async Task<IActionResult> GetOds()
+        {
+            var data = await _context.InvOds
+                .Include(o => o.IdEjeNavigation)
+                .OrderBy(o => o.NumeroOds)
+                .Select(o => new {
+                    idOds = o.IdOds,
+                    numeroOds = o.NumeroOds,
+                    titulo = o.Titulo,
+                    idEje = o.IdEje,
+                    eje = o.IdEjeNavigation != null ? o.IdEjeNavigation.Nombre : ""
+                })
+                .ToListAsync();
+            return Ok(data);
+        }
     }
 }
 

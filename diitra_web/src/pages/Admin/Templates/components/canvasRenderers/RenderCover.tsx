@@ -48,17 +48,19 @@ export const getHeaderStylePair = (id?: string): HeaderStylePair => {
 const DEFAULT_POSITIONS: Record<string, FreeFormPosition> = {
     logo: { x: 10, y: 3 },
     institution: { x: 10, y: 13 },
-    title: { x: 10, y: 35 },
+    title: { x: 10, y: 32 },
+    tema: { x: 10, y: 46 },
     carrera: { x: 10, y: 70 },
     periodo: { x: 10, y: 80 },
 };
 
-type CoverElementId = 'logo' | 'institution' | 'title' | 'carrera' | 'periodo';
+type CoverElementId = 'logo' | 'institution' | 'title' | 'tema' | 'carrera' | 'periodo';
 
 const ELEMENT_NAMES: Record<CoverElementId, string> = {
     logo: 'Logo',
     institution: 'Institución',
     title: 'Título',
+    tema: 'Tema del Proyecto',
     carrera: 'Carrera',
     periodo: 'Periodo'
 };
@@ -151,6 +153,10 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
             x: config.xTitle ?? gCover.xTitle ?? DEFAULT_POSITIONS.title.x,
             y: config.yTitle ?? gCover.yTitle ?? DEFAULT_POSITIONS.title.y
         },
+        tema: {
+            x: config.xTema ?? gCover.xTema ?? (config.xTitle ?? DEFAULT_POSITIONS.tema.x),
+            y: config.yTema ?? gCover.yTema ?? (config.yTitle !== undefined ? Math.min(95, config.yTitle + 14) : DEFAULT_POSITIONS.tema.y)
+        },
         carrera: {
             x: config.xCarrera ?? gCover.xCarrera ?? DEFAULT_POSITIONS.carrera.x,
             y: config.yCarrera ?? gCover.yCarrera ?? DEFAULT_POSITIONS.carrera.y
@@ -175,10 +181,11 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         }
     );
 
-    const tabMapping: Record<CoverElementId, 'institution' | 'title' | 'carrera' | 'periodo'> = {
+    const tabMapping: Record<CoverElementId, 'institution' | 'title' | 'tema' | 'carrera' | 'periodo'> = {
         logo: 'institution',
         institution: 'institution',
         title: 'title',
+        tema: 'tema',
         carrera: 'carrera',
         periodo: 'periodo'
     };
@@ -305,21 +312,20 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
             {renderElement('institution', showText, renderInstitutionContent())}
 
             {renderElement('title', showTitle,
-                <div className="space-y-4">
-                    <h1
-                        className={`font-extrabold tracking-tight uppercase leading-snug ${tituloItalica ? 'italic' : ''}`}
-                        style={{ color: titleColor, fontSize: `${tituloFontSize * 1.33}px` }}
-                    >
-                        {textTitle}
-                    </h1>
-                    {showTema && (
-                        <div
-                            className={`font-extrabold uppercase tracking-wide leading-tight ${temaItalica ? 'italic' : ''}`}
-                            style={{ color: colorTema, fontSize: `${temaFontSize * 1.33}px` }}
-                        >
-                            {placeholderTema}
-                        </div>
-                    )}
+                <h1
+                    className={`font-extrabold tracking-tight uppercase leading-snug ${tituloItalica ? 'italic' : ''}`}
+                    style={{ color: titleColor, fontSize: `${tituloFontSize * 1.33}px` }}
+                >
+                    {textTitle}
+                </h1>
+            )}
+
+            {renderElement('tema', showTema,
+                <div
+                    className={`font-extrabold uppercase tracking-wide leading-tight ${temaItalica ? 'italic' : ''}`}
+                    style={{ color: colorTema, fontSize: `${temaFontSize * 1.33}px` }}
+                >
+                    {placeholderTema}
                 </div>
             )}
 

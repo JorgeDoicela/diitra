@@ -1,271 +1,116 @@
-import type { DocumentBlock, IdentificationField, ImpactCategory, TechnicalSubsection } from '../../types';
+import type { DocumentBlock, ImpactCategory } from '../../types';
 import { DEFAULT_IMPACT_CATEGORIES, DEFAULT_TECHNICAL_SUBSECTIONS } from '../../types';
 import { COLORS, headerBg } from './generatorStyles';
 
 export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const headerColorMode = c.headerColor || 'blue';
-    const borderStyleMode = c.borderStyle || 'solid';
-
-    const resolveHeaderPair = (mode: string) => {
-        switch (mode) {
-            case 'gold': return { bg: '#b8912e', fg: '#ffffff' };
-            case 'gray': return { bg: '#475569', fg: '#ffffff' };
-            case 'none': return { bg: 'transparent', fg: '#1e293b' };
-            case 'blue':
-            default: return { bg: '#1e2a4a', fg: '#ffffff' };
-        }
-    };
-
-    const defaultHeaderPair = resolveHeaderPair(headerColorMode);
-    const tableBorder = borderStyleMode === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
-    const cellBorder = borderStyleMode === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
-
-    const resolveVariantPair = (variant?: string) => {
-        switch (variant) {
-            case 'banner_gold': return { bg: '#b8912e', fg: '#ffffff' };
-            case 'banner_navy': return { bg: '#1e2a4a', fg: '#ffffff' };
-            case 'banner_emerald': return { bg: '#065f46', fg: '#ffffff' };
-            default: return defaultHeaderPair;
-        }
-    };
-
-    interface ItemRow {
-        key: string;
-        label: string;
-        content: string;
-        isGroupHeader?: boolean;
-        variant?: string;
-        colSpan: 1 | 2;
-    }
-
-    const items: ItemRow[] = [];
-
-    if (c.showTitulo !== false) {
-        const lbl = c.customLabel_showTitulo || 'Nombre del Proyecto';
-        const scr = c.customScriban_showTitulo || 'titulo';
-        items.push({
-            key: 'showTitulo',
-            label: lbl,
-            content: `<span style="font-weight: bold;">{{default ${scr} "[TEMA / NOMBRE DEL PROYECTO]"}}</span>`,
-            variant: c.variant_showTitulo || 'standard',
-            colSpan: (c.colSpan_showTitulo as 1 | 2) || 2,
-        });
-    }
-    if (c.showDirector !== false) {
-        const lbl = c.customLabel_showDirector || 'Director del Proyecto';
-        const scr = c.customScriban_showDirector || 'director_proyecto';
-        items.push({
-            key: 'showDirector',
-            label: lbl,
-            content: `{{default ${scr} "No especificado"}}`,
-            variant: c.variant_showDirector || 'standard',
-            colSpan: (c.colSpan_showDirector as 1 | 2) || 1,
-        });
-    }
-    if (c.showCarrera !== false) {
-        const lbl = c.customLabel_showCarrera || 'Carrera / Unidad Académica';
-        const scr = c.customScriban_showCarrera || 'carrera';
-        items.push({
-            key: 'showCarrera',
-            label: lbl,
-            content: `{{default ${scr} "No especificada"}}`,
-            variant: c.variant_showCarrera || 'standard',
-            colSpan: (c.colSpan_showCarrera as 1 | 2) || 1,
-        });
-    }
-    if (c.showConvocatoria !== false) {
-        const lbl = c.customLabel_showConvocatoria || 'Convocatoria Activa';
-        const scr = c.customScriban_showConvocatoria || 'convocatoria';
-        items.push({
-            key: 'showConvocatoria',
-            label: lbl,
-            content: `{{default ${scr} "No especificada"}}`,
-            variant: c.variant_showConvocatoria || 'standard',
-            colSpan: (c.colSpan_showConvocatoria as 1 | 2) || 1,
-        });
-    }
-    if (c.showPrograma !== false) {
-        const lbl = c.customLabel_showPrograma || 'Programa de Investigación';
-        const scr = c.customScriban_showPrograma || 'programa';
-        items.push({
-            key: 'showPrograma',
-            label: lbl,
-            content: `{{default ${scr} "No especificado"}}`,
-            variant: c.variant_showPrograma || 'standard',
-            colSpan: (c.colSpan_showPrograma as 1 | 2) || 1,
-        });
-    }
-    if (c.showGrupo !== false) {
-        const lbl = c.customLabel_showGrupo || 'Grupo de Investigación';
-        const scr = c.customScriban_showGrupo || 'grupo_investigacion';
-        items.push({
-            key: 'showGrupo',
-            label: lbl,
-            content: `{{default ${scr} "No especificado"}}`,
-            variant: c.variant_showGrupo || 'standard',
-            colSpan: (c.colSpan_showGrupo as 1 | 2) || 1,
-        });
-    }
-    if (c.showLinea !== false) {
-        const lbl = c.customLabel_showLinea || 'Línea de Investigación';
-        const scr = c.customScriban_showLinea || 'linea_investigacion';
-        items.push({
-            key: 'showLinea',
-            label: lbl,
-            content: `<div><strong>Línea:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Sublínea:</strong> {{default sublinea_investigacion "No especificada"}}</div>`,
-            variant: c.variant_showLinea || 'standard',
-            colSpan: (c.colSpan_showLinea as 1 | 2) || 1,
-        });
-    }
-    if (c.showTipo !== false) {
-        const lbl = c.customLabel_showTipo || 'Tipo de Investigación';
-        const scr = c.customScriban_showTipo || 'tipo_investigacion';
-        items.push({
-            key: 'showTipo',
-            label: lbl,
-            content: `{{default ${scr} "No especificado"}}`,
-            variant: c.variant_showTipo || 'standard',
-            colSpan: (c.colSpan_showTipo as 1 | 2) || 1,
-        });
-    }
-    if (c.showCaces !== false) {
-        const lbl = c.customLabel_showCaces || 'Campo Detallado CACES';
-        const scr = c.customScriban_showCaces || 'campo_detallado';
-        items.push({
-            key: 'showCaces',
-            label: lbl,
-            content: `{{default ${scr} "No especificado"}}`,
-            variant: c.variant_showCaces || 'standard',
-            colSpan: (c.colSpan_showCaces as 1 | 2) || 1,
-        });
-    }
-    if (c.showFechas !== false) {
-        const lbl = c.customLabel_showFechas || 'Fechas y Plazos';
-        const scr = c.customScriban_showFechas || 'fecha_inicio';
-        items.push({
-            key: 'showFechas',
-            label: lbl,
-            content: `<div><strong>Inicio:</strong> {{default ${scr} "No especificada"}}</div><div style="margin-top: 4px;"><strong>Fin:</strong> {{default fecha_fin "No especificada"}}</div>`,
-            variant: c.variant_showFechas || 'standard',
-            colSpan: (c.colSpan_showFechas as 1 | 2) || 1,
-        });
-    }
-
-    const customFields: IdentificationField[] = c.customFields || [];
-    customFields.forEach((f: IdentificationField) => {
-        if (f.isGroupHeader) {
-            items.push({
-                key: f.fieldKey,
-                label: f.label,
-                content: '',
-                isGroupHeader: true,
-                variant: f.variant || 'banner_gold',
-                colSpan: 2,
-            });
-            return;
-        }
-
-        const scriban = f.scriptVariable || f.fieldKey.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-        const cellContent = f.scriptMode === 'static'
-            ? (f.options?.[0] || f.label)
-            : `{{default ${scriban} "No especificado"}}`;
-        items.push({
-            key: f.fieldKey,
-            label: f.label,
-            content: cellContent,
-            variant: f.variant || 'standard',
-            colSpan: (f.colSpan as 1 | 2) || 1,
-        });
-    });
-
-    const fieldsOrder: string[] = c.fieldsOrder || [];
-    if (fieldsOrder.length > 0) {
-        items.sort((a, b) => {
-            const idxA = fieldsOrder.indexOf(a.key);
-            const idxB = fieldsOrder.indexOf(b.key);
-            if (idxA === -1 && idxB === -1) return 0;
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
-        });
-    }
-
-    if (items.length === 0) return '';
-
-    // Layout Tabla Clásica Institucional
-    type RowGroup = { type: 'header'; item: ItemRow } | { type: 'full'; item: ItemRow } | { type: 'pair'; item1: ItemRow; item2?: ItemRow };
-    const rows: RowGroup[] = [];
-
-    let idx = 0;
-    while (idx < items.length) {
-        const current = items[idx];
-        if (current.isGroupHeader) {
-            rows.push({ type: 'header', item: current });
-            idx++;
-        } else if (current.colSpan === 2) {
-            rows.push({ type: 'full', item: current });
-            idx++;
-        } else {
-            const next = items[idx + 1];
-            if (next && !next.isGroupHeader && next.colSpan === 1) {
-                rows.push({ type: 'pair', item1: current, item2: next });
-                idx += 2;
-            } else {
-                rows.push({ type: 'pair', item1: current });
-                idx++;
-            }
-        }
-    }
-
-    const tableRowsHtml = rows.map(r => {
-        if (r.type === 'header') {
-            const pair = resolveVariantPair(r.item.variant);
-            return `
-    <tr style="page-break-inside: avoid;">
-      <td colspan="4" style="background-color: ${pair.bg} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${r.item.label}</td>
-    </tr>`;
-        } else if (r.type === 'full') {
-            const pair = resolveVariantPair(r.item.variant);
-            return `
-    <tr style="page-break-inside: avoid;">
-      <td style="background-color: ${pair.bg} !important; color: ${pair.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 25%; vertical-align: top; ${cellBorder}">${r.item.label}</td>
-      <td colspan="3" style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; vertical-align: top; ${cellBorder}">${r.item.content}</td>
-    </tr>`;
-        } else {
-            const { item1, item2 } = r;
-            const pair1 = resolveVariantPair(item1.variant);
-            const pair2 = item2 ? resolveVariantPair(item2.variant) : null;
-            if (item2 && pair2) {
-                return `
-    <tr style="page-break-inside: avoid;">
-      <td style="background-color: ${pair1.bg} !important; color: ${pair1.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
-      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item1.content}</td>
-      <td style="background-color: ${pair2.bg} !important; color: ${pair2.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item2.label}</td>
-      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item2.content}</td>
-    </tr>`;
-            } else {
-                return `
-    <tr style="page-break-inside: avoid;">
-      <td style="background-color: ${pair1.bg} !important; color: ${pair1.fg} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 20%; vertical-align: top; ${cellBorder}">${item1.label}</td>
-      <td style="padding: 6px 10px; font-size: 9.5pt; color: #0f172a; width: 30%; vertical-align: top; ${cellBorder}">${item1.content}</td>
-      <td colspan="2" style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
-    </tr>`;
-            }
-        }
-    }).join('\n');
-
-    let renderedContent = `
-    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder}">
-      <tbody>
-        ${tableRowsHtml}
-      </tbody>
-    </table>`;
+    const title = c.title || block.title || '1.  IDENTIFICACIÓN DEL PROYECTO';
 
     return `
-  <!-- BLOQUE: FICHA DE IDENTIFICACIÓN -->
-  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">Ficha de Identificación</p>
-  ${renderedContent}`;
+  <!-- BLOQUE: 1. IDENTIFICACIÓN DEL PROYECTO -->
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #1e2a4a; margin-top: 14px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
+  <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-family: {{ theme.typography.font_family }}; table-layout: fixed;">
+    <colgroup>
+      <col style="width: 34%;" />
+      <col style="width: 13%;" />
+      <col style="width: 7%;" />
+      <col style="width: 14%;" />
+      <col style="width: 7%;" />
+      <col style="width: 18%;" />
+      <col style="width: 7%;" />
+    </colgroup>
+    <tbody>
+      <!-- 1. NOMBRE DEL PROYECTO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">NOMBRE DEL PROYECTO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default titulo ""}}</td>
+      </tr>
+      <!-- 2. PROGRAMA -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">PROGRAMA:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default programa ""}}</td>
+      </tr>
+      <!-- 3. GRUPO DE INVESTIGACIÓN -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">GRUPO DE INVESTIGACIÓN:</td>
+        <td style="font-weight: bold; font-size: 8pt; text-align: center; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">NO</td>
+        <td style="text-align: center; border: 1px solid #000000; padding: 5px 4px; font-size: 8.5pt; vertical-align: middle;">{{#unless grupo_investigacion}}X{{/unless}}</td>
+        <td style="font-weight: bold; font-size: 8pt; text-align: center; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">SI</td>
+        <td colspan="3" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{#if grupo_investigacion}}{{grupo_investigacion}}{{/if}}</td>
+      </tr>
+      <!-- 4. DOMINIO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">DOMINIO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default dominio ""}}</td>
+      </tr>
+      <!-- 5. LÍNEA DE INVESTIGACIÓN -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">LÍNEA DE INVESTIGACIÓN:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default linea_investigacion ""}}</td>
+      </tr>
+      <!-- 6. SUBLÍNEA DE INVESTIGACIÓN -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">SUBLÍNEA DE INVESTIGACIÓN:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default sublinea_investigacion ""}}</td>
+      </tr>
+      <!-- 7. TIPO DE INVESTIGACIÓN (X) -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">TIPO DE INVESTIGACIÓN (X):</td>
+        <td style="font-weight: bold; font-size: 7.5pt; text-align: center; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">BÁSICA</td>
+        <td style="text-align: center; font-size: 8.5pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{#if (eq tipo_investigacion "BASICA")}}X{{/if}}</td>
+        <td style="font-weight: bold; font-size: 7.5pt; text-align: center; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">APLICADA</td>
+        <td style="text-align: center; font-size: 8.5pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{#if (eq tipo_investigacion "APLICADA")}}X{{/if}}</td>
+        <td style="font-weight: bold; font-size: 7pt; text-align: center; border: 1px solid #000000; padding: 5px 2px; vertical-align: middle;">DESARROLLO EXPERIMENTAL</td>
+        <td style="text-align: center; font-size: 8.5pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{#if (eq tipo_investigacion "DESARROLLO EXPERIMENTAL")}}X{{/if}}</td>
+      </tr>
+      <!-- 8. CAMPO AMPLIO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">CAMPO AMPLIO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default campo_amplio ""}}</td>
+      </tr>
+      <!-- 9. CAMPO ESPECÍFICO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">CAMPO ESPECÍFICO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default campo_especifico ""}}</td>
+      </tr>
+      <!-- 10. CAMPO DETALLADO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">CAMPO DETALLADO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default campo_detallado ""}}</td>
+      </tr>
+      <!-- 11. CARRERA -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">CARRERA:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">Tecnología Superior en {{default carrera ""}}</td>
+      </tr>
+      <!-- 12. PERIODO ACADÉMICO DE CONVOCATORIA -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">PERIODO ACADÉMICO DE CONVOCATORIA:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default periodo convocatoria ""}}</td>
+      </tr>
+      <!-- 13. TIEMPO DE EJECUCIÓN -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">TIEMPO DE EJECUCIÓN:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default tiempo_ejecucion meses_ejecucion ""}}</td>
+      </tr>
+      <!-- 14. DIRECTOR DEL PROYECTO -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #1e2a4a !important; color: #ffffff !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; border: 1px solid #000000; vertical-align: middle;">DIRECTOR DEL PROYECTO:</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; border: 1px solid #000000; vertical-align: middle;">{{default director_proyecto "[Título abreviado, Apellidos y Nombres Completos]"}}</td>
+      </tr>
+      <!-- 15. BANNER DORADO DE FECHAS -->
+      <tr style="page-break-inside: avoid;">
+        <td style="background-color: #c4a857 !important; color: #000000 !important; font-weight: bold; font-size: 7.5pt; text-align: center; border: 1px solid #000000; padding: 6px 4px; vertical-align: middle;">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
+        <td colspan="3" style="background-color: #c4a857 !important; color: #000000 !important; font-weight: bold; font-size: 7.5pt; text-align: center; border: 1px solid #000000; padding: 6px 4px; vertical-align: middle;">FECHA PREVISTA DE INICIO DEL PROYECTO</td>
+        <td colspan="3" style="background-color: #c4a857 !important; color: #000000 !important; font-weight: bold; font-size: 7.5pt; text-align: center; border: 1px solid #000000; padding: 6px 4px; vertical-align: middle;">FECHA PREVISTA DE FINALIZACIÓN DEL PROYECTO</td>
+      </tr>
+      <tr style="page-break-inside: avoid;">
+        <td style="text-align: center; font-size: 8pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{default fecha_presentacion "[día/mes/año]"}}</td>
+        <td colspan="3" style="text-align: center; font-size: 8pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{default fecha_inicio "[día/mes/año]"}}</td>
+        <td colspan="3" style="text-align: center; font-size: 8pt; border: 1px solid #000000; padding: 5px 4px; vertical-align: middle;">{{default fecha_fin "[día/mes/año]"}}</td>
+      </tr>
+    </tbody>
+  </table>`;
 };
 
 export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {

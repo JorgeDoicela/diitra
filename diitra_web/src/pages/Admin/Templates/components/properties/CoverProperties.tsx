@@ -25,7 +25,8 @@ interface CoverPropertiesProps {
 const DEFAULT_POS: Record<string, { x: number; y: number }> = {
     institution: { x: 10, y: 13 },
     logo: { x: 10, y: 3 },
-    title: { x: 10, y: 35 },
+    title: { x: 10, y: 32 },
+    tema: { x: 10, y: 46 },
     carrera: { x: 10, y: 70 },
     periodo: { x: 10, y: 80 },
 };
@@ -39,6 +40,43 @@ const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ 
     </div>
 );
 
+const FontSizeControl: React.FC<{
+    label?: string;
+    value: number;
+    min: number;
+    max: number;
+    onChange: (val: number) => void;
+}> = ({ label = 'Tamaño:', value, min, max, onChange }) => (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+        <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">{label}</span>
+        <input
+            type="range"
+            min={min}
+            max={max}
+            step={1}
+            value={value}
+            onChange={e => onChange(parseInt(e.target.value) || min)}
+            className="flex-1 h-1 rounded accent-foreground cursor-pointer"
+        />
+        <div className="flex items-center bg-surface border border-border rounded px-1.5 py-0.5 focus-within:border-foreground transition-all shrink-0">
+            <input
+                type="number"
+                min={min}
+                max={max}
+                value={value}
+                onChange={e => {
+                    const parsed = parseInt(e.target.value);
+                    if (!isNaN(parsed)) {
+                        onChange(Math.max(min, Math.min(max, parsed)));
+                    }
+                }}
+                className="w-7 text-[9px] font-mono text-foreground font-bold text-right bg-transparent outline-none p-0 border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span className="text-[8px] font-mono text-text-dim select-none ml-0.5">pt</span>
+        </div>
+    </div>
+);
+
 export const CoverProperties: React.FC<CoverPropertiesProps> = ({
     activeBlock,
     onUpdateConfig,
@@ -46,11 +84,11 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
     selectCls
 }) => {
     const config = (activeBlock.config || {}) as any;
-    const [activeTab, setActiveTab] = useState<'institution' | 'title' | 'carrera' | 'periodo'>('institution');
+    const [activeTab, setActiveTab] = useState<'institution' | 'title' | 'tema' | 'carrera' | 'periodo'>('institution');
     const [openPosControls, setOpenPosControls] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        if (config._activeCoverTab && ['institution', 'title', 'carrera', 'periodo'].includes(config._activeCoverTab)) {
+        if (config._activeCoverTab && ['institution', 'title', 'tema', 'carrera', 'periodo'].includes(config._activeCoverTab)) {
             setActiveTab(config._activeCoverTab);
         }
     }, [config._activeCoverTab]);
@@ -148,10 +186,11 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
             </div>
 
             {/* BARRA DE PESTAÑAS GEIST (SEGMENTED CONTROL) */}
-            <div className="grid grid-cols-4 gap-1 bg-surface border border-border p-1 rounded-lg">
+            <div className="grid grid-cols-5 gap-1 bg-surface border border-border p-1 rounded-lg">
                 {[
                     { id: 'institution', label: 'Institución', icon: Building2, active: config.showInstitution !== false },
                     { id: 'title', label: 'Título', icon: FileText, active: config.showTitle !== false },
+                    { id: 'tema', label: 'Tema', icon: Sparkles, active: config.showTemaProyecto !== false },
                     { id: 'carrera', label: 'Carrera', icon: GraduationCap, active: config.showCarrera !== false },
                     { id: 'periodo', label: 'Periodo', icon: Calendar, active: config.showPeriodo !== false },
                 ].map(tab => {
@@ -312,11 +351,26 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                                 <div className="space-y-2 pt-2 border-t border-border">
                                                     <div className="flex items-center justify-between text-[9px] text-text-dim">
                                                         <span>Altura del logo</span>
-                                                        <span className="font-mono font-semibold">{instLogoHeight}px</span>
+                                                        <div className="flex items-center bg-surface border border-border rounded px-1.5 py-0.5 focus-within:border-foreground transition-all">
+                                                            <input
+                                                                type="number"
+                                                                min={20}
+                                                                max={240}
+                                                                value={instLogoHeight}
+                                                                onChange={e => {
+                                                                    const parsed = parseInt(e.target.value);
+                                                                    if (!isNaN(parsed)) {
+                                                                        onUpdateConfig(activeBlock.id, 'institutionLogoHeight', Math.max(20, Math.min(240, parsed)));
+                                                                    }
+                                                                }}
+                                                                className="w-8 text-[9px] font-mono text-foreground font-bold text-right bg-transparent outline-none p-0 border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <span className="text-[8px] font-mono text-text-dim select-none ml-0.5">px</span>
+                                                        </div>
                                                     </div>
                                                     <input
                                                         type="range"
-                                                        min={20} max={120} step={2}
+                                                        min={20} max={240} step={2}
                                                         value={instLogoHeight}
                                                         onChange={e => onUpdateConfig(activeBlock.id, 'institutionLogoHeight', parseInt(e.target.value))}
                                                         className="w-full h-1.5 rounded accent-foreground cursor-pointer"
@@ -351,17 +405,12 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
 
                                             {/* Formato y Tamaño de Institución (Línea Compacta) */}
                                             <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                    <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                                    <input
-                                                        type="range"
-                                                        min={8} max={22} step={1}
-                                                        value={institutionFontSize}
-                                                        onChange={e => onUpdateConfig(activeBlock.id, 'institutionFontSize', parseInt(e.target.value))}
-                                                        className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                                    />
-                                                    <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{institutionFontSize}pt</span>
-                                                </div>
+                                                <FontSizeControl
+                                                    value={institutionFontSize}
+                                                    min={8}
+                                                    max={36}
+                                                    onChange={v => onUpdateConfig(activeBlock.id, 'institutionFontSize', v)}
+                                                />
 
                                                 <button
                                                     type="button"
@@ -386,7 +435,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     );
                 })()}
 
-                {/* ── TAB 2: TÍTULO Y TEMA DEL PROYECTO ── */}
+                {/* ── TAB 2: TÍTULO DOCUMENTAL ── */}
                 {activeTab === 'title' && (() => {
                     const isVisible = config.showTitle !== false;
                     const tituloSuperior = config.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN';
@@ -394,16 +443,10 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     const tituloFontSize = Number(config.tituloFontSize || 20);
                     const tituloItalica = Boolean(config.tituloItalica);
 
-                    const showTemaProyecto = config.showTemaProyecto !== false;
-                    const placeholderTema = config.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
-                    const colorTemaProyecto = config.colorTemaProyecto || '#1e2a4a';
-                    const temaFontSize = Number(config.temaFontSize || 13);
-                    const temaItalica = Boolean(config.temaItalica);
-
                     return (
                         <div className="space-y-4 font-sans">
                             <div className="flex items-center justify-between pb-2 border-b border-border">
-                                <span className="text-[11px] font-bold text-foreground">Mostrar Bloque de Título</span>
+                                <span className="text-[11px] font-bold text-foreground">Mostrar Título</span>
                                 <input
                                     type="checkbox"
                                     checked={isVisible}
@@ -413,138 +456,137 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                             </div>
 
                             {isVisible && (
-                                <div className="space-y-4">
-                                    {/* 1. TÍTULO SUPERIOR */}
-                                    <div className="space-y-2.5">
-                                        <LabeledField label="1. Título / Tipo de Documento">
-                                            <input
-                                                type="text"
-                                                className={inputCls}
-                                                value={tituloSuperior}
-                                                onChange={e => onUpdateConfig(activeBlock.id, 'tituloSuperior', e.target.value)}
-                                                placeholder="PROYECTO DE INVESTIGACIÓN"
-                                            />
-                                        </LabeledField>
-                                        <div className="space-y-1">
-                                            <span className="text-[8px] text-text-dim block">Sugerencias rápidas:</span>
-                                            <div className="flex flex-wrap gap-1">
-                                                {titlePresets.map(preset => (
-                                                    <button
-                                                        key={preset}
-                                                        type="button"
-                                                        onClick={() => onUpdateConfig(activeBlock.id, 'tituloSuperior', preset)}
-                                                        className="text-[8px] px-1.5 py-0.5 rounded border border-border bg-surface hover:bg-surface-hover text-text-dim hover:text-foreground transition-all cursor-pointer truncate max-w-full"
-                                                    >
-                                                        {preset}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                <div className="space-y-3.5">
+                                    <LabeledField label="Título / Tipo de Documento">
+                                        <input
+                                            type="text"
+                                            className={inputCls}
+                                            value={tituloSuperior}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'tituloSuperior', e.target.value)}
+                                            placeholder="PROYECTO DE INVESTIGACIÓN"
+                                        />
+                                    </LabeledField>
+                                    <div className="space-y-1">
+                                        <span className="text-[8px] text-text-dim block">Sugerencias rápidas:</span>
+                                        <div className="flex flex-wrap gap-1">
+                                            {titlePresets.map(preset => (
+                                                <button
+                                                    key={preset}
+                                                    type="button"
+                                                    onClick={() => onUpdateConfig(activeBlock.id, 'tituloSuperior', preset)}
+                                                    className="text-[8px] px-1.5 py-0.5 rounded border border-border bg-surface hover:bg-surface-hover text-text-dim hover:text-foreground transition-all cursor-pointer truncate max-w-full"
+                                                >
+                                                    {preset}
+                                                </button>
+                                            ))}
                                         </div>
+                                    </div>
 
-                                        <ColorPickerField
-                                            label="Color del Título Documental"
-                                            value={colorTitulo}
-                                            fallback="#1e2a4a"
-                                            onChange={v => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', v)}
-                                            inputCls={inputCls}
+                                    <ColorPickerField
+                                        label="Color del Título Documental"
+                                        value={colorTitulo}
+                                        fallback="#1e2a4a"
+                                        onChange={v => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', v)}
+                                        inputCls={inputCls}
+                                    />
+
+                                    {/* Formato y Tamaño del Título (Línea Compacta) */}
+                                    <div className="flex items-center justify-between gap-2.5 pt-0.5">
+                                        <FontSizeControl
+                                            value={tituloFontSize}
+                                            min={12}
+                                            max={48}
+                                            onChange={v => onUpdateConfig(activeBlock.id, 'tituloFontSize', v)}
                                         />
 
-                                        {/* Formato y Tamaño del Título (Línea Compacta) */}
-                                        <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                                <input
-                                                    type="range"
-                                                    min={14} max={32} step={1}
-                                                    value={tituloFontSize}
-                                                    onChange={e => onUpdateConfig(activeBlock.id, 'tituloFontSize', parseInt(e.target.value))}
-                                                    className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                                />
-                                                <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{tituloFontSize}pt</span>
-                                            </div>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => onUpdateConfig(activeBlock.id, 'tituloItalica', !tituloItalica)}
-                                                className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-                                                    tituloItalica
-                                                        ? 'bg-foreground text-background border-foreground shadow-xs'
-                                                        : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
-                                                }`}
-                                                title="Texto en cursiva / itálica"
-                                            >
-                                                <Italic className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => onUpdateConfig(activeBlock.id, 'tituloItalica', !tituloItalica)}
+                                            className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                                                tituloItalica
+                                                    ? 'bg-foreground text-background border-foreground shadow-xs'
+                                                    : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
+                                            }`}
+                                            title="Texto en cursiva / itálica"
+                                        >
+                                            <Italic className="w-3.5 h-3.5" />
+                                        </button>
                                     </div>
 
-                                    {/* 2. SECCIÓN DEL TEMA DEL PROYECTO */}
-                                    <div className="space-y-2.5 pt-3 border-t border-border">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="text-[10px] font-bold text-foreground block">2. Campo de Tema del Proyecto</span>
-                                                <span className="text-[8px] text-text-dim">Texto dinámico que completan los investigadores</span>
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={showTemaProyecto}
-                                                onChange={e => onUpdateConfig(activeBlock.id, 'showTemaProyecto', e.target.checked)}
-                                                className="w-4 h-4 accent-foreground rounded cursor-pointer"
-                                            />
-                                        </div>
+                                    {renderPositionControl('xTitle', 'yTitle', DEFAULT_POS.title, 'Ajuste de posición del Título')}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
-                                        {showTemaProyecto && (
-                                            <div className="space-y-2.5 pt-1">
-                                                <LabeledField label="Texto Guía / Placeholder">
-                                                    <input
-                                                        type="text"
-                                                        className={inputCls}
-                                                        value={placeholderTema}
-                                                        onChange={e => onUpdateConfig(activeBlock.id, 'placeholderTema', e.target.value)}
-                                                        placeholder="ESCRIBIR EL TEMA EN MAYÚSCULAS"
-                                                    />
-                                                </LabeledField>
+                {/* ── TAB 3: TEMA DEL PROYECTO ── */}
+                {activeTab === 'tema' && (() => {
+                    const showTemaProyecto = config.showTemaProyecto !== false;
+                    const placeholderTema = config.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
+                    const colorTemaProyecto = config.colorTemaProyecto || '#1e2a4a';
+                    const temaFontSize = Number(config.temaFontSize || 13);
+                    const temaItalica = Boolean(config.temaItalica);
 
-                                                <ColorPickerField
-                                                    label="Color del Tema del Proyecto"
-                                                    value={colorTemaProyecto}
-                                                    fallback="#1e2a4a"
-                                                    onChange={v => onUpdateConfig(activeBlock.id, 'colorTemaProyecto', v)}
-                                                    inputCls={inputCls}
-                                                />
+                    return (
+                        <div className="space-y-4 font-sans">
+                            <div className="flex items-center justify-between pb-2 border-b border-border">
+                                <div>
+                                    <span className="text-[11px] font-bold text-foreground block">Mostrar Tema del Proyecto</span>
+                                    <span className="text-[8px] text-text-dim">Texto dinámico que completan los investigadores</span>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={showTemaProyecto}
+                                    onChange={e => onUpdateConfig(activeBlock.id, 'showTemaProyecto', e.target.checked)}
+                                    className="w-4 h-4 accent-foreground rounded cursor-pointer"
+                                />
+                            </div>
 
-                                                {/* Formato y Tamaño del Tema (Línea Compacta) */}
-                                                <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                        <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                                        <input
-                                                            type="range"
-                                                            min={10} max={22} step={1}
-                                                            value={temaFontSize}
-                                                            onChange={e => onUpdateConfig(activeBlock.id, 'temaFontSize', parseInt(e.target.value))}
-                                                            className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                                        />
-                                                        <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{temaFontSize}pt</span>
-                                                    </div>
+                            {showTemaProyecto && (
+                                <div className="space-y-3.5">
+                                    <LabeledField label="Texto Guía / Placeholder">
+                                        <input
+                                            type="text"
+                                            className={inputCls}
+                                            value={placeholderTema}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'placeholderTema', e.target.value)}
+                                            placeholder="ESCRIBIR EL TEMA EN MAYÚSCULAS"
+                                        />
+                                    </LabeledField>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onUpdateConfig(activeBlock.id, 'temaItalica', !temaItalica)}
-                                                        className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-                                                            temaItalica
-                                                                ? 'bg-foreground text-background border-foreground shadow-xs'
-                                                                : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
-                                                        }`}
-                                                        title="Texto en cursiva / itálica"
-                                                    >
-                                                        <Italic className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                    <ColorPickerField
+                                        label="Color del Tema del Proyecto"
+                                        value={colorTemaProyecto}
+                                        fallback="#1e2a4a"
+                                        onChange={v => onUpdateConfig(activeBlock.id, 'colorTemaProyecto', v)}
+                                        inputCls={inputCls}
+                                    />
+
+                                    {/* Formato y Tamaño del Tema (Línea Compacta) */}
+                                    <div className="flex items-center justify-between gap-2.5 pt-0.5">
+                                        <FontSizeControl
+                                            value={temaFontSize}
+                                            min={10}
+                                            max={36}
+                                            onChange={v => onUpdateConfig(activeBlock.id, 'temaFontSize', v)}
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => onUpdateConfig(activeBlock.id, 'temaItalica', !temaItalica)}
+                                            className={`p-1.5 rounded-md border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                                                temaItalica
+                                                    ? 'bg-foreground text-background border-foreground shadow-xs'
+                                                    : 'bg-surface text-text-dim border-border hover:text-foreground hover:bg-surface-hover'
+                                            }`}
+                                            title="Texto en cursiva / itálica"
+                                        >
+                                            <Italic className="w-3.5 h-3.5" />
+                                        </button>
                                     </div>
 
-                                    {renderPositionControl('xTitle', 'yTitle', DEFAULT_POS.title)}
+                                    {renderPositionControl('xTema', 'yTema', DEFAULT_POS.tema, 'Ajuste de posición del Tema')}
                                 </div>
                             )}
                         </div>
@@ -620,17 +662,12 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
 
                                     {/* Formato y Tamaño de Carrera (Línea Compacta) */}
                                     <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                            <input
-                                                type="range"
-                                                min={9} max={18} step={1}
-                                                value={carreraFontSize}
-                                                onChange={e => onUpdateConfig(activeBlock.id, 'carreraFontSize', parseInt(e.target.value))}
-                                                className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                            />
-                                            <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{carreraFontSize}pt</span>
-                                        </div>
+                                        <FontSizeControl
+                                            value={carreraFontSize}
+                                            min={9}
+                                            max={32}
+                                            onChange={v => onUpdateConfig(activeBlock.id, 'carreraFontSize', v)}
+                                        />
 
                                         <button
                                             type="button"
@@ -722,17 +759,12 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
 
                                     {/* Formato y Tamaño de Periodo (Línea Compacta) */}
                                     <div className="flex items-center justify-between gap-2.5 pt-0.5">
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            <span className="text-[9px] font-semibold text-text-dim uppercase tracking-wider shrink-0">Tamaño:</span>
-                                            <input
-                                                type="range"
-                                                min={8} max={16} step={1}
-                                                value={periodoFontSize}
-                                                onChange={e => onUpdateConfig(activeBlock.id, 'periodoFontSize', parseInt(e.target.value))}
-                                                className="flex-1 h-1 rounded accent-foreground cursor-pointer"
-                                            />
-                                            <span className="text-[9px] font-mono text-text-dim font-bold w-6 text-right shrink-0">{periodoFontSize}pt</span>
-                                        </div>
+                                        <FontSizeControl
+                                            value={periodoFontSize}
+                                            min={8}
+                                            max={28}
+                                            onChange={v => onUpdateConfig(activeBlock.id, 'periodoFontSize', v)}
+                                        />
 
                                         <button
                                             type="button"

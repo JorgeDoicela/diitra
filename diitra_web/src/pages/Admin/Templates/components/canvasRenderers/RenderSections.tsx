@@ -1,407 +1,205 @@
 import React, { useState } from 'react';
-import { ArrowUp, ArrowDown, Scissors, Bookmark } from 'lucide-react';
-import type { IdentificationField, ImpactCategory } from '../../types';
+import { ArrowUp, ArrowDown, Scissors } from 'lucide-react';
+import type { ImpactCategory } from '../../types';
 import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES, DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS } from '../../types';
-import { getHeaderStylePair } from './RenderCover';
 import { getNormalizedColumns, getNormalizedCategories } from '../properties/ExpectedProductsProperties';
 
 export const RenderProjectGeneralSection: React.FC<{
-    config: any;
+    config?: any;
+    title?: string;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config, blockId, onUpdateConfig }) => {
-    const c = config || {};
-    const customFields: IdentificationField[] = c.customFields || [];
-    const headerColorMode = c.headerColor || 'blue';
-    const borderStyleMode = c.borderStyle || 'solid';
-
-    const headerPair = getHeaderStylePair(headerColorMode);
-    const borderCss = borderStyleMode === 'none' ? 'border-0' : 'border border-slate-300';
-    const cellBorderCss = borderStyleMode === 'none' ? 'border-b border-slate-100' : 'border border-slate-300';
-
-    const resolveVariantBg = (variant?: string) => {
-        switch (variant) {
-            case 'banner_gold': return { bg: '#b8912e', fg: '#ffffff' };
-            case 'banner_navy': return { bg: '#1e2a4a', fg: '#ffffff' };
-            case 'banner_emerald': return { bg: '#065f46', fg: '#ffffff' };
-            default: return headerPair;
-        }
-    };
-
-    interface TableItem {
-        id: string;
-        key: string;
-        label: string;
-        value: string;
-        isCustom?: boolean;
-        isGroupHeader?: boolean;
-        variant?: string;
-        requirementText?: string;
-        colSpan: 1 | 2;
-    }
-
-    const rawItems: TableItem[] = [];
-
-    if (c.showTitulo !== false) {
-        rawItems.push({
-            id: 'showTitulo',
-            key: 'showTitulo',
-            label: c.customLabel_showTitulo || 'Nombre del Proyecto',
-            value: '[TEMA / NOMBRE DEL PROYECTO CIENTÍFICO]',
-            colSpan: c.colSpan_showTitulo || 2,
-            variant: c.variant_showTitulo || 'standard',
-            requirementText: c.req_showTitulo,
-        });
-    }
-    if (c.showDirector !== false) {
-        rawItems.push({
-            id: 'showDirector',
-            key: 'showDirector',
-            label: c.customLabel_showDirector || 'Director del Proyecto',
-            value: '[Director Asignado]',
-            colSpan: c.colSpan_showDirector || 1,
-            variant: c.variant_showDirector || 'standard',
-            requirementText: c.req_showDirector,
-        });
-    }
-    if (c.showCarrera !== false) {
-        rawItems.push({
-            id: 'showCarrera',
-            key: 'showCarrera',
-            label: c.customLabel_showCarrera || 'Carrera / Unidad Académica',
-            value: '[Carrera Seleccionada]',
-            colSpan: c.colSpan_showCarrera || 1,
-            variant: c.variant_showCarrera || 'standard',
-            requirementText: c.req_showCarrera,
-        });
-    }
-    if (c.showConvocatoria !== false) {
-        rawItems.push({
-            id: 'showConvocatoria',
-            key: 'showConvocatoria',
-            label: c.customLabel_showConvocatoria || 'Convocatoria Activa',
-            value: '[Convocatoria Vigente]',
-            colSpan: c.colSpan_showConvocatoria || 1,
-            variant: c.variant_showConvocatoria || 'standard',
-            requirementText: c.req_showConvocatoria,
-        });
-    }
-    if (c.showPrograma !== false) {
-        rawItems.push({
-            id: 'showPrograma',
-            key: 'showPrograma',
-            label: c.customLabel_showPrograma || 'Programa de Investigación',
-            value: '[Programa Institucional]',
-            colSpan: c.colSpan_showPrograma || 1,
-            variant: c.variant_showPrograma || 'standard',
-            requirementText: c.req_showPrograma,
-        });
-    }
-    if (c.showGrupo !== false) {
-        rawItems.push({
-            id: 'showGrupo',
-            key: 'showGrupo',
-            label: c.customLabel_showGrupo || 'Grupo de Investigación',
-            value: '[Grupo Vinculado]',
-            colSpan: c.colSpan_showGrupo || 1,
-            variant: c.variant_showGrupo || 'standard',
-            requirementText: c.req_showGrupo,
-        });
-    }
-    if (c.showLinea !== false) {
-        rawItems.push({
-            id: 'showLinea',
-            key: 'showLinea',
-            label: c.customLabel_showLinea || 'Línea de Investigación',
-            value: 'Línea: [Línea] / Sublínea: [Sublínea]',
-            colSpan: c.colSpan_showLinea || 1,
-            variant: c.variant_showLinea || 'standard',
-            requirementText: c.req_showLinea,
-        });
-    }
-    if (c.showTipo !== false) {
-        rawItems.push({
-            id: 'showTipo',
-            key: 'showTipo',
-            label: c.customLabel_showTipo || 'Tipo de Investigación',
-            value: 'APLICADA',
-            colSpan: c.colSpan_showTipo || 1,
-            variant: c.variant_showTipo || 'standard',
-            requirementText: c.req_showTipo,
-        });
-    }
-    if (c.showCaces !== false) {
-        rawItems.push({
-            id: 'showCaces',
-            key: 'showCaces',
-            label: c.customLabel_showCaces || 'Campo Detallado CACES',
-            value: '[Campo CACES]',
-            colSpan: c.colSpan_showCaces || 1,
-            variant: c.variant_showCaces || 'standard',
-            requirementText: c.req_showCaces,
-        });
-    }
-    if (c.showFechas !== false) {
-        rawItems.push({
-            id: 'showFechas',
-            key: 'showFechas',
-            label: c.customLabel_showFechas || 'Fechas y Plazos',
-            value: 'Inicio: [Fecha] — Fin: [Fecha]',
-            colSpan: c.colSpan_showFechas || 1,
-            variant: c.variant_showFechas || 'standard',
-            requirementText: c.req_showFechas,
-        });
-    }
-
-    customFields.forEach((f) => {
-        if (f.isGroupHeader) {
-            rawItems.push({
-                id: f.fieldKey,
-                key: f.fieldKey,
-                label: f.label,
-                value: '',
-                isCustom: true,
-                isGroupHeader: true,
-                variant: f.variant || 'banner_gold',
-                colSpan: 2,
-            });
-            return;
-        }
-
-        const val = f.fieldType === 'select_inline'
-            ? `[Opciones: ${(f.options || []).join(', ')}]`
-            : f.fieldType === 'select_catalog'
-                ? `[Catálogo: ${f.catalogUrl || 'sin url'}]`
-                : f.fieldType === 'date'
-                    ? '[dd/mm/aaaa]'
-                    : `[${f.placeholder || f.label}]`;
-
-        rawItems.push({
-            id: f.fieldKey,
-            key: f.fieldKey,
-            label: f.label,
-            value: val,
-            isCustom: true,
-            isGroupHeader: false,
-            variant: f.variant || 'standard',
-            requirementText: f.requirementText,
-            colSpan: (f.colSpan as 1 | 2) || 1,
-        });
-    });
-
-    const fieldsOrder: string[] = c.fieldsOrder || [];
-
-    const handleSpanChange = (item: TableItem, newSpan: 1 | 2) => {
-        if (!onUpdateConfig || !blockId) return;
-        if (item.isCustom) {
-            const updated = customFields.map(f => f.fieldKey === item.key ? { ...f, colSpan: newSpan } : f);
-            onUpdateConfig(blockId, 'customFields', updated);
-        } else {
-            onUpdateConfig(blockId, `colSpan_${item.key}`, newSpan);
-        }
-    };
-
-    const handleMoveItem = (itemKey: string, direction: 'up' | 'down') => {
-        if (!onUpdateConfig || !blockId) return;
-        const currentKeys = rawItems.map(i => i.key);
-        const activeOrder = fieldsOrder.length > 0
-            ? fieldsOrder.filter(k => currentKeys.includes(k))
-            : [...currentKeys];
-
-        currentKeys.forEach(k => {
-            if (!activeOrder.includes(k)) activeOrder.push(k);
-        });
-
-        const index = activeOrder.indexOf(itemKey);
-        if (index === -1) return;
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        if (targetIndex < 0 || targetIndex >= activeOrder.length) return;
-
-        const updatedOrder = [...activeOrder];
-        const [moved] = updatedOrder.splice(index, 1);
-        updatedOrder.splice(targetIndex, 0, moved);
-
-        onUpdateConfig(blockId, 'fieldsOrder', updatedOrder);
-    };
-
-    if (fieldsOrder.length > 0) {
-        rawItems.sort((a, b) => {
-            const idxA = fieldsOrder.indexOf(a.key);
-            const idxB = fieldsOrder.indexOf(b.key);
-            if (idxA === -1 && idxB === -1) return 0;
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
-        });
-    }
-
-    type RowGroup = { type: 'header'; item: TableItem } | { type: 'full'; item: TableItem } | { type: 'pair'; item1: TableItem; item2?: TableItem };
-    const rows: RowGroup[] = [];
-
-    let i = 0;
-    while (i < rawItems.length) {
-        const current = rawItems[i];
-        if (current.isGroupHeader) {
-            rows.push({ type: 'header', item: current });
-            i++;
-        } else if (current.colSpan === 2) {
-            rows.push({ type: 'full', item: current });
-            i++;
-        } else {
-            const next = rawItems[i + 1];
-            if (next && !next.isGroupHeader && next.colSpan === 1) {
-                rows.push({ type: 'pair', item1: current, item2: next });
-                i += 2;
-            } else {
-                rows.push({ type: 'pair', item1: current });
-                i++;
-            }
-        }
-    }
-
-    const renderCellControls = (item: TableItem, itemIdx: number) => (
-        <div className="absolute -top-3.5 right-1 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 rounded-md px-1.5 py-0.5 shadow-sm flex items-center gap-1 text-[8px] z-20 font-sans">
-            <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'up'); }}
-                disabled={itemIdx === 0}
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded px-0.5 py-0.2 disabled:opacity-20 cursor-pointer transition-colors"
-                title="Mover elemento arriba"
-            >
-                ▲
-            </button>
-            <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleMoveItem(item.key, 'down'); }}
-                disabled={itemIdx === rawItems.length - 1}
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded px-0.5 py-0.2 disabled:opacity-20 cursor-pointer transition-colors"
-                title="Mover elemento abajo"
-            >
-                ▼
-            </button>
-            {!item.isGroupHeader && (
-                <>
-                    <span className="text-slate-200 dark:text-slate-700 font-bold">|</span>
-                    <span className="text-[7.5px] uppercase font-bold text-slate-400 tracking-wider">Ancho:</span>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 1); }}
-                        className={`px-1.5 py-0.5 rounded text-[8px] cursor-pointer transition-all ${
-                            item.colSpan === 1
-                                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 font-bold shadow-2xs'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800'
-                        }`}
-                        title="Ocupar la mitad de la fila (50%)"
-                    >
-                        Mitad
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleSpanChange(item, 2); }}
-                        className={`px-1.5 py-0.5 rounded text-[8px] cursor-pointer transition-all ${
-                            item.colSpan === 2
-                                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 font-bold shadow-2xs'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800'
-                        }`}
-                        title="Ocupar la fila completa (100%)"
-                    >
-                        Completo
-                    </button>
-                </>
-            )}
-        </div>
-    );
-
+}> = ({ config, title }) => {
+    const displayTitle = config?.title || title || '1.  IDENTIFICACIÓN DEL PROYECTO';
     return (
-        <div className="my-2 select-none">
-            <table className={`w-full border-collapse text-[10px] ${borderCss}`}>
+        <div className="my-2 select-none font-sans">
+            <p className="font-bold text-[10pt] uppercase text-[#1e2a4a] mb-2 tracking-wide font-sans">
+                {displayTitle}
+            </p>
+            <table className="w-full border-collapse border border-black text-[9px] table-fixed">
+                <colgroup>
+                    <col className="w-[34%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[7%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[7%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[7%]" />
+                </colgroup>
                 <tbody>
-                    {rows.map((row, rIdx) => {
-                        if (row.type === 'header') {
-                            const item = row.item;
-                            const style = resolveVariantBg(item.variant);
-                            return (
-                                <tr key={`r-${rIdx}`} className="group/cell relative border-b border-slate-300">
-                                    <td
-                                        colSpan={4}
-                                        className={`p-1.5 font-bold text-center uppercase text-[9px] tracking-wider text-white relative align-middle ${cellBorderCss}`}
-                                        style={{ backgroundColor: style.bg }}
-                                    >
-                                        <span className="flex items-center justify-center gap-1.5">
-                                            <Bookmark className="w-3 h-3 text-white/90" />
-                                            {item.label}
-                                        </span>
-                                        {renderCellControls(item, rawItems.findIndex(x => x.key === item.key))}
-                                    </td>
-                                </tr>
-                            );
-                        } else if (row.type === 'full') {
-                            const item = row.item;
-                            const style = resolveVariantBg(item.variant);
-                            return (
-                                <tr key={`r-${rIdx}`} className="group/cell relative border-b border-slate-200 last:border-0 hover:bg-slate-50/50">
-                                    <td
-                                        className={`p-2 font-bold text-[8.5px] uppercase w-1/4 relative align-top ${cellBorderCss}`}
-                                        style={{ backgroundColor: style.bg, color: style.fg }}
-                                    >
-                                        {item.label} {item.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
-                                        {renderCellControls(item, rawItems.findIndex(x => x.key === item.key))}
-                                    </td>
-                                    <td colSpan={3} className={`p-2 text-slate-800 font-semibold bg-white align-top ${cellBorderCss}`}>
-                                        {item.value}
-                                        {item.requirementText && (
-                                            <span className="block text-[8px] text-slate-400 italic mt-0.5">{item.requirementText}</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        } else {
-                            const { item1, item2 } = row;
-                            const style1 = resolveVariantBg(item1.variant);
-                            const style2 = item2 ? resolveVariantBg(item2.variant) : null;
-                            return (
-                                <tr key={`r-${rIdx}`} className="border-b border-slate-200 last:border-0">
-                                    <td
-                                        className={`group/cell relative p-2 font-bold text-[8.5px] uppercase w-1/5 align-top ${cellBorderCss}`}
-                                        style={{ backgroundColor: style1.bg, color: style1.fg }}
-                                    >
-                                        {item1.label} {item1.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
-                                        {renderCellControls(item1, rawItems.findIndex(x => x.key === item1.key))}
-                                    </td>
-                                    <td
-                                        className={`p-2 text-slate-800 font-semibold bg-white align-top w-3/10 ${cellBorderCss}`}
-                                    >
-                                        {item1.value}
-                                        {item1.requirementText && (
-                                            <span className="block text-[8px] text-slate-400 italic mt-0.5">{item1.requirementText}</span>
-                                        )}
-                                    </td>
-
-                                    {item2 && style2 ? (
-                                        <>
-                                            <td
-                                                className={`group/cell relative p-2 font-bold text-[8.5px] uppercase w-1/5 align-top ${cellBorderCss}`}
-                                                style={{ backgroundColor: style2.bg, color: style2.fg }}
-                                            >
-                                                {item2.label} {item2.isCustom && <span className="text-[7px] text-emerald-400 font-mono">*</span>}
-                                                {renderCellControls(item2, rawItems.findIndex(x => x.key === item2.key))}
-                                            </td>
-                                            <td className={`p-2 text-slate-800 font-semibold bg-white w-3/10 align-top ${cellBorderCss}`}>
-                                                {item2.value}
-                                                {item2.requirementText && (
-                                                    <span className="block text-[8px] text-slate-400 italic mt-0.5">{item2.requirementText}</span>
-                                                )}
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <td colSpan={2} className={`p-2 bg-slate-50/40 text-slate-300 italic text-[8px] text-center align-middle border-dashed ${cellBorderCss}`}>
-                                            [Espacio disponible (50%)]
-                                        </td>
-                                    )}
-                                </tr>
-                            );
-                        }
-                    })}
+                    {/* 1. NOMBRE DEL PROYECTO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            NOMBRE DEL PROYECTO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 font-semibold bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 2. PROGRAMA */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            PROGRAMA:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 3. GRUPO DE INVESTIGACIÓN */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            GRUPO DE INVESTIGACIÓN:
+                        </td>
+                        <td className="font-bold text-[8px] text-center border-r border-black p-1.5 align-middle">
+                            NO
+                        </td>
+                        <td className="text-center border-r border-black p-1.5 text-[8.5px] align-middle">
+                            &nbsp;
+                        </td>
+                        <td className="font-bold text-[8px] text-center border-r border-black p-1.5 align-middle">
+                            SI
+                        </td>
+                        <td colSpan={3} className="p-1.5 text-slate-400 italic text-[8.5px] align-middle">
+                            [Escriba el Nombre o borrar este título]
+                        </td>
+                    </tr>
+                    {/* 4. DOMINIO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            DOMINIO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 5. LÍNEA DE INVESTIGACIÓN */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            LÍNEA DE INVESTIGACIÓN:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 6. SUBLÍNEA DE INVESTIGACIÓN */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            SUBLÍNEA DE INVESTIGACIÓN:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 7. TIPO DE INVESTIGACIÓN (X) */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            TIPO DE INVESTIGACIÓN (X):
+                        </td>
+                        <td className="font-bold text-[7.5px] text-center border-r border-black p-1.5 align-middle">
+                            BÁSICA
+                        </td>
+                        <td className="text-center border-r border-black p-1.5 text-[8.5px] align-middle">
+                            &nbsp;
+                        </td>
+                        <td className="font-bold text-[7.5px] text-center border-r border-black p-1.5 align-middle">
+                            APLICADA
+                        </td>
+                        <td className="text-center border-r border-black p-1.5 text-[8.5px] align-middle">
+                            &nbsp;
+                        </td>
+                        <td className="font-bold text-[7px] text-center border-r border-black p-1.5 align-middle">
+                            DESARROLLO EXPERIMENTAL
+                        </td>
+                        <td className="text-center p-1.5 text-[8.5px] align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 8. CAMPO AMPLIO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            CAMPO AMPLIO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 9. CAMPO ESPECÍFICO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            CAMPO ESPECÍFICO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 10. CAMPO DETALLADO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            CAMPO DETALLADO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 11. CARRERA */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            CARRERA:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            Tecnología Superior en
+                        </td>
+                    </tr>
+                    {/* 12. PERIODO ACADÉMICO DE CONVOCATORIA */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            PERIODO ACADÉMICO DE CONVOCATORIA:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 13. TIEMPO DE EJECUCIÓN */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            TIEMPO DE EJECUCIÓN:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    {/* 14. DIRECTOR DEL PROYECTO */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#1e2a4a] text-white p-2 font-bold text-[8.5px] uppercase border-r border-black align-middle">
+                            DIRECTOR DEL PROYECTO:
+                        </td>
+                        <td colSpan={6} className="p-2 text-slate-500 italic bg-white align-middle">
+                            [Título abreviado, Apellidos y Nombres Completos]
+                        </td>
+                    </tr>
+                    {/* 15. BANNER DORADO DE FECHAS */}
+                    <tr className="border-b border-black">
+                        <td className="bg-[#c4a857] text-black p-1.5 font-bold text-[7.5px] text-center border-r border-black align-middle">
+                            FECHA DE PRESENTACIÓN DEL PROYECTO
+                        </td>
+                        <td colSpan={3} className="bg-[#c4a857] text-black p-1.5 font-bold text-[7.5px] text-center border-r border-black align-middle">
+                            FECHA PREVISTA DE INICIO DEL PROYECTO
+                        </td>
+                        <td colSpan={3} className="bg-[#c4a857] text-black p-1.5 font-bold text-[7.5px] text-center align-middle">
+                            FECHA PREVISTA DE FINALIZACIÓN DEL PROYECTO
+                        </td>
+                    </tr>
+                    <tr className="border-b border-black text-[8px] text-slate-500 italic bg-white text-center">
+                        <td className="p-1.5 border-r border-black align-middle">
+                            [día/mes/año]
+                        </td>
+                        <td colSpan={3} className="p-1.5 border-r border-black align-middle">
+                            [día/mes/año]
+                        </td>
+                        <td colSpan={3} className="p-1.5 align-middle">
+                            [día/mes/año]
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -751,18 +549,6 @@ export const RenderFinalReportWritingSection: React.FC<{
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }> = ({ config }) => {
     const c = config || {};
-    const headerColorKey = c.writingHeaderColor || 'navy';
-    const resolveHeaderBg = (col: string) => {
-        switch (col) {
-            case 'gold': return '#b8912e';
-            case 'slate': return '#334155';
-            case 'emerald': return '#065f46';
-            case 'navy':
-            default: return '#1e2a4a';
-        }
-    };
-    const headerBg = resolveHeaderBg(headerColorKey);
-    const goldColor = '#b8912e';
 
     const rawSections = (c.writingSections && Array.isArray(c.writingSections) && c.writingSections.length > 0)
         ? c.writingSections
@@ -806,12 +592,6 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
     const cols = getNormalizedColumns(c.productColumns);
     const rawCats = c.productCategories || c.categories;
     const categories = getNormalizedCategories(rawCats).filter((cat: any) => cat.enabled !== false);
-
-    const handleSelectLayout = (newMode: string) => {
-        if (blockId && onUpdateConfig) {
-            onUpdateConfig(blockId, 'productsLayoutMode', newMode);
-        }
-    };
 
     const handleToggleColumn = (colKey: string) => {
         if (blockId && onUpdateConfig) {
