@@ -57,7 +57,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     });
     const [topBarCollapsed, setTopBarCollapsed] = useState(false);
 
-    // ── Disparador de Pantalla de Bienvenida Personalizada Inicial ─────────────
+    // ── Disparador de Pantalla de Bienvenida Inicial (Drawer) ─────────────────
     useEffect(() => {
         if (!user || !isAuthenticated || isLoading || isWorkspace) return;
 

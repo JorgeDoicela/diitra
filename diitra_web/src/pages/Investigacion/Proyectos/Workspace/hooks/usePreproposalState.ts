@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, createElement } from 'react';
 import api from '../../../../../api/axios_config';
 import { useNotifications } from '../../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../../api/ConfirmContext';
@@ -84,18 +84,37 @@ export function usePreproposalState(
     const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
     const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
 
-    const fetchTrazabilidad = useCallback(async () => {
+    const fetchTrazabilidad = useCallback(async (silent = false) => {
         if (!resolvedProjectUuid) return;
-        setIsLoadingTrazabilidad(true);
+        if (!silent) setIsLoadingTrazabilidad(true);
         try {
             const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
             setTrazabilidad(res.data || []);
         } catch (e) {
             console.error("Error al cargar la trazabilidad", e);
         } finally {
-            setIsLoadingTrazabilidad(false);
+            if (!silent) setIsLoadingTrazabilidad(false);
         }
     }, [resolvedProjectUuid]);
+
+    const [docenteCarreras, setDocenteCarreras] = useState<any[]>([]);
+    const [editIdCarrera, setEditIdCarrera] = useState<number>(0);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadDocenteCarreras = async () => {
+            try {
+                const res = await api.get('/catalogs/mi-carrera');
+                if (isMounted && Array.isArray(res.data)) {
+                    setDocenteCarreras(res.data);
+                }
+            } catch (err) {
+                console.error("[usePreproposalState] Error cargando carreras del docente:", err);
+            }
+        };
+        loadDocenteCarreras();
+        return () => { isMounted = false; };
+    }, []);
 
     useEffect(() => {
         fetchTrazabilidad();
@@ -106,10 +125,21 @@ export function usePreproposalState(
             setEditTitulo(currentProject.title || '');
             setEditDescripcion(currentProject.descripcion || '');
             setEditPresupuesto(currentProject.presupuesto?.toString() || '');
+            const projCarreraId = currentProject.idCarrera || currentProject.id_carrera || 0;
+            if (projCarreraId) {
+                setEditIdCarrera(Number(projCarreraId));
+            } else if (currentProject.carrera && docenteCarreras.length > 0) {
+                const match = docenteCarreras.find((c: any) =>
+                    (c.carrera1 || c.nombre_carrera || c.carrera || '').trim().toLowerCase() === currentProject.carrera.trim().toLowerCase()
+                );
+                if (match) {
+                    setEditIdCarrera(match.idCarrera ?? match.id_carrera ?? 0);
+                }
+            }
         }
-    }, [currentProject]);
+    }, [currentProject, docenteCarreras]);
 
-    const handleGuardarYReenviar = async (nuevoTitulo: string, nuevaDescripcion: string, nuevoPresupuesto: string) => {
+    const handleGuardarYReenviar = async (nuevoTitulo: string, nuevaDescripcion: string, nuevoPresupuesto: string, nuevoIdCarrera?: number) => {
         if (!nuevoTitulo.trim()) {
             addToast("Validación", "El título de la prepropuesta es obligatorio.", "warning");
             return;
@@ -140,6 +170,8 @@ export function usePreproposalState(
                 ? JSON.parse(instanceRes.data.data_snapshot_json)
                 : {};
 
+            const finalCarreraId = nuevoIdCarrera ?? editIdCarrera;
+
             const updatedMetadata = {
                 ...currentMetadata,
                 Titulo: nuevoTitulo.trim().toUpperCase(),
@@ -150,6 +182,11 @@ export function usePreproposalState(
                 PresupuestoEstimado: parsedBudget,
                 presupuestoEstimado: parsedBudget,
                 presupuesto_estimado: parsedBudget,
+                ...(finalCarreraId > 0 ? {
+                    IdCarrera: finalCarreraId,
+                    idCarrera: finalCarreraId,
+                    id_carrera: finalCarreraId
+                } : {}),
                 Estado: 'Prepropuesta'
             };
 
@@ -282,12 +319,61 @@ export function usePreproposalState(
             return;
         }
 
+        const hasGeneral = Boolean(adminObservation.trim());
+        const sectionList: { label: string; text: string }[] = [];
+        if (sectionObservations.carrera.trim()) {
+            sectionList.push({ label: 'Carrera / Unidad Postulante', text: sectionObservations.carrera.trim() });
+        }
+        if (sectionObservations.titulo.trim()) {
+            sectionList.push({ label: 'Tema / Título de la Investigación', text: sectionObservations.titulo.trim() });
+        }
+        if (sectionObservations.descripcion.trim()) {
+            sectionList.push({ label: 'Descripción / Justificación', text: sectionObservations.descripcion.trim() });
+        }
+        if (sectionObservations.presupuesto.trim()) {
+            sectionList.push({ label: 'Presupuesto Estimado', text: sectionObservations.presupuesto.trim() });
+        }
+
+        const confirmMessage = React.createElement('div', { className: 'space-y-5' },
+            React.createElement('p', { className: 'text-xs text-text-dim leading-relaxed' },
+                'Se notificará al docente con las siguientes observaciones para que realice las correcciones:'
+            ),
+
+            hasGeneral ? React.createElement('div', { className: 'space-y-1' },
+                React.createElement('span', { className: 'text-[10px] font-bold text-text-main uppercase tracking-wider block' },
+                    'Observación General'
+                ),
+                React.createElement('p', { className: 'text-xs text-text-dim leading-relaxed italic whitespace-pre-wrap' },
+                    `\u201C${adminObservation.trim()}\u201D`
+                )
+            ) : null,
+
+            sectionList.length > 0 ? React.createElement('div', { className: 'space-y-4 pt-1' },
+                React.createElement('span', { className: 'text-[10px] font-bold text-text-dim uppercase tracking-wider block border-b border-border-thin pb-1' },
+                    'Por Secciones'
+                ),
+                React.createElement('div', { className: 'space-y-3' },
+                    sectionList.map((item, idx) =>
+                        React.createElement('div', { key: idx, className: 'space-y-0.5 text-xs' },
+                            React.createElement('span', { className: 'font-semibold text-text-main text-[10.5px] block' },
+                                item.label
+                            ),
+                            React.createElement('p', { className: 'text-text-dim italic leading-relaxed whitespace-pre-wrap' },
+                                `\u201C${item.text}\u201D`
+                            )
+                        )
+                    )
+                )
+            ) : null
+        );
+
         if (!await confirm({
             title: "Devolver Prepropuesta",
-            message: "¿Está seguro de devolver esta prepropuesta al docente para correcciones?",
+            message: confirmMessage,
             confirmText: "Devolver",
             cancelText: "Cancelar",
-            variant: "destructive"
+            variant: "destructive",
+            position: "right"
         })) return;
 
         setIsSubmittingAdminReview(true);
@@ -338,6 +424,9 @@ export function usePreproposalState(
         setEditDescripcion,
         editPresupuesto,
         setEditPresupuesto,
+        docenteCarreras,
+        editIdCarrera,
+        setEditIdCarrera,
         isSavingPreproposal,
         trazabilidad,
         isLoadingTrazabilidad,

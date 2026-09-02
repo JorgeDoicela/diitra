@@ -260,12 +260,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 if (isDocente && linkedCareers.length > 0) {
                     setCarreras(linkedCareers);
                     if (linkedCareers.length === 1) {
-                        // Solo auto-asignar carrera si NO estamos restaurando un borrador
-                        // (para no sobreescribir el idCarrera guardado en el draft)
+                        // Solo auto-asignar carrera fija si tiene una sola
                         if (!restoreDraftOnOpen) {
                             setIdCarrera(getCarreraId(linkedCareers[0]));
                         }
                         setCareerLocked(true);
+                    } else {
+                        // Docente con múltiples carreras: selector desbloqueado
+                        setCareerLocked(false);
+                        if (!restoreDraftOnOpen && idCarrera === 0) {
+                            setIdCarrera(getCarreraId(linkedCareers[0]));
+                        }
                     }
                 } else {
                     setCarreras(rCarreras.data || []);
@@ -324,9 +329,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             return setError("Debe ingresar un presupuesto estimado válido y mayor a cero.");
         }
         if (idCarrera === 0) {
-            return setError(isDocente
-                ? "No se encontró una carrera vinculada a su perfil docente. Contacte al administrador institucional."
-                : "Debe seleccionar una carrera asociada.");
+            return setError(carreras.length > 0
+                ? "Debe seleccionar una carrera para su postulación."
+                : (isDocente
+                    ? "No se encontró una carrera vinculada a su perfil docente. Contacte al administrador institucional."
+                    : "Debe seleccionar una carrera asociada."));
         }
         if (idConvocatoria === 0) return setError("Debe vincular su propuesta a una convocatoria.");
 

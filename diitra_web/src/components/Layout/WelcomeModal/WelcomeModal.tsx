@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../api/AuthContext';
 import { getWelcomeConfigByRole } from './welcomeConfigs';
@@ -63,90 +64,98 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
     const userFirstName = formatTitleCase(user?.nombre_completo);
 
-    return (
+    return createPortal(
         <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-md animate-fade-in"
+            className="fixed inset-0 z-[9999] flex justify-end"
             role="dialog"
             aria-modal="true"
             aria-label="Bienvenida a DIITRA"
         >
-            {/* Modal Dialog Card Vercel Geist */}
-            <div className="relative w-full max-w-[680px] bg-white border border-zinc-200/80 rounded-2xl shadow-[0_20px_70px_rgba(0,0,0,0.15)] flex flex-col z-10 animate-scale-up overflow-hidden max-h-[92vh]">
+            {/* Backdrop Blur Overlay */}
+            <div 
+                className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm cursor-pointer animate-fade-in"
+                onClick={handleFinish}
+            />
+
+            {/* Panel lateral derecho (Drawer Vercel Geist) */}
+            <div className="relative w-full max-w-lg md:max-w-xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
                 
                 {/* Header Institucional */}
-                <div className="p-7 pb-5 bg-white flex items-start justify-between border-b border-zinc-100 shrink-0">
-                    <div className="space-y-1.5 pr-4">
-                        {/* Breadcrumb de rol */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-semibold text-zinc-900 tracking-tight">
-                                DIITRA
-                            </span>
-                            <span className="text-zinc-300 font-light">/</span>
-                            <span className="rounded-full border border-zinc-200 bg-zinc-50/80 text-[10.5px] font-mono font-medium px-2.5 py-0.5 text-zinc-600">
-                                {roleDisplayName || config.roleLabel}
-                            </span>
-                        </div>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-semibold text-text-main tracking-tight">
+                            DIITRA
+                        </span>
+                        <span className="text-text-dim/40 font-light">/</span>
+                        <span className="rounded-full border border-border-thin bg-surface-hover text-[10.5px] font-mono font-medium px-2.5 py-0.5 text-text-dim">
+                            {roleDisplayName || config.roleLabel}
+                        </span>
+                    </div>
 
-                        {/* Título de Bienvenida */}
-                        <h2 className="text-[26px] font-bold text-zinc-950 tracking-[-0.03em] leading-tight pt-1">
+                    <button
+                        onClick={handleFinish}
+                        className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                        title="Cerrar"
+                        aria-label="Cerrar"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Body: Contenido con scroll y aprovechamiento vertical */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-surface custom-scrollbar">
+                    {/* Hero Saludo */}
+                    <div className="space-y-2">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-text-main tracking-tight leading-tight">
                             Hola, {userFirstName}
                         </h2>
-
-                        {/* Descripción concisa */}
-                        <p className="text-[13.5px] text-zinc-600 leading-relaxed font-normal pt-0.5">
+                        <p className="text-[13px] text-text-dim leading-relaxed font-normal">
                             {config.systemDescription}
                         </p>
                     </div>
 
-                    {/* Botón Cerrar */}
-                    <button
-                        onClick={handleFinish}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer shrink-0 mt-0.5"
-                        title="Cerrar"
-                        aria-label="Cerrar"
-                    >
-                        <X size={16} />
-                    </button>
-                </div>
+                    {/* Áreas Diseñadas */}
+                    <div className="space-y-3 pt-1">
+                        <div className="flex items-center justify-between pb-2 border-b border-border-thin">
+                            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-text-dim">
+                                {config.sectionTitle}
+                            </span>
+                            <span className="text-[10.5px] font-mono text-text-dim/60">
+                                Áreas Principales
+                            </span>
+                        </div>
 
-                {/* Body: Cuadrícula Bento 2x2 Espaciosa */}
-                <div className="p-7 space-y-4 overflow-y-auto custom-scrollbar flex-1 bg-zinc-50/40">
-                    <div className="flex items-center justify-between pb-0.5">
-                        <span className="text-[11.5px] font-mono uppercase tracking-wider font-semibold text-zinc-500">
-                            {config.sectionTitle}
-                        </span>
-                        <span className="text-[11px] font-mono text-zinc-400">
-                            Áreas Principales
-                        </span>
-                    </div>
-
-                    {/* Bento Grid 2x2 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        {config.benefits.map((benefit, idx) => (
-                            <div 
-                                key={idx}
-                                className="group bg-white border border-zinc-200/80 hover:border-zinc-400/80 rounded-xl p-4.5 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:-translate-y-[1px] transition-all duration-200 cursor-default"
-                            >
-                                <div>
-                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                        <h3 className="text-[13.5px] font-semibold text-zinc-900 tracking-tight group-hover:text-black">
-                                            {benefit.title}
-                                        </h3>
-                                        <span className="rounded-md border border-zinc-200/70 bg-zinc-50 text-[10px] font-mono font-medium px-2 py-0.5 text-zinc-500 shrink-0">
+                        {/* Lista de tarjetas que aprovechan el ancho y alto del panel */}
+                        <div className="space-y-3">
+                            {config.benefits.map((benefit, idx) => (
+                                <div 
+                                    key={idx}
+                                    className="bento-card p-4 flex flex-col justify-between cursor-default hover:border-border-hover transition-colors"
+                                >
+                                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <span className="text-[11px] font-mono font-bold text-text-dim/50 shrink-0">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </span>
+                                            <h3 className="text-[13.5px] font-semibold text-text-main tracking-tight truncate">
+                                                {benefit.title}
+                                            </h3>
+                                        </div>
+                                        <span className="rounded-md border border-border-thin bg-surface-hover text-[10px] font-mono font-medium px-2 py-0.5 text-text-dim shrink-0">
                                             {benefit.tag}
                                         </span>
                                     </div>
-                                    <p className="text-[12.5px] text-zinc-500 leading-relaxed font-normal group-hover:text-zinc-600">
+                                    <p className="text-[12.5px] text-text-dim leading-relaxed font-normal pl-6">
                                         {benefit.description}
                                     </p>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
 
                 {/* Footer Vercel Minimalista */}
-                <div className="p-4 px-7 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-zinc-100 shrink-0">
+                <div className="p-4 px-6 sm:px-8 border-t border-border-thin bg-surface flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
                     
                     {/* Checkbox persistencia */}
                     <label 
@@ -156,13 +165,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                         <div 
                             className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
                                 dontShowAgain 
-                                    ? 'bg-zinc-950 border-zinc-950 text-white shadow-xs' 
-                                    : 'border-zinc-300 bg-white group-hover:border-zinc-500'
+                                    ? 'bg-brand border-brand text-white shadow-xs' 
+                                    : 'border-border-thin bg-surface group-hover:border-border-hover'
                             }`}
                         >
                             {dontShowAgain && <Check size={11} strokeWidth={3} />}
                         </div>
-                        <span className="text-[12.5px] text-zinc-500 group-hover:text-zinc-900 font-medium transition-colors">
+                        <span className="text-[12px] text-text-dim group-hover:text-text-main font-medium transition-colors">
                             No volver a mostrar al iniciar sesión
                         </span>
                     </label>
@@ -170,14 +179,15 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     {/* Botón Comenzar */}
                     <button
                         onClick={handleFinish}
-                        className="w-full sm:w-auto h-10 px-6 rounded-lg bg-zinc-950 text-white text-[13px] font-medium hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5"
+                        className="btn-vercel-primary !h-10 !px-6 !text-[12px] w-full sm:w-auto"
                         title="Comenzar"
                     >
                         <span>Comenzar</span>
-                        <ArrowRight size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight size={14} />
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

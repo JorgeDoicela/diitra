@@ -293,8 +293,113 @@ namespace diitra_infrastructure.Common.Notifications
             };
         }
 
+        private async Task EnsureWelcomeNotificationAsync(int userId)
+        {
+            try
+            {
+                // 1. Verificar si el usuario ya recibió o descartó la notificación de bienvenida previamente
+                var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == userId);
+                if (meta != null && !string.IsNullOrEmpty(meta.Configuracion))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(meta.Configuracion);
+                        if (doc.RootElement.TryGetProperty("welcome_notif_sent", out var sentProp) && sentProp.GetBoolean())
+                        {
+                            return; // Ya se envió y fue procesada/eliminada por el usuario. No recrear.
+                        }
+                    }
+                    catch
+                    {
+                        // JSON corrupto o vacío, continuar verificación
+                    }
+                }
+
+                // 2. Verificar si ya existe actualmente en la bandeja
+                var hasWelcome = await _context.InvNotificaciones
+                    .AnyAsync(n => n.Destinatario == userId && n.Categoria == "SISTEMA" && n.Titulo.StartsWith("¡Bienvenido a DIITRA"));
+
+                if (hasWelcome)
+                {
+                    // Si ya existe en la bandeja pero no estaba marcado en metadata, registrarlo para evitar recreaciones futuras al borrarlo
+                    await MarkWelcomeSentInMetadataAsync(userId, meta);
+                    await _context.SaveChangesAsync();
+                    return;
+                }
+
+                // 3. Crear notificación inicial de bienvenida por única vez
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null)
+                {
+                    var nombre = user.Nombre ?? "Docente";
+                    var primerNombre = nombre.Trim().Split(' ')[0];
+                    if (!string.IsNullOrEmpty(primerNombre))
+                    {
+                        primerNombre = char.ToUpper(primerNombre[0]) + primerNombre.Substring(1).ToLower();
+                    }
+
+                    var welcomeNotif = new InvNotificacion
+                    {
+                        Uuid = Guid.NewGuid(),
+                        Destinatario = userId,
+                        Titulo = $"¡Bienvenido a DIITRA, {primerNombre}!",
+                        Mensaje = "Este es tu centro oficial de notificaciones. Aquí recibirás avisos sobre convocatorias, estados de tus proyectos, asignaciones de arbitraje y fechas límite institucionales.",
+                        Categoria = "SISTEMA",
+                        UrlAccion = "/notificaciones",
+                        FechaEnvio = DateTime.UtcNow,
+                        Leido = false
+                    };
+
+                    _context.InvNotificaciones.Add(welcomeNotif);
+                    await MarkWelcomeSentInMetadataAsync(userId, meta);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo procesar la notificación inicial de bienvenida para el usuario {UserId}", userId);
+            }
+        }
+
+        private async Task MarkWelcomeSentInMetadataAsync(int userId, InvUsuarioMetadata? meta)
+        {
+            try
+            {
+                if (meta == null)
+                {
+                    meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == userId);
+                }
+
+                if (meta == null)
+                {
+                    meta = new InvUsuarioMetadata
+                    {
+                        Uuid = Guid.NewGuid(),
+                        IdUsuario = userId,
+                        Configuracion = "{\"welcome_notif_sent\":true}",
+                        Version = 1
+                    };
+                    _context.InvUsuariosMetadata.Add(meta);
+                }
+                else
+                {
+                    var dict = !string.IsNullOrEmpty(meta.Configuracion)
+                        ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(meta.Configuracion) ?? new()
+                        : new Dictionary<string, object>();
+                    dict["welcome_notif_sent"] = true;
+                    meta.Configuracion = System.Text.Json.JsonSerializer.Serialize(dict);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo guardar marca de bienvenida en metadata para el usuario {UserId}", userId);
+            }
+        }
+
         public async Task<IEnumerable<object>> GetMyNotificationsAsync(int userId)
         {
+            await EnsureWelcomeNotificationAsync(userId);
+
             return await _context.InvNotificaciones
                 .Where(n => n.Destinatario == userId)
                 .OrderByDescending(n => n.FechaEnvio)
@@ -345,6 +450,12 @@ namespace diitra_infrastructure.Common.Notifications
 
             var notif = await _context.InvNotificaciones.FirstOrDefaultAsync(n => n.Uuid == guid);
             if (notif == null) return false;
+
+            // Si el usuario está eliminando la notificación de bienvenida, asegurar que quede registrada para no recrearla nunca
+            if (notif.Categoria == "SISTEMA" && notif.Titulo.StartsWith("¡Bienvenido a DIITRA"))
+            {
+                await MarkWelcomeSentInMetadataAsync(notif.Destinatario, null);
+            }
 
             _context.InvNotificaciones.Remove(notif);
             await _context.SaveChangesAsync();

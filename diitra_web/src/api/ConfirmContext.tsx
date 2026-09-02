@@ -3,10 +3,11 @@ import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmOptions {
     title?: string;
-    message: string;
+    message: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     variant?: 'primary' | 'destructive' | 'warning';
+    position?: 'center' | 'right';
 }
 
 interface ConfirmContextType {
@@ -67,54 +68,111 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
             {children}
             {isOpen && (
                 <div 
-                    className="modal-overlay animate-fade-in" 
-                    style={{ zIndex: 999999 }}
+                    className={`fixed inset-0 z-[999999] flex ${options.position === 'right' ? 'justify-end' : 'items-center justify-center'}`}
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
                             handleCancel();
                         }
                     }}
                 >
-                    <div className="modal-card max-w-md animate-scale-up">
-                        <div className="modal-header border-b border-border-thin flex justify-between items-center py-3.5 px-5">
-                            <div className="flex items-center gap-2">
-                                {options.variant === 'destructive' && (
-                                    <AlertTriangle size={16} className="text-red-500 shrink-0" />
-                                )}
-                                {options.variant === 'warning' && (
-                                    <AlertTriangle size={16} className="text-amber-500 shrink-0" />
-                                )}
-                                <h3 className="font-bold text-text-main text-xs uppercase tracking-widest">
-                                    {options.title || 'Confirmación'}
-                                </h3>
+                    <div className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm animate-fade-in" />
+
+                    {options.position === 'right' ? (
+                        <div className="relative w-full max-w-lg h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right shadow-2xl">
+                            {/* Header */}
+                            <div className="modal-header border-b border-border-thin flex justify-between items-center py-4 px-6 bg-surface">
+                                <div className="flex items-center gap-2.5">
+                                    {options.variant === 'destructive' && (
+                                        <AlertTriangle size={18} className="text-red-500 shrink-0" />
+                                    )}
+                                    {options.variant === 'warning' && (
+                                        <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+                                    )}
+                                    <h3 className="font-bold text-text-main text-xs uppercase tracking-widest">
+                                        {options.title || 'Confirmación'}
+                                    </h3>
+                                </div>
+                                <button 
+                                    onClick={handleCancel} 
+                                    className="text-text-dim hover:text-text-main p-1.5 transition-colors rounded-lg hover:bg-surface-hover cursor-pointer"
+                                >
+                                    <X size={18} />
+                                </button>
                             </div>
-                            <button 
-                                onClick={handleCancel} 
-                                className="text-text-dim hover:text-text-main p-1 transition-colors rounded-lg hover:bg-surface-hover"
-                            >
-                                <X size={16} />
-                            </button>
+
+                            {/* Body */}
+                            <div className="modal-body flex-1 p-6 overflow-y-auto custom-scrollbar">
+                                {typeof options.message === 'string' ? (
+                                    <p className="text-xs text-text-dim leading-relaxed font-medium whitespace-pre-wrap">
+                                        {options.message}
+                                    </p>
+                                ) : (
+                                    options.message
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="modal-footer border-t border-border-thin py-4 px-6 flex justify-end gap-2.5 bg-surface">
+                                <button 
+                                    onClick={handleCancel} 
+                                    className="btn-vercel-secondary transition-all active:scale-[0.98] font-bold text-xs uppercase tracking-widest"
+                                >
+                                    {options.cancelText || 'Cancelar'}
+                                </button>
+                                <button 
+                                    onClick={handleConfirm} 
+                                    className={getConfirmBtnClass()}
+                                >
+                                    {options.confirmText || 'Aceptar'}
+                                </button>
+                            </div>
                         </div>
-                        <div className="modal-body p-5">
-                            <p className="text-xs text-text-dim leading-relaxed font-medium">
-                                {options.message}
-                            </p>
+                    ) : (
+                        <div className="modal-card max-w-md animate-scale-up relative z-10">
+                            <div className="modal-header border-b border-border-thin flex justify-between items-center py-3.5 px-5">
+                                <div className="flex items-center gap-2">
+                                    {options.variant === 'destructive' && (
+                                        <AlertTriangle size={16} className="text-red-500 shrink-0" />
+                                    )}
+                                    {options.variant === 'warning' && (
+                                        <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+                                    )}
+                                    <h3 className="font-bold text-text-main text-xs uppercase tracking-widest">
+                                        {options.title || 'Confirmación'}
+                                    </h3>
+                                </div>
+                                <button 
+                                    onClick={handleCancel} 
+                                    className="text-text-dim hover:text-text-main p-1 transition-colors rounded-lg hover:bg-surface-hover"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="modal-body p-5">
+                                {typeof options.message === 'string' ? (
+                                    <p className="text-xs text-text-dim leading-relaxed font-medium whitespace-pre-wrap">
+                                        {options.message}
+                                    </p>
+                                ) : (
+                                    options.message
+                                )}
+                            </div>
+                            <div className="modal-footer border-t border-border-thin py-3 px-5 flex justify-end gap-2 bg-transparent">
+                                <button 
+                                    onClick={handleCancel} 
+                                    className="btn-vercel-secondary transition-all active:scale-[0.98] font-bold text-xs uppercase tracking-widest"
+                                >
+                                    {options.cancelText || 'Cancelar'}
+                                </button>
+                                <button 
+                                    onClick={handleConfirm} 
+                                    className={getConfirmBtnClass()}
+                                >
+                                    {options.confirmText || 'Aceptar'}
+                                </button>
+                            </div>
                         </div>
-                        <div className="modal-footer border-t border-border-thin py-3 px-5 flex justify-end gap-2 bg-transparent">
-                            <button 
-                                onClick={handleCancel} 
-                                className="btn-vercel-secondary transition-all active:scale-[0.98] font-bold text-xs uppercase tracking-widest"
-                            >
-                                {options.cancelText || 'Cancelar'}
-                            </button>
-                            <button 
-                                onClick={handleConfirm} 
-                                className={getConfirmBtnClass()}
-                            >
-                                {options.confirmText || 'Aceptar'}
-                            </button>
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
         </ConfirmContext.Provider>

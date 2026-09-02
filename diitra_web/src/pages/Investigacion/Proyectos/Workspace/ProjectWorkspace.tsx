@@ -10,7 +10,7 @@
 //
 // ══════════════════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -96,44 +96,79 @@ export const ProjectWorkspace: React.FC = () => {
     const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
     const preloadedData = React.useMemo(() => ({ Uuid: editorUuid }), [editorUuid]);
 
-    const handleProjectsChanged = useCallback(() => {
-        console.log("[DIITRA] Recargando datos del proyecto por evento, enfoque de ventana o polling...");
-        fetchProject((data) => {
-            if (data) team.populateTeamFromProject(data);
-        });
-        preproposal.fetchTrazabilidad();
-    }, [fetchProject, team.populateTeamFromProject, preproposal.fetchTrazabilidad]);
+    // ── Sincronización Silenciosa y Throttling Enterprise (10/10) ──
+    const FOCUS_THROTTLE_MS = 15000; // Cooldown mínimo de 15s entre revalidaciones por foco/visibilidad
+    const lastSyncTimestampRef = useRef<number>(0);
+    const isSyncingRef = useRef<boolean>(false);
 
+    // Contenedor mutable para evitar recrear listeners en cada render
+    const syncCallbacksRef = useRef({
+        fetchProject,
+        populateTeam: team.populateTeamFromProject,
+        fetchTrazabilidad: preproposal.fetchTrazabilidad
+    });
+
+    useEffect(() => {
+        syncCallbacksRef.current = {
+            fetchProject,
+            populateTeam: team.populateTeamFromProject,
+            fetchTrazabilidad: preproposal.fetchTrazabilidad
+        };
+    });
+
+    const triggerSync = useCallback(async (isSilent = true) => {
+        if (isSyncingRef.current) return;
+        isSyncingRef.current = true;
+        lastSyncTimestampRef.current = Date.now();
+
+        try {
+            const { fetchProject: doFetchProject, populateTeam: doPopulateTeam, fetchTrazabilidad: doFetchTrazabilidad } = syncCallbacksRef.current;
+            await Promise.allSettled([
+                doFetchProject((data) => {
+                    if (data) doPopulateTeam(data);
+                }),
+                doFetchTrazabilidad(isSilent)
+            ]);
+        } finally {
+            isSyncingRef.current = false;
+        }
+    }, []);
+
+    // Carga inicial o cuando cambia el documento activo/uuid
     useEffect(() => {
         if (resolvedProjectUuid) {
-            handleProjectsChanged();
+            triggerSync(false);
         }
-    }, [resolvedProjectUuid, activeDocument, handleProjectsChanged]);
+    }, [resolvedProjectUuid, activeDocument, triggerSync]);
 
+    // Registro atómico de listeners nativos (se suscribe una sola vez al montar)
     useEffect(() => {
-        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
-
-        const handleFocus = () => {
-            handleProjectsChanged();
+        // Evento explícito de DIITRA (tras guardar, firmar o revertir) -> Inmediato sin cooldown
+        const onCustomEvent = () => {
+            triggerSync(true);
         };
 
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                handleProjectsChanged();
+        // Eventos del navegador (enfoque de ventana o cambio de pestaña) -> Throttled a 15s
+        const onWindowFocusOrVisible = () => {
+            if (document.visibilityState !== 'visible') return;
+            const now = Date.now();
+            if (now - lastSyncTimestampRef.current >= FOCUS_THROTTLE_MS) {
+                triggerSync(true);
             }
         };
 
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('diitra-projects-changed', onCustomEvent);
+        window.addEventListener('focus', onWindowFocusOrVisible);
+        document.addEventListener('visibilitychange', onWindowFocusOrVisible);
 
         return () => {
-            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('diitra-projects-changed', onCustomEvent);
+            window.removeEventListener('focus', onWindowFocusOrVisible);
+            document.removeEventListener('visibilitychange', onWindowFocusOrVisible);
         };
-    }, [handleProjectsChanged]);
+    }, [triggerSync]);
 
-    // Polling en segundo plano cuando el proyecto está en un estado activo o pendiente de revisión
+    // Polling en segundo plano cuando el proyecto está en un estado pendiente de revisión
     useEffect(() => {
         if (!currentProject?.status) return;
 
@@ -142,12 +177,15 @@ export const ProjectWorkspace: React.FC = () => {
 
         const intervalId = setInterval(() => {
             if (document.visibilityState === 'visible') {
-                handleProjectsChanged();
+                const now = Date.now();
+                if (now - lastSyncTimestampRef.current >= FOCUS_THROTTLE_MS) {
+                    triggerSync(true);
+                }
             }
-        }, 15000); // Polling suave cada 15 segundos
+        }, 15000); // Polling suave cada 15s
 
         return () => clearInterval(intervalId);
-    }, [currentProject?.status, handleProjectsChanged]);
+    }, [currentProject?.status, triggerSync]);
 
     if (isLoading || !resolvedProjectUuid) {
         return <FullscreenLoader message="Cargando proyecto..." />;
@@ -257,7 +295,6 @@ export const ProjectWorkspace: React.FC = () => {
                     currentProject={currentProject}
                     isSidebarCollapsed={isSidebarCollapsed}
                     urlPrefix={urlPrefix}
-                    navigate={navigate}
                     feedbackMode={preproposal.feedbackMode}
                     setFeedbackMode={preproposal.setFeedbackMode}
                     activeSectionTab={preproposal.activeSectionTab}
@@ -280,13 +317,15 @@ export const ProjectWorkspace: React.FC = () => {
                 currentProject={currentProject}
                 isSidebarCollapsed={isSidebarCollapsed}
                 urlPrefix={urlPrefix}
-                navigate={navigate}
                 editTitulo={preproposal.editTitulo}
                 setEditTitulo={preproposal.setEditTitulo}
                 editDescripcion={preproposal.editDescripcion}
                 setEditDescripcion={preproposal.setEditDescripcion}
                 editPresupuesto={preproposal.editPresupuesto}
                 setEditPresupuesto={preproposal.setEditPresupuesto}
+                docenteCarreras={preproposal.docenteCarreras}
+                editIdCarrera={preproposal.editIdCarrera}
+                setEditIdCarrera={preproposal.setEditIdCarrera}
                 isSavingPreproposal={preproposal.isSavingPreproposal}
                 handleGuardarYReenviar={preproposal.handleGuardarYReenviar}
                 trazabilidad={preproposal.trazabilidad}

@@ -250,14 +250,13 @@ const PublicConvocatoriasPage = () => {
                     {filtered.map((c) => (
                         <div
                             key={c.uuid}
-                            className={`bento-card p-6 group relative overflow-hidden transition-all ${selectedConvocatoria?.uuid === c.uuid
+                            onClick={() => setSelectedConvocatoria(c)}
+                            className={`bento-card p-6 group relative overflow-hidden transition-all cursor-pointer ${selectedConvocatoria?.uuid === c.uuid
                                 ? 'bg-brand/[0.05] border-brand/35 shadow-[0_0_12px_rgba(0,112,243,0.08)]'
                                 : ''
                                 }`}
                         >
-                            <Link to={`?open=${c.uuid}`} className="absolute inset-0 z-10" />
-
-                            <div className="space-y-6 relative z-0 pointer-events-none">
+                            <div className="space-y-6 relative z-0">
                                 <div className="flex justify-between items-start">
                                     <span className="badge-vercel">
                                         {c.codigo_convocatoria}
@@ -298,7 +297,7 @@ const PublicConvocatoriasPage = () => {
                                 </div>
                             </div>
 
-                            <div className="pt-6 flex items-center gap-4 relative z-20 pointer-events-auto">
+                            <div className="pt-6 flex items-center gap-4 relative z-10">
                                 {isPastDeadline(c.fecha_cierre) ? (
                                     <button
                                         disabled
@@ -307,12 +306,16 @@ const PublicConvocatoriasPage = () => {
                                         Plazo Vencido
                                     </button>
                                 ) : (
-                                    <Link
-                                        to={`?postular=${c.id_convocatoria}`}
-                                        className="btn-vercel-primary flex-1 justify-center text-center flex items-center"
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedConvocatoria(c);
+                                        }}
+                                        className="btn-vercel-primary flex-1 justify-center text-center flex items-center cursor-pointer"
                                     >
-                                        Postular Ahora
-                                    </Link>
+                                        Abrir
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -340,13 +343,13 @@ const PublicConvocatoriasPage = () => {
 
             {/* Detail Panel */}
             {selectedConvocatoria && createPortal(
-                <div className="fixed inset-0 z-[9999] flex justify-end animate-fade-up">
+                <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                         onClick={() => setSelectedConvocatoria(null)}
                     />
 
-                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10">
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
                                 <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
