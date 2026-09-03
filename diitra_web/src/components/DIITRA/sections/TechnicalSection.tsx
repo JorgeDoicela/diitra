@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
-import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../../DIITRA/SectionBlockGuard';
 import api from '../../../api/axios_config';
@@ -15,10 +14,7 @@ import {
     ClipboardCheck,
     Info,
     Lock,
-    ArrowDown,
-    Check,
     Layers,
-    Sparkles,
     X,
     ChevronDown
 } from 'lucide-react';
