@@ -150,11 +150,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                                     {u.nivel || 'Nivel no definido'}
                                                 </span>
                                                 {u.es_instituto === false ? (
-                                                    <span className="badge-vercel badge-vercel-info !text-[8px] !py-0 !px-1.5">
+                                                    <span className="badge-vercel badge-vercel-neutral !text-[8px] !py-0 !px-1.5">
                                                         Conducción
                                                     </span>
                                                 ) : (
-                                                    <span className="badge-vercel badge-vercel-violet !text-[8px] !py-0 !px-1.5">
+                                                    <span className="badge-vercel badge-vercel-neutral !text-[8px] !py-0 !px-1.5">
                                                         ISTPET
                                                     </span>
                                                 )}
@@ -187,21 +187,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                     <div className="flex flex-wrap gap-1.5 items-center">
                                         {userActiveRoles.length > 0 ? (
                                             userActiveRoles.map(r => {
-                                                const isBrand = r.codigo_rol === 'DIITRA_ADMIN';
-                                                const isViolet = r.codigo_rol === 'DIITRA_DOCENTE';
-                                                const isInfo = r.codigo_rol === 'DIITRA_ESTUDIANTE';
-                                                const badgeClass = isBrand 
-                                                    ? 'badge-vercel-info' 
-                                                    : isViolet 
-                                                    ? 'badge-vercel-violet' 
-                                                    : isInfo 
-                                                    ? 'badge-vercel-success' 
-                                                    : 'badge-vercel-neutral';
-
+                                                const isAdmin = r.codigo_rol === 'DIITRA_ADMIN';
                                                 return (
                                                     <span
                                                         key={r.id_rol}
-                                                        className={`badge-vercel ${badgeClass} text-[9px] font-bold tracking-wider uppercase py-0.5 px-2`}
+                                                        className={`badge-vercel ${isAdmin ? 'badge-vercel-info font-bold' : 'badge-vercel-neutral font-medium'} text-[9px] tracking-wider uppercase py-0.5 px-2`}
                                                     >
                                                         {r.nombre}
                                                     </span>

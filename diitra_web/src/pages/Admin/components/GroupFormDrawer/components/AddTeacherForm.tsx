@@ -89,7 +89,7 @@ export const AddTeacherForm: React.FC<AddTeacherFormProps> = ({
                                                     </p>
                                                     <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {teacher.cedula} | {teacher.carrera || 'SIN CARRERA'}</p>
                                                 </div>
-                                                <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-violet">
+                                                <span className="badge-vercel text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 badge-vercel-neutral">
                                                     Docente
                                                 </span>
                                             </button>

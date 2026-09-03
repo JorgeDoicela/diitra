@@ -386,8 +386,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 renderedCoreKeys.add('showGrupo');
                 return showGrupo ? (
                     <div key="showGrupo" className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
-                        <div className="md:col-span-4 space-y-1.5 sm:space-y-3">
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">¿Grupo de Investigación?</label>
+                        <div className="md:col-span-4">
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">¿Grupo de Investigación?</label>
                             <select 
                                 disabled={true}
                                 value={formData.GrupoInvestigacionTipo || 'NO'}
@@ -504,8 +504,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 renderedCoreKeys.add('showTipo');
                 return showTipo ? (
                     <div key="showTipo" className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-                        <div className="md:col-span-2 space-y-1.5 sm:space-y-3">
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelTipo}</label>
+                        <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelTipo}</label>
                             <select 
                                 value={(() => {
                                     const raw = formData.TipoInvestigacion || 'APLICADA';
@@ -562,8 +562,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 return (showCarrera || showConvocatoria) ? (
                     <div key="showCarrera" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         {showCarrera && (
-                            <div className="space-y-1.5 sm:space-y-3">
-                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelCarrera}</label>
+                            <div className="w-full">
+                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelCarrera}</label>
                                 <select 
                                     value={Number(formData.IdCarrera) || 0}
                                     onChange={(e) => {
@@ -613,8 +613,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         )}
 
                         {showConvocatoria && (
-                            <div className="space-y-1.5 sm:space-y-3">
-                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">{labelConvocatoria}</label>
+                            <div className="w-full">
+                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelConvocatoria}</label>
                                 <select 
                                     value={formData.IdConvocatoria || 0}
                                     onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}

@@ -502,7 +502,12 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
 
     return (
         <div className={type === 'checkbox' ? "flex items-center gap-3" : "w-full"}>
-            <div className="relative order-1">
+            {type !== 'checkbox' && label && (
+                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">
+                    {label}
+                </label>
+            )}
+            <div className="relative">
                 {activeUsersEditing.length > 0 && type !== 'checkbox' && (
                     <div className="absolute right-2 -top-2.5 z-50 flex items-center gap-1">
                         {/* Usuario principal con nombre completo */}
@@ -563,13 +568,9 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                         </button>
                     </>
                 )}
-
-
             </div>
-            {label && (
-                <label className={type === 'checkbox' 
-                    ? "text-[10px] font-bold text-text-main uppercase tracking-tight cursor-pointer order-2" 
-                    : "block text-[9px] font-black text-text-dim uppercase mt-1 ml-2 mb-2 tracking-widest"}>
+            {type === 'checkbox' && label && (
+                <label className="text-[10px] font-bold text-text-main uppercase tracking-tight cursor-pointer">
                     {label}
                 </label>
             )}
