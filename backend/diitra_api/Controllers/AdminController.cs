@@ -9,7 +9,7 @@ namespace diitra_api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "DIITRA_ADMIN")]
+[Authorize]
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
@@ -68,6 +68,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPut("metadata/{uuid}")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> UpdateMetadata(string uuid, [FromBody] UserMetadataDto dto)
     {
         try
@@ -83,6 +84,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("roles/assign")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> AssignRole([FromBody] RoleActionRequest request)
     {
         var roleIdentifier = !string.IsNullOrEmpty(request.RoleCode) ? request.RoleCode : request.RoleName;
@@ -99,6 +101,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("roles/revoke")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> RevokeRole([FromBody] RoleActionRequest request)
     {
         var roleIdentifier = !string.IsNullOrEmpty(request.RoleCode) ? request.RoleCode : request.RoleName;
@@ -115,6 +118,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("external")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> RegisterExternal([FromBody] ExternalUserDto dto)
     {
         try
@@ -130,6 +134,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("audit")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetAuditLogs()
     {
         var logs = await _adminService.GetRecentAuditLogsAsync();
@@ -137,6 +142,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("audit/advanced")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetAuditLogsAdvanced(
         [FromQuery] DateTime? from, 
         [FromQuery] DateTime? to, 
@@ -154,6 +160,7 @@ public class AdminController : ControllerBase
     /// Lista el historial de copias de seguridad del sistema (Solo administradores).
     /// </summary>
     [HttpGet("backups")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetBackupLogs()
     {
         var destFolder = _configuration["BackupSettings:DestinationFolder"] ?? "backups";
@@ -186,6 +193,7 @@ public class AdminController : ControllerBase
     /// Desencadena manualmente una copia de seguridad local (Base de datos + Archivos).
     /// </summary>
     [HttpPost("backups/trigger")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> TriggerBackup()
     {
         try
@@ -208,6 +216,7 @@ public class AdminController : ControllerBase
     /// Descarga un archivo de copia de seguridad por su UUID de auditoría (Solo administradores).
     /// </summary>
     [HttpGet("backups/download/{uuid}")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> DownloadBackup(System.Guid uuid)
     {
         try

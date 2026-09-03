@@ -121,18 +121,18 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 <div className="flex items-center gap-2.5 mb-1.5">
                     <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                     <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">
-                        {tieneGrupo ? 'Equipo de Trabajo' : 'Personal del Proyecto'}
+                        {tieneGrupo ? 'Equipo Adscrito a Grupo Institucional' : 'Equipo de Investigación del Proyecto'}
                     </h3>
                 </div>
                 <p className="text-xs text-text-dim font-normal leading-relaxed">
                     {tieneGrupo 
-                        ? 'Gestión dinámica del talento humano del proyecto' 
-                        : 'Dedicación y detalles del investigador principal'}
+                        ? 'Gestión del talento humano vinculado al grupo de investigación formal' 
+                        : 'Gestión ágil de docentes investigadores, semilleristas y colaboradores del proyecto'}
                 </p>
             </div>
 
             <div className="mt-6 space-y-4">
-                {/* Toggle Individual / Asociativo */}
+                {/* Toggle Individual / Equipo vs Asociativo */}
                 <div className="flex bg-surface-hover rounded-md border border-border-thin overflow-hidden">
                     <button
                         type="button"
@@ -140,7 +140,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         onClick={() => onToggleTieneGrupo(false)}
                         className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                     >
-                        Individual
+                        Equipo de Proyecto / Individual
                     </button>
                     <button
                         type="button"
@@ -148,7 +148,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         onClick={() => onToggleTieneGrupo(true)}
                         className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 border-l border-border-thin ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep border-l-transparent' : 'text-text-dim hover:text-text-main'}`}
                     >
-                        Asociativo (Grupo)
+                        Asociativo (Grupo Formal)
                     </button>
                 </div>
 

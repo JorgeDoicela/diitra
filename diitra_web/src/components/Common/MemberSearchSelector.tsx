@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle } from 'lucide-react';
+import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 
 export interface SelectedMemberResult {
@@ -30,6 +30,9 @@ interface MemberSearchSelectorProps {
     isCoordinatorSelectorOnly?: boolean;
     onSelectCoordinator?: (member: SelectedMemberResult) => void;
     selectedCoordinatorCedula?: string;
+    soloConHorasDocentes?: boolean;
+    estadoEstudiante?: string;
+    variant?: 'card' | 'embedded';
 }
 
 export const formatNombre = (nombre: string | null | undefined) => {
@@ -49,7 +52,10 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     excludeCoordinatorCedula,
     isCoordinatorSelectorOnly = false,
     onSelectCoordinator,
-    selectedCoordinatorCedula
+    selectedCoordinatorCedula,
+    soloConHorasDocentes = false,
+    estadoEstudiante = 'TODOS',
+    variant = 'card'
 }) => {
     const [selectedType, setSelectedType] = useState<'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO'>(defaultType);
     const [searchQuery, setSearchQuery] = useState('');
@@ -78,14 +84,17 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
         }
     };
 
-    // Petición debounced hacia /api/Admin/users
+    const isEmbedded = variant === 'embedded';
+
+    // Petición debounced hacia /api/Admin/users (inmediata si es embedded)
     useEffect(() => {
-        if (!showDropdown || !searchQuery.trim()) {
+        if (!isEmbedded && (!showDropdown || !searchQuery.trim())) {
             setResults([]);
             setIsSearching(false);
             return;
         }
 
+        const delay = isEmbedded && !searchQuery.trim() ? 0 : 250;
         const timer = setTimeout(async () => {
             setIsSearching(true);
             try {
@@ -93,9 +102,9 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                     search: searchQuery.trim(),
                     type: selectedType,
                     page: '1',
-                    pageSize: '20',
-                    soloConHoras: 'false',
-                    estadoEstudiante: 'TODOS',
+                    pageSize: isEmbedded ? '50' : '20',
+                    soloConHoras: (selectedType === 'DOCENTE' && soloConHorasDocentes) ? 'true' : 'false',
+                    estadoEstudiante: selectedType === 'ESTUDIANTE' ? estadoEstudiante : 'TODOS',
                     origenEstudiante: 'TODOS'
                 });
 
@@ -108,10 +117,10 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
             } finally {
                 setIsSearching(false);
             }
-        }, 300);
+        }, delay);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedType, showDropdown]);
+    }, [searchQuery, selectedType, showDropdown, soloConHorasDocentes, estadoEstudiante, isEmbedded]);
 
     // Cerrar dropdown al hacer click fuera
     useEffect(() => {
@@ -198,56 +207,56 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     };
 
     return (
-        <div ref={containerRef} className="p-4 bg-surface rounded-2xl border border-border-thin space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div ref={containerRef} className={variant === 'embedded' ? 'space-y-4' : 'p-4 bg-surface rounded-2xl border border-border-thin space-y-4'}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h5 className="text-[11px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
-                        <UserPlus size={13} className="text-brand" /> {title}
+                        <UserPlus size={13} className="text-text-main" /> {title}
                     </h5>
                     <p className="text-[10px] text-text-dim mt-0.5">{subtitle}</p>
                 </div>
 
                 {/* Tabs de tipo de personal */}
                 {allowedTypes.length > 1 && !selectedCandidate && (
-                    <div className="bg-bg-deep border border-border-thin p-0.5 rounded-lg flex overflow-x-auto custom-scrollbar">
+                    <div className="bg-bg-deep border border-border-thin p-0.5 rounded-lg flex shrink-0">
                         {allowedTypes.includes('DOCENTE') && (
                             <button
                                 type="button"
                                 onClick={() => { setSelectedType('DOCENTE'); setResults([]); }}
-                                className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                     selectedType === 'DOCENTE' ? 'bg-surface text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'
                                 }`}
                             >
                                 Docentes
                             </button>
                         )}
+                        {allowedTypes.includes('ESTUDIANTE') && (
+                            <button
+                                type="button"
+                                onClick={() => { setSelectedType('ESTUDIANTE'); setResults([]); }}
+                                className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                    selectedType === 'ESTUDIANTE' ? 'bg-surface text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                Estudiantes
+                            </button>
+                        )}
                         {allowedTypes.includes('ADMINISTRATIVO') && (
                             <button
                                 type="button"
                                 onClick={() => { setSelectedType('ADMINISTRATIVO'); setResults([]); }}
-                                className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                     selectedType === 'ADMINISTRATIVO' ? 'bg-surface text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'
                                 }`}
                             >
                                 Administrativos
                             </button>
                         )}
-                        {allowedTypes.includes('ESTUDIANTE') && (
-                            <button
-                                type="button"
-                                onClick={() => { setSelectedType('ESTUDIANTE'); setResults([]); }}
-                                className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                    selectedType === 'ESTUDIANTE' ? 'bg-surface text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'
-                                }`}
-                            >
-                                Alumnos
-                            </button>
-                        )}
                         {allowedTypes.includes('EXTERNO') && (
                             <button
                                 type="button"
                                 onClick={() => { setSelectedType('EXTERNO'); setResults([]); }}
-                                className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                     selectedType === 'EXTERNO' ? 'bg-surface text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'
                                 }`}
                             >
@@ -293,78 +302,165 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                         )}
                     </div>
 
-                    {/* Menú de resultados flotante */}
-                    {showDropdown && searchQuery.trim().length > 0 && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl p-1.5 shadow-2xl max-h-[220px] overflow-y-auto z-40 custom-scrollbar">
-                            {isSearching ? (
-                                <div className="p-4 text-center text-xs text-text-dim font-mono animate-pulse">
-                                    Buscando en {selectedType.toLowerCase()}s...
+                    {/* Lista embebida directa para Drawers/Paneles */}
+                    {isEmbedded ? (
+                        <div className="space-y-2 mt-4">
+                            <div className="flex items-center justify-between px-1">
+                                <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    {selectedType === 'DOCENTE' ? 'Docentes con Horas de Investigación' : 'Estudiantes Matriculados'} ({results.length})
+                                </p>
+                                {isSearching && (
+                                    <span className="text-[10px] text-text-dim flex items-center gap-1.5 animate-pulse">
+                                        <Loader2 size={11} className="animate-spin" /> Actualizando...
+                                    </span>
+                                )}
+                            </div>
+
+                            {isSearching && results.length === 0 ? (
+                                <div className="p-8 text-center text-xs text-text-dim border border-border-thin rounded-xl bg-surface/50">
+                                    <Loader2 size={18} className="animate-spin mx-auto mb-2 text-text-main" />
+                                    <span>Cargando nómina institucional...</span>
                                 </div>
                             ) : results.length === 0 ? (
-                                <div className="p-4 text-center text-xs text-text-dim font-mono">
-                                    No se encontraron {selectedType.toLowerCase()}s que coincidan con la búsqueda.
+                                <div className="p-8 text-center text-xs text-text-dim border border-dashed border-border-thin rounded-xl bg-surface/50 space-y-1">
+                                    <p className="font-bold uppercase tracking-wider text-text-main">Sin resultados</p>
+                                    <p className="text-[11px]">
+                                        {selectedType === 'DOCENTE'
+                                            ? 'No se encontraron docentes con horas de investigación asignadas en el período activo.'
+                                            : 'No se encontraron estudiantes con matrícula activa en el período actual.'}
+                                    </p>
                                 </div>
                             ) : (
-                                results.map((candidate: any) => {
-                                    const cedula = (candidate.id_profesor || candidate.id_sigafi || '').trim();
-                                    const isAlreadyMember = existingCedulas.includes(cedula) || (excludeCoordinatorCedula && excludeCoordinatorCedula.trim() === cedula);
-                                    const isSelectedCoord = selectedCoordinatorCedula && selectedCoordinatorCedula.trim() === cedula;
+                                <div className="space-y-1.5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar pr-1">
+                                    {results.map((candidate: any) => {
+                                        const cedula = (candidate.id_profesor || candidate.id_sigafi || '').trim();
+                                        const isAlreadyMember = existingCedulas.includes(cedula) || (excludeCoordinatorCedula && excludeCoordinatorCedula.trim() === cedula);
+                                        const isSelectedCoord = selectedCoordinatorCedula && selectedCoordinatorCedula.trim() === cedula;
 
-                                    return (
-                                        <button
-                                            key={cedula}
-                                            type="button"
-                                            onClick={() => handleSelectCandidate(candidate)}
-                                            disabled={isAlreadyMember && !isSelectedCoord}
-                                            className={`w-full text-left p-2.5 rounded-lg transition-colors flex justify-between items-center gap-2 cursor-pointer ${
-                                                isAlreadyMember && !isSelectedCoord
-                                                    ? 'opacity-40 bg-bg-deep/20 cursor-not-allowed'
-                                                    : isSelectedCoord
-                                                    ? 'bg-brand/10 border border-brand/30'
-                                                    : 'hover:bg-bg-deep/60'
-                                            }`}
-                                        >
-                                            <div className="space-y-0.5 min-w-0">
-                                                <p className="font-semibold text-text-main text-xs flex items-center gap-2 truncate">
-                                                    <span>{formatNombre(candidate.nombre_completo || candidate.nombre)}</span>
+                                        return (
+                                            <div
+                                                key={cedula}
+                                                onClick={() => {
+                                                    if (isAlreadyMember && !isSelectedCoord) return;
+                                                    handleSelectCandidate(candidate);
+                                                }}
+                                                className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 select-none ${
+                                                    isAlreadyMember && !isSelectedCoord
+                                                        ? 'opacity-40 bg-bg-deep/40 border-border-thin cursor-not-allowed'
+                                                        : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover cursor-pointer shadow-2xs'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-8 h-8 rounded-lg bg-bg-deep border border-border-thin flex items-center justify-center text-xs font-bold text-text-main shrink-0">
+                                                        {(candidate.nombre_completo || candidate.nombre || 'IN').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0 truncate">
+                                                        <p className="font-semibold text-text-main text-xs truncate">
+                                                            {formatNombre(candidate.nombre_completo || candidate.nombre)}
+                                                        </p>
+                                                        <p className="text-text-dim font-mono text-[10px] truncate mt-0.5">
+                                                            C.I. {cedula} &bull; {candidate.departamento || candidate.carrera || candidate.cargo_instituto || 'Personal Institucional'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="shrink-0 flex items-center gap-2">
                                                     {candidate.horas_investigacion !== undefined && candidate.horas_investigacion > 0 && (
-                                                        <span className="badge-vercel badge-vercel-success text-[9px] px-1.5 py-0.5">
-                                                            {candidate.horas_investigacion}h SIGAFI
+                                                        <span className="badge-vercel badge-vercel-success text-[9px] px-2 py-0.5 font-mono">
+                                                            {candidate.horas_investigacion}h Distributivo
                                                         </span>
                                                     )}
-                                                </p>
-                                                <p className="text-text-dim font-mono text-[10px] truncate">
-                                                    C.I. {cedula} &bull; {candidate.departamento || candidate.carrera || candidate.cargo_instituto || 'Personal Institucional'}
-                                                </p>
+                                                    {candidate.type === 'ESTUDIANTE' && candidate.es_graduado === false && (
+                                                        <span className="badge-vercel badge-vercel-info text-[9px] px-2 py-0.5">
+                                                            Matriculado
+                                                        </span>
+                                                    )}
+                                                    {isAlreadyMember && (
+                                                        <span className="badge-vercel badge-vercel-neutral text-[9px]">
+                                                            En el equipo
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-
-                                            <div className="shrink-0 flex items-center gap-1">
-                                                {candidate.type === 'DOCENTE' && (
-                                                    <span className="badge-vercel badge-vercel-violet text-[9px] uppercase">
-                                                        Docente
-                                                    </span>
-                                                )}
-                                                {candidate.type === 'ADMINISTRATIVO' && (
-                                                    <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">
-                                                        Admin
-                                                    </span>
-                                                )}
-                                                {candidate.type === 'ESTUDIANTE' && (
-                                                    <span className="badge-vercel badge-vercel-info text-[9px] uppercase">
-                                                        Alumno
-                                                    </span>
-                                                )}
-                                                {candidate.type === 'EXTERNO' && (
-                                                    <span className="badge-vercel badge-vercel-warning text-[9px] uppercase">
-                                                        Externo
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })
+                                        );
+                                    })}
+                                </div>
                             )}
                         </div>
+                    ) : (
+                        /* Menú de resultados flotante para modo card standalone */
+                        showDropdown && searchQuery.trim().length > 0 && (
+                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl p-1.5 shadow-2xl max-h-[220px] overflow-y-auto z-40 custom-scrollbar">
+                                {isSearching ? (
+                                    <div className="p-4 text-center text-xs text-text-dim font-mono animate-pulse">
+                                        Buscando en {selectedType.toLowerCase()}s...
+                                    </div>
+                                ) : results.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-text-dim font-mono">
+                                        No se encontraron {selectedType.toLowerCase()}s que coincidan con la búsqueda.
+                                    </div>
+                                ) : (
+                                    results.map((candidate: any) => {
+                                        const cedula = (candidate.id_profesor || candidate.id_sigafi || '').trim();
+                                        const isAlreadyMember = existingCedulas.includes(cedula) || (excludeCoordinatorCedula && excludeCoordinatorCedula.trim() === cedula);
+                                        const isSelectedCoord = selectedCoordinatorCedula && selectedCoordinatorCedula.trim() === cedula;
+
+                                        return (
+                                            <button
+                                                key={cedula}
+                                                type="button"
+                                                onClick={() => handleSelectCandidate(candidate)}
+                                                disabled={isAlreadyMember && !isSelectedCoord}
+                                                className={`w-full text-left p-2.5 rounded-lg transition-colors flex justify-between items-center gap-2 cursor-pointer ${
+                                                    isAlreadyMember && !isSelectedCoord
+                                                        ? 'opacity-40 bg-bg-deep/20 cursor-not-allowed'
+                                                        : isSelectedCoord
+                                                        ? 'bg-brand/10 border border-brand/30'
+                                                        : 'hover:bg-bg-deep/60'
+                                                }`}
+                                            >
+                                                <div className="space-y-0.5 min-w-0">
+                                                    <p className="font-semibold text-text-main text-xs flex items-center gap-2 truncate">
+                                                        <span>{formatNombre(candidate.nombre_completo || candidate.nombre)}</span>
+                                                        {candidate.horas_investigacion !== undefined && candidate.horas_investigacion > 0 && (
+                                                            <span className="badge-vercel badge-vercel-success text-[9px] px-1.5 py-0.5">
+                                                                {candidate.horas_investigacion}h SIGAFI
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-text-dim font-mono text-[10px] truncate">
+                                                        C.I. {cedula} &bull; {candidate.departamento || candidate.carrera || candidate.cargo_instituto || 'Personal Institucional'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="shrink-0 flex items-center gap-1">
+                                                    {candidate.type === 'DOCENTE' && (
+                                                        <span className="badge-vercel badge-vercel-violet text-[9px] uppercase">
+                                                            Docente
+                                                        </span>
+                                                    )}
+                                                    {candidate.type === 'ADMINISTRATIVO' && (
+                                                        <span className="badge-vercel badge-vercel-neutral text-[9px] uppercase">
+                                                            Admin
+                                                        </span>
+                                                    )}
+                                                    {candidate.type === 'ESTUDIANTE' && (
+                                                        <span className="badge-vercel badge-vercel-info text-[9px] uppercase">
+                                                            Alumno
+                                                        </span>
+                                                    )}
+                                                    {candidate.type === 'EXTERNO' && (
+                                                        <span className="badge-vercel badge-vercel-warning text-[9px] uppercase">
+                                                            Externo
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        )
                     )}
                 </div>
             ) : (

@@ -771,7 +771,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 let listProps: any = {};
                 if (activeTab === 'equipo') {
                     listProps = {
-                        onAdd: () => addItem('Investigadores', { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
+                        onAdd: (tpl?: any) => addItem('Investigadores', tpl || { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
                         onRemove: (i: number) => removeItem('Investigadores', i),
                         onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
                     };
