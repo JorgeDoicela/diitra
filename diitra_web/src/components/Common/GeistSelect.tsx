@@ -41,8 +41,12 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
     const popoverRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    const [popoverPlacement, setPopoverPlacement] = useState<{ vertical: 'top' | 'bottom' }>({
-        vertical: 'bottom'
+    const [popoverPlacement, setPopoverPlacement] = useState<{ 
+        vertical: 'top' | 'bottom';
+        horizontal: 'left' | 'right' | 'center';
+    }>({
+        vertical: 'bottom',
+        horizontal: 'left'
     });
 
     // Extraer opciones ya sea por la prop options o dinámicamente de <option> children
@@ -92,31 +96,41 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
 
     const toggleOpen = () => {
         if (!isInteractive) return;
-        setIsOpen(prev => {
-            const next = !prev;
-            if (next) {
-                onFocus?.();
-                setSearchTerm('');
-            } else {
-                onBlur?.();
-            }
-            return next;
-        });
+        if (!isOpen) {
+            setIsOpen(true);
+            setSearchTerm('');
+            onFocus?.();
+        } else {
+            setIsOpen(false);
+            onBlur?.();
+        }
     };
 
-    // Calcular posición óptima del menú (arriba o abajo)
+    // Calcular posición óptima del menú (arriba/abajo y horizontal dinámico según dispositivo)
     useEffect(() => {
         if (!isOpen) return;
 
         const updatePosition = () => {
             if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
-            const popoverHeight = 280;
+            const popoverHeight = 320;
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
 
             const vertical = (spaceBelow < popoverHeight && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-            setPopoverPlacement({ vertical });
+
+            const viewportWidth = window.innerWidth;
+            const spaceRight = viewportWidth - rect.left;
+            const spaceLeft = rect.right;
+
+            let horizontal: 'left' | 'right' | 'center' = 'left';
+            if (viewportWidth < 640) {
+                horizontal = 'center';
+            } else if (spaceRight < 420 && spaceLeft > spaceRight) {
+                horizontal = 'right';
+            }
+
+            setPopoverPlacement({ vertical, horizontal });
         };
 
         updatePosition();
@@ -161,6 +175,13 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
         onBlur?.();
     };
 
+    // Clases de alineación horizontal inteligente
+    const horizontalPlacementClass = popoverPlacement.horizontal === 'right'
+        ? 'right-0 left-auto'
+        : popoverPlacement.horizontal === 'center'
+        ? 'left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-md'
+        : 'left-0 right-auto';
+
     return (
         <div ref={containerRef} className="relative w-full" style={style}>
             {/* Trigger Button */}
@@ -181,7 +202,7 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
 
-                <div className="shrink-0 flex items-center pointer-events-none ml-1">
+                <div className="shrink-0 flex items-center pointer-events-none ml-1.5">
                     {readOnly ? (
                         <Lock className="w-4 h-4 text-text-dim/70" />
                     ) : (
@@ -192,19 +213,21 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                 </div>
             </button>
 
-            {/* Floating Popover Menu */}
+            {/* Floating Popover Menu con Ancho Dinámico Horizontal */}
             {isOpen && isInteractive && (
                 <div
                     ref={popoverRef}
                     className={`
-                        absolute left-0 z-50 min-w-full sm:min-w-[340px] max-w-[min(540px,94vw)] bg-bg-deep border border-border-thin rounded-xl shadow-2xl p-1.5 animate-fade-in
+                        absolute z-50 bg-bg-deep border border-border-thin rounded-xl shadow-2xl p-2 animate-fade-in
+                        w-full min-w-full sm:min-w-[440px] md:min-w-[540px] lg:min-w-[640px] max-w-[min(780px,94vw)]
+                        ${horizontalPlacementClass}
                         ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}
                     `}
-                    style={{ maxHeight: '340px' }}
+                    style={{ maxHeight: '360px' }}
                 >
                     {/* Buscador inteligente si hay más de 5 opciones */}
                     {parsedOptions.length > 5 && (
-                        <div className="relative mb-1.5 pb-1.5 border-b border-border-thin/50 px-1 pt-0.5">
+                        <div className="relative mb-2 pb-2 border-b border-border-thin/50 px-1 pt-0.5">
                             <div className="relative flex items-center">
                                 <Search className="w-3.5 h-3.5 text-text-dim absolute left-2.5 pointer-events-none" />
                                 <input
@@ -213,14 +236,14 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Buscar en la lista..."
-                                    className="w-full bg-surface/50 border border-border-thin/60 rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-main placeholder:text-text-dim/50 outline-none focus:border-text-main transition-colors font-medium"
+                                    className="w-full bg-surface/50 border border-border-thin/60 rounded-lg pl-8 pr-3 py-2 text-xs text-text-main placeholder:text-text-dim/50 outline-none focus:border-text-main transition-colors font-medium"
                                 />
                             </div>
                         </div>
                     )}
 
-                    {/* Lista de Opciones */}
-                    <div className="overflow-y-auto max-h-60 space-y-1 custom-scrollbar pr-0.5">
+                    {/* Lista de Opciones con Espaciado y Lectura Óptima */}
+                    <div className="overflow-y-auto max-h-64 space-y-1 custom-scrollbar pr-1">
                         {filteredOptions.length === 0 ? (
                             <div className="py-4 px-3 text-center text-xs text-text-dim italic">
                                 No se encontraron opciones que coincidan
@@ -238,7 +261,7 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                                         onClick={() => handleSelect(option.value)}
                                         title={option.label}
                                         className={`
-                                            w-full flex items-start justify-between px-3 py-2.5 rounded-lg text-xs transition-colors text-left gap-2
+                                            w-full flex items-start justify-between px-3.5 py-2.5 rounded-lg text-xs transition-colors text-left gap-3
                                             ${isSelected 
                                                 ? 'bg-text-main text-bg-deep font-bold shadow-xs' 
                                                 : isFirstDefault 
@@ -248,11 +271,11 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                                             ${option.disabled ? 'opacity-40 cursor-default' : 'cursor-pointer'}
                                         `}
                                     >
-                                        <span className="leading-snug whitespace-normal break-words flex-1">
+                                        <span className="leading-relaxed whitespace-normal break-words flex-1 text-xs">
                                             {option.label}
                                         </span>
                                         {isSelected && (
-                                            <Check className="w-3.5 h-3.5 shrink-0 text-bg-deep mt-0.5" />
+                                            <Check className="w-4 h-4 shrink-0 text-bg-deep mt-0.5" />
                                         )}
                                     </button>
                                 );
