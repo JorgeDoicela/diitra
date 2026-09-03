@@ -368,12 +368,19 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 ? "Vinculando convocatoria y estructurando secciones de innovación..."
                 : "Vinculando convocatoria y estructurando secciones CACES...");
 
+            const selectedConv = convocatorias.find(c => getConvocatoriaId(c) === idConvocatoria);
+            const convPeriodoName = selectedConv?.periodo_nombre ?? selectedConv?.periodoNombre ?? selectedConv?.periodo ?? selectedConv?.id_periodo_navigation?.detalle ?? selectedConv?.idPeriodoNavigation?.detalle ?? '';
+            const selectedCarreraObj = carreras.find(c => getCarreraId(c) === idCarrera);
+            const carreraName = selectedCarreraObj ? getCarreraName(selectedCarreraObj) : '';
+
             const initialMetadata = isInnovacion ? {
                 ...DocumentTemplateRegistry.PROTOCOLO_INNOVACION.schema,
                 Uuid: newUuid,
                 Titulo: titulo.trim().toUpperCase(),
                 IdCarrera: idCarrera,
+                Carrera: carreraName,
                 IdConvocatoria: idConvocatoria,
+                Periodo: convPeriodoName,
                 DirectorProyecto: user?.nombre_completo || '',
                 DescripcionProyecto: descripcion.trim(),
                 DescripcionInnovacion: descripcion.trim(),
@@ -390,7 +397,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 Uuid: newUuid,
                 Titulo: titulo.trim().toUpperCase(),
                 IdCarrera: idCarrera,
+                Carrera: carreraName,
                 IdConvocatoria: idConvocatoria,
+                Periodo: convPeriodoName,
                 DirectorProyecto: user?.nombre_completo || '',
                 DescripcionProyecto: descripcion.trim(),
                 CostoTotal: parsedBudget,

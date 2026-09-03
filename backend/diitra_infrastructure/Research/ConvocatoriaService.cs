@@ -378,14 +378,14 @@ public class ConvocatoriaService : IConvocatoriaService
                 {
                     var adminProfs = await db.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
                         db.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) &&
-                            ((c.DepartamentoNavigation != null && (
+                            ((c.DepartamentoNavigation != null && c.DepartamentoNavigation.NombreDepartamento != null && (
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("rector") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("vicerrector") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("comunicaci") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("investiga") ||
                                 c.DepartamentoNavigation.NombreDepartamento.ToLower().Contains("academ")
                             )) ||
-                            (c.CargoInstitutoNavigation != null && (
+                            (c.CargoInstitutoNavigation != null && c.CargoInstitutoNavigation.Nombre != null && (
                                 c.CargoInstitutoNavigation.Nombre.ToLower().Contains("rector") ||
                                 c.CargoInstitutoNavigation.Nombre.ToLower().Contains("vicerrector") ||
                                 c.CargoInstitutoNavigation.Nombre.ToLower().Contains("comunicaci") ||

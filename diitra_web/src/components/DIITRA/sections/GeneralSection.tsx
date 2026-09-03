@@ -81,7 +81,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     const labelCarrera = config?.customLabel_showCarrera || "Carrera / Unidad Académica Vinculada";
     const labelConvocatoria = config?.customLabel_showConvocatoria || "Convocatoria Activa ISTT";
     const labelTipo = config?.customLabel_showTipo || "Tipo de Investigación";
-    const labelFechas = config?.customLabel_showFechas || "Fechas y Plazos";
+    const labelFechas = config?.customLabel_showFechas || "Fecha de Presentación del Proyecto";
 
     const filteredCarreras = React.useMemo(() => {
         if (isAdmin) return carreras;
@@ -92,21 +92,41 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             if (currentCarreraObj) {
                 list.push(currentCarreraObj);
             }
+        } else if (formData.Carrera && !list.some(c => (c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? '').toLowerCase() === String(formData.Carrera).toLowerCase())) {
+            const currentCarreraObj = carreras.find(c => (c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? '').toLowerCase() === String(formData.Carrera).toLowerCase());
+            if (currentCarreraObj) {
+                list.push(currentCarreraObj);
+            }
         }
         return list;
-    }, [isAdmin, carreras, misCarreras, formData.IdCarrera]);
+    }, [isAdmin, carreras, misCarreras, formData.IdCarrera, formData.Carrera]);
+
+    const resolvedCarreraId = React.useMemo(() => {
+        const currentId = Number(formData.IdCarrera) || 0;
+        if (currentId > 0) return currentId;
+        if (formData.Carrera && carreras.length > 0) {
+            const match = carreras.find(c => {
+                const cname = (c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? '').trim().toLowerCase();
+                return cname === String(formData.Carrera).trim().toLowerCase();
+            });
+            if (match) return match.id_carrera ?? match.idCarrera ?? 0;
+        }
+        if (!isAdmin && misCarreras.length === 1) {
+            return misCarreras[0].id_carrera ?? misCarreras[0].idCarrera ?? 0;
+        }
+        return 0;
+    }, [formData.IdCarrera, formData.Carrera, carreras, misCarreras, isAdmin]);
 
     React.useEffect(() => {
-        if (!isAdmin && misCarreras.length === 1) {
-            const unica = misCarreras[0];
-            const unicaId = unica.id_carrera ?? unica.idCarrera ?? 0;
-            if (!formData.IdCarrera || Number(formData.IdCarrera) === 0) {
-                onUpdate('IdCarrera', unicaId);
-                const cname = unica.nombre_carrera ?? unica.carrera1 ?? unica.carrera ?? '';
+        if (resolvedCarreraId > 0 && (!formData.IdCarrera || Number(formData.IdCarrera) === 0)) {
+            onUpdate('IdCarrera', resolvedCarreraId, { source: 'system' });
+            const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === resolvedCarreraId);
+            if (selectedCarrera && !formData.Carrera) {
+                const cname = selectedCarrera.nombre_carrera ?? selectedCarrera.carrera1 ?? selectedCarrera.carrera ?? '';
                 onUpdate('Carrera', cname, { source: 'system' });
             }
         }
-    }, [misCarreras, formData.IdCarrera, isAdmin, onUpdate]);
+    }, [resolvedCarreraId, formData.IdCarrera, formData.Carrera, carreras, onUpdate]);
 
     const coejecutoras = React.useMemo(() => {
         if (!formData.Investigadores || !Array.isArray(formData.Investigadores)) return [];
@@ -170,6 +190,155 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         return sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === lineId);
     }, [selectedLine, sublineas]);
 
+    // Función auxiliar para parsear formato dd/mm/aaaa o yyyy-mm-dd a Date en hora local
+    const parseLocalDate = (dateStr: string): Date | null => {
+        if (!dateStr || typeof dateStr !== 'string') return null;
+        let day = 0, month = 0, year = 0;
+        if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10);
+            year = parseInt(parts[2], 10);
+        } else if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return null;
+            if (parts[0].length === 4) {
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10);
+                day = parseInt(parts[2], 10);
+            } else {
+                day = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10);
+                year = parseInt(parts[2], 10);
+            }
+        } else {
+            return null;
+        }
+        
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+        if (year < 1000 || year > 9999) return null;
+        if (month < 1 || month > 12) return null;
+
+        const date = new Date(year, month - 1, day);
+        date.setHours(0, 0, 0, 0);
+        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+            return null;
+        }
+        return date;
+    };
+
+    // Obtener convocatoria activa seleccionada
+    const selectedConvocatoria = React.useMemo(() => {
+        const id = Number(formData.IdConvocatoria) || 0;
+        if (id <= 0) return null;
+        return convocatorias.find(c => (c.id_convocatoria ?? c.idConvocatoria ?? c.id) === id) || null;
+    }, [convocatorias, formData.IdConvocatoria]);
+
+    const convAperturaStr = selectedConvocatoria?.fecha_apertura ?? selectedConvocatoria?.fechaApertura ?? selectedConvocatoria?.fecha_inicio ?? selectedConvocatoria?.fechaInicio ?? '';
+    const convCierreStr = selectedConvocatoria?.fecha_cierre ?? selectedConvocatoria?.fechaCierre ?? selectedConvocatoria?.fecha_fin ?? selectedConvocatoria?.fechaFin ?? '';
+    const convPeriodo = selectedConvocatoria?.periodo_nombre ?? selectedConvocatoria?.periodoNombre ?? selectedConvocatoria?.periodo ?? selectedConvocatoria?.id_periodo_navigation?.detalle ?? selectedConvocatoria?.idPeriodoNavigation?.detalle ?? '';
+
+    // Sincronización automática del Periodo Académico de la Convocatoria
+    React.useEffect(() => {
+        if (convPeriodo && formData.Periodo !== convPeriodo) {
+            onUpdate('Periodo', convPeriodo, { source: 'system' });
+        }
+    }, [convPeriodo, formData.Periodo, onUpdate]);
+
+    const convAperturaDate = React.useMemo(() => convAperturaStr ? parseLocalDate(convAperturaStr) : null, [convAperturaStr]);
+    const convCierreDate = React.useMemo(() => convCierreStr ? parseLocalDate(convCierreStr) : null, [convCierreStr]);
+
+    // Límites dinámicos reactivos para los 3 calendarios
+    const maxFechaPresentacion = React.useMemo(() => {
+        if (convCierreStr && formData.FechaInicio) {
+            const dCierre = parseLocalDate(convCierreStr);
+            const dInicio = parseLocalDate(formData.FechaInicio);
+            if (dCierre && dInicio) {
+                return dInicio < dCierre ? formData.FechaInicio : convCierreStr;
+            }
+        }
+        return convCierreStr || formData.FechaInicio || undefined;
+    }, [convCierreStr, formData.FechaInicio]);
+
+    const minFechaInicio = React.useMemo(() => {
+        return formData.FechaPresentacion || convAperturaStr || (!isAdmin ? new Date().toISOString().split('T')[0] : undefined);
+    }, [formData.FechaPresentacion, convAperturaStr, isAdmin]);
+
+    const minFechaFin = React.useMemo(() => {
+        return formData.FechaInicio || undefined;
+    }, [formData.FechaInicio]);
+
+    // Cálculo sugerido automático del tiempo de ejecución en base a las fechas de inicio y fin (meses, semanas y días)
+    const suggestedExecutionTime = React.useMemo(() => {
+        const inicioVal = (formData && formData.FechaInicio) || '';
+        const finVal = (formData && formData.FechaFin) || '';
+        if (inicioVal.length === 10 && finVal.length === 10) {
+            const d1 = parseLocalDate(inicioVal);
+            const d2 = parseLocalDate(finVal);
+            if (d1 && d2 && d2 > d1) {
+                const diffTime = d2.getTime() - d1.getTime();
+                const totalDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                if (totalDays <= 0) return null;
+                if (totalDays < 7) {
+                    return totalDays === 1 ? '1 día' : `${totalDays} días`;
+                }
+
+                // Cálculo de meses reales de calendario
+                let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+                let daysRemainder = d2.getDate() - d1.getDate();
+
+                if (daysRemainder < 0) {
+                    months -= 1;
+                    const prevMonthDate = new Date(d2.getFullYear(), d2.getMonth(), 0);
+                    daysRemainder += prevMonthDate.getDate();
+                }
+
+                // Si cubre mes completo de inicio a fin (ej: 01/03 a 31/08 = 6 meses)
+                const isD1StartOfMonth = d1.getDate() === 1;
+                const isD2EndOfMonth = new Date(d2.getFullYear(), d2.getMonth() + 1, 0).getDate() === d2.getDate();
+                if (isD1StartOfMonth && isD2EndOfMonth) {
+                    const fullMonths = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + 1;
+                    return fullMonths === 1 ? '1 mes' : `${fullMonths} meses`;
+                }
+
+                // Si los meses son exactos o casi exactos (tolerancia de 2 días)
+                if (months >= 1 && (daysRemainder <= 2 || daysRemainder >= 28)) {
+                    const roundedMonths = daysRemainder >= 28 ? months + 1 : months;
+                    return roundedMonths === 1 ? '1 mes' : `${roundedMonths} meses`;
+                }
+
+                // Meses con remanente de semanas o días
+                if (months >= 1) {
+                    const weeks = Math.floor(daysRemainder / 7);
+                    const remDays = daysRemainder % 7;
+                    const parts: string[] = [months === 1 ? '1 mes' : `${months} meses`];
+
+                    if (weeks > 0) {
+                        parts.push(weeks === 1 ? '1 semana' : `${weeks} semanas`);
+                    }
+                    if (remDays > 0 && weeks === 0) {
+                        parts.push(remDays === 1 ? '1 día' : `${remDays} días`);
+                    }
+                    return parts.join(' y ');
+                }
+
+                // Menos de 1 mes: expresar en semanas y días
+                const weeks = Math.floor(totalDays / 7);
+                const days = totalDays % 7;
+                if (days === 0) {
+                    return weeks === 1 ? '1 semana' : `${weeks} semanas`;
+                }
+                if (weeks === 0) {
+                    return days === 1 ? '1 día' : `${days} días`;
+                }
+                return `${weeks === 1 ? '1 semana' : `${weeks} semanas`} y ${days === 1 ? '1 día' : `${days} días`}`;
+            }
+        }
+        return null;
+    }, [formData?.FechaInicio, formData?.FechaFin]);
+
     // Validar fechas del proyecto en tiempo real (presentación, inicio, fin)
     const dateErrors = React.useMemo(() => {
         const errors: { FechaPresentacion?: string; FechaInicio?: string; FechaFin?: string } = {};
@@ -182,69 +351,75 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         const inicioVal = (formData && formData.FechaInicio) || '';
         const finVal = (formData && formData.FechaFin) || '';
 
-        // Función auxiliar para parsear formato dd/mm/aaaa a Date en hora local
-        const parseLocalDate = (dateStr: string): Date | null => {
-            if (!dateStr) return null;
-            const normalized = dateStr.replace(/-/g, '/');
-            const parts = normalized.split('/');
-            if (parts.length !== 3) return null;
-            
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10);
-            const year = parseInt(parts[2], 10);
-            
-            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-            if (year < 1000 || year > 9999) return null;
-            if (month < 1 || month > 12) return null;
-
-            const date = new Date(year, month - 1, day);
-            if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-                return null;
-            }
-            return date;
-        };
+        let parsedPres: Date | null = null;
+        let parsedInicio: Date | null = null;
+        let parsedFin: Date | null = null;
 
         // 1. Validar Fecha de Presentación
         if (presVal && presVal.trim() !== '') {
             if (presVal.length === 10) {
-                const parsed = parseLocalDate(presVal);
-                if (!parsed) {
+                parsedPres = parseLocalDate(presVal);
+                if (!parsedPres) {
                     errors.FechaPresentacion = 'Fecha inválida';
+                } else if (convAperturaDate && parsedPres < convAperturaDate) {
+                    const dia = String(convAperturaDate.getDate()).padStart(2, '0');
+                    const mes = String(convAperturaDate.getMonth() + 1).padStart(2, '0');
+                    const anio = convAperturaDate.getFullYear();
+                    errors.FechaPresentacion = `No puede ser anterior a la apertura de la convocatoria (${dia}/${mes}/${anio})`;
+                } else if (convCierreDate && parsedPres > convCierreDate) {
+                    const dia = String(convCierreDate.getDate()).padStart(2, '0');
+                    const mes = String(convCierreDate.getMonth() + 1).padStart(2, '0');
+                    const anio = convCierreDate.getFullYear();
+                    errors.FechaPresentacion = `Supera el cierre de la convocatoria (${dia}/${mes}/${anio})`;
                 }
             } else {
                 errors.FechaPresentacion = 'Fecha incompleta (dd/mm/aaaa)';
             }
         }
 
-        // 2. Validar Fecha de Inicio
-        let parsedInicio: Date | null = null;
+        // 2. Validar Fecha de Inicio (En flujo digital debe ser futura)
         if (inicioVal && inicioVal.trim() !== '') {
             if (inicioVal.length === 10) {
                 parsedInicio = parseLocalDate(inicioVal);
                 if (!parsedInicio) {
                     errors.FechaInicio = 'Fecha inválida';
-                } else if (parsedInicio < today) {
-                    errors.FechaInicio = 'La fecha de inicio no puede ser anterior a la fecha actual';
+                } else if (!isAdmin && parsedInicio <= today) {
+                    errors.FechaInicio = 'La fecha de inicio debe ser una fecha futura';
                 }
             } else {
                 errors.FechaInicio = 'Fecha incompleta (dd/mm/aaaa)';
             }
         }
 
-        // 3. Validar Fecha de Fin
+        // 3. Cruce Presentación vs Inicio: Presentación debe ser anterior o igual a Inicio
+        if (parsedPres && parsedInicio) {
+            if (parsedPres > parsedInicio) {
+                errors.FechaPresentacion = 'La fecha de presentación debe ser anterior o igual a la de inicio';
+                if (!errors.FechaInicio) {
+                    errors.FechaInicio = 'La fecha de inicio debe ser posterior o igual a la de presentación';
+                }
+            }
+        }
+
+        // 4. Validar Fecha de Fin
         if (finVal && finVal.trim() !== '') {
             if (finVal.length === 10) {
-                const parsedFin = parseLocalDate(finVal);
+                parsedFin = parseLocalDate(finVal);
                 if (!parsedFin) {
                     errors.FechaFin = 'Fecha inválida';
                 } else if (parsedInicio) {
                     if (parsedFin <= parsedInicio) {
-                        errors.FechaFin = 'La fecha de fin debe ser posterior a la fecha de inicio';
+                        errors.FechaFin = 'La fecha de finalización debe ser posterior a la fecha de inicio';
+                    } else {
+                        const diffDays = Math.round((parsedFin.getTime() - parsedInicio.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays < 28) {
+                            errors.FechaFin = 'La duración mínima del proyecto debe ser de al menos 1 mes';
+                        }
                     }
                 } else if (inicioVal && inicioVal.length === 10) {
                     const backupInicio = parseLocalDate(inicioVal);
                     if (backupInicio && parsedFin <= backupInicio) {
-                        errors.FechaFin = 'La fecha de fin debe ser posterior a la fecha de inicio';
+                        errors.FechaFin = 'La fecha de finalización debe ser posterior a la fecha de inicio';
                     }
                 }
             } else {
@@ -253,7 +428,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         }
 
         return errors;
-    }, [formData?.FechaPresentacion, formData?.FechaInicio, formData?.FechaFin]);
+    }, [formData?.FechaPresentacion, formData?.FechaInicio, formData?.FechaFin, isAdmin, convAperturaDate, convCierreDate]);
 
     // Handler when the selected research group changes
     const handleGroupChange = (groupName: string, meta?: { source?: 'local' | 'remote' }) => {
@@ -503,33 +678,20 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             case 'showTipo':
                 renderedCoreKeys.add('showTipo');
                 return showTipo ? (
-                    <div key="showTipo" className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-                        <div className="md:col-span-2">
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelTipo}</label>
-                            <select 
-                                value={(() => {
-                                    const raw = formData.TipoInvestigacion || 'APLICADA';
-                                    const upper = raw.trim().toUpperCase();
-                                    if (upper === 'BÁSICA' || upper === 'BASICA') return 'BASICA';
-                                    if (upper === 'APLICADA') return 'APLICADA';
-                                    return 'DESARROLLO EXPERIMENTAL';
-                                })()}
-                                onChange={(e) => onUpdate('TipoInvestigacion', e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
+                    <div key="showTipo" className="grid grid-cols-1 gap-4 sm:gap-6">
+                        <div className="w-full">
+                            <CoWorkField 
+                                name="TipoInvestigacion"
+                                type="select"
+                                cowork={cowork}
+                                label={labelTipo}
+                                onValueChange={(val) => onUpdate('TipoInvestigacion', val)}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold"
                             >
                                 <option value="BASICA">BÁSICA</option>
                                 <option value="APLICADA">APLICADA</option>
                                 <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-2">
-                            <CoWorkField 
-                                name="CampoAmplio" 
-                                cowork={cowork} 
-                                label="Campo Amplio" 
-                                onValueChange={(v, meta) => onUpdate('CampoAmplio', v, meta)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                            />
+                            </CoWorkField>
                         </div>
                     </div>
                 ) : null;
@@ -537,7 +699,14 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             case 'showCaces':
                 renderedCoreKeys.add('showCaces');
                 return showCaces ? (
-                    <div key="showCaces" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div key="showCaces" className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                        <CoWorkField 
+                            name="CampoAmplio" 
+                            cowork={cowork} 
+                            label="Campo Amplio" 
+                            onValueChange={(v, meta) => onUpdate('CampoAmplio', v, meta)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                        />
                         <CoWorkField 
                             name="CampoEspecifico" 
                             cowork={cowork} 
@@ -559,17 +728,21 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
             case 'showConvocatoria':
                 renderedCoreKeys.add('showCarrera');
                 renderedCoreKeys.add('showConvocatoria');
-                return (showCarrera || showConvocatoria) ? (
-                    <div key="showCarrera" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                const canShowConvocatoriaField = isAdmin && showConvocatoria;
+                return (showCarrera || canShowConvocatoriaField) ? (
+                    <div key="showCarrera" className={`grid grid-cols-1 ${canShowConvocatoriaField ? 'md:grid-cols-2' : ''} gap-4 sm:gap-6`}>
                         {showCarrera && (
                             <div className="w-full">
-                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelCarrera}</label>
-                                <select 
-                                    value={Number(formData.IdCarrera) || 0}
-                                    onChange={(e) => {
-                                        const val = Number(e.target.value);
-                                        onUpdate('IdCarrera', val);
-                                        const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === val);
+                                <CoWorkField 
+                                    name="IdCarrera"
+                                    type="select"
+                                    cowork={cowork}
+                                    label={labelCarrera}
+                                    readOnly={!isAdmin && filteredCarreras.length <= 1}
+                                    onValueChange={(val) => {
+                                        const numVal = Number(val);
+                                        onUpdate('IdCarrera', numVal);
+                                        const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === numVal);
                                         if (selectedCarrera) {
                                             const cname = selectedCarrera.nombre_carrera ?? selectedCarrera.carrera1 ?? selectedCarrera.carrera ?? '';
                                             onUpdate('Carrera', cname, { source: 'system' });
@@ -577,8 +750,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                             onUpdate('Carrera', '', { source: 'system' });
                                         }
                                     }}
-                                    disabled={!isAdmin && filteredCarreras.length <= 1}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold"
                                 >
                                     <option value={0}>Seleccione una carrera...</option>
                                     {filteredCarreras.map(c => {
@@ -588,7 +760,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                             <option key={cid} value={cid}>{cname}</option>
                                         );
                                     })}
-                                </select>
+                                </CoWorkField>
                                 {!isAdmin && misCarreras.length > 1 && (
                                     <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold flex items-center gap-1.5 animate-fade-in">
                                         <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
@@ -612,29 +784,30 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             </div>
                         )}
 
-                        {showConvocatoria && (
+                        {canShowConvocatoriaField && (
                             <div className="w-full">
                                 <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelConvocatoria}</label>
-                                <select 
-                                    value={formData.IdConvocatoria || 0}
-                                    onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
-                                    disabled={!!formData.IdConvocatoria}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <option value={0}>Seleccione una convocatoria...</option>
-                                    {convocatorias.map(c => {
-                                        const isExpired = isPastDeadline(c.fecha_cierre || c.fechaCierre);
-                                        const isCurrent = Number(c.id_convocatoria ?? c.idConvocatoria) === Number(formData.IdConvocatoria);
-                                        if (isExpired && !isCurrent) {
-                                            return null;
-                                        }
-                                        return (
-                                            <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
-                                                {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
+                                <div className="relative">
+                                    <select 
+                                        value={formData.IdConvocatoria || 0}
+                                        onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none cursor-pointer transition-all"
+                                    >
+                                        <option value={0}>Seleccione una convocatoria...</option>
+                                        {convocatorias.map(c => {
+                                            const isExpired = isPastDeadline(c.fecha_cierre || c.fechaCierre);
+                                            const isCurrent = Number(c.id_convocatoria ?? c.idConvocatoria) === Number(formData.IdConvocatoria);
+                                            if (isExpired && !isCurrent) {
+                                                return null;
+                                            }
+                                            return (
+                                                <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
+                                                    {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -648,6 +821,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             name="DirectorProyecto" 
                             cowork={cowork} 
                             label={labelDirector} 
+                            readOnly={!isAdmin}
                             onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
                             className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                         />
@@ -662,24 +836,43 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             <CoWorkField 
                                 name="Periodo" 
                                 cowork={cowork} 
-                                label="Periodo Académico (Ej: MARZO 2025 - SEPTIEMBRE 2025)" 
+                                label="Periodo Académico de Convocatoria" 
+                                readOnly={!!selectedConvocatoria}
+                                placeholder={convPeriodo || "Periodo Académico de Convocatoria"}
                                 onValueChange={(v, meta) => onUpdate('Periodo', v, meta)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                             />
-                            <CoWorkField 
-                                name="TiempoEjecucion" 
-                                cowork={cowork} 
-                                label="Tiempo Estimado de Ejecución (Meses / Semanas)" 
-                                onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                            />
+                            <div className="w-full">
+                                <CoWorkField 
+                                    name="TiempoEjecucion" 
+                                    cowork={cowork} 
+                                    label="Tiempo Estimado de Ejecución" 
+                                    placeholder="Ej: 6 meses"
+                                    onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
+                                />
+
+                                {/* Sugerencia reactiva según FechaInicio y FechaFin */}
+                                {suggestedExecutionTime && (formData.TiempoEjecucion || '').trim().toLowerCase() !== suggestedExecutionTime.toLowerCase() && (
+                                    <div className="mt-2 px-2 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-text-dim animate-fade-in">
+                                        <span className="truncate">Sugerido por fechas: <strong className="text-text-main font-semibold">{suggestedExecutionTime}</strong></span>
+                                        <button
+                                            type="button"
+                                            onClick={() => onUpdate('TiempoEjecucion', suggestedExecutionTime)}
+                                            className="text-[10px] font-extrabold text-accent-vercel hover:text-text-main hover:underline transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                                        >
+                                            Aplicar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                                 <CoWorkField 
                                     name="FechaPresentacion" 
                                     cowork={cowork} 
-                                    label={`${labelFechas} (Presentación)`} 
+                                    label={labelFechas} 
                                     onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
                                     className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
                                         dateErrors.FechaPresentacion 
@@ -688,6 +881,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     }`} 
                                     placeholder="dd/mm/aaaa"
                                     mask="date"
+                                    minDate={convAperturaStr || undefined}
+                                    maxDate={maxFechaPresentacion}
                                 />
                                 {dateErrors.FechaPresentacion && (
                                     <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
@@ -699,7 +894,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 <CoWorkField 
                                     name="FechaInicio" 
                                     cowork={cowork} 
-                                    label="Fecha Prevista Inicio (día/mes/año)" 
+                                    label="Fecha Prevista de Inicio del Proyecto" 
                                     onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
                                     className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
                                         dateErrors.FechaInicio 
@@ -708,6 +903,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     }`} 
                                     placeholder="dd/mm/aaaa"
                                     mask="date"
+                                    minDate={minFechaInicio}
+                                    maxDate={formData.FechaFin || undefined}
                                 />
                                 {dateErrors.FechaInicio && (
                                     <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
@@ -719,7 +916,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 <CoWorkField 
                                     name="FechaFin" 
                                     cowork={cowork} 
-                                    label="Fecha Prevista Fin (día/mes/año)" 
+                                    label="Fecha Prevista de Finalización del Proyecto" 
                                     onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
                                     className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
                                         dateErrors.FechaFin 
@@ -728,6 +925,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     }`} 
                                     placeholder="dd/mm/aaaa"
                                     mask="date"
+                                    minDate={minFechaFin}
                                 />
                                 {dateErrors.FechaFin && (
                                     <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">

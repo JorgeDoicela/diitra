@@ -70,6 +70,14 @@ body {
     outline: none !important;
 }
 
+/* Normalización Global Vercel Geist: Desactivar el cursor de prohibición agresivo del SO */
+:disabled,
+[disabled],
+.cursor-not-allowed,
+[class*="cursor-not-allowed"] {
+    cursor: default !important;
+}
+
 /* Enfoque Vercel en Inputs */
 input:focus,
 textarea:focus,

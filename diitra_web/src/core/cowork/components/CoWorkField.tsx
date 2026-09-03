@@ -1,26 +1,13 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Lock } from 'lucide-react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
 import { DocumentDataContext, SectionGuardContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
+import { GeistCalendar } from '../../../components/Common/GeistCalendar';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
 
-function isoToDdmmyyyy(isoStr: string): string {
-    if (!isoStr || !isoStr.includes('-')) return isoStr;
-    const parts = isoStr.split('-');
-    if (parts.length < 3) return isoStr;
-    const [year, month, day] = parts;
-    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
-}
 
-function ddmmyyyyToIso(dateStr: string): string {
-    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('/')) return '';
-    const parts = dateStr.split('/');
-    if (parts.length < 3) return '';
-    const [day, month, year] = parts;
-    if (!day || !month || !year || year.length !== 4) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-}
 
 interface CoWorkFieldProps {
     name: string;
@@ -32,8 +19,12 @@ interface CoWorkFieldProps {
     onValueChange?: (value: any, meta?: { source?: 'local' | 'remote' }) => void;
     children?: React.ReactNode;
     readOnly?: boolean;
+    lockBadge?: string | boolean;
     mask?: 'date';
     uppercase?: boolean;
+    minDate?: string;
+    maxDate?: string;
+    options?: { value: string | number; label: string; disabled?: boolean }[];
 }
 
 function maskDate(value: string, deletedSlash: boolean = false): string {
@@ -228,8 +219,12 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     onValueChange,
     children,
     readOnly,
+    lockBadge,
     mask,
-    uppercase
+    uppercase,
+    minDate,
+    maxDate,
+    options,
 }) => {
     const parentFormData = useContext(DocumentDataContext);
     const guardContext = useContext(SectionGuardContext);
@@ -260,17 +255,10 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         const readYjs = (): any => {
             const raw = ytext.toString();
             if (raw === 'undefined' || raw === null) return null;
-            if (raw === '' && !seededRef.current && dbValue !== undefined && dbValue !== null && dbValue !== '') {
+            if (raw === '' && dbValue !== undefined && dbValue !== null && dbValue !== '') {
                 return null;
             }
             return type === 'checkbox' ? raw === 'true' : raw;
-        };
-
-        const syncDisplayFromYjs = () => {
-            const val = readYjs();
-            if (val !== null) {
-                setDisplayValue(val);
-            }
         };
 
         const currentYjsVal = readYjs();
@@ -309,35 +297,31 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         } else if (currentYjsVal !== null) {
             setDisplayValue(currentYjsVal);
         } else if (
-            historyLoaded &&
-            !seededRef.current &&
-            ytext.length === 0 &&
             dbValue !== undefined &&
             dbValue !== null &&
             dbValue !== ''
         ) {
-            seededRef.current = true;
-            const isReadOnlyMode = readOnly || guardContext.readOnly || cowork.session.readOnly;
-            if (!isReadOnlyMode) {
-                const states = cowork.awareness ? Array.from(cowork.awareness.getStates().values()) : [];
-                const otherUsersCount = states.filter((st: any) => st?.user?.id && st?.user?.id !== cowork.user?.id).length;
-                const isLeader = otherUsersCount === 0;
+            const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
+            setDisplayValue(parsed);
 
-                if (isLeader) {
-                    coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time, sole user):`, dbValue);
-                    const stringVal = String(dbValue);
-                    ydoc.transact(() => {
-                        ytext.delete(0, ytext.length);
-                        ytext.insert(0, stringVal);
-                    }, 'local-seed');
-                } else {
-                    coworkLog(`[CoWorkField:${name}] Postponing seed, active session with ${otherUsersCount} other user(s)`);
-                    const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
-                    setDisplayValue(parsed);
+            if (historyLoaded && !seededRef.current) {
+                seededRef.current = true;
+                const isReadOnlyMode = readOnly || guardContext.readOnly || cowork.session.readOnly;
+                if (!isReadOnlyMode) {
+                    const states = cowork.awareness ? Array.from(cowork.awareness.getStates().values()) : [];
+                    const localUserId = (cowork.awareness?.getLocalState() as any)?.user?.id;
+                    const otherUsersCount = states.filter((st: any) => st?.user?.id && st?.user?.id !== localUserId).length;
+                    const isLeader = otherUsersCount === 0;
+
+                    if (isLeader) {
+                        coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time, sole user):`, dbValue);
+                        const stringVal = String(dbValue);
+                        ydoc.transact(() => {
+                            ytext.delete(0, ytext.length);
+                            ytext.insert(0, stringVal);
+                        }, 'local-seed');
+                    }
                 }
-            } else {
-                const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
-                setDisplayValue(parsed);
             }
         }
 
@@ -444,36 +428,64 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         }
     };
 
-    const datePickerRef = useRef<HTMLInputElement>(null);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [popoverPlacement, setPopoverPlacement] = useState<{ vertical: 'top' | 'bottom'; horizontal: 'left' | 'right' }>({
+        vertical: 'bottom',
+        horizontal: 'right'
+    });
+    const calendarContainerRef = useRef<HTMLDivElement>(null);
 
-    const handleCalendarClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (datePickerRef.current) {
-            try {
-                if ('showPicker' in HTMLInputElement.prototype) {
-                    datePickerRef.current.showPicker();
-                } else {
-                    datePickerRef.current.click();
-                }
-            } catch (err) {
-                datePickerRef.current.click();
+    useEffect(() => {
+        if (!isCalendarOpen) return;
+
+        const updatePosition = () => {
+            if (!calendarContainerRef.current) return;
+            const rect = calendarContainerRef.current.getBoundingClientRect();
+            const calendarHeight = 350;
+            const calendarWidth = 310;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            const vertical = (spaceBelow < calendarHeight && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+            const horizontal = (rect.right < calendarWidth && window.innerWidth - rect.left >= calendarWidth) ? 'left' : 'right';
+
+            setPopoverPlacement({ vertical, horizontal });
+        };
+
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (calendarContainerRef.current && !calendarContainerRef.current.contains(event.target as Node)) {
+                setIsCalendarOpen(false);
             }
-        }
-    };
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsCalendarOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isCalendarOpen]);
 
-    const handleDatePickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const isoVal = e.target.value;
-        if (!isoVal) return;
-        const formatted = isoToDdmmyyyy(isoVal);
-        setDisplayValue(formatted);
-        onValueChange?.(formatted, { source: 'local' });
+    const handleCalendarSelect = (newDateStr: string) => {
+        setDisplayValue(newDateStr);
+        onValueChange?.(newDateStr, { source: 'local' });
 
         if (ydoc) {
             const ytext = ydoc.getText(name);
             const current = ytext.toString();
-            if (current !== formatted) {
+            if (current !== newDateStr) {
                 ydoc.transact(() => {
-                    applyMinimalDiff(ytext, current, formatted);
+                    applyMinimalDiff(ytext, current, newDateStr);
                 }, 'local-input');
             }
         }
@@ -487,16 +499,26 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
           }
         : {};
 
+    const isDateField = mask === 'date';
+
+    const toggleCalendar = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (isDateField && !cowork.session.readOnly && !isFieldReadOnly) {
+            setIsCalendarOpen(prev => !prev);
+        }
+    };
+
     const commonProps = {
         name,
         placeholder,
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
-            : `${className} ${mask === 'date' ? 'pr-10' : ''} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
+            : `${className} ${isDateField ? 'pr-10 cursor-pointer select-none' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
-        readOnly: isFieldReadOnly,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
+        readOnly: isFieldReadOnly || isDateField,
+        onClick: isDateField ? toggleCalendar : undefined,
+        onFocus: isDateField ? undefined : handleFocus,
+        onBlur: isDateField ? undefined : handleBlur,
         style: borderStyle
     };
 
@@ -507,7 +529,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                     {label}
                 </label>
             )}
-            <div className="relative">
+            <div className="relative" ref={isDateField ? calendarContainerRef : undefined}>
                 {activeUsersEditing.length > 0 && type !== 'checkbox' && (
                     <div className="absolute right-2 -top-2.5 z-50 flex items-center gap-1">
                         {/* Usuario principal con nombre completo */}
@@ -537,36 +559,79 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                 {type === 'text' && <input {...commonProps} type="text" value={displayValue} onChange={handleChange} />}
                 {type === 'textarea' && <textarea {...commonProps} value={displayValue} onChange={handleChange} />}
                 {type === 'select' && (
-                    <select {...commonProps} value={displayValue} onChange={handleChange}>
+                    <GeistSelect
+                        name={name}
+                        value={displayValue}
+                        options={options}
+                        placeholder={placeholder || 'Seleccione una opción...'}
+                        disabled={cowork.session.readOnly || isFieldReadOnly}
+                        readOnly={isFieldReadOnly}
+                        className={className}
+                        style={borderStyle}
+                        onChange={(newVal) => {
+                            setDisplayValue(newVal);
+                            onValueChange?.(newVal, { source: 'local' });
+                            if (ydoc) {
+                                const ytext = ydoc.getText(name);
+                                const current = ytext.toString();
+                                const strVal = String(newVal);
+                                if (current !== strVal) {
+                                    ydoc.transact(() => {
+                                        ytext.delete(0, ytext.length);
+                                        ytext.insert(0, strVal);
+                                    }, 'local-input');
+                                }
+                            }
+                        }}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                    >
                         {children}
-                    </select>
+                    </GeistSelect>
                 )}
                 {type === 'checkbox' && (
                     <input {...commonProps} type="checkbox" checked={displayValue} onChange={handleChange} />
                 )}
+
+                {isFieldReadOnly && !isDateField && type !== 'select' && (
+                    <div 
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none select-none animate-fade-in"
+                        title="Campo de solo lectura institucional"
+                    >
+                        <Lock className="w-4 h-4 text-text-dim/70" />
+                    </div>
+                )}
                 
                 {mask === 'date' && (
-                    <>
-                        <input
-                            ref={datePickerRef}
-                            type="date"
-                            tabIndex={-1}
-                            aria-hidden="true"
-                            value={ddmmyyyyToIso(displayValue)}
-                            onChange={handleDatePickerChange}
-                            className="sr-only opacity-0 absolute w-0 h-0 pointer-events-none"
-                        />
+                    <div>
                         <button
                             type="button"
                             tabIndex={-1}
-                            onClick={handleCalendarClick}
+                            onClick={toggleCalendar}
                             disabled={cowork.session.readOnly || isFieldReadOnly}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-emerald-600 hover:text-emerald-500 transition-colors cursor-pointer rounded-md hover:bg-emerald-500/10"
-                            title="Abrir calendario"
+                            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer rounded-md ${
+                                isCalendarOpen ? 'text-text-main bg-surface-hover' : ''
+                            }`}
+                            title="Seleccionar fecha en calendario"
                         >
-                            <Calendar className="w-4.5 h-4.5" />
+                            <Calendar className="w-4 h-4" />
                         </button>
-                    </>
+
+                        {isCalendarOpen && !cowork.session.readOnly && !isFieldReadOnly && (
+                            <div className={`absolute ${popoverPlacement.horizontal === 'left' ? 'left-0' : 'right-0'} ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} z-50 animate-fade-in`}>
+                                <GeistCalendar
+                                    value={displayValue}
+                                    minDate={minDate}
+                                    maxDate={maxDate}
+                                    onChange={(newVal) => {
+                                        handleCalendarSelect(newVal);
+                                        setIsCalendarOpen(false);
+                                    }}
+                                    onClose={() => setIsCalendarOpen(false)}
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
             {type === 'checkbox' && label && (
