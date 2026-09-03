@@ -3,13 +3,14 @@ import { AlertTriangle } from 'lucide-react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import type { IdentificationField } from '../../../pages/Admin/Templates/types';
-import api from '../../../api/axios_config';
 
 interface GeneralSectionProps {
     formData: any;
     cowork: CoWorkHandle;
     convocatorias: any[];
     carreras: any[];
+    misCarreras?: any[];
+    programas?: any[];
     groups?: any[];
     dominios?: any[];
     lineas?: any[];
@@ -38,6 +39,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     cowork,
     convocatorias,
     carreras,
+    misCarreras: initialMisCarreras = [],
+    programas: initialProgramas = [],
     groups = [],
     dominios = [],
     lineas = [],
@@ -47,19 +50,16 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     isAdmin = false,
     config
 }) => {
-    const [misCarreras, setMisCarreras] = React.useState<any[]>([]);
-    const [programas, setProgramas] = React.useState<any[]>([]);
+    const [misCarreras, setMisCarreras] = React.useState<any[]>(initialMisCarreras);
+    const [programas, setProgramas] = React.useState<any[]>(initialProgramas);
 
     React.useEffect(() => {
-        if (!isAdmin) {
-            api.get('/catalogs/mi-carrera')
-                .then(res => setMisCarreras(res.data || []))
-                .catch(err => console.error("Error al cargar carreras del docente:", err));
-        }
-        api.get('/catalogs/programas')
-            .then(res => setProgramas(res.data || []))
-            .catch(err => console.error("Error al cargar programas de investigación:", err));
-    }, [isAdmin]);
+        setMisCarreras(initialMisCarreras);
+    }, [initialMisCarreras]);
+
+    React.useEffect(() => {
+        setProgramas(initialProgramas);
+    }, [initialProgramas]);
 
     const customFieldsList: IdentificationField[] = config?.customFields || [];
 
@@ -597,6 +597,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 
             case 'showLinea':
                 renderedCoreKeys.add('showLinea');
+                const isSublineaDisabled = !selectedLine && !formData.LineaInvestigacion && !formData.SublineaInvestigacion;
                 return showLinea ? (
                     <div key="showLinea" className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
                         <div>
@@ -621,6 +622,9 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     {dominios.map((d: any) => (
                                         <option key={d.id_dominio ?? d.idDominio} value={d.nombre}>{d.nombre}</option>
                                     ))}
+                                    {formData.Dominio && !dominios.some((d: any) => d.nombre === formData.Dominio) && (
+                                        <option value={formData.Dominio}>{formData.Dominio}</option>
+                                    )}
                                 </CoWorkField>
                             )}
                         </div>
@@ -642,6 +646,9 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                         </option>
                                     );
                                 })}
+                                {formData.LineaInvestigacion && !availableLines.some((l: any) => (l.nombre ?? l.nombreLinea) === formData.LineaInvestigacion) && (
+                                    <option value={formData.LineaInvestigacion}>{formData.LineaInvestigacion}</option>
+                                )}
                             </CoWorkField>
                         </div>
                         <div>
@@ -650,15 +657,15 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 cowork={cowork} 
                                 type="select"
                                 label="Sublínea de Investigación" 
-                                readOnly={!selectedLine}
+                                readOnly={isSublineaDisabled}
                                 onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
                                 className={`w-full border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold outline-none transition-all ${
-                                    !selectedLine 
+                                    isSublineaDisabled 
                                         ? 'bg-bg-deep/50 border-border-thin/80 text-text-dim cursor-not-allowed opacity-50 select-none' 
                                         : 'bg-bg-deep border-border-thin text-text-main focus:border-text-main'
                                 }`} 
                             >
-                                {!selectedLine ? (
+                                {isSublineaDisabled ? (
                                     <option value="">-- Primero seleccione una Línea --</option>
                                 ) : (
                                     <>
@@ -668,6 +675,9 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                                 {s.nombre}
                                             </option>
                                         ))}
+                                        {formData.SublineaInvestigacion && !availableSublines.some((s: any) => s.nombre === formData.SublineaInvestigacion) && (
+                                            <option value={formData.SublineaInvestigacion}>{formData.SublineaInvestigacion}</option>
+                                        )}
                                     </>
                                 )}
                             </CoWorkField>

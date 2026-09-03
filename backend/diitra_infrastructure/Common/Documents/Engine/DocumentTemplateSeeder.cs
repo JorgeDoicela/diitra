@@ -31,10 +31,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             logger.LogInformation("DIITRA DocumentSeeder: Iniciando sincronización de {Count} plantillas semilla...", seedTemplates.Count);
 
             var dbSet = context.Set<DocumentTemplate>();
+            var existingTemplates = await dbSet.ToListAsync();
+            var existingMap = existingTemplates.ToDictionary(t => t.Code, StringComparer.OrdinalIgnoreCase);
 
             foreach (var seed in seedTemplates)
             {
-                var template = await dbSet.FirstOrDefaultAsync(t => t.Code == seed.Code);
+                existingMap.TryGetValue(seed.Code, out var template);
 
                 // Cargar archivos físicos desde disco
                 var fileHtml = await fileLoader.LoadAsync(seed.Code);

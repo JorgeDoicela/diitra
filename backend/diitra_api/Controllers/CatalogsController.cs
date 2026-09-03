@@ -22,6 +22,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetTiposProducto()
         {
             var data = await _context.InvCatTipoProductos
+                .AsNoTracking()
                 .OrderByDescending(t => t.Activo)
                 .ThenBy(t => t.Nombre)
                 .ToListAsync();
@@ -70,6 +71,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetTiposEvidencia()
         {
             var data = await _context.InvCatTipoEvidencias
+                .AsNoTracking()
                 .Where(t => t.Activo == true)
                 .OrderBy(t => t.Nombre)
                 .ToListAsync();
@@ -80,6 +82,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetEntidadesExternas()
         {
             var data = await _context.InvEntidadesExternas
+                .AsNoTracking()
                 .Where(e => e.Activo == true)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
@@ -90,6 +93,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetConfigIndicadores()
         {
             var data = await _context.InvConfigIndicadores
+                .AsNoTracking()
                 .OrderByDescending(i => i.Activo)
                 .ThenBy(i => i.CodigoIndicador)
                 .ToListAsync();
@@ -141,7 +145,7 @@ namespace diitra_api.Controllers
         [HttpGet("config-general")]
         public async Task<IActionResult> GetConfigGeneral([FromQuery] string? prefix = null)
         {
-            var query = _context.InvConfigsGenerales.AsQueryable();
+            var query = _context.InvConfigsGenerales.AsNoTracking().AsQueryable();
             if (!string.IsNullOrEmpty(prefix))
             {
                 query = query.Where(c => c.Clave.StartsWith(prefix));
@@ -154,6 +158,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetDominios()
         {
             var data = await _context.InvDominios
+                .AsNoTracking()
                 .OrderByDescending(d => d.Activo)
                 .ThenBy(d => d.Nombre)
                 .ToListAsync();
@@ -200,6 +205,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetCarreras()
         {
             var data = await _context.Carreras
+                .AsNoTracking()
                 .OrderBy(c => c.Carrera1)
                 .ToListAsync();
             return Ok(data);
@@ -261,6 +267,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetLineasInvestigacion()
         {
             var data = await _context.InvLineasInvestigacion
+                .AsNoTracking()
                 .OrderBy(l => l.NombreLinea)
                 .ToListAsync();
             return Ok(data);
@@ -270,6 +277,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetSublineasInvestigacion()
         {
             var data = await _context.InvSublineas
+                .AsNoTracking()
                 .Where(s => s.Activo == true)
                 .OrderBy(s => s.Nombre)
                 .ToListAsync();
@@ -324,6 +332,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetPeriodos()
         {
             var data = await _context.Periodos
+                .AsNoTracking()
                 .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.IdPeriodo)
                 .ToListAsync();
@@ -377,6 +386,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetEstadosConfig()
         {
             var estados = await _context.InvConfigWorkflows
+                .AsNoTracking()
                 .Where(w => w.Activo)
                 .Select(w => new {
                     estado = w.EstadoDestino,
@@ -396,6 +406,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetProgramas()
         {
             var data = await _context.InvProgramas
+                .AsNoTracking()
                 .Where(p => p.Activo == true)
                 .OrderBy(p => p.Nombre)
                 .Select(p => new { p.IdPrograma, p.Uuid, p.Nombre, p.Activo })
@@ -420,6 +431,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetOds()
         {
             var data = await _context.InvOds
+                .AsNoTracking()
                 .Include(o => o.IdEjeNavigation)
                 .OrderBy(o => o.NumeroOds)
                 .Select(o => new {

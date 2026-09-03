@@ -50,6 +50,7 @@ public class ConvocatoriaService : IConvocatoriaService
     public async Task<IEnumerable<ConvocatoriaDto>> GetAllAsync()
     {
         return await _context.InvConvocatorias
+            .AsNoTracking()
             .Include(c => c.IdPeriodoNavigation)
             .OrderByDescending(c => c.Anio)
             .Select(c => new ConvocatoriaDto
@@ -78,6 +79,7 @@ public class ConvocatoriaService : IConvocatoriaService
     public async Task<ConvocatoriaDto?> GetByUuidAsync(string uuid)
     {
         return await _context.InvConvocatorias
+            .AsNoTracking()
             .Include(c => c.IdPeriodoNavigation)
             .Where(c => c.Uuid == uuid)
             .Select(c => new ConvocatoriaDto
@@ -711,6 +713,7 @@ public class ConvocatoriaService : IConvocatoriaService
     public async Task<IEnumerable<object>> GetCatalogosAgendasAsync()
     {
         return await _context.InvAgendasZonales
+            .AsNoTracking()
             .Select(a => new { id = a.IdAgendaZonal, nombre = a.Nombre })
             .ToListAsync();
     }
@@ -718,6 +721,7 @@ public class ConvocatoriaService : IConvocatoriaService
     public async Task<IEnumerable<object>> GetCatalogosRubricasAsync()
     {
         return await _context.Set<InvRubrica>()
+            .AsNoTracking()
             .Where(r => r.Activo)
             .Select(r => new { id = r.IdRubrica, nombre = r.Nombre })
             .ToListAsync();
@@ -726,6 +730,7 @@ public class ConvocatoriaService : IConvocatoriaService
     public async Task<IEnumerable<object>> GetCatalogosLineasAsync()
     {
         return await _context.InvLineasInvestigacion
+            .AsNoTracking()
             .Where(l => l.Activo == true)
             .Select(l => new { id = l.IdLinea, nombre = l.NombreLinea })
             .ToListAsync();

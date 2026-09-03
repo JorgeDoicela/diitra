@@ -41,30 +41,43 @@ export function useGroupsPage() {
         type: 'warning'
     });
 
+    // Carga de catálogos estáticos (una sola vez al montar)
+    useEffect(() => {
+        let isMounted = true;
+        const loadCatalogs = async () => {
+            try {
+                const [linesRes, dominiosRes, carrerasRes] = await Promise.all([
+                    api.get('/Convocatorias/catalogos/lineas'),
+                    api.get('/catalogs/dominios'),
+                    api.get('/catalogs/carreras')
+                ]);
+                if (isMounted) {
+                    setLines(linesRes.data || []);
+                    setDominios(dominiosRes.data || []);
+                    setCarreras(carrerasRes.data || []);
+                }
+            } catch (err) {
+                console.error("Error fetching static catalogs:", err);
+            }
+        };
+        loadCatalogs();
+        return () => { isMounted = false; };
+    }, []);
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const promises: Promise<any>[] = [
-                api.get(`/Groups?search=${search}`),
-                api.get('/Convocatorias/catalogos/lineas'),
-                api.get('/catalogs/dominios'),
-                api.get('/catalogs/carreras')
-            ];
-
-            const [groupsRes, linesRes, dominiosRes, carrerasRes] = await Promise.all(promises);
-            setGroups(groupsRes.data);
-            setLines(linesRes.data);
-            setDominios(dominiosRes.data);
-            setCarreras(carrerasRes.data);
+            const groupsRes = await api.get(`/Groups?search=${encodeURIComponent(search)}`);
+            setGroups(groupsRes.data || []);
 
             if (detailGroup) {
-                const updated = groupsRes.data.find((g: Group) => g.uuid === detailGroup.uuid);
+                const updated = (groupsRes.data || []).find((g: Group) => g.uuid === detailGroup.uuid);
                 if (updated) {
                     setDetailGroup(prev => prev ? { ...prev, ...updated } : updated);
                 }
             }
         } catch (err) {
-            console.error("Error fetching data:", err);
+            console.error("Error fetching groups data:", err);
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Search, Lock } from 'lucide-react';
 
 export interface GeistSelectOption {
@@ -41,12 +42,14 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
     const popoverRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    const [popoverPlacement, setPopoverPlacement] = useState<{ 
-        vertical: 'top' | 'bottom';
-        horizontal: 'left' | 'right' | 'center';
-    }>({
-        vertical: 'bottom',
-        horizontal: 'left'
+    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({
+        top: 0,
+        left: 0,
+        width: 0
+    });
+
+    const [popoverPlacement, setPopoverPlacement] = useState<{ vertical: 'top' | 'bottom' }>({
+        vertical: 'bottom'
     });
 
     // Extraer opciones ya sea por la prop options o dinámicamente de <option> children
@@ -79,9 +82,20 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
 
     // Encontrar la opción seleccionada actual
     const selectedOption = useMemo(() => {
-        if (value === undefined || value === null) return null;
-        return parsedOptions.find(opt => String(opt.value) === String(value));
+        if (value === undefined || value === null || value === '' || value === 0 || value === '0') return null;
+        return parsedOptions.find(opt => String(opt.value) === String(value)) || null;
     }, [parsedOptions, value]);
+
+    // Texto visible inmediatamente (sin esperar a que termine la petición HTTP del catálogo)
+    const displayLabel = useMemo(() => {
+        if (selectedOption) return selectedOption.label;
+        if (value !== undefined && value !== null && value !== '' && value !== 0 && value !== '0') {
+            return String(value);
+        }
+        return placeholder;
+    }, [selectedOption, value, placeholder]);
+
+    const isValueSelected = Boolean(selectedOption) || (value !== undefined && value !== null && value !== '' && value !== 0 && value !== '0');
 
     // Opciones filtradas por término de búsqueda
     const filteredOptions = useMemo(() => {
@@ -106,31 +120,48 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
         }
     };
 
-    // Calcular posición óptima del menú (arriba/abajo y horizontal dinámico según dispositivo)
+    // Calcular posición exacta en viewport con escape de stacking context
     useEffect(() => {
         if (!isOpen) return;
 
         const updatePosition = () => {
             if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
-            const popoverHeight = 320;
+            const popoverHeight = 340;
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
 
-            const vertical = (spaceBelow < popoverHeight && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+            const isTop = (spaceBelow < popoverHeight && spaceAbove > spaceBelow);
 
+            // Ancho inteligente responsivo
             const viewportWidth = window.innerWidth;
-            const spaceRight = viewportWidth - rect.left;
-            const spaceLeft = rect.right;
+            const minResponsiveWidth = viewportWidth >= 1024 
+                ? 620 
+                : viewportWidth >= 640 
+                ? 480 
+                : viewportWidth - 32;
 
-            let horizontal: 'left' | 'right' | 'center' = 'left';
+            const targetWidth = Math.min(
+                Math.max(rect.width, minResponsiveWidth),
+                Math.min(780, viewportWidth - 32)
+            );
+
+            let leftPos = rect.left;
             if (viewportWidth < 640) {
-                horizontal = 'center';
-            } else if (spaceRight < 420 && spaceLeft > spaceRight) {
-                horizontal = 'right';
+                leftPos = 16;
+            } else if (leftPos + targetWidth > viewportWidth - 16) {
+                leftPos = Math.max(16, rect.right - targetWidth);
             }
 
-            setPopoverPlacement({ vertical, horizontal });
+            const topPos = isTop ? rect.top - 6 : rect.bottom + 6;
+
+            setCoords({
+                top: topPos,
+                left: leftPos,
+                width: targetWidth
+            });
+
+            setPopoverPlacement({ vertical: isTop ? 'top' : 'bottom' });
         };
 
         updatePosition();
@@ -145,7 +176,11 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
         }
 
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                containerRef.current && !containerRef.current.contains(target) &&
+                popoverRef.current && !popoverRef.current.contains(target)
+            ) {
                 setIsOpen(false);
                 onBlur?.();
             }
@@ -175,13 +210,6 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
         onBlur?.();
     };
 
-    // Clases de alineación horizontal inteligente
-    const horizontalPlacementClass = popoverPlacement.horizontal === 'right'
-        ? 'right-0 left-auto'
-        : popoverPlacement.horizontal === 'center'
-        ? 'left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-md'
-        : 'left-0 right-auto';
-
     return (
         <div ref={containerRef} className="relative w-full" style={style}>
             {/* Trigger Button */}
@@ -189,7 +217,7 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                 type="button"
                 onClick={toggleOpen}
                 disabled={disabled || readOnly}
-                title={selectedOption ? selectedOption.label : placeholder}
+                title={displayLabel}
                 className={`
                     w-full flex items-center justify-between text-left transition-all duration-200 outline-none
                     ${className}
@@ -198,8 +226,8 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                     ${readOnly ? 'bg-surface/30 opacity-90' : ''}
                 `}
             >
-                <span className={`truncate min-w-0 pr-2 ${selectedOption ? 'text-text-main font-bold' : 'text-text-dim/60 font-medium'}`}>
-                    {selectedOption ? selectedOption.label : placeholder}
+                <span className={`truncate min-w-0 pr-2 ${isValueSelected ? 'text-text-main font-bold' : 'text-text-dim/60 font-medium'}`}>
+                    {displayLabel}
                 </span>
 
                 <div className="shrink-0 flex items-center pointer-events-none ml-1.5">
@@ -213,21 +241,24 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                 </div>
             </button>
 
-            {/* Floating Popover Menu con Ancho Dinámico Horizontal */}
-            {isOpen && isInteractive && (
+            {/* Floating Popover Menu via React Portal (Siempre encima de todo) */}
+            {isOpen && isInteractive && typeof document !== 'undefined' && createPortal(
                 <div
                     ref={popoverRef}
-                    className={`
-                        absolute z-50 bg-bg-deep border border-border-thin rounded-xl shadow-2xl p-2 animate-fade-in
-                        w-full min-w-full sm:min-w-[440px] md:min-w-[540px] lg:min-w-[640px] max-w-[min(780px,94vw)]
-                        ${horizontalPlacementClass}
-                        ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}
-                    `}
-                    style={{ maxHeight: '360px' }}
+                    style={{
+                        position: 'fixed',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                        width: `${coords.width}px`,
+                        maxHeight: '360px',
+                        zIndex: 999999,
+                        transform: popoverPlacement.vertical === 'top' ? 'translateY(-100%)' : undefined,
+                    }}
+                    className="bg-bg-deep border border-border-thin rounded-xl shadow-2xl p-2 animate-fade-in flex flex-col"
                 >
                     {/* Buscador inteligente si hay más de 5 opciones */}
                     {parsedOptions.length > 5 && (
-                        <div className="relative mb-2 pb-2 border-b border-border-thin/50 px-1 pt-0.5">
+                        <div className="relative mb-2 pb-2 border-b border-border-thin/50 px-1 pt-0.5 shrink-0">
                             <div className="relative flex items-center">
                                 <Search className="w-3.5 h-3.5 text-text-dim absolute left-2.5 pointer-events-none" />
                                 <input
@@ -236,14 +267,14 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Buscar en la lista..."
-                                    className="w-full bg-surface/50 border border-border-thin/60 rounded-lg pl-8 pr-3 py-2 text-xs text-text-main placeholder:text-text-dim/50 outline-none focus:border-text-main transition-colors font-medium"
+                                    className="w-full bg-surface border border-border-thin/60 rounded-lg pl-8 pr-3 py-2 text-xs text-text-main placeholder:text-text-dim/50 outline-none focus:border-text-main transition-colors font-medium"
                                 />
                             </div>
                         </div>
                     )}
 
-                    {/* Lista de Opciones con Espaciado y Lectura Óptima */}
-                    <div className="overflow-y-auto max-h-64 space-y-1 custom-scrollbar pr-1">
+                    {/* Lista de Opciones */}
+                    <div className="overflow-y-auto max-h-64 space-y-1 custom-scrollbar pr-1 flex-1">
                         {filteredOptions.length === 0 ? (
                             <div className="py-4 px-3 text-center text-xs text-text-dim italic">
                                 No se encontraron opciones que coincidan
@@ -282,7 +313,8 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                             })
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

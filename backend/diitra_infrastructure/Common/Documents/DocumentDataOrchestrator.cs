@@ -29,6 +29,7 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             // 1. Obtener la instancia del documento
             var instance = await _db.DocumentInstances
+                .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Uuid == documentInstanceUuid, ct)
                 ?? throw new KeyNotFoundException($"No se encontró la instancia: {documentInstanceUuid}");
 
@@ -44,6 +45,7 @@ namespace Diitra.Infrastructure.Common.Documents
 
             // 5. Obtener contenido colaborativo (CoWork) vinculado a esta INSTANCIA de documento
             var coworkDocs = await _db.InvCoworkDocumentos
+                .AsNoTracking()
                 .Where(d => d.EntidadUuid == instance.Uuid)
                 .ToListAsync(ct);
 

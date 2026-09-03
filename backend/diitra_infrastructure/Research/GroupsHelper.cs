@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using diitra_application.Research.Dtos;
 using diitra_infrastructure.data.models;
 
@@ -7,8 +9,22 @@ namespace diitra_infrastructure.Research
 {
     public static class GroupsHelper
     {
-        public static GroupDto MapToDto(DiitraContext context, InvGrupoInvestigacion g)
+        public static GroupDto MapToDto(DiitraContext? context, InvGrupoInvestigacion g, Dictionary<string, string>? preloadedPhones = null)
         {
+            string telefono = g.TelefonoCoordinador ?? string.Empty;
+            if (string.IsNullOrEmpty(telefono) && g.IdCoordinadorNavigation?.IdSigafi != null)
+            {
+                var sigafiTrim = g.IdCoordinadorNavigation.IdSigafi.Trim();
+                if (preloadedPhones != null && preloadedPhones.TryGetValue(sigafiTrim, out var phoneVal))
+                {
+                    telefono = phoneVal;
+                }
+                else if (context != null)
+                {
+                    telefono = GetUserPhoneFromCatalog(context, sigafiTrim, g.IdCoordinadorNavigation.TablaSigafi);
+                }
+            }
+
             return new GroupDto
             {
                 IdGrupo = g.IdGrupo,
@@ -30,9 +46,7 @@ namespace diitra_infrastructure.Research
                 Estado = g.Estado,
                 LinkWhatsapp = g.LinkWhatsapp,
                 FotoUrl = g.FotoUrl,
-                TelefonoCoordinador = !string.IsNullOrEmpty(g.TelefonoCoordinador)
-                    ? g.TelefonoCoordinador
-                    : GetUserPhoneFromCatalog(context, g.IdCoordinadorNavigation?.IdSigafi, g.IdCoordinadorNavigation?.TablaSigafi),
+                TelefonoCoordinador = telefono,
                 LineasIds = g.IdLineas.Select(l => l.IdLinea).ToList(),
                 CarrerasIds = g.IdCarreras.Select(c => c.IdCarrera).ToList(),
                 LineasNombres = g.IdLineas.Select(l => l.NombreLinea).ToList(),
@@ -51,12 +65,12 @@ namespace diitra_infrastructure.Research
             string phone = string.Empty;
             if (tablaSigafi == "profesor")
             {
-                var prof = context.Profesores.FirstOrDefault(p => p.IdProfesor == sigafiTrim);
+                var prof = context.Profesores.AsNoTracking().FirstOrDefault(p => p.IdProfesor == sigafiTrim);
                 phone = prof != null ? (prof.Celular ?? prof.Telefono ?? string.Empty) : string.Empty;
             }
             else if (tablaSigafi == "alumno")
             {
-                var alum = context.Alumnos.FirstOrDefault(a => a.IdAlumno == sigafiTrim);
+                var alum = context.Alumnos.AsNoTracking().FirstOrDefault(a => a.IdAlumno == sigafiTrim);
                 phone = alum != null ? (alum.Celular ?? alum.Telefono ?? string.Empty) : string.Empty;
             }
 

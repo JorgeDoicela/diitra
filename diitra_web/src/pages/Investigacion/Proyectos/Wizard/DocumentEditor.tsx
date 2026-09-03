@@ -117,6 +117,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
 
     // Catálogos institucionales (agnóstico por plantilla)
     const [carreras, setCarreras] = useState<any[]>([]);
+    const [misCarreras, setMisCarreras] = useState<any[]>([]);
+    const [programas, setProgramas] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [tiposProducto, setTiposProducto] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
@@ -155,7 +157,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             // 2. Lanzar peticiones de red
             const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
-            const [configResult, instanceResult, carrerasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
+            const [configResult, instanceResult, carrerasRes, misCarrerasRes, programasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}/ui-config`).catch(() => ({ data: null }))
                     : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
@@ -163,6 +165,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
                     : Promise.resolve({ data: null }),
                 getCachedOrFetch('carreras', () => api.get('/catalogs/carreras')),
+                getCachedOrFetch('mi-carrera', () => isAdmin ? Promise.resolve({ data: [] }) : api.get('/catalogs/mi-carrera')),
+                getCachedOrFetch('programas', () => api.get('/catalogs/programas')),
                 getCachedOrFetch('convocatorias', () => api.get('/Convocatorias')),
                 getCachedOrFetch('tipos-producto', () => api.get('/catalogs/tipo-producto')),
                 getCachedOrFetch('groups', () => api.get('/groups')),
@@ -180,6 +184,16 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             if (!finalConfig) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
             }
+
+            setCarreras(carrerasRes?.data || []);
+            setMisCarreras(misCarrerasRes?.data || []);
+            setProgramas(programasRes?.data || []);
+            setConvocatorias(convsRes?.data || []);
+            setTiposProducto(tiposRes?.data || []);
+            setGroups(groupsRes?.data || []);
+            setDominios(dominiosRes?.data || []);
+            setLineas(lineasRes?.data || []);
+            setSublineas(sublineasRes?.data || []);
 
             // Detectar si hay campos personalizados que requieran cargar catálogos dinámicos por URL
             const templateBlocks = finalConfig?.blocks || finalConfig?.Blocks || [];
@@ -363,6 +377,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             initialData={{ ...docInstanceData, Uuid: resolvedUuid || initialData?.Uuid }}
             entityUuid={entityUuid}
             carreras={carreras}
+            misCarreras={misCarreras}
+            programas={programas}
             convocatorias={convocatorias}
             tiposProducto={tiposProducto}
             groups={groups}
@@ -391,6 +407,8 @@ interface DocumentEditorCoreProps {
     initialData: any;
     entityUuid?: string;
     carreras: any[];
+    misCarreras?: any[];
+    programas?: any[];
     convocatorias: any[];
     tiposProducto: any[];
     groups: any[];
@@ -411,6 +429,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     initialData,
     entityUuid,
     carreras,
+    misCarreras = [],
+    programas = [],
     convocatorias,
     tiposProducto,
     groups,
@@ -817,6 +837,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             activeTab={activeTab}
                             templateCode={templateCode}
                             carreras={carreras}
+                            misCarreras={misCarreras}
+                            programas={programas}
                             convocatorias={convocatorias}
                             tiposProducto={tiposProducto}
                             groups={groups}

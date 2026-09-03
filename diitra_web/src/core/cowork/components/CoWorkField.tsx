@@ -19,7 +19,6 @@ interface CoWorkFieldProps {
     onValueChange?: (value: any, meta?: { source?: 'local' | 'remote' }) => void;
     children?: React.ReactNode;
     readOnly?: boolean;
-    lockBadge?: string | boolean;
     mask?: 'date';
     uppercase?: boolean;
     minDate?: string;
@@ -219,7 +218,6 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     onValueChange,
     children,
     readOnly,
-    lockBadge,
     mask,
     uppercase,
     minDate,
