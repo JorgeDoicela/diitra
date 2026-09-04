@@ -226,8 +226,8 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     const instLogoHeight = Number(config.institutionLogoHeight || 48);
                     const instLogoInvert = Boolean(config.institutionLogoInvert);
                     const instVariant = config.institutionVariant || 'clean';
-                    const bgInstitution = config.bgInstitution || '#1e2a4a';
-                    const colorInstitution = config.colorInstitution || '#1e2a4a';
+                    const bgInstitution = config.bgInstitution || '#222c57';
+                    const colorInstitution = config.colorInstitution || '#222c57';
                     const institutionFontSize = Number(config.institutionFontSize || 11);
                     const institutionItalica = Boolean(config.institutionItalica);
                     const textVal = config.textoInstitucion || '';
@@ -398,7 +398,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                             <ColorPickerField
                                                 label="Color de Texto"
                                                 value={colorInstitution}
-                                                fallback="#1e2a4a"
+                                                fallback="#222c57"
                                                 onChange={v => onUpdateConfig(activeBlock.id, 'colorInstitution', v)}
                                                 inputCls={inputCls}
                                             />
@@ -439,7 +439,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                 {activeTab === 'title' && (() => {
                     const isVisible = config.showTitle !== false;
                     const tituloSuperior = config.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN';
-                    const colorTitulo = config.colorTituloSuperior || '#1e2a4a';
+                    const colorTitulo = config.colorTituloSuperior || '#222c57';
                     const tituloFontSize = Number(config.tituloFontSize || 20);
                     const tituloItalica = Boolean(config.tituloItalica);
 
@@ -485,7 +485,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                     <ColorPickerField
                                         label="Color del Título Documental"
                                         value={colorTitulo}
-                                        fallback="#1e2a4a"
+                                        fallback="#222c57"
                                         onChange={v => onUpdateConfig(activeBlock.id, 'colorTituloSuperior', v)}
                                         inputCls={inputCls}
                                     />
@@ -524,7 +524,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                 {activeTab === 'tema' && (() => {
                     const showTemaProyecto = config.showTemaProyecto !== false;
                     const placeholderTema = config.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
-                    const colorTemaProyecto = config.colorTemaProyecto || '#1e2a4a';
+                    const colorTemaProyecto = config.colorTemaProyecto || '#222c57';
                     const temaFontSize = Number(config.temaFontSize || 13);
                     const temaItalica = Boolean(config.temaItalica);
 
@@ -558,7 +558,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                     <ColorPickerField
                                         label="Color del Tema del Proyecto"
                                         value={colorTemaProyecto}
-                                        fallback="#1e2a4a"
+                                        fallback="#222c57"
                                         onChange={v => onUpdateConfig(activeBlock.id, 'colorTemaProyecto', v)}
                                         inputCls={inputCls}
                                     />
@@ -597,7 +597,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                 {activeTab === 'carrera' && (() => {
                     const isVisible = config.showCarrera !== false;
                     const prefijoCarrera = config.prefijoCarrera !== undefined ? config.prefijoCarrera : 'TECNOLOGÍA SUPERIOR EN';
-                    const colorVal = config.colorCarrera || '#1e2a4a';
+                    const colorVal = config.colorCarrera || '#222c57';
                     const carreraFontSize = Number(config.carreraFontSize || 11);
                     const carreraItalica = Boolean(config.carreraItalica);
 
@@ -655,7 +655,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                     <ColorPickerField
                                         label="Color de Texto de Carrera"
                                         value={colorVal}
-                                        fallback="#1e2a4a"
+                                        fallback="#222c57"
                                         onChange={v => onUpdateConfig(activeBlock.id, 'colorCarrera', v)}
                                         inputCls={inputCls}
                                     />
@@ -790,3 +790,4 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
         </div>
     );
 };
+

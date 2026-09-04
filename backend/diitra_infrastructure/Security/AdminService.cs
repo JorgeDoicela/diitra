@@ -29,7 +29,8 @@ public class AdminService : IAdminService
         bool soloConHoras = false, 
         string estadoEstudiante = "ACTIVO",
         string origenEstudiante = "INSTITUTO",
-        string? departamento = null)
+        string? departamento = null,
+        string? nivel = null)
     {
         searchTerm = searchTerm?.ToLower() ?? "";
         if (page < 1) page = 1;
@@ -130,17 +131,35 @@ public class AdminService : IAdminService
 
             if (!string.IsNullOrEmpty(carrera))
             {
-                var carreraLower = carrera.ToLower();
+                var carreraLower = carrera.Trim().ToLower();
                 var matchingCarreraIds = await _context.Carreras.AsNoTracking()
                     .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
                     .Select(c => c.IdCarrera)
                     .ToListAsync();
 
-                query = query.Where(a => _context.Matriculas.Any(m =>
-                    m.IdAlumno == a.IdAlumno &&
-                    (m.Retirado == null || m.Retirado == false) &&
-                    m.Valida == 1 &&
-                    _context.Cursos.Any(c => c.IdNivel == m.IdNivel && matchingCarreraIds.Contains(c.IdCarrera))));
+                query = query.Where(a => 
+                    _context.Matriculas.Any(m =>
+                        m.IdAlumno == a.IdAlumno &&
+                        (m.Retirado == null || m.Retirado == false) &&
+                        m.Valida == 1 &&
+                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel && matchingCarreraIds.Contains(c.IdCarrera)))
+                    ||
+                    (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && matchingCarreraIds.Contains(c.IdCarrera)))
+                );
+            }
+
+            if (!string.IsNullOrEmpty(nivel))
+            {
+                var nivelLower = nivel.Trim().ToLower();
+                query = query.Where(a => 
+                    _context.Matriculas.Any(m =>
+                        m.IdAlumno == a.IdAlumno &&
+                        (m.Retirado == null || m.Retirado == false) &&
+                        m.Valida == 1 &&
+                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel && c.Nivel != null && (c.Nivel.ToLower() == nivelLower || c.Nivel.ToLower().Contains(nivelLower))))
+                    ||
+                    (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && c.Nivel != null && (c.Nivel.ToLower() == nivelLower || c.Nivel.ToLower().Contains(nivelLower))))
+                );
             }
 
             if (!string.IsNullOrEmpty(searchTerm))
@@ -511,8 +530,7 @@ public class AdminService : IAdminService
 
                 query = query.Where(p => _context.ProfesoresCarrerasPeriodos.Any(pc =>
                     pc.IdProfesor == p.IdProfesor &&
-                    pc.IdPeriodo == periodId &&
-                    pc.EsActivo == 1 &&
+                    (string.IsNullOrEmpty(periodId) || pc.IdPeriodo == periodId || pc.EsActivo == 1) &&
                     pc.IdCarrera != null &&
                     matchingCarreraIds.Contains(pc.IdCarrera.Value)));
             }

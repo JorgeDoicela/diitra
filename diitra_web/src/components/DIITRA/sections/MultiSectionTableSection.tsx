@@ -58,9 +58,9 @@ export const MultiSectionTableSection: React.FC<MultiSectionTableSectionProps> =
     const getHeaderStyleClass = (style?: 'blue' | 'gold' | 'gray' | 'none') => {
         switch (style) {
             case 'blue':
-                return 'bg-[#1e2a4a] text-white border-[#151f38]';
+                return 'bg-[#222c57] text-white border-[#151f38]';
             case 'gold':
-                return 'bg-[#b8912e] text-white border-[#9c7823]';
+                return 'bg-[#c4a857] text-white border-[#9c7823]';
             case 'gray':
                 return 'bg-[#334155] text-white border-[#1e293b]';
             case 'none':
@@ -283,3 +283,5 @@ export const MultiSectionTableSection: React.FC<MultiSectionTableSectionProps> =
 };
 
 export default MultiSectionTableSection;
+
+

@@ -174,10 +174,10 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                 let trHeaderCls = "border-b border-border-thin ";
 
                 if (tableHeaderStyle === 'blue') {
-                    trHeaderCls += "bg-[#1e2a4a] text-white";
+                    trHeaderCls += "bg-[#222c57] text-white";
                     thCls += "text-white";
                 } else if (tableHeaderStyle === 'gold') {
-                    trHeaderCls += "bg-[#b8912e] text-white";
+                    trHeaderCls += "bg-[#c4a857] text-white";
                     thCls += "text-white";
                 } else if (tableHeaderStyle === 'gray') {
                     trHeaderCls += "bg-slate-700 text-white";
@@ -578,3 +578,5 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 };
 
 export default AgnosticSection;
+
+

@@ -9,6 +9,7 @@ interface TeamSectionProps {
     cowork: CoWorkHandle;
     onAdd?: (tpl?: any) => void;
     onRemove?: (index: number) => void;
+    onUpdate?: (index: number, field: string, value: any) => void;
     onUpdateItem?: (listName: string, index: number, field: string, value: any) => void;
     formData?: any;
     readOnly?: boolean;
@@ -21,6 +22,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
     formData,
     onAdd,
     onRemove,
+    onUpdate,
     onUpdateItem,
     readOnly = false,
     carreras = [],
@@ -30,9 +32,17 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const repairedCedulasRef = useRef<Set<string>>(new Set());
 
+    const updateMemberField = (idx: number, field: string, value: any) => {
+        if (onUpdate) {
+            onUpdate(idx, field, value);
+        } else if (onUpdateItem) {
+            onUpdateItem('Investigadores', idx, field, value);
+        }
+    };
+
     // Auto-reparación de carreras disponibles
     useEffect(() => {
-        if (readOnly || !onUpdateItem || !investigadores || !investigadoresReales || investigadores.length === 0) return;
+        if (readOnly || (!onUpdateItem && !onUpdate) || !investigadores || !investigadoresReales || investigadores.length === 0) return;
 
         investigadores.forEach((inv, idx) => {
             const invCedula = inv.Cedula || inv.cedula;
@@ -63,16 +73,16 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
 
                 if (isGeneric && hasRealCareer) {
                     repairedCedulasRef.current.add(cedKey);
-                    onUpdateItem('Investigadores', idx, 'Carrera', realCarrera);
+                    updateMemberField(idx, 'Carrera', realCarrera);
                 }
 
                 if (realDisponibles && invDisponibles !== realDisponibles) {
                     repairedCedulasRef.current.add(cedKey);
-                    onUpdateItem('Investigadores', idx, 'CarrerasDisponibles', realDisponibles);
+                    updateMemberField(idx, 'CarrerasDisponibles', realDisponibles);
                 }
             }
         });
-    }, [investigadores, investigadoresReales, onUpdateItem, readOnly]);
+    }, [investigadores, investigadoresReales, onUpdateItem, onUpdate, readOnly]);
 
     const handleAddMemberFromSearch = (member: SelectedMemberResult) => {
         if (!member) return;
@@ -121,8 +131,8 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Callouts Oficiales del Sistema DIITRA */}
-            {isAssociative ? (
+            {/* Callout para Proyectos Adscritos a Grupo de Investigación si aplica */}
+            {isAssociative && (
                 <div className="callout-vercel callout-vercel-warning mb-6 animate-fade-in">
                     <Award size={16} className="text-warning mt-0.5 shrink-0" />
                     <div>
@@ -132,28 +142,6 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                         </p>
                     </div>
                 </div>
-            ) : (
-                <div className="callout-vercel callout-vercel-info mb-6 animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex gap-3 items-start">
-                        <Users size={16} className="text-info mt-0.5 shrink-0" />
-                        <div>
-                            <p className="callout-vercel-title">Equipo de Trabajo del Proyecto (Equipo Ad-Hoc)</p>
-                            <p className="callout-vercel-body">
-                                Este proyecto cuenta con un equipo autónomo. Puedes incorporar docentes investigadores y estudiantes semilleristas directamente desde el catálogo de la institución.
-                            </p>
-                        </div>
-                    </div>
-                    {!readOnly && (
-                        <button
-                            type="button"
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="btn-vercel-primary shrink-0"
-                        >
-                            <UserPlus size={14} />
-                            <span>Añadir Integrante</span>
-                        </button>
-                    )}
-                </div>
             )}
 
             {/* Cabecera de la Sección */}
@@ -161,7 +149,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-text-main">
                     <Users size={18} /> 2. Investigadores (Docentes y Estudiantes)
                 </h4>
-                {!isAssociative && !readOnly && investigadores.length > 0 && (
+                {!isAssociative && !readOnly && (
                     <button
                         type="button"
                         onClick={() => setIsAddModalOpen(true)}
@@ -283,7 +271,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-text-main transition-colors"
                                             value={_inv.Telefono || ''}
                                             readOnly={readOnly}
-                                            onChange={(e) => onUpdateItem?.('Investigadores', idx, 'Telefono', e.target.value)}
+                                            onChange={(e) => updateMemberField(idx, 'Telefono', e.target.value)}
                                             placeholder="0991234567"
                                         />
                                         <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
@@ -302,7 +290,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                         ) : (
                                             <select
                                                 value={_inv.NivelAcademico || 'Tercer Nivel'}
-                                                onChange={(e) => onUpdateItem?.('Investigadores', idx, 'NivelAcademico', e.target.value)}
+                                                onChange={(e) => updateMemberField(idx, 'NivelAcademico', e.target.value)}
                                                 className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-text-main transition-colors cursor-pointer"
                                             >
                                                 <option value="Tercer Nivel">Tercer Nivel</option>
@@ -327,7 +315,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                         ) : (
                                             <select
                                                 value={rol}
-                                                onChange={(e) => onUpdateItem?.('Investigadores', idx, 'Rol', e.target.value)}
+                                                onChange={(e) => updateMemberField(idx, 'Rol', e.target.value)}
                                                 className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold text-text-main outline-none focus:border-text-main transition-colors cursor-pointer"
                                             >
                                                 <option value="Co-Investigador">Co-Investigador</option>
@@ -351,7 +339,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-text-main transition-colors"
                                             value={_inv.HorasSemanales !== undefined && _inv.HorasSemanales !== null ? String(_inv.HorasSemanales) : ''}
                                             readOnly={readOnly}
-                                            onChange={(e) => onUpdateItem?.('Investigadores', idx, 'HorasSemanales', e.target.value ? parseFloat(e.target.value) : 0)}
+                                            onChange={(e) => updateMemberField(idx, 'HorasSemanales', e.target.value ? parseFloat(e.target.value) : 0)}
                                             placeholder="0"
                                         />
                                         <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
@@ -380,7 +368,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                                         </span>
                                                         <select
                                                             value={currentValue}
-                                                            onChange={(e) => onUpdateItem?.('Investigadores', idx, 'Carrera', e.target.value)}
+                                                            onChange={(e) => updateMemberField(idx, 'Carrera', e.target.value)}
                                                             disabled={readOnly}
                                                             className="w-full max-w-md bg-bg-deep border border-warning/50 rounded-xl px-4 py-3 text-xs font-bold text-text-main outline-none focus:border-warning cursor-pointer"
                                                         >

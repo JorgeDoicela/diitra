@@ -35,11 +35,11 @@ export function createBaseCoverBlock(
             colorTituloSuperior: options.colorTitle || 'navy',
             prefijoCarrera: 'TECNOLOGÍA SUPERIOR EN',
             prefijoPeriodo: 'PERIODO ACADÉMICO',
-            colorTema: options.themeColor || '#1e2a4a',
-            colorCarrera: '#1e2a4a',
+            colorTema: options.themeColor || '#222c57',
+            colorCarrera: '#222c57',
             colorPeriodo: '#475569',
-            colorTemaProyecto: '#1e2a4a',
-            colorInstitution: '#1e2a4a',
+            colorTemaProyecto: '#222c57',
+            colorInstitution: '#222c57',
             institutionVariant: 'clean',
             institutionFontSize: 11,
             institutionItalica: false,
@@ -159,7 +159,7 @@ export function generateDefaultBlocksForTemplate(
                     mostrarEmail: true,
                     mostrarTelefono: true,
                     mostrarNivelAcademico: true,
-                    mostrarHoras: true
+                    mostrarHoras: false
                 }
             },
             {
@@ -245,7 +245,7 @@ export function generateDefaultBlocksForTemplate(
                     mostrarEmail: true,
                     mostrarTelefono: true,
                     mostrarNivelAcademico: true,
-                    mostrarHoras: true
+                    mostrarHoras: false
                 }
             },
             {
@@ -450,15 +450,15 @@ export function generateDefaultBlocksForTemplate(
             createBaseCoverBlock('RÚBRICA DE EVALUACIÓN TÉCNICA POR PARES', { colorTitle: 'navy' }),
             {
                 id: 'block-sec-1', type: 'title' as BlockType, title: '1. Información del Proyecto', isActive: true,
-                config: { text: '1. INFORMACIÓN DEL PROYECTO DE INVESTIGACIÓN', fontSize: 'H2', colorTema: '#1e2a4a', alignTitle: 'left' }
+                config: { text: '1. INFORMACIÓN DEL PROYECTO DE INVESTIGACIÓN', fontSize: 'H2', colorTema: '#222c57', alignTitle: 'left' }
             },
             {
                 id: 'block-sec-2', type: 'title' as BlockType, title: '2. Datos del Evaluador Técnico', isActive: true,
-                config: { text: '2. DATOS DEL EVALUADOR TÉCNICO ACREDITADO', fontSize: 'H2', colorTema: '#1e2a4a', alignTitle: 'left' }
+                config: { text: '2. DATOS DEL EVALUADOR TÉCNICO ACREDITADO', fontSize: 'H2', colorTema: '#222c57', alignTitle: 'left' }
             },
             {
                 id: 'block-sec-3', type: 'title' as BlockType, title: '3. Declaración de Conflicto de Interés', isActive: true,
-                config: { text: '3. DECLARACIÓN DE AUSENCIA DE CONFLICTO DE INTERÉS', fontSize: 'H2', colorTema: '#1e2a4a', alignTitle: 'left' }
+                config: { text: '3. DECLARACIÓN DE AUSENCIA DE CONFLICTO DE INTERÉS', fontSize: 'H2', colorTema: '#222c57', alignTitle: 'left' }
             },
             {
                 id: 'block-rubric', type: 'rubric_table' as BlockType, title: '4. Tabla de Criterios (Rúbrica Dinámica)', isActive: true,
@@ -466,11 +466,11 @@ export function generateDefaultBlocksForTemplate(
             },
             {
                 id: 'block-sec-5', type: 'title' as BlockType, title: '5. Observaciones Fundamentales', isActive: true,
-                config: { text: '5. OBSERVACIONES Y COMENTARIOS FUNDAMENTALES', fontSize: 'H2', colorTema: '#1e2a4a', alignTitle: 'left' }
+                config: { text: '5. OBSERVACIONES Y COMENTARIOS FUNDAMENTALES', fontSize: 'H2', colorTema: '#222c57', alignTitle: 'left' }
             },
             {
                 id: 'block-sec-6', type: 'title' as BlockType, title: '6. Dictamen Final', isActive: true,
-                config: { text: '6. DICTAMEN Y RECOMENDACIÓN FINAL DEL EVALUADOR', fontSize: 'H2', colorTema: '#1e2a4a', alignTitle: 'left' }
+                config: { text: '6. DICTAMEN Y RECOMENDACIÓN FINAL DEL EVALUADOR', fontSize: 'H2', colorTema: '#222c57', alignTitle: 'left' }
             },
             createBaseSignaturesBlock([
                 { label: 'Firma del Evaluador Técnico', name: '{{evaluador_nombre}}', role: 'Par Evaluador Acreditado' }
@@ -532,7 +532,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'title' as BlockType,
                 title: '1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN',
                 isActive: true,
-                config: { text: '1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN', fontSize: 'H2', color: '#1e2a4a' }
+                config: { text: '1. DATOS GENERALES DEL GRUPO DE INVESTIGACIÓN', fontSize: 'H2', color: '#222c57' }
             },
             {
                 id: 'block-table-datos',
@@ -561,7 +561,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'title' as BlockType,
                 title: '2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO',
                 isActive: true,
-                config: { text: '2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO', fontSize: 'H2', color: '#1e2a4a' }
+                config: { text: '2. IDENTIDAD ESTRATÉGICA Y PROPÓSITO', fontSize: 'H2', color: '#222c57' }
             },
             {
                 id: 'block-mision-vision',
@@ -580,7 +580,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'title' as BlockType,
                 title: '3. OBJETIVO GENERAL DEL GRUPO',
                 isActive: true,
-                config: { text: '3. OBJETIVO GENERAL DEL GRUPO', fontSize: 'H2', color: '#1e2a4a' }
+                config: { text: '3. OBJETIVO GENERAL DEL GRUPO', fontSize: 'H2', color: '#222c57' }
             },
             {
                 id: 'block-objetivo',
@@ -601,7 +601,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'title' as BlockType,
                 title: '4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS',
                 isActive: true,
-                config: { text: '4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS', fontSize: 'H2', color: '#1e2a4a' }
+                config: { text: '4. EQUIPO DE INVESTIGADORES Y SEMILLERISTAS', fontSize: 'H2', color: '#222c57' }
             },
             createBaseSignaturesBlock([
                 { label: 'Docente Coordinador del Grupo', name: '{{coordinador_nombre}}', role: 'Coordinador / Líder' },
@@ -680,7 +680,13 @@ export function generateDefaultBlocksForTemplate(
             type: 'researchers_table' as BlockType,
             title: '2. EQUIPO DE PARTICIPANTES',
             isActive: true,
-            config: { mostrarCedula: true, mostrarEmail: true, mostrarHoras: true }
+            config: {
+                mostrarCedula: true,
+                mostrarEmail: true,
+                mostrarTelefono: true,
+                mostrarNivelAcademico: true,
+                mostrarHoras: false
+            }
         },
         {
             id: 'block-tech-auto',
@@ -721,3 +727,4 @@ export function generateDefaultBlocksForTemplate(
         ])
     ];
 }
+

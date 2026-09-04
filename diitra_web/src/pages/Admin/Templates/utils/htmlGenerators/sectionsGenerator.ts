@@ -7,7 +7,7 @@ import { resolveHeaderColor, getContrastFg } from '../../components/properties/S
 export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const title = c.title || block.title || '1.  IDENTIFICACIÓN DEL PROYECTO';
-    const defaultHeaderBg = resolveHeaderColor(c.headerColor || '#1e2a4a');
+    const defaultHeaderBg = resolveHeaderColor(c.headerColor || '#222c57');
     const borderStyle = c.borderStyle || 'solid';
     const isNoBorder = borderStyle === 'none';
 
@@ -17,7 +17,7 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
     const resolveBg = (variant?: string, defaultColor = defaultHeaderBg) => {
         if (variant === 'banner_gold') return '#c4a857';
         if (variant === 'banner_emerald') return '#065f46';
-        if (variant === 'banner_navy') return '#1e2a4a';
+        if (variant === 'banner_navy') return '#222c57';
         if (variant && (variant.startsWith('#') || variant.startsWith('rgb') || variant.startsWith('hsl'))) return variant;
         return defaultColor;
     };
@@ -307,15 +307,15 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 
     const resolveHeaderBg = (col: string) => {
         switch (col) {
-            case 'gold': return '#b8912e';
+            case 'gold': return '#c4a857';
             case 'slate': return '#334155';
             case 'emerald': return '#065f46';
             case 'navy':
-            default: return '#1e2a4a';
+            default: return '#222c57';
         }
     };
     const headerBgCol = resolveHeaderBg(headerColorKey);
-    const goldColor = '#b8912e';
+    const goldColor = '#c4a857';
     const tableBorder = borderStyleKey === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
     const cellBorder = borderStyleKey === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
 
@@ -341,7 +341,7 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 
     const resolveVariantColor = (v?: string) => {
         if (v === 'banner_gold') return goldColor;
-        if (v === 'banner_navy') return '#1e2a4a';
+        if (v === 'banner_navy') return '#222c57';
         if (v === 'banner_emerald') return '#065f46';
         return headerBgCol;
     };
@@ -620,3 +620,5 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
     ${parts.join('')}
   </div>`;
 };
+
+

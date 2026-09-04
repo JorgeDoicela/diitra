@@ -14,7 +14,7 @@ export const RenderProjectGeneralSection: React.FC<{
 }> = ({ config, title, blockId, onUpdateConfig }) => {
     const c = config || {};
     const displayTitle = c.title || title || '1.  IDENTIFICACIÓN DEL PROYECTO';
-    const defaultHeaderBg = resolveHeaderColor(c.headerColor || '#1e2a4a');
+    const defaultHeaderBg = resolveHeaderColor(c.headerColor || '#222c57');
     const borderStyle = c.borderStyle || 'solid';
     const isNoBorder = borderStyle === 'none';
 
@@ -28,7 +28,7 @@ export const RenderProjectGeneralSection: React.FC<{
     const resolveBg = (variant?: string, defaultColor = defaultHeaderBg) => {
         if (variant === 'banner_gold') return '#c4a857';
         if (variant === 'banner_emerald') return '#065f46';
-        if (variant === 'banner_navy') return '#1e2a4a';
+        if (variant === 'banner_navy') return '#222c57';
         if (variant && (variant.startsWith('#') || variant.startsWith('rgb') || variant.startsWith('hsl'))) return variant;
         return defaultColor;
     };
@@ -934,11 +934,11 @@ export const RenderProjectTechnicalSection: React.FC<{
 
     const resolveHeaderBg = (col: string) => {
         switch (col) {
-            case 'gold': return '#b8912e';
+            case 'gold': return '#c4a857';
             case 'slate': return '#334155';
             case 'emerald': return '#065f46';
             case 'navy':
-            default: return '#1e2a4a';
+            default: return '#222c57';
         }
     };
     const headerBg = resolveHeaderBg(headerColorKey);
@@ -1109,7 +1109,7 @@ export const RenderProjectTechnicalSection: React.FC<{
                     <tbody>
                         {(() => {
                             const rows: React.ReactNode[] = [];
-                            const goldColor = '#b8912e';
+                            const goldColor = '#c4a857';
                             let idx = 0;
 
                             while (idx < subs.length) {
@@ -1126,7 +1126,7 @@ export const RenderProjectTechnicalSection: React.FC<{
 
                                 const resolveBg = (v?: string) => {
                                     if (v === 'banner_gold') return goldColor;
-                                    if (v === 'banner_navy') return '#1e2a4a';
+                                    if (v === 'banner_navy') return '#222c57';
                                     if (v === 'banner_emerald') return '#065f46';
                                     return headerBg;
                                 };
@@ -1554,7 +1554,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                                 </h6>
                                 <table className="w-full border-collapse border border-slate-200 text-[9px]">
                                     <thead>
-                                        <tr className="bg-[#1e2a4a] text-white">
+                                        <tr className="bg-[#222c57] text-white">
                                             <th className="p-1 text-left border border-slate-200">Entregable Tecnológico</th>
                                             {cols.showSenadi !== false && <th className="p-1 text-center border border-slate-200 w-16">SENADI</th>}
                                             {cols.showTrl !== false && <th className="p-1 text-center border border-slate-200 w-14">TRL</th>}
@@ -1581,7 +1581,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     /* MODO TABLA SIMPLE */
                     <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
                         <thead>
-                            <tr className="bg-[#1e2a4a] text-white">
+                            <tr className="bg-[#222c57] text-white">
                                 <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Entregable Tecnológico (IST)</th>
                                 <th className="p-1.5 text-center font-bold border border-slate-200 w-24">Cantidad</th>
                             </tr>
@@ -1597,7 +1597,7 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
                     /* MODO TABLA DETALLADA CACES (DEFAULT) */
                     <table className="w-full border-collapse border border-slate-200 text-[9px]">
                         <thead>
-                            <tr className="bg-[#1e2a4a] text-white">
+                            <tr className="bg-[#222c57] text-white">
                                 {cols.showCategory !== false && <th className="p-1.5 text-left border border-slate-200">Categoría IST</th>}
                                 {cols.showSubtype !== false && <th className="p-1.5 text-left border border-slate-200">Subtipo / Entregable</th>}
                                 {cols.showProductName !== false && <th className="p-1.5 text-left border border-slate-200">Nombre del Producto</th>}
@@ -1753,7 +1753,7 @@ export const RenderImpacts: React.FC<{
                         type="text"
                         value={displayTitle}
                         onChange={e => onUpdateConfig(blockId, 'impactsTitle', e.target.value)}
-                        className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide bg-transparent border-b border-dashed border-slate-300 focus:border-indigo-600 focus:outline-none py-0.5 max-w-md"
+                        className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide bg-transparent border-b border-transparent hover:border-slate-300/60 focus:border-indigo-600 focus:outline-none py-0.5 max-w-md transition-colors"
                     />
                 ) : (
                     <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{displayTitle}</h5>
@@ -1778,7 +1778,7 @@ export const RenderImpacts: React.FC<{
                         const isEditing = editingCatId === id;
                         return (
                             <div key={id} className={`border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs group/cell relative ${cat.colSpan === 2 ? 'col-span-2' : 'col-span-1'}`}>
-                                <div className="p-1.5 bg-[#1e2a4a] text-white font-bold text-[9px] uppercase tracking-wider relative flex items-center justify-between">
+                                <div className="p-1.5 bg-[#222c57] text-white font-bold text-[9px] uppercase tracking-wider relative flex items-center justify-between">
                                     {isEditing ? (
                                         <div className="flex items-center gap-1 w-full" onClick={e => e.stopPropagation()}>
                                             <input
@@ -1825,7 +1825,7 @@ export const RenderImpacts: React.FC<{
                         const id = cat.id || cat.key || `${idx}`;
                         const isEditing = editingCatId === id;
                         return (
-                            <div key={id} className="border-l-4 border-[#1e2a4a] pl-3 py-1 bg-slate-50/40 rounded-r-md group/cell relative">
+                            <div key={id} className="border-l-4 border-[#222c57] pl-3 py-1 bg-slate-50/40 rounded-r-md group/cell relative">
                                 {isEditing ? (
                                     <div className="flex items-center gap-1 my-1" onClick={e => e.stopPropagation()}>
                                         <input
@@ -1853,7 +1853,7 @@ export const RenderImpacts: React.FC<{
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between">
-                                        <h6 className="text-[9.5px] font-bold uppercase text-[#1e2a4a] tracking-wide">{cat.title}</h6>
+                                        <h6 className="text-[9.5px] font-bold uppercase text-[#222c57] tracking-wide">{cat.title}</h6>
                                         {renderControls(cat, idx === 0, idx === categories.length - 1)}
                                     </div>
                                 )}
@@ -1873,7 +1873,7 @@ export const RenderImpacts: React.FC<{
                             const isEditing = editingCatId === id;
                             return (
                                 <tr key={id} className="border-b border-slate-200 last:border-0 group/cell">
-                                    <td className="p-2 bg-[#1e2a4a] text-white font-bold text-[8.5px] uppercase w-1/3 align-top border border-slate-300 relative">
+                                    <td className="p-2 bg-[#222c57] text-white font-bold text-[8.5px] uppercase w-1/3 align-top border border-slate-300 relative">
                                         {isEditing ? (
                                             <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                                 <input
@@ -1918,3 +1918,5 @@ export const RenderImpacts: React.FC<{
         </div>
     );
 };
+
+

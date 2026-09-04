@@ -61,7 +61,7 @@ export const RenderRichText: React.FC<{ config: any }> = ({ config }) => {
     return (
         <div className="space-y-2">
             <div
-                className="prose max-w-none text-xs leading-relaxed text-[#1e2a4a]/90 tiptap-editor"
+                className="prose max-w-none text-xs leading-relaxed text-[#222c57]/90 tiptap-editor"
                 dangerouslySetInnerHTML={{ __html: html }}
             />
         </div>
@@ -381,3 +381,4 @@ export const RenderSignatures: React.FC<{
         </div>
     );
 };
+

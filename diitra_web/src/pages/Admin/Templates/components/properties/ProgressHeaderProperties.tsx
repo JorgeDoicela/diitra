@@ -11,7 +11,7 @@ interface ProgressHeaderPropertiesProps {
 
 export const ProgressHeaderProperties: React.FC<ProgressHeaderPropertiesProps> = ({ block, onUpdateConfig }) => {
     const config = block.config || {};
-    const headerColor = config.progressHeaderColor || '#1e2a4a';
+    const headerColor = config.progressHeaderColor || '#222c57';
     const borderStyle = config.progressHeaderBorder || 'solid';
 
     const getActiveFields = (): ProgressHeaderField[] => {
@@ -139,3 +139,4 @@ export const ProgressHeaderProperties: React.FC<ProgressHeaderPropertiesProps> =
         </div>
     );
 };
+

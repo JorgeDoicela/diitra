@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2, Layers, RotateCcw } from 'lucide-react';
 import api from '../../api/axios_config';
 
 export interface SelectedMemberResult {
@@ -59,6 +59,12 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
 }) => {
     const [selectedType, setSelectedType] = useState<'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO'>(defaultType);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCarrera, setSelectedCarrera] = useState<string>('');
+    const [selectedNivel, setSelectedNivel] = useState<string>('');
+    const [selectedDepto, setSelectedDepto] = useState<string>('');
+    const [carrerasList, setCarrerasList] = useState<any[]>([]);
+    const [nivelesList, setNivelesList] = useState<string[]>([]);
+    const [deptosList, setDeptosList] = useState<string[]>([]);
     const [results, setResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -67,6 +73,33 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     const [memberPhone, setMemberPhone] = useState<string>('');
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Cargar catálogos institucionales para filtros
+    useEffect(() => {
+        api.get('/catalogs/carreras')
+            .then(res => {
+                if (Array.isArray(res.data)) {
+                    setCarrerasList(res.data);
+                }
+            })
+            .catch(err => console.error('[MemberSearchSelector] Error cargando carreras:', err));
+
+        api.get('/catalogs/niveles')
+            .then(res => {
+                if (Array.isArray(res.data)) {
+                    setNivelesList(res.data);
+                }
+            })
+            .catch(err => console.error('[MemberSearchSelector] Error cargando niveles:', err));
+
+        api.get('/Admin/departments')
+            .then(res => {
+                if (Array.isArray(res.data)) {
+                    setDeptosList(res.data);
+                }
+            })
+            .catch(err => console.error('[MemberSearchSelector] Error cargando departamentos:', err));
+    }, []);
 
     // Ajustar el rol por defecto cuando cambia el tipo de candidato seleccionado
     const getSuggestedRoles = (type: string) => {
@@ -88,7 +121,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
 
     // Petición debounced hacia /api/Admin/users (inmediata si es embedded)
     useEffect(() => {
-        if (!isEmbedded && (!showDropdown || !searchQuery.trim())) {
+        if (!isEmbedded && (!showDropdown || (!searchQuery.trim() && !selectedCarrera && !selectedNivel && !selectedDepto))) {
             setResults([]);
             setIsSearching(false);
             return;
@@ -108,6 +141,16 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                     origenEstudiante: 'TODOS'
                 });
 
+                if (selectedCarrera && (selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE')) {
+                    params.append('carrera', selectedCarrera);
+                }
+                if (selectedNivel && selectedType === 'ESTUDIANTE') {
+                    params.append('nivel', selectedNivel);
+                }
+                if (selectedDepto && selectedType === 'ADMINISTRATIVO') {
+                    params.append('departamento', selectedDepto);
+                }
+
                 const res = await api.get(`/Admin/users?${params.toString()}`);
                 const items: any[] = res.data?.items || [];
                 setResults(items);
@@ -120,7 +163,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedType, showDropdown, soloConHorasDocentes, estadoEstudiante, isEmbedded]);
+    }, [searchQuery, selectedType, selectedCarrera, selectedNivel, selectedDepto, showDropdown, soloConHorasDocentes, estadoEstudiante, isEmbedded]);
 
     // Cerrar dropdown al hacer click fuera
     useEffect(() => {
@@ -277,7 +320,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
             )}
 
             {!selectedCandidate ? (
-                <div className="relative">
+                <div className="relative space-y-2.5">
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim/60" />
                         <input
@@ -301,6 +344,85 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                             </button>
                         )}
                     </div>
+
+                    {/* Filtros dinámicos por Carrera, Nivel y Departamento */}
+                    {(selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE' || selectedType === 'ADMINISTRATIVO') && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {(selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE') && carrerasList.length > 0 && (
+                                <div className="flex-1 min-w-[150px]">
+                                    <select
+                                        value={selectedCarrera}
+                                        onChange={(e) => setSelectedCarrera(e.target.value)}
+                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                    >
+                                        <option value="">Todas las Carreras</option>
+                                        {carrerasList.map((car: any) => {
+                                            const name = car.carrera1 || car.carrera || car.nombre || car.aliasCarrera || car.alias_carrera;
+                                            const id = car.idCarrera || car.id_carrera || name;
+                                            return (
+                                                <option key={id} value={name}>
+                                                    {name}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+                            )}
+
+                            {selectedType === 'ESTUDIANTE' && (
+                                <div className="w-36 min-w-[120px]">
+                                    <select
+                                        value={selectedNivel}
+                                        onChange={(e) => setSelectedNivel(e.target.value)}
+                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                    >
+                                        <option value="">Todos los Niveles</option>
+                                        {(nivelesList.length > 0 ? nivelesList : ['PRIMERO', 'SEGUNDO', 'TERCERO', 'CUARTO', 'QUINTO', 'SEXTO']).map((niv: any) => {
+                                            const name = typeof niv === 'string' ? niv : (niv.nivel || niv.nombre);
+                                            return (
+                                                <option key={name} value={name}>
+                                                    {name}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+                            )}
+
+                            {selectedType === 'ADMINISTRATIVO' && deptosList.length > 0 && (
+                                <div className="flex-1 min-w-[160px]">
+                                    <select
+                                        value={selectedDepto}
+                                        onChange={(e) => setSelectedDepto(e.target.value)}
+                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                    >
+                                        <option value="">Todos los Departamentos</option>
+                                        {deptosList.map((dept: string) => (
+                                            <option key={dept} value={dept}>
+                                                {dept}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {(selectedCarrera || selectedNivel || selectedDepto) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedCarrera('');
+                                        setSelectedNivel('');
+                                        setSelectedDepto('');
+                                    }}
+                                    className="p-1.5 rounded-lg border border-border-thin hover:bg-surface-hover text-text-dim hover:text-text-main text-[10px] flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                                    title="Limpiar filtros"
+                                >
+                                    <RotateCcw size={12} />
+                                    <span className="hidden sm:inline">Limpiar</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* Lista embebida directa para Drawers/Paneles */}
                     {isEmbedded ? (
@@ -326,12 +448,12 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                     <p className="font-bold uppercase tracking-wider text-text-main">Sin resultados</p>
                                     <p className="text-[11px]">
                                         {selectedType === 'DOCENTE'
-                                            ? 'No se encontraron docentes con horas de investigación asignadas en el período activo.'
-                                            : 'No se encontraron estudiantes con matrícula activa en el período actual.'}
+                                            ? 'No se encontraron docentes que coincidan con los filtros y búsqueda en el período activo.'
+                                            : 'No se encontraron estudiantes con los filtros seleccionados en el período actual.'}
                                     </p>
                                 </div>
                             ) : (
-                                <div className="space-y-1.5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar pr-1">
+                                <div className="space-y-1.5 max-h-[calc(100vh-360px)] overflow-y-auto custom-scrollbar pr-1">
                                     {results.map((candidate: any) => {
                                         const cedula = (candidate.id_profesor || candidate.id_sigafi || '').trim();
                                         const isAlreadyMember = existingCedulas.includes(cedula) || (excludeCoordinatorCedula && excludeCoordinatorCedula.trim() === cedula);
@@ -359,7 +481,8 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                             {formatNombre(candidate.nombre_completo || candidate.nombre)}
                                                         </p>
                                                         <p className="text-text-dim font-mono text-[10px] truncate mt-0.5">
-                                                            C.I. {cedula} &bull; {candidate.departamento || candidate.carrera || candidate.cargo_instituto || 'Personal Institucional'}
+                                                            C.I. {cedula} &bull; {candidate.carrera || candidate.departamento || candidate.cargo_instituto || 'Personal Institucional'}
+                                                            {candidate.nivel && candidate.nivel !== 'N/A' ? ` • ${candidate.nivel}` : ''}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -368,6 +491,11 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                     {candidate.horas_investigacion !== undefined && candidate.horas_investigacion > 0 && (
                                                         <span className="badge-vercel badge-vercel-success text-[9px] px-2 py-0.5 font-mono">
                                                             {candidate.horas_investigacion}h Distributivo
+                                                        </span>
+                                                    )}
+                                                    {candidate.type === 'ESTUDIANTE' && candidate.nivel && candidate.nivel !== 'N/A' && (
+                                                        <span className="badge-vercel badge-vercel-neutral text-[9px] px-1.5 py-0.5">
+                                                            {candidate.nivel}
                                                         </span>
                                                     )}
                                                     {candidate.type === 'ESTUDIANTE' && candidate.es_graduado === false && (
@@ -389,7 +517,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                         </div>
                     ) : (
                         /* Menú de resultados flotante para modo card standalone */
-                        showDropdown && searchQuery.trim().length > 0 && (
+                        showDropdown && (searchQuery.trim().length > 0 || selectedCarrera || selectedNivel || selectedDepto) && (
                             <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl p-1.5 shadow-2xl max-h-[220px] overflow-y-auto z-40 custom-scrollbar">
                                 {isSearching ? (
                                     <div className="p-4 text-center text-xs text-text-dim font-mono animate-pulse">
@@ -397,7 +525,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                     </div>
                                 ) : results.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-text-dim font-mono">
-                                        No se encontraron {selectedType.toLowerCase()}s que coincidan con la búsqueda.
+                                        No se encontraron {selectedType.toLowerCase()}s que coincidan con los filtros.
                                     </div>
                                 ) : (
                                     results.map((candidate: any) => {
@@ -429,7 +557,8 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                         )}
                                                     </p>
                                                     <p className="text-text-dim font-mono text-[10px] truncate">
-                                                        C.I. {cedula} &bull; {candidate.departamento || candidate.carrera || candidate.cargo_instituto || 'Personal Institucional'}
+                                                        C.I. {cedula} &bull; {candidate.carrera || candidate.departamento || candidate.cargo_instituto || 'Personal Institucional'}
+                                                        {candidate.nivel && candidate.nivel !== 'N/A' ? ` • ${candidate.nivel}` : ''}
                                                     </p>
                                                 </div>
 

@@ -49,7 +49,7 @@ export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) 
                 </div>
                 <ColorPickerField
                     label="Color de Encabezado"
-                    value={block.config.leftHeaderStyle ?? '#1e2a4a'}
+                    value={block.config.leftHeaderStyle ?? '#222c57'}
                     onChange={v => onUpdateConfig(block.id, 'leftHeaderStyle', v)}
                 />
                 <div className="space-y-1.5">
@@ -79,7 +79,7 @@ export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) 
                 </div>
                 <ColorPickerField
                     label="Color de Encabezado"
-                    value={block.config.rightHeaderStyle ?? '#1e2a4a'}
+                    value={block.config.rightHeaderStyle ?? '#222c57'}
                     onChange={v => onUpdateConfig(block.id, 'rightHeaderStyle', v)}
                 />
                 <div className="space-y-1.5">
@@ -96,3 +96,4 @@ export const TwoColumnProperties: React.FC<Props> = ({ block, onUpdateConfig }) 
         </div>
     );
 };
+

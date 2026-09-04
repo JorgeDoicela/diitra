@@ -683,7 +683,7 @@ export const RenderProgressStatusSection: React.FC<{
                 
                 <table className="w-full text-center border-collapse border border-slate-900 text-[8.5pt]">
                     <thead>
-                        <tr className="bg-[#1e2a4a] text-white font-bold">
+                        <tr className="bg-[#222c57] text-white font-bold">
                             {options.map((opt: string) => (
                                 <th key={opt} className="p-1.5 border border-slate-900 w-[20%] uppercase text-[8.5pt]">{opt}</th>
                             ))}
@@ -697,7 +697,7 @@ export const RenderProgressStatusSection: React.FC<{
                                 </td>
                             ))}
                         </tr>
-                        <tr className="bg-[#1e2a4a] text-white font-bold text-left">
+                        <tr className="bg-[#222c57] text-white font-bold text-left">
                             <td colSpan={5} className="p-1.5 border border-slate-900 text-[8.5pt] uppercase">
                                 EXPLIQUE BREVEMENTE LA FASE DE EJECUCIÓN EN QUE SE ENCUENTRA SU PROYECTO:
                             </td>
@@ -736,7 +736,7 @@ export const RenderFinalReportHeaderSection: React.FC<{
     const c = config || {};
     const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
     const headerColorKey = c.finalReportHeaderColor || 'navy';
-    const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
+    const headerBg = headerColorKey === 'gold' ? '#c4a857' : headerColorKey === 'slate' ? '#334155' : '#222c57';
 
     const handleToggle = (key: string, currentVal: boolean = true) => {
         if (!onUpdateConfig || !blockId) return;
@@ -920,3 +920,5 @@ export const RenderFinalReportHeaderSection: React.FC<{
         </div>
     );
 };
+
+

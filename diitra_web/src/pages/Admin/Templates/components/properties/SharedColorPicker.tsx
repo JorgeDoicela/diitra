@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const INSTITUTIONAL_COLOR_PRESETS = [
-    '#1e2a4a', // Azul Marino ISTPET
-    '#b8912e', // Dorado Institucional
+    '#222c57', // Azul Marino ISTPET
+    '#c4a857', // Dorado Institucional
     '#475569', // Gris Neutro
     '#065f46', // Verde Institucional
     '#000000', // Negro
@@ -10,9 +10,9 @@ export const INSTITUTIONAL_COLOR_PRESETS = [
 ];
 
 export const TOKEN_COLOR_MAP: Record<string, string> = {
-    blue: '#1e2a4a',
-    navy: '#1e2a4a',
-    gold: '#b8912e',
+    blue: '#222c57',
+    navy: '#222c57',
+    gold: '#c4a857',
     gray: '#475569',
     slate: '#475569',
     emerald: '#065f46',
@@ -26,7 +26,7 @@ export const TOKEN_COLOR_MAP: Record<string, string> = {
  * Resuelve cualquier valor (token legacy como 'navy' o 'gold', o HEX directo)
  * retornando siempre un color utilizable en CSS.
  */
-export function resolveHeaderColor(value?: string, fallback = '#1e2a4a'): string {
+export function resolveHeaderColor(value?: string, fallback = '#222c57'): string {
     if (!value) return fallback;
     const clean = value.trim().toLowerCase();
     if (clean.startsWith('#') || clean.startsWith('rgb') || clean.startsWith('hsl')) {
@@ -71,7 +71,7 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
     label,
     value,
     onChange,
-    fallback = '#1e2a4a',
+    fallback = '#222c57',
     presets = INSTITUTIONAL_COLOR_PRESETS,
     allowTransparent = false,
 }) => {
@@ -108,7 +108,7 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
                     type="text"
                     value={displayHex}
                     onChange={e => onChange(e.target.value)}
-                    placeholder="#1E2A4A"
+                    placeholder="#222C57"
                     className="text-xs bg-surface border border-border-thin rounded-md text-text-main focus:outline-none font-mono text-[9.5px] uppercase w-20 shrink-0 px-1.5 py-1 text-center font-semibold"
                 />
 
@@ -152,3 +152,4 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
         </div>
     );
 };
+

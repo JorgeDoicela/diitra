@@ -13,8 +13,8 @@ const MONTHS_DEFAULT = [
 ];
 
 const GANTT_COLORS: { hex: GanttColor; label: string }[] = [
-    { hex: '#1e2a4a', label: 'Azul'    },
-    { hex: '#b8912e', label: 'Dorado'  },
+    { hex: '#222c57', label: 'Azul'    },
+    { hex: '#c4a857', label: 'Dorado'  },
     { hex: '#60a5fa', label: 'Celeste' },
     { hex: '#f97316', label: 'Naranja' },
     { hex: '#a855f7', label: 'Violeta' },
@@ -310,3 +310,5 @@ export const GanttProperties: React.FC<Props> = ({ block, onUpdateConfig }) => {
         </div>
     );
 };
+
+

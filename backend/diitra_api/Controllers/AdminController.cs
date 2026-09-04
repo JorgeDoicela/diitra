@@ -39,9 +39,10 @@ public class AdminController : ControllerBase
         [FromQuery] bool soloConHoras = false,
         [FromQuery] string estadoEstudiante = "ACTIVO",
         [FromQuery] string origenEstudiante = "INSTITUTO",
-        [FromQuery] string? departamento = null)
+        [FromQuery] string? departamento = null,
+        [FromQuery] string? nivel = null)
     {
-        var users = await _adminService.GetUsersAsync(search, type, page, pageSize, carrera, soloConHoras, estadoEstudiante, origenEstudiante, departamento);
+        var users = await _adminService.GetUsersAsync(search, type, page, pageSize, carrera, soloConHoras, estadoEstudiante, origenEstudiante, departamento, nivel);
         return Ok(users);
     }
 

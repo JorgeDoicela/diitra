@@ -125,7 +125,7 @@ export const MultiSectionTableProperties: React.FC<Props> = ({ block, onUpdateCo
                         {/* Estilo de encabezado */}
                         <ColorPickerField
                             label="Estilo de Encabezado"
-                            value={section.headerStyle ?? '#1e2a4a'}
+                            value={section.headerStyle ?? '#222c57'}
                             onChange={val => updateSection(sIdx, { headerStyle: val as any })}
                         />
 
@@ -210,3 +210,4 @@ export const MultiSectionTableProperties: React.FC<Props> = ({ block, onUpdateCo
         </div>
     );
 };
+

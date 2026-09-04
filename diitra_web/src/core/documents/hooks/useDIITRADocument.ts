@@ -61,6 +61,8 @@ function generateRandomId(): string {
     return result.substring(0, 10);
 }
 
+const KNOWN_DEFAULT_LISTS = ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'Cronograma', 'ProductosEsperados'];
+
 export function useDIITRADocument<T extends Record<string, any>>(
     initialData: T,
     ydoc: Y.Doc | null,
@@ -76,7 +78,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
     const [formData, setFormData] = useState<T>(() => {
         const enriched: any = { ...initialData };
-        options.lists?.forEach(listName => {
+        const allLists = [...KNOWN_DEFAULT_LISTS, ...(options.lists || [])];
+        allLists.forEach(listName => {
             if (Array.isArray(enriched[listName])) {
                 enriched[listName] = enriched[listName].map((item: any, idx: number) => {
                     if (item && typeof item === 'object') {
@@ -103,33 +106,25 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const resolvedValue = typeof value === 'function' ? value(prev[name]) : value;
             if (isEqualValue(prev[name], resolvedValue)) return prev;
 
-            const isList = options.lists?.includes(name) || name.startsWith('MultiSec_') || (ydoc && ydoc.share.get(name) instanceof Y.Array);
+            const isList = KNOWN_DEFAULT_LISTS.includes(name) || options.lists?.includes(name) || name.startsWith('MultiSec_') || (ydoc && ydoc.share.get(name) instanceof Y.Array);
 
             const isRichText = options.richTexts?.some(rt => rt.toLowerCase() === name.toLowerCase()) || /^field_\d+/i.test(name) || name.endsWith('Izquierda') || name.endsWith('Derecha');
 
             if (source !== 'remote' &&
-                ydoc &&
-                !isList &&
                 !isRichText &&
+                !isList &&
                 !options.nonCollaborative?.includes(name) &&
-                name.toLowerCase() !== 'uuid' &&
-                name.toLowerCase() !== 'entityuuid') {
-                // Evitar conflicto de constructor en Yjs: Si la clave ya está registrada como un XmlFragment o Array,
-                // la respetamos y no intentamos interactuar con ella como texto plano (Y.Text).
-                const sharedType = ydoc.share.get(name);
-                if (sharedType instanceof Y.XmlFragment || sharedType instanceof Y.Array) {
-                    return;
-                }
-                if (sharedType && !(sharedType instanceof Y.Text)) {
-                    console.warn(`[useDIITRADocument] Conflicto de constructor detectado para '${name}'. Tipo actual: ${sharedType.constructor.name}. Recreando como Y.Text.`);
-                    ydoc.share.delete(name);
-                }
+                ydoc
+            ) {
                 const ytext = ydoc.getText(name);
-                const stringVal = typeof resolvedValue === 'object' && resolvedValue !== null ? JSON.stringify(resolvedValue) : String(resolvedValue);
-                if (ytext.toString() !== stringVal) {
+                const strValue = typeof resolvedValue === 'object' && resolvedValue !== null
+                    ? JSON.stringify(resolvedValue)
+                    : String(resolvedValue ?? '');
+
+                if (ytext.toString() !== strValue) {
                     ydoc.transact(() => {
                         ytext.delete(0, ytext.length);
-                        ytext.insert(0, stringVal);
+                        ytext.insert(0, strValue);
                     }, 'local-hook');
                 }
             }
@@ -137,14 +132,13 @@ export function useDIITRADocument<T extends Record<string, any>>(
             return { ...prev, [name]: resolvedValue };
         });
 
-        if (source !== 'remote' && source !== 'system') {
+        if (source === 'local') {
             setLocalChangeCount(c => c + 1);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ydoc, options.lists, options.richTexts, options.nonCollaborative]);
+    }, [ydoc, options.nonCollaborative, options.richTexts, options.lists]);
 
     const ensureYArray = (listName: string): Y.Array<any> | null => {
-        if (!ydoc || !listName || listName.includes('[') || listName.includes('.')) return null;
+        if (!ydoc) return null;
         const sharedType = ydoc.share.get(listName);
         if (sharedType && !(sharedType instanceof Y.Array)) {
             console.warn(`[useDIITRADocument] Limpiando tipo en conflicto para lista '${listName}' (tipo previo: ${sharedType.constructor.name}).`);
@@ -164,10 +158,14 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 yarray.push([enrichedTemplate]);
             }, 'local-hook');
         }
-        setFormData(prev => ({
-            ...prev,
-            [listName]: [...(prev as any)[listName], enrichedTemplate]
-        }));
+        setFormData(prev => {
+            const rawList = (prev as any)[listName];
+            const currentList = Array.isArray(rawList) ? rawList : [];
+            return {
+                ...prev,
+                [listName]: [...currentList, enrichedTemplate]
+            };
+        });
         setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
@@ -180,10 +178,14 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 }, 'local-hook');
             }
         }
-        setFormData(prev => ({
-            ...prev,
-            [listName]: (prev as any)[listName].filter((_: any, i: number) => i !== index)
-        }));
+        setFormData(prev => {
+            const rawList = (prev as any)[listName];
+            const currentList = Array.isArray(rawList) ? rawList : [];
+            return {
+                ...prev,
+                [listName]: currentList.filter((_: any, i: number) => i !== index)
+            };
+        });
         setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
@@ -406,75 +408,52 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const yarray = ydoc.getArray(listName);
             const currentArray = yarray.toArray() as any[];
             const dbInvestigadores = initialData.investigadores || initialData.Investigadores;
-            if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(dbInvestigadores)) {
-                const targetArray = dbInvestigadores.map((dbInv: any, idx: number) => {
-                    const dbCedula = dbInv.Cedula || dbInv.cedula;
-                    const yjsInv = currentArray.find((yInv: any) => {
-                        const yCedula = yInv?.Cedula || yInv?.cedula;
-                        return yCedula && dbCedula && 
-                               yCedula.trim().toLowerCase() === dbCedula.trim().toLowerCase();
-                    });
-                    return {
-                        Nombre: dbInv.Nombre || dbInv.nombre || '',
-                        Cedula: dbCedula || '',
-                        Email: dbInv.Email || dbInv.email || '',
-                        NivelAcademico: dbInv.NivelAcademico || dbInv.nivelAcademico || '',
-                        Rol: dbInv.Rol || dbInv.rol || '',
-                        id: dbInv.id || yjsInv?.id || `db_${idx}`,
-                        Telefono: dbInv.Telefono || dbInv.telefono || '',
-                        HorasSemanales: dbInv.HorasSemanales !== undefined ? dbInv.HorasSemanales : (dbInv.horasSemanales !== undefined ? dbInv.horasSemanales : null),
-                        Carrera: dbInv.Carrera || dbInv.carrera || '',
-                        CarrerasDisponibles: dbInv.CarrerasDisponibles || dbInv.carrerasDisponibles || ''
-                    };
-                });
 
-                const areEqual = (arrA: any[], arrB: any[]) => {
-                    if (arrA.length !== arrB.length) return false;
-                    for (let i = 0; i < arrA.length; i++) {
-                        const a = arrA[i] || {};
-                        const b = arrB[i] || {};
-                        const aCarrera = a.Carrera || a.carrera || '';
-                        const bCarrera = b.Carrera || b.carrera || '';
-                        const aDisponibles = a.CarrerasDisponibles || a.carrerasDisponibles || '';
-                        const bDisponibles = b.CarrerasDisponibles || b.carrerasDisponibles || '';
-                        if (
-                            (a.Nombre || a.nombre || '') !== (b.Nombre || b.nombre || '') ||
-                            (a.Cedula || a.cedula || '') !== (b.Cedula || b.cedula || '') ||
-                            (a.Email || a.email || '') !== (b.Email || b.email || '') ||
-                            (a.NivelAcademico || a.nivelAcademico || '') !== (b.NivelAcademico || b.nivelAcademico || '') ||
-                            (a.Rol || a.rol || '') !== (b.Rol || b.rol || '') ||
-                            (a.id ?? '') !== (b.id ?? '') ||
-                            (a.Telefono || a.telefono || '') !== (b.Telefono || b.telefono || '') ||
-                            (a.HorasSemanales !== undefined ? a.HorasSemanales : (a.horasSemanales !== undefined ? a.horasSemanales : null)) !== 
-                            (b.HorasSemanales !== undefined ? b.HorasSemanales : (b.horasSemanales !== undefined ? b.horasSemanales : null)) ||
-                            aCarrera !== bCarrera ||
-                            aDisponibles !== bDisponibles
-                        ) {
-                            return false;
-                        }
+            if (currentArray.length > 0) {
+                const enriched = currentArray.map((item: any, idx) => {
+                    if (item && typeof item === 'object' && !item.id) {
+                        return { ...item, id: `db_${idx}` };
+                    }
+                    return item;
+                });
+                
+                const seen = new Set();
+                const uniqueEnriched = enriched.filter((item: any) => {
+                    const id = item?.id || item?.uuid || item?.Uuid;
+                    if (id) {
+                        if (seen.has(id)) return false;
+                        seen.add(id);
                     }
                     return true;
-                };
+                });
 
-                if (!areEqual(currentArray, targetArray)) {
-                    coworkLog(`[DIITRA] Force-updating Yjs list 'Investigadores' to match DB truth. DB count: ${targetArray.length}, Yjs count: ${currentArray.length}`);
-                    ydoc.transact(() => {
-                        yarray.delete(0, yarray.length);
-                        if (targetArray.length > 0) {
-                            yarray.push(targetArray);
-                        }
-                    }, 'local-hook-force-sync');
+                setFormData(prev => {
+                    if (isEqualValue(prev[listName], uniqueEnriched)) return prev;
+                    return { ...prev, [listName]: uniqueEnriched };
+                });
+            } else if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(dbInvestigadores) && dbInvestigadores.length > 0) {
+                const targetArray = dbInvestigadores.map((dbInv: any, idx: number) => ({
+                    Nombre: dbInv.Nombre || dbInv.nombre || '',
+                    Cedula: dbInv.Cedula || dbInv.cedula || '',
+                    Email: dbInv.Email || dbInv.email || '',
+                    NivelAcademico: dbInv.NivelAcademico || dbInv.nivelAcademico || '',
+                    Rol: dbInv.Rol || dbInv.rol || '',
+                    id: dbInv.id || `db_${idx}`,
+                    Telefono: dbInv.Telefono || dbInv.telefono || '',
+                    HorasSemanales: dbInv.HorasSemanales !== undefined ? dbInv.HorasSemanales : (dbInv.horasSemanales !== undefined ? dbInv.horasSemanales : null),
+                    Carrera: dbInv.Carrera || dbInv.carrera || '',
+                    CarrerasDisponibles: dbInv.CarrerasDisponibles || dbInv.carrerasDisponibles || ''
+                }));
 
-                    setFormData(prev => {
-                        if (isEqualValue(prev[listName], targetArray)) return prev;
-                        return { ...prev, [listName]: targetArray };
-                    });
-                } else {
-                    setFormData(prev => {
-                        if (isEqualValue(prev[listName], targetArray)) return prev;
-                        return { ...prev, [listName]: targetArray };
-                    });
-                }
+                coworkLog(`[DIITRA] Initializing Yjs list 'Investigadores' with ${targetArray.length} items from DB`);
+                ydoc.transact(() => {
+                    yarray.push(targetArray);
+                }, 'local-hook');
+
+                setFormData(prev => {
+                    if (isEqualValue(prev[listName], targetArray)) return prev;
+                    return { ...prev, [listName]: targetArray };
+                });
             } else if (currentArray.length > 0) {
                 const enriched = currentArray.map((item: any, idx) => {
                     if (item && typeof item === 'object' && !item.id) {

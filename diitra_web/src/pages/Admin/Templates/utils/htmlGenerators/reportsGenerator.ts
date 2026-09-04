@@ -440,7 +440,7 @@ export const generateProgressStatusHtml = (block: DocumentBlock): string => {
     
     <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 0px;">
       <thead>
-        <tr style="background-color: #1e2a4a; color: white; font-weight: bold;">
+        <tr style="background-color: #222c57; color: white; font-weight: bold;">
           <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">INICIADO</th>
           <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">EN AVANCE</th>
           <th style="width: 20%; padding: 6px 4px; border: 1px solid #000000; text-transform: uppercase;">SUSPENDIDO</th>
@@ -456,7 +456,7 @@ export const generateProgressStatusHtml = (block: DocumentBlock): string => {
           <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "POR FINALIZAR"}}(X){{else}}{{#if_eq estado_ejecucion "POR FINALIZAR"}}(X){{/if_eq}}{{/if_eq}}</td>
           <td style="padding: 8px 4px; border: 1px solid #000000; font-weight: bold; font-size: 10pt;">{{#if_eq EstadoEjecucion "FINALIZADO"}}(X){{else}}{{#if_eq estado_ejecucion "FINALIZADO"}}(X){{/if_eq}}{{/if_eq}}</td>
         </tr>
-        <tr style="background-color: #1e2a4a; color: white; font-weight: bold; text-align: left;">
+        <tr style="background-color: #222c57; color: white; font-weight: bold; text-align: left;">
           <td colspan="5" style="padding: 6px 8px; border: 1px solid #000000; font-size: 8.5pt; text-transform: uppercase;">
             EXPLIQUE BREVEMENTE LA FASE DE EJECUCIÓN EN QUE SE ENCUENTRA SU PROYECTO:
           </td>
@@ -808,7 +808,7 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
           {{#if theme.brand.logo_url}}
             <img src="{{theme.brand.logo_url}}" style="max-height: 45px; max-width: 180px;" alt="ISTPET" />
           {{else}}
-            <div style="font-size: 16pt; font-weight: bold; color: #1e2a4a; letter-spacing: 1px;">ISTPET</div>
+            <div style="font-size: 16pt; font-weight: bold; color: #222c57; letter-spacing: 1px;">ISTPET</div>
             <div style="font-size: 6.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">INSTITUTO TRAVERSARI</div>
           {{/if}}
         </td>
@@ -1197,4 +1197,5 @@ export const generateLearningPlanEvaluationHtml = (_block?: DocumentBlock): stri
     </table>
   </div>`;
 };
+
 

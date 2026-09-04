@@ -109,7 +109,7 @@ export const generateMultiSectionTableHtml = (block: DocumentBlock): string => {
 export const generateResearchersTableHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const title = c.title || block.title || '2.  INVESTIGADORES';
-    const headerBg = c.headerColor || '#1e2a4a';
+    const headerBg = c.headerColor || '#222c57';
 
     const showCedula = c.mostrarCedula !== false;
     const showEmail = c.mostrarEmail !== false;
@@ -119,7 +119,7 @@ export const generateResearchersTableHtml = (block: DocumentBlock): string => {
 
     return `
   <!-- BLOQUE: 2. INVESTIGADORES -->
-  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #1e2a4a; margin-top: 18px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #222c57; margin-top: 18px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
   <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
     <thead>
       <tr style="page-break-inside: avoid;">
@@ -133,65 +133,51 @@ export const generateResearchersTableHtml = (block: DocumentBlock): string => {
       </tr>
     </thead>
     <tbody>
-      <!-- Fila Director -->
-      <tr style="page-break-inside: avoid;">
-        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
-          <div style="font-weight: bold; color: #000000;">Director</div>
-          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">{{#if director_proyecto}}{{director_proyecto}}{{else}}[Indicar Título abreviado, nombres y apellidos completos]{{/if}}</div>
-        </td>
-        ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_cedula "[Especificar el número de cédula]"}}</td>` : ''}
-        ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_email "[ejemplo@istpet.edu]"}}</td>` : ''}
-        ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_telefono "[Indicar su número de contacto]"}}</td>` : ''}
-        ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_nivel_academico "[Especificar el título más alto que está debidamente registrado en la Senescyt]"}}</td>` : ''}
-        ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">{{default director_horas "20 hs"}}</td>` : ''}
-        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{default director_rol_institucional "[Indicar rol dentro del ISTPET]"}}</td>
-      </tr>
-      <!-- Fila Docentes -->
-      <tr style="page-break-inside: avoid;">
-        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
-          <div style="font-weight: bold; color: #000000;">Docentes</div>
-          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">[Indicar Título abreviado, nombres y apellidos completos]</div>
-        </td>
-        ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">10 hs</td>` : ''}
-        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
-      </tr>
-      <!-- Fila Estudiantes -->
-      <tr style="page-break-inside: avoid;">
-        <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
-          <div style="font-weight: bold; color: #000000;">Estudiantes</div>
-          <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">[Indicar nombres y apellidos completos]</div>
-        </td>
-        ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>` : ''}
-        ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">N/A</td>` : ''}
-        <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">&nbsp;</td>
-      </tr>
-      <!-- Fila libre 1 -->
-      <tr style="page-break-inside: avoid; height: 22px;">
-        <td style="border: 1px solid #000000;">&nbsp;</td>
-        ${showCedula ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showEmail ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showTelefono ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showNivelAcademico ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showHoras ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        <td style="border: 1px solid #000000;">&nbsp;</td>
-      </tr>
-      <!-- Fila libre 2 -->
-      <tr style="page-break-inside: avoid; height: 22px;">
-        <td style="border: 1px solid #000000;">&nbsp;</td>
-        ${showCedula ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showEmail ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showTelefono ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showNivelAcademico ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        ${showHoras ? `<td style="border: 1px solid #000000;">&nbsp;</td>` : ''}
-        <td style="border: 1px solid #000000;">&nbsp;</td>
-      </tr>
+      {{#if Investigadores}}
+        {{#each Investigadores}}
+        <tr style="page-break-inside: avoid;">
+          <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+            <div style="font-weight: bold; color: #000000;">{{{default this.Rol (default this.rol "Investigador")}}}</div>
+            <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">{{{default this.Nombre (default this.nombre "")}}}</div>
+          </td>
+          ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.Cedula (default this.cedula "")}}}</td>` : ''}
+          ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.Email (default this.email "")}}}</td>` : ''}
+          ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.Telefono (default this.telefono "")}}}</td>` : ''}
+          ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.NivelAcademico (default this.nivel_academico (default this.Nivel this.nivel))}}}</td>` : ''}
+          ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">{{{default this.HorasSemanales (default this.horas_semanales (default this.Horas this.horas))}}}</td>` : ''}
+          <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.Rol (default this.rol "")}}}</td>
+        </tr>
+        {{/each}}
+      {{else if investigadores}}
+        {{#each investigadores}}
+        <tr style="page-break-inside: avoid;">
+          <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+            <div style="font-weight: bold; color: #000000;">{{{default this.rol (default this.Rol "Investigador")}}}</div>
+            <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">{{{default this.nombre (default this.Nombre "")}}}</div>
+          </td>
+          ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.cedula (default this.Cedula "")}}}</td>` : ''}
+          ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.email (default this.Email "")}}}</td>` : ''}
+          ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.telefono (default this.Telefono "")}}}</td>` : ''}
+          ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.nivel_academico (default this.NivelAcademico (default this.nivel this.Nivel))}}}</td>` : ''}
+          ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">{{{default this.horas_semanales (default this.HorasSemanales (default this.horas this.Horas))}}}</td>` : ''}
+          <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default this.rol (default this.Rol "")}}}</td>
+        </tr>
+        {{/each}}
+      {{else}}
+        <!-- Fila Director por defecto cuando aún no se han registrado integrantes -->
+        <tr style="page-break-inside: avoid;">
+          <td style="padding: 5px 6px; font-size: 8pt; border: 1px solid #000000; vertical-align: top;">
+            <div style="font-weight: bold; color: #000000;">Director de Proyecto</div>
+            <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">{{{default DirectorProyecto (default director_proyecto (default NombreDirector ""))}}}</div>
+          </td>
+          ${showCedula ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default DirectorCedula (default director_cedula (default CedulaDirector ""))}}}</td>` : ''}
+          ${showEmail ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default DirectorEmail (default director_email (default EmailDirector ""))}}}</td>` : ''}
+          ${showTelefono ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default DirectorTelefono (default director_telefono (default TelefonoDirector ""))}}}</td>` : ''}
+          ${showNivelAcademico ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">{{{default DirectorNivelAcademico (default director_nivel_academico "Tercer Nivel")}}}</td>` : ''}
+          ${showHoras ? `<td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; text-align: center; font-weight: bold; vertical-align: middle;">{{{default DirectorHoras (default director_horas "0")}}}}</td>` : ''}
+          <td style="padding: 5px 6px; font-size: 7.5pt; color: #334155; border: 1px solid #000000; vertical-align: middle;">Director de Proyecto</td>
+        </tr>
+      {{/if}}
     </tbody>
   </table>`;
 };
@@ -226,3 +212,4 @@ export const generateRubricTableHtml = (block: DocumentBlock): string => {
     </tbody>
   </table>`;
 };
+

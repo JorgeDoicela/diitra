@@ -209,7 +209,7 @@ export const useDocumentTemplatesPage = () => {
                             tituloSuperior: "PORTADA DE PRUEBA DE IDENTIDAD VISUAL",
                             carreraPorDefecto: "CARRERA / UNIDAD ACADÉMICA DE MUESTRA",
                             periodoPorDefecto: "PERIODO ACADÉMICO DE PRUEBA",
-                            colorTema: "#1e2a4a",
+                            colorTema: "#222c57",
                             showInstitution: true,
                             textoInstitucion: "INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI",
                             posInstitution: "top",
@@ -328,7 +328,7 @@ export const useDocumentTemplatesPage = () => {
             case 'title':
                 newBlock = {
                     id: newId, type, title: 'Título de Sección', isActive: true,
-                    config: { text: 'NUEVA SECCIÓN DE DOCUMENTO', fontSize: 'H2', color: '#1e2a4a', alignment: 'left' }
+                    config: { text: 'NUEVA SECCIÓN DE DOCUMENTO', fontSize: 'H2', color: '#222c57', alignment: 'left' }
                 };
                 break;
             case 'rich_text':
@@ -392,13 +392,13 @@ export const useDocumentTemplatesPage = () => {
             case 'cover':
                 newBlock = {
                     id: newId, type, title: 'Portada Institucional', isActive: true,
-                    config: { tituloSuperior: 'NUEVO DOCUMENTO', carreraPorDefecto: 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', periodoPorDefecto: 'PERIODO ACADÉMICO 2025-2026', colorTema: '#1e2a4a' }
+                    config: { tituloSuperior: 'NUEVO DOCUMENTO', carreraPorDefecto: 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE', periodoPorDefecto: 'PERIODO ACADÉMICO 2025-2026', colorTema: '#222c57' }
                 };
                 break;
             case 'researchers_table':
                 newBlock = {
-                    id: newId, type, title: 'Tabla de Participantes', isActive: true,
-                    config: { mostrarCedula: true, mostrarHoras: true, mostrarEmail: false, mostrarNivelAcademico: false, mostrarTelefono: false }
+                    id: newId, type, title: '2. INVESTIGADORES', isActive: true,
+                    config: { mostrarCedula: true, mostrarEmail: true, mostrarTelefono: true, mostrarNivelAcademico: true, mostrarHoras: false }
                 };
                 break;
             case 'rubric_table':
@@ -1023,3 +1023,4 @@ export const useDocumentTemplatesPage = () => {
         handleReorderTemplates,
     };
 };
+

@@ -300,8 +300,8 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                                     className="w-full text-xs px-2 py-1 bg-surface border border-border-thin rounded-xl focus:outline-none focus:border-text-main text-text-main cursor-pointer"
                                                 >
                                                     <option value="standard">Estándar</option>
-                                                    <option value="banner_gold">Dorado (#b8912e)</option>
-                                                    <option value="banner_navy">Azul (#1e2a4a)</option>
+                                                    <option value="banner_gold">Dorado (#c4a857)</option>
+                                                    <option value="banner_navy">Azul (#222c57)</option>
                                                     <option value="banner_emerald">Verde (#065f46)</option>
                                                 </select>
                                             </div>
@@ -505,8 +505,8 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                     className="w-full text-xs px-2 py-1 bg-surface border border-border-thin rounded-xl focus:outline-none focus:border-text-main text-text-main cursor-pointer"
                                 >
                                     <option value="standard">Estándar</option>
-                                    <option value="banner_gold">Dorado (#b8912e)</option>
-                                    <option value="banner_navy">Azul (#1e2a4a)</option>
+                                    <option value="banner_gold">Dorado (#c4a857)</option>
+                                    <option value="banner_navy">Azul (#222c57)</option>
                                     <option value="banner_emerald">Verde (#065f46)</option>
                                 </select>
                             </div>
@@ -610,3 +610,5 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
         </div>
     );
 };
+
+

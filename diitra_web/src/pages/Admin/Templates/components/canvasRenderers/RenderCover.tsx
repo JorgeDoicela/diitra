@@ -13,11 +13,11 @@ export interface HeaderStylePair {
 }
 
 export const DYN_COLORS: Record<string, string> = {
-    blue: '#1e2a4a',
-    gold: '#b8912e',
+    blue: '#222c57',
+    gold: '#c4a857',
     gray: '#475569',
     none: 'transparent',
-    tableHeaderBg: '#1e2a4a',
+    tableHeaderBg: '#222c57',
     tableHeaderColor: '#ffffff',
     fontFamily: "'Calibri', 'Open Sans', Arial, sans-serif",
     baseSize: '10pt',
@@ -98,7 +98,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025';
 
     const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'navy';
-    const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '#1e2a4a' : colorTitleKey;
+    const titleColor = colorTitleKey === 'gold' ? '#c4a857' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '#222c57' : colorTitleKey;
     const tituloFontSize = Number(config.tituloFontSize || 20);
     const tituloItalica = Boolean(config.tituloItalica);
 
@@ -121,9 +121,9 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const rawColorCar = config.colorCarrera || gCover.colorCarrera;
     const rawColorPer = config.colorPeriodo || gCover.colorPeriodo;
 
-    const colorInst = rawColorInst || (activeCoverImage ? '#ffffff' : '#1e2a4a');
-    const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '#1e2a4a');
-    const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '#1e2a4a');
+    const colorInst = rawColorInst || (activeCoverImage ? '#ffffff' : '#222c57');
+    const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '#222c57');
+    const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '#222c57');
     const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
 
     // Carrera
@@ -289,7 +289,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 className={`font-black uppercase tracking-widest select-none inline-flex items-center gap-1.5 ${institutionItalica ? 'italic' : ''}`}
                 style={{
                     fontSize: `${institutionFontSize}pt`,
-                    color: colorInst === '#ffffff' && !activeCoverImage ? '#1e2a4a' : colorInst
+                    color: colorInst === '#ffffff' && !activeCoverImage ? '#222c57' : colorInst
                 }}
             >
                 {textInst}
@@ -369,3 +369,5 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         </div>
     );
 };
+
+

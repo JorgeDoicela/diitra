@@ -283,7 +283,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                     <ColorPickerField
                                         label="Color de Encabezado"
-                                        value={activeBlock.config.headerStyle || '#1e2a4a'}
+                                        value={activeBlock.config.headerStyle || '#222c57'}
                                         onChange={v => onUpdateConfig(activeBlock.id, 'headerStyle', v)}
                                     />
 
@@ -528,7 +528,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                     <ColorPickerField
                                         label="Color del Tema"
-                                        value={activeBlock.config.finalReportHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.finalReportHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'finalReportHeaderColor', val)}
                                     />
                                     <div className="space-y-2 pt-2 border-t border-border-thin/10">
@@ -559,7 +559,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
                                     <ColorPickerField
                                         label="Color del Tema de Encabezados"
-                                        value={activeBlock.config.writingHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.writingHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'writingHeaderColor', val)}
                                     />
                                     <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
@@ -574,7 +574,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
                                     <ColorPickerField
                                         label="Color del Encabezado"
-                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
                                     <div className="flex items-center justify-between border-b border-border-thin/10 pb-3">
@@ -596,7 +596,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
                                     <ColorPickerField
                                         label="Color del Encabezado"
-                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
                                     <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
@@ -621,7 +621,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                     <ColorPickerField
                                         label="Color del Encabezado"
-                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
                                     <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
@@ -647,7 +647,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     </div>
                                     <ColorPickerField
                                         label="Color del Encabezado"
-                                        value={activeBlock.config.learningPlanHeaderColor || '#1e2a4a'}
+                                        value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
                                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
@@ -803,3 +803,4 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
         </div>
     );
 };
+

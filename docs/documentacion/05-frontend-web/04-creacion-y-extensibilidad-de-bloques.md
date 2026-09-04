@@ -216,9 +216,10 @@ Todos los paneles de propiedades deben implementar este componente para garantiz
 * **Características:**
   - Rueda de selección de color nativa (`<input type="color">`).
   - Campo de entrada `#HEX` en mayúsculas (`w-20` con ancho estricto para evitar desbordamientos).
-  - Presets rápidos de la paleta institucional (`#1e2a4a`, `#b8912e`, `#475569`, `#065f46`, `#000000`, `#ffffff`).
+  - Presets rápidos de la paleta institucional (`#1e2a4a`, `#c4a857`, `#475569`, `#065f46`, `#000000`, `#ffffff`).
   - Compatibilidad transparente con tokens históricos mediante `resolveHeaderColor()`.
   - Cálculo automático de contraste (`getContrastFg`) para alternar el texto del encabezado entre blanco y oscuro según la luminancia del fondo.
 
 ### 6.2. Sincronización Bidireccional Canvas ↔ Propiedades
 Al hacer clic o arrastrar un elemento visual en el lienzo A4 (ej. en `RenderCover.tsx`), el renderizador emite `onUpdateConfig(blockId, '_activeCoverTab', targetTab)`. El panel de propiedades escucha este cambio mediante un `useEffect` y activa inmediatamente la subpestaña correspondiente (`institution`, `title`, `carrera` o `periodo`), agilizando el flujo de diseño del usuario.
+

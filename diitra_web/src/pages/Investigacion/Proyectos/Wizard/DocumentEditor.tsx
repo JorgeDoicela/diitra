@@ -776,7 +776,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     listProps = {
                         onAdd: (tpl?: any) => addItem('Investigadores', tpl || { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
                         onRemove: (i: number) => removeItem('Investigadores', i),
-                        onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
+                        onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v),
+                        onUpdateItem: (_listName: string, i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
                     };
                 } else if (activeTab === 'cronograma') {
                     const getProjectWeeksCount = () => {

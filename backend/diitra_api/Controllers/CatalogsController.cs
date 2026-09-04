@@ -211,6 +211,25 @@ namespace diitra_api.Controllers
             return Ok(data);
         }
 
+        [HttpGet("niveles")]
+        public async Task<IActionResult> GetNiveles([FromQuery] int? idCarrera = null)
+        {
+            var query = _context.Cursos.AsNoTracking().Where(c => !string.IsNullOrEmpty(c.Nivel));
+            if (idCarrera.HasValue && idCarrera.Value > 0)
+            {
+                query = query.Where(c => c.IdCarrera == idCarrera.Value);
+            }
+            var data = await query
+                .Select(c => new { c.Nivel, c.Jerarquia, c.Orden })
+                .Distinct()
+                .OrderBy(c => c.Jerarquia ?? c.Orden ?? 99)
+                .ThenBy(c => c.Nivel)
+                .Select(c => c.Nivel)
+                .Distinct()
+                .ToListAsync();
+            return Ok(data);
+        }
+
         /// <summary>
         /// Devuelve las carreras vinculadas al usuario autenticado en el periodo académico activo.
         /// </summary>

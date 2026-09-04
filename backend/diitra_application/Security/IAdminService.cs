@@ -13,7 +13,8 @@ public interface IAdminService
         bool soloConHoras = false, 
         string estadoEstudiante = "ACTIVO",
         string origenEstudiante = "INSTITUTO",
-        string? departamento = null);
+        string? departamento = null,
+        string? nivel = null);
     Task<List<RoleDto>> GetAvailableRolesAsync();
     Task<List<string>> GetDepartmentsAsync();
     Task<UserMetadataDto?> GetUserMetadataAsync(string userUuid);

@@ -245,7 +245,7 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                 <div className="space-y-2.5 text-xs">
                     <ColorPickerField
                         label="Color de Encabezado"
-                        value={config.headerColor || '#1e2a4a'}
+                        value={config.headerColor || '#222c57'}
                         onChange={val => onUpdateConfig(block.id, 'headerColor', val)}
                     />
 
@@ -408,8 +408,8 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                                             className="w-full bg-surface border border-border-thin rounded-xl px-2 py-1 text-xs text-text-main outline-none focus:border-text-main font-medium transition-colors cursor-pointer"
                                                         >
                                                             <option value="standard">Estándar</option>
-                                                            <option value="banner_gold">Dorado (#b8912e)</option>
-                                                            <option value="banner_navy">Azul (#1e2a4a)</option>
+                                                            <option value="banner_gold">Dorado (#c4a857)</option>
+                                                            <option value="banner_navy">Azul (#222c57)</option>
                                                             <option value="banner_emerald">Verde (#065f46)</option>
                                                         </select>
                                                     </div>
@@ -534,8 +534,8 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                             onChange={e => setNewField(prev => ({ ...prev, variant: e.target.value as any }))}
                                             className="w-full bg-surface border border-border-thin rounded-xl px-2 py-1 text-xs text-text-main outline-none focus:border-text-main font-medium transition-colors cursor-pointer"
                                         >
-                                            <option value="banner_gold">Dorado Acreditación (#b8912e)</option>
-                                            <option value="banner_navy">Azul Institucional (#1e2a4a)</option>
+                                            <option value="banner_gold">Dorado Acreditación (#c4a857)</option>
+                                            <option value="banner_navy">Azul Institucional (#222c57)</option>
                                             <option value="banner_emerald">Verde Esmeralda (#065f46)</option>
                                         </select>
                                     </div>
@@ -786,3 +786,5 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
         </div>
     );
 };
+
+

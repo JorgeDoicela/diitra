@@ -16,7 +16,7 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const placeholderTema = (c.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS').replace(/'/g, "\\'");
 
     const colorTitleKey = c.colorTituloSuperior || gCover.colorTituloSuperior || 'navy';
-    const titleColor = colorTitleKey === 'gold' ? '#b8912e' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '{{ theme.colors.primary }}' : colorTitleKey;
+    const titleColor = colorTitleKey === 'gold' ? '#c4a857' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '{{ theme.colors.primary }}' : colorTitleKey;
     const tituloFontSize = Number(c.tituloFontSize || gCover.tituloFontSize || 20);
     const tituloItalica = Boolean(c.tituloItalica ?? gCover.tituloItalica);
 
@@ -126,3 +126,4 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     ${periodoEl}
   </div>`;
 };
+

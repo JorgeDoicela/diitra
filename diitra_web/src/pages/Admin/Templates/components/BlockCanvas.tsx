@@ -103,8 +103,8 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
     // Actualización de colores e identidad tipográfica del canvas en base a themeConfig
     if (themeConfig?.colors) {
-        DYN_COLORS.blue = themeConfig.colors.primary || '#1e2a4a';
-        DYN_COLORS.gold = themeConfig.colors.secondary || '#b8912e';
+        DYN_COLORS.blue = themeConfig.colors.primary || '#222c57';
+        DYN_COLORS.gold = themeConfig.colors.secondary || '#c4a857';
         DYN_COLORS.gray = themeConfig.colors.text || '#475569';
         DYN_COLORS.tableHeaderBg = themeConfig.colors.tableHeaderBg || DYN_COLORS.blue;
         DYN_COLORS.tableHeaderColor = themeConfig.colors.tableHeaderColor || '#ffffff';
@@ -318,3 +318,5 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         </div>
     );
 };
+
+
