@@ -20,6 +20,7 @@ import { getDocumentSection, COMPONENT_MAP } from '../../../../core/documents/re
 
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../core/documents/templateUrl';
+import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
 /**
  * Mapa de nombres de íconos (string del Registry) → componentes Lucide.
@@ -715,7 +716,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
     // ── 8. Resolución de secciones: datos (Registry) + componentes (ComponentRegistry) ──
     const mappedSections = React.useMemo(() => {
-        return (templateConfig.sections as any[]).map((sec: any) => {
+        return (templateConfig.sections as any[]).map((sec: any, idx: number) => {
             // Ícono: puede ser componente directo (legacy) o nombre string (nuevo)
             const iconName = sec.icon_name || sec.iconName;
             const IconComponent = sec.icon || (iconName ? ICON_MAP[iconName] : null) || FileText;
@@ -724,9 +725,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             // Componente de sección: resuelto dinámicamente por nombre o ID (soporta snake_case y camelCase)
             const componentName = sec.component_name || sec.componentName || sec.component;
             const SectionComponent = (componentName ? COMPONENT_MAP[componentName] : null) || getDocumentSection(sec.id, sec.component);
+            const dynamicLabel = formatDynamicSectionLabel(sec.label || sec.title || 'Sección', idx);
 
             return {
                 ...sec,
+                label: dynamicLabel,
                 icon: <IconComponent size={18} />,
                 config: normalizedConfig,
                 component: SectionComponent,    // Siempre resuelto

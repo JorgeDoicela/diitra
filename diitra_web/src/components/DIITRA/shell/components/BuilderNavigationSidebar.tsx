@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, FileText, Lock } from 'lucide-react';
 import type { BuilderSection } from '../hooks/useBuilderLayout';
+import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
 export interface BuilderNavigationSidebarProps {
     sections: BuilderSection[];
@@ -79,9 +80,10 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                     </div>
 
                     <div className={density.spaceY}>
-                        {sections.map(section => {
+                        {sections.map((section, idx) => {
                             const isBlocked = !!formData?.BlockedSections?.[section.id];
                             const isActive = activeTab === section.id;
+                            const dynamicLabel = formatDynamicSectionLabel(section.label, idx);
 
                             return (
                                 <button
@@ -95,7 +97,7 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                                 >
                                     <span className={`flex items-center ${density.gap} text-left min-w-0`}>
                                         <span className={`shrink-0 flex items-center ${density.iconClass}`}>{section.icon}</span>
-                                        <span className="text-left leading-snug break-words">{section.label}</span>
+                                        <span className="text-left leading-snug break-words">{dynamicLabel}</span>
                                     </span>
                                     {isBlocked && (
                                         <div className="flex items-center shrink-0 ml-2">

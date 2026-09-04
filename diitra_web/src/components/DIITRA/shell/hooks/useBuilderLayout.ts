@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CoWorkHandle } from '../../../../core/cowork/types';
 import { useAuth } from '../../../../api/AuthContext';
+import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
 export interface BuilderSection {
     id: string;
@@ -47,8 +48,11 @@ export const useBuilderLayout = ({
     const sectionParam = queryParams.get('section');
     const defaultTab = (sections && sections.length > 0 && !readOnly) ? sections[0].id : 'output';
     const activeTab = (readOnly && (sections.length === 0 || !sections.some(s => s.id === sectionParam))) ? 'output' : (sectionParam || defaultTab);
-    const activeSection = sections.find(s => s.id === activeTab);
-    const activeSectionLabel = activeSection?.label || (activeTab === 'output' ? 'Vista Previa & Firmas' : 'General');
+    const activeSectionIndex = sections.findIndex(s => s.id === activeTab);
+    const activeSection = activeSectionIndex >= 0 ? sections[activeSectionIndex] : null;
+    const activeSectionLabel = activeSection
+        ? formatDynamicSectionLabel(activeSection.label, activeSectionIndex)
+        : (activeTab === 'output' ? 'Vista Previa & Firmas' : 'General');
     const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
     const isDirectorOrAdmin = !!canSign || !!isAdmin;
 

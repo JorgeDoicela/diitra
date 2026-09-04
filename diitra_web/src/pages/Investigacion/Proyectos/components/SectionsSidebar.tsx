@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { SECTIONS } from '../types/revisionTecnicaTypes';
 import type { SectionComment } from '../types/revisionTecnicaTypes';
+import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
 interface SectionsSidebarProps {
     isOpen: boolean;
@@ -87,11 +88,12 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
     const sectionsToDisplay = React.useMemo(() => {
         // 1. Si provienen directamente de ui-config (idéntico a DocumentEditor)
         if (templateSections && Array.isArray(templateSections) && templateSections.length > 0) {
-            return templateSections.map(sec => {
+            return templateSections.map((sec, idx) => {
                 const mappedIcon = (sec.iconName && ICON_MAP[sec.iconName]) || (SECTIONS.find(s => s.id === sec.id)?.icon) || BookOpen;
+                const dynamicLabel = formatDynamicSectionLabel(sec.label || sec.title || 'Sección', idx);
                 return {
                     id: sec.id,
-                    label: sec.label || sec.title || 'Sección',
+                    label: dynamicLabel,
                     icon: mappedIcon
                 };
             });
@@ -146,10 +148,18 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
                 }
             });
 
-            if (dynamicList.length > 0) return dynamicList;
+            if (dynamicList.length > 0) {
+                return dynamicList.map((item, idx) => ({
+                    ...item,
+                    label: formatDynamicSectionLabel(item.label, idx)
+                }));
+            }
         }
 
-        return SECTIONS;
+        return SECTIONS.map((sec, idx) => ({
+            ...sec,
+            label: formatDynamicSectionLabel(sec.label, idx)
+        }));
     }, [templateBlocks, templateSections]);
 
     return (

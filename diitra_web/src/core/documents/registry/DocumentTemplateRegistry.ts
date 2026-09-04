@@ -120,15 +120,15 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'Cronograma', 'ProductosEsperados'],
         sections: [
-            { id: 'identificacion', label: '1. Identificación', iconName: 'FileText', componentName: 'ProjectGeneralSection' },
-            { id: 'investigadores', label: '2. Investigadores', iconName: 'Users', componentName: 'ResearchersSection' },
-            { id: 'especificacion', label: '3. Especificación', iconName: 'Layers', componentName: 'ProjectTechnicalSection' },
-            { id: 'recursos', label: '4. Recursos y Presupuesto', iconName: 'DollarSign', componentName: 'ProjectBudgetSection' },
-            { id: 'productos', label: '5. Productos Esperados', iconName: 'Package', componentName: 'ExpectedProductsSection' },
-            { id: 'impactos', label: '6. Impactos', iconName: 'TrendingUp', componentName: 'ImpactsSection' },
-            { id: 'cronograma', label: '7. Cronograma (Gantt)', iconName: 'Calendar', componentName: 'GanttSection' },
-            { id: 'bibliografia', label: '8. Bibliografía', iconName: 'BookOpen', componentName: 'AgnosticSection' },
-            { id: 'firmas', label: '9. Firmas de Responsabilidad', iconName: 'PenTool', componentName: 'SignaturesSection' }
+            { id: 'identificacion', label: 'Identificación', iconName: 'FileText', componentName: 'ProjectGeneralSection' },
+            { id: 'investigadores', label: 'Investigadores', iconName: 'Users', componentName: 'ResearchersSection' },
+            { id: 'especificacion', label: 'Especificación', iconName: 'Layers', componentName: 'ProjectTechnicalSection' },
+            { id: 'recursos', label: 'Recursos y Presupuesto', iconName: 'DollarSign', componentName: 'ProjectBudgetSection' },
+            { id: 'productos', label: 'Productos Esperados', iconName: 'Package', componentName: 'ExpectedProductsSection' },
+            { id: 'impactos', label: 'Impactos', iconName: 'TrendingUp', componentName: 'ImpactsSection' },
+            { id: 'cronograma', label: 'Cronograma (Gantt)', iconName: 'Calendar', componentName: 'GanttSection' },
+            { id: 'bibliografia', label: 'Bibliografía', iconName: 'BookOpen', componentName: 'AgnosticSection' },
+            { id: 'firmas', label: 'Firmas de Responsabilidad', iconName: 'PenTool', componentName: 'SignaturesSection' }
         ]
     },
 
@@ -200,12 +200,12 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'ResultadosEsperados'],
         sections: [
-            { id: 'identificacion', label: '1. Identificación', iconName: 'FileText', componentName: 'InnovationGeneralSection' },
-            { id: 'investigadores', label: '2. Investigadores', iconName: 'Users', componentName: 'ResearchersSection' },
-            { id: 'descripcion', label: '3. Descripción del Proyecto', iconName: 'Layers', componentName: 'InnovationDescriptionSection' },
-            { id: 'recursos', label: '4. Recursos y Presupuesto', iconName: 'DollarSign', componentName: 'ProjectBudgetSection' },
-            { id: 'impactos', label: '5. Impactos', iconName: 'TrendingUp', componentName: 'ImpactsSection' },
-            { id: 'firmas', label: '6. Firmas de Responsabilidad', iconName: 'PenTool', componentName: 'SignaturesSection' }
+            { id: 'identificacion', label: 'Identificación', iconName: 'FileText', componentName: 'InnovationGeneralSection' },
+            { id: 'investigadores', label: 'Investigadores', iconName: 'Users', componentName: 'ResearchersSection' },
+            { id: 'descripcion', label: 'Descripción del Proyecto', iconName: 'Layers', componentName: 'InnovationDescriptionSection' },
+            { id: 'recursos', label: 'Recursos y Presupuesto', iconName: 'DollarSign', componentName: 'ProjectBudgetSection' },
+            { id: 'impactos', label: 'Impactos', iconName: 'TrendingUp', componentName: 'ImpactsSection' },
+            { id: 'firmas', label: 'Firmas de Responsabilidad', iconName: 'PenTool', componentName: 'SignaturesSection' }
         ]
     },
 
@@ -246,9 +246,9 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: ['ActividadesEjecutadas', 'ActividadesNoPrevistas', 'Obstaculos', 'HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
         sections: [
-            { id: 'avance_bitacora', label: '1. Bitácora Científica', iconName: 'FileText', componentName: 'ProgressLogSection' },
-            { id: 'avance_estado', label: '2. Estado de Ejecución', iconName: 'CheckCircle', componentName: 'ProgressStateSection' },
-            { id: 'avance_observaciones', label: '3. Observaciones y Firmas', iconName: 'PenTool', componentName: 'ProgressObservationsSection' }
+            { id: 'avance_bitacora', label: 'Bitácora Científica', iconName: 'FileText', componentName: 'ProgressLogSection' },
+            { id: 'avance_estado', label: 'Estado de Ejecución', iconName: 'CheckCircle', componentName: 'ProgressStateSection' },
+            { id: 'avance_observaciones', label: 'Observaciones y Firmas', iconName: 'PenTool', componentName: 'ProgressObservationsSection' }
         ]
     },
 
@@ -274,21 +274,21 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: [],
         sections: [
-            { id: 'sec_indice', label: '1. Índice y Estructura', iconName: 'List', componentName: 'AgnosticSection' },
-            { id: 'sec_resumen', label: '2. Resumen Ejecutivo', iconName: 'FileText', componentName: 'AgnosticSection' },
-            { id: 'sec_introduccion', label: '3. Introducción', iconName: 'BookOpen', componentName: 'AgnosticSection' },
-            { id: 'sec_objetivos', label: '4. Objetivos y Cumplimiento', iconName: 'Target', componentName: 'AgnosticSection' },
-            { id: 'sec_fundamentos', label: '5. Fundamentos Teóricos', iconName: 'Layers', componentName: 'AgnosticSection' },
-            { id: 'sec_metodos', label: '6. Métodos Aplicados', iconName: 'Sliders', componentName: 'AgnosticSection' },
-            { id: 'sec_resultados', label: '7. Resultados Obtenidos', iconName: 'Activity', componentName: 'AgnosticSection' },
-            { id: 'sec_productos', label: '8. Productos Alcanzados', iconName: 'Package', componentName: 'AgnosticSection' },
-            { id: 'sec_impactos', label: '9. Impactos Finales', iconName: 'TrendingUp', componentName: 'AgnosticSection' },
-            { id: 'sec_transferencia', label: '10. Transferencia', iconName: 'Share2', componentName: 'AgnosticSection' },
-            { id: 'sec_informe_financiero', label: '11. Informe Financiero', iconName: 'DollarSign', componentName: 'AgnosticSection' },
-            { id: 'sec_conclusiones', label: '12. Conclusiones', iconName: 'CheckSquare', componentName: 'AgnosticSection' },
-            { id: 'sec_recomendaciones', label: '13. Recomendaciones', iconName: 'Award', componentName: 'AgnosticSection' },
-            { id: 'sec_bibliografia', label: '14. Bibliografía Final', iconName: 'Book', componentName: 'AgnosticSection' },
-            { id: 'sec_anexos', label: '15. Anexos', iconName: 'Paperclip', componentName: 'AgnosticSection' }
+            { id: 'sec_indice', label: 'Índice y Estructura', iconName: 'List', componentName: 'AgnosticSection' },
+            { id: 'sec_resumen', label: 'Resumen Ejecutivo', iconName: 'FileText', componentName: 'AgnosticSection' },
+            { id: 'sec_introduccion', label: 'Introducción', iconName: 'BookOpen', componentName: 'AgnosticSection' },
+            { id: 'sec_objetivos', label: 'Objetivos y Cumplimiento', iconName: 'Target', componentName: 'AgnosticSection' },
+            { id: 'sec_fundamentos', label: 'Fundamentos Teóricos', iconName: 'Layers', componentName: 'AgnosticSection' },
+            { id: 'sec_metodos', label: 'Métodos Aplicados', iconName: 'Sliders', componentName: 'AgnosticSection' },
+            { id: 'sec_resultados', label: 'Resultados Obtenidos', iconName: 'Activity', componentName: 'AgnosticSection' },
+            { id: 'sec_productos', label: 'Productos Alcanzados', iconName: 'Package', componentName: 'AgnosticSection' },
+            { id: 'sec_impactos', label: 'Impactos Finales', iconName: 'TrendingUp', componentName: 'AgnosticSection' },
+            { id: 'sec_transferencia', label: 'Transferencia', iconName: 'Share2', componentName: 'AgnosticSection' },
+            { id: 'sec_informe_financiero', label: 'Informe Financiero', iconName: 'DollarSign', componentName: 'AgnosticSection' },
+            { id: 'sec_conclusiones', label: 'Conclusiones', iconName: 'CheckSquare', componentName: 'AgnosticSection' },
+            { id: 'sec_recomendaciones', label: 'Recomendaciones', iconName: 'Award', componentName: 'AgnosticSection' },
+            { id: 'sec_bibliografia', label: 'Bibliografía Final', iconName: 'Book', componentName: 'AgnosticSection' },
+            { id: 'sec_anexos', label: 'Anexos', iconName: 'Paperclip', componentName: 'AgnosticSection' }
         ]
     },
 

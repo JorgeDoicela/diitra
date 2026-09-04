@@ -30,11 +30,20 @@ description: Extiende la skill global de frontend con convenciones y patrones es
 * Los sidebars colapsables y arrastrables deben persistir su estado de visibilidad con `localStorage`.
 * En selects/dropdowns con catálogos relacionales, verifica que cada opción exponga el `id` local y las claves de vinculación externa necesarias (ej: `l.id` y `s.id_linea` para vincular líneas y sublíneas de forma reactiva).
 
-## 6. Sistema de Color y Selector Unificado de Plantillas
+## 5. Sistema de Color y Selector Unificado de Plantillas
 
 * **Componente Compartido (`ColorPickerField`):** Ubicado en `src/pages/Admin/Templates/components/properties/SharedColorPicker.tsx`. Debe usarse como el estándar único en todos los paneles de propiedades para selección de color (permite rueda nativa, entrada `#HEX` directa y presets institucionales ISTPET).
 * **Normalización y Contraste Automático:**
   - `resolveHeaderColor(value)`: Asegura compatibilidad transparente con tokens antiguos (`navy`, `gold`, `slate`, `emerald`) convirtiéndolos a HEX utilizable.
   - `getContrastFg(color)`: Calcula por luminancia si el texto del encabezado debe ser blanco (`#ffffff`) u oscuro (`#0f172a`), garantizando siempre legibilidad en exportaciones y previsualizaciones.
 * **Sincronización Bidireccional Canvas ↔ Propiedades:** Al hacer clic o arrastrar un elemento en el lienzo (`RenderCover`, etc.), debe emitirse `onUpdateConfig(blockId, '_activeCoverTab', targetTab)` para activar automáticamente la subpestaña correspondiente en el panel lateral de propiedades.
+
+## 6. Preservación Estricta de Interactividad en Canvas de Plantillas y Workspace
+
+* **PROHIBIDO VOLVER ESTÁTICOS LOS BLOQUES DEL DISEÑADOR:** Al estilizar, ajustar o alinear cualquier bloque del lienzo A4 (`canvasRenderers/` como `RenderProjectGeneralSection`, `RenderResearchersTable`, `RenderSections`, etc.) para igualar un formato oficial (Word / PDF / CACES), **queda estrictamente prohibido eliminar o reemplazar inputs, estados locales (`useState`), eventos (`onUpdateConfig`), botones de reordenamiento con flechas, selectores de variantes o controles interactivos por etiquetas HTML estáticas (`<p>`, `<span>`, `<div>` planos)**.
+* **Separación de Capas:**
+  1. **Lienzo A4 (`canvasRenderers/`):** Es 100% interactivo y configurable directamente en el canvas y desde el panel de propiedades.
+  2. **Workspace de Investigación (`components/DIITRA/sections/`):** Es 100% colaborativo y editable con campos `<CoWorkField>` conectados a Yjs.
+  3. **Motor PDF (`DocumentEngine` C#):** Es el único responsable de la emisión final estática con firmas electrónicas.
+* **Regla de Oro:** Todo cambio de apariencia visual debe realizarse por CSS, estilos o tokens (`themeConfig`), **preservando intactos todos los eventos, hooks y capacidades de edición**.
 
