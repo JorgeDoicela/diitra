@@ -137,7 +137,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'gantt':
                 return <RenderGantt config={block.config} />;
             case 'researchers_table':
-                return <RenderResearchersTable config={block.config} title={block.title} />;
+                return <RenderResearchersTable config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'rubric_table':
                 return <RenderRubricTable config={block.config} />;
             case 'signatures':
@@ -158,7 +158,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'expected_products':
                 return <RenderExpectedProducts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'impacts':
-                return <RenderImpacts config={block.config} />;
+                return <RenderImpacts config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'progress_header_section':
                 return <RenderProgressHeaderSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'progress_activity_section':

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { TableSection } from '../../types';
 import { getHeaderStylePair, DYN_COLORS } from './RenderCover';
+import { resolveHeaderColor } from '../properties/SharedColorPicker';
 
 export const RenderAdvancedTable: React.FC<{ config: any }> = ({ config }) => {
     const headers = config.headers || ['Columna 1', 'Columna 2'];
@@ -100,22 +101,79 @@ export const RenderMultiSectionTable: React.FC<{ config: any }> = ({ config }) =
     );
 };
 
-export const RenderResearchersTable: React.FC<{ config?: any; title?: string }> = ({ config, title }) => {
-    const displayTitle = config?.title || title || '2.  INVESTIGADORES';
+export const RenderResearchersTable: React.FC<{
+    config?: any;
+    title?: string;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config, title, blockId, onUpdateConfig }) => {
+    const c = config || {};
+    const displayTitle = c.title || title || '2.  INVESTIGADORES';
+    const headerBg = resolveHeaderColor(c.headerColor || '#1e2a4a');
+
+    const showCedula = c.mostrarCedula !== false;
+    const showEmail = c.mostrarEmail !== false;
+    const showTelefono = c.mostrarTelefono !== false;
+    const showNivelAcademico = c.mostrarNivelAcademico !== false;
+    const showHoras = Boolean(c.mostrarHoras);
+
+    const handleToggleCol = (key: string, currentVal: boolean) => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, key, !currentVal);
+    };
+
     return (
         <div className="overflow-x-auto my-2 select-none font-sans">
-            <p className="font-bold text-[10pt] uppercase text-[#1e2a4a] mb-2 tracking-wide font-sans">
-                {displayTitle}
-            </p>
+            {/* Barra de chips en lienzo para activar/desactivar columnas */}
+            {onUpdateConfig && blockId && (
+                <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-indigo-50/60 border border-indigo-100 rounded-md mb-2 text-[8.5px]">
+                    <span className="font-bold text-indigo-900 uppercase tracking-wider shrink-0 mr-1">Columnas:</span>
+                    {[
+                        { key: 'mostrarCedula', label: 'Cédula', active: showCedula },
+                        { key: 'mostrarEmail', label: 'Email', active: showEmail },
+                        { key: 'mostrarTelefono', label: 'Teléfono', active: showTelefono },
+                        { key: 'mostrarNivelAcademico', label: 'Nivel Académico', active: showNivelAcademico },
+                        { key: 'mostrarHoras', label: 'Carga Horaria', active: showHoras },
+                    ].map(({ key, label, active }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleToggleCol(key, active); }}
+                            className={`px-1.5 py-0.5 rounded border transition-all cursor-pointer font-medium ${active
+                                ? 'bg-indigo-600 text-white border-indigo-700 font-bold'
+                                : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 line-through'
+                            }`}
+                        >
+                            {active ? '✓ ' : '+ '}{label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <div className="mb-2">
+                {onUpdateConfig && blockId ? (
+                    <input
+                        type="text"
+                        value={displayTitle}
+                        onChange={e => onUpdateConfig(blockId, 'title', e.target.value)}
+                        className="font-bold text-[10pt] uppercase text-[#1e2a4a] tracking-wide font-sans bg-transparent border-b border-dashed border-slate-300 focus:border-indigo-600 focus:outline-none py-0.5 w-full max-w-md"
+                    />
+                ) : (
+                    <p className="font-bold text-[10pt] uppercase text-[#1e2a4a] tracking-wide font-sans">
+                        {displayTitle}
+                    </p>
+                )}
+            </div>
             <table className="w-full border-collapse text-[10px] border border-black">
                 <thead>
                     <tr className="border-b border-black">
-                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[22%] bg-[#1e2a4a]">NOMBRE</th>
-                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[16%] bg-[#1e2a4a]">NÚMERO DE CÉDULA</th>
-                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[18%] bg-[#1e2a4a]">EMAIL</th>
-                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[14%] bg-[#1e2a4a]">TELEFONO</th>
-                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[16%] bg-[#1e2a4a]">NIVEL ACADÉMICO</th>
-                        <th className="p-1.5 text-white font-bold text-center uppercase text-[8.5px] w-[14%] bg-[#1e2a4a]">ROL</th>
+                        <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>NOMBRE</th>
+                        {showCedula && <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>NÚMERO DE CÉDULA</th>}
+                        {showEmail && <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>EMAIL</th>}
+                        {showTelefono && <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>TELEFONO</th>}
+                        {showNivelAcademico && <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>NIVEL ACADÉMICO</th>}
+                        {showHoras && <th className="border-r border-black p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>HORAS</th>}
+                        <th className="p-1.5 text-white font-bold text-center uppercase text-[8.5px]" style={{ backgroundColor: headerBg }}>ROL</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -125,10 +183,11 @@ export const RenderResearchersTable: React.FC<{ config?: any; title?: string }> 
                             <div className="font-bold text-slate-900 text-[9px]">Director</div>
                             <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar Título abreviado, nombres y apellidos completos]</div>
                         </td>
-                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el número de cédula]</td>
-                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[ejemplo@istpet.edu]</td>
-                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Indicar su número de contacto]</td>
-                        <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el título más alto que está debidamente registrado en la Senescyt]</td>
+                        {showCedula && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el número de cédula]</td>}
+                        {showEmail && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[ejemplo@istpet.edu]</td>}
+                        {showTelefono && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Indicar su número de contacto]</td>}
+                        {showNivelAcademico && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Especificar el título más alto que está debidamente registrado en la Senescyt]</td>}
+                        {showHoras && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-700 font-bold text-center align-middle">20 hs</td>}
                         <td className="p-1.5 text-[7.5px] text-slate-500 italic align-middle">[Indicar rol dentro del ISTPET]</td>
                     </tr>
                     {/* Fila Docentes */}
@@ -137,10 +196,11 @@ export const RenderResearchersTable: React.FC<{ config?: any; title?: string }> 
                             <div className="font-bold text-slate-900 text-[9px]">Docentes</div>
                             <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar Título abreviado, nombres y apellidos completos]</div>
                         </td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        {showCedula && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showEmail && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showTelefono && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showNivelAcademico && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showHoras && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-700 font-bold text-center align-middle">10 hs</td>}
                         <td className="p-1.5 align-middle">&nbsp;</td>
                     </tr>
                     {/* Fila Estudiantes */}
@@ -149,28 +209,31 @@ export const RenderResearchersTable: React.FC<{ config?: any; title?: string }> 
                             <div className="font-bold text-slate-900 text-[9px]">Estudiantes</div>
                             <div className="text-[7.5px] text-slate-500 italic mt-0.5">[Indicar nombres y apellidos completos]</div>
                         </td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
-                        <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>
+                        {showCedula && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showEmail && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showTelefono && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showNivelAcademico && <td className="border-r border-black p-1.5 align-middle">&nbsp;</td>}
+                        {showHoras && <td className="border-r border-black p-1.5 text-[7.5px] text-slate-700 font-bold text-center align-middle">N/A</td>}
                         <td className="p-1.5 align-middle">&nbsp;</td>
                     </tr>
                     {/* Fila libre 1 */}
                     <tr className="border-b border-black h-6 hover:bg-slate-50/50">
                         <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        {showCedula && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showEmail && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showTelefono && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showNivelAcademico && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showHoras && <td className="border-r border-black p-1.5">&nbsp;</td>}
                         <td className="p-1.5">&nbsp;</td>
                     </tr>
                     {/* Fila libre 2 */}
                     <tr className="h-6 hover:bg-slate-50/50">
                         <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
-                        <td className="border-r border-black p-1.5">&nbsp;</td>
+                        {showCedula && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showEmail && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showTelefono && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showNivelAcademico && <td className="border-r border-black p-1.5">&nbsp;</td>}
+                        {showHoras && <td className="border-r border-black p-1.5">&nbsp;</td>}
                         <td className="p-1.5">&nbsp;</td>
                     </tr>
                 </tbody>

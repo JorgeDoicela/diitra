@@ -284,9 +284,31 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                         return idxA - idxB;
                     });
 
+                    const handleMoveCoreItem = (itemKey: string, direction: 'up' | 'down') => {
+                        const allKeys = [...CORE_ITEMS.map(c => c.key), ...customFields.map(f => f.fieldKey || (f as any).id)];
+                        const currentOrder = fieldsOrder.length > 0
+                            ? fieldsOrder.filter(k => allKeys.includes(k))
+                            : [...allKeys];
+
+                        allKeys.forEach(k => {
+                            if (!currentOrder.includes(k)) currentOrder.push(k);
+                        });
+
+                        const index = currentOrder.indexOf(itemKey);
+                        if (index === -1) return;
+                        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+                        if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
+
+                        const updated = [...currentOrder];
+                        const [moved] = updated.splice(index, 1);
+                        updated.splice(targetIndex, 0, moved);
+
+                        onUpdateConfig(block.id, 'fieldsOrder', updated);
+                    };
+
                     return (
                         <div className="space-y-1.5 max-h-[420px] overflow-y-auto pt-1 pr-1 pl-0.5 custom-scrollbar">
-                            {sortedCoreItems.map((item) => {
+                            {sortedCoreItems.map((item, idx) => {
                                 const isChecked = (config as any)[item.key] !== false;
                                 const customLabel = (config as any)[item.labelKey] || item.defaultLabel;
                                 const customScriban = (config as any)[item.scribanKey] || item.defaultScriban;
@@ -320,7 +342,7 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="text-xs font-bold text-text-main truncate block">{customLabel}</span>
                                                         {customVariant === 'banner_gold' && (
-                                                            <span className="badge-vercel-warning text-[8px] px-1 py-0.2">Dorado</span>
+                                                             <span className="badge-vercel-warning text-[8px] px-1 py-0.2">Dorado</span>
                                                         )}
                                                         {customVariant === 'banner_navy' && (
                                                             <span className="badge-vercel-info text-[8px] px-1 py-0.2">Azul</span>
@@ -336,8 +358,26 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
                                             <div className="flex items-center gap-0.5 shrink-0">
                                                 <button
                                                     type="button"
+                                                    disabled={idx === 0}
+                                                    onClick={() => handleMoveCoreItem(item.key, 'up')}
+                                                    className="p-1 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors cursor-pointer"
+                                                    title="Mover arriba"
+                                                >
+                                                    <ChevronUp className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={idx === sortedCoreItems.length - 1}
+                                                    onClick={() => handleMoveCoreItem(item.key, 'down')}
+                                                    className="p-1 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover disabled:opacity-20 transition-colors cursor-pointer"
+                                                    title="Mover abajo"
+                                                >
+                                                    <ChevronDown className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     onClick={() => setEditingCoreKey(isEditingThis ? null : item.key)}
-                                                    className={`p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors ${isEditingThis ? 'text-text-main bg-surface-hover font-bold' : ''}`}
+                                                    className={`p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer ${isEditingThis ? 'text-text-main bg-surface-hover font-bold' : ''}`}
                                                     title="Personalizar campo"
                                                 >
                                                     <Pencil className="w-3.5 h-3.5" />

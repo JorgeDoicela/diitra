@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ArrowUp, ArrowDown, Pencil, EyeOff, Plus, Check, X, Columns, RotateCcw } from 'lucide-react';
 import type {
     ProgressHeaderField,
     ProgressActivityColumn,
@@ -16,8 +17,9 @@ export const RenderProgressHeaderSection: React.FC<{
     config: any;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config }) => {
+}> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
+    const displayTitle = c.title || '1. DATOS GENERALES DEL PROYECTO (AUTO-POBLADOS)';
     const fields: ProgressHeaderField[] = (c.progressHeaderFields && Array.isArray(c.progressHeaderFields) && c.progressHeaderFields.length > 0)
         ? c.progressHeaderFields
         : DEFAULT_PROGRESS_HEADER_FIELDS;
@@ -30,36 +32,180 @@ export const RenderProgressHeaderSection: React.FC<{
 
     const activeFields = fields.filter(f => f.enabled);
 
+    const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+    const [editingLabelText, setEditingLabelText] = useState<string>('');
+
+    const handleUpdateLabel = (fieldId: string, newLabel: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        const updated = fields.map(f => f.id === fieldId ? { ...f, label: newLabel } : f);
+        onUpdateConfig(blockId, 'progressHeaderFields', updated);
+        setEditingFieldId(null);
+    };
+
+    const handleMoveField = (fieldId: string, direction: 'up' | 'down') => {
+        if (!onUpdateConfig || !blockId) return;
+        const activeIdx = activeFields.findIndex(f => f.id === fieldId);
+        if (activeIdx === -1) return;
+        const targetActiveIdx = direction === 'up' ? activeIdx - 1 : activeIdx + 1;
+        if (targetActiveIdx < 0 || targetActiveIdx >= activeFields.length) return;
+
+        const targetField = activeFields[targetActiveIdx];
+        const fromIdx = fields.findIndex(f => f.id === fieldId);
+        const toIdx = fields.findIndex(f => f.id === targetField.id);
+
+        const updated = [...fields];
+        const [moved] = updated.splice(fromIdx, 1);
+        updated.splice(toIdx, 0, moved);
+        onUpdateConfig(blockId, 'progressHeaderFields', updated);
+    };
+
+    const handleToggleSpan = (fieldId: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        const updated = fields.map(f => f.id === fieldId ? { ...f, colSpan: f.colSpan === 2 ? 1 : 2 } : f);
+        onUpdateConfig(blockId, 'progressHeaderFields', updated);
+    };
+
+    const handleHideField = (fieldId: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        const updated = fields.map(f => f.id === fieldId ? { ...f, enabled: false } : f);
+        onUpdateConfig(blockId, 'progressHeaderFields', updated);
+    };
+
+    const handleAddField = () => {
+        if (!onUpdateConfig || !blockId) return;
+        const newField: ProgressHeaderField = {
+            id: `custom_hdr_${Date.now()}`,
+            label: 'NUEVO CAMPO',
+            fieldKey: `custom_${Date.now()}`,
+            enabled: true,
+            colSpan: 1,
+            readOnly: false,
+            placeholder: 'Redactar información...'
+        };
+        onUpdateConfig(blockId, 'progressHeaderFields', [...fields, newField]);
+    };
+
     return (
-        <div className="w-full text-slate-900 font-sans my-2">
+        <div className="w-full text-slate-900 font-sans my-2 select-none">
             <div className={`w-full overflow-hidden rounded-xs ${borderCss}`}>
-                {/* Header principal del bloque */}
+                {/* Header principal del bloque con edición de título */}
                 <div
                     className="px-3 py-1.5 font-bold text-[11px] uppercase tracking-wider flex items-center justify-between"
                     style={{ backgroundColor: headerPair.bg, color: headerPair.fg }}
                 >
-                    <span>1. DATOS GENERALES DEL PROYECTO (AUTO-POBLADOS)</span>
+                    {onUpdateConfig && blockId ? (
+                        <input
+                            type="text"
+                            value={displayTitle}
+                            onChange={e => onUpdateConfig(blockId, 'title', e.target.value)}
+                            className="bg-transparent border-b border-white/40 focus:border-white focus:outline-none py-0.5 text-[11px] font-bold uppercase tracking-wider text-white w-2/3"
+                        />
+                    ) : (
+                        <span>{displayTitle}</span>
+                    )}
                     <span className="text-[9px] opacity-80 font-normal">Identificación Institucional ISTPET</span>
                 </div>
 
                 {/* Grid de campos de encabezado */}
                 <div className="grid grid-cols-2 bg-white">
-                    {activeFields.map((field) => {
+                    {activeFields.map((field, idx) => {
                         const colSpanClass = field.colSpan === 2 ? 'col-span-2' : 'col-span-1';
+                        const isEditing = editingFieldId === field.id;
 
                         return (
                             <div
                                 key={field.id}
-                                className={`${colSpanClass} p-2 ${cellBorderCss} flex flex-col justify-start bg-slate-50/40`}
+                                className={`${colSpanClass} p-2 ${cellBorderCss} flex flex-col justify-start bg-slate-50/40 relative group/cell hover:bg-indigo-50/20 transition-colors`}
                             >
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-700 mb-0.5">
-                                    {field.label}
-                                </span>
+                                {/* Floating pill controls */}
+                                {onUpdateConfig && blockId && (
+                                    <div
+                                        className="absolute right-1 top-1 z-20 flex items-center gap-0.5 bg-slate-900/90 text-white p-0.5 rounded shadow-sm opacity-0 group-hover/cell:opacity-100 transition-opacity"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <button
+                                            type="button"
+                                            disabled={idx === 0}
+                                            onClick={() => handleMoveField(field.id, 'up')}
+                                            className="p-0.5 hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer"
+                                            title="Mover arriba"
+                                        >
+                                            <ArrowUp className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={idx === activeFields.length - 1}
+                                            onClick={() => handleMoveField(field.id, 'down')}
+                                            className="p-0.5 hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer"
+                                            title="Mover abajo"
+                                        >
+                                            <ArrowDown className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditingFieldId(field.id);
+                                                setEditingLabelText(field.label);
+                                            }}
+                                            className="p-0.5 hover:bg-slate-700 rounded cursor-pointer"
+                                            title="Renombrar etiqueta"
+                                        >
+                                            <Pencil className="w-2.5 h-2.5 text-amber-300" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleSpan(field.id)}
+                                            className={`p-0.5 hover:bg-slate-700 rounded cursor-pointer ${field.colSpan === 2 ? 'text-indigo-300' : 'text-slate-300'}`}
+                                            title={field.colSpan === 2 ? "Cambiar a 1 columna" : "Expandir a 2 columnas"}
+                                        >
+                                            <Columns className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleHideField(field.id)}
+                                            className="p-0.5 hover:bg-red-900/80 rounded text-red-300 cursor-pointer"
+                                            title="Ocultar campo"
+                                        >
+                                            <EyeOff className="w-2.5 h-2.5" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {isEditing ? (
+                                    <div className="flex items-center gap-1 mb-1" onClick={e => e.stopPropagation()}>
+                                        <input
+                                            type="text"
+                                            value={editingLabelText}
+                                            onChange={e => setEditingLabelText(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleUpdateLabel(field.id, editingLabelText)}
+                                            autoFocus
+                                            className="px-1 py-0.5 text-slate-900 bg-white text-[9px] font-bold rounded border border-indigo-400"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUpdateLabel(field.id, editingLabelText)}
+                                            className="p-0.5 bg-emerald-600 rounded text-white"
+                                        >
+                                            <Check className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingFieldId(null)}
+                                            className="p-0.5 bg-slate-600 rounded text-white"
+                                        >
+                                            <X className="w-2.5 h-2.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-700 mb-0.5">
+                                        {field.label}
+                                    </span>
+                                )}
 
                                 {field.fieldType === 'checkbox_group' ? (
                                     <div className="flex items-center gap-4 mt-1">
-                                        {(field.options || ['BÁSICA', 'APLICADA', 'EXPERIMENTAL']).map((opt, idx) => (
-                                            <label key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-800 font-medium cursor-pointer">
+                                        {(field.options || ['BÁSICA', 'APLICADA', 'EXPERIMENTAL']).map((opt, oIdx) => (
+                                            <label key={oIdx} className="flex items-center gap-1.5 text-[10px] text-slate-800 font-medium cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     disabled
@@ -79,6 +225,27 @@ export const RenderProgressHeaderSection: React.FC<{
                         );
                     })}
                 </div>
+
+                {/* Botón rápido en el lienzo para añadir campos */}
+                {onUpdateConfig && blockId && (
+                    <div className="p-1.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <button
+                            type="button"
+                            onClick={handleAddField}
+                            className="flex items-center gap-1 text-[8.5px] font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded shadow-2xs transition-all cursor-pointer"
+                        >
+                            <Plus className="w-2.5 h-2.5" /> Añadir Campo
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onUpdateConfig(blockId, 'progressHeaderFields', DEFAULT_PROGRESS_HEADER_FIELDS)}
+                            className="flex items-center gap-1 text-[8px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                            title="Restablecer a campos por defecto"
+                        >
+                            <RotateCcw className="w-2.5 h-2.5" /> Restablecer campos
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -88,7 +255,7 @@ export const RenderProgressActivitySection: React.FC<{
     config: any;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config }) => {
+}> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const variant: ProgressActivityVariant = c.activityVariant || 'ejecutadas';
     const rawColumns: ProgressActivityColumn[] = (c.activityColumns && Array.isArray(c.activityColumns) && c.activityColumns.length > 0)
@@ -494,15 +661,24 @@ export const RenderProgressStatusSection: React.FC<{
     config: any;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config }) => {
+}> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const title = c.statusTableTitle || 'ESTADO DE EJECUCIÓN DEL PROYECTO';
     const options = c.statusOptions || ['INICIADO', 'EN AVANCE', 'SUSPENDIDO', 'POR FINALIZAR', 'FINALIZADO'];
 
     return (
-        <div className="w-full text-slate-900 font-sans my-2">
+        <div className="w-full text-slate-900 font-sans my-2 select-none">
             <div className="w-full border border-slate-300 overflow-hidden rounded-xs bg-white p-4 space-y-4">
-                <p className="font-bold text-[11pt] uppercase tracking-wider text-center text-slate-900">{title}</p>
+                {onUpdateConfig && blockId ? (
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={e => onUpdateConfig(blockId, 'statusTableTitle', e.target.value)}
+                        className="font-bold text-[11pt] uppercase tracking-wider text-center text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:border-indigo-600 focus:outline-none py-0.5 w-full"
+                    />
+                ) : (
+                    <p className="font-bold text-[11pt] uppercase tracking-wider text-center text-slate-900">{title}</p>
+                )}
                 <p className="text-[8.5pt] font-semibold text-slate-900 uppercase">MARQUE CON UNA (X) EL ESTADO ACTUAL DEL PROYECTO DE INVESTIGACIÓN:</p>
                 
                 <table className="w-full text-center border-collapse border border-slate-900 text-[8.5pt]">
@@ -556,20 +732,59 @@ export const RenderFinalReportHeaderSection: React.FC<{
     config: any;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config }) => {
+}> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
     const headerColorKey = c.finalReportHeaderColor || 'navy';
     const headerBg = headerColorKey === 'gold' ? '#b8912e' : headerColorKey === 'slate' ? '#334155' : '#1e2a4a';
 
+    const handleToggle = (key: string, currentVal: boolean = true) => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, key, !currentVal);
+    };
+
     return (
-        <div className="w-full text-slate-900 font-sans my-2">
+        <div className="w-full text-slate-900 font-sans my-2 select-none">
+            {/* Barra de chips en lienzo para activar/desactivar sub-secciones */}
+            {onUpdateConfig && blockId && (
+                <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-indigo-50/60 border border-indigo-100 rounded-md mb-2 text-[8.5px]">
+                    <span className="font-bold text-indigo-900 uppercase tracking-wider shrink-0 mr-1">Secciones:</span>
+                    {[
+                        { key: 'showTipoInvestigacion', label: 'Tipo Invest.', active: c.showTipoInvestigacion !== false },
+                        { key: 'showAlcanceProyecto', label: 'Alcance Proyecto', active: c.showAlcanceProyecto !== false },
+                        { key: 'showFechasProyecto', label: 'Fechas Proyecto', active: c.showFechasProyecto !== false },
+                        { key: 'showTablaInvestigadores', label: 'Investigadores', active: c.showTablaInvestigadores !== false },
+                    ].map(({ key, label, active }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleToggle(key, active); }}
+                            className={`px-1.5 py-0.5 rounded border transition-all cursor-pointer font-medium ${active
+                                ? 'bg-indigo-600 text-white border-indigo-700 font-bold'
+                                : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 line-through'
+                            }`}
+                        >
+                            {active ? '✓ ' : '+ '}{label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className="w-full border border-black overflow-hidden rounded-xs bg-white p-2">
                 <table className="w-full border-collapse border border-black text-[8.5pt]">
                     <tbody>
                         <tr className="text-center font-bold uppercase bg-white">
                             <td colSpan={6} className="p-1.5 border border-black text-[9pt] font-extrabold text-black">
-                                {title}
+                                {onUpdateConfig && blockId ? (
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={e => onUpdateConfig(blockId, 'finalReportTitle', e.target.value)}
+                                        className="font-extrabold text-[9pt] uppercase tracking-wider text-center text-black bg-transparent border-b border-dashed border-slate-300 focus:border-indigo-600 focus:outline-none py-0.5 w-full"
+                                    />
+                                ) : (
+                                    title
+                                )}
                             </td>
                         </tr>
                         <tr>

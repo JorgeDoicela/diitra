@@ -432,9 +432,9 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                             </div>
                                             <input
                                                 type="checkbox"
-                                                checked={(activeBlock.config as any)[key] || false}
+                                                checked={key === 'mostrarHoras' ? Boolean((activeBlock.config as any)[key]) : (activeBlock.config as any)[key] !== false}
                                                 onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
-                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main cursor-pointer"
                                             />
                                         </div>
                                     ))}
