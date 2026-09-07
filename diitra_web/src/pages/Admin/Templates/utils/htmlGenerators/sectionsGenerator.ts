@@ -303,9 +303,9 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
 export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const headerColorKey = c.technicalHeaderColor || 'navy';
-    const borderStyleKey = c.technicalBorderStyle || 'solid';
 
     const resolveHeaderBg = (col: string) => {
+        if (col && (col.startsWith('#') || col.startsWith('rgb') || col.startsWith('hsl'))) return col;
         switch (col) {
             case 'gold': return '#c4a857';
             case 'slate': return '#334155';
@@ -316,8 +316,11 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     };
     const headerBgCol = resolveHeaderBg(headerColorKey);
     const goldColor = '#c4a857';
-    const tableBorder = borderStyleKey === 'none' ? 'border: 0;' : 'border: 1px solid #cbd5e1;';
-    const cellBorder = borderStyleKey === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : 'border: 1px solid #cbd5e1;';
+    const borderStyleKey = c.technicalBorderStyle || 'solid';
+    const borderColorKey = c.technicalBorderColor || '#000000';
+    const borderWidthKey = c.technicalBorderWidth || 1;
+    const tableBorder = borderStyleKey === 'none' ? 'border: 0;' : `border: ${borderWidthKey}px ${borderStyleKey} ${borderColorKey};`;
+    const cellBorder = borderStyleKey === 'none' ? 'border-bottom: 1px solid #f1f5f9;' : `border: ${borderWidthKey}px ${borderStyleKey} ${borderColorKey};`;
 
     const sanitizeScribanVar = (rawVar?: string, fallbackKey?: string) => {
         let raw = (rawVar || fallbackKey || 'contenido').trim();
@@ -339,11 +342,12 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         return p ? `${p} ${t}`.trim().toUpperCase() : t.toUpperCase();
     };
 
-    const resolveVariantColor = (v?: string) => {
-        if (v === 'banner_gold') return goldColor;
-        if (v === 'banner_navy') return '#222c57';
-        if (v === 'banner_emerald') return '#065f46';
-        return headerBgCol;
+    const resolveVariantStyles = (v?: string) => {
+        if (v === 'banner_gold') return { bg: goldColor, fg: '#000000' };
+        if (v === 'banner_navy') return { bg: headerBgCol, fg: '#ffffff' };
+        if (v === 'banner_emerald') return { bg: '#065f46', fg: '#ffffff' };
+        if (v === 'standard') return { bg: '#ffffff', fg: '#000000' };
+        return { bg: headerBgCol, fg: '#ffffff' };
     };
 
     const rawSections = (c.technicalSections && Array.isArray(c.technicalSections) && c.technicalSections.length > 0)
@@ -368,69 +372,99 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         const isGroup = sec.isGroupHeader || sec.hasContent === false;
         const breakBefore = sec.pageBreakBefore ? 'page-break-before: always;' : '';
         const avoidInside = sec.avoidBreakInside !== false ? 'page-break-inside: avoid;' : '';
-        const color = resolveVariantColor(variant);
+        const { bg: color, fg: fontColor } = resolveVariantStyles(variant);
 
         if (isGroup || variant === 'banner_gold') {
             renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
-        <td colspan="2" style="background-color: ${color} !important; color: #ffffff !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; ${cellBorder} text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td colspan="2" style="background-color: ${color} !important; color: ${fontColor} !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; ${cellBorder} text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
       </tr>`);
             i++;
-        } else if (colSpan === 1 || variant === 'banner_navy') {
+        } else if (colSpan === 1) {
             const nextSec = activeSections[i + 1];
-            if (nextSec && (nextSec.colSpan === 1 || nextSec.variant === 'banner_navy') && !nextSec.isGroupHeader) {
+            if (nextSec && nextSec.colSpan === 1 && !nextSec.isGroupHeader) {
                 const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
                 const nextVarName = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey || nextSec.key);
                 const nextPascalVar = (nextSec.fieldKey || nextSec.key || '').trim();
-                const color2 = resolveVariantColor(nextSec.variant);
+                const { bg: color2, fg: fontColor2 } = resolveVariantStyles(nextSec.variant);
 
                 const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
                 const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} "Sin contenido redactado."}}}`;
 
                 renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
-        <td style="background-color: ${color} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="background-color: ${color2} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${nextTitle}</td>
-      </tr>
-      <tr style="${avoidInside}">
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag2}</td>
+        <td colspan="2" style="padding: 0; border: 0;">
+          <table style="width: 100%; border-collapse: collapse; margin: 0; border: 0; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 50%;" />
+              <col style="width: 50%;" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td style="background-color: ${color} !important; color: ${fontColor} !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+                <td style="background-color: ${color2} !important; color: ${fontColor2} !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${nextTitle}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
+                <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag2}</td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
       </tr>`);
                 i += 2;
             } else {
                 const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
                 renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
-        <td style="background-color: ${color} !important; color: #ffffff !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
-      </tr>
-      <tr style="${avoidInside}">
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
-        <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
+        <td colspan="2" style="padding: 0; border: 0;">
+          <table style="width: 100%; border-collapse: collapse; margin: 0; border: 0; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 50%;" />
+              <col style="width: 50%;" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td style="background-color: ${color} !important; color: ${fontColor} !important; text-align: center; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 50%; padding: 6px 10px; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+                <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4; width: 50%;">${tag1}</td>
+                <td style="background-color: #fafafa; width: 50%; ${cellBorder}">&nbsp;</td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
       </tr>`);
                 i++;
             }
         } else {
             const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+            const textAlign = variant === 'banner_navy' ? 'center' : 'left';
             renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
-        <td style="background-color: ${color} !important; color: #ffffff !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 28%; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
-        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
+        <td style="background-color: ${color} !important; color: ${fontColor} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 26%; text-align: ${textAlign}; vertical-align: middle; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
+        <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; width: 74%; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
       </tr>`);
             i++;
         }
     }
 
     const bodyHtml = `
-    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder}">
+    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder} table-layout: fixed;">
+      <colgroup>
+        <col style="width: 26%;" />
+        <col style="width: 74%;" />
+      </colgroup>
       <tbody>
         ${renderedRows.join('\n')}
       </tbody>
     </table>`;
 
+    const sectionTitle = block.title || '3. ESPECIFICACIÓN DEL PROYECTO';
     return `
-  <!-- BLOQUE: PROPUESTA TÉCNICA -->
-  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">Propuesta Técnica</p>
+  <!-- BLOQUE: ESPECIFICACIÓN DEL PROYECTO -->
+  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">${sectionTitle}</p>
   ${bodyHtml}`;
 };
 

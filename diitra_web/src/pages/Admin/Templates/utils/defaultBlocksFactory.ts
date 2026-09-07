@@ -11,6 +11,7 @@
  */
 
 import type { DocumentTemplateDto, DocumentBlock, BlockType, TechnicalSubsection } from '../types';
+import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../types';
 
 /**
  * Genera la portada base institucional con diseño de rombos geométricos del ISTPET.
@@ -101,19 +102,8 @@ const INNOVATION_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
     { id: 'sec_transferencia', fieldKey: 'TransferenciaConocimiento', numberPrefix: '3.13', title: 'TRANSFERENCIA DE CONOCIMIENTO', placeholder: 'Capacitaciones, talleres, publicaciones y socialización de resultados...', requirementText: 'EXTENSIÓN SUGERIDA: 150–200 PALABRAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true }
 ];
 
-/** Subsecciones técnicas de investigación I+D+i */
-const RESEARCH_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
-    { id: 'sec_antecedentes', fieldKey: 'Antecedentes', numberPrefix: '3.1', title: 'ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA', placeholder: 'Identificar y analizar estudios previos...', requirementText: 'DETALLAR EN DOS PÁRRAFOS DE 8 A 12 LÍNEAS MÍNIMO', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_descripcion', fieldKey: 'DescripcionProyecto', numberPrefix: '3.2', title: 'DESCRIPCIÓN DEL PROYECTO', placeholder: 'Definir el propósito del proyecto...', requirementText: 'DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_justificacion', fieldKey: 'Justificacion', numberPrefix: '3.3', title: 'JUSTIFICACIÓN', placeholder: 'Especificar la importancia científica...', requirementText: 'CITAR USANDO NORMAS APA 7MA EDICIÓN', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_banner_objetivos', fieldKey: 'BannerObjetivos', numberPrefix: '3.4', title: 'OBJETIVOS', placeholder: '', requirementText: '', enabled: true, colSpan: 2, variant: 'banner_gold', hasContent: false, isGroupHeader: true },
-    { id: 'sec_objetivo_general', fieldKey: 'ObjetivoGeneral', numberPrefix: '', title: 'GENERAL', placeholder: 'Formular el objetivo general...', requirementText: 'VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?', enabled: true, colSpan: 1, variant: 'banner_navy', hasContent: true, parentId: 'sec_banner_objetivos' },
-    { id: 'sec_objetivos_especificos', fieldKey: 'ObjetivosEspecificos', numberPrefix: '', title: 'ESPECÍFICOS', placeholder: '1. Desarrollar...\n2. Implementar...', requirementText: 'INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO', enabled: true, colSpan: 1, variant: 'banner_navy', hasContent: true, parentId: 'sec_banner_objetivos' },
-    { id: 'sec_ods', fieldKey: 'ObjetivosDesarrolloSostenible', numberPrefix: '3.5', title: 'OBJETIVOS DE DESARROLLO SOSTENIBLE', placeholder: 'Los objetivos de desarrollo sostenible de la ONU son 17...', requirementText: 'Alineación con Objetivos de Desarrollo Sostenible ONU', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_marco_teorico', fieldKey: 'MarcoTeorico', numberPrefix: '3.6', title: 'MARCO TEÓRICO', placeholder: 'Describir los conceptos clave...', requirementText: 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_metodologia', fieldKey: 'Metodologia', numberPrefix: '3.7', title: 'METODOLOGÍA', placeholder: 'Describir el enfoque metodológico...', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true },
-    { id: 'sec_evaluacion', fieldKey: 'Evaluacion', numberPrefix: '3.8', title: 'EVALUACIÓN', placeholder: 'Describir los criterios e indicadores...', requirementText: 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS', enabled: true, colSpan: 2, variant: 'standard', hasContent: true }
-];
+/** Subsecciones técnicas de investigación I+D+i (oficiales ISTPET) */
+const RESEARCH_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = DEFAULT_TECHNICAL_SUBSECTIONS;
 
 /**
  * Fábrica principal de bloques por defecto.
@@ -168,7 +158,11 @@ export function generateDefaultBlocksForTemplate(
                 title: '3. DESCRIPCIÓN DEL PROYECTO',
                 isActive: true,
                 config: {
-                    technicalSections: INNOVATION_TECHNICAL_SUBSECTIONS
+                    technicalSections: INNOVATION_TECHNICAL_SUBSECTIONS,
+                    technicalHeaderColor: '#222c57',
+                    technicalBorderStyle: 'solid',
+                    technicalBorderColor: '#000000',
+                    technicalBorderWidth: 1,
                 }
             },
             {
@@ -254,7 +248,11 @@ export function generateDefaultBlocksForTemplate(
                 title: '3. ESPECIFICACIÓN DEL PROYECTO',
                 isActive: true,
                 config: {
-                    technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS
+                    technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS,
+                    technicalHeaderColor: '#222c57',
+                    technicalBorderStyle: 'solid',
+                    technicalBorderColor: '#000000',
+                    technicalBorderWidth: 1,
                 }
             },
             {
@@ -691,10 +689,14 @@ export function generateDefaultBlocksForTemplate(
         {
             id: 'block-tech-auto',
             type: 'project_technical_section' as BlockType,
-            title: '3. ESPECIFICACIÓN Y PLAN DE TRABAJO',
+            title: '3. ESPECIFICACIÓN DEL PROYECTO',
             isActive: true,
             config: {
-                technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS
+                technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS,
+                technicalHeaderColor: '#222c57',
+                technicalBorderStyle: 'solid',
+                technicalBorderColor: '#000000',
+                technicalBorderWidth: 1,
             }
         },
         {

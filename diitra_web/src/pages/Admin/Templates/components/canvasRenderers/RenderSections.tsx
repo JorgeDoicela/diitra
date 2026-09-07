@@ -929,10 +929,13 @@ export const RenderProjectTechnicalSection: React.FC<{
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
-    const headerColorKey = c.technicalHeaderColor || 'navy';
+    const headerColorKey = c.technicalHeaderColor || '#222c57';
     const borderStyleKey = c.technicalBorderStyle || 'solid';
+    const borderColorKey = c.technicalBorderColor || '#000000';
+    const borderWidthKey = c.technicalBorderWidth !== undefined ? c.technicalBorderWidth : 1;
 
     const resolveHeaderBg = (col: string) => {
+        if (col && (col.startsWith('#') || col.startsWith('rgb') || col.startsWith('hsl'))) return col;
         switch (col) {
             case 'gold': return '#c4a857';
             case 'slate': return '#334155';
@@ -1008,6 +1011,7 @@ export const RenderProjectTechnicalSection: React.FC<{
         title: string;
         numberPrefix?: string;
         requirementText?: string;
+        placeholder?: string;
         colSpan?: 1 | 2;
         variant?: string;
         isGroupHeader?: boolean;
@@ -1023,6 +1027,7 @@ export const RenderProjectTechnicalSection: React.FC<{
                 title: sec.title,
                 numberPrefix: sec.numberPrefix,
                 requirementText: sec.requirementText,
+                placeholder: sec.placeholder,
                 colSpan: sec.colSpan || 2,
                 variant: sec.variant || 'standard',
                 isGroupHeader: sec.isGroupHeader || sec.hasContent === false,
@@ -1102,10 +1107,33 @@ export const RenderProjectTechnicalSection: React.FC<{
         </div>
     );
 
+    const borderCss = borderStyleKey === 'none'
+        ? 'none'
+        : `${borderWidthKey}px ${borderStyleKey} ${borderColorKey}`;
+
+    const borderBottomStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { borderBottom: borderCss };
+
+    const borderRightStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { borderRight: borderCss };
+
+    const borderFullStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { border: borderCss };
+
     return (
         <div className="my-2 select-none">
-            <div className={`rounded-lg shadow-xs overflow-hidden ${borderStyleKey === 'none' ? '' : 'border border-slate-300'}`}>
-                <table className="w-full border-collapse text-[9px]">
+            <div
+                className="rounded-lg shadow-xs overflow-hidden"
+                style={borderFullStyle}
+            >
+                <table className="w-full border-collapse text-[9px] table-fixed" style={{ borderCollapse: 'collapse', ...borderFullStyle }}>
+                    <colgroup>
+                        <col className="w-[26%]" />
+                        <col className="w-[74%]" />
+                    </colgroup>
                     <tbody>
                         {(() => {
                             const rows: React.ReactNode[] = [];
@@ -1128,12 +1156,19 @@ export const RenderProjectTechnicalSection: React.FC<{
                                     if (v === 'banner_gold') return goldColor;
                                     if (v === 'banner_navy') return '#222c57';
                                     if (v === 'banner_emerald') return '#065f46';
+                                    if (v === 'standard') return '#ffffff';
                                     return headerBg;
+                                };
+
+                                const resolveFg = (v?: string) => {
+                                    if (v === 'standard') return '#0f172a';
+                                    if (v === 'banner_gold') return '#000000';
+                                    return '#ffffff';
                                 };
 
                                 if (sub.pageBreakBefore) {
                                     rows.push(
-                                        <tr key={`break-${sub.key}`} className="bg-purple-50 border-b border-purple-200">
+                                        <tr key={`break-${sub.key}`} className="bg-purple-50" style={borderBottomStyle}>
                                             <td colSpan={2} className="py-0.5 px-2 text-[7.5px] font-bold text-purple-700 uppercase flex items-center gap-1">
                                                 <Scissors className="w-2.5 h-2.5" />
                                                 <span>Salto de página obligatorio en PDF antes de: {displayTitle}</span>
@@ -1144,7 +1179,7 @@ export const RenderProjectTechnicalSection: React.FC<{
 
                                 if (colSpan === 1) {
                                     const nextSub = subs[idx + 1];
-                                    if (nextSub && (nextSub.colSpan === 1 || nextSub.variant === 'banner_navy')) {
+                                    if (nextSub && nextSub.colSpan === 1 && !nextSub.isGroupHeader) {
                                         const nextNum = (nextSub.numberPrefix || '').trim();
                                         let nextTitleClean = (nextSub.title || '').trim();
                                         if (nextNum && nextTitleClean.toLowerCase().startsWith(nextNum.toLowerCase())) {
@@ -1154,62 +1189,103 @@ export const RenderProjectTechnicalSection: React.FC<{
 
                                         const bg1 = resolveBg(sub.variant);
                                         const bg2 = resolveBg(nextSub.variant);
+                                        const fg1 = resolveFg(sub.variant);
+                                        const fg2 = resolveFg(nextSub.variant);
 
                                         rows.push(
-                                            <React.Fragment key={sub.key}>
-                                                <tr className="border-b border-slate-300">
-                                                    <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
-                                                        <span>{displayTitle}</span>
-                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                    </td>
-                                                    <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg2 }}>
-                                                        <span>{nextDisplayTitle}</span>
-                                                        {renderDirectControlsPill(nextSub, idx + 1 === 0, idx + 1 === subs.length - 1)}
-                                                    </td>
-                                                </tr>
-                                                <tr className="border-b border-slate-200">
-                                                    <td className="p-2 w-1/2 text-slate-600 bg-white border-r border-slate-200 align-top text-[8.5px]">
-                                                        {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
-                                                    </td>
-                                                    <td className="p-2 w-1/2 text-slate-600 bg-white align-top text-[8.5px]">
-                                                        {nextSub.requirementText ? <span className="font-bold text-slate-700 block">[{nextSub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
-                                                    </td>
-                                                </tr>
-                                            </React.Fragment>
+                                            <tr key={sub.key} style={borderBottomStyle}>
+                                                <td colSpan={2} className="p-0" style={{ border: 'none' }}>
+                                                    <table className="w-full border-collapse table-fixed" style={{ borderCollapse: 'collapse' }}>
+                                                        <colgroup>
+                                                            <col className="w-1/2" />
+                                                            <col className="w-1/2" />
+                                                        </colgroup>
+                                                        <tbody>
+                                                            <tr style={borderBottomStyle}>
+                                                                <td className="p-1.5 w-1/2 font-bold text-center uppercase text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1, color: fg1, ...borderRightStyle, ...borderBottomStyle }}>
+                                                                    <span>{displayTitle}</span>
+                                                                    {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                                </td>
+                                                                <td className="p-1.5 w-1/2 font-bold text-center uppercase text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg2, color: fg2, ...borderBottomStyle }}>
+                                                                    <span>{nextDisplayTitle}</span>
+                                                                    {renderDirectControlsPill(nextSub, idx + 1 === 0, idx + 1 === subs.length - 1)}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="p-2 w-1/2 text-slate-700 bg-white align-top text-[8.5px] leading-relaxed whitespace-pre-line select-text" style={borderRightStyle}>
+                                                                    {sub.placeholder ? (
+                                                                        <div className="text-slate-800 font-normal select-text">{sub.placeholder}</div>
+                                                                    ) : sub.requirementText ? (
+                                                                        <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span>
+                                                                    ) : (
+                                                                        <span className="italic text-slate-400">[Redacción colaborativa]</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="p-2 w-1/2 text-slate-700 bg-white align-top text-[8.5px] leading-relaxed whitespace-pre-line select-text">
+                                                                    {nextSub.placeholder ? (
+                                                                        <div className="text-slate-800 font-normal select-text">{nextSub.placeholder}</div>
+                                                                    ) : nextSub.requirementText ? (
+                                                                        <span className="font-bold text-slate-700 block">[{nextSub.requirementText}]</span>
+                                                                    ) : (
+                                                                        <span className="italic text-slate-400">[Redacción colaborativa]</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
                                         );
                                         idx += 2;
                                     } else {
                                         const bg1 = resolveBg(sub.variant);
+                                        const fg1 = resolveFg(sub.variant);
                                         rows.push(
-                                            <React.Fragment key={sub.key}>
-                                                <tr className="border-b border-slate-300">
-                                                    <td className="p-1.5 w-1/2 text-white font-bold text-center uppercase border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
-                                                        <span>{displayTitle}</span>
-                                                        {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
-                                                    </td>
-                                                    <td className="p-1.5 w-1/2 bg-slate-50/50 text-slate-300 font-normal italic text-center uppercase border-slate-300 text-[8px]">
-                                                        [Espacio disponible (50%)]
-                                                    </td>
-                                                </tr>
-                                                <tr className="border-b border-slate-200">
-                                                    <td className="p-2 w-1/2 text-slate-600 bg-white border-r border-slate-200 align-top text-[8.5px]">
-                                                        {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
-                                                    </td>
-                                                    <td className="p-2 w-1/2 bg-slate-50/30 text-slate-300 italic align-top text-[8px] text-center">
-                                                        —
-                                                    </td>
-                                                </tr>
-                                            </React.Fragment>
+                                            <tr key={sub.key} style={borderBottomStyle}>
+                                                <td colSpan={2} className="p-0" style={{ border: 'none' }}>
+                                                    <table className="w-full border-collapse table-fixed" style={{ borderCollapse: 'collapse' }}>
+                                                        <colgroup>
+                                                            <col className="w-1/2" />
+                                                            <col className="w-1/2" />
+                                                        </colgroup>
+                                                        <tbody>
+                                                            <tr style={borderBottomStyle}>
+                                                                <td className="p-1.5 w-1/2 font-bold text-center uppercase text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1, color: fg1, ...borderRightStyle, ...borderBottomStyle }}>
+                                                                    <span>{displayTitle}</span>
+                                                                    {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
+                                                                </td>
+                                                                <td className="p-1.5 w-1/2 bg-slate-50/50 text-slate-400 font-normal italic text-center uppercase text-[8px]" style={borderBottomStyle}>
+                                                                    [Espacio disponible (50%)]
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="p-2 w-1/2 text-slate-700 bg-white align-top text-[8.5px] leading-relaxed whitespace-pre-line select-text" style={borderRightStyle}>
+                                                                    {sub.placeholder ? (
+                                                                        <div className="text-slate-800 font-normal select-text">{sub.placeholder}</div>
+                                                                    ) : sub.requirementText ? (
+                                                                        <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span>
+                                                                    ) : (
+                                                                        <span className="italic text-slate-400">[Redacción colaborativa]</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="p-2 w-1/2 bg-slate-50/30 text-slate-300 italic align-top text-[8px] text-center">
+                                                                    —
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
                                         );
                                         idx++;
                                     }
                                 } else if (variant === 'banner_gold' || sub.isGroupHeader) {
                                     rows.push(
-                                        <tr key={sub.key} className="border-b border-slate-300">
+                                        <tr key={sub.key} style={borderBottomStyle}>
                                             <td
                                                 colSpan={2}
-                                                className="p-1.5 text-center font-bold text-slate-900 uppercase text-[9px] tracking-wider cursor-pointer relative group/cell"
-                                                style={{ backgroundColor: resolveBg(sub.variant) }}
+                                                className="p-1.5 text-center font-bold uppercase text-[9px] tracking-wider cursor-pointer relative group/cell"
+                                                style={{ backgroundColor: resolveBg(sub.variant), color: resolveFg(sub.variant), ...borderBottomStyle }}
                                                 onClick={() => {
                                                     setEditingKey(sub.key);
                                                     setEditingTitleText(sub.title);
@@ -1227,7 +1303,7 @@ export const RenderProjectTechnicalSection: React.FC<{
                                                     />
                                                 ) : (
                                                     <>
-                                                        <span className="text-white drop-shadow-xs">{displayTitle}</span>
+                                                        <span className="drop-shadow-xs">{displayTitle}</span>
                                                         {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
                                                     </>
                                                 )}
@@ -1237,14 +1313,24 @@ export const RenderProjectTechnicalSection: React.FC<{
                                     idx++;
                                 } else {
                                     const bg1 = resolveBg(sub.variant);
+                                    const fg1 = resolveFg(sub.variant);
+                                    const textAlign = sub.variant === 'banner_navy' ? 'text-center' : 'text-left';
                                     rows.push(
-                                        <tr key={sub.key} className="border-b border-slate-200">
-                                            <td className="p-2 w-[32%] text-white font-bold text-left uppercase align-middle border-r border-slate-300 text-[8.5px] cursor-pointer relative group/cell" style={{ backgroundColor: bg1 }}>
+                                        <tr key={sub.key} style={borderBottomStyle}>
+                                            <td className={`p-2 w-[26%] font-bold ${textAlign} uppercase align-middle text-[8.5px] cursor-pointer relative group/cell`} style={{ backgroundColor: bg1, color: fg1, ...borderRightStyle }}>
                                                 <span>{displayTitle}</span>
                                                 {renderDirectControlsPill(sub, idx === 0, idx === subs.length - 1)}
                                             </td>
-                                            <td className="p-2 w-[68%] text-slate-600 bg-white align-top text-[8.5px]">
-                                                {sub.requirementText ? <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span> : <span className="italic text-slate-400">[Redacción colaborativa]</span>}
+                                            <td className="p-2 w-[74%] text-slate-700 bg-white align-top text-[8.5px] leading-relaxed whitespace-pre-line select-text">
+                                                {sub.placeholder ? (
+                                                    <div className="text-slate-800 font-normal select-text">
+                                                        {sub.placeholder}
+                                                    </div>
+                                                ) : sub.requirementText ? (
+                                                    <span className="font-bold text-slate-700 block">[{sub.requirementText}]</span>
+                                                ) : (
+                                                    <span className="italic text-slate-400">[Redacción colaborativa]</span>
+                                                )}
                                             </td>
                                         </tr>
                                     );

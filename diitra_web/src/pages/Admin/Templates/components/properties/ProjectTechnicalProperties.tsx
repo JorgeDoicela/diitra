@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, RotateCcw, Pencil, Check, X, Layers, Palette, ChevronUp, ChevronDown, Scissors, Bookmark } from 'lucide-react';
 import type { DocumentBlock, TechnicalSubsection } from '../../types';
 import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../../types';
+import { ColorPickerField } from './SharedColorPicker';
+import { BorderPickerField } from './SharedBorderPicker';
 
 interface ProjectTechnicalPropertiesProps {
     block: DocumentBlock;
@@ -10,8 +12,10 @@ interface ProjectTechnicalPropertiesProps {
 
 export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProps> = ({ block, onUpdateConfig }) => {
     const config = block.config || {};
-    const headerColor = config.technicalHeaderColor || 'navy';
+    const headerColor = config.technicalHeaderColor || '#222c57';
     const borderStyle = config.technicalBorderStyle || 'solid';
+    const borderColor = config.technicalBorderColor || '#000000';
+    const borderWidth = config.technicalBorderWidth || 1;
 
     const getActiveSections = (): TechnicalSubsection[] => {
         if (config.technicalSections && Array.isArray(config.technicalSections) && config.technicalSections.length > 0) {
@@ -108,9 +112,12 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
 
     const handleResetPresets = () => {
         updateSections(DEFAULT_TECHNICAL_SUBSECTIONS);
+        onUpdateConfig(block.id, 'title', '3. ESPECIFICACIÓN DEL PROYECTO');
         onUpdateConfig(block.id, 'technicalLayoutMode', 'table_2col');
-        onUpdateConfig(block.id, 'technicalHeaderColor', 'navy');
+        onUpdateConfig(block.id, 'technicalHeaderColor', '#222c57');
         onUpdateConfig(block.id, 'technicalBorderStyle', 'solid');
+        onUpdateConfig(block.id, 'technicalBorderColor', '#000000');
+        onUpdateConfig(block.id, 'technicalBorderWidth', 1);
     };
 
     const handleSaveEdit = () => {
@@ -195,47 +202,36 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                 </div>
                 <input
                     type="text"
-                    value={config.title !== undefined ? config.title : (block.title || '3. ESPECIFICACIÓN TÉCNICA')}
+                    value={config.title !== undefined ? config.title : (block.title || '3. ESPECIFICACIÓN DEL PROYECTO')}
                     onChange={e => onUpdateConfig(block.id, 'title', e.target.value)}
-                    placeholder="3. ESPECIFICACIÓN TÉCNICA"
+                    placeholder="3. ESPECIFICACIÓN DEL PROYECTO"
                     className="w-full bg-surface border border-border-thin rounded-xl px-3 py-1.5 text-xs text-text-main font-semibold outline-none focus:border-text-main transition-colors"
                 />
             </div>
 
             {/* SECCIÓN 1: ESTILOS VISUALES Y ACABADO PDF */}
-            <div className="space-y-2.5 pb-3 border-b border-border-thin/20">
+            <div className="space-y-4 pb-4 border-b border-border-thin/20">
                 <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
                     <Palette className="w-3.5 h-3.5 text-text-main" />
                     Diseño y Estilo Visual
                 </span>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-wide block mb-1">Encabezado</label>
-                        <select
-                            value={headerColor}
-                            onChange={e => onUpdateConfig(block.id, 'technicalHeaderColor', e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-2 py-1.5 text-xs text-text-main outline-none focus:border-text-main font-medium transition-colors cursor-pointer"
-                        >
-                            <option value="navy">Azul Traversari</option>
-                            <option value="gold">Dorado Acreditación</option>
-                            <option value="slate">Gris Ejecutivo</option>
-                            <option value="emerald">Verde Esmeralda</option>
-                        </select>
-                    </div>
+                <ColorPickerField
+                    label="Color del Encabezado Principal"
+                    value={headerColor}
+                    onChange={col => onUpdateConfig(block.id, 'technicalHeaderColor', col)}
+                    fallback="#222c57"
+                />
 
-                    <div>
-                        <label className="text-[9px] font-bold text-text-dim uppercase tracking-wide block mb-1">Bordes</label>
-                        <select
-                            value={borderStyle}
-                            onChange={e => onUpdateConfig(block.id, 'technicalBorderStyle', e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-2 py-1.5 text-xs text-text-main outline-none focus:border-text-main font-medium transition-colors cursor-pointer"
-                        >
-                            <option value="solid">Institucional</option>
-                            <option value="none">Sin Bordes</option>
-                        </select>
-                    </div>
-                </div>
+                <BorderPickerField
+                    label="Bordes de la Tabla de Especificación"
+                    borderStyle={borderStyle}
+                    borderColor={borderColor}
+                    borderWidth={borderWidth}
+                    onBorderStyleChange={st => onUpdateConfig(block.id, 'technicalBorderStyle', st)}
+                    onBorderColorChange={col => onUpdateConfig(block.id, 'technicalBorderColor', col)}
+                    onBorderWidthChange={w => onUpdateConfig(block.id, 'technicalBorderWidth', w)}
+                />
             </div>
 
             {/* SECCIÓN 2: GESTIÓN DIRECTA DE SUB-SECCIONES */}
