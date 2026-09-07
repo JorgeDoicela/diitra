@@ -146,7 +146,7 @@ const PublicConvocatoriasPage = () => {
         const fetchConvocatorias = async () => {
             try {
                 const response = await api.get('/Convocatorias');
-                setConvocatorias(response.data.filter((c: any) => c.estado === 'Abierta' || (isAdmin && c.estado === 'Borrador')));
+                setConvocatorias(response.data.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Cerrada' || (isAdmin && c.estado === 'Borrador')));
             } catch (error) {
                 console.error('Error fetching convocatorias:', error);
             } finally {
@@ -261,7 +261,7 @@ const PublicConvocatoriasPage = () => {
                                     <span className="badge-vercel">
                                         {c.codigo_convocatoria}
                                     </span>
-                                    {isPastDeadline(c.fecha_cierre) ? (
+                                    {c.estado === 'Cerrada' || isPastDeadline(c.fecha_cierre) ? (
                                         <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest">
                                             <span className="dot dot-error" />
                                             <span className="text-error">
@@ -298,7 +298,7 @@ const PublicConvocatoriasPage = () => {
                             </div>
 
                             <div className="pt-6 flex items-center gap-4 relative z-10">
-                                {isPastDeadline(c.fecha_cierre) ? (
+                                {c.estado === 'Cerrada' || isPastDeadline(c.fecha_cierre) ? (
                                     <button
                                         disabled
                                         className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
@@ -356,7 +356,7 @@ const PublicConvocatoriasPage = () => {
                                     {selectedConvocatoria.codigo_convocatoria}
                                 </span>
                                 <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider">
-                                    {isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
+                                    {selectedConvocatoria.estado === 'Cerrada' || isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
                                         <>
                                             <span className="dot dot-error" />
                                             <span className="text-error">
@@ -432,7 +432,7 @@ const PublicConvocatoriasPage = () => {
                         </div>
 
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
-                            {isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
+                            {selectedConvocatoria.estado === 'Cerrada' || isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
                                 <button
                                     disabled
                                     className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"

@@ -5,6 +5,27 @@ import {
 } from 'lucide-react';
 import { CoWorkField } from '../../../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../../../core/cowork/types';
+import { GeistDatePicker } from '../../../../Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface ActivityCardItemProps {
     item: any;
@@ -238,28 +259,22 @@ export const ActivityCardItem: React.FC<ActivityCardItemProps> = ({
                             <label className="block text-[8px] font-black text-text-dim uppercase tracking-widest mb-1.5 flex items-center gap-1">
                                 <Clock size={11} /> Fecha Inicio Prevista
                             </label>
-                            <input
-                                type="date"
-                                value={formatDateForInput(_c.FechaInicioPrevista)}
-                                min={formatDateForInput(formData?.FechaInicio || formData?.FechaInicioEstimada)}
-                                max={formatDateForInput(formData?.FechaFin || formData?.FechaFinEstimada)}
-                                onChange={(e) => handleActivityDateChange(i, 'start', e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs font-semibold focus:border-text-main focus:outline-none"
+                            <GeistDatePicker
+                                value={toDisplayDate(formatDateForInput(_c.FechaInicioPrevista))}
+                                onChange={(val) => handleActivityDateChange(i, 'start', toISODate(val))}
                                 disabled={readOnly}
+                                placeholder="dd/mm/aaaa"
                             />
                         </div>
                         <div>
                             <label className="block text-[8px] font-black text-text-dim uppercase tracking-widest mb-1.5 flex items-center gap-1">
                                 <Clock size={11} /> Fecha Fin Prevista
                             </label>
-                            <input
-                                type="date"
-                                value={formatDateForInput(_c.FechaFinPrevista)}
-                                min={formatDateForInput(_c.FechaInicioPrevista || formData?.FechaInicio || formData?.FechaInicioEstimada)}
-                                max={formatDateForInput(formData?.FechaFin || formData?.FechaFinEstimada)}
-                                onChange={(e) => handleActivityDateChange(i, 'end', e.target.value)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs font-semibold focus:border-text-main focus:outline-none"
+                            <GeistDatePicker
+                                value={toDisplayDate(formatDateForInput(_c.FechaFinPrevista))}
+                                onChange={(val) => handleActivityDateChange(i, 'end', toISODate(val))}
                                 disabled={readOnly}
+                                placeholder="dd/mm/aaaa"
                             />
                         </div>
                     </div>

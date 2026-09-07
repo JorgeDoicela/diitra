@@ -1,5 +1,27 @@
 import React from 'react';
 import { BookOpen } from 'lucide-react';
+import { GeistSelect } from '../../../../../components/Common/GeistSelect';
+import { GeistDatePicker } from '../../../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface ProductRegistrationModalProps {
     isOpen: boolean;
@@ -50,17 +72,14 @@ export const ProductRegistrationModal: React.FC<ProductRegistrationModalProps> =
                 <form onSubmit={onSubmit} className="modal-body space-y-4">
                     <div className="space-y-1">
                         <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Tipo de Producto</label>
-                        <select 
-                            value={newProduct.id_tipo_producto}
-                            onChange={(e) => setNewProduct({ ...newProduct, id_tipo_producto: Number(e.target.value) })}
-                            className="input-vercel !text-xs"
-                        >
-                            {productTypes.map((type) => (
-                                <option key={type.id_tipo_producto} value={type.id_tipo_producto}>
-                                    {type.nombre}
-                                </option>
-                            ))}
-                        </select>
+                        <GeistSelect 
+                            value={String(newProduct.id_tipo_producto || '')}
+                            onChange={(val) => setNewProduct({ ...newProduct, id_tipo_producto: Number(val) })}
+                            options={productTypes.map((type) => ({
+                                value: String(type.id_tipo_producto),
+                                label: type.nombre
+                            }))}
+                        />
                     </div>
                     
                     <div className="space-y-1">
@@ -124,11 +143,10 @@ export const ProductRegistrationModal: React.FC<ProductRegistrationModalProps> =
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Fecha de Registro</label>
-                                <input 
-                                    type="date"
-                                    value={newProduct.fecha_registro_senadi}
-                                    onChange={(e) => setNewProduct({ ...newProduct, fecha_registro_senadi: e.target.value })}
-                                    className="input-vercel !text-xs"
+                                <GeistDatePicker 
+                                    value={toDisplayDate(newProduct.fecha_registro_senadi)}
+                                    onChange={(val) => setNewProduct({ ...newProduct, fecha_registro_senadi: toISODate(val) })}
+                                    placeholder="dd/mm/aaaa"
                                 />
                             </div>
                         </div>

@@ -5,6 +5,28 @@ import { searchRevisores, asignarArbitro } from '../../../services/peerReviewSer
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
 import { formatNombre } from './arbitrajeUtils';
 import ModalRevisorExterno from './ModalRevisorExterno';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 const formatCarrera = (text?: string) => {
     if (!text) return '';
@@ -256,19 +278,17 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                             {filtroTipo !== 'externos' && carrerasDisponibles.length > 0 && (
                                 <div className="flex items-center gap-2 animate-fade-in">
                                     <div className="relative flex-1">
-                                        <GraduationCap size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
-                                        <select
+                                        <GeistSelect
                                             value={filtroCarrera}
-                                            onChange={(e) => setFiltroCarrera(e.target.value)}
-                                            className="input-vercel !pl-8 !py-1.5 w-full text-xs font-sans bg-surface appearance-none cursor-pointer"
-                                        >
-                                            <option value="">Todas las carreras ({carrerasDisponibles.length})</option>
-                                            {carrerasDisponibles.map(([carrera, count]) => (
-                                                <option key={carrera} value={carrera}>
-                                                    {formatCarrera(carrera)} ({count})
-                                                </option>
-                                            ))}
-                                        </select>
+                                            onChange={(val) => setFiltroCarrera(val)}
+                                            options={[
+                                                { value: '', label: `Todas las carreras (${carrerasDisponibles.length})` },
+                                                ...carrerasDisponibles.map(([carrera, count]) => ({
+                                                    value: carrera,
+                                                    label: `${formatCarrera(carrera)} (${count})`
+                                                }))
+                                            ]}
+                                        />
                                     </div>
                                     {filtroCarrera && (
                                         <button
@@ -437,12 +457,10 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                             <CalendarDays size={10} />
                                             <span>Fecha Límite de Dictamen</span>
                                         </label>
-                                        <input
-                                            type="date"
-                                            className="input-vercel w-full font-mono text-xs"
-                                            value={fechaLimite}
-                                            min={new Date().toISOString().slice(0, 10)}
-                                            onChange={(e) => setFechaLimite(e.target.value)}
+                                        <GeistDatePicker
+                                            value={toDisplayDate(fechaLimite)}
+                                            onChange={(val) => setFechaLimite(toISODate(val))}
+                                            placeholder="dd/mm/aaaa"
                                         />
                                     </div>
 

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import type { Convocatoria, Catalogo } from '../types';
+import { GeistSelect } from '../../../../components/Common/GeistSelect';
 
 export interface RecipientItem {
     key: string;
@@ -457,18 +458,17 @@ export const PublishConvocatoriaDrawer: React.FC<PublishConvocatoriaDrawerProps>
 
                             {activeTab === 'AUTORIDADES' && departmentsList.length > 0 && (
                                 <div className="sm:w-64">
-                                    <select
+                                    <GeistSelect
                                         value={selectedDeptFilter}
-                                        onChange={e => setSelectedDeptFilter(e.target.value)}
-                                        className="w-full h-9 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer font-medium"
-                                    >
-                                        <option value="">Todos los Departamentos ({departmentsList.length})</option>
-                                        {departmentsList.map(dept => (
-                                            <option key={dept} value={dept}>
-                                                {dept}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={val => setSelectedDeptFilter(val)}
+                                        options={[
+                                            { value: '', label: `Todos los Departamentos (${departmentsList.length})` },
+                                            ...departmentsList.map(dept => ({
+                                                value: dept,
+                                                label: dept
+                                            }))
+                                        ]}
+                                    />
                                 </div>
                             )}
                         </div>

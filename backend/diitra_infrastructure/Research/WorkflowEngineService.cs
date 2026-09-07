@@ -34,8 +34,13 @@ namespace Diitra.Infrastructure.Research
 
             string estadoAnterior = proyecto.Estado;
 
+            bool isReversion = !string.IsNullOrEmpty(observacion) && 
+                (observacion.StartsWith("Reversión", StringComparison.OrdinalIgnoreCase) || 
+                 observacion.StartsWith("Reversion", StringComparison.OrdinalIgnoreCase) || 
+                 observacion.StartsWith("Deshacer", StringComparison.OrdinalIgnoreCase));
+
             // 0. Validación de Casos Extremos de Reversión (Undo Timeout & Concurrencia de Datos)
-            if (!string.IsNullOrEmpty(observacion) && observacion.StartsWith("Reversión (Undo)"))
+            if (isReversion)
             {
                 var ultimaTransicionReciente = await _context.InvTrazabilidadProyectos
                     .Where(t => t.IdProyecto == proyecto.IdProyecto)
@@ -48,9 +53,9 @@ namespace Diitra.Infrastructure.Research
                     if (fechaTrans.HasValue)
                     {
                         var diferencia = DateTime.Now - fechaTrans.Value;
-                        if (diferencia.TotalSeconds > 20) // Margen de seguridad de 20 segundos para la sincronización de red
+                        if (diferencia.TotalSeconds > 25) // Margen de seguridad de 25 segundos para la sincronización de red
                         {
-                            throw new InvalidOperationException("El tiempo límite para deshacer la última acción ha expirado. El docente podría haber iniciado modificaciones.");
+                            throw new InvalidOperationException("El tiempo límite para deshacer la última acción ha expirado.");
                         }
                     }
                 }
@@ -67,7 +72,7 @@ namespace Diitra.Infrastructure.Research
 
             // 1. Validación Dinámica vía Base de Datos (Configurable)
             bool esValida = false;
-            if (!string.IsNullOrEmpty(observacion) && observacion.StartsWith("Reversión (Undo)"))
+            if (isReversion)
             {
                 esValida = true;
             }
@@ -92,7 +97,9 @@ namespace Diitra.Infrastructure.Research
                 throw new InvalidOperationException($"La transición {estadoAnterior} -> {nuevoEstado} no está permitida por la normativa vigente para este tipo de proyecto.");
             }
 
-            // 1.05 Validaciones de Prepropuesta (Idea de Investigación)
+            if (!isReversion)
+            {
+                // 1.05 Validaciones de Prepropuesta (Idea de Investigación)
             if (estadoAnterior == "Prepropuesta" && nuevoEstado == "Borrador")
             {
                 if (string.IsNullOrWhiteSpace(proyecto.Titulo))
@@ -251,12 +258,40 @@ namespace Diitra.Infrastructure.Research
                     }
                 }
             }
+            } // Fin if (!isReversion)
+
+            // 1.3 Restauración de Instrumentos en Reversión de Devolución Técnica
+            if (isReversion && estadoAnterior == "En Corrección" && nuevoEstado == "Enviado")
+            {
+                var protocolInstances = await _context.DocumentInstances
+                    .Where(d => d.EntityUuid == proyecto.Uuid && 
+                               (d.TemplateCode == "PROTOCOLO_INVESTIGACION" || d.TemplateCode == "PROTOCOLO_INNOVACION"))
+                    .ToListAsync();
+
+                var protocolUuids = protocolInstances.Select(d => d.Uuid).ToList();
+
+                var existingFirmas = await _context.InvDocumentoFirmas
+                    .Where(f => protocolUuids.Contains(f.DocumentoUuid))
+                    .ToListAsync();
+
+                foreach (var firma in existingFirmas)
+                {
+                    firma.EsValida = true;
+                }
+
+                foreach (var docInst in protocolInstances)
+                {
+                    docInst.TransitionTo(DocumentState.Signed);
+                }
+
+                await _context.SaveChangesAsync();
+            }
 
             // 2. Ejecutar Transición
             proyecto.Estado = nuevoEstado;
             proyecto.FechaModificacion = DateTime.Now;
 
-            if (nuevoEstado == "En Corrección" && fechaLimite.HasValue)
+            if (!isReversion && nuevoEstado == "En Corrección" && fechaLimite.HasValue)
             {
                 proyecto.FechaLimiteSubsanacion = fechaLimite.Value;
             }
@@ -306,8 +341,11 @@ namespace Diitra.Infrastructure.Research
  
             await _auditService.LogActionAsync(idUsuario, "TRANSICIONAR_PROYECTO", $"Proyecto \"{proyecto.Titulo}\" transicionó de {estadoAnterior} a {nuevoEstado}", "PROYECTOS", beforeJson, afterJson);
  
-            // Notify admins/directors when a project is submitted
-            if (nuevoEstado == "Enviado")
+            // Notificaciones institucionales (omitidas en reversiones para evitar spam o estados inconsistentes)
+            if (!isReversion)
+            {
+                // Notify admins/directors when a project is submitted
+                if (nuevoEstado == "Enviado")
             {
                 try
                 {
@@ -542,6 +580,7 @@ namespace Diitra.Infrastructure.Research
                     Console.WriteLine($"[DIITRA] Error en notificación de finalización de proyecto: {ex.Message}");
                 }
             }
+            } // Fin if (!isReversion)
  
             return true;
         }

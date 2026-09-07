@@ -2,6 +2,28 @@ import React from 'react';
 import { CheckCircle, XCircle, Edit2, Trash2 } from 'lucide-react';
 import { useConfiguracion } from './useConfiguracion';
 import type { EventoNormativo } from './useConfiguracion';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface CalendarioTabProps {
     hook: ReturnType<typeof useConfiguracion>;
@@ -143,16 +165,16 @@ export const CalendarioTab: React.FC<CalendarioTabProps> = ({ hook, setDetailIte
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Tipo de Evento</label>
-                                    <select 
+                                    <GeistSelect 
                                         value={calendarioForm.tipoEvento}
-                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, tipoEvento: e.target.value }))}
-                                        className="select-vercel"
-                                    >
-                                        <option value="Normativo">Normativo (CACES/CES)</option>
-                                        <option value="Academico">Académico (IST)</option>
-                                        <option value="Institucional">Institucional</option>
-                                        <option value="Feriado">Feriado / Receso</option>
-                                    </select>
+                                        onChange={(val) => setCalendarioForm(prev => ({ ...prev, tipoEvento: val }))}
+                                        options={[
+                                            { value: 'Normativo', label: 'Normativo (CACES/CES)' },
+                                            { value: 'Academico', label: 'Académico (IST)' },
+                                            { value: 'Institucional', label: 'Institucional' },
+                                            { value: 'Feriado', label: 'Feriado / Receso' }
+                                        ]}
+                                    />
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -169,22 +191,19 @@ export const CalendarioTab: React.FC<CalendarioTabProps> = ({ hook, setDetailIte
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Fecha Inicio *</label>
-                                    <input 
-                                        type="date" 
-                                        required
-                                        value={calendarioForm.fechaInicio}
-                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, fechaInicio: e.target.value }))}
-                                        className="input-vercel"
+                                    <GeistDatePicker 
+                                        value={toDisplayDate(calendarioForm.fechaInicio)}
+                                        onChange={(val) => setCalendarioForm(prev => ({ ...prev, fechaInicio: toISODate(val) }))}
+                                        placeholder="dd/mm/aaaa"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Fecha Fin</label>
-                                    <input 
-                                        type="date" 
-                                        value={calendarioForm.fechaFin}
-                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, fechaFin: e.target.value }))}
-                                        className="input-vercel"
+                                    <GeistDatePicker 
+                                        value={toDisplayDate(calendarioForm.fechaFin)}
+                                        onChange={(val) => setCalendarioForm(prev => ({ ...prev, fechaFin: toISODate(val) }))}
+                                        placeholder="dd/mm/aaaa"
                                     />
                                 </div>
                             </div>
@@ -212,11 +231,10 @@ export const CalendarioTab: React.FC<CalendarioTabProps> = ({ hook, setDetailIte
                             {calendarioForm.recurrenciaAnual && (
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-text-main uppercase tracking-wider">Repetir Hasta</label>
-                                    <input 
-                                        type="date" 
-                                        value={calendarioForm.recurrenciaHasta}
-                                        onChange={(e) => setCalendarioForm(prev => ({ ...prev, recurrenciaHasta: e.target.value }))}
-                                        className="input-vercel"
+                                    <GeistDatePicker 
+                                        value={toDisplayDate(calendarioForm.recurrenciaHasta)}
+                                        onChange={(val) => setCalendarioForm(prev => ({ ...prev, recurrenciaHasta: toISODate(val) }))}
+                                        placeholder="dd/mm/aaaa"
                                     />
                                 </div>
                             )}

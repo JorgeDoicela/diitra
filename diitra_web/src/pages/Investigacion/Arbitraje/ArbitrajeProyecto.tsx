@@ -19,6 +19,27 @@ import { formatNombre } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -732,13 +753,10 @@ const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose
                         <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                             Nueva fecha límite *
                         </label>
-                        <input
-                            type="date"
-                            required
-                            min={new Date().toISOString().slice(0, 10)}
-                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-sm text-text-main focus:outline-none focus:border-text-dim transition-colors"
-                            value={nuevaFecha}
-                            onChange={(e) => setNuevaFecha(e.target.value)}
+                        <GeistDatePicker
+                            value={toDisplayDate(nuevaFecha)}
+                            onChange={(val) => setNuevaFecha(toISODate(val))}
+                            placeholder="dd/mm/aaaa"
                         />
                     </div>
 

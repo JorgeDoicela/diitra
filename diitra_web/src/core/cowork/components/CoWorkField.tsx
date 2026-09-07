@@ -511,7 +511,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         placeholder,
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
-            : `${className} ${isDateField ? 'pr-10 cursor-pointer select-none' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
+            : `${className} ${isDateField ? 'pr-10 cursor-pointer select-none' : ''} ${isDateField && isCalendarOpen ? 'border-text-main' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:border-text-main focus:ring-0 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
         readOnly: isFieldReadOnly || isDateField,
         onClick: isDateField ? toggleCalendar : undefined,

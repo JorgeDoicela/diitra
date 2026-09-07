@@ -355,10 +355,10 @@ export const useRevisionTecnicaData = ({
                         await api.post(`/projects/${project.uuid}/transition`, null, {
                             params: {
                                 newState: originalState,
-                                observation: "Reversión (Undo): Retorno al estado anterior por cancelación de la aprobación."
+                                observation: "Reversión: Retorno al estado anterior por cancelación de la aprobación."
                             }
                         });
-                        addToast("Acción Revertida", `La aprobación ha sido cancelada. Proyecto en estado: ${originalState}`, "info");
+                        addToast("Acción Revertida", "La aprobación ha sido cancelada. La propuesta permanece en estado Enviado para revisión.", "info");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         navigate(`/investigacion/revision-tecnica/${projectUuid}`);
                     } catch (err) {
@@ -431,10 +431,10 @@ export const useRevisionTecnicaData = ({
                         await api.post(`/projects/${project.uuid}/transition`, null, {
                             params: {
                                 newState: originalState,
-                                observation: "Reversión (Undo): Retorno al estado anterior por cancelación de la devolución."
+                                observation: "Reversión: Retorno al estado anterior por cancelación de la devolución."
                             }
                         });
-                        addToast("Acción Revertida", `La devolución ha sido cancelada. Proyecto en estado: ${originalState}`, "info");
+                        addToast("Acción Revertida", "La devolución ha sido cancelada. La propuesta permanece en estado Enviado para revisión.", "info");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         navigate(`/investigacion/revision-tecnica/${projectUuid}`);
                     } catch (err) {

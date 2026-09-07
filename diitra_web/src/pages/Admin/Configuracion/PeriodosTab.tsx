@@ -2,6 +2,27 @@ import React from 'react';
 import { Calendar, CheckCircle, XCircle, Edit2, Trash2, ChevronRight } from 'lucide-react';
 import { useConfiguracion } from './useConfiguracion';
 import type { PeriodoAcademico } from './useConfiguracion';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface PeriodosTabProps {
     hook: ReturnType<typeof useConfiguracion>;
@@ -151,22 +172,20 @@ export const PeriodosTab: React.FC<PeriodosTabProps> = ({ hook, setDetailItem })
                                         <label className="section-label text-text-dim">
                                             Fecha de Inicio
                                         </label>
-                                        <input 
-                                            type="date" 
-                                            value={periodoForm.fechaInicial}
-                                            onChange={(e) => setPeriodoForm({...periodoForm, fechaInicial: e.target.value})}
-                                            className="input-vercel"
+                                        <GeistDatePicker 
+                                            value={toDisplayDate(periodoForm.fechaInicial)}
+                                            onChange={(val) => setPeriodoForm({...periodoForm, fechaInicial: toISODate(val)})}
+                                            placeholder="dd/mm/aaaa"
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="section-label text-text-dim">
                                             Fecha de Fin
                                         </label>
-                                        <input 
-                                            type="date" 
-                                            value={periodoForm.fechaFinal}
-                                            onChange={(e) => setPeriodoForm({...periodoForm, fechaFinal: e.target.value})}
-                                            className="input-vercel"
+                                        <GeistDatePicker 
+                                            value={toDisplayDate(periodoForm.fechaFinal)}
+                                            onChange={(val) => setPeriodoForm({...periodoForm, fechaFinal: toISODate(val)})}
+                                            placeholder="dd/mm/aaaa"
                                         />
                                     </div>
                                 </div>

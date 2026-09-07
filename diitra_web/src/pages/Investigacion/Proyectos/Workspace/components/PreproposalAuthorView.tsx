@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { GeistSelect } from '../../../../../components/Common/GeistSelect';
 
 import WorkspaceHeader from './WorkspaceHeader';
 import { ProjectTraceabilitySection } from './ProjectTraceabilitySection';
@@ -34,7 +35,7 @@ export const PreproposalAuthorView: React.FC<PreproposalAuthorViewProps> = ({
     setEditDescripcion,
     editPresupuesto,
     setEditPresupuesto,
-    docenteCarreras,
+    docenteCarreras = [],
     editIdCarrera,
     setEditIdCarrera,
     isSavingPreproposal,
@@ -50,11 +51,27 @@ export const PreproposalAuthorView: React.FC<PreproposalAuthorViewProps> = ({
 
     const isRejected = currentProject.status === 'Prepropuesta Rechazada';
 
-    const ultimaObservacion = isRejected && !isLoadingTrazabilidad
-        ? (trazabilidad.find(t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada')?.observacion || 'Sin observaciones especificadas.')
+    const isSystemReversion = (obs?: string) => {
+        if (!obs) return false;
+        const lower = obs.toLowerCase().trim();
+        return lower.startsWith('reversión') || lower.startsWith('reversion') || lower.startsWith('deshacer');
+    };
+
+    // La última observación técnica de revisión emitida por la Coordinación (omitiendo logs de reversión)
+    const revisionTecnicaPrevia = isRejected && !isLoadingTrazabilidad
+        ? trazabilidad.find(t => 
+            (t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada') &&
+            !isSystemReversion(t.observacion ?? t.Observacion)
+          )
+        : null;
+
+    const ultimaObservacion = revisionTecnicaPrevia
+        ? (revisionTecnicaPrevia.observacion ?? revisionTecnicaPrevia.Observacion ?? '')
         : '';
 
-    const parsedObs = isRejected ? parseObservation(ultimaObservacion) : {};
+    const parsedObs = isRejected && ultimaObservacion ? parseObservation(ultimaObservacion) : {};
+
+
 
     return (
         <div className="h-screen w-full flex flex-col bg-bg-deep overflow-y-auto pb-20 selection:bg-text-main selection:text-bg-deep">
@@ -88,6 +105,7 @@ export const PreproposalAuthorView: React.FC<PreproposalAuthorViewProps> = ({
                                 </span>
                             )}
                         </div>
+
 
                         {/* Observación General */}
                         {parsedObs.general && (
@@ -136,24 +154,18 @@ export const PreproposalAuthorView: React.FC<PreproposalAuthorViewProps> = ({
                                     )}
                                 </div>
                                 {currentProject.status === 'Prepropuesta Rechazada' && currentProject.puedeEditar && docenteCarreras && docenteCarreras.length > 1 ? (
-                                    <select
+                                    <GeistSelect<number>
                                         value={editIdCarrera || 0}
-                                        onChange={(e) => setEditIdCarrera?.(Number(e.target.value))}
+                                        onChange={(val) => setEditIdCarrera?.(Number(val))}
                                         onFocus={() => setFocusedField('carrera')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`input-vercel !text-xs !font-bold uppercase ${parsedObs.carrera ? 'border-error/40 ring-1 ring-error/20 shadow-sm' : ''}`}
-                                    >
-                                        <option value={0} disabled>Seleccione una carrera...</option>
-                                        {docenteCarreras.map((c: any) => {
-                                            const cId = c.idCarrera ?? c.id_carrera ?? 0;
-                                            const cName = c.carrera1 ?? c.nombre_carrera ?? c.carrera ?? 'Sin Nombre';
-                                            return (
-                                                <option key={cId} value={cId} className="bg-bg-deep text-text-main">
-                                                    {cName}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
+                                        placeholder="Seleccione una carrera..."
+                                        className={`!text-xs !font-bold uppercase ${parsedObs.carrera ? '!border-error/40 !ring-1 !ring-error/20 shadow-sm' : ''}`}
+                                        options={docenteCarreras.map((c: any) => ({
+                                            value: Number(c.idCarrera ?? c.id_carrera ?? 0),
+                                            label: String(c.carrera1 ?? c.nombre_carrera ?? c.carrera ?? 'Sin Nombre').toUpperCase()
+                                        }))}
+                                    />
                                 ) : (
                                     <div className={`input-vercel opacity-70 bg-bg-deep select-none ${parsedObs.carrera ? 'border-error/40 ring-1 ring-error/20' : ''}`}>{currentProject.carrera || 'No definida'}</div>
                                 )}

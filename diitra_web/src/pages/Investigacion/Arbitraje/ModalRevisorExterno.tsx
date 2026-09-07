@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { UserPlus, AlertTriangle, Loader2, Check, ChevronRight } from 'lucide-react';
 import { registerRevisorExterno } from '../../../services/peerReviewService';
 import type { RegistrarRevisorExternoPayload } from '../../../services/peerReviewService';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
 
 export interface ModalRevisorExternoProps {
     onClose: () => void;
@@ -162,17 +163,17 @@ export const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClos
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="section-label text-text-dim">Grado Académico</label>
-                                <select 
-                                    className="input-vercel" 
-                                    value={form.grado_academico} 
-                                    onChange={e => setForm(f => ({ ...f, grado_academico: e.target.value }))}
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    <option value="PHD">Doctorado / PhD</option>
-                                    <option value="MAESTRIA">Maestría</option>
-                                    <option value="ESPECIALIDAD">Especialidad Médica</option>
-                                    <option value="TERCER_NIVEL">Tercer Nivel</option>
-                                </select>
+                                <GeistSelect 
+                                    value={form.grado_academico || ''} 
+                                    onChange={(val) => setForm(f => ({ ...f, grado_academico: val }))}
+                                    options={[
+                                        { value: '', label: 'Seleccionar...' },
+                                        { value: 'PHD', label: 'Doctorado / PhD' },
+                                        { value: 'MAESTRIA', label: 'Maestría' },
+                                        { value: 'ESPECIALIDAD', label: 'Especialidad Médica' },
+                                        { value: 'TERCER_NIVEL', label: 'Tercer Nivel' }
+                                    ]}
+                                />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="section-label text-text-dim">ORCID iD</label>

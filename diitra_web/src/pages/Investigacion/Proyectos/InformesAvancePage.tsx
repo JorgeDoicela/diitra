@@ -25,6 +25,27 @@ import {
 
 // ── DocumentEditor (Builder Core con 4 secciones CACES) ──────────────────────
 import DocumentEditor from './Wizard/DocumentEditor';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -596,11 +617,10 @@ const InformesAvancePage: React.FC = () => {
                                     <label className="section-label text-text-dim block">
                                         Período del Informe
                                     </label>
-                                    <input
-                                        type="date"
-                                        value={formData.fecha_reporte}
-                                        onChange={e => setFormData(f => ({ ...f, fecha_reporte: e.target.value }))}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-text-main/40 font-sans"
+                                    <GeistDatePicker
+                                        value={toDisplayDate(formData.fecha_reporte)}
+                                        onChange={val => setFormData(f => ({ ...f, fecha_reporte: toISODate(val) }))}
+                                        placeholder="dd/mm/aaaa"
                                     />
                                 </div>
 

@@ -1,7 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, FileText } from 'lucide-react';
+import { GeistSelect } from '../../../../components/Common/GeistSelect';
+import { GeistDatePicker } from '../../../../components/Common/GeistDatePicker';
 import type { Periodo, Catalogo, Convocatoria } from '../types';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
+
+const extractYear = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const iso = toISODate(dateStr);
+    return iso ? iso.split('-')[0] : '';
+};
 
 interface FormData {
     codigo_convocatoria: string;
@@ -161,29 +189,27 @@ export const ConvocatoriaFormModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
-                            <select
-                                className="input-vercel"
+                            <GeistSelect
                                 value={formData.id_periodo}
-                                onChange={e => setFormData({ ...formData, id_periodo: e.target.value })}
-                            >
-                                {periodos.map(p => (
-                                    <option key={p.id_periodo} value={p.id_periodo}>{p.detalle}</option>
-                                ))}
-                            </select>
+                                options={periodos.map(p => ({
+                                    value: p.id_periodo,
+                                    label: p.detalle
+                                }))}
+                                placeholder="Seleccionar Periodo..."
+                                onChange={val => setFormData(prev => ({ ...prev, id_periodo: String(val) }))}
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
-                            <select
-                                className="input-vercel"
-                                required
+                            <GeistSelect
                                 value={formData.id_tipo_convocatoria || ''}
-                                onChange={e => setFormData({ ...formData, id_tipo_convocatoria: e.target.value ? parseInt(e.target.value) : undefined })}
-                            >
-                                <option value="">Seleccionar Tipo...</option>
-                                {tiposConv.map(t => (
-                                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                                ))}
-                            </select>
+                                options={tiposConv.map(t => ({
+                                    value: t.id,
+                                    label: t.nombre
+                                }))}
+                                placeholder="Seleccionar Tipo de Convocatoria..."
+                                onChange={val => setFormData(prev => ({ ...prev, id_tipo_convocatoria: val ? Number(val) : undefined }))}
+                            />
                         </div>
                     </div>
 
@@ -191,33 +217,29 @@ export const ConvocatoriaFormModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
-                            <input
-                                type="date"
-                                required
-                                className="input-vercel"
-                                value={formData.fecha_apertura}
-                                onChange={e => {
-                                    const newApertura = e.target.value;
-                                    const sY = newApertura ? newApertura.split('-')[0] : '';
-                                    const cY = formData.fecha_cierre ? formData.fecha_cierre.split('-')[0] : '';
+                            <GeistDatePicker
+                                value={toDisplayDate(formData.fecha_apertura)}
+                                placeholder="dd/mm/aaaa"
+                                onChange={newVal => {
+                                    const isoVal = toISODate(newVal);
+                                    const sY = extractYear(newVal);
+                                    const cY = extractYear(formData.fecha_cierre);
                                     const newAnio = (sY && cY) ? (sY === cY ? sY : `${sY} - ${cY}`) : (sY || cY || formData.anio);
-                                    setFormData(prev => ({ ...prev, fecha_apertura: newApertura, anio: newAnio }));
+                                    setFormData(prev => ({ ...prev, fecha_apertura: isoVal, anio: newAnio }));
                                 }}
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Cierre</label>
-                            <input
-                                type="date"
-                                required
-                                className="input-vercel"
-                                value={formData.fecha_cierre}
-                                onChange={e => {
-                                    const newCierre = e.target.value;
-                                    const sY = formData.fecha_apertura ? formData.fecha_apertura.split('-')[0] : '';
-                                    const cY = newCierre ? newCierre.split('-')[0] : '';
+                            <GeistDatePicker
+                                value={toDisplayDate(formData.fecha_cierre)}
+                                placeholder="dd/mm/aaaa"
+                                onChange={newVal => {
+                                    const isoVal = toISODate(newVal);
+                                    const sY = extractYear(formData.fecha_apertura);
+                                    const cY = extractYear(newVal);
                                     const newAnio = (sY && cY) ? (sY === cY ? sY : `${sY} - ${cY}`) : (sY || cY || formData.anio);
-                                    setFormData(prev => ({ ...prev, fecha_cierre: newCierre, anio: newAnio }));
+                                    setFormData(prev => ({ ...prev, fecha_cierre: isoVal, anio: newAnio }));
                                 }}
                             />
                         </div>

@@ -73,15 +73,29 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
 
     const isRejected = currentProject.status === 'Prepropuesta Rechazada';
 
-    const ultimaObservacion = isRejected && !isLoadingTrazabilidad
-        ? (trazabilidad.find(t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada')?.observacion || 'Sin observaciones especificadas.')
+    const isSystemReversion = (obs?: string) => {
+        if (!obs) return false;
+        const lower = obs.toLowerCase().trim();
+        return lower.startsWith('reversión') || lower.startsWith('reversion') || lower.startsWith('deshacer');
+    };
+
+    const revisionTecnicaPrevia = isRejected && !isLoadingTrazabilidad
+        ? trazabilidad.find(t => 
+            (t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada') &&
+            !isSystemReversion(t.observacion ?? t.Observacion)
+          )
+        : null;
+
+    const ultimaObservacion = revisionTecnicaPrevia
+        ? (revisionTecnicaPrevia.observacion ?? revisionTecnicaPrevia.Observacion ?? '')
         : '';
 
-    const parsedObs = isRejected ? parseObservation(ultimaObservacion) : {};
+    const parsedObs = isRejected && ultimaObservacion ? parseObservation(ultimaObservacion) : {};
 
     // Observaciones históricas de la devolución previa (para contexto in situ del evaluador)
     const previousRejection = trazabilidad.find(
-        t => t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada'
+        t => (t.estadoNuevo === 'Prepropuesta Rechazada' || t.EstadoNuevo === 'Prepropuesta Rechazada') &&
+             !isSystemReversion(t.observacion ?? t.Observacion)
     );
     const previousObsParsed = previousRejection && !isLoadingTrazabilidad
         ? parseObservation(previousRejection.observacion ?? previousRejection.Observacion ?? '')

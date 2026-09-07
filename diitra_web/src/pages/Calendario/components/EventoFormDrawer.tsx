@@ -2,7 +2,49 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Bell, RotateCcw } from 'lucide-react';
 import { COLORES_OPCIONES } from '../../../services/calendarioService';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
 import './EventoDrawers.css';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
+
+const TIPO_OPCIONES = [
+    { value: 'Personal', label: 'Personal / Nota' },
+    { value: 'Tarea', label: 'Tarea de Investigación' },
+    { value: 'Reunion', label: 'Reunión / Tutoría' },
+    { value: 'Hito', label: 'Hito de Proyecto' },
+];
+
+const PRIORIDAD_OPCIONES = [
+    { value: 'Baja', label: 'Baja' },
+    { value: 'Media', label: 'Media' },
+    { value: 'Alta', label: 'Alta' },
+];
+
+const ESTADO_OPCIONES = [
+    { value: 'Pendiente', label: 'Pendiente' },
+    { value: 'EnProgreso', label: 'En Progreso' },
+    { value: 'Completado', label: 'Completado' },
+    { value: 'Cancelado', label: 'Cancelado' },
+];
 
 interface EventoFormDrawerProps {
     isOpen: boolean;
@@ -117,82 +159,65 @@ export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
                         {/* Tipo */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Categoría / Tipo</label>
-                            <select
+                            <GeistSelect
                                 value={formTipo}
-                                onChange={(e) => setFormTipo(e.target.value)}
-                                className="input-vercel text-sm"
-                            >
-                                <option value="Personal">Personal / Nota</option>
-                                <option value="Tarea">Tarea de Investigación</option>
-                                <option value="Reunion">Reunión / Tutoría</option>
-                                <option value="Hito">Hito de Proyecto</option>
-                            </select>
+                                options={TIPO_OPCIONES}
+                                placeholder="Seleccionar Tipo..."
+                                onChange={(val) => setFormTipo(String(val))}
+                            />
                         </div>
 
                         {/* Color */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Etiqueta Visual (Color)</label>
-                            <select
+                            <GeistSelect
                                 value={formColorHex}
-                                onChange={(e) => setFormColorHex(e.target.value)}
-                                className="input-vercel text-sm"
-                            >
-                                {COLORES_OPCIONES.map(({ value, label }) => (
-                                    <option key={value} value={value}>{label}</option>
-                                ))}
-                            </select>
+                                options={COLORES_OPCIONES}
+                                placeholder="Seleccionar Color..."
+                                onChange={(val) => setFormColorHex(String(val))}
+                            />
                         </div>
 
                         {/* Fecha Inicio */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Fecha de Inicio *</label>
-                            <input
-                                type="date"
-                                required
-                                value={formFechaInicio || ''}
-                                onChange={(e) => setFormFechaInicio(e.target.value)}
-                                className="input-vercel text-sm"
+                            <GeistDatePicker
+                                value={toDisplayDate(formFechaInicio)}
+                                placeholder="dd/mm/aaaa"
+                                onChange={(newVal) => setFormFechaInicio(toISODate(newVal))}
                             />
                         </div>
 
                         {/* Fecha Fin */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Fecha de Fin</label>
-                            <input
-                                type="date"
-                                value={formFechaFin || ''}
-                                onChange={(e) => setFormFechaFin(e.target.value)}
-                                className="input-vercel text-sm"
+                            <GeistDatePicker
+                                value={toDisplayDate(formFechaFin)}
+                                placeholder="dd/mm/aaaa"
+                                onChange={(newVal) => setFormFechaFin(toISODate(newVal))}
                             />
                         </div>
 
                         {/* Prioridad */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Prioridad</label>
-                            <select
+                            <GeistSelect
                                 value={formPrioridad}
-                                onChange={(e) => setFormPrioridad(e.target.value)}
-                                className="input-vercel text-sm"
-                            >
-                                <option value="Baja">Baja</option>
-                                <option value="Media">Media</option>
-                                <option value="Alta">Alta</option>
-                            </select>
+                                options={PRIORIDAD_OPCIONES}
+                                placeholder="Seleccionar Prioridad..."
+                                onChange={(val) => setFormPrioridad(String(val))}
+                            />
                         </div>
 
                         {/* Estado */}
                         <div className="space-y-1">
                             <label className="section-label mb-1.5 block">Estado</label>
-                            <select
+                            <GeistSelect
                                 value={formEstado}
-                                onChange={(e) => setFormEstado(e.target.value)}
-                                className="input-vercel text-sm"
-                            >
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="EnProgreso">En Progreso</option>
-                                <option value="Completado">Completado</option>
-                                <option value="Cancelado">Cancelado</option>
-                            </select>
+                                options={ESTADO_OPCIONES}
+                                placeholder="Seleccionar Estado..."
+                                onChange={(val) => setFormEstado(String(val))}
+                            />
                         </div>
 
                         {/* Alerta días */}

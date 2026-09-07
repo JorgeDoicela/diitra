@@ -110,11 +110,11 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                         await api.post(`/projects/${currentProject.uuid}/transition`, null, {
                             params: {
                                 newState: 'Enviado',
-                                observation: "Reversión (Undo): Cancelación de la aprobación técnica inicial."
+                                observation: "Reversión: Cancelación de la aprobación técnica inicial."
                             }
                         });
-                        addToast("Acción Revertida", "La aprobación técnica ha sido cancelada. Proyecto en estado: Enviado", "info");
-                        onStatusChanged('Enviado', "Reversión (Undo)");
+                        addToast("Acción Revertida", "La aprobación técnica ha sido cancelada. La postulación permanece en estado Enviado para revisión.", "info");
+                        onStatusChanged('Enviado', "Reversión: Cancelación de la aprobación técnica inicial.");
                     } catch (err: any) {
                         console.error("[Undo Technical Approval] Failed:", err);
                         addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la aprobación técnica.", "error");
@@ -163,11 +163,11 @@ export const AdminReviewPanel: React.FC<AdminReviewPanelProps> = ({
                         await api.post(`/projects/${currentProject.uuid}/transition`, null, {
                             params: {
                                 newState: 'Enviado',
-                                observation: "Reversión (Undo): Cancelación de la devolución al docente."
+                                observation: "Reversión: Cancelación de la devolución al docente."
                             }
                         });
-                        addToast("Acción Revertida", "La devolución del proyecto ha sido cancelada. Proyecto en estado: Enviado", "info");
-                        onStatusChanged('Enviado', "Reversión (Undo)");
+                        addToast("Acción Revertida", "La devolución del proyecto ha sido cancelada. La postulación permanece en estado Enviado para revisión.", "info");
+                        onStatusChanged('Enviado', "Reversión: Cancelación de la devolución al docente.");
                     } catch (err: any) {
                         console.error("[Undo Technical Return] Failed:", err);
                         addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la devolución del proyecto.", "error");

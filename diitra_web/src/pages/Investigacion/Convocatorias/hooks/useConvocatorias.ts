@@ -66,7 +66,7 @@ export const getProximasACerrar = (items: Convocatoria[]) => {
     }).length;
 };
 
-export const canEditConvocatoria = (estado: Convocatoria['estado']) => estado !== 'Cerrada';
+export const canEditConvocatoria = (estado: Convocatoria['estado']) => estado !== 'Anulada';
 
 export const getAnioDisplay = (conv: Convocatoria) => {
     if (!conv.fecha_apertura || !conv.fecha_cierre) return conv.anio.toString();
@@ -335,9 +335,6 @@ export const useConvocatorias = () => {
                         titulo: item.titulo,
                         id_periodo: item.id_periodo,
                         anio: item.anio,
-                        descripcion: item.descripcion || '',
-                        url_bases: item.url_bases || '',
-                        requisitos_minimos: item.requisitos_minimos || '',
                         id_tipo_convocatoria: item.id_tipo_convocatoria,
                         fecha_apertura: item.fecha_apertura,
                         fecha_cierre: item.fecha_cierre
@@ -492,14 +489,27 @@ export const useConvocatorias = () => {
                 return;
             }
 
-            if (!formData.fecha_apertura || !formData.fecha_cierre) {
+            const toISODate = (val?: string) => {
+                if (!val) return '';
+                const clean = val.trim();
+                if (clean.includes('/')) {
+                    const [d, m, y] = clean.split('/');
+                    if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }
+                return clean;
+            };
+
+            const aperturaStr = toISODate(formData.fecha_apertura);
+            const cierreStr = toISODate(formData.fecha_cierre);
+
+            if (!aperturaStr || !cierreStr) {
                 addToast('Fechas requeridas', 'Ingresa la fecha de apertura y cierre.', 'error');
                 return;
             }
 
-            const apertura = new Date(formData.fecha_apertura);
-            const cierre = new Date(formData.fecha_cierre);
-            if (apertura > cierre) {
+            const apertura = parseLocalDate(aperturaStr);
+            const cierre = parseLocalDate(cierreStr);
+            if (!apertura || !cierre || apertura > cierre) {
                 addToast('Fechas inválidas', 'La fecha de apertura debe ser anterior o igual a la fecha de cierre.', 'error');
                 return;
             }
@@ -507,6 +517,8 @@ export const useConvocatorias = () => {
             setFormFieldErrors({});
             const payload = {
                 ...formData,
+                fecha_apertura: aperturaStr,
+                fecha_cierre: cierreStr,
                 anio: anioVal
             };
             if (isEditing && selectedUuid) {

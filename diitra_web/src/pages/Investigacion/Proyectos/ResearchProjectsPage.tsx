@@ -290,8 +290,8 @@ const ResearchProjectsPage = () => {
                 undefined,
                 async () => {
                     try {
-                        await api.post(`/projects/${project.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la aprobación de la prepropuesta.")}`);
-                        addToast("Acción Revertida", "La aprobación ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        await api.post(`/projects/${project.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión: Cancelación de la aprobación de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La aprobación ha sido cancelada. La prepropuesta ha retornado a estado pendiente de revisión.", "info");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         loadProjects();
                     } catch (err: any) {
@@ -323,8 +323,8 @@ const ResearchProjectsPage = () => {
                 undefined,
                 async () => {
                     try {
-                        await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión (Undo): Cancelación de la devolución de la prepropuesta.")}`);
-                        addToast("Acción Revertida", "La devolución ha sido cancelada. Proyecto en estado: Prepropuesta", "info");
+                        await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión: Cancelación de la devolución de la prepropuesta.")}`);
+                        addToast("Acción Revertida", "La devolución ha sido cancelada. La prepropuesta ha retornado a estado pendiente de revisión.", "info");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         loadProjects();
                     } catch (err: any) {

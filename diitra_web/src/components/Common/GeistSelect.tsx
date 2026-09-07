@@ -2,28 +2,28 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check, Search, Lock } from 'lucide-react';
 
-export interface GeistSelectOption {
-    value: string | number;
+export interface GeistSelectOption<T extends string | number = string | number> {
+    value: T;
     label: string;
     disabled?: boolean;
 }
 
-export interface GeistSelectProps {
-    value?: string | number;
-    options?: GeistSelectOption[];
+export interface GeistSelectProps<T extends string | number = string | number> {
+    value?: T;
+    options?: GeistSelectOption<T>[];
     children?: React.ReactNode;
     placeholder?: string;
     disabled?: boolean;
     readOnly?: boolean;
     className?: string;
-    onChange?: (val: string | number) => void;
+    onChange?: (val: T) => void;
     onFocus?: () => void;
     onBlur?: () => void;
     name?: string;
     style?: React.CSSProperties;
 }
 
-export const GeistSelect: React.FC<GeistSelectProps> = ({
+export const GeistSelect = <T extends string | number = string | number>({
     value,
     options,
     children,
@@ -35,7 +35,7 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
     onFocus,
     onBlur,
     style
-}) => {
+}: GeistSelectProps<T>) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
@@ -53,16 +53,16 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
     });
 
     // Extraer opciones ya sea por la prop options o dinámicamente de <option> children
-    const parsedOptions = useMemo<GeistSelectOption[]>(() => {
+    const parsedOptions = useMemo<GeistSelectOption<T>[]>(() => {
         if (options && options.length > 0) return options;
         if (!children) return [];
 
-        const extracted: GeistSelectOption[] = [];
+        const extracted: GeistSelectOption<T>[] = [];
 
         const processChild = (child: React.ReactNode) => {
             if (!React.isValidElement(child)) return;
             if (child.type === 'option') {
-                const val = (child.props as any).value !== undefined ? (child.props as any).value : (child.props as any).children;
+                const val = ((child.props as any).value !== undefined ? (child.props as any).value : (child.props as any).children) as T;
                 const lbl = typeof (child.props as any).children === 'string' 
                     ? (child.props as any).children 
                     : String(val);
@@ -204,7 +204,7 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
         };
     }, [isOpen, onBlur, parsedOptions.length]);
 
-    const handleSelect = (val: string | number) => {
+    const handleSelect = (val: T) => {
         onChange?.(val);
         setIsOpen(false);
         onBlur?.();
@@ -220,13 +220,14 @@ export const GeistSelect: React.FC<GeistSelectProps> = ({
                 title={displayLabel}
                 className={`
                     w-full flex items-center justify-between text-left transition-all duration-200 outline-none
-                    ${className}
+                    bg-bg-deep border border-border-thin rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium
                     ${isInteractive ? 'cursor-pointer hover:border-text-main/50' : 'cursor-default select-none'}
-                    ${isOpen ? 'ring-2 ring-text-main/20 border-text-main' : ''}
+                    ${isOpen ? 'border-text-main' : ''}
                     ${readOnly ? 'bg-surface/30 opacity-90' : ''}
+                    ${className}
                 `}
             >
-                <span className={`truncate min-w-0 pr-2 ${isValueSelected ? 'text-text-main font-bold' : 'text-text-dim/60 font-medium'}`}>
+                <span className={`truncate min-w-0 pr-2 text-xs sm:text-sm ${isValueSelected ? 'text-text-main font-semibold' : 'text-text-dim/60 font-normal'}`}>
                     {displayLabel}
                 </span>
 

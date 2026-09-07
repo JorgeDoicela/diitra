@@ -139,24 +139,7 @@ export const RevisionInformeFinalPage: React.FC = () => {
             addToast(
                 'Proyecto Culminado',
                 'El informe final ha sido aprobado y el proyecto cerrado oficialmente.',
-                'success',
-                undefined,
-                async () => {
-                    try {
-                        await api.post(`/projects/${projectUuid}/transition`, null, {
-                            params: {
-                                newState: originalState,
-                                observation: 'Reversión (Undo): Retorno al estado anterior por cancelación de la aprobación del informe final.'
-                            }
-                        });
-                        addToast('Acción Revertida', `La aprobación de cierre ha sido cancelada. Proyecto en estado: ${originalState}`, 'info');
-                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-                        navigate(`/investigacion/revision-informe-final/${projectUuid}`);
-                    } catch (err) {
-                        console.error('[Undo Cierre] Error:', err);
-                        addToast('Error al Revertir', 'No se pudo deshacer la aprobación de cierre del proyecto.', 'error');
-                    }
-                }
+                'success'
             );
             navigate(`/investigacion/workspace/protocolo-investigacion/${projectUuid}`);
             return true;

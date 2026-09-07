@@ -367,7 +367,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
             id: name,
             disabled: isDisabled,
             placeholder,
-            className: "w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-xs text-text-main outline-none focus:ring-2 focus:ring-text-main/20 transition-all"
+            className: "w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-xs text-text-main outline-none focus:border-text-main transition-all"
         };
 
         return (

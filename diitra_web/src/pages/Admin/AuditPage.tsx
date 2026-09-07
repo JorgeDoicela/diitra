@@ -17,6 +17,27 @@ import {
 import { useAuditLogs } from './Audit/useAuditLogs';
 import { AuditDetailDrawer } from './Audit/AuditDetailDrawer';
 import { formatDateSafe, formatActionLabel, getActionBadge } from './Audit/auditTypes';
+import { GeistDatePicker } from '../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 const AuditPage: React.FC = () => {
     const {
@@ -147,23 +168,19 @@ const AuditPage: React.FC = () => {
                             </select>
                         </div>
 
-                        <div className="relative group">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input
-                                type="date"
-                                className="input-vercel !pl-10 !py-2.5 !text-sm text-text-dim focus:text-text-main"
-                                value={fromDate}
-                                onChange={(e) => setFromDate(e.target.value)}
+                        <div className="relative">
+                            <GeistDatePicker
+                                value={toDisplayDate(fromDate)}
+                                placeholder="Desde (dd/mm/aaaa)"
+                                onChange={(val) => setFromDate(toISODate(val))}
                             />
                         </div>
 
-                        <div className="relative group">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-text-main transition-colors" />
-                            <input
-                                type="date"
-                                className="input-vercel !pl-10 !py-2.5 !text-sm text-text-dim focus:text-text-main"
-                                value={toDate}
-                                onChange={(e) => setToDate(e.target.value)}
+                        <div className="relative">
+                            <GeistDatePicker
+                                value={toDisplayDate(toDate)}
+                                placeholder="Hasta (dd/mm/aaaa)"
+                                onChange={(val) => setToDate(toISODate(val))}
                             />
                         </div>
 

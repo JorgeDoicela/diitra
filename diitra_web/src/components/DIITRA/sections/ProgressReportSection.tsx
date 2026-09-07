@@ -11,6 +11,27 @@ import {
     Clock
 } from 'lucide-react';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
+import { GeistDatePicker } from '../../Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface ProgressReportSectionProps {
     formData: any;
@@ -431,22 +452,20 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Inicio</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaInicio || ''}
-                                                onChange={(e) => onUpdateItem('ActividadesEjecutadas', idx, 'FechaInicio', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaInicio)}
+                                                onChange={(val) => onUpdateItem('ActividadesEjecutadas', idx, 'FechaInicio', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Fin</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaFin || ''}
-                                                onChange={(e) => onUpdateItem('ActividadesEjecutadas', idx, 'FechaFin', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaFin)}
+                                                onChange={(val) => onUpdateItem('ActividadesEjecutadas', idx, 'FechaFin', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                     </div>
@@ -559,22 +578,20 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Inicio NP</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaInicio || ''}
-                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaInicio', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaInicio)}
+                                                onChange={(val) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaInicio', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Fin NP</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaFin || ''}
-                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaFin', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaFin)}
+                                                onChange={(val) => onUpdateItem('ActividadesNoPrevistas', idx, 'FechaFin', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                     </div>
@@ -708,22 +725,20 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Inicio Correctiva</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaInicio || ''}
-                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'FechaInicio', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaInicio)}
+                                                onChange={(val) => onUpdateItem('Obstaculos', idx, 'FechaInicio', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold uppercase text-text-dim block mb-1">Fecha Fin Correctiva</label>
-                                            <input
-                                                type="date"
+                                            <GeistDatePicker
                                                 disabled={isReadOnly}
-                                                value={item.FechaFin || ''}
-                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'FechaFin', e.target.value)}
-                                                className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs text-text-main"
+                                                value={toDisplayDate(item.FechaFin)}
+                                                onChange={(val) => onUpdateItem('Obstaculos', idx, 'FechaFin', toISODate(val))}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                     </div>

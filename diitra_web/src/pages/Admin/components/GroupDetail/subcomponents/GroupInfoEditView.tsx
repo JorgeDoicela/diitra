@@ -6,6 +6,27 @@ import type { useGroupDetail } from '../useGroupDetail';
 import { formatNombre } from '../utils/groupInfoHelpers';
 import { MemberSearchSelector } from '../../../../../components/Common/MemberSearchSelector';
 import { CoordinatorSection } from '../../GroupFormDrawer/components/CoordinatorSection';
+import { GeistDatePicker } from '../../../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 export interface Domain {
     id_dominio: number;
@@ -361,11 +382,10 @@ export const GroupInfoEditView: React.FC<GroupInfoEditViewProps> = ({
                         <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
                             <Calendar size={12} /> Fecha de Creación
                         </label>
-                        <input
-                            type="date"
-                            value={editFormData.fecha_creacion}
-                            onChange={(e) => setEditFormData({ ...editFormData, fecha_creacion: e.target.value })}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all"
+                        <GeistDatePicker
+                            value={toDisplayDate(editFormData.fecha_creacion)}
+                            onChange={(val) => setEditFormData({ ...editFormData, fecha_creacion: toISODate(val) })}
+                            placeholder="dd/mm/aaaa"
                         />
                     </div>
                 </section>

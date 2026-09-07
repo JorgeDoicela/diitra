@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { GeistSelect } from '../../../../../components/Common/GeistSelect';
 
 const formatNombre = (nombre: string | null | undefined) => {
     if (!nombre) return '';
@@ -70,33 +71,31 @@ export const DirectorTransferModal: React.FC<DirectorTransferModalProps> = ({
                 <form onSubmit={onSubmit} className="modal-body space-y-4">
                     <div className="relative space-y-1">
                         <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Seleccionar Nuevo Director</label>
-                        <select
+                        <GeistSelect
                             value={newDirectorCedula}
-                            onChange={(e) => setNewDirectorCedula(e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded px-3 py-2.5 text-xs text-text-main outline-none focus:border-text-main transition-all font-sans"
-                            required
-                        >
-                            <option value="">-- Seleccione un integrante del equipo --</option>
-                            {candidates.map((su: any) => (
-                                <option key={su.cedula} value={su.cedula}>
-                                    {formatNombre(su.nombre)} ({su.rol})
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => setNewDirectorCedula(val)}
+                            options={[
+                                { value: '', label: '-- Seleccione un integrante del equipo --' },
+                                ...candidates.map((su: any) => ({
+                                    value: su.cedula,
+                                    label: `${formatNombre(su.nombre)} (${su.rol})`
+                                }))
+                            ]}
+                        />
                     </div>
 
                     <div className="space-y-1">
                         <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Motivo</label>
-                        <select 
+                        <GeistSelect 
                             value={transferMotivo}
-                            onChange={(e) => setTransferMotivo(e.target.value)}
-                            className="input-vercel !text-xs"
-                        >
-                            <option value="Reasignación institucional">Reasignación institucional</option>
-                            <option value="Renuncia voluntaria">Renuncia voluntaria</option>
-                            <option value="Licencia o permiso de estudios">Licencia o permiso de estudios</option>
-                            <option value="Otro motivo administrativo">Otro motivo administrativo</option>
-                        </select>
+                            onChange={(val) => setTransferMotivo(val)}
+                            options={[
+                                { value: 'Reasignación institucional', label: 'Reasignación institucional' },
+                                { value: 'Renuncia voluntaria', label: 'Renuncia voluntaria' },
+                                { value: 'Licencia o permiso de estudios', label: 'Licencia o permiso de estudios' },
+                                { value: 'Otro motivo administrativo', label: 'Otro motivo administrativo' }
+                            ]}
+                        />
                     </div>
 
                     <div className="space-y-1">

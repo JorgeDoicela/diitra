@@ -2,6 +2,27 @@ import React, { useState, useMemo, useContext } from 'react';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionGuardContext } from '../../../core/documents/context/DocumentDataContext';
 import { exportLearningPlanToExcel } from '../../../utils/learningPlanExcelExport';
+import { GeistDatePicker } from '../../Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface PrerrequisitoItem {
     id: string;
@@ -836,12 +857,11 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
 
                                 <div className="space-y-1.5">
                                     <label className="section-label">Fecha Prevista / Ejecución</label>
-                                    <input
-                                        type="date"
-                                        value={act.fecha}
+                                    <GeistDatePicker
+                                        value={toDisplayDate(act.fecha)}
                                         disabled={effectiveReadOnly || isEvaluationMode}
-                                        onChange={(e) => handleUpdateActividad(idx, 'fecha', e.target.value)}
-                                        className="input-vercel text-xs w-full font-mono"
+                                        onChange={(val) => handleUpdateActividad(idx, 'fecha', toISODate(val))}
+                                        placeholder="dd/mm/aaaa"
                                     />
                                 </div>
 

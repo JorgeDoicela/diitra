@@ -1,6 +1,12 @@
 import React from 'react';
 import { parseObservation } from '../hooks/usePreproposalState';
 
+export const isSystemReversion = (obs?: string) => {
+    if (!obs) return false;
+    const lower = obs.toLowerCase().trim();
+    return lower.startsWith('reversión') || lower.startsWith('reversion') || lower.startsWith('deshacer');
+};
+
 interface ProjectTraceabilitySectionProps {
     trazabilidad: any[];
     isLoadingTrazabilidad: boolean;
@@ -8,6 +14,21 @@ interface ProjectTraceabilitySectionProps {
 
 export const renderTrazabilidadObservation = (observationText: string) => {
     if (!observationText) return null;
+
+    if (isSystemReversion(observationText)) {
+        const cleanText = observationText
+            .replace(/^Reversión(\s*\(Undo\))?:\s*/i, '')
+            .replace(/^Reversion(\s*\(Undo\))?:\s*/i, '')
+            .replace(/^Deshacer(\s*\(Undo\))?:\s*/i, '')
+            .trim();
+
+        return (
+            <div className="bg-surface border border-border-thin p-2 rounded-lg mt-1 text-[11px] text-text-dim leading-snug">
+                <span>Acción revertida: {cleanText || observationText}</span>
+            </div>
+        );
+    }
+
     const parsed = parseObservation(observationText);
 
     const specificList = [

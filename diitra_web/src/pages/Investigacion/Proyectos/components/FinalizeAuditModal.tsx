@@ -1,5 +1,26 @@
 import React, { useState } from 'react';
 import { Scale, X, Loader2, CheckCircle, RotateCcw, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { GeistDatePicker } from '../../../../components/Common/GeistDatePicker';
+
+const toDisplayDate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    if (clean.includes('-')) {
+        const [y, m, d] = clean.split('-');
+        if (y && m && d) return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return clean;
+};
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface FinalizeAuditModalProps {
     isOpen: boolean;
@@ -88,15 +109,14 @@ export const FinalizeAuditModal: React.FC<FinalizeAuditModalProps> = ({
                                 +{days} días
                             </button>
                         ))}
-                        <div className="flex-1 relative">
-                            <input
-                                type="date"
-                                value={fechaLimite}
-                                onChange={(e) => {
-                                    setFechaLimite(e.target.value);
+                        <div className="flex-1">
+                            <GeistDatePicker
+                                value={toDisplayDate(fechaLimite)}
+                                onChange={(val) => {
+                                    setFechaLimite(toISODate(val));
                                     setSelectedDays(0);
                                 }}
-                                className="w-full bg-surface border border-border-thin rounded-lg px-2.5 py-1 text-xs text-text-main outline-none focus:border-brand/45 font-mono"
+                                placeholder="dd/mm/aaaa"
                             />
                         </div>
                     </div>

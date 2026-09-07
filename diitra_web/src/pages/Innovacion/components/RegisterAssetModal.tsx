@@ -4,6 +4,7 @@ import { X, Loader2, Sparkles, ShieldCheck, Layers, Link as LinkIcon, Save } fro
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
 import type { TipoPropiedadIntelectual, EstadoSenadi } from '../types';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
 
 interface Props {
     isOpen: boolean;
@@ -159,18 +160,14 @@ export const RegisterAssetModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                                     <span>Cargando proyectos vinculados...</span>
                                 </div>
                             ) : (
-                                <select
+                                <GeistSelect
                                     value={projectUuid}
-                                    onChange={(e) => setProjectUuid(e.target.value)}
-                                    className="input-vercel w-full"
-                                    required
-                                >
-                                    {projects.map((p) => (
-                                        <option key={p.uuid} value={p.uuid}>
-                                            {p.codigo_institucional ? `[${p.codigo_institucional}] ` : ''}{p.titulo}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setProjectUuid(val)}
+                                    options={projects.map((p) => ({
+                                        value: p.uuid,
+                                        label: `${p.codigo_institucional ? `[${p.codigo_institucional}] ` : ''}${p.titulo}`
+                                    }))}
+                                />
                             )}
                         </div>
 
@@ -195,39 +192,39 @@ export const RegisterAssetModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">
                                     Tipo de Activo Intelectual
                                 </label>
-                                <select
+                                <GeistSelect
                                     value={tipoPropiedad}
-                                    onChange={(e) => setTipoPropiedad(e.target.value as TipoPropiedadIntelectual)}
-                                    className="input-vercel w-full"
-                                >
-                                    <option value="Software">Software / Soporte Lógico</option>
-                                    <option value="ModeloUtilidad">Modelo de Utilidad</option>
-                                    <option value="DisenoIndustrial">Diseño Industrial</option>
-                                    <option value="Patente">Patente de Invención</option>
-                                    <option value="Marca">Signo Distintivo / Marca</option>
-                                    <option value="SecretoIndustrial">Secreto Industrial</option>
-                                </select>
+                                    onChange={(val) => setTipoPropiedad(val as TipoPropiedadIntelectual)}
+                                    options={[
+                                        { value: 'Software', label: 'Software / Soporte Lógico' },
+                                        { value: 'ModeloUtilidad', label: 'Modelo de Utilidad' },
+                                        { value: 'DisenoIndustrial', label: 'Diseño Industrial' },
+                                        { value: 'Patente', label: 'Patente de Invención' },
+                                        { value: 'Marca', label: 'Signo Distintivo / Marca' },
+                                        { value: 'SecretoIndustrial', label: 'Secreto Industrial' }
+                                    ]}
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">
                                     Nivel de Madurez Tecnológica (TRL)
                                 </label>
-                                <select
-                                    value={trlActual}
-                                    onChange={(e) => setTrlActual(Number(e.target.value))}
-                                    className="input-vercel w-full"
-                                >
-                                    <option value={1}>TRL 1 - Principios básicos observados</option>
-                                    <option value={2}>TRL 2 - Concepto tecnológico formulado</option>
-                                    <option value={3}>TRL 3 - Prueba de concepto experimental</option>
-                                    <option value={4}>TRL 4 - Validación en laboratorio (Prototipo)</option>
-                                    <option value={5}>TRL 5 - Validación en entorno relevante</option>
-                                    <option value={6}>TRL 6 - Demostración de prototipo en entorno real</option>
-                                    <option value={7}>TRL 7 - Prototipo operativo en entorno real</option>
-                                    <option value={8}>TRL 8 - Sistema completo y cualificado</option>
-                                    <option value={9}>TRL 9 - Sistema probado y desplegado</option>
-                                </select>
+                                <GeistSelect
+                                    value={String(trlActual)}
+                                    onChange={(val) => setTrlActual(Number(val))}
+                                    options={[
+                                        { value: '1', label: 'TRL 1 - Principios básicos observados' },
+                                        { value: '2', label: 'TRL 2 - Concepto tecnológico formulado' },
+                                        { value: '3', label: 'TRL 3 - Prueba de concepto experimental' },
+                                        { value: '4', label: 'TRL 4 - Validación en laboratorio (Prototipo)' },
+                                        { value: '5', label: 'TRL 5 - Validación en entorno relevante' },
+                                        { value: '6', label: 'TRL 6 - Demostración de prototipo en entorno real' },
+                                        { value: '7', label: 'TRL 7 - Prototipo operativo en entorno real' },
+                                        { value: '8', label: 'TRL 8 - Sistema completo y cualificado' },
+                                        { value: '9', label: 'TRL 9 - Sistema probado y desplegado' }
+                                    ]}
+                                />
                             </div>
                         </div>
 
@@ -257,16 +254,16 @@ export const RegisterAssetModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
                                             Estado del Trámite
                                         </label>
-                                        <select
+                                        <GeistSelect
                                             value={estadoSenadi}
-                                            onChange={(e) => setEstadoSenadi(e.target.value as EstadoSenadi)}
-                                            className="input-vercel w-full text-xs"
-                                        >
-                                            <option value="Solicitado">Trámite Iniciado / Solicitado</option>
-                                            <option value="EnExamen">En Examen Formal / Fondo</option>
-                                            <option value="Concedido">Título / Registro Concedido</option>
-                                            <option value="Denegado">Observado / Denegado</option>
-                                        </select>
+                                            onChange={(val) => setEstadoSenadi(val as EstadoSenadi)}
+                                            options={[
+                                                { value: 'Solicitado', label: 'Trámite Iniciado / Solicitado' },
+                                                { value: 'EnExamen', label: 'En Examen Formal / Fondo' },
+                                                { value: 'Concedido', label: 'Título / Registro Concedido' },
+                                                { value: 'Denegado', label: 'Observado / Denegado' }
+                                            ]}
+                                        />
                                     </div>
 
                                     <div className="space-y-1.5">

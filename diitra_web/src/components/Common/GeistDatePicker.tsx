@@ -99,59 +99,45 @@ export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
     return (
         <div ref={containerRef} className={`relative w-full ${containerClassName}`}>
             {label && (
-                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">
+                <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 mb-1.5 sm:mb-2">
                     {label}
                 </label>
             )}
 
-            <div className="relative flex items-center">
-                <input
-                    type="text"
-                    value={value}
-                    onChange={handleInputChange}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    readOnly={readOnly}
-                    maxLength={10}
-                    className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:ring-2 focus:ring-text-main/20 outline-none transition-all pr-10 ${
-                        error ? 'border-red-500/60 focus:border-red-500' : 'border-border-thin focus:border-text-main'
-                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
-                />
+            {/* Selector interactivo de fecha (Trigger completo) */}
+            <button
+                type="button"
+                onClick={() => !disabled && !readOnly && setIsOpen(prev => !prev)}
+                disabled={disabled || readOnly}
+                className={`
+                    w-full flex items-center justify-between text-left transition-all duration-200 outline-none
+                    bg-bg-deep border border-border-thin rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium
+                    ${!disabled && !readOnly ? 'cursor-pointer hover:border-text-main/50' : 'cursor-default select-none'}
+                    ${isOpen ? 'ring-2 ring-text-main/20 border-text-main shadow-sm' : ''}
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                    ${readOnly ? 'bg-surface/30 opacity-90' : ''}
+                    ${error ? 'border-red-500/60 focus:border-red-500' : ''}
+                    ${className}
+                `}
+            >
+                <span className={`truncate min-w-0 pr-2 ${value ? 'text-text-main font-semibold' : 'text-text-dim/60 font-normal'}`}>
+                    {value || placeholder}
+                </span>
 
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {value && !disabled && !readOnly && (
-                        <button
-                            type="button"
-                            onClick={() => onChange('')}
-                            className="p-1 text-text-dim hover:text-text-main transition-colors cursor-pointer rounded"
-                            title="Limpiar fecha"
-                        >
-                            <X className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                    <button
-                        type="button"
-                        disabled={disabled || readOnly}
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={`p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer ${
-                            isOpen ? 'text-text-main bg-surface-hover' : ''
-                        }`}
-                        title="Seleccionar fecha en calendario"
-                    >
-                        <CalendarIcon className="w-4 h-4" />
-                    </button>
+                <div className="shrink-0 flex items-center pointer-events-none ml-1.5 text-text-dim">
+                    <CalendarIcon className={`w-4 h-4 transition-colors ${isOpen ? 'text-text-main' : 'text-text-dim'}`} />
                 </div>
-            </div>
+            </button>
 
             {error && (
-                <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1.5 ml-1 animate-fade-in">
                     {error}
                 </p>
             )}
 
             {/* Popover del Calendario Geist */}
             {isOpen && !disabled && !readOnly && (
-                <div className={`absolute ${popoverPlacement.horizontal === 'right' ? 'right-0' : 'left-0'} ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} z-50 animate-fade-in`}>
+                <div className={`absolute ${popoverPlacement.horizontal === 'right' ? 'right-0' : 'left-0'} ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} z-[100] animate-fade-in`}>
                     <GeistCalendar
                         value={value}
                         onChange={(newVal) => {

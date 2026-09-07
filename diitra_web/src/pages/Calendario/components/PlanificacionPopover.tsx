@@ -2,7 +2,18 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, X } from 'lucide-react';
 import { format, addDays } from 'date-fns';
+import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
 import type { PlanificandoState } from '../types/calendarioTypes';
+
+const toISODate = (val?: string) => {
+    if (!val) return '';
+    const clean = val.trim();
+    if (clean.includes('/')) {
+        const [d, m, y] = clean.split('/');
+        if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return clean;
+};
 
 interface PlanificacionPopoverProps {
     planificando: PlanificandoState | null;
@@ -24,14 +35,14 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
                 onClick={onClose}
             />
             <div
-                className="kanban-popover-planificacion animate-slide-up"
+                className="kanban-popover-card animate-fade-in"
                 style={{
                     left: Math.min(planificando.anchorPos.x, window.innerWidth - 260),
                     top: planificando.anchorPos.y,
                 }}
             >
                 <div className="kanban-popover-header">
-                    <Clock size={13} />
+                    <Clock size={14} />
                     <span>¿Cuándo planificarla?</span>
                     <button type="button" onClick={onClose} className="kanban-popover-close">
                         <X size={14} />
@@ -55,13 +66,15 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
                         </button>
                     ))}
                 </div>
-                <div className="kanban-popover-custom">
+                <div className="kanban-popover-custom space-y-1.5">
                     <label className="kanban-popover-label">O elige una fecha:</label>
-                    <input
-                        type="date"
-                        className="kanban-popover-date-input"
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                        onChange={(e) => e.target.value && handleConfirmPlanificacion(e.target.value)}
+                    <GeistDatePicker
+                        placeholder="Seleccionar fecha..."
+                        minDate={format(new Date(), 'yyyy-MM-dd')}
+                        onChange={(newVal) => {
+                            const iso = toISODate(newVal);
+                            if (iso) handleConfirmPlanificacion(iso);
+                        }}
                     />
                 </div>
             </div>

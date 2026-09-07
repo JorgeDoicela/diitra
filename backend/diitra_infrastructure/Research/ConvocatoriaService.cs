@@ -47,8 +47,35 @@ public class ConvocatoriaService : IConvocatoriaService
         });
     }
 
+    private async Task SyncExpiredConvocatoriasAsync(DateOnly hoy)
+    {
+        try
+        {
+            var expired = await _context.InvConvocatorias
+                .Where(c => c.Estado == "Abierta" && c.FechaCierre < hoy && (c.Eliminado == false || c.Eliminado == null))
+                .ToListAsync();
+
+            if (expired.Count > 0)
+            {
+                foreach (var conv in expired)
+                {
+                    conv.Estado = "Cerrada";
+                }
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Se actualizaron automáticamente {Count} convocatorias vencidas al estado 'Cerrada'.", expired.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al auto-sincronizar convocatorias vencidas.");
+        }
+    }
+
     public async Task<IEnumerable<ConvocatoriaDto>> GetAllAsync()
     {
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        await SyncExpiredConvocatoriasAsync(hoy);
+
         return await _context.InvConvocatorias
             .AsNoTracking()
             .Include(c => c.IdPeriodoNavigation)
@@ -65,7 +92,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
-                Estado = c.Estado,
+                Estado = (c.Estado == "Abierta" && hoy > c.FechaCierre) ? "Cerrada" : c.Estado,
                 Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
                     Uuid = p.Uuid,
                     Titulo = p.Titulo,
@@ -78,6 +105,9 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<ConvocatoriaDto?> GetByUuidAsync(string uuid)
     {
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        await SyncExpiredConvocatoriasAsync(hoy);
+
         return await _context.InvConvocatorias
             .AsNoTracking()
             .Include(c => c.IdPeriodoNavigation)
@@ -94,7 +124,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
-                Estado = c.Estado,
+                Estado = (c.Estado == "Abierta" && hoy > c.FechaCierre) ? "Cerrada" : c.Estado,
                 Proyectos = c.Proyectos.Select(p => new ConvocatoriaProyectoDto {
                     Uuid = p.Uuid,
                     Titulo = p.Titulo,
@@ -182,9 +212,6 @@ public class ConvocatoriaService : IConvocatoriaService
             .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
-        if (conv.Estado == "Cerrada")
-            throw new InvalidOperationException("No se puede editar una convocatoria cerrada.");
-
         await EnsureCodigoConvocatoriaUniqueAsync(dto.CodigoConvocatoria, uuid);
 
         var beforeState = new
@@ -206,6 +233,13 @@ public class ConvocatoriaService : IConvocatoriaService
         conv.IdTipoConvocatoria = dto.IdTipoConvocatoria;
         conv.FechaApertura = dto.FechaApertura;
         conv.FechaCierre = dto.FechaCierre;
+
+        // Si estaba Cerrada pero el administrador extiende la fecha de cierre a una fecha vigente, se reabre automáticamente
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        if (conv.Estado == "Cerrada" && dto.FechaCierre >= hoy)
+        {
+            conv.Estado = "Abierta";
+        }
 
         await _context.SaveChangesAsync();
 
@@ -499,6 +533,13 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
+
+        if (newState == "Abierta")
+        {
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            if (hoy > conv.FechaCierre)
+                throw new InvalidOperationException($"No se puede abrir la convocatoria \"{conv.Titulo}\" porque su fecha de cierre ({conv.FechaCierre:dd/MM/yyyy}) ya expiró.");
+        }
 
         var beforeState = new
         {
