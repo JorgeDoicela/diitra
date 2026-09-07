@@ -435,8 +435,18 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                                 type="number"
                                                 min={0} max={100}
                                                 disabled={isReadOnly}
-                                                value={item.PorcentajeAvance ?? 100}
-                                                onChange={(e) => onUpdateItem('ActividadesEjecutadas', idx, 'PorcentajeAvance', Number(e.target.value))}
+                                                value={item.PorcentajeAvance !== undefined && item.PorcentajeAvance !== null ? String(item.PorcentajeAvance) : ''}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    onUpdateItem('ActividadesEjecutadas', idx, 'PorcentajeAvance', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '' || isNaN(Number(val))) {
+                                                        onUpdateItem('ActividadesEjecutadas', idx, 'PorcentajeAvance', 100);
+                                                    }
+                                                }}
                                                 className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs font-bold text-emerald-400"
                                             />
                                         </div>
@@ -561,8 +571,18 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                                 type="number"
                                                 min={0} max={100}
                                                 disabled={isReadOnly}
-                                                value={item.PorcentajeAvance ?? 100}
-                                                onChange={(e) => onUpdateItem('ActividadesNoPrevistas', idx, 'PorcentajeAvance', Number(e.target.value))}
+                                                value={item.PorcentajeAvance !== undefined && item.PorcentajeAvance !== null ? String(item.PorcentajeAvance) : ''}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    onUpdateItem('ActividadesNoPrevistas', idx, 'PorcentajeAvance', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '' || isNaN(Number(val))) {
+                                                        onUpdateItem('ActividadesNoPrevistas', idx, 'PorcentajeAvance', 100);
+                                                    }
+                                                }}
                                                 className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs font-bold text-amber-400"
                                             />
                                         </div>
@@ -708,8 +728,18 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                                 type="number"
                                                 min={0} max={100}
                                                 disabled={isReadOnly}
-                                                value={item.PorcentajeAvance ?? 100}
-                                                onChange={(e) => onUpdateItem('Obstaculos', idx, 'PorcentajeAvance', Number(e.target.value))}
+                                                value={item.PorcentajeAvance !== undefined && item.PorcentajeAvance !== null ? String(item.PorcentajeAvance) : ''}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    onUpdateItem('Obstaculos', idx, 'PorcentajeAvance', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '' || isNaN(Number(val))) {
+                                                        onUpdateItem('Obstaculos', idx, 'PorcentajeAvance', 100);
+                                                    }
+                                                }}
                                                 className="w-full bg-surface-hover/30 border border-border-thin rounded-lg p-2 text-xs font-bold text-red-400"
                                             />
                                         </div>

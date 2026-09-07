@@ -13,6 +13,7 @@ import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 import { useProjectPreferences } from './hooks/useProjectPreferences';
+import { GeistSelect } from '../../../components/Common/GeistSelect';
 
 export interface ProyectoResumen {
     uuid: string;
@@ -407,18 +408,20 @@ const ResearchProjectsPage = () => {
                             />
                         </div>
                         <div className="flex gap-2">
-                            <select
-                                value={sortBy}
-                                onChange={e => setSortBy(e.target.value)}
-                                className="input-vercel !rounded-lg !py-2 !text-xs min-w-[160px] cursor-pointer"
-                            >
-                                <option value="mi_actividad">Mi actividad reciente</option>
-                                <option value="accion_requerida">Requieren atención</option>
-                                <option value="recientes">Modificados recientemente</option>
-                                <option value="antiguos">Más antiguos</option>
-                                <option value="titulo">Título (A-Z)</option>
-                                <option value="presupuesto">Presupuesto mayor</option>
-                            </select>
+                            <div className="min-w-[170px]">
+                                <GeistSelect<string>
+                                    value={sortBy}
+                                    onChange={val => setSortBy(val)}
+                                    className="!rounded-lg !py-2 !text-xs"
+                                >
+                                    <option value="mi_actividad">Mi actividad reciente</option>
+                                    <option value="accion_requerida">Requieren atención</option>
+                                    <option value="recientes">Modificados recientemente</option>
+                                    <option value="antiguos">Más antiguos</option>
+                                    <option value="titulo">Título (A-Z)</option>
+                                    <option value="presupuesto">Presupuesto mayor</option>
+                                </GeistSelect>
+                            </div>
                             {hasActiveFilters && (
                                 <button
                                     onClick={() => {
@@ -439,44 +442,47 @@ const ResearchProjectsPage = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-border-thin">
                         <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Estado</label>
-                            <select
+                            <GeistSelect<string>
                                 value={filterEstado}
-                                onChange={e => setFilterEstado(e.target.value)}
-                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
+                                onChange={val => setFilterEstado(val)}
+                                placeholder="Todos los estados"
+                                className="!rounded-lg !py-1.5 !text-xs w-full"
                             >
                                 <option value="todos">Todos los estados</option>
                                 {states.map(s => (
                                     <option key={s.estado} value={s.estado}>{s.etiqueta}</option>
                                 ))}
-                            </select>
+                            </GeistSelect>
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Línea de Investigación</label>
-                            <select
+                            <GeistSelect<string>
                                 value={filterLinea}
-                                onChange={e => setFilterLinea(e.target.value)}
-                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
+                                onChange={val => setFilterLinea(val)}
+                                placeholder="Todas las líneas"
+                                className="!rounded-lg !py-1.5 !text-xs w-full"
                             >
                                 <option value="todas">Todas las líneas</option>
                                 {lineasDisponibles.map(linea => (
                                     <option key={linea} value={linea}>{linea}</option>
                                 ))}
-                            </select>
+                            </GeistSelect>
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-0.5">Convocatoria</label>
-                            <select
+                            <GeistSelect<string>
                                 value={filterConvocatoria}
-                                onChange={e => setFilterConvocatoria(e.target.value)}
-                                className="input-vercel !rounded-lg !py-1.5 !text-xs w-full cursor-pointer"
+                                onChange={val => setFilterConvocatoria(val)}
+                                placeholder="Todas las convocatorias"
+                                className="!rounded-lg !py-1.5 !text-xs w-full"
                             >
                                 <option value="todas">Todas las convocatorias</option>
                                 {convocatoriasDisponibles.map(conv => (
                                     <option key={conv} value={conv}>{conv}</option>
                                 ))}
-                            </select>
+                            </GeistSelect>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2, RotateCcw } from 'lucide-react';
 import api from '../../api/axios_config';
+import { GeistSelect } from './GeistSelect';
+import { fetchCatalogCached } from '../../api/catalogsCache';
 
 export interface SelectedMemberResult {
     id_usuario: number;
@@ -42,6 +44,9 @@ export const formatNombre = (nombre: string | null | undefined) => {
         .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
 };
 
+// Caché en memoria para evitar redundancias y re-fetches al conmutar entre tipos (Docentes / Estudiantes)
+const usersSearchMemoryCache = new Map<string, { timestamp: number; data: any[] }>();
+
 export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     onAddMember = () => {},
     existingCedulas = [],
@@ -74,31 +79,21 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Cargar catálogos institucionales para filtros
+    // Cargar catálogos institucionales para filtros con deduplicación y caché en memoria
     useEffect(() => {
-        api.get('/catalogs/carreras')
-            .then(res => {
-                if (Array.isArray(res.data)) {
-                    setCarrerasList(res.data);
-                }
-            })
-            .catch(err => console.error('[MemberSearchSelector] Error cargando carreras:', err));
+        let isMounted = true;
+        Promise.all([
+            fetchCatalogCached('/catalogs/carreras', () => api.get('/catalogs/carreras')),
+            fetchCatalogCached('/catalogs/niveles', () => api.get('/catalogs/niveles')),
+            fetchCatalogCached('/Admin/departments', () => api.get('/Admin/departments'))
+        ]).then(([carreras, niveles, deptos]) => {
+            if (!isMounted) return;
+            if (Array.isArray(carreras)) setCarrerasList(carreras);
+            if (Array.isArray(niveles)) setNivelesList(niveles);
+            if (Array.isArray(deptos)) setDeptosList(deptos);
+        }).catch(err => console.error('[MemberSearchSelector] Error cargando catálogos:', err));
 
-        api.get('/catalogs/niveles')
-            .then(res => {
-                if (Array.isArray(res.data)) {
-                    setNivelesList(res.data);
-                }
-            })
-            .catch(err => console.error('[MemberSearchSelector] Error cargando niveles:', err));
-
-        api.get('/Admin/departments')
-            .then(res => {
-                if (Array.isArray(res.data)) {
-                    setDeptosList(res.data);
-                }
-            })
-            .catch(err => console.error('[MemberSearchSelector] Error cargando departamentos:', err));
+        return () => { isMounted = false; };
     }, []);
 
     // Ajustar el rol por defecto cuando cambia el tipo de candidato seleccionado
@@ -119,7 +114,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
 
     const isEmbedded = variant === 'embedded';
 
-    // Petición debounced hacia /api/Admin/users (inmediata si es embedded)
+    // Petición debounced hacia /api/Admin/users (inmediata si es embedded) con AbortController y caché en memoria
     useEffect(() => {
         if (!isEmbedded && (!showDropdown || (!searchQuery.trim() && !selectedCarrera && !selectedNivel && !selectedDepto))) {
             setResults([]);
@@ -127,34 +122,54 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
             return;
         }
 
+        const params = new URLSearchParams({
+            search: searchQuery.trim(),
+            type: selectedType,
+            page: '1',
+            pageSize: isEmbedded ? '50' : '20',
+            soloConHoras: (selectedType === 'DOCENTE' && soloConHorasDocentes) ? 'true' : 'false',
+            estadoEstudiante: selectedType === 'ESTUDIANTE' ? estadoEstudiante : 'TODOS',
+            origenEstudiante: 'TODOS'
+        });
+
+        if (selectedCarrera && (selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE')) {
+            params.append('carrera', selectedCarrera);
+        }
+        if (selectedNivel && selectedType === 'ESTUDIANTE') {
+            params.append('nivel', selectedNivel);
+        }
+        if (selectedDepto && selectedType === 'ADMINISTRATIVO') {
+            params.append('departamento', selectedDepto);
+        }
+
+        const cacheKey = params.toString();
+        const cached = usersSearchMemoryCache.get(cacheKey);
+        const now = Date.now();
+
+        // Si tenemos resultados en caché válidos (TTL: 3 minutos), usarlos instantáneamente sin disparar red
+        if (cached && (now - cached.timestamp < 180000)) {
+            setResults(cached.data);
+            setIsSearching(false);
+            return;
+        }
+
+        const abortController = new AbortController();
         const delay = isEmbedded && !searchQuery.trim() ? 0 : 250;
+
         const timer = setTimeout(async () => {
             setIsSearching(true);
             try {
-                const params = new URLSearchParams({
-                    search: searchQuery.trim(),
-                    type: selectedType,
-                    page: '1',
-                    pageSize: isEmbedded ? '50' : '20',
-                    soloConHoras: (selectedType === 'DOCENTE' && soloConHorasDocentes) ? 'true' : 'false',
-                    estadoEstudiante: selectedType === 'ESTUDIANTE' ? estadoEstudiante : 'TODOS',
-                    origenEstudiante: 'TODOS'
+                const res = await api.get(`/Admin/users?${cacheKey}`, {
+                    signal: abortController.signal
                 });
-
-                if (selectedCarrera && (selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE')) {
-                    params.append('carrera', selectedCarrera);
-                }
-                if (selectedNivel && selectedType === 'ESTUDIANTE') {
-                    params.append('nivel', selectedNivel);
-                }
-                if (selectedDepto && selectedType === 'ADMINISTRATIVO') {
-                    params.append('departamento', selectedDepto);
-                }
-
-                const res = await api.get(`/Admin/users?${params.toString()}`);
                 const items: any[] = res.data?.items || [];
+                usersSearchMemoryCache.set(cacheKey, { timestamp: Date.now(), data: items });
                 setResults(items);
-            } catch (err) {
+            } catch (err: any) {
+                // Si la petición fue cancelada intencionalmente por cambio de filtro/tab, ignorar
+                if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED' || err?.message === 'canceled') {
+                    return;
+                }
                 console.error('[MemberSearchSelector] Error buscando personal:', err);
                 setResults([]);
             } finally {
@@ -162,7 +177,10 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
             }
         }, delay);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            abortController.abort();
+        };
     }, [searchQuery, selectedType, selectedCarrera, selectedNivel, selectedDepto, showDropdown, soloConHorasDocentes, estadoEstudiante, isEmbedded]);
 
     // Cerrar dropdown al hacer click fuera
@@ -349,11 +367,12 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                     {(selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE' || selectedType === 'ADMINISTRATIVO') && (
                         <div className="flex items-center gap-2 flex-wrap">
                             {(selectedType === 'DOCENTE' || selectedType === 'ESTUDIANTE') && carrerasList.length > 0 && (
-                                <div className="flex-1 min-w-[150px]">
-                                    <select
+                                <div className="flex-1 min-w-[170px]">
+                                    <GeistSelect<string>
                                         value={selectedCarrera}
-                                        onChange={(e) => setSelectedCarrera(e.target.value)}
-                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                        onChange={(val) => setSelectedCarrera(val)}
+                                        placeholder="Todas las Carreras"
+                                        className="!py-1.5 !px-2.5 !text-[11px] !rounded-lg"
                                     >
                                         <option value="">Todas las Carreras</option>
                                         {carrerasList.map((car: any) => {
@@ -365,16 +384,17 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                 </option>
                                             );
                                         })}
-                                    </select>
+                                    </GeistSelect>
                                 </div>
                             )}
 
                             {selectedType === 'ESTUDIANTE' && (
-                                <div className="w-36 min-w-[120px]">
-                                    <select
+                                <div className="w-40 min-w-[130px]">
+                                    <GeistSelect<string>
                                         value={selectedNivel}
-                                        onChange={(e) => setSelectedNivel(e.target.value)}
-                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                        onChange={(val) => setSelectedNivel(val)}
+                                        placeholder="Todos los Niveles"
+                                        className="!py-1.5 !px-2.5 !text-[11px] !rounded-lg"
                                     >
                                         <option value="">Todos los Niveles</option>
                                         {(nivelesList.length > 0 ? nivelesList : ['PRIMERO', 'SEGUNDO', 'TERCERO', 'CUARTO', 'QUINTO', 'SEXTO']).map((niv: any) => {
@@ -385,16 +405,17 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                 </option>
                                             );
                                         })}
-                                    </select>
+                                    </GeistSelect>
                                 </div>
                             )}
 
                             {selectedType === 'ADMINISTRATIVO' && deptosList.length > 0 && (
-                                <div className="flex-1 min-w-[160px]">
-                                    <select
+                                <div className="flex-1 min-w-[170px]">
+                                    <GeistSelect<string>
                                         value={selectedDepto}
-                                        onChange={(e) => setSelectedDepto(e.target.value)}
-                                        className="input-vercel !py-1.5 !px-2.5 !text-[11px] w-full bg-surface border-border-thin text-text-main rounded-lg cursor-pointer font-medium"
+                                        onChange={(val) => setSelectedDepto(val)}
+                                        placeholder="Todos los Departamentos"
+                                        className="!py-1.5 !px-2.5 !text-[11px] !rounded-lg"
                                     >
                                         <option value="">Todos los Departamentos</option>
                                         {deptosList.map((dept: string) => (
@@ -402,7 +423,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                                                 {dept}
                                             </option>
                                         ))}
-                                    </select>
+                                    </GeistSelect>
                                 </div>
                             )}
 
@@ -627,17 +648,17 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                             <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block mb-1">
                                 Rol Funcional en el Grupo
                             </label>
-                            <select
+                            <GeistSelect<string>
                                 value={memberRole}
-                                onChange={(e) => setMemberRole(e.target.value)}
-                                className="input-vercel !py-1.5 !px-2.5 !text-xs w-full font-medium"
+                                onChange={(val) => setMemberRole(val)}
+                                className="!py-1.5 !px-2.5 !text-xs !rounded-lg"
                             >
                                 {getSuggestedRoles(selectedCandidate.type || selectedType).map((rol) => (
                                     <option key={rol} value={rol}>
                                         {rol}
                                     </option>
                                 ))}
-                            </select>
+                            </GeistSelect>
                         </div>
 
                         <div>

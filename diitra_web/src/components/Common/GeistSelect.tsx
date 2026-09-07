@@ -82,8 +82,11 @@ export const GeistSelect = <T extends string | number = string | number>({
 
     // Encontrar la opción seleccionada actual
     const selectedOption = useMemo(() => {
-        if (value === undefined || value === null || value === '' || value === 0 || value === '0') return null;
-        return parsedOptions.find(opt => String(opt.value) === String(value)) || null;
+        if (value === undefined || value === null) return null;
+        // Coincidencia exacta o conversión a string
+        const match = parsedOptions.find(opt => opt.value === value || String(opt.value) === String(value));
+        if (match) return match;
+        return null;
     }, [parsedOptions, value]);
 
     // Texto visible inmediatamente (sin esperar a que termine la petición HTTP del catálogo)

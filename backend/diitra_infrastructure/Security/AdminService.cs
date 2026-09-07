@@ -63,102 +63,61 @@ public class AdminService : IAdminService
         {
             var query = _context.Alumnos.AsNoTracking().AsQueryable();
 
-            // Segmentación por estado de estudiante (Activo matriculado vs Graduado / Histórico)
-            if (!string.IsNullOrEmpty(periodId) && estadoEstudiante == "ACTIVO")
-            {
-                query = query.Where(a => _context.Matriculas.Any(m =>
-                    m.IdAlumno == a.IdAlumno &&
-                    m.IdPeriodo == periodId &&
-                    (m.Retirado == null || m.Retirado == false) &&
-                    (m.Valida == 1)));
-            }
-            else if (!string.IsNullOrEmpty(periodId) && estadoEstudiante == "GRADUADO")
-            {
-                query = query.Where(a => !_context.Matriculas.Any(m =>
-                    m.IdAlumno == a.IdAlumno &&
-                    m.IdPeriodo == periodId &&
-                    (m.Retirado == null || m.Retirado == false) &&
-                    (m.Valida == 1)));
-            }
-
-            // Segmentación por origen de estudiante: Instituto vs Escuela de Conducción
+            // Optimización de Alto Rendimiento: Resolver carreras y niveles objetivo previamente en memoria
+            var carrerasTargetQuery = _context.Carreras.AsNoTracking();
             if (origenEstudiante == "INSTITUTO")
             {
-                if (estadoEstudiante == "ACTIVO" && !string.IsNullOrEmpty(periodId))
-                {
-                    query = query.Where(a => _context.Matriculas.Any(m =>
-                        m.IdAlumno == a.IdAlumno &&
-                        m.IdPeriodo == periodId &&
-                        (m.Retirado == null || m.Retirado == false) &&
-                        m.Valida == 1 &&
-                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel &&
-                            _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && car.EsInstituto == 1))));
-                }
-                else
-                {
-                    // Graduados o Todos: Basado en su IdNivel asignado en alumnos o matrículas del instituto sin cursos de conducción
-                    query = query.Where(a =>
-                        (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && car.EsInstituto == 1)))
-                        ||
-                        (!_context.Cursos.Any(c => c.IdNivel == a.IdNivel && _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && (car.EsInstituto == 0 || car.EsInstituto == null))) &&
-                         _context.Matriculas.Any(m => m.IdAlumno == a.IdAlumno && m.Valida == 1 &&
-                            _context.Cursos.Any(c => c.IdNivel == m.IdNivel && _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && car.EsInstituto == 1))))
-                    );
-                }
+                carrerasTargetQuery = carrerasTargetQuery.Where(car => car.EsInstituto == 1);
             }
             else if (origenEstudiante == "CONDUCCION")
             {
-                if (estadoEstudiante == "ACTIVO" && !string.IsNullOrEmpty(periodId))
-                {
-                    query = query.Where(a => _context.Matriculas.Any(m =>
-                        m.IdAlumno == a.IdAlumno &&
-                        m.IdPeriodo == periodId &&
-                        (m.Retirado == null || m.Retirado == false) &&
-                        m.Valida == 1 &&
-                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel &&
-                            _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && (car.EsInstituto == 0 || car.EsInstituto == null)))));
-                }
-                else
-                {
-                    query = query.Where(a =>
-                        (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && (car.EsInstituto == 0 || car.EsInstituto == null))))
-                        ||
-                        _context.Matriculas.Any(m => m.IdAlumno == a.IdAlumno && m.Valida == 1 &&
-                            _context.Cursos.Any(c => c.IdNivel == m.IdNivel && _context.Carreras.Any(car => car.IdCarrera == c.IdCarrera && (car.EsInstituto == 0 || car.EsInstituto == null))))
-                    );
-                }
+                carrerasTargetQuery = carrerasTargetQuery.Where(car => car.EsInstituto == 0 || car.EsInstituto == null);
             }
 
             if (!string.IsNullOrEmpty(carrera))
             {
                 var carreraLower = carrera.Trim().ToLower();
-                var matchingCarreraIds = await _context.Carreras.AsNoTracking()
-                    .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
-                    .Select(c => c.IdCarrera)
-                    .ToListAsync();
-
-                query = query.Where(a => 
-                    _context.Matriculas.Any(m =>
-                        m.IdAlumno == a.IdAlumno &&
-                        (m.Retirado == null || m.Retirado == false) &&
-                        m.Valida == 1 &&
-                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel && matchingCarreraIds.Contains(c.IdCarrera)))
-                    ||
-                    (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && matchingCarreraIds.Contains(c.IdCarrera)))
-                );
+                carrerasTargetQuery = carrerasTargetQuery.Where(c => 
+                    (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || 
+                    (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)));
             }
 
+            var targetCarreraIds = await carrerasTargetQuery.Select(car => car.IdCarrera).ToListAsync();
+
+            var cursosTargetQuery = _context.Cursos.AsNoTracking().Where(c => targetCarreraIds.Contains(c.IdCarrera));
             if (!string.IsNullOrEmpty(nivel))
             {
                 var nivelLower = nivel.Trim().ToLower();
-                query = query.Where(a => 
-                    _context.Matriculas.Any(m =>
-                        m.IdAlumno == a.IdAlumno &&
-                        (m.Retirado == null || m.Retirado == false) &&
-                        m.Valida == 1 &&
-                        _context.Cursos.Any(c => c.IdNivel == m.IdNivel && c.Nivel != null && (c.Nivel.ToLower() == nivelLower || c.Nivel.ToLower().Contains(nivelLower))))
-                    ||
-                    (a.IdNivel != null && _context.Cursos.Any(c => c.IdNivel == a.IdNivel && c.Nivel != null && (c.Nivel.ToLower() == nivelLower || c.Nivel.ToLower().Contains(nivelLower))))
+                cursosTargetQuery = cursosTargetQuery.Where(c => c.Nivel != null && (c.Nivel.ToLower() == nivelLower || c.Nivel.ToLower().Contains(nivelLower)));
+            }
+
+            var targetNivelIds = await cursosTargetQuery.Select(c => c.IdNivel).Distinct().ToListAsync();
+
+            // Filtrar estudiantes con búsqueda directa sobre los niveles precalculados
+            if (estadoEstudiante == "ACTIVO" && !string.IsNullOrEmpty(periodId))
+            {
+                query = query.Where(a => _context.Matriculas.Any(m =>
+                    m.IdAlumno == a.IdAlumno &&
+                    m.IdPeriodo == periodId &&
+                    (m.Retirado == null || m.Retirado == false) &&
+                    m.Valida == 1 &&
+                    targetNivelIds.Contains(m.IdNivel)));
+            }
+            else if (estadoEstudiante == "GRADUADO" && !string.IsNullOrEmpty(periodId))
+            {
+                query = query.Where(a => !_context.Matriculas.Any(m =>
+                    m.IdAlumno == a.IdAlumno &&
+                    m.IdPeriodo == periodId &&
+                    (m.Retirado == null || m.Retirado == false) &&
+                    m.Valida == 1) &&
+                    (targetNivelIds.Contains(a.IdNivel ?? 0) ||
+                     _context.Matriculas.Any(m => m.IdAlumno == a.IdAlumno && m.Valida == 1 && targetNivelIds.Contains(m.IdNivel))));
+            }
+            else
+            {
+                query = query.Where(a =>
+                    targetNivelIds.Contains(a.IdNivel ?? 0) ||
+                    _context.Matriculas.Any(m => m.IdAlumno == a.IdAlumno && m.Valida == 1 && targetNivelIds.Contains(m.IdNivel))
                 );
             }
 

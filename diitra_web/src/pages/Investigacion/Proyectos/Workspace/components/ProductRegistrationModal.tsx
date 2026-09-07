@@ -101,8 +101,18 @@ export const ProductRegistrationModal: React.FC<ProductRegistrationModalProps> =
                                 type="number"
                                 min="1"
                                 required
-                                value={newProduct.cantidad}
-                                onChange={(e) => setNewProduct({ ...newProduct, cantidad: Number(e.target.value) })}
+                                value={newProduct.cantidad !== undefined && newProduct.cantidad !== null ? newProduct.cantidad : ''}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setNewProduct({ ...newProduct, cantidad: val === '' ? '' as any : (isNaN(parseInt(val, 10)) ? '' as any : parseInt(val, 10)) });
+                                }}
+                                onBlur={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || isNaN(parseInt(val, 10))) {
+                                        setNewProduct({ ...newProduct, cantidad: 1 });
+                                    }
+                                }}
                                 className="input-vercel !text-xs"
                             />
                         </div>

@@ -100,8 +100,14 @@ export const useBuilderNetworkMonitor = ({
             }
         };
 
-        checkLatency();
-        intervalId = setInterval(checkLatency, 4000);
+        if (document.visibilityState === 'visible') {
+            checkLatency();
+        }
+        intervalId = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                checkLatency();
+            }
+        }, 30000);
 
         return () => {
             if (intervalId) clearInterval(intervalId);

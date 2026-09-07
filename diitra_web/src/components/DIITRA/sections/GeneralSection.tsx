@@ -2,6 +2,7 @@ import React from 'react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import type { IdentificationField } from '../../../pages/Admin/Templates/types';
+import { GeistSelect } from '../../Common/GeistSelect';
 
 interface GeneralSectionProps {
     formData: any;
@@ -796,10 +797,11 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             <div className="w-full">
                                 <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2 mb-1.5 sm:mb-2">{labelConvocatoria}</label>
                                 <div className="relative">
-                                    <select 
-                                        value={formData.IdConvocatoria || 0}
-                                        onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none cursor-pointer transition-all"
+                                    <GeistSelect<number> 
+                                        value={formData.IdConvocatoria ? Number(formData.IdConvocatoria) : 0}
+                                        onChange={(val) => onUpdate('IdConvocatoria', Number(val) || 0)}
+                                        placeholder="Seleccione una convocatoria..."
+                                        className="!py-3 sm:!py-4 !px-3.5 sm:!px-5 !rounded-lg sm:!rounded-xl !text-xs sm:!text-sm !font-bold"
                                     >
                                         <option value={0}>Seleccione una convocatoria...</option>
                                         {convocatorias.map(c => {
@@ -809,12 +811,12 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                                 return null;
                                             }
                                             return (
-                                                <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
+                                                <option key={c.id_convocatoria ?? c.idConvocatoria} value={Number(c.id_convocatoria ?? c.idConvocatoria)}>
                                                     {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
                                                 </option>
                                             );
                                         })}
-                                    </select>
+                                    </GeistSelect>
                                 </div>
                             </div>
                         )}

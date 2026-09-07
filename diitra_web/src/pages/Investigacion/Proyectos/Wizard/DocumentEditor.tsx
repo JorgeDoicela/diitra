@@ -80,20 +80,11 @@ const PROTOCOLO_STRING_FIELDS: ReadonlyArray<string> = [
 //   5. PERSISTENCIA: El documento se guardará automáticamente como snapshot JSON sin requerir
 //      crear tablas relacionales a menos que sea un dato crítico a consultar por SQL.
 
-// Cache global en memoria para evitar ráfagas redundantes de catálogos institucionales en re-montajes de DocumentEditor
-const catalogsCache: Record<string, any> = {};
+import { fetchCatalogCached } from '../../../../api/catalogsCache';
 
-const getCachedOrFetch = async (key: string, fetchFn: () => Promise<any>) => {
-    if (catalogsCache[key]) {
-        return catalogsCache[key];
-    }
-    try {
-        const res = await fetchFn();
-        catalogsCache[key] = res;
-        return res;
-    } catch (err) {
-        return { data: [] };
-    }
+// Conectar con el cache global de promesas de DIITRA para deduplicación total
+const getCachedOrFetch = (key: string, fetchFn: () => Promise<any>) => {
+    return fetchCatalogCached(key, fetchFn).then(data => ({ data }));
 };
 
 const EMPTY_ARRAY: any[] = [];
@@ -176,175 +167,171 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
             ]);
 
-            // Aplicar config de plantilla (prioriza backend si retornó respuesta con secciones válidas, de lo contrario cae en localConfig)
-            const rawConfig = configResult?.data;
-            const hasValidSections = Array.isArray(rawConfig?.sections) && rawConfig.sections.length > 0 && rawConfig.sections[0]?.id !== 'edicion_colaborativa';
-            const isApiSuccess = rawConfig && typeof rawConfig === 'object' && hasValidSections;
-            const finalConfig = isApiSuccess ? rawConfig : (localConfig || rawConfig);
-            setTemplateConfig(finalConfig);
-            if (!finalConfig) {
-                console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
-            }
+            try {
+                // Aplicar config de plantilla (prioriza backend si retornó respuesta con secciones válidas, de lo contrario cae en localConfig)
+                const rawConfig = configResult?.data;
+                const hasValidSections = Array.isArray(rawConfig?.sections) && rawConfig.sections.length > 0 && rawConfig.sections[0]?.id !== 'edicion_colaborativa';
+                const isApiSuccess = rawConfig && typeof rawConfig === 'object' && hasValidSections;
+                const finalConfig = isApiSuccess ? rawConfig : (localConfig || rawConfig);
+                setTemplateConfig(finalConfig);
+                if (!finalConfig) {
+                    console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
+                }
 
-            setCarreras(carrerasRes?.data || []);
-            setMisCarreras(misCarrerasRes?.data || []);
-            setProgramas(programasRes?.data || []);
-            setConvocatorias(convsRes?.data || []);
-            setTiposProducto(tiposRes?.data || []);
-            setGroups(groupsRes?.data || []);
-            setDominios(dominiosRes?.data || []);
-            setLineas(lineasRes?.data || []);
-            setSublineas(sublineasRes?.data || []);
+                // Detectar si hay campos personalizados que requieran cargar catálogos dinámicos por URL
+                const templateBlocks = finalConfig?.blocks || finalConfig?.Blocks || [];
+                const genBlock = templateBlocks.find((b: any) => b.type === 'project_general_section');
+                if (genBlock && genBlock.config?.identificationMode === 'fields') {
+                    const customFields = genBlock.config.customFields || [];
+                    const urlsToFetch = customFields
+                        .filter((f: any) => f.fieldType === 'select_catalog' && f.catalogUrl)
+                        .map((f: any) => f.catalogUrl);
 
-            // Detectar si hay campos personalizados que requieran cargar catálogos dinámicos por URL
-            const templateBlocks = finalConfig?.blocks || finalConfig?.Blocks || [];
-            const genBlock = templateBlocks.find((b: any) => b.type === 'project_general_section');
-            if (genBlock && genBlock.config?.identificationMode === 'fields') {
-                const customFields = genBlock.config.customFields || [];
-                const urlsToFetch = customFields
-                    .filter((f: any) => f.fieldType === 'select_catalog' && f.catalogUrl)
-                    .map((f: any) => f.catalogUrl);
+                    if (urlsToFetch.length > 0) {
+                        const customFetches = await Promise.all(
+                            urlsToFetch.map((url: string) => getCachedOrFetch(url, () => api.get(url)))
+                        );
+                        const catalogMap: Record<string, any[]> = {};
+                        urlsToFetch.forEach((url: string, idx: number) => {
+                            catalogMap[url] = customFetches[idx]?.data || [];
+                        });
+                        setCustomCatalogs(catalogMap);
+                    }
+                }
 
-                if (urlsToFetch.length > 0) {
-                    const customFetches = await Promise.all(
-                        urlsToFetch.map((url: string) => getCachedOrFetch(url, () => api.get(url)))
+                // Aplicar datos de instancia
+                if (instanceResult?.data) {
+                    const hasSignedPdf = !!(
+                        instanceResult.data.final_pdf_path ||
+                        instanceResult.data.finalPdfPath ||
+                        instanceResult.data.FinalPdfPath ||
+                        instanceResult.data.is_signed ||
+                        instanceResult.data.isSigned ||
+                        instanceResult.data.IsSigned ||
+                        instanceResult.data.signed_at ||
+                        instanceResult.data.signedAt ||
+                        instanceResult.data.estado === 'Firmado' ||
+                        instanceResult.data.estado === 'Finalizado'
                     );
-                    const catalogMap: Record<string, any[]> = {};
-                    urlsToFetch.forEach((url: string, idx: number) => {
-                        catalogMap[url] = customFetches[idx]?.data || [];
-                    });
-                    setCustomCatalogs(catalogMap);
-                }
-            }
+                    setIsInstanceSigned(hasSignedPdf);
 
-            // Aplicar datos de instancia
-            if (instanceResult.data) {
-                const hasSignedPdf = !!(
-                    instanceResult.data.final_pdf_path ||
-                    instanceResult.data.finalPdfPath ||
-                    instanceResult.data.FinalPdfPath ||
-                    instanceResult.data.is_signed ||
-                    instanceResult.data.isSigned ||
-                    instanceResult.data.IsSigned ||
-                    instanceResult.data.signed_at ||
-                    instanceResult.data.signedAt ||
-                    instanceResult.data.estado === 'Firmado' ||
-                    instanceResult.data.estado === 'Finalizado'
-                );
-                setIsInstanceSigned(hasSignedPdf);
-
-                const realUuid = instanceResult.data.uuid || instanceResult.data.Uuid;
-                if (realUuid) {
-                    coworkLog(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
-                    setResolvedUuid(realUuid);
-                }
-                const snapshotStr = instanceResult.data.data_snapshot_json || instanceResult.data.dataSnapshotJson || instanceResult.data.DataSnapshotJson;
-                if (snapshotStr) {
-                    try {
-                        const parsed = JSON.parse(snapshotStr);
-                        if (parsed) {
-                            if (!parsed.Impacto || parsed.Impacto === "[object Object]" || typeof parsed.Impacto === 'string') {
-                                parsed.Impacto = { social: '', cientifico: '', economico: '', politico: '', ambiental: '', otro: '' };
+                    const realUuid = instanceResult.data.uuid || instanceResult.data.Uuid;
+                    if (realUuid) {
+                        coworkLog(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
+                        setResolvedUuid(realUuid);
+                    }
+                    const snapshotStr = instanceResult.data.data_snapshot_json || instanceResult.data.dataSnapshotJson || instanceResult.data.DataSnapshotJson;
+                    if (snapshotStr) {
+                        try {
+                            const parsed = JSON.parse(snapshotStr);
+                            if (parsed) {
+                                if (!parsed.Impacto || parsed.Impacto === "[object Object]" || typeof parsed.Impacto === 'string') {
+                                    parsed.Impacto = { social: '', cientifico: '', economico: '', politico: '', ambiental: '', otro: '' };
+                                }
+                                if (!parsed.FirmasResponsabilidad || parsed.FirmasResponsabilidad === "[object Object]" || typeof parsed.FirmasResponsabilidad === 'string') {
+                                    parsed.FirmasResponsabilidad = {
+                                        DirectorNombre: '',
+                                        DirectorCargo: 'Director del Proyecto',
+                                        CoordinadorNombre: '',
+                                        CoordinadorCargo: 'Coordinador de Carrera'
+                                    };
+                                }
+                                if (parsed.FirmasResponsabilidad && !parsed.FirmasResponsabilidad.DirectorNombre && parsed.DirectorProyecto) {
+                                    parsed.FirmasResponsabilidad.DirectorNombre = parsed.DirectorProyecto;
+                                }
                             }
-                            if (!parsed.FirmasResponsabilidad || parsed.FirmasResponsabilidad === "[object Object]" || typeof parsed.FirmasResponsabilidad === 'string') {
-                                parsed.FirmasResponsabilidad = {
-                                    DirectorNombre: '',
-                                    DirectorCargo: 'Director del Proyecto',
-                                    CoordinadorNombre: '',
-                                    CoordinadorCargo: 'Coordinador de Carrera'
-                                };
-                            }
-                            if (parsed.FirmasResponsabilidad && !parsed.FirmasResponsabilidad.DirectorNombre && parsed.DirectorProyecto) {
-                                parsed.FirmasResponsabilidad.DirectorNombre = parsed.DirectorProyecto;
-                            }
+                            setDocInstanceData(parsed);
+                        } catch (e) {
+                            console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
+                            setDocInstanceData({});
                         }
-                        setDocInstanceData(parsed);
-                    } catch (e) {
-                        console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
+                    } else {
                         setDocInstanceData({});
                     }
                 } else {
                     setDocInstanceData({});
                 }
-            } else {
-                setDocInstanceData({});
-            }
 
-            // Auto-completar metadatos del proyecto para oficio de aprobación si faltan valores iniciales
-            if (entityUuid && entityUuid !== 'GLOBAL' && templateCode === 'OFICIO_APROBACION') {
-                try {
-                    const projRes = await api.get(`/projects/${entityUuid}/detail`);
-                    if (projRes.data) {
-                        const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
-                            inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
-                        );
-                        const directorNombre = directorObj
-                            ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
-                            : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
-                        const directorCarrera = projRes.data.carrera || '';
-                        const todaySpanish = new Date().toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
+                // Auto-completar metadatos del proyecto para oficio de aprobación si faltan valores iniciales
+                if (entityUuid && entityUuid !== 'GLOBAL' && templateCode === 'OFICIO_APROBACION') {
+                    try {
+                        const projRes = await api.get(`/projects/${entityUuid}/detail`);
+                        if (projRes.data) {
+                            const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
+                                inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
+                            );
+                            const directorNombre = directorObj
+                                ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
+                                : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
+                            const directorCarrera = projRes.data.carrera || '';
+                            const todaySpanish = new Date().toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                        setDocInstanceData((prev: any) => ({
-                            oficio_numero: prev?.oficio_numero || `01-ISTPET-INV-${new Date().getFullYear()}`,
-                            oficio_fecha: prev?.oficio_fecha || todaySpanish,
-                            director_nombre: prev?.director_nombre || directorNombre,
-                            director_carrera: prev?.director_carrera || directorCarrera,
-                            coordinador_nombre: prev?.coordinador_nombre || 'Ing. Estefani Sánchez Mgtr.',
-                            ...prev
-                        }));
+                            setDocInstanceData((prev: any) => ({
+                                oficio_numero: prev?.oficio_numero || `01-ISTPET-INV-${new Date().getFullYear()}`,
+                                oficio_fecha: prev?.oficio_fecha || todaySpanish,
+                                director_nombre: prev?.director_nombre || directorNombre,
+                                director_carrera: prev?.director_carrera || directorCarrera,
+                                coordinador_nombre: prev?.coordinador_nombre || 'Ing. Estefani Sánchez Mgtr.',
+                                ...prev
+                            }));
+                        }
+                    } catch (e) {
+                        console.warn('[DIITRA] No se pudo autocompletar metadatos del proyecto:', e);
                     }
-                } catch (e) {
-                    console.warn('[DIITRA] No se pudo autocompletar metadatos del proyecto:', e);
                 }
-            }
 
-            // Auto-completar metadatos del proyecto para Plan de Aprendizaje / Evaluación si faltan valores iniciales
-            if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'PLAN_APRENDIZAJE' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')) {
-                try {
-                    const projRes = await api.get(`/projects/${entityUuid}/detail`);
-                    if (projRes.data) {
-                        const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
-                            inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
-                        );
-                        const directorNombre = directorObj
-                            ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
-                            : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
+                // Auto-completar metadatos del proyecto para Plan de Aprendizaje / Evaluación si faltan valores iniciales
+                if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'PLAN_APRENDIZAJE' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')) {
+                    try {
+                        const projRes = await api.get(`/projects/${entityUuid}/detail`);
+                        if (projRes.data) {
+                            const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
+                                inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
+                            );
+                            const directorNombre = directorObj
+                                ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
+                                : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
 
-                        const docentes = (projRes.data.investigadores || []).map((inv: any) => ({
-                            cedula: inv.cedula || '',
-                            nombres: inv.nombres_completos || inv.nombresCompletos || `${inv.nombre || ''} ${inv.apellido || ''}`.trim(),
-                            rol: inv.rol || 'Coinvestigador'
-                        }));
+                            const docentes = (projRes.data.investigadores || []).map((inv: any) => ({
+                                cedula: inv.cedula || '',
+                                nombres: inv.nombres_completos || inv.nombresCompletos || `${inv.nombre || ''} ${inv.apellido || ''}`.trim(),
+                                rol: inv.rol || 'Coinvestigador'
+                            }));
 
-                        setDocInstanceData((prev: any) => ({
-                            NombreProyecto: prev?.NombreProyecto || projRes.data.titulo || '',
-                            TituloProyecto: prev?.TituloProyecto || projRes.data.titulo || '',
-                            LineaInvestigacion: prev?.LineaInvestigacion || projRes.data.linea || projRes.data.linea_investigacion || '',
-                            SublineaInvestigacion: prev?.SublineaInvestigacion || projRes.data.sublinea || projRes.data.sublinea_investigacion || '',
-                            Carrera: prev?.Carrera || projRes.data.carrera || '',
-                            PeriodoAcademico: prev?.PeriodoAcademico || projRes.data.periodo || projRes.data.periodo_convocatoria || '',
-                            DirectorProyecto: prev?.DirectorProyecto || directorNombre,
-                            DocentesParticipantes: (prev?.DocentesParticipantes && prev.DocentesParticipantes.length > 0) ? prev.DocentesParticipantes : docentes,
-                            ...prev
-                        }));
+                            setDocInstanceData((prev: any) => ({
+                                NombreProyecto: prev?.NombreProyecto || projRes.data.titulo || '',
+                                TituloProyecto: prev?.TituloProyecto || projRes.data.titulo || '',
+                                LineaInvestigacion: prev?.LineaInvestigacion || projRes.data.linea || projRes.data.linea_investigacion || '',
+                                SublineaInvestigacion: prev?.SublineaInvestigacion || projRes.data.sublinea || projRes.data.sublinea_investigacion || '',
+                                Carrera: prev?.Carrera || projRes.data.carrera || '',
+                                PeriodoAcademico: prev?.PeriodoAcademico || projRes.data.periodo || projRes.data.periodo_convocatoria || '',
+                                DirectorProyecto: prev?.DirectorProyecto || directorNombre,
+                                DocentesParticipantes: (prev?.DocentesParticipantes && prev.DocentesParticipantes.length > 0) ? prev.DocentesParticipantes : docentes,
+                                ...prev
+                            }));
+                        }
+                    } catch (e) {
+                        console.warn('[DIITRA] No se pudo autocompletar metadatos para Plan de Aprendizaje:', e);
                     }
-                } catch (e) {
-                    console.warn('[DIITRA] No se pudo autocompletar metadatos para Plan de Aprendizaje:', e);
                 }
+
+                // Aplicar catálogos
+                setCarreras(Array.isArray(carrerasRes?.data) ? carrerasRes.data : []);
+                setMisCarreras(Array.isArray(misCarrerasRes?.data) ? misCarrerasRes.data : []);
+                setProgramas(Array.isArray(programasRes?.data) ? programasRes.data : []);
+                const allConvs = Array.isArray(convsRes?.data) ? convsRes.data : [];
+                const activeConvs = allConvs.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
+                setConvocatorias(activeConvs.length > 0 ? activeConvs : allConvs.filter((c: any) => c.estado !== 'Borrador' || isAdmin));
+                setTiposProducto(Array.isArray(tiposRes?.data) ? tiposRes.data : []);
+                setGroups(Array.isArray(groupsRes?.data) ? groupsRes.data : []);
+                setDominios(Array.isArray(dominiosRes?.data) ? dominiosRes.data : []);
+                setLineas(Array.isArray(lineasRes?.data) ? lineasRes.data : []);
+                setSublineas(Array.isArray(sublineasRes?.data) ? sublineasRes.data : []);
+            } catch (err) {
+                console.error('[DIITRA] Error inicializando DocumentEditor:', err);
+            } finally {
+                setIsLoading(false);
             }
-
-            // Aplicar catálogos
-            setCarreras(carrerasRes.data || []);
-            const allConvs = convsRes.data || [];
-            const activeConvs = allConvs.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
-            setConvocatorias(activeConvs.length > 0 ? activeConvs : allConvs.filter((c: any) => c.estado !== 'Borrador' || isAdmin));
-            setTiposProducto(tiposRes.data || []);
-            setGroups(groupsRes.data || []);
-            setDominios(dominiosRes.data || []);
-            setLineas(lineasRes.data || []);
-            setSublineas(sublineasRes.data || []);
-
-            setIsLoading(false);
         };
 
         loadAll();

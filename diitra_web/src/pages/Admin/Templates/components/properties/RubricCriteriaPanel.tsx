@@ -234,8 +234,18 @@ export const RubricCriteriaPanel: React.FC = () => {
                                 type="number"
                                 min={1}
                                 max={100}
-                                value={crit.peso_maximo}
-                                onChange={e => handleChange(crit._key, 'peso_maximo', Number(e.target.value))}
+                                value={crit.peso_maximo !== undefined && crit.peso_maximo !== null ? crit.peso_maximo : ''}
+                                onFocus={e => e.target.select()}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    handleChange(crit._key, 'peso_maximo', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                }}
+                                onBlur={e => {
+                                    const val = e.target.value;
+                                    if (val === '' || isNaN(Number(val))) {
+                                        handleChange(crit._key, 'peso_maximo', 1);
+                                    }
+                                }}
                                 className="w-12 text-[11px] bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-main text-center focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                             />
                             <span className="text-[9px] text-text-dim shrink-0">pts</span>

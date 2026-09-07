@@ -3,6 +3,7 @@ import {
     Users, AlertCircle, ExternalLink, RefreshCw, X,
     Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
+import { GeistSelect } from '../../../../../components/Common/GeistSelect';
 
 const formatNombre = (nombre: string | null | undefined) => {
     if (!nombre) return '';
@@ -175,19 +176,22 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                             )}
                         </div>
                         <div className="flex gap-2 items-center">
-                            <select
-                                value={grupoInvestigacion}
-                                disabled={currentProject.puedeEditar === false || isSyncingGroupMembers}
-                                onChange={(e) => onSetGrupoInvestigacion(e.target.value)}
-                                className="flex-1 bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                <option value="">-- Seleccione Grupo Aprobado --</option>
-                                {approvedGroups.map((g: any) => (
-                                    <option key={g.id_grupo || g.idGrupo} value={g.uuid}>
-                                        {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="flex-1 min-w-0">
+                                <GeistSelect<string>
+                                    value={grupoInvestigacion}
+                                    disabled={currentProject.puedeEditar === false || isSyncingGroupMembers}
+                                    onChange={(val) => onSetGrupoInvestigacion(val)}
+                                    placeholder="-- Seleccione Grupo Aprobado --"
+                                    className="!py-2 !rounded-lg !text-xs"
+                                >
+                                    <option value="">-- Seleccione Grupo Aprobado --</option>
+                                    {approvedGroups.map((g: any) => (
+                                        <option key={g.id_grupo || g.idGrupo} value={g.uuid}>
+                                            {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
+                                        </option>
+                                    ))}
+                                </GeistSelect>
+                            </div>
                             {isSyncingGroupMembers && (
                                 <RefreshCw size={14} className="animate-spin text-brand shrink-0" />
                             )}
@@ -280,16 +284,19 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                         <span className="text-[8px] font-bold text-warning uppercase tracking-wider flex items-center gap-1 animate-pulse">
                                                                             <AlertTriangle className="w-2.5 h-2.5 shrink-0 text-amber-500" /> Elegir Carrera de Asociación
                                                                         </span>
-                                                                        <select
-                                                                            value={currentValue}
-                                                                            onChange={(e) => onUpdateMember(member.cedula, 'carrera', e.target.value)}
-                                                                            className="bg-bg-deep border border-warning/40 rounded px-2 py-0.5 text-[9px] text-text-main font-bold outline-none max-w-[220px]"
-                                                                        >
-                                                                            <option value="">Seleccione una carrera...</option>
-                                                                            {cleanOptions.map((opt: string) => (
-                                                                                <option key={opt} value={opt}>{opt}</option>
-                                                                            ))}
-                                                                        </select>
+                                                                        <div className="w-[220px]">
+                                                                            <GeistSelect<string>
+                                                                                value={currentValue}
+                                                                                onChange={(val) => onUpdateMember(member.cedula, 'carrera', val)}
+                                                                                placeholder="Seleccione una carrera..."
+                                                                                className="!py-1 !px-2 !text-[9px] !rounded border-warning/40"
+                                                                            >
+                                                                                <option value="">Seleccione una carrera...</option>
+                                                                                {cleanOptions.map((opt: string) => (
+                                                                                    <option key={opt} value={opt}>{opt}</option>
+                                                                                ))}
+                                                                            </GeistSelect>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             );
@@ -326,31 +333,31 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full 2xl:w-auto">
                                                     <div className="flex flex-col gap-1 w-full 2xl:w-36 min-w-0">
                                                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol</span>
-                                                        <select
+                                                        <GeistSelect<string>
                                                             value={normalizeRole(member.rol)}
                                                             disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                            onChange={(e) => onUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full max-w-full min-w-0 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                            onChange={(val) => onUpdateMember(member.cedula, 'rol', val)}
+                                                            className="!py-2 !rounded-lg !text-xs"
                                                         >
                                                             <option value="Director de Proyecto">Director de Proyecto</option>
                                                             <option value="Co-Investigador">Co-Investigador</option>
                                                             <option value="Semillerista">Semillerista</option>
-                                                        </select>
+                                                        </GeistSelect>
                                                     </div>
 
                                                     <div className="flex flex-col gap-1 w-full 2xl:w-36 min-w-0">
                                                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
-                                                        <select
+                                                        <GeistSelect<string>
                                                             value={nivelAcademico}
                                                             disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                            onChange={(e) => onUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full max-w-full min-w-0 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                            onChange={(val) => onUpdateMember(member.cedula, 'nivelAcademico', val)}
+                                                            className="!py-2 !rounded-lg !text-xs"
                                                         >
                                                             <option value="Tercer Nivel">Tercer Nivel</option>
                                                             <option value="Cuarto Nivel (Maestría)">Maestría</option>
                                                             <option value="Cuarto Nivel (PhD)">PhD</option>
                                                             <option value="Pregrado">Pregrado</option>
-                                                        </select>
+                                                        </GeistSelect>
                                                     </div>
 
                                                     <div className="flex flex-col gap-1 w-full 2xl:w-20 min-w-0">
@@ -359,7 +366,17 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                             type="number"
                                                             value={horasSemanales ?? ''}
                                                             disabled={currentProject.puedeEditar === false}
-                                                            onChange={(e) => onUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
+                                                            onFocus={(e) => e.target.select()}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                onUpdateMember(member.cedula, 'horasSemanales', val === '' ? '' : (isNaN(parseFloat(val)) ? '' : parseFloat(val)));
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val === '' || isNaN(parseFloat(val))) {
+                                                                    onUpdateMember(member.cedula, 'horasSemanales', 0);
+                                                                }
+                                                            }}
                                                             placeholder="0"
                                                             min="0"
                                                             max="40"
@@ -500,19 +517,19 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="flex flex-col gap-1.5">
                                                     <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Tipo de Solicitud</label>
-                                                    <select
+                                                    <GeistSelect<string>
                                                         value={teamChangeForm.tipo}
-                                                        onChange={(e) => {
-                                                            setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value, cedulaObjetivo: '' }));
+                                                        onChange={(val) => {
+                                                            setTeamChangeForm(prev => ({ ...prev, tipo: val, cedulaObjetivo: '' }));
                                                             setRequestSearchQuery('');
                                                         }}
-                                                        className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                        className="!py-2 !rounded-md !text-xs"
                                                     >
                                                         <option value="ALTA">{tieneGrupo ? 'Alta de integrante' : 'Alta de personal'}</option>
                                                         <option value="BAJA">{tieneGrupo ? 'Baja de integrante' : 'Baja de personal'}</option>
                                                         <option value="CAMBIO_DIRECTOR">Cambio de director</option>
                                                         <option value="CAMBIO_GRUPO">Cambio de grupo de investigación</option>
-                                                    </select>
+                                                    </GeistSelect>
                                                 </div>
 
                                                 <div className="flex flex-col gap-1.5">
@@ -532,18 +549,18 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                 {teamChangeForm.tipo === 'ALTA' && (
                                                     <div className="flex flex-col gap-1.5">
                                                         <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Rol Propuesto</label>
-                                                        <select
+                                                        <GeistSelect<string>
                                                             value={teamChangeForm.rolPropuesto}
-                                                            onChange={(e) => {
-                                                                setTeamChangeForm(prev => ({ ...prev, rolPropuesto: e.target.value, cedulaObjetivo: '' }));
+                                                            onChange={(val) => {
+                                                                setTeamChangeForm(prev => ({ ...prev, rolPropuesto: val, cedulaObjetivo: '' }));
                                                                 setRequestSearchQuery('');
                                                             }}
-                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                            className="!py-2 !rounded-md !text-xs"
                                                         >
                                                             <option value="Director de Proyecto">Director de Proyecto</option>
                                                             <option value="Co-Investigador">Co-Investigador</option>
                                                             <option value="Semillerista">Semillerista</option>
-                                                        </select>
+                                                        </GeistSelect>
                                                     </div>
                                                 )}
 
@@ -556,10 +573,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                     </label>
 
                                                     {teamChangeForm.tipo === 'CAMBIO_GRUPO' ? (
-                                                        <select
+                                                        <GeistSelect<string>
                                                             value={teamChangeForm.cedulaObjetivo}
-                                                            onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
-                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                            onChange={(val) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: val }))}
+                                                            placeholder="-- Seleccione Grupo Destino --"
+                                                            className="!py-2 !rounded-md !text-xs"
                                                         >
                                                             <option value="">-- Seleccione Grupo Destino --</option>
                                                             {approvedGroups.map((g: any) => (
@@ -567,12 +585,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                     {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
                                                                 </option>
                                                             ))}
-                                                        </select>
+                                                        </GeistSelect>
                                                     ) : teamChangeForm.tipo === 'BAJA' ? (
-                                                        <select
+                                                        <GeistSelect<string>
                                                             value={teamChangeForm.cedulaObjetivo}
-                                                            onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
-                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                            onChange={(val) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: val }))}
+                                                            placeholder={tieneGrupo ? '-- Seleccione Integrante --' : '-- Seleccione Personal --'}
+                                                            className="!py-2 !rounded-md !text-xs"
                                                         >
                                                             <option value="">{tieneGrupo ? '-- Seleccione Integrante --' : '-- Seleccione Personal --'}</option>
                                                             {investigadores.filter((m: any) => m.activo !== false).map((m: any) => (
@@ -580,7 +599,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                     {formatNombre(m.nombre)} ({m.cedula}) - {m.rol}
                                                                 </option>
                                                             ))}
-                                                        </select>
+                                                        </GeistSelect>
                                                     ) : (
                                                         <div className="w-full relative">
                                                             {teamChangeForm.cedulaObjetivo ? (

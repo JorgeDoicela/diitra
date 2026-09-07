@@ -68,14 +68,26 @@ export const CriterioCard: React.FC<CriterioCardProps> = ({
                             min={0}
                             max={detalle.max}
                             step={0.5}
-                            value={detalle.puntaje}
+                            value={detalle.puntaje !== undefined && detalle.puntaje !== null ? detalle.puntaje : ''}
                             disabled={disabled}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                                let val = parseFloat(e.target.value);
+                                const raw = e.target.value;
+                                if (raw === '') {
+                                    onPuntajeChange('' as any);
+                                    return;
+                                }
+                                let val = parseFloat(raw);
                                 if (isNaN(val)) val = 0;
                                 if (val < 0) val = 0;
                                 if (val > detalle.max) val = detalle.max;
                                 onPuntajeChange(val);
+                            }}
+                            onBlur={(e) => {
+                                const raw = e.target.value;
+                                if (raw === '' || isNaN(parseFloat(raw))) {
+                                    onPuntajeChange(0);
+                                }
                             }}
                             className={`w-14 h-7 text-center font-bold bg-surface focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:cursor-not-allowed ${disabled ? 'bg-surface border-dashed border-border-thin text-text-dim opacity-70' : 'hover:bg-surface-hover'}`}
                             style={{ color }}

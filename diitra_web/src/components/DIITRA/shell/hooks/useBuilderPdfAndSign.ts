@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../../../api/axios_config';
 import { useNotifications } from '../../../../api/NotificationsContext';
 
@@ -75,48 +75,69 @@ export const useBuilderPdfAndSign = ({
         }
     }, [templateCode, isDraftMode, formData, addAudit]);
 
+    const inFlightPdfResolveRef = useRef<Promise<boolean> | null>(null);
+    const lastResolvedTargetRef = useRef<string>('');
+
     // ── Cargar PDF firmado u oficial ──
     const fetchSignedPdf = useCallback(async (): Promise<boolean> => {
-        const targetUuid = entityUuid || documentUuid || formData.Uuid || formData.uuid;
+        const targetUuid = entityUuid || documentUuid || formData?.Uuid || formData?.uuid;
         if (!targetUuid || targetUuid.startsWith('temp_')) return false;
 
-        try {
-            let instanceData: any = null;
-            const currentDocId = documentUuid || formData.Uuid || formData.uuid;
-            if (currentDocId && !currentDocId.startsWith('temp_')) {
-                try {
-                    const directRes = await api.get(`/documents/instances/${currentDocId}`);
-                    if (directRes?.data?.finalPdfPath || directRes?.data?.final_pdf_path) {
-                        instanceData = directRes.data;
-                    }
-                } catch { }
-            }
-
-            if (!instanceData) {
-                const instanceRes = await api.get(`/documents/instances/resolve`, {
-                    params: { templateCode, entityUuid: targetUuid }
-                });
-                instanceData = instanceRes.data;
-            }
-
-            const finalPath = instanceData?.finalPdfPath || instanceData?.final_pdf_path || instanceData?.FinalPdfPath;
-
-            if (finalPath) {
-                const cleanPath = finalPath.replace(/\\/g, '/');
-                const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
-                setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
-                setIsDraftMode(false);
-                return true;
-            }
-        } catch (err) {
-            console.error('[DIITRA] Error al consultar/cargar el PDF oficial firmado:', err);
+        if (inFlightPdfResolveRef.current) {
+            return inFlightPdfResolveRef.current;
         }
-        return false;
-    }, [entityUuid, documentUuid, formData.Uuid, formData.uuid, templateCode]);
+
+        const resolvePromise = (async () => {
+            try {
+                let instanceData: any = null;
+                const currentDocId = documentUuid || formData?.Uuid || formData?.uuid;
+                if (currentDocId && !currentDocId.startsWith('temp_')) {
+                    try {
+                        const directRes = await api.get(`/documents/instances/${currentDocId}`);
+                        if (directRes?.data?.finalPdfPath || directRes?.data?.final_pdf_path) {
+                            instanceData = directRes.data;
+                        }
+                    } catch { }
+                }
+
+                if (!instanceData) {
+                    const instanceRes = await api.get(`/documents/instances/resolve`, {
+                        params: { templateCode, entityUuid: targetUuid }
+                    });
+                    instanceData = instanceRes.data;
+                }
+
+                const finalPath = instanceData?.finalPdfPath || instanceData?.final_pdf_path || instanceData?.FinalPdfPath;
+
+                if (finalPath) {
+                    const cleanPath = finalPath.replace(/\\/g, '/');
+                    const fileRes = await api.get(`/storage/${cleanPath}`, { responseType: 'blob' });
+                    setPdfBlob(new Blob([fileRes.data], { type: 'application/pdf' }));
+                    setIsDraftMode(false);
+                    return true;
+                }
+            } catch (err) {
+                console.error('[DIITRA] Error al consultar/cargar el PDF oficial firmado:', err);
+            } finally {
+                inFlightPdfResolveRef.current = null;
+            }
+            return false;
+        })();
+
+        inFlightPdfResolveRef.current = resolvePromise;
+        return resolvePromise;
+    }, [entityUuid, documentUuid, formData?.Uuid, formData?.uuid, templateCode]);
 
     // Autocargar PDF firmado si existe; si no, mantener estado inicial en borrador
     useEffect(() => {
         let isMounted = true;
+        const targetUuid = entityUuid || documentUuid || formData?.Uuid || formData?.uuid;
+        const targetKey = `${templateCode}_${targetUuid}_${signatureRefreshTrigger}`;
+        if (lastResolvedTargetRef.current === targetKey) {
+            return;
+        }
+        lastResolvedTargetRef.current = targetKey;
+
         const initPdf = async () => {
             const hasSigned = await fetchSignedPdf();
             if (hasSigned) {
@@ -130,7 +151,7 @@ export const useBuilderPdfAndSign = ({
         };
         initPdf();
         return () => { isMounted = false; };
-    }, [entityUuid, documentUuid, projectStatus, signatureRefreshTrigger, fetchSignedPdf]);
+    }, [entityUuid, documentUuid, projectStatus, signatureRefreshTrigger, fetchSignedPdf, templateCode, formData?.Uuid, formData?.uuid]);
 
     // ── Firma Electrónica PAdES — Upload-on-Demand ──
     const handleSign = async () => {

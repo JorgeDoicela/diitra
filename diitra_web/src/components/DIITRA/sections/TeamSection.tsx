@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Users, UserPlus, Trash2, ShieldCheck, Award, AlertCircle, ChevronRight } from 'lucide-react';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { MemberSearchSelector, type SelectedMemberResult, formatNombre } from '../../Common/MemberSearchSelector';
+import { GeistSelect } from '../../Common/GeistSelect';
+import { useDocenteDistributivo, isStudentMember } from './hooks/useDocenteDistributivo';
 
 interface TeamSectionProps {
     investigadores: any[];
@@ -31,6 +33,14 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
     const isAssociative = formData?.GrupoInvestigacionTipo === 'SI';
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const repairedCedulasRef = useRef<Set<string>>(new Set());
+
+    // Hook desacoplado de lógica y sincronización de distributivo SIGAFI
+    const {
+        metricsByCedula,
+        hasAnyExceededDocente,
+        docentesConExcesoCount,
+        registerMemberHours
+    } = useDocenteDistributivo(investigadores, isAssociative, investigadoresReales);
 
     const updateMemberField = (idx: number, field: string, value: any) => {
         if (onUpdate) {
@@ -111,11 +121,21 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             NivelAcademico: defaultNivel,
             Rol: defaultRole,
             HorasSemanales: member.horas_investigacion ?? (isStudent ? 0 : 5),
+            HorasDisponibles: member.horas_investigacion ?? 0,
+            HorasAsignadas: member.horas_asignadas ?? 0,
             Carrera: member.carrera || '',
             CarrerasDisponibles: member.carrera || '',
             Activo: true,
             EsDirector: false
         };
+
+        if (!isStudent && cedula) {
+            registerMemberHours(
+                cedula,
+                Number(member.horas_investigacion ?? 0),
+                Number(member.horas_asignadas ?? 0)
+            );
+        }
 
         if (onAdd) {
             onAdd(newInvestigador);
@@ -125,9 +145,17 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
         setIsAddModalOpen(false);
     };
 
-    const existingCedulas = investigadores
-        .map(i => (i.Cedula || i.cedula || '').trim())
-        .filter(Boolean);
+    const existingCedulas = useMemo(() => {
+        return investigadores
+            .map(i => (i.Cedula || i.cedula || '').trim())
+            .filter(Boolean);
+    }, [investigadores]);
+
+    const allowedTypes = useMemo<('DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO')[]>(() => {
+        return !isAssociative 
+            ? ['DOCENTE', 'ESTUDIANTE'] 
+            : ['DOCENTE', 'ADMINISTRATIVO', 'ESTUDIANTE', 'EXTERNO'];
+    }, [isAssociative]);
 
     return (
         <div className="space-y-6">
@@ -141,6 +169,23 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             Los integrantes y sus roles oficiales se sincronizan automáticamente desde la nómina del <strong>Grupo de Investigación</strong> aprobado. Las altas y bajas se gestionan en el módulo de Grupos. En esta sección puedes registrar las <strong>horas semanales de dedicación</strong> asignadas para este proyecto.
                         </p>
                     </div>
+                </div>
+            )}
+
+            {/* Banner reactivo si algún docente excede su distributivo SIGAFI */}
+            {hasAnyExceededDocente && (
+                <div className="p-3.5 bg-error/10 border border-error/30 rounded-2xl flex items-center justify-between text-xs text-error font-medium animate-fade-in">
+                    <div className="flex items-center gap-2.5">
+                        <AlertCircle size={15} className="shrink-0 text-error" />
+                        <span>
+                            {docentesConExcesoCount === 1
+                                ? 'Un docente investigador excede las horas disponibles en su distributivo académico de SIGAFI.'
+                                : `${docentesConExcesoCount} docentes investigadores exceden las horas disponibles en su distributivo académico de SIGAFI.`}
+                        </span>
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider font-mono text-error/90 bg-error/15 px-2 py-0.5 rounded-md">
+                        Límite Excedido
+                    </span>
                 </div>
             )}
 
@@ -182,15 +227,31 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                     investigadores.map((_inv, idx) => {
                         const rol = _inv.Rol || _inv.rol || 'Co-Investigador';
                         const isDirector = _inv.EsDirector || _inv.esDirector || rol.toLowerCase().includes('director');
-                        const isStudent = rol.toLowerCase().includes('semillerista') ||
-                                          rol.toLowerCase().includes('estudiante') ||
-                                          rol.toLowerCase().includes('alumno') ||
-                                          (_inv.NivelAcademico || _inv.nivelAcademico) === 'Pregrado';
+                        const isStudent = isStudentMember(_inv);
+                        const cedKey = (_inv.Cedula || _inv.cedula || '').trim().toLowerCase();
+
+                        const metrics = metricsByCedula[cedKey] || {
+                            horasDisponibles: 0,
+                            horasAsignadasOtros: 0,
+                            cupoLibre: 0,
+                            hasNoDistributivo: false,
+                            isInvalidHours: false,
+                            excesoHoras: 0
+                        };
+
+                        const {
+                            horasDisponibles,
+                            horasAsignadasOtros,
+                            cupoLibre,
+                            hasNoDistributivo,
+                            isInvalidHours,
+                            excesoHoras
+                        } = metrics;
 
                         return (
                             <div
                                 key={_inv.id || _inv.Cedula || idx}
-                                className="p-8 bg-bg-deep border border-border-thin rounded-3xl shadow-sm animate-fade-in relative"
+                                className={`p-8 bg-bg-deep border ${isInvalidHours ? 'border-error/70 ring-1 ring-error/20' : 'border-border-thin'} rounded-3xl shadow-sm animate-fade-in relative`}
                             >
                                 {/* Header del Integrante dentro de la tarjeta */}
                                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-border-thin/40">
@@ -288,16 +349,16 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                                 readOnly={true}
                                             />
                                         ) : (
-                                            <select
+                                            <GeistSelect<string>
                                                 value={_inv.NivelAcademico || 'Tercer Nivel'}
-                                                onChange={(e) => updateMemberField(idx, 'NivelAcademico', e.target.value)}
-                                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-text-main transition-colors cursor-pointer"
+                                                onChange={(val) => updateMemberField(idx, 'NivelAcademico', val)}
+                                                className="!py-2.5 !rounded-xl !text-xs"
                                             >
                                                 <option value="Tercer Nivel">Tercer Nivel</option>
                                                 <option value="Cuarto Nivel (Maestría)">Cuarto Nivel (Maestría)</option>
                                                 <option value="Cuarto Nivel (PhD)">Cuarto Nivel (PhD)</option>
                                                 <option value="Pregrado">Pregrado</option>
-                                            </select>
+                                            </GeistSelect>
                                         )}
                                         <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
                                             Nivel Académico
@@ -313,38 +374,86 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                                 readOnly={true}
                                             />
                                         ) : (
-                                            <select
+                                            <GeistSelect<string>
                                                 value={rol}
-                                                onChange={(e) => updateMemberField(idx, 'Rol', e.target.value)}
-                                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold text-text-main outline-none focus:border-text-main transition-colors cursor-pointer"
+                                                onChange={(val) => updateMemberField(idx, 'Rol', val)}
+                                                className="!py-2.5 !rounded-xl !text-xs !font-bold"
                                             >
                                                 <option value="Co-Investigador">Co-Investigador</option>
                                                 <option value="Semillerista">Semillerista</option>
                                                 <option value="Auxiliar de Investigación">Auxiliar de Investigación</option>
                                                 <option value="Personal de Apoyo Técnico">Personal de Apoyo Técnico</option>
                                                 <option value="Investigador Asociado">Investigador Asociado</option>
-                                            </select>
+                                            </GeistSelect>
                                         )}
                                         <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
                                             Rol
                                         </label>
                                     </div>
 
-                                    <div className="md:col-span-3">
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="40"
-                                            step="0.5"
-                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main outline-none focus:border-text-main transition-colors"
-                                            value={_inv.HorasSemanales !== undefined && _inv.HorasSemanales !== null ? String(_inv.HorasSemanales) : ''}
-                                            readOnly={readOnly}
-                                            onChange={(e) => updateMemberField(idx, 'HorasSemanales', e.target.value ? parseFloat(e.target.value) : 0)}
-                                            placeholder="0"
-                                        />
-                                        <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
-                                            Horas Semanales
-                                        </label>
+                                    <div className="md:col-span-3 flex flex-col justify-between">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="40"
+                                                step="0.5"
+                                                className={`w-full bg-bg-deep border rounded-xl px-4 py-3 text-xs font-mono font-bold outline-none transition-colors ${
+                                                    isInvalidHours
+                                                        ? 'border-error text-error bg-error/5 focus:border-error ring-1 ring-error/20'
+                                                        : 'border-border-thin text-text-main focus:border-text-main'
+                                                }`}
+                                                value={_inv.HorasSemanales !== undefined && _inv.HorasSemanales !== null ? String(_inv.HorasSemanales) : ''}
+                                                readOnly={readOnly}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    updateMemberField(idx, 'HorasSemanales', val === '' ? '' : parseFloat(val));
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '' || isNaN(parseFloat(val))) {
+                                                        updateMemberField(idx, 'HorasSemanales', 0);
+                                                    }
+                                                }}
+                                                placeholder="0"
+                                            />
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                                Horas Semanales
+                                            </label>
+                                        </div>
+
+                                        {/* Indicador reactivo de horas de distributivo SIGAFI (estándar styles-diitra / Vercel Geist) */}
+                                        {!isStudent ? (
+                                            <div className="mt-2.5 pt-2 border-t border-border-thin/40 space-y-1">
+                                                <div className="flex items-center justify-between text-[9.5px] font-mono text-text-dim">
+                                                    <span>SIGAFI: <strong className="text-text-main font-semibold">{horasDisponibles}h</strong></span>
+                                                    <span>Otros: <strong className="text-text-main font-semibold">{horasAsignadasOtros}h</strong></span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-[9.5px] font-mono">
+                                                    <span className="text-text-dim">Cupo disponible:</span>
+                                                    <span className={`font-bold ${cupoLibre > 0 ? 'text-text-main' : 'text-error'}`}>
+                                                        {cupoLibre}h
+                                                    </span>
+                                                </div>
+
+                                                {isInvalidHours && (
+                                                    <div className="pt-1">
+                                                        <p className="text-[9px] font-bold text-error leading-tight tracking-tight">
+                                                            {hasNoDistributivo
+                                                                ? 'Sin horas en distributivo SIGAFI activo'
+                                                                : `Excede distributivo (+${excesoHoras.toFixed(1)}h)`}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="mt-2.5 pt-2 border-t border-border-thin/40">
+                                                <span className="text-[9px] font-medium text-text-dim/80">
+                                                    Semillero / Estudiante (Sin distributivo docente)
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Carrera de Asociación */}
@@ -366,17 +475,20 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                                         <span className="text-[10px] font-black text-warning uppercase tracking-widest flex items-center gap-1.5">
                                                             <AlertCircle size={12} /> Selecciona la carrera de asociación para este integrante:
                                                         </span>
-                                                        <select
-                                                            value={currentValue}
-                                                            onChange={(e) => updateMemberField(idx, 'Carrera', e.target.value)}
-                                                            disabled={readOnly}
-                                                            className="w-full max-w-md bg-bg-deep border border-warning/50 rounded-xl px-4 py-3 text-xs font-bold text-text-main outline-none focus:border-warning cursor-pointer"
-                                                        >
-                                                            <option value="">Seleccione una carrera...</option>
-                                                            {cleanOptions.map((opt: string) => (
-                                                                <option key={opt} value={opt}>{opt}</option>
-                                                            ))}
-                                                        </select>
+                                                        <div className="w-full max-w-md">
+                                                            <GeistSelect<string>
+                                                                value={currentValue}
+                                                                onChange={(val) => updateMemberField(idx, 'Carrera', val)}
+                                                                disabled={readOnly}
+                                                                placeholder="Seleccione una carrera..."
+                                                                className="!py-2.5 !rounded-xl !text-xs !font-bold border-warning/50 focus:border-warning"
+                                                            >
+                                                                <option value="">Seleccione una carrera...</option>
+                                                                {cleanOptions.map((opt: string) => (
+                                                                    <option key={opt} value={opt}>{opt}</option>
+                                                                ))}
+                                                            </GeistSelect>
+                                                        </div>
                                                     </div>
                                                 );
                                             }
@@ -444,7 +556,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     : "Búsqueda en el catálogo de personal institucional."}
                                 onAddMember={handleAddMemberFromSearch}
                                 existingCedulas={existingCedulas}
-                                allowedTypes={!isAssociative ? ['DOCENTE', 'ESTUDIANTE'] : ['DOCENTE', 'ADMINISTRATIVO', 'ESTUDIANTE', 'EXTERNO']}
+                                allowedTypes={allowedTypes}
                                 defaultType="DOCENTE"
                                 soloConHorasDocentes={!isAssociative}
                                 estadoEstudiante={!isAssociative ? 'ACTIVO' : 'TODOS'}

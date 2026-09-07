@@ -6,6 +6,7 @@ import {
 import { CoWorkField } from '../../../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../../../core/cowork/types';
 import { GeistDatePicker } from '../../../../Common/GeistDatePicker';
+import { GeistSelect } from '../../../../Common/GeistSelect';
 
 const toDisplayDate = (val?: string) => {
     if (!val) return '';
@@ -169,8 +170,18 @@ export const ActivityCardItem: React.FC<ActivityCardItemProps> = ({
                             <label className="block text-[8px] font-black text-text-dim uppercase tracking-widest mb-1.5">N° Orden</label>
                             <input
                                 type="number"
-                                value={_c.Numero || (i + 1)}
-                                onChange={(e) => onUpdate(i, 'Numero', parseInt(e.target.value) || 1)}
+                                value={_c.Numero !== undefined && _c.Numero !== null ? _c.Numero : (i + 1)}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onUpdate(i, 'Numero', val === '' ? '' : (isNaN(parseInt(val, 10)) ? '' : parseInt(val, 10)));
+                                }}
+                                onBlur={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || isNaN(parseInt(val, 10))) {
+                                        onUpdate(i, 'Numero', i + 1);
+                                    }
+                                }}
                                 className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-text-main focus:outline-none"
                                 disabled={readOnly}
                                 min={1}
@@ -194,18 +205,18 @@ export const ActivityCardItem: React.FC<ActivityCardItemProps> = ({
                             <label className="block text-[8px] font-black text-text-dim uppercase tracking-widest mb-1.5 flex items-center gap-1">
                                 <Target size={10} /> Objetivo Relacionado
                             </label>
-                            <select
+                            <GeistSelect<number>
                                 value={_c.IdObjetivo !== undefined ? _c.IdObjetivo : 0}
-                                onChange={(e) => onUpdate(i, 'IdObjetivo', parseInt(e.target.value) || 0)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs font-semibold focus:border-text-main focus:outline-none cursor-pointer"
+                                onChange={(val) => onUpdate(i, 'IdObjetivo', Number(val) || 0)}
                                 disabled={readOnly}
+                                className="!py-2 !rounded-lg !text-xs !font-semibold"
                             >
                                 {objectives.map((obj) => (
                                     <option key={obj.index} value={obj.index}>
                                         {obj.label}
                                     </option>
                                 ))}
-                            </select>
+                            </GeistSelect>
                         </div>
 
                         {/* Responsable de la actividad */}
@@ -214,11 +225,12 @@ export const ActivityCardItem: React.FC<ActivityCardItemProps> = ({
                                 <User size={10} /> Responsable
                             </label>
                             {teamMembers.length > 0 ? (
-                                <select
+                                <GeistSelect<string>
                                     value={_c.Responsable || ''}
-                                    onChange={(e) => onUpdate(i, 'Responsable', e.target.value)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs font-semibold focus:border-text-main focus:outline-none cursor-pointer"
+                                    onChange={(val) => onUpdate(i, 'Responsable', val)}
                                     disabled={readOnly}
+                                    placeholder="-- Seleccionar Integrante --"
+                                    className="!py-2 !rounded-lg !text-xs !font-semibold"
                                 >
                                     <option value="">-- Seleccionar Integrante --</option>
                                     {teamMembers.map((m, idx) => (
@@ -226,7 +238,7 @@ export const ActivityCardItem: React.FC<ActivityCardItemProps> = ({
                                             {m}
                                         </option>
                                     ))}
-                                </select>
+                                </GeistSelect>
                             ) : (
                                 <input
                                     type="text"

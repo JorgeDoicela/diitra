@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../../../../api/axios_config';
+import { fetchCatalogCached } from '../../../../../api/catalogsCache';
 import { useAuth } from '../../../../../api/AuthContext';
 import { useNotifications } from '../../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../../api/ConfirmContext';
@@ -82,13 +83,13 @@ export function useProjectTeam(
         if (dominios.length === 0 || carreras.length === 0 || lines.length === 0) {
             try {
                 const [domRes, carRes, linRes] = await Promise.all([
-                    api.get('/catalogs/dominios'),
-                    api.get('/catalogs/carreras'),
-                    api.get('/Convocatorias/catalogos/lineas')
+                    fetchCatalogCached('/catalogs/dominios', () => api.get('/catalogs/dominios')),
+                    fetchCatalogCached('/catalogs/carreras', () => api.get('/catalogs/carreras')),
+                    fetchCatalogCached('/Convocatorias/catalogos/lineas', () => api.get('/Convocatorias/catalogos/lineas'))
                 ]);
-                setDominios(domRes.data || []);
-                setCarreras(carRes.data || []);
-                setLines(linRes.data || []);
+                setDominios(Array.isArray(domRes) ? domRes : (domRes?.data || []));
+                setCarreras(Array.isArray(carRes) ? carRes : (carRes?.data || []));
+                setLines(Array.isArray(linRes) ? linRes : (linRes?.data || []));
             } catch (e) {
                 console.error("Error loading catalogs for GroupDetailDrawer", e);
             }

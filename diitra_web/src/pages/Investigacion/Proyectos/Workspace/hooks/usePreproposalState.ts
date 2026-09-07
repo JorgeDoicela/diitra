@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, createElement } from 'react';
 import api from '../../../../../api/axios_config';
+import { fetchCatalogCached } from '../../../../../api/catalogsCache';
 import { useNotifications } from '../../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../../api/ConfirmContext';
 
@@ -84,8 +85,13 @@ export function usePreproposalState(
     const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
     const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
 
+    const inFlightTraceabilityRef = React.useRef<string | null>(null);
+
     const fetchTrazabilidad = useCallback(async (silent = false) => {
         if (!resolvedProjectUuid) return;
+        if (inFlightTraceabilityRef.current === resolvedProjectUuid) return;
+        inFlightTraceabilityRef.current = resolvedProjectUuid;
+
         if (!silent) setIsLoadingTrazabilidad(true);
         try {
             const res = await api.get(`/projects/${resolvedProjectUuid}/traceability`);
@@ -93,6 +99,7 @@ export function usePreproposalState(
         } catch (e) {
             console.error("Error al cargar la trazabilidad", e);
         } finally {
+            inFlightTraceabilityRef.current = null;
             if (!silent) setIsLoadingTrazabilidad(false);
         }
     }, [resolvedProjectUuid]);
@@ -102,23 +109,15 @@ export function usePreproposalState(
 
     useEffect(() => {
         let isMounted = true;
-        const loadDocenteCarreras = async () => {
-            try {
-                const res = await api.get('/catalogs/mi-carrera');
-                if (isMounted && Array.isArray(res.data)) {
-                    setDocenteCarreras(res.data);
+        fetchCatalogCached('/catalogs/mi-carrera', () => api.get('/catalogs/mi-carrera'))
+            .then((data) => {
+                if (isMounted && Array.isArray(data)) {
+                    setDocenteCarreras(data);
                 }
-            } catch (err) {
-                console.error("[usePreproposalState] Error cargando carreras del docente:", err);
-            }
-        };
-        loadDocenteCarreras();
+            })
+            .catch((err) => console.error("[usePreproposalState] Error cargando carreras del docente:", err));
         return () => { isMounted = false; };
     }, []);
-
-    useEffect(() => {
-        fetchTrazabilidad();
-    }, [fetchTrazabilidad]);
 
     useEffect(() => {
         if (currentProject) {

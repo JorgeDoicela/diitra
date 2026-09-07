@@ -3,6 +3,7 @@ import { Award, Trash2, Target, Layers, Tag, CheckCircle2, FileCheck, Hash, Cale
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../SectionBlockGuard';
 import { SectionGuardContext } from '../../../core/documents/context/DocumentDataContext';
+import { GeistSelect } from '../../Common/GeistSelect';
 
 interface ExpectedProductsSectionProps {
     productosEsperados?: any[];
@@ -248,11 +249,10 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                                                     <Layers size={11} className="text-brand-light" />
                                                     Familia / Categoría IST
                                                 </label>
-                                                <select
+                                                <GeistSelect<string>
                                                     value={catObj.name}
-                                                    onChange={(e) => {
+                                                    onChange={(newCatName) => {
                                                         if (!onUpdateProducto) return;
-                                                        const newCatName = e.target.value;
                                                         onUpdateProducto(idx, 'categoria', newCatName);
                                                         const newCatObj = findCategoryObj(newCatName);
                                                         const newSubtypes = getAvailableSubtypes(newCatObj);
@@ -261,12 +261,12 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                                                         }
                                                     }}
                                                     disabled={effectiveReadOnly}
-                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-3 py-2 text-xs text-text-main outline-none font-semibold focus:border-text-main transition-colors disabled:opacity-60 cursor-pointer"
+                                                    className="!py-2 !rounded-xl !text-xs !font-semibold"
                                                 >
                                                     {categories.map((c: any) => (
                                                         <option key={c.id || c.name} value={c.name}>{c.name}</option>
                                                     ))}
-                                                </select>
+                                                </GeistSelect>
                                             </div>
                                         )}
 
@@ -276,16 +276,16 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                                                     <Tag size={11} className="text-brand-light" />
                                                     Subtipo de Entregable
                                                 </label>
-                                                <select
+                                                <GeistSelect<string>
                                                     value={subTypeName}
-                                                    onChange={(e) => onUpdateProducto && onUpdateProducto(idx, 'tipo', e.target.value)}
+                                                    onChange={(val) => onUpdateProducto && onUpdateProducto(idx, 'tipo', val)}
                                                     disabled={effectiveReadOnly}
-                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-3 py-2 text-xs text-text-main outline-none font-semibold focus:border-text-main transition-colors disabled:opacity-60 cursor-pointer"
+                                                    className="!py-2 !rounded-xl !text-xs !font-semibold"
                                                 >
                                                     {availableSubtypes.map(sub => (
                                                         <option key={sub} value={sub}>{sub}</option>
                                                     ))}
-                                                </select>
+                                                </GeistSelect>
                                             </div>
                                         )}
                                     </div>
@@ -343,17 +343,18 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                                                         <Gauge size={11} className="text-amber-500" />
                                                         Madurez Tecnológica (TRL)
                                                     </label>
-                                                    <select
+                                                    <GeistSelect<string>
                                                         value={trlLevel}
-                                                        onChange={(e) => onUpdateProducto && onUpdateProducto(idx, 'trl', e.target.value)}
+                                                        onChange={(val) => onUpdateProducto && onUpdateProducto(idx, 'trl', val)}
                                                         disabled={effectiveReadOnly}
-                                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-2.5 py-1.5 text-[11px] text-text-main outline-none font-semibold focus:border-text-main transition-colors disabled:opacity-60 cursor-pointer"
+                                                        placeholder="Seleccione nivel TRL..."
+                                                        className="!py-1.5 !px-2.5 !text-[11px] !rounded-xl !font-semibold"
                                                     >
                                                         <option value="">Seleccione nivel TRL...</option>
                                                         {TRL_OPTIONS.map(opt => (
                                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                         ))}
-                                                    </select>
+                                                    </GeistSelect>
                                                 </div>
                                             )}
                                         </div>
@@ -411,7 +412,17 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
                                                         type="number"
                                                         min={1}
                                                         value={cantVal}
-                                                        onChange={(e) => onUpdateProducto && onUpdateProducto(idx, 'cantidad', parseInt(e.target.value, 10) || 1)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            onUpdateProducto && onUpdateProducto(idx, 'cantidad', val === '' ? '' : (isNaN(parseInt(val, 10)) ? '' : parseInt(val, 10)));
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === '' || isNaN(parseInt(val, 10))) {
+                                                                onUpdateProducto && onUpdateProducto(idx, 'cantidad', 1);
+                                                            }
+                                                        }}
                                                         disabled={effectiveReadOnly}
                                                         className="w-full bg-bg-deep border border-border-thin rounded-xl px-3 py-2 text-xs text-text-main font-bold text-center outline-none focus:border-text-main transition-colors disabled:opacity-60"
                                                     />

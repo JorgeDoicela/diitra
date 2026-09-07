@@ -285,7 +285,10 @@ export const PreproposalAuthorView: React.FC<PreproposalAuthorViewProps> = ({
                                                 min="0.01"
                                                 value={editPresupuesto}
                                                 onChange={(e) => setEditPresupuesto(e.target.value)}
-                                                onFocus={() => setFocusedField('presupuesto')}
+                                                onFocus={(e) => {
+                                                    setFocusedField('presupuesto');
+                                                    e.target.select();
+                                                }}
                                                 onBlur={() => setFocusedField(null)}
                                                 placeholder="15000.00"
                                                 className={`input-vercel !pl-7 !font-bold !text-xs ${parsedObs.presupuesto ? 'border-error/40 ring-1 ring-error/20 shadow-sm' : ''}`}

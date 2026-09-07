@@ -660,6 +660,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         step="0.01"
                                         min="0.01"
                                         value={presupuestoEstimado}
+                                        onFocus={(e) => e.target.select()}
                                         onChange={(e) => setPresupuestoEstimado(e.target.value)}
                                         placeholder="15000.00"
                                         className="input-vercel !pl-7 !text-xs !font-bold !placeholder:text-text-dim/30"
