@@ -283,7 +283,7 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
 
     return `
   <!-- BLOQUE: 1. IDENTIFICACIÓN DEL PROYECTO -->
-  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${defaultHeaderBg}; margin-top: 14px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${defaultHeaderBg}; margin-top: 14px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${title}</p>
   <table style="width: 100%; border-collapse: collapse; ${tableBorderStyle} font-family: {{ theme.typography.font_family }}; table-layout: fixed;">
     <colgroup>
       <col style="width: 34%;" />
@@ -464,14 +464,26 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
     const sectionTitle = block.title || '3. ESPECIFICACIÓN DEL PROYECTO';
     return `
   <!-- BLOQUE: ESPECIFICACIÓN DEL PROYECTO -->
-  <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-top: 18px; margin-bottom: 6px;">${sectionTitle}</p>
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #222c57; margin-top: 18px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${sectionTitle}</p>
   ${bodyHtml}`;
 };
 
 export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const productosTitle = c.productosTitle || '5. Productos y Entregables Esperados';
-    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_detailed';
+    const productosTitle = c.productosTitle || c.title || '5.  PRODUCTOS ESPERADOS';
+    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_simple';
+    const headerColor = resolveHeaderColor(c.productsHeaderColor || c.headerColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+    const borderColor = c.productsBorderColor || '#000000';
+    const borderStyle = c.productsBorderStyle || 'solid';
+    const isNoBorder = borderStyle === 'none';
+    const tableBorder = isNoBorder ? 'border: none;' : `border: 1px solid ${borderColor};`;
+    const cellBorder = isNoBorder ? `border-bottom: 1px solid ${borderColor};` : `border: 1px solid ${borderColor};`;
+
+    const titleTipo = c.titleTipo || 'TIPO';
+    const titleCantidad = c.titleCantidad || 'CANTIDAD';
+    const guidelineTipo = c.guidelineTipo ?? '[Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]';
+    const guidelineCantidad = c.guidelineCantidad ?? '[Defina cantidad de productos]';
 
     const cols = c.productColumns || {
         showCategory: true,
@@ -485,21 +497,30 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
 
     if (layoutMode === 'table_simple') {
         return `
-  <!-- BLOQUE: PRODUCTOS ESPERADOS (SIMPLE) -->
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (SIMPLE INSTITUCIONAL) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
-    <table class="info-table">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerColor}; margin-top: 20px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${productosTitle}</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: {{ theme.typography.font_family }}; ${tableBorder}">
       <thead>
-        <tr>
-          <th style="${headerBg('blue')}">Tipo de Producto</th>
-          <th style="${headerBg('blue')} width: 100px; text-align: center;">Cantidad</th>
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
+          <th style="padding: 6px 10px; text-align: center; font-weight: bold; text-transform: uppercase; width: 68%; ${cellBorder}">${titleTipo}</th>
+          <th style="padding: 6px 10px; text-align: center; font-weight: bold; text-transform: uppercase; width: 32%; ${cellBorder}">${titleCantidad}</th>
         </tr>
       </thead>
       <tbody>
+        ${(guidelineTipo || guidelineCantidad) ? `
+        <tr style="background-color: #ffffff; color: #475569;">
+          <td style="padding: 6px 10px; text-align: justify; line-height: 1.35; ${cellBorder}">
+            ${guidelineTipo}
+          </td>
+          <td style="padding: 6px 10px; text-align: center; vertical-align: middle; ${cellBorder}">
+            ${guidelineCantidad}
+          </td>
+        </tr>` : ''}
         {{#each productos_esperados}}
-        <tr>
-          <td>{{this.tipo_producto_nombre}}</td>
-          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
+        <tr style="background-color: #ffffff;">
+          <td style="padding: 6px 10px; ${cellBorder}">{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{#if this.tipo}}{{this.tipo}}{{else}}{{this.nombre}}{{/if}}{{/if}}</td>
+          <td style="padding: 6px 10px; text-align: center; font-weight: bold; ${cellBorder}">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>
         </tr>
         {{/each}}
       </tbody>
@@ -509,30 +530,30 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
 
     // Encabezados de tabla dinámicos
     const tableHeaders: string[] = [];
-    if (cols.showCategory !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Categoría</th>`);
-    if (cols.showSubtype !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Subtipo / Entregable</th>`);
-    if (cols.showProductName !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Nombre del Producto</th>`);
-    if (cols.showIndicator !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Indicador Verificable</th>`);
-    if (cols.showVerificationMeans !== false) tableHeaders.push(`<th style="${headerBg('blue')}">Medio de Verificación</th>`);
-    if (cols.showQuantity !== false) tableHeaders.push(`<th style="${headerBg('blue')} width: 60px; text-align: center;">Cant.</th>`);
-    if (cols.showDeadline !== false) tableHeaders.push(`<th style="${headerBg('blue')} width: 80px; text-align: center;">Plazo</th>`);
+    if (cols.showCategory !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; ${cellBorder}">Categoría</th>`);
+    if (cols.showSubtype !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; ${cellBorder}">Subtipo / Entregable</th>`);
+    if (cols.showProductName !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; ${cellBorder}">Nombre del Producto</th>`);
+    if (cols.showIndicator !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; ${cellBorder}">Indicador Verificable</th>`);
+    if (cols.showVerificationMeans !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; ${cellBorder}">Medio de Verificación</th>`);
+    if (cols.showQuantity !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; width: 60px; text-align: center; ${cellBorder}">Cant.</th>`);
+    if (cols.showDeadline !== false) tableHeaders.push(`<th style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 8px; width: 80px; text-align: center; ${cellBorder}">Plazo</th>`);
 
     // Celdas Handlebars correspondientes
     const tableCells: string[] = [];
-    if (cols.showCategory !== false) tableCells.push(`<td>{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>`);
-    if (cols.showSubtype !== false) tableCells.push(`<td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>`);
-    if (cols.showProductName !== false) tableCells.push(`<td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>`);
-    if (cols.showIndicator !== false) tableCells.push(`<td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>`);
-    if (cols.showVerificationMeans !== false) tableCells.push(`<td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>`);
-    if (cols.showQuantity !== false) tableCells.push(`<td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>`);
-    if (cols.showDeadline !== false) tableCells.push(`<td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>`);
+    if (cols.showCategory !== false) tableCells.push(`<td style="padding: 6px 8px; ${cellBorder}">{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>`);
+    if (cols.showSubtype !== false) tableCells.push(`<td style="padding: 6px 8px; ${cellBorder}">{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>`);
+    if (cols.showProductName !== false) tableCells.push(`<td style="padding: 6px 8px; ${cellBorder}">{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>`);
+    if (cols.showIndicator !== false) tableCells.push(`<td style="padding: 6px 8px; ${cellBorder}">{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>`);
+    if (cols.showVerificationMeans !== false) tableCells.push(`<td style="padding: 6px 8px; ${cellBorder}">{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>`);
+    if (cols.showQuantity !== false) tableCells.push(`<td style="padding: 6px 8px; text-align: center; font-weight: bold; ${cellBorder}">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>`);
+    if (cols.showDeadline !== false) tableCells.push(`<td style="padding: 6px 8px; text-align: center; ${cellBorder}">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>`);
 
     if (layoutMode === 'grouped_sections') {
         return `
   <!-- BLOQUE: PRODUCTOS ESPERADOS (POR SECCIONES) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
-    <table class="info-table">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerColor}; margin-top: 20px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${productosTitle}</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: {{ theme.typography.font_family }}; ${tableBorder}">
       <thead>
         <tr>
           ${tableHeaders.join('\n          ')}
@@ -552,8 +573,8 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
     return `
   <!-- BLOQUE: PRODUCTOS ESPERADOS (DETALLADO CACES) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">${productosTitle}</p>
-    <table class="info-table">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerColor}; margin-top: 20px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${productosTitle}</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: {{ theme.typography.font_family }}; ${tableBorder}">
       <thead>
         <tr>
           ${tableHeaders.join('\n          ')}
@@ -572,7 +593,21 @@ export const generateExpectedProductsHtml = (block: DocumentBlock): string => {
 
 export const generateImpactsHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
+    const impactsTitle = c.impactsTitle || c.title || '6.  IMPACTO DEL PROYECTO';
     const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
+    const headerColor = resolveHeaderColor(c.impactHeaderColor || c.headerColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+    const borderColor = c.impactBorderColor || '#000000';
+    const borderStyle = c.impactBorderStyle || 'solid';
+    const isNoBorder = borderStyle === 'none';
+    const tableBorder = isNoBorder ? 'border: none;' : `border: 1px solid ${borderColor};`;
+    const cellBorder = isNoBorder ? `border-bottom: 1px solid ${borderColor};` : `border: 1px solid ${borderColor};`;
+
+    const titleImpactoCol = c.titleImpactoCol || 'IMPACTO DEL PROYECTO';
+    const titleAplicaCol = c.titleAplicaCol || 'Aplica (X)';
+    const titleNoAplicaCol = c.titleNoAplicaCol || 'No aplica (x)';
+    const titleDescripcionCol = c.titleDescripcionCol || 'DESCRIPCIÓN BREVE (Solamente si aplica)';
+
     const parts: string[] = [];
 
     const getImpactCategories = (): ImpactCategory[] => {
@@ -595,18 +630,18 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
             const cardHtmlList = activeCats.map(cat => {
                 const scr = cat.scribanVariable || `impacto.${cat.key}`;
                 return `
-      <div style="margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
-        <div style="background-color: ${COLORS.blue}; color: #ffffff; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
+      <div style="margin-bottom: 10px; border: 1px solid ${borderColor}; border-radius: 4px; overflow: hidden; page-break-inside: avoid; background-color: #ffffff;">
+        <div style="background-color: ${headerColor}; color: ${headerFg}; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">
           ${cat.title}
         </div>
-        <div style="padding: 8px 10px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }}; bg-color: #ffffff;">
+        <div style="padding: 8px 10px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
           {{default ${scr} "Sin descripción."}}
         </div>
       </div>`;
             });
 
             parts.push(`
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${headerColor}; margin: 20px 0 8px; font-family: {{ theme.typography.font_family }};">${impactsTitle}</p>
     <div style="margin-bottom: 15px;">
       ${cardHtmlList.join('')}
     </div>`);
@@ -615,8 +650,8 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
                 const scr = cat.scribanVariable || `impacto.${cat.key}`;
                 return `
       <div style="margin-bottom: 12px; page-break-inside: avoid;">
-        <div style="padding: 4px 8px; background-color: #f1f5f9; border-left: 3px solid ${COLORS.blue}; margin-bottom: 4px;">
-          <p style="margin: 0; font-weight: bold; font-size: 8.5pt; color: ${COLORS.blue}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${cat.title}</p>
+        <div style="padding: 4px 8px; background-color: #f1f5f9; border-left: 3px solid ${headerColor}; margin-bottom: 4px;">
+          <p style="margin: 0; font-weight: bold; font-size: 8.5pt; color: ${headerColor}; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${cat.title}</p>
         </div>
         <div style="padding-left: 4px; font-size: 8.5pt; line-height: 1.4; color: #000000; font-family: {{ theme.typography.font_family }};">
           {{default ${scr} "Sin descripción."}}
@@ -625,22 +660,36 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
             });
 
             parts.push(`
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 8px;">6. Matriz de Impacto</p>
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerColor}; margin: 20px 0 8px 35px; font-family: {{ theme.typography.font_family }};">${impactsTitle}</p>
     <div style="margin-bottom: 15px;">
       ${secHtmlList.join('')}
     </div>`);
         } else {
-            const impactRows = activeCats.map((cat, idx) => {
+            // MODO TABLA OFICIAL INSTITUCIONAL (4 COLUMNAS)
+            const impactRows = activeCats.map(cat => {
                 const scr = cat.scribanVariable || `impacto.${cat.key}`;
-                const wStyle = idx === 0 ? ' style="width: 28%;"' : '';
-                return `<tr><td class="label-cell"${wStyle}>${cat.title}</td><td>{{default ${scr} "Sin descripción."}}</td></tr>`;
+                return `
+        <tr style="background-color: #ffffff;">
+          <td style="padding: 6px 10px; font-weight: bold; ${cellBorder}">${cat.title}</td>
+          <td style="padding: 6px 4px; text-align: center; font-weight: bold; ${cellBorder}">{{#if ${scr}}}X{{/if}}</td>
+          <td style="padding: 6px 4px; text-align: center; font-weight: bold; ${cellBorder}">{{#unless ${scr}}}x{{/unless}}</td>
+          <td style="padding: 6px 10px; ${cellBorder}">{{default ${scr} ""}}</td>
+        </tr>`;
             });
 
             parts.push(`
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin: 20px 0 6px;">6. Matriz de Impacto</p>
-    <table class="info-table">
+    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: ${headerColor}; margin: 20px 0 6px 35px; font-family: {{ theme.typography.font_family }};">${impactsTitle}</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: {{ theme.typography.font_family }}; ${tableBorder}">
+      <thead>
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
+          <th style="padding: 6px 10px; text-align: left; font-weight: bold; text-transform: uppercase; width: 26%; ${cellBorder}">${titleImpactoCol}</th>
+          <th style="padding: 6px 4px; text-align: center; font-weight: bold; width: 12%; ${cellBorder}">${titleAplicaCol}</th>
+          <th style="padding: 6px 4px; text-align: center; font-weight: bold; width: 12%; ${cellBorder}">${titleNoAplicaCol}</th>
+          <th style="padding: 6px 10px; text-align: left; font-weight: bold; text-transform: uppercase; width: 50%; ${cellBorder}">${titleDescripcionCol}</th>
+        </tr>
+      </thead>
       <tbody>
-        ${impactRows.join('\n        ')}
+        ${impactRows.join('\n')}
       </tbody>
     </table>`);
         }
@@ -649,7 +698,7 @@ export const generateImpactsHtml = (block: DocumentBlock): string => {
     if (parts.length === 0) return '';
 
     return `
-  <!-- BLOQUE: MATRIZ DE IMPACTOS -->
+  <!-- BLOQUE: IMPACTO DEL PROYECTO (OFICIAL INSTITUCIONAL) -->
   <div style="margin-top: 20px;">
     ${parts.join('')}
   </div>`;

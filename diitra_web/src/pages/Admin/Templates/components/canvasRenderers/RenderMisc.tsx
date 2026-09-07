@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Pencil, Check, X } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -56,14 +57,191 @@ export const RenderTitle: React.FC<{ config: any; themeConfig?: any }> = ({ conf
     );
 };
 
-export const RenderRichText: React.FC<{ config: any }> = ({ config }) => {
-    const html = config.html || '<p class="text-gray-400 italic">Escribe el contenido enriquecido aquí...</p>';
+export const RenderRichText: React.FC<{
+    config: any;
+    title?: string;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config, title, blockId, onUpdateConfig }) => {
+    const c = config || {};
+    const displayTitle = c.title || title || '';
+    const guideline = c.guidelineText ?? c.placeholder ?? '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]';
+    const html = c.html || c.text || '';
+
+    const headerColorKey = c.headerColor || 'navy';
+    const headerBg = headerColorKey === 'gold'
+        ? '#c4a857'
+        : headerColorKey === 'slate'
+        ? '#334155'
+        : headerColorKey === 'emerald'
+        ? '#065f46'
+        : headerColorKey.startsWith('#')
+        ? headerColorKey
+        : '#222c57';
+
+    const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState<string>('');
+
+    const handleStartEditing = (key: string, currentVal: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        setEditingKey(key);
+        setEditingText(currentVal);
+    };
+
+    const handleSaveText = (key: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, key, editingText);
+        setEditingKey(null);
+    };
+
+    const handleCycleHeaderColor = () => {
+        if (!onUpdateConfig || !blockId) return;
+        const colorCycle = ['navy', 'gold', 'slate', 'emerald'];
+        const currentIdx = colorCycle.indexOf(headerColorKey);
+        const nextColor = colorCycle[(currentIdx + 1) % colorCycle.length];
+        onUpdateConfig(blockId, 'headerColor', nextColor);
+    };
+
     return (
-        <div className="space-y-2">
-            <div
-                className="prose max-w-none text-xs leading-relaxed text-[#222c57]/90 tiptap-editor"
-                dangerouslySetInnerHTML={{ __html: html }}
-            />
+        <div className="my-3 space-y-2 select-none relative group/richTextBlock">
+            {/* PÍLDORA FLOTANTE DE CONTROLES */}
+            {onUpdateConfig && blockId && (
+                <div
+                    className="absolute -top-3 right-0 z-30 flex items-center gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm opacity-0 group-hover/richTextBlock:opacity-100 transition-opacity"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <span className="text-[7.5px] uppercase font-bold text-slate-400">Color:</span>
+                    <button
+                        type="button"
+                        onClick={handleCycleHeaderColor}
+                        className={`px-1.5 py-0.2 text-[8px] font-bold rounded border transition-all cursor-pointer ${
+                            headerColorKey === 'gold'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : headerColorKey === 'slate'
+                                ? 'bg-slate-100 text-slate-800 border-slate-300'
+                                : headerColorKey === 'emerald'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-blue-50 text-blue-800 border-blue-200'
+                        }`}
+                        title="Cambiar color de título"
+                    >
+                        {headerColorKey === 'gold' ? 'Dorado' : headerColorKey === 'slate' ? 'Pizarra' : headerColorKey === 'emerald' ? 'Verde' : 'Azul'}
+                    </button>
+                    <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+                    <button
+                        type="button"
+                        onClick={() => handleStartEditing('guidelineText', guideline)}
+                        className="px-1.5 py-0.2 text-[8px] font-bold rounded bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                        title="Editar texto de guía normativo"
+                    >
+                        Editar Guía
+                    </button>
+                </div>
+            )}
+
+            {/* TÍTULO DE LA SECCIÓN (EDITABLE IN-PLACE) */}
+            {displayTitle && (
+                <div className="mb-2 ml-7 sm:ml-8">
+                    {editingKey === 'title' ? (
+                        <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                            <input
+                                type="text"
+                                value={editingText}
+                                onChange={e => setEditingText(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') handleSaveText('title');
+                                    if (e.key === 'Escape') setEditingKey(null);
+                                }}
+                                autoFocus
+                                className="text-[10.5pt] font-bold uppercase tracking-wide bg-white text-slate-900 border border-indigo-400 px-1 py-0.5 rounded outline-none w-full"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => handleSaveText('title')}
+                                className="p-1 bg-emerald-600 text-white rounded text-[10px]"
+                            >
+                                <Check className="w-3 h-3" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditingKey(null)}
+                                className="p-1 bg-slate-400 text-white rounded text-[10px]"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div
+                            className="group/title flex items-center gap-2 cursor-pointer"
+                            onClick={() => handleStartEditing('title', displayTitle)}
+                            title="Clic para editar título"
+                        >
+                            <h5
+                                className="text-[10.5pt] font-bold uppercase tracking-wide transition-colors"
+                                style={{ color: headerBg }}
+                            >
+                                {displayTitle}
+                            </h5>
+                            {onUpdateConfig && blockId && (
+                                <Pencil className="w-3 h-3 opacity-0 group-hover/title:opacity-100 text-indigo-600 transition-opacity" />
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* CONTENIDO / TEXTO GUÍA (EDITABLE IN-PLACE) */}
+            <div className="ml-12 sm:ml-16">
+                {editingKey === 'guidelineText' ? (
+                    <div className="flex items-start gap-1 select-text" onClick={e => e.stopPropagation()}>
+                        <textarea
+                            value={editingText}
+                            onChange={e => setEditingText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSaveText('guidelineText');
+                                if (e.key === 'Escape') setEditingKey(null);
+                            }}
+                            autoFocus
+                            rows={2}
+                            className="w-full text-[9.5pt] text-slate-800 bg-white border border-indigo-400 p-1.5 rounded outline-none resize-none font-sans"
+                        />
+                        <div className="flex flex-col gap-1">
+                            <button
+                                type="button"
+                                onClick={() => handleSaveText('guidelineText')}
+                                className="p-1 bg-emerald-600 text-white rounded text-[10px]"
+                                title="Guardar (Ctrl+Enter)"
+                            >
+                                <Check className="w-3 h-3" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditingKey(null)}
+                                className="p-1 bg-slate-400 text-white rounded text-[10px]"
+                                title="Cancelar"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
+                    </div>
+                ) : html && html !== '<p class="text-gray-400 italic">Escribe el contenido enriquecido aquí...</p>' ? (
+                    <div
+                        className="prose max-w-none text-[9.5pt] leading-relaxed text-slate-800"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                ) : (
+                    <div
+                        className="text-[9.5pt] text-slate-900 leading-relaxed cursor-pointer hover:bg-indigo-50/40 p-1 rounded transition-colors group/guide flex items-center justify-between"
+                        onClick={() => handleStartEditing('guidelineText', guideline)}
+                        title="Clic para editar texto guía"
+                    >
+                        <span>{guideline}</span>
+                        {onUpdateConfig && blockId && (
+                            <Pencil className="w-3 h-3 opacity-0 group-hover/guide:opacity-100 text-indigo-500 transition-opacity ml-2 shrink-0" />
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
@@ -102,10 +280,17 @@ export const RenderTwoColumn: React.FC<{ config: any }> = ({ config }) => {
     );
 };
 
-export const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
-    const totalMonths = config.totalMonths || 6;
-    const months = config.months || ['Mes 1', 'Mes 2', 'Mes 3', 'Mes 4', 'Mes 5', 'Mes 6'].slice(0, totalMonths);
-    const objectives: GanttObjective[] = config.objectives || [
+export const RenderGantt: React.FC<{
+    config: any;
+    title?: string;
+    blockId?: string;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}> = ({ config, title, blockId, onUpdateConfig }) => {
+    const c = config || {};
+    const displayTitle = c.title || title || '7.  CRONOGRAMA DE ACTIVIDADES';
+    const totalMonths = c.totalMonths || 6;
+    const months = c.months || c.ganttMonths || ['Mes 1', 'Mes 2', 'Mes 3', 'Mes 4', 'Mes 5', 'Mes 6'].slice(0, totalMonths);
+    const objectives: GanttObjective[] = c.objectives || c.ganttObjectives || [
         {
             name: 'Objetivo 1: Diagnóstico y Fundamentación',
             activities: [
@@ -130,8 +315,16 @@ export const RenderGantt: React.FC<{ config: any }> = ({ config }) => {
     };
 
     return (
-        <div className="overflow-x-auto my-2 border border-slate-200 rounded-lg">
-            <table className="w-full border-collapse text-[9px] min-w-[700px]">
+        <div className="my-2 select-none">
+            {displayTitle && (
+                <div className="mb-2 ml-7 sm:ml-8">
+                    <p className="font-bold text-[10pt] uppercase tracking-wide font-sans text-[#222c57]">
+                        {displayTitle}
+                    </p>
+                </div>
+            )}
+            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                <table className="w-full border-collapse text-[9px] min-w-[700px]">
                 <thead>
                     <tr>
                         <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Objetivos</th>

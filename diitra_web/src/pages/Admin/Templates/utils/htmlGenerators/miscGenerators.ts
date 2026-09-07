@@ -19,11 +19,30 @@ export const generateRichTextHtml = (block: DocumentBlock): string => {
     const upperVar = (varName.startsWith('field_') ? 'FIELD_' + varName.substring(6) : varName.toUpperCase());
     const snakeVar = varName.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
 
-    const titleHtml = c.title ? `\n  <div class="title-h2">${c.title}</div>` : '';
+    const headerColorKey = c.headerColor || 'navy';
+    const headerColor = headerColorKey === 'gold'
+        ? '#c4a857'
+        : headerColorKey === 'slate'
+        ? '#334155'
+        : headerColorKey === 'emerald'
+        ? '#065f46'
+        : headerColorKey.startsWith('#')
+        ? headerColorKey
+        : '#222c57';
+
+    const titleText = c.title || block.title;
+    const titleHtml = titleText 
+        ? `\n  <div style="font-size: 10pt; font-weight: bold; color: ${headerColor}; margin-top: 25px; margin-bottom: 8px; margin-left: 35px; text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${titleText}</div>`
+        : '';
+
+    const guideline = c.guidelineText || (blockId.includes('bibliog') ? '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]' : '');
+    const defaultContent = guideline ? ` "${guideline}"` : '';
+    const contentIndent = guideline ? 'margin-left: 70px; ' : '';
+    const extraFallbacks = blockId.includes('bibliog') ? ' bibliografia Bibliografia' : '';
 
     return `
   <!-- BLOQUE: TEXTO ENRIQUECIDO -->${titleHtml}
-  <div class="rich-content">{{{default ${varName} ${upperVar} ${snakeVar}}}}</div>`;
+  <div class="rich-content" style="${contentIndent}font-size: 10pt; color: #1e293b; line-height: 1.5; margin-bottom: 12px;">{{{default ${varName} ${upperVar} ${snakeVar}${extraFallbacks}${defaultContent}}}}</div>`;
 };
 
 export const generateTwoColumnHtml = (block: DocumentBlock): string => {

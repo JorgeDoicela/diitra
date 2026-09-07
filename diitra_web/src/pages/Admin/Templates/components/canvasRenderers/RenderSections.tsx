@@ -864,7 +864,7 @@ export const RenderProjectGeneralSection: React.FC<{
                         </button>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-7 sm:ml-8">
                         <p className="font-bold text-[10pt] uppercase tracking-wide font-sans cursor-pointer hover:opacity-80 transition-opacity" style={{ color: defaultHeaderBg }} onClick={() => { setEditingKey('section_title'); setEditingText(displayTitle); }}>
                             {displayTitle}
                         </p>
@@ -925,10 +925,12 @@ export const RenderProjectGeneralSection: React.FC<{
 
 export const RenderProjectTechnicalSection: React.FC<{
     config: any;
+    title?: string;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config, blockId, onUpdateConfig }) => {
+}> = ({ config, title, blockId, onUpdateConfig }) => {
     const c = config || {};
+    const displaySectionTitle = c.title || title || '3.  ESPECIFICACIÓN DEL PROYECTO';
     const headerColorKey = c.technicalHeaderColor || '#222c57';
     const borderStyleKey = c.technicalBorderStyle || 'solid';
     const borderColorKey = c.technicalBorderColor || '#000000';
@@ -1125,6 +1127,11 @@ export const RenderProjectTechnicalSection: React.FC<{
 
     return (
         <div className="my-2 select-none">
+            <div className="mb-2 ml-7 sm:ml-8">
+                <p className="font-bold text-[10pt] uppercase tracking-wide font-sans" style={{ color: headerBg }}>
+                    {displaySectionTitle}
+                </p>
+            </div>
             <div
                 className="rounded-lg shadow-xs overflow-hidden"
                 style={borderFullStyle}
@@ -1566,8 +1573,45 @@ export const RenderFinalReportWritingSection: React.FC<{
 
 export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; onUpdateConfig?: (blockId: string, key: string, value: any) => void }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
-    const productosTitle = c.productosTitle || '5. Productos y Entregables Esperados';
-    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_detailed';
+    const productosTitle = c.productosTitle || '5. PRODUCTOS ESPERADOS';
+    const layoutMode = c.productsLayoutMode || c.layoutMode || 'table_simple';
+
+    const headerColorKey = c.productsHeaderColor || '#222c57';
+    const borderStyleKey = c.productsBorderStyle || 'solid';
+    const borderColorKey = c.productsBorderColor || '#000000';
+    const borderWidthKey = c.productsBorderWidth !== undefined ? c.productsBorderWidth : 1;
+
+    const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState<string>('');
+
+    const resolveHeaderBg = (col?: string) => {
+        const target = col || headerColorKey;
+        if (target && (target.startsWith('#') || target.startsWith('rgb') || target.startsWith('hsl'))) return target;
+        switch (target) {
+            case 'gold': return '#c4a857';
+            case 'slate': return '#334155';
+            case 'emerald': return '#065f46';
+            case 'navy':
+            default: return '#222c57';
+        }
+    };
+    const headerBg = resolveHeaderBg(headerColorKey);
+
+    const borderCss = borderStyleKey === 'none'
+        ? 'none'
+        : `${borderWidthKey}px ${borderStyleKey} ${borderColorKey}`;
+
+    const borderBottomStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { borderBottom: borderCss };
+
+    const borderRightStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { borderRight: borderCss };
+
+    const borderFullStyle: React.CSSProperties = borderStyleKey === 'none'
+        ? {}
+        : { border: borderCss };
 
     const cols = getNormalizedColumns(c.productColumns);
     const rawCats = c.productCategories || c.categories;
@@ -1580,137 +1624,278 @@ export const RenderExpectedProducts: React.FC<{ config: any; blockId?: string; o
         }
     };
 
+    const handleCycleHeaderColor = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!onUpdateConfig || !blockId) return;
+        const variants = ['navy', 'gold', 'slate', 'emerald'];
+        const currentIdx = variants.indexOf(c.productsHeaderColor || 'navy');
+        const next = variants[(currentIdx + 1) % variants.length];
+        onUpdateConfig(blockId, 'productsHeaderColor', next);
+    };
+
+    const handleToggleLayoutMode = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!onUpdateConfig || !blockId) return;
+        const nextMode = layoutMode === 'table_simple' ? 'table_detailed' : 'table_simple';
+        onUpdateConfig(blockId, 'productsLayoutMode', nextMode);
+    };
+
+    const handleSaveText = (key: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, key, editingText);
+        setEditingKey(null);
+    };
+
+    const titleTipo = c.titleTipo || 'TIPO';
+    const titleCantidad = c.titleCantidad || 'CANTIDAD';
+    const guidelineTipo = c.guidelineTipo ?? '[Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]';
+    const guidelineCantidad = c.guidelineCantidad ?? '[Defina cantidad de productos]';
+
+    const renderEditableText = (key: string, currentText: string, isMultiline = false) => {
+        if (editingKey === key) {
+            return (
+                <div className="inline-flex items-center gap-1 select-text w-full" onClick={e => e.stopPropagation()}>
+                    {isMultiline ? (
+                        <textarea
+                            value={editingText}
+                            onChange={e => setEditingText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Escape') setEditingKey(null);
+                            }}
+                            autoFocus
+                            rows={2}
+                            className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none border border-indigo-400 w-full"
+                        />
+                    ) : (
+                        <input
+                            type="text"
+                            value={editingText}
+                            onChange={e => setEditingText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveText(key);
+                                if (e.key === 'Escape') setEditingKey(null);
+                            }}
+                            autoFocus
+                            className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold text-center border border-indigo-400 w-auto min-w-[70px]"
+                        />
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => handleSaveText(key)}
+                        className="p-0.5 text-emerald-500 hover:text-emerald-400 cursor-pointer shrink-0"
+                        title="Guardar"
+                    >
+                        <Check className="w-3 h-3" />
+                    </button>
+                </div>
+            );
+        }
+
+        return (
+            <span
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingKey(key);
+                    setEditingText(currentText);
+                }}
+                className="cursor-pointer hover:underline decoration-dotted transition-colors group-hover/th:text-indigo-200 inline-flex items-center gap-1"
+                title="Clic para editar en el lienzo"
+            >
+                {currentText}
+                <Pencil className="w-2 h-2 opacity-0 group-hover/table:opacity-40 transition-opacity shrink-0" />
+            </span>
+        );
+    };
+
     return (
-        <div className="my-2 space-y-2 select-none">
-            {/* BARRA DE BOTONES CHIP EN LIENZO PARA TOGGLE DIRECTO DE COLUMNAS */}
-            {onUpdateConfig && blockId && (layoutMode === 'table_detailed' || layoutMode === 'grouped_sections') && (
-                <div className="flex flex-wrap items-center gap-1 p-1.5 bg-emerald-50/50 border border-emerald-100 rounded-md text-[8.5px]">
-                    <span className="font-bold text-emerald-800 uppercase tracking-wider shrink-0 mr-1">Campos en Lienzo:</span>
-                    {[
-                        { key: 'showCategory', label: 'Categoría IST' },
-                        { key: 'showSubtype', label: 'Subtipo' },
-                        { key: 'showProductName', label: 'Nombre' },
-                        { key: 'showSenadi', label: 'SENADI' },
-                        { key: 'showTrl', label: 'TRL' },
-                        { key: 'showIndicator', label: 'Indicador CACES' },
-                        { key: 'showVerificationMeans', label: 'Medio Verif.' },
-                        { key: 'showQuantity', label: 'Cantidad' },
-                        { key: 'showDeadline', label: 'Plazo' },
-                    ].map(({ key, label }) => {
-                        const active = cols[key] !== false;
-                        return (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleToggleColumn(key); }}
-                                className={`px-1.5 py-0.5 rounded border transition-all cursor-pointer font-medium ${active
-                                    ? 'bg-emerald-600 text-white border-emerald-700 font-bold'
-                                    : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 line-through'
-                                    }`}
-                            >
-                                {active ? '✓ ' : '+ '}{label}
-                            </button>
-                        );
-                    })}
+        <div className="my-3 space-y-2 select-none group/table relative font-sans">
+            {/* PÍLDORA FLOTANTE DE CONTROLES RÁPIDOS EN EL LIENZO */}
+            {onUpdateConfig && blockId && (
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="opacity-0 group-hover/table:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs px-1.5 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-700 text-[8px] absolute -top-2 right-0 z-20"
+                >
+                    <span className="text-[7.5px] uppercase font-bold text-slate-400">Color:</span>
+                    <button
+                        type="button"
+                        onClick={handleCycleHeaderColor}
+                        className={`px-1.5 py-0.2 text-[8px] font-bold rounded border transition-all cursor-pointer ${
+                            headerColorKey === 'gold'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : headerColorKey === 'slate'
+                                ? 'bg-slate-100 text-slate-800 border-slate-300'
+                                : headerColorKey === 'emerald'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-blue-50 text-blue-800 border-blue-200'
+                        }`}
+                        title="Cambiar color de cabecera"
+                    >
+                        {headerColorKey === 'gold' ? 'Dorado' : headerColorKey === 'slate' ? 'Pizarra' : headerColorKey === 'emerald' ? 'Verde' : 'Azul'}
+                    </button>
+                    <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+                    <button
+                        type="button"
+                        onClick={handleToggleLayoutMode}
+                        className="px-1.5 py-0.2 text-[8px] font-bold rounded bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                        title="Alternar entre formato simple (2 columnas) y detallado CACES"
+                    >
+                        {layoutMode === 'table_simple' ? 'Modo CACES' : 'Modo Oficial 2 Col'}
+                    </button>
                 </div>
             )}
 
-            {/* ÁREA PRINCIPAL DEL LIENZO A4 */}
-            <div className="space-y-2 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
-                {/* Título Editable Directamente en el Lienzo */}
-                {onUpdateConfig && blockId ? (
-                    <input
-                        type="text"
-                        value={productosTitle}
-                        onChange={e => onUpdateConfig(blockId, 'productosTitle', e.target.value)}
-                        className="text-[10px] font-black uppercase text-slate-800 tracking-wide bg-transparent border-b border-dashed border-slate-300 focus:border-emerald-600 focus:outline-none w-full py-0.5"
-                    />
-                ) : (
-                    <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{productosTitle}</h5>
-                )}
-
-                {layoutMode === 'grouped_sections' ? (
-                    /* MODO SECCIONES CONSECUTIVAS */
-                    <div className="space-y-3">
-                        {categories.map((cat: any) => (
-                            <div key={cat.id || cat.name} className="space-y-1">
-                                <h6 className="text-[8.5px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    {cat.name}
-                                </h6>
-                                <table className="w-full border-collapse border border-slate-200 text-[9px]">
-                                    <thead>
-                                        <tr className="bg-[#222c57] text-white">
-                                            <th className="p-1 text-left border border-slate-200">Entregable Tecnológico</th>
-                                            {cols.showSenadi !== false && <th className="p-1 text-center border border-slate-200 w-16">SENADI</th>}
-                                            {cols.showTrl !== false && <th className="p-1 text-center border border-slate-200 w-14">TRL</th>}
-                                            {cols.showIndicator !== false && <th className="p-1 text-left border border-slate-200">Indicador CACES</th>}
-                                            {cols.showVerificationMeans !== false && <th className="p-1 text-left border border-slate-200">Medio Verificación</th>}
-                                            {cols.showQuantity !== false && <th className="p-1 text-center border border-slate-200 w-12">Cant.</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr className="bg-white text-slate-700">
-                                            <td className="p-1 border border-slate-200 font-medium">Prototipo funcional / Software de gestión</td>
-                                            {cols.showSenadi !== false && <td className="p-1 border border-slate-200 text-center font-bold text-emerald-600 text-[8px]">Sí</td>}
-                                            {cols.showTrl !== false && <td className="p-1 border border-slate-200 text-center font-mono text-amber-600 font-bold text-[8px]">TRL 6</td>}
-                                            {cols.showIndicator !== false && <td className="p-1 border border-slate-200">1 Prototipo operativo en laboratorio</td>}
-                                            {cols.showVerificationMeans !== false && <td className="p-1 border border-slate-200">Certificado SENADI / Acta de entrega</td>}
-                                            {cols.showQuantity !== false && <td className="p-1 border border-slate-200 text-center font-bold text-emerald-600">1</td>}
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        ))}
+            {/* TÍTULO DE LA SECCIÓN (EDITABLE) */}
+            <div className="mb-2 ml-7 sm:ml-8">
+                {editingKey === 'productosTitle' ? (
+                    <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                        <input
+                            type="text"
+                            value={editingText}
+                            onChange={e => setEditingText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveText('productosTitle');
+                                if (e.key === 'Escape') setEditingKey(null);
+                            }}
+                            autoFocus
+                            className="text-[10.5pt] font-bold uppercase tracking-wide bg-white text-slate-900 border border-indigo-400 px-1 py-0.5 rounded outline-none w-full"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleSaveText('productosTitle')}
+                            className="p-1 text-emerald-500 hover:text-emerald-400 cursor-pointer"
+                        >
+                            <Check className="w-3.5 h-3.5" />
+                        </button>
                     </div>
-                ) : layoutMode === 'table_simple' ? (
-                    /* MODO TABLA SIMPLE */
-                    <table className="w-full border-collapse border border-slate-200 text-[9.5px]">
-                        <thead>
-                            <tr className="bg-[#222c57] text-white">
-                                <th className="p-1.5 text-left font-bold border border-slate-200">Tipo de Entregable Tecnológico (IST)</th>
-                                <th className="p-1.5 text-center font-bold border border-slate-200 w-24">Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-white text-slate-700">
-                                <td className="p-1.5 border border-slate-200 font-medium">Prototipos Funcionales / Software SENADI</td>
-                                <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>
-                            </tr>
-                        </tbody>
-                    </table>
                 ) : (
-                    /* MODO TABLA DETALLADA CACES (DEFAULT) */
-                    <table className="w-full border-collapse border border-slate-200 text-[9px]">
-                        <thead>
-                            <tr className="bg-[#222c57] text-white">
-                                {cols.showCategory !== false && <th className="p-1.5 text-left border border-slate-200">Categoría IST</th>}
-                                {cols.showSubtype !== false && <th className="p-1.5 text-left border border-slate-200">Subtipo / Entregable</th>}
-                                {cols.showProductName !== false && <th className="p-1.5 text-left border border-slate-200">Nombre del Producto</th>}
-                                {cols.showSenadi !== false && <th className="p-1.5 text-center border border-slate-200 w-16">SENADI</th>}
-                                {cols.showTrl !== false && <th className="p-1.5 text-center border border-slate-200 w-14">TRL</th>}
-                                {cols.showIndicator !== false && <th className="p-1.5 text-left border border-slate-200">Indicador CACES</th>}
-                                {cols.showVerificationMeans !== false && <th className="p-1.5 text-left border border-slate-200">Medio de Verificación</th>}
-                                {cols.showQuantity !== false && <th className="p-1.5 text-center border border-slate-200 w-14">Cant.</th>}
-                                {cols.showDeadline !== false && <th className="p-1.5 text-center border border-slate-200 w-20">Plazo</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-white text-slate-700">
-                                {cols.showCategory !== false && <td className="p-1.5 border border-slate-200 font-semibold text-emerald-700">I+D+i Aplicada</td>}
-                                {cols.showSubtype !== false && <td className="p-1.5 border border-slate-200 font-medium">Prototipo / Software SENADI</td>}
-                                {cols.showProductName !== false && <td className="p-1.5 border border-slate-200">Prototipo de banco de pruebas automatizado...</td>}
-                                {cols.showSenadi !== false && <td className="p-1.5 border border-slate-200 text-center font-bold text-emerald-600 text-[8.5px]">Depósito Legal</td>}
-                                {cols.showTrl !== false && <td className="p-1.5 border border-slate-200 text-center font-mono text-amber-600 font-bold text-[8.5px]">TRL 6</td>}
-                                {cols.showIndicator !== false && <td className="p-1.5 border border-slate-200">1 Prototipo validado en laboratorio</td>}
-                                {cols.showVerificationMeans !== false && <td className="p-1.5 border border-slate-200">Certificado SENADI / Acta de entrega</td>}
-                                {cols.showQuantity !== false && <td className="p-1.5 border border-slate-200 text-center font-mono font-bold text-emerald-600">1</td>}
-                                {cols.showDeadline !== false && <td className="p-1.5 border border-slate-200 text-center">Trimestre 4</td>}
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingKey('productosTitle');
+                            setEditingText(productosTitle);
+                        }}
+                        className="text-[10.5pt] font-bold uppercase tracking-wide cursor-pointer hover:underline decoration-dotted inline-flex items-center gap-1.5"
+                        style={{ color: '#222c57' }}
+                        title="Clic para renombrar título"
+                    >
+                        <span>{productosTitle}</span>
+                        <Pencil className="w-3 h-3 opacity-0 group-hover/table:opacity-40 transition-opacity" />
+                    </div>
                 )}
             </div>
+
+            {/* TABLA PRINCIPAL DEL LIENZO */}
+            {layoutMode === 'table_simple' ? (
+                /* FORMATO INSTITUCIONAL OFICIAL (2 COLUMNAS: TIPO Y CANTIDAD) */
+                <div className="overflow-hidden" style={borderFullStyle}>
+                    <table className="w-full text-[8.5px] border-collapse" style={{ borderCollapse: 'collapse', ...borderFullStyle }}>
+                        <colgroup>
+                            <col style={{ width: '65%' }} />
+                            <col style={{ width: '35%' }} />
+                        </colgroup>
+                        <thead>
+                            <tr style={borderBottomStyle}>
+                                <th
+                                    className="p-2 text-center font-bold uppercase text-[9px] tracking-wider group/th"
+                                    style={{ backgroundColor: headerBg, color: '#ffffff', ...borderRightStyle, ...borderBottomStyle }}
+                                >
+                                    {renderEditableText('titleTipo', titleTipo)}
+                                </th>
+                                <th
+                                    className="p-2 text-center font-bold uppercase text-[9px] tracking-wider group/th"
+                                    style={{ backgroundColor: headerBg, color: '#ffffff', ...borderBottomStyle }}
+                                >
+                                    {renderEditableText('titleCantidad', titleCantidad)}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style={borderBottomStyle}>
+                                <td className="p-2 text-slate-700 bg-white align-top text-left text-[8.5px] leading-relaxed group/td" style={borderRightStyle}>
+                                    {renderEditableText('guidelineTipo', guidelineTipo, true)}
+                                </td>
+                                <td className="p-2 text-slate-700 bg-white align-top text-left text-[8.5px] leading-relaxed group/td">
+                                    {renderEditableText('guidelineCantidad', guidelineCantidad, true)}
+                                </td>
+                            </tr>
+                            <tr style={borderBottomStyle}>
+                                <td className="p-2 bg-white" style={borderRightStyle}>&nbsp;</td>
+                                <td className="p-2 bg-white">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td className="p-2 bg-white" style={borderRightStyle}>&nbsp;</td>
+                                <td className="p-2 bg-white">&nbsp;</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            ) : layoutMode === 'grouped_sections' ? (
+                /* MODO SECCIONES CONSECUTIVAS */
+                <div className="space-y-3">
+                    {categories.map((cat: any) => (
+                        <div key={cat.id || cat.name} className="space-y-1">
+                            <h6 className="text-[8.5px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {cat.name}
+                            </h6>
+                            <table className="w-full border-collapse text-[9px]" style={borderFullStyle}>
+                                <thead>
+                                    <tr style={{ backgroundColor: headerBg, color: '#ffffff' }}>
+                                        <th className="p-1 text-left" style={borderRightStyle}>Entregable Tecnológico</th>
+                                        {cols.showSenadi !== false && <th className="p-1 text-center w-16" style={borderRightStyle}>SENADI</th>}
+                                        {cols.showTrl !== false && <th className="p-1 text-center w-14" style={borderRightStyle}>TRL</th>}
+                                        {cols.showIndicator !== false && <th className="p-1 text-left" style={borderRightStyle}>Indicador CACES</th>}
+                                        {cols.showVerificationMeans !== false && <th className="p-1 text-left" style={borderRightStyle}>Medio Verificación</th>}
+                                        {cols.showQuantity !== false && <th className="p-1 text-center w-12">Cant.</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="bg-white text-slate-700" style={borderBottomStyle}>
+                                        <td className="p-1 font-medium" style={borderRightStyle}>Prototipo funcional / Software de gestión</td>
+                                        {cols.showSenadi !== false && <td className="p-1 text-center font-bold text-emerald-600 text-[8px]" style={borderRightStyle}>Sí</td>}
+                                        {cols.showTrl !== false && <td className="p-1 text-center font-mono text-amber-600 font-bold text-[8px]" style={borderRightStyle}>TRL 6</td>}
+                                        {cols.showIndicator !== false && <td className="p-1" style={borderRightStyle}>1 Prototipo operativo en laboratorio</td>}
+                                        {cols.showVerificationMeans !== false && <td className="p-1" style={borderRightStyle}>Certificado SENADI / Acta de entrega</td>}
+                                        {cols.showQuantity !== false && <td className="p-1 text-center font-bold text-emerald-600">1</td>}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                /* MODO TABLA DETALLADA CACES */
+                <div className="overflow-hidden" style={borderFullStyle}>
+                    <table className="w-full border-collapse text-[9px]" style={{ borderCollapse: 'collapse', ...borderFullStyle }}>
+                        <thead>
+                            <tr style={{ backgroundColor: headerBg, color: '#ffffff', ...borderBottomStyle }}>
+                                {cols.showCategory !== false && <th className="p-1.5 text-left" style={borderRightStyle}>Categoría IST</th>}
+                                {cols.showSubtype !== false && <th className="p-1.5 text-left" style={borderRightStyle}>Subtipo / Entregable</th>}
+                                {cols.showProductName !== false && <th className="p-1.5 text-left" style={borderRightStyle}>Nombre del Producto</th>}
+                                {cols.showSenadi !== false && <th className="p-1.5 text-center w-16" style={borderRightStyle}>SENADI</th>}
+                                {cols.showTrl !== false && <th className="p-1.5 text-center w-14" style={borderRightStyle}>TRL</th>}
+                                {cols.showIndicator !== false && <th className="p-1.5 text-left" style={borderRightStyle}>Indicador CACES</th>}
+                                {cols.showVerificationMeans !== false && <th className="p-1.5 text-left" style={borderRightStyle}>Medio de Verificación</th>}
+                                {cols.showQuantity !== false && <th className="p-1.5 text-center w-14" style={borderRightStyle}>Cant.</th>}
+                                {cols.showDeadline !== false && <th className="p-1.5 text-center w-20">Plazo</th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="bg-white text-slate-700" style={borderBottomStyle}>
+                                {cols.showCategory !== false && <td className="p-1.5 font-semibold text-emerald-700" style={borderRightStyle}>I+D+i Aplicada</td>}
+                                {cols.showSubtype !== false && <td className="p-1.5 font-medium" style={borderRightStyle}>Prototipo / Software SENADI</td>}
+                                {cols.showProductName !== false && <td className="p-1.5" style={borderRightStyle}>Prototipo de banco de pruebas automatizado...</td>}
+                                {cols.showSenadi !== false && <td className="p-1.5 text-center font-bold text-emerald-600 text-[8.5px]" style={borderRightStyle}>Depósito Legal</td>}
+                                {cols.showTrl !== false && <td className="p-1.5 text-center font-mono text-amber-600 font-bold text-[8.5px]" style={borderRightStyle}>TRL 6</td>}
+                                {cols.showIndicator !== false && <td className="p-1.5" style={borderRightStyle}>1 Prototipo validado en laboratorio</td>}
+                                {cols.showVerificationMeans !== false && <td className="p-1.5" style={borderRightStyle}>Certificado SENADI / Acta de entrega</td>}
+                                {cols.showQuantity !== false && <td className="p-1.5 text-center font-mono font-bold text-emerald-600" style={borderRightStyle}>1</td>}
+                                {cols.showDeadline !== false && <td className="p-1.5 text-center">Trimestre 4</td>}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };
@@ -1721,7 +1906,7 @@ export const RenderImpacts: React.FC<{
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
 }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
-    const displayTitle = c.impactsTitle || c.title || '6.  MATRIZ DE IMPACTOS';
+    const displayTitle = c.impactsTitle || c.title || '6.  IMPACTO DEL PROYECTO';
     const rawCats = c.impactCategories || c.categories;
     const allCategories: ImpactCategory[] = (Array.isArray(rawCats) && rawCats.length > 0)
         ? rawCats
@@ -1729,8 +1914,75 @@ export const RenderImpacts: React.FC<{
     const categories = allCategories.filter((cat: any) => cat.enabled !== false);
     const layoutMode = c.impactLayoutMode || c.impactsLayoutMode || 'table';
 
+    // Paleta de cabecera y bordes
+    const headerColorKey = c.impactHeaderColor || c.headerColor || 'navy';
+    const headerBg = headerColorKey === 'gold'
+        ? '#c4a857'
+        : headerColorKey === 'slate'
+        ? '#334155'
+        : headerColorKey === 'emerald'
+        ? '#065f46'
+        : headerColorKey.startsWith('#')
+        ? headerColorKey
+        : '#222c57';
+
+    const borderStyle = c.impactBorderStyle || 'solid';
+    const isNoBorder = borderStyle === 'none';
+    const borderColor = c.impactBorderColor || '#000000';
+
+    const borderFullStyle: React.CSSProperties = isNoBorder
+        ? { border: 'none' }
+        : { border: `1px solid ${borderColor}` };
+    const borderRightStyle: React.CSSProperties = isNoBorder
+        ? {}
+        : { borderRight: `1px solid ${borderColor}` };
+    const borderBottomStyle: React.CSSProperties = isNoBorder
+        ? { borderBottom: `1px solid ${borderColor}` }
+        : { borderBottom: `1px solid ${borderColor}` };
+
+    const titleImpactoCol = c.titleImpactoCol || 'IMPACTO DEL PROYECTO';
+    const titleAplicaCol = c.titleAplicaCol || 'Aplica (X)';
+    const titleNoAplicaCol = c.titleNoAplicaCol || 'No aplica (x)';
+    const titleDescripcionCol = c.titleDescripcionCol || 'DESCRIPCIÓN BREVE (Solamente si aplica)';
+
     const [editingCatId, setEditingCatId] = useState<string | null>(null);
     const [editingTitleText, setEditingTitleText] = useState<string>('');
+    const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState<string>('');
+
+    const handleStartEditing = (key: string, currentVal: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        setEditingKey(key);
+        setEditingText(currentVal);
+    };
+
+    const handleSaveText = (key: string) => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, key, editingText);
+        setEditingKey(null);
+    };
+
+    const handleCycleHeaderColor = () => {
+        if (!onUpdateConfig || !blockId) return;
+        const colorCycle: string[] = ['navy', 'gold', 'slate', 'emerald'];
+        const currentIdx = colorCycle.indexOf(headerColorKey);
+        const nextColor = colorCycle[(currentIdx + 1) % colorCycle.length];
+        onUpdateConfig(blockId, 'impactHeaderColor', nextColor);
+    };
+
+    const handleToggleBorderStyle = () => {
+        if (!onUpdateConfig || !blockId) return;
+        onUpdateConfig(blockId, 'impactBorderStyle', isNoBorder ? 'solid' : 'none');
+        if (isNoBorder) {
+            onUpdateConfig(blockId, 'impactBorderColor', '#000000');
+        }
+    };
+
+    const handleToggleLayoutMode = () => {
+        if (!onUpdateConfig || !blockId) return;
+        const nextMode = layoutMode === 'table' ? 'cards' : layoutMode === 'cards' ? 'sections' : 'table';
+        onUpdateConfig(blockId, 'impactLayoutMode', nextMode);
+    };
 
     const handleUpdateCategoryTitle = (catId: string, newTitle: string) => {
         if (!onUpdateConfig || !blockId) return;
@@ -1773,8 +2025,8 @@ export const RenderImpacts: React.FC<{
         const newCat: ImpactCategory = {
             id: `custom_impact_${Date.now()}`,
             key: `custom_impact_${Date.now()}`,
-            title: 'NUEVO IMPACTO PERSONALIZADO',
-            placeholder: 'Descripción detallada del impacto esperado...',
+            title: 'Otro Impacto',
+            placeholder: 'Descripción breve (solamente si aplica)...',
             enabled: true,
             colSpan: 1
         };
@@ -1831,28 +2083,106 @@ export const RenderImpacts: React.FC<{
     };
 
     return (
-        <div className="my-2 space-y-2 select-none">
-            {/* Encabezado de sección con edición de título */}
-            <div className="flex items-center justify-between">
-                {onUpdateConfig && blockId ? (
-                    <input
-                        type="text"
-                        value={displayTitle}
-                        onChange={e => onUpdateConfig(blockId, 'impactsTitle', e.target.value)}
-                        className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide bg-transparent border-b border-transparent hover:border-slate-300/60 focus:border-indigo-600 focus:outline-none py-0.5 max-w-md transition-colors"
-                    />
-                ) : (
-                    <h5 className="text-[9.5px] font-black uppercase text-slate-800 tracking-wide">{displayTitle}</h5>
-                )}
-
-                {onUpdateConfig && blockId && (
+        <div className="my-2 space-y-2 select-none relative group/impactsBlock">
+            {/* PÍLDORA FLOTANTE DE CONTROLES RÁPIDOS */}
+            {onUpdateConfig && blockId && (
+                <div
+                    className="absolute -top-3 right-0 z-30 flex items-center gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm opacity-0 group-hover/impactsBlock:opacity-100 transition-opacity"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <span className="text-[7.5px] uppercase font-bold text-slate-400">Color:</span>
+                    <button
+                        type="button"
+                        onClick={handleCycleHeaderColor}
+                        className={`px-1.5 py-0.2 text-[8px] font-bold rounded border transition-all cursor-pointer ${
+                            headerColorKey === 'gold'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : headerColorKey === 'slate'
+                                ? 'bg-slate-100 text-slate-800 border-slate-300'
+                                : headerColorKey === 'emerald'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-blue-50 text-blue-800 border-blue-200'
+                        }`}
+                        title="Cambiar color de cabecera"
+                    >
+                        {headerColorKey === 'gold' ? 'Dorado' : headerColorKey === 'slate' ? 'Pizarra' : headerColorKey === 'emerald' ? 'Verde' : 'Azul'}
+                    </button>
+                    <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+                    <button
+                        type="button"
+                        onClick={handleToggleBorderStyle}
+                        className="px-1.5 py-0.2 text-[8px] font-bold rounded bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                        title="Alternar bordes sólidos"
+                    >
+                        {isNoBorder ? 'Borde: Ninguno' : 'Borde: Sólido'}
+                    </button>
+                    <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
+                    <button
+                        type="button"
+                        onClick={handleToggleLayoutMode}
+                        className="px-1.5 py-0.2 text-[8px] font-bold rounded bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                        title="Alternar diseño: Tabla Oficial / Tarjetas / Párrafos"
+                    >
+                        {layoutMode === 'table' ? 'Tabla 4 Col' : layoutMode === 'cards' ? 'Tarjetas' : 'Párrafos'}
+                    </button>
+                    <span className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 my-auto" />
                     <button
                         type="button"
                         onClick={handleAddCategory}
-                        className="flex items-center gap-1 text-[8.5px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded shadow-2xs transition-all cursor-pointer"
+                        className="flex items-center gap-0.5 text-[8px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer"
+                        title="Añadir nueva fila de impacto"
                     >
-                        <Plus className="w-2.5 h-2.5" /> Añadir Impacto
+                        <Plus className="w-2.5 h-2.5" /> Fila
                     </button>
+                </div>
+            )}
+
+            {/* TÍTULO DE LA SECCIÓN (EDITABLE IN-PLACE) */}
+            <div className="mb-2 ml-7 sm:ml-8">
+                {editingKey === 'impactsTitle' ? (
+                    <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                        <input
+                            type="text"
+                            value={editingText}
+                            onChange={e => setEditingText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveText('impactsTitle');
+                                if (e.key === 'Escape') setEditingKey(null);
+                            }}
+                            autoFocus
+                            className="text-[10.5pt] font-bold uppercase tracking-wide bg-white text-slate-900 border border-indigo-400 px-1 py-0.5 rounded outline-none w-full"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleSaveText('impactsTitle')}
+                            className="p-1 bg-emerald-600 text-white rounded text-[10px]"
+                        >
+                            <Check className="w-3 h-3" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setEditingKey(null)}
+                            className="p-1 bg-slate-400 text-white rounded text-[10px]"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    </div>
+                ) : (
+                    <div
+                        className="group/title flex items-center gap-2 cursor-pointer"
+                        onClick={() => handleStartEditing('impactsTitle', displayTitle)}
+                        title="Doble clic o clic para editar título"
+                    >
+                        <h5
+                            className="text-[10.5pt] font-bold uppercase tracking-wide transition-colors"
+                            style={{ color: headerBg }}
+                        >
+                            {displayTitle}
+                        </h5>
+                        {onUpdateConfig && blockId && (
+                            <Pencil className="w-3 h-3 opacity-0 group-hover/title:opacity-100 text-indigo-600 transition-opacity" />
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -1864,7 +2194,7 @@ export const RenderImpacts: React.FC<{
                         const isEditing = editingCatId === id;
                         return (
                             <div key={id} className={`border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs group/cell relative ${cat.colSpan === 2 ? 'col-span-2' : 'col-span-1'}`}>
-                                <div className="p-1.5 bg-[#222c57] text-white font-bold text-[9px] uppercase tracking-wider relative flex items-center justify-between">
+                                <div className="p-1.5 text-white font-bold text-[9px] uppercase tracking-wider relative flex items-center justify-between" style={{ backgroundColor: headerBg }}>
                                     {isEditing ? (
                                         <div className="flex items-center gap-1 w-full" onClick={e => e.stopPropagation()}>
                                             <input
@@ -1911,7 +2241,7 @@ export const RenderImpacts: React.FC<{
                         const id = cat.id || cat.key || `${idx}`;
                         const isEditing = editingCatId === id;
                         return (
-                            <div key={id} className="border-l-4 border-[#222c57] pl-3 py-1 bg-slate-50/40 rounded-r-md group/cell relative">
+                            <div key={id} className="pl-3 py-1 bg-slate-50/40 rounded-r-md group/cell relative" style={{ borderLeft: `4px solid ${headerBg}` }}>
                                 {isEditing ? (
                                     <div className="flex items-center gap-1 my-1" onClick={e => e.stopPropagation()}>
                                         <input
@@ -1939,7 +2269,7 @@ export const RenderImpacts: React.FC<{
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between">
-                                        <h6 className="text-[9.5px] font-bold uppercase text-[#222c57] tracking-wide">{cat.title}</h6>
+                                        <h6 className="text-[9.5px] font-bold uppercase tracking-wide" style={{ color: headerBg }}>{cat.title}</h6>
                                         {renderControls(cat, idx === 0, idx === categories.length - 1)}
                                     </div>
                                 )}
@@ -1951,55 +2281,185 @@ export const RenderImpacts: React.FC<{
                     })}
                 </div>
             ) : (
-                /* MODO TABLA CLÁSICA (RETICULAR) */
-                <table className="w-full border-collapse border border-slate-300 text-[9.5px]">
-                    <tbody>
-                        {categories.map((cat, idx) => {
-                            const id = cat.id || cat.key || `${idx}`;
-                            const isEditing = editingCatId === id;
-                            return (
-                                <tr key={id} className="border-b border-slate-200 last:border-0 group/cell">
-                                    <td className="p-2 bg-[#222c57] text-white font-bold text-[8.5px] uppercase w-1/3 align-top border border-slate-300 relative">
-                                        {isEditing ? (
-                                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                                <input
-                                                    type="text"
-                                                    value={editingTitleText}
-                                                    onChange={e => setEditingTitleText(e.target.value)}
-                                                    onKeyDown={e => e.key === 'Enter' && handleUpdateCategoryTitle(id, editingTitleText)}
-                                                    autoFocus
-                                                    className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleUpdateCategoryTitle(id, editingTitleText)}
-                                                    className="p-0.5 bg-emerald-600 rounded text-white"
-                                                >
-                                                    <Check className="w-2.5 h-2.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditingCatId(null)}
-                                                    className="p-0.5 bg-slate-600 rounded text-white"
-                                                >
-                                                    <X className="w-2.5 h-2.5" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span className="block pr-16">{cat.title}</span>
-                                                {renderControls(cat, idx === 0, idx === categories.length - 1)}
-                                            </>
-                                        )}
-                                    </td>
-                                    <td className="p-2 text-slate-700 bg-white align-top border border-slate-300 leading-relaxed italic text-[9px]">
-                                        {cat.placeholder || 'Descripción del impacto asignado al proyecto...'}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                /* MODO OFICIAL INSTITUCIONAL: TABLA RETICULAR DE 4 COLUMNAS */
+                <div className="overflow-hidden" style={borderFullStyle}>
+                    <table className="w-full border-collapse text-[9px]" style={{ borderCollapse: 'collapse', ...borderFullStyle }}>
+                        <thead>
+                            <tr style={{ backgroundColor: headerBg, color: '#ffffff', ...borderBottomStyle }}>
+                                {/* COL 1: IMPACTO DEL PROYECTO */}
+                                <th
+                                    className="p-1.5 text-left font-bold uppercase tracking-wider relative group/th cursor-pointer"
+                                    style={{ width: '26%', ...borderRightStyle }}
+                                    onClick={() => handleStartEditing('titleImpactoCol', titleImpactoCol)}
+                                    title="Clic para editar encabezado"
+                                >
+                                    {editingKey === 'titleImpactoCol' ? (
+                                        <input
+                                            type="text"
+                                            value={editingText}
+                                            onChange={e => setEditingText(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveText('titleImpactoCol');
+                                                if (e.key === 'Escape') setEditingKey(null);
+                                            }}
+                                            onClick={e => e.stopPropagation()}
+                                            autoFocus
+                                            className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-between">
+                                            <span>{titleImpactoCol}</span>
+                                            <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/th:opacity-80 text-amber-300" />
+                                        </div>
+                                    )}
+                                </th>
+
+                                {/* COL 2: Aplica (X) */}
+                                <th
+                                    className="p-1.5 text-center font-bold tracking-wider relative group/th cursor-pointer"
+                                    style={{ width: '12%', ...borderRightStyle }}
+                                    onClick={() => handleStartEditing('titleAplicaCol', titleAplicaCol)}
+                                    title="Clic para editar encabezado"
+                                >
+                                    {editingKey === 'titleAplicaCol' ? (
+                                        <input
+                                            type="text"
+                                            value={editingText}
+                                            onChange={e => setEditingText(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveText('titleAplicaCol');
+                                                if (e.key === 'Escape') setEditingKey(null);
+                                            }}
+                                            onClick={e => e.stopPropagation()}
+                                            autoFocus
+                                            className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center gap-1">
+                                            <span>{titleAplicaCol}</span>
+                                            <Pencil className="w-2 h-2 opacity-0 group-hover/th:opacity-80 text-amber-300" />
+                                        </div>
+                                    )}
+                                </th>
+
+                                {/* COL 3: No aplica (x) */}
+                                <th
+                                    className="p-1.5 text-center font-bold tracking-wider relative group/th cursor-pointer"
+                                    style={{ width: '12%', ...borderRightStyle }}
+                                    onClick={() => handleStartEditing('titleNoAplicaCol', titleNoAplicaCol)}
+                                    title="Clic para editar encabezado"
+                                >
+                                    {editingKey === 'titleNoAplicaCol' ? (
+                                        <input
+                                            type="text"
+                                            value={editingText}
+                                            onChange={e => setEditingText(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveText('titleNoAplicaCol');
+                                                if (e.key === 'Escape') setEditingKey(null);
+                                            }}
+                                            onClick={e => e.stopPropagation()}
+                                            autoFocus
+                                            className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center gap-1">
+                                            <span>{titleNoAplicaCol}</span>
+                                            <Pencil className="w-2 h-2 opacity-0 group-hover/th:opacity-80 text-amber-300" />
+                                        </div>
+                                    )}
+                                </th>
+
+                                {/* COL 4: DESCRIPCIÓN BREVE (Solamente si aplica) */}
+                                <th
+                                    className="p-1.5 text-left font-bold uppercase tracking-wider relative group/th cursor-pointer"
+                                    style={{ width: '50%' }}
+                                    onClick={() => handleStartEditing('titleDescripcionCol', titleDescripcionCol)}
+                                    title="Clic para editar encabezado"
+                                >
+                                    {editingKey === 'titleDescripcionCol' ? (
+                                        <input
+                                            type="text"
+                                            value={editingText}
+                                            onChange={e => setEditingText(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveText('titleDescripcionCol');
+                                                if (e.key === 'Escape') setEditingKey(null);
+                                            }}
+                                            onClick={e => e.stopPropagation()}
+                                            autoFocus
+                                            className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-between">
+                                            <span>{titleDescripcionCol}</span>
+                                            <Pencil className="w-2.5 h-2.5 opacity-0 group-hover/th:opacity-80 text-amber-300" />
+                                        </div>
+                                    )}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {categories.map((cat, idx) => {
+                                const id = cat.id || cat.key || `${idx}`;
+                                const isEditing = editingCatId === id;
+                                return (
+                                    <tr key={id} className="bg-white hover:bg-slate-50/50 transition-colors group/row" style={borderBottomStyle}>
+                                        {/* COL 1: Categoría de Impacto */}
+                                        <td className="p-1.5 font-bold text-slate-900 text-[9px] relative group/cell" style={borderRightStyle}>
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                                    <input
+                                                        type="text"
+                                                        value={editingTitleText}
+                                                        onChange={e => setEditingTitleText(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && handleUpdateCategoryTitle(id, editingTitleText)}
+                                                        autoFocus
+                                                        className="w-full px-1 py-0.5 text-slate-900 bg-white text-[8.5px] font-bold rounded border"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUpdateCategoryTitle(id, editingTitleText)}
+                                                        className="p-0.5 bg-emerald-600 rounded text-white"
+                                                    >
+                                                        <Check className="w-2.5 h-2.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditingCatId(null)}
+                                                        className="p-0.5 bg-slate-600 rounded text-white"
+                                                    >
+                                                        <X className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <span>{cat.title}</span>
+                                                    {renderControls(cat, idx === 0, idx === categories.length - 1)}
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        {/* COL 2: Aplica (X) */}
+                                        <td className="p-1.5 text-center font-bold text-slate-700 text-[9px]" style={borderRightStyle}>
+                                            <span className="inline-block w-4 h-4 leading-4 text-center text-slate-400"> </span>
+                                        </td>
+
+                                        {/* COL 3: No aplica (x) */}
+                                        <td className="p-1.5 text-center font-bold text-slate-700 text-[9px]" style={borderRightStyle}>
+                                            <span className="inline-block w-4 h-4 leading-4 text-center text-slate-400"> </span>
+                                        </td>
+
+                                        {/* COL 4: DESCRIPCIÓN BREVE */}
+                                        <td className="p-1.5 text-slate-400 italic text-[8.5px]">
+                                            {cat.placeholder || 'Descripción breve (solamente si aplica)...'}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );

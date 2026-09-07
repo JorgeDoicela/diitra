@@ -54,7 +54,7 @@ export const generateGanttHtml = (block: DocumentBlock): string => {
 
     return `
   <!-- BLOQUE: GANTT -->
-  <div style="font-size: 8pt; font-weight: bold; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px; text-align: center;">Cronograma (Diagrama de Gantt)</div>
+  <div style="font-size: 10pt; font-weight: bold; text-transform: uppercase; color: ${COLORS.blue}; margin-top: 20px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${block.title || '7.  CRONOGRAMA DE ACTIVIDADES'}</div>
   <div style="overflow-x: auto;">
   <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">
     <thead>

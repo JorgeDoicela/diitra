@@ -417,31 +417,29 @@
       </tr>
       </tbody>
     </table>
-  <!-- BLOQUE: PRODUCTOS ESPERADOS (DETALLADO CACES) -->
+  <!-- BLOQUE: PRODUCTOS ESPERADOS (OFICIAL INSTITUCIONAL) -->
   <div style="margin-top: 20px;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px;">5. Productos y Entregables Esperados</p>
-    <table class="info-table">
+    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: {{ theme.colors.primary }}; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">5.  PRODUCTOS ESPERADOS</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: {{ theme.typography.font_family }}; border: 1px solid #000000;">
       <thead>
-        <tr>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Categoría</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Subtipo / Entregable</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Nombre del Producto</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Indicador Verificable</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">Medio de Verificación</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 60px; text-align: center;">Cant.</th>
-          <th style="background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important; width: 80px; text-align: center;">Plazo</th>
+        <tr style="background-color: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;">
+          <th style="padding: 6px 10px; text-align: center; font-weight: bold; text-transform: uppercase; width: 68%; border: 1px solid #000000;">TIPO</th>
+          <th style="padding: 6px 10px; text-align: center; font-weight: bold; text-transform: uppercase; width: 32%; border: 1px solid #000000;">CANTIDAD</th>
         </tr>
       </thead>
       <tbody>
+        <tr style="background-color: #ffffff; color: #475569;">
+          <td style="padding: 6px 10px; text-align: justify; line-height: 1.35; border: 1px solid #000000;">
+            [Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]
+          </td>
+          <td style="padding: 6px 10px; text-align: center; vertical-align: middle; border: 1px solid #000000;">
+            [Defina cantidad de productos]
+          </td>
+        </tr>
         {{#each productos_esperados}}
-        <tr>
-          <td>{{#if this.categoria}}{{this.categoria}}{{else}}{{#if this.Category}}{{this.Category}}{{else}}{{#if this.Categoria}}{{this.Categoria}}{{else}}General{{/if}}{{/if}}{{/if}}</td>
-          <td>{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{this.tipo}}{{/if}}</td>
-          <td>{{#if this.titulo}}{{this.titulo}}{{else}}{{this.nombre}}{{/if}}</td>
-          <td>{{#if this.indicador}}{{this.indicador}}{{else}}1 Entregable completado{{/if}}</td>
-          <td>{{#if this.medio_verificacion}}{{this.medio_verificacion}}{{else}}{{#if this.url_producto}}{{this.url_producto}}{{else}}Certificado / Informe{{/if}}{{/if}}</td>
-          <td style="text-align: center; font-weight: bold;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>
-          <td style="text-align: center;">{{#if this.plazo}}{{this.plazo}}{{else}}Final del Proyecto{{/if}}</td>
+        <tr style="background-color: #ffffff;">
+          <td style="padding: 6px 10px; border: 1px solid #000000;">{{#if this.tipo_producto_nombre}}{{this.tipo_producto_nombre}}{{else}}{{#if this.tipo}}{{this.tipo}}{{else}}{{this.nombre}}{{/if}}{{/if}}</td>
+          <td style="padding: 6px 10px; text-align: center; font-weight: bold; border: 1px solid #000000;">{{#if this.cantidad}}{{this.cantidad}}{{else}}1{{/if}}</td>
         </tr>
         {{/each}}
       </tbody>

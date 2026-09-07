@@ -119,7 +119,7 @@ export const generateResearchersTableHtml = (block: DocumentBlock): string => {
 
     return `
   <!-- BLOQUE: 2. INVESTIGADORES -->
-  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #222c57; margin-top: 18px; margin-bottom: 6px; font-family: {{ theme.typography.font_family }};">${title}</p>
+  <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; color: #222c57; margin-top: 18px; margin-bottom: 6px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${title}</p>
   <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-family: {{ theme.typography.font_family }};">
     <thead>
       <tr style="page-break-inside: avoid;">

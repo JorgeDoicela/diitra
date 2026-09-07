@@ -7,87 +7,168 @@ import { COLORS, headerBg } from './generatorStyles';
  */
 export const generateResourcesHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
-    const parts: string[] = [];
+    const colLabels = c.colLabels || {};
+
+    const resolveHeaderBg = (col?: string) => {
+        const target = col || c.budgetHeaderColor;
+        if (!target) return '{{default theme.colors.table_header_bg "#222c57"}}';
+        if (target.startsWith('#') || target.startsWith('rgb') || target.startsWith('hsl')) return target;
+        switch (target) {
+            case 'gold': return '{{default theme.colors.secondary "#c4a857"}}';
+            case 'slate': return '#334155';
+            case 'emerald': return '#065f46';
+            case 'navy':
+            default: return '{{default theme.colors.table_header_bg "#222c57"}}';
+        }
+    };
+
+    const borderStyle = c.budgetBorderStyle || 'solid';
+    const borderColor = c.budgetBorderColor || '#000000';
+    const borderWidth = c.budgetBorderWidth !== undefined ? `${c.budgetBorderWidth}px` : '1px';
+    const borderRule = borderStyle === 'none' ? 'none' : `${borderWidth} ${borderStyle} ${borderColor}`;
+    const cellBorder = borderStyle === 'none' ? '' : `border: ${borderRule};`;
+    const tableBorder = borderStyle === 'none' ? '' : `border: ${borderRule};`;
+
+    const defaultOrder = ['disponibles', 'necesarios', 'financiamiento'];
+    const currentOrder: string[] = Array.isArray(c.budgetTablesOrder) && c.budgetTablesOrder.length > 0
+        ? c.budgetTablesOrder
+        : defaultOrder;
+
+    const fullOrder = [...currentOrder];
+    defaultOrder.forEach(k => {
+        if (!fullOrder.includes(k)) fullOrder.push(k);
+    });
+
+    const tableMap: { [key: string]: string } = {};
 
     if (c.showRecursosDisponibles !== false) {
-        parts.push(`
-    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 10px 0 4px;">4.1 Recursos Disponibles (Equipos, Licencias, Espacios)</p>
-    <table class="info-table">
+        const headerBg = resolveHeaderBg(c.variantRecursosDisponibles);
+        const title = c.titleRecursosDisponibles || 'RECURSOS DISPONIBLES';
+        const colDesc = colLabels.col_disp_desc || 'DESCRIPCIÓN';
+        const colCant = colLabels.col_disp_cant || 'CANTIDAD';
+        const colFuente = colLabels.col_disp_fuente || 'FUENTE';
+
+        tableMap['disponibles'] = `
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; ${tableBorder} table-layout: fixed;">
+      <colgroup>
+        <col style="width: 50%;" />
+        <col style="width: 25%;" />
+        <col style="width: 25%;" />
+      </colgroup>
       <thead>
         <tr>
-          <th style="${headerBg('blue')}">Descripción del Recurso</th>
-          <th style="${headerBg('blue')} width: 60px; text-align: center;">Cantidad</th>
-          <th style="${headerBg('blue')} width: 150px;">Fuente</th>
+          <th colspan="3" style="background: ${headerBg} !important; color: #ffffff !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; text-transform: uppercase; ${cellBorder} letter-spacing: 0.5px;">${title}</th>
+        </tr>
+        <tr>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colDesc}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colCant}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colFuente}</th>
         </tr>
       </thead>
       <tbody>
         {{#each recursos_disponibles}}
         <tr>
-          <td>{{this.descripcion}}</td>
-          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
-          <td>{{this.fuente}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: left; vertical-align: middle; ${cellBorder}">{{this.descripcion}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: center; font-weight: bold; vertical-align: middle; ${cellBorder}">{{this.cantidad}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: left; vertical-align: middle; ${cellBorder}">{{this.fuente}}</td>
         </tr>
         {{/each}}
       </tbody>
-    </table>`);
+    </table>`;
     }
 
     if (c.showRecursosNecesarios !== false) {
-        parts.push(`
-    <p style="font-weight: bold; font-size: 8.5pt; color: ${COLORS.gray}; margin: 15px 0 4px;">4.2 Recursos Necesarios (Presupuesto de Gasto)</p>
-    <table class="info-table">
+        const headerBg = resolveHeaderBg(c.variantRecursosNecesarios);
+        const title = c.titleRecursosNecesarios || 'RECURSOS NECESARIOS';
+        const colDesc = colLabels.col_nec_desc || 'DESCRIPCIÓN';
+        const colCant = colLabels.col_nec_cant || 'CANTIDAD';
+        const colUnit = colLabels.col_nec_unit || 'COSTO UNITARIO';
+        const colTot = colLabels.col_nec_tot || 'COSTO TOTAL';
+        const titleCostoTotal = c.titleCostoTotal || 'COSTO TOTAL DEL PROYECTO';
+
+        tableMap['necesarios'] = `
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; ${tableBorder} table-layout: fixed;">
+      <colgroup>
+        <col style="width: 40%;" />
+        <col style="width: 20%;" />
+        <col style="width: 20%;" />
+        <col style="width: 20%;" />
+      </colgroup>
       <thead>
         <tr>
-          <th style="${headerBg('blue')}">Partida / Rubro</th>
-          <th style="${headerBg('blue')} width: 60px; text-align: center;">Cantidad</th>
-          <th style="${headerBg('blue')} width: 90px; text-align: right;">P. Unitario</th>
-          <th style="${headerBg('blue')} width: 90px; text-align: right;">Total</th>
+          <th colspan="4" style="background: ${headerBg} !important; color: #ffffff !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; text-transform: uppercase; ${cellBorder} letter-spacing: 0.5px;">${title}</th>
+        </tr>
+        <tr>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colDesc}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colCant}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colUnit}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colTot}</th>
         </tr>
       </thead>
       <tbody>
         {{#each recursos_necesarios}}
         <tr>
-          <td>{{this.descripcion}}</td>
-          <td style="text-align: center; font-weight: bold;">{{this.cantidad}}</td>
-          <td style="text-align: right;">$ {{this.costo_unitario}}</td>
-          <td style="text-align: right; font-weight: bold;">$ {{this.costo_total}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: left; vertical-align: middle; ${cellBorder}">{{this.descripcion}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: center; font-weight: bold; vertical-align: middle; ${cellBorder}">{{this.cantidad}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: right; vertical-align: middle; ${cellBorder}">$ {{this.costo_unitario}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: right; font-weight: bold; vertical-align: middle; ${cellBorder}">$ {{this.costo_total}}</td>
         </tr>
         {{/each}}
+        <tr>
+          <td colspan="3" style="background-color: #c4a857 !important; color: #000000 !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 8.5pt; text-transform: uppercase; ${cellBorder}">${titleCostoTotal}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: right; font-weight: bold; color: #000000; vertical-align: middle; ${cellBorder}">$ {{default costo_total "0.00"}}</td>
+        </tr>
       </tbody>
-    </table>`);
+    </table>`;
     }
 
     if (c.showFinanciamiento !== false) {
-        parts.push(`
-    <div style="margin-top: 15px; padding: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-        <tbody>
-          <tr>
-            <td style="width: 65%;">
-              <div style="margin-bottom: 4px;">
-                <strong>Financiamiento Solicitado al ISTPET:</strong> {{#if financiamiento_istpet}}SÍ{{else}}NO{{/if}}
-              </div>
-              <div>
-                <strong>Financiamiento Otras Fuentes:</strong> {{#if financiamiento_otras_fuentes}}SÍ ({{default nombres_otras_fuentes "No especificadas"}}){{else}}NO{{/if}}
-              </div>
-            </td>
-            <td style="text-align: right; vertical-align: bottom;">
-              <span style="font-size: 8pt; text-transform: uppercase; color: #64748b; font-weight: bold; display: block;">Costo Total Estimado:</span>
-              <span style="font-size: 13pt; font-weight: bold; color: ${COLORS.blue};">$ {{default costo_total "0.00"}}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>`);
+        const headerBg = resolveHeaderBg(c.variantFinanciamiento);
+        const title = c.titleFinanciamiento || 'FINANCIAMIENTO (X)';
+        const colIstpet = colLabels.col_fin_istpet || 'ISTPET';
+        const colOtras = colLabels.col_fin_otras || 'OTRAS FUENTES';
+        const colNombres = colLabels.col_fin_nombres || 'NOMBRES DE OTRAS FUENTES';
+
+        tableMap['financiamiento'] = `
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; ${tableBorder} table-layout: fixed;">
+      <colgroup>
+        <col style="width: 33.33%;" />
+        <col style="width: 33.33%;" />
+        <col style="width: 33.34%;" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th colspan="3" style="background: ${headerBg} !important; color: #ffffff !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; text-transform: uppercase; ${cellBorder} letter-spacing: 0.5px;">${title}</th>
+        </tr>
+        <tr>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colIstpet}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colOtras}</th>
+          <th style="padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-align: center; text-transform: uppercase; ${cellBorder}">${colNombres}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 6px 10px; font-size: 9pt; text-align: center; font-weight: bold; vertical-align: middle; ${cellBorder}">{{#if financiamiento_istpet}}X{{/if}}</td>
+          <td style="padding: 6px 10px; font-size: 9pt; text-align: center; font-weight: bold; vertical-align: middle; ${cellBorder}">{{#if financiamiento_otras_fuentes}}X{{/if}}</td>
+          <td style="padding: 6px 10px; font-size: 8.5pt; text-align: center; vertical-align: middle; ${cellBorder}">{{default nombres_otras_fuentes ""}}</td>
+        </tr>
+      </tbody>
+    </table>`;
     }
 
-    if (parts.length === 0) return '';
+    const orderedParts = fullOrder
+        .map(key => tableMap[key])
+        .filter(Boolean);
+
+    if (orderedParts.length === 0) return '';
+
+    const sectionTitle = block.title || '4. RECURSOS, COSTO Y FINANCIAMIENTO';
 
     return `
-  <!-- BLOQUE: RECURSOS Y PRESUPUESTO -->
+  <!-- BLOQUE: RECURSOS, COSTO Y FINANCIAMIENTO -->
   <div style="margin-top: 20px; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 9.5pt; text-transform: uppercase; color: ${COLORS.blue}; margin-bottom: 6px;">4. Recursos y Presupuesto Detallado</p>
-    ${parts.join('')}
+    <div style="font-size: 10pt; font-weight: bold; color: ${COLORS.blue}; text-transform: uppercase; margin-bottom: 8px; margin-left: 35px; font-family: {{ theme.typography.font_family }};">${sectionTitle}</div>
+    ${orderedParts.join('')}
   </div>`;
 };
 

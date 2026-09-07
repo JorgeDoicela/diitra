@@ -127,7 +127,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'title':
                 return <RenderTitle config={block.config} themeConfig={themeConfig} />;
             case 'rich_text':
-                return <RenderRichText config={block.config} />;
+                return <RenderRichText config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'advanced_table':
                 return <RenderAdvancedTable config={block.config} />;
             case 'multi_section_table':
@@ -135,7 +135,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'two_column':
                 return <RenderTwoColumn config={block.config} />;
             case 'gantt':
-                return <RenderGantt config={block.config} />;
+                return <RenderGantt config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'researchers_table':
                 return <RenderResearchersTable config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'rubric_table':
@@ -145,10 +145,10 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
             case 'project_general_section':
                 return <RenderProjectGeneralSection config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_technical_section':
-                return <RenderProjectTechnicalSection config={block.config} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
+                return <RenderProjectTechnicalSection config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_budget_section':
             case 'resources':
-                return <RenderProjectBudgetSection config={block.config} />;
+                return <RenderProjectBudgetSection config={block.config} title={block.title} blockId={block.id} onUpdateConfig={onUpdateConfig} />;
             case 'project_progress_report':
                 return <RenderProjectProgressReport config={block.config} />;
             case 'project_approval_notice':

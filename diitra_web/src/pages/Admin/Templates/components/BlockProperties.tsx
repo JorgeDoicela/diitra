@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings, Palette, Plus, Trash2 } from 'lucide-react';
 import { type DocumentBlock, type DocumentTemplateDto, BLOCK_METADATA } from '../types';
 import { ColorPickerField } from './properties/SharedColorPicker';
+import { BorderPickerField } from './properties/SharedBorderPicker';
 import { RichTextEditor } from './properties/RichTextEditor';
 import { MultiSectionTableProperties } from './properties/MultiSectionTableProperties';
 import { SignaturesProperties } from './properties/SignaturesProperties';
@@ -461,28 +462,46 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
 
                             {/* ── RECURSOS Y PRESUPUESTO ──────────────────────────────────── */}
                             {(activeBlock.type === 'project_budget_section' || activeBlock.type === 'resources') && (
-                                <div className="space-y-3 border-t border-border-thin/20 pt-4">
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Activa o desactiva las tablas de recursos y financiamiento:
-                                    </p>
-                                    {[
-                                        { key: 'showRecursosDisponibles', label: 'Mostrar Recursos Disponibles', desc: 'Bienes, infraestructura o equipos ya provistos.' },
-                                        { key: 'showRecursosNecesarios', label: 'Mostrar Recursos Necesarios', desc: 'Tabla de presupuesto detallado para adquisiciones.' },
-                                        { key: 'showFinanciamiento', label: 'Mostrar Financiamiento', desc: 'Origen de recursos (ISTPET / Otras Fuentes).' },
-                                    ].map(({ key, label, desc }) => (
-                                        <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-main block">{label}</label>
-                                                <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <ColorPickerField
+                                        label="Color de Encabezados (Tablas)"
+                                        value={(activeBlock.config as any)?.budgetHeaderColor || '#222c57'}
+                                        onChange={col => onUpdateConfig(activeBlock.id, 'budgetHeaderColor', col)}
+                                    />
+
+                                    <BorderPickerField
+                                        title="Bordes de las Tablas"
+                                        borderStyle={(activeBlock.config as any)?.budgetBorderStyle || 'solid'}
+                                        borderColor={(activeBlock.config as any)?.budgetBorderColor || '#000000'}
+                                        borderWidth={(activeBlock.config as any)?.budgetBorderWidth ?? 1}
+                                        onBorderStyleChange={st => onUpdateConfig(activeBlock.id, 'budgetBorderStyle', st)}
+                                        onBorderColorChange={col => onUpdateConfig(activeBlock.id, 'budgetBorderColor', col)}
+                                        onBorderWidthChange={w => onUpdateConfig(activeBlock.id, 'budgetBorderWidth', w)}
+                                    />
+
+                                    <div className="space-y-3 pt-2">
+                                        <p className="text-[10px] text-text-dim leading-relaxed">
+                                            Activa o desactiva las tablas de recursos y financiamiento:
+                                        </p>
+                                        {[
+                                            { key: 'showRecursosDisponibles', label: 'Mostrar Recursos Disponibles', desc: 'Bienes, infraestructura o equipos ya provistos.' },
+                                            { key: 'showRecursosNecesarios', label: 'Mostrar Recursos Necesarios', desc: 'Tabla de presupuesto detallado para adquisiciones.' },
+                                            { key: 'showFinanciamiento', label: 'Mostrar Financiamiento', desc: 'Origen de recursos (ISTPET / Otras Fuentes).' },
+                                        ].map(({ key, label, desc }) => (
+                                            <div key={key} className="flex items-center justify-between border-b border-border-thin/10 pb-3 last:border-0 last:pb-0">
+                                                <div>
+                                                    <label className="text-xs font-semibold text-text-main block">{label}</label>
+                                                    <span className="text-[9px] text-text-dim block mt-0.5 leading-tight">{desc}</span>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={(activeBlock.config as any)[key] !== false}
+                                                    onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
+                                                    className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
+                                                />
                                             </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={(activeBlock.config as any)[key] !== false}
-                                                onChange={e => onUpdateConfig(activeBlock.id, key, e.target.checked)}
-                                                className="w-4 h-4 text-text-main accent-text-main bg-surface border-border-thin rounded focus:ring-text-main"
-                                            />
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 

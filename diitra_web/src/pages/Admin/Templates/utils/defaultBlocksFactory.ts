@@ -11,7 +11,7 @@
  */
 
 import type { DocumentTemplateDto, DocumentBlock, BlockType, TechnicalSubsection } from '../types';
-import { DEFAULT_TECHNICAL_SUBSECTIONS } from '../types';
+import { DEFAULT_TECHNICAL_SUBSECTIONS, DEFAULT_IMPACT_CATEGORIES } from '../types';
 
 /**
  * Genera la portada base institucional con diseño de rombos geométricos del ISTPET.
@@ -171,6 +171,15 @@ export function generateDefaultBlocksForTemplate(
                 title: 'RESULTADOS ESPERADOS',
                 isActive: true,
                 config: {
+                    productsLayoutMode: 'table_simple',
+                    productsHeaderColor: '#222c57',
+                    productsBorderStyle: 'solid',
+                    productsBorderColor: '#000000',
+                    productsBorderWidth: 1,
+                    titleTipo: 'TIPO',
+                    titleCantidad: 'CANTIDAD',
+                    guidelineTipo: '[Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]',
+                    guidelineCantidad: '[Defina cantidad de productos]',
                     productColumns: {
                         showCategory: true,
                         showQuantity: true,
@@ -187,19 +196,36 @@ export function generateDefaultBlocksForTemplate(
                 config: {
                     showRecursosDisponibles: true,
                     showRecursosNecesarios: true,
-                    showFinanciamiento: true
+                    showFinanciamiento: true,
+                    budgetHeaderColor: '#222c57',
+                    budgetBorderStyle: 'solid',
+                    budgetBorderColor: '#000000',
+                    budgetBorderWidth: 1,
                 }
             },
             {
                 id: 'block-impacts',
                 type: 'impacts' as BlockType,
-                title: '5. IMPACTO DEL PROYECTO',
+                title: '6.  IMPACTO DEL PROYECTO',
                 isActive: true,
                 config: {
+                    impactsTitle: '6.  IMPACTO DEL PROYECTO',
+                    impactLayoutMode: 'table',
+                    impactHeaderColor: '#222c57',
+                    impactBorderStyle: 'solid',
+                    impactBorderColor: '#000000',
+                    impactBorderWidth: 1,
+                    titleImpactoCol: 'IMPACTO DEL PROYECTO',
+                    titleAplicaCol: 'Aplica (X)',
+                    titleNoAplicaCol: 'No aplica (x)',
+                    titleDescripcionCol: 'DESCRIPCIÓN BREVE (Solamente si aplica)',
+                    impactCategories: DEFAULT_IMPACT_CATEGORIES,
                     showImpactoSocial: true,
                     showImpactoCientifico: true,
                     showImpactoEconomico: true,
-                    showImpactoAmbiental: true
+                    showImpactoPolitico: true,
+                    showImpactoAmbiental: true,
+                    showImpactoOtro: true
                 }
             },
             createBaseSignaturesBlock([
@@ -263,7 +289,11 @@ export function generateDefaultBlocksForTemplate(
                 config: {
                     showRecursosDisponibles: true,
                     showRecursosNecesarios: true,
-                    showFinanciamiento: true
+                    showFinanciamiento: true,
+                    budgetHeaderColor: '#222c57',
+                    budgetBorderStyle: 'solid',
+                    budgetBorderColor: '#000000',
+                    budgetBorderWidth: 1,
                 }
             },
             {
@@ -272,6 +302,15 @@ export function generateDefaultBlocksForTemplate(
                 title: '5. PRODUCTOS ESPERADOS',
                 isActive: true,
                 config: {
+                    productsLayoutMode: 'table_simple',
+                    productsHeaderColor: '#222c57',
+                    productsBorderStyle: 'solid',
+                    productsBorderColor: '#000000',
+                    productsBorderWidth: 1,
+                    titleTipo: 'TIPO',
+                    titleCantidad: 'CANTIDAD',
+                    guidelineTipo: '[Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]',
+                    guidelineCantidad: '[Defina cantidad de productos]',
                     productColumns: {
                         showCategory: true,
                         showQuantity: true,
@@ -283,14 +322,26 @@ export function generateDefaultBlocksForTemplate(
             {
                 id: 'block-impacts',
                 type: 'impacts' as BlockType,
-                title: '6. IMPACTO DEL PROYECTO',
+                title: '6.  IMPACTO DEL PROYECTO',
                 isActive: true,
                 config: {
+                    impactsTitle: '6.  IMPACTO DEL PROYECTO',
+                    impactLayoutMode: 'table',
+                    impactHeaderColor: '#222c57',
+                    impactBorderStyle: 'solid',
+                    impactBorderColor: '#000000',
+                    impactBorderWidth: 1,
+                    titleImpactoCol: 'IMPACTO DEL PROYECTO',
+                    titleAplicaCol: 'Aplica (X)',
+                    titleNoAplicaCol: 'No aplica (x)',
+                    titleDescripcionCol: 'DESCRIPCIÓN BREVE (Solamente si aplica)',
+                    impactCategories: DEFAULT_IMPACT_CATEGORIES,
                     showImpactoSocial: true,
                     showImpactoCientifico: true,
                     showImpactoEconomico: true,
                     showImpactoPolitico: true,
-                    showImpactoAmbiental: true
+                    showImpactoAmbiental: true,
+                    showImpactoOtro: true
                 }
             },
             {
@@ -315,11 +366,13 @@ export function generateDefaultBlocksForTemplate(
             {
                 id: 'block-bibliography',
                 type: 'rich_text' as BlockType,
-                title: '8. BIBLIOGRAFÍA',
+                title: '8.  BIBLIOGRAFÍA',
                 isActive: true,
                 config: {
-                    title: '8. Bibliografía',
-                    placeholder: 'Registrar entre 10 y 15 fuentes bibliográficas con normas APA 7ma edición...'
+                    title: '8.  BIBLIOGRAFÍA',
+                    headerColor: '#222c57',
+                    guidelineText: '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]',
+                    placeholder: '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]'
                 }
             },
             createBaseSignaturesBlock([
@@ -705,6 +758,15 @@ export function generateDefaultBlocksForTemplate(
             title: '4. ENTREGABLES Y RESULTADOS COMPROMETIDOS',
             isActive: true,
             config: {
+                productsLayoutMode: 'table_simple',
+                productsHeaderColor: '#222c57',
+                productsBorderStyle: 'solid',
+                productsBorderColor: '#000000',
+                productsBorderWidth: 1,
+                titleTipo: 'TIPO',
+                titleCantidad: 'CANTIDAD',
+                guidelineTipo: '[Indique que tipo de productos generará su proyecto Eje. Publicaciones Científicas, Desarrollo Tangible de un producto, Publicaciones Docentes]',
+                guidelineCantidad: '[Defina cantidad de productos]',
                 productColumns: {
                     showCategory: true,
                     showQuantity: true,
@@ -720,7 +782,48 @@ export function generateDefaultBlocksForTemplate(
             config: {
                 showRecursosDisponibles: true,
                 showRecursosNecesarios: true,
-                showFinanciamiento: true
+                showFinanciamiento: true,
+                budgetHeaderColor: '#222c57',
+                budgetBorderStyle: 'solid',
+                budgetBorderColor: '#000000',
+                budgetBorderWidth: 1,
+            }
+        },
+        {
+            id: 'block-impacts-auto',
+            type: 'impacts' as BlockType,
+            title: '6.  IMPACTO DEL PROYECTO',
+            isActive: true,
+            config: {
+                impactsTitle: '6.  IMPACTO DEL PROYECTO',
+                impactLayoutMode: 'table',
+                impactHeaderColor: '#222c57',
+                impactBorderStyle: 'solid',
+                impactBorderColor: '#000000',
+                impactBorderWidth: 1,
+                titleImpactoCol: 'IMPACTO DEL PROYECTO',
+                titleAplicaCol: 'Aplica (X)',
+                titleNoAplicaCol: 'No aplica (x)',
+                titleDescripcionCol: 'DESCRIPCIÓN BREVE (Solamente si aplica)',
+                impactCategories: DEFAULT_IMPACT_CATEGORIES,
+                showImpactoSocial: true,
+                showImpactoCientifico: true,
+                showImpactoEconomico: true,
+                showImpactoPolitico: true,
+                showImpactoAmbiental: true,
+                showImpactoOtro: true
+            }
+        },
+        {
+            id: 'block-bibliography-auto',
+            type: 'rich_text' as BlockType,
+            title: '8.  BIBLIOGRAFÍA',
+            isActive: true,
+            config: {
+                title: '8.  BIBLIOGRAFÍA',
+                headerColor: '#222c57',
+                guidelineText: '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]',
+                placeholder: '[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]'
             }
         },
         createBaseSignaturesBlock([

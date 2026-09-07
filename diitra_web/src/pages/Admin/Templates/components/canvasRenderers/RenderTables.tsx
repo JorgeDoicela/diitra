@@ -119,7 +119,7 @@ export const RenderResearchersTable: React.FC<{
 
     return (
         <div className="overflow-x-auto my-2 select-none font-sans">
-            <div className="mb-2">
+            <div className="mb-2 ml-7 sm:ml-8">
                 {onUpdateConfig && blockId ? (
                     <input
                         type="text"

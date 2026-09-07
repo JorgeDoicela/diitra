@@ -90,8 +90,8 @@ export const BLOCK_METADATA: Record<BlockType, BlockMetaInfo> = {
     project_general_section: { label: 'Identificación del Proyecto', defaultTitle: '1. IDENTIFICACIÓN DEL PROYECTO', category: 'Base de Datos' },
     researchers_table: { label: 'Investigadores', defaultTitle: '2. INVESTIGADORES', category: 'Base de Datos' },
     project_technical_section: { label: 'Especificación del Proyecto', defaultTitle: '3. ESPECIFICACIÓN DEL PROYECTO', category: 'Base de Datos' },
-    project_budget_section: { label: 'Recursos y Presupuesto', defaultTitle: '4. RECURSOS Y PRESUPUESTO', category: 'Base de Datos' },
-    resources: { label: 'Recursos y Presupuesto', defaultTitle: '4. RECURSOS Y PRESUPUESTO', category: 'Base de Datos' },
+    project_budget_section: { label: 'Recursos, Costo y Financiamiento', defaultTitle: '4. RECURSOS, COSTO Y FINANCIAMIENTO', category: 'Base de Datos' },
+    resources: { label: 'Recursos, Costo y Financiamiento', defaultTitle: '4. RECURSOS, COSTO Y FINANCIAMIENTO', category: 'Base de Datos' },
     expected_products: { label: 'Productos Esperados', defaultTitle: '5. PRODUCTOS ESPERADOS', category: 'Base de Datos' },
     impacts: { label: 'Matriz de Impactos', defaultTitle: '6. MATRIZ DE IMPACTOS', category: 'Base de Datos' },
     project_progress_report: { label: 'Avance de Ejecución', defaultTitle: '7. AVANCE DE EJECUCIÓN', category: 'Base de Datos' },
@@ -346,12 +346,12 @@ export interface ImpactCategory {
 }
 
 export const DEFAULT_IMPACT_CATEGORIES: ImpactCategory[] = [
-    { id: 'imp_social', key: 'social', title: 'Impacto Social', placeholder: 'Descripción del impacto positivo en la comunidad o grupo beneficiario...', enabled: true, scribanVariable: 'impacto.social', legacyKey: 'showImpactoSocial', colSpan: 2 },
-    { id: 'imp_cientifico', key: 'cientifico', title: 'Impacto Científico', placeholder: 'Aporte al estado del arte, desarrollo tecnológico o nuevo conocimiento...', enabled: true, scribanVariable: 'impacto.cientifico', legacyKey: 'showImpactoCientifico', colSpan: 2 },
-    { id: 'imp_economico', key: 'economico', title: 'Impacto Económico', placeholder: 'Optimización de recursos, retorno de inversión o reactivación productiva...', enabled: true, scribanVariable: 'impacto.economico', legacyKey: 'showImpactoEconomico', colSpan: 2 },
-    { id: 'imp_politico', key: 'politico', title: 'Impacto Político', placeholder: 'Aporte a políticas públicas, regulación, normativas o gobernanza...', enabled: true, scribanVariable: 'impacto.politico', legacyKey: 'showImpactoPolitico', colSpan: 2 },
-    { id: 'imp_ambiental', key: 'ambiental', title: 'Impacto Ambiental', placeholder: 'Mitigación de huella ecológica, conservación o desarrollo sostenible...', enabled: true, scribanVariable: 'impacto.ambiental', legacyKey: 'showImpactoAmbiental', colSpan: 2 },
-    { id: 'imp_otro', key: 'otro', title: 'Otro Impacto', placeholder: 'Cualquier otro impacto institucional o transferible no clasificado...', enabled: true, scribanVariable: 'impacto.otro', legacyKey: 'showImpactoOtro', colSpan: 2 }
+    { id: 'imp_social', key: 'social', title: 'Social', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.social', legacyKey: 'showImpactoSocial', colSpan: 2 },
+    { id: 'imp_cientifico', key: 'cientifico', title: 'Científico', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.cientifico', legacyKey: 'showImpactoCientifico', colSpan: 2 },
+    { id: 'imp_economico', key: 'economico', title: 'Económico', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.economico', legacyKey: 'showImpactoEconomico', colSpan: 2 },
+    { id: 'imp_politico', key: 'politico', title: 'Político', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.politico', legacyKey: 'showImpactoPolitico', colSpan: 2 },
+    { id: 'imp_ambiental', key: 'ambiental', title: 'Ambiental', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.ambiental', legacyKey: 'showImpactoAmbiental', colSpan: 2 },
+    { id: 'imp_otro', key: 'otro', title: 'Otro', placeholder: 'Descripción breve (solamente si aplica)...', enabled: true, scribanVariable: 'impacto.otro', legacyKey: 'showImpactoOtro', colSpan: 2 }
 ];
 
 
@@ -567,11 +567,32 @@ export interface DocumentBlock {
         showRecursosDisponibles?: boolean;
         showRecursosNecesarios?: boolean;
         showFinanciamiento?: boolean;
+        budgetHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        budgetBorderStyle?: 'solid' | 'none' | string;
+        budgetBorderColor?: string;
+        budgetBorderWidth?: number;
+        titleRecursosDisponibles?: string;
+        titleRecursosNecesarios?: string;
+        titleFinanciamiento?: string;
+        titleCostoTotal?: string;
+        budgetTablesOrder?: string[];
+        variantRecursosDisponibles?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        variantRecursosNecesarios?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        variantFinanciamiento?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        colLabels?: { [key: string]: string };
 
         // ── impacts ────────────────────────────────────────────────────────
+        impactsTitle?: string;
         impactCategories?: ImpactCategory[];
-        impactLayoutMode?: 'table' | 'cards' | 'sections';
+        impactLayoutMode?: 'table' | 'cards' | 'sections' | string;
         impactHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        impactBorderStyle?: 'solid' | 'none' | string;
+        impactBorderColor?: string;
+        impactBorderWidth?: number;
+        titleImpactoCol?: string;
+        titleAplicaCol?: string;
+        titleNoAplicaCol?: string;
+        titleDescripcionCol?: string;
         productosTitle?: string;
         showImpactoSocial?: boolean;
         showImpactoCientifico?: boolean;
@@ -582,8 +603,16 @@ export interface DocumentBlock {
         showProductosEsperados?: boolean;
 
         // ── expected_products ─────────────────────────────────────────────
-        productsLayoutMode?: string;
+        productsLayoutMode?: 'table_simple' | 'table_detailed' | 'grouped_sections' | string;
         layoutMode?: string;
+        productsHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
+        productsBorderStyle?: 'solid' | 'none' | string;
+        productsBorderColor?: string;
+        productsBorderWidth?: number;
+        titleTipo?: string;
+        titleCantidad?: string;
+        guidelineTipo?: string;
+        guidelineCantidad?: string;
         productColumns?: {
             showCategory?: boolean;
             showSubtype?: boolean;
