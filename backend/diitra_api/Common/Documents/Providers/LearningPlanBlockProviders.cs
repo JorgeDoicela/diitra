@@ -50,13 +50,13 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            if (!sectionsList.Any(s => s.Id == "plan_aprendizaje"))
+            if (!sectionsList.Any(s => s.Id == "learning_plan_header_section"))
             {
                 sectionsList.Add(new UiSectionDto
                 {
-                    Id = "plan_aprendizaje",
-                    Label = "Plan de Aprendizaje",
-                    IconName = "GraduationCap",
+                    Id = "learning_plan_header_section",
+                    Label = string.IsNullOrWhiteSpace(title) ? "Identificación del Proyecto & Estudiante" : title,
+                    IconName = "BookOpen",
                     ComponentName = "LearningPlanSection"
                 });
             }
@@ -98,13 +98,13 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            if (!sectionsList.Any(s => s.Id == "plan_aprendizaje"))
+            if (!sectionsList.Any(s => s.Id == "learning_plan_prerequisites_section"))
             {
                 sectionsList.Add(new UiSectionDto
                 {
-                    Id = "plan_aprendizaje",
-                    Label = "Plan de Aprendizaje",
-                    IconName = "GraduationCap",
+                    Id = "learning_plan_prerequisites_section",
+                    Label = string.IsNullOrWhiteSpace(title) ? "Prerrequisitos Previos a la Vinculación" : title,
+                    IconName = "CheckSquare",
                     ComponentName = "LearningPlanSection"
                 });
             }
@@ -146,13 +146,13 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            if (!sectionsList.Any(s => s.Id == "plan_aprendizaje"))
+            if (!sectionsList.Any(s => s.Id == "learning_plan_activities_section"))
             {
                 sectionsList.Add(new UiSectionDto
                 {
-                    Id = "plan_aprendizaje",
-                    Label = "Plan de Aprendizaje",
-                    IconName = "GraduationCap",
+                    Id = "learning_plan_activities_section",
+                    Label = string.IsNullOrWhiteSpace(title) ? "Plan de Aprendizaje (Actividades APE)" : title,
+                    IconName = "Calendar",
                     ComponentName = "LearningPlanSection"
                 });
             }
@@ -166,7 +166,7 @@ namespace diitra_api.Controllers
     public class LearningPlanEvalParametersBlockProvider : IDocumentBlockProvider
     {
         public string BlockType => "learning_plan_eval_parameters_section";
-        public BlockBehavior Behavior => BlockBehavior.StaticLayout;
+        public BlockBehavior Behavior => BlockBehavior.DataCapture;
 
         public void PopulateSchema(
             JsonElement block, 
@@ -186,6 +186,16 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
+            if (!sectionsList.Any(s => s.Id == "learning_plan_eval_parameters_section"))
+            {
+                sectionsList.Add(new UiSectionDto
+                {
+                    Id = "learning_plan_eval_parameters_section",
+                    Label = string.IsNullOrWhiteSpace(title) ? "Parámetros de Evaluación" : title,
+                    IconName = "BarChart",
+                    ComponentName = "LearningPlanSection"
+                });
+            }
             return Task.CompletedTask;
         }
     }
@@ -218,13 +228,13 @@ namespace diitra_api.Controllers
             string templateCode,
             CancellationToken ct)
         {
-            if (!sectionsList.Any(s => s.Id == "plan_aprendizaje"))
+            if (!sectionsList.Any(s => s.Id == "learning_plan_evaluation_table"))
             {
                 sectionsList.Add(new UiSectionDto
                 {
-                    Id = "plan_aprendizaje",
-                    Label = "Plan de Aprendizaje",
-                    IconName = "GraduationCap",
+                    Id = "learning_plan_evaluation_table",
+                    Label = string.IsNullOrWhiteSpace(title) ? "Dictamen y Resultados" : title,
+                    IconName = "Award",
                     ComponentName = "LearningPlanSection"
                 });
             }

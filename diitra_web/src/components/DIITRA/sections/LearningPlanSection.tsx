@@ -57,6 +57,7 @@ interface LearningPlanSectionProps {
     isAdmin?: boolean;
     readOnly?: boolean;
     templateCode?: string;
+    activeTab?: string;
 }
 
 const DEFAULT_COGNITIVOS: PrerrequisitoItem[] = [
@@ -88,12 +89,21 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
     onUpdate,
     isAdmin = false,
     readOnly = false,
-    templateCode
+    templateCode,
+    activeTab
 }) => {
     const { readOnly: blockReadOnly } = useContext(SectionGuardContext);
     const effectiveReadOnly = readOnly || blockReadOnly || cowork.session.readOnly;
     const isEvaluationMode = templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || formData?.isEvaluationMode === true;
     const estadoAprobacion = formData.EstadoAprobacion || 'Pendiente';
+
+    // Control de visibilidad por pestaña desacoplada / navegación de secciones
+    const isAll = !activeTab || activeTab === 'plan_aprendizaje' || activeTab === 'evaluacion_plan_aprendizaje';
+    const showIdentificacion = isAll || activeTab === 'learning_plan_header_section' || activeTab === 'identificacion';
+    const showEvalParams = isEvaluationMode && (isAll || activeTab === 'learning_plan_eval_parameters_section' || activeTab === 'parametros_evaluacion');
+    const showPrerrequisitos = isAll || activeTab === 'learning_plan_prerequisites_section' || activeTab === 'prerrequisitos';
+    const showActividades = isAll || activeTab === 'learning_plan_activities_section' || activeTab === 'actividades_ape';
+    const showResultadosGenerales = isEvaluationMode && (isAll || activeTab === 'learning_plan_evaluation_table' || activeTab === 'resultados_generales');
 
     // Lista de fichas de estudiantes
     const estudiantesList: EstudianteEvaluacion[] = useMemo(() => {
@@ -464,7 +474,8 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
             </div>
 
             {/* 1. IDENTIFICACIÓN DEL PROYECTO & ESTUDIANTE */}
-            <section className="bento-card p-6 space-y-4">
+            {showIdentificacion && (
+                <section className="bento-card p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border-thin pb-3">
                     <span className="section-label !text-text-main !text-xs !font-bold">
                         1. Identificación del Proyecto & Estudiante
@@ -577,9 +588,10 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                     </div>
                 </div>
             </section>
+            )}
 
             {/* 2. PARÁMETROS DE EVALUACIÓN (Visible en Modo Evaluación) */}
-            {isEvaluationMode && (
+            {showEvalParams && (
                 <section className="bento-card p-6 space-y-3">
                     <span className="section-label !text-text-main !text-xs !font-bold">
                         2. Parámetros de Evaluación Cualitativa (Escala 1 a 4)
@@ -633,7 +645,8 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
             )}
 
             {/* 3. PRERREQUISITOS PREVIOS A LA VINCULACIÓN */}
-            <section className="bento-card p-6 space-y-4">
+            {showPrerrequisitos && (
+                <section className="bento-card p-6 space-y-4">
                 <div className="border-b border-border-thin pb-3">
                     <span className="section-label !text-text-main !text-xs !font-bold">
                         {isEvaluationMode ? '3. Evaluación de Prerrequisitos Previos a la Vinculación' : '2. Prerrequisitos Previos a la Vinculación'}
@@ -770,9 +783,11 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                     </div>
                 </div>
             </section>
+            )}
 
             {/* 4. PLAN DE APRENDIZAJE (ACTIVIDADES APE) */}
-            <section className="bento-card p-6 space-y-4">
+            {showActividades && (
+                <section className="bento-card p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border-thin pb-3">
                     <span className="section-label !text-text-main !text-xs !font-bold">
                         {isEvaluationMode ? '4. Evaluación del Plan de Aprendizaje (Actividades Ejecutadas)' : '3. Plan de Aprendizaje (Actividades APE)'}
@@ -904,9 +919,10 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                     ))}
                 </div>
             </section>
+            )}
 
             {/* 5. RESULTADOS GENERALES (Visible en Modo Evaluación) */}
-            {isEvaluationMode && (
+            {showResultadosGenerales && (
                 <section className="bento-card p-6 space-y-4">
                     <div className="border-b border-border-thin pb-3 flex items-center justify-between">
                         <span className="section-label !text-text-main !text-xs !font-bold">

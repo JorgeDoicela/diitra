@@ -353,11 +353,9 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: ['EstudiantesEvaluaciones'],
         sections: [
-            {
-                id: 'plan_aprendizaje',
-                label: 'Plan de Aprendizaje',
-                iconName: 'BookOpen'
-            }
+            { id: 'learning_plan_header_section', label: '1. Identificación del Proyecto & Estudiante', iconName: 'BookOpen', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_prerequisites_section', label: '2. Prerrequisitos Previos a la Vinculación', iconName: 'CheckSquare', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_activities_section', label: '3. Plan de Aprendizaje (Actividades APE)', iconName: 'Calendar', componentName: 'LearningPlanSection' }
         ]
     },
 
@@ -392,11 +390,11 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         },
         lists: ['EstudiantesEvaluaciones'],
         sections: [
-            {
-                id: 'evaluacion_plan_aprendizaje',
-                label: 'Evaluación Plan de Aprendizaje',
-                iconName: 'Award'
-            }
+            { id: 'learning_plan_header_section', label: '1. Identificación del Proyecto & Estudiante', iconName: 'BookOpen', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_eval_parameters_section', label: '2. Parámetros de Evaluación', iconName: 'BarChart', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_prerequisites_section', label: '3. Evaluación de Prerrequisitos', iconName: 'CheckSquare', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_activities_section', label: '4. Evaluación del Plan de Aprendizaje', iconName: 'Target', componentName: 'LearningPlanSection' },
+            { id: 'learning_plan_evaluation_table', label: '5. Dictamen y Resultados', iconName: 'Award', componentName: 'LearningPlanSection' }
         ]
     }
 };

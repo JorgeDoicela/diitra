@@ -76,6 +76,7 @@ export const DocumentComponentRegistry: Record<string, React.ComponentType<any>>
     'learning_plan_header_section': LearningPlanSection,
     'learning_plan_prerequisites_section': LearningPlanSection,
     'learning_plan_activities_section': LearningPlanSection,
+    'learning_plan_eval_parameters_section': LearningPlanSection,
     'learning_plan_evaluation_table': LearningPlanSection,
 };
 

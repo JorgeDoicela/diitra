@@ -139,6 +139,26 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
                     if (!dynamicList.some(s => s.id === 'bibliografia')) {
                         dynamicList.push({ id: 'bibliografia', label: b.title || 'Bibliografía & Firmas', icon: SECTIONS[6].icon });
                     }
+                } else if (b.type === 'learning_plan_header_section') {
+                    if (!dynamicList.some(s => s.id === 'learning_plan_header_section')) {
+                        dynamicList.push({ id: 'learning_plan_header_section', label: b.title || 'Identificación del Proyecto & Estudiante', icon: BookOpen });
+                    }
+                } else if (b.type === 'learning_plan_prerequisites_section') {
+                    if (!dynamicList.some(s => s.id === 'learning_plan_prerequisites_section')) {
+                        dynamicList.push({ id: 'learning_plan_prerequisites_section', label: b.title || 'Prerrequisitos Previos', icon: CheckSquare });
+                    }
+                } else if (b.type === 'learning_plan_activities_section') {
+                    if (!dynamicList.some(s => s.id === 'learning_plan_activities_section')) {
+                        dynamicList.push({ id: 'learning_plan_activities_section', label: b.title || 'Plan de Aprendizaje (Actividades APE)', icon: Calendar });
+                    }
+                } else if (b.type === 'learning_plan_eval_parameters_section') {
+                    if (!dynamicList.some(s => s.id === 'learning_plan_eval_parameters_section')) {
+                        dynamicList.push({ id: 'learning_plan_eval_parameters_section', label: b.title || 'Parámetros de Evaluación', icon: BarChart });
+                    }
+                } else if (b.type === 'learning_plan_evaluation_table') {
+                    if (!dynamicList.some(s => s.id === 'learning_plan_evaluation_table')) {
+                        dynamicList.push({ id: 'learning_plan_evaluation_table', label: b.title || 'Dictamen y Resultados', icon: Award });
+                    }
                 } else {
                     const cleanId = b.id || `custom-${b.type}`;
                     if (!dynamicList.some(s => s.id === cleanId)) {
