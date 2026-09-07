@@ -981,6 +981,8 @@ namespace Diitra.Infrastructure.Common.Documents
                         mapProp("Periodo", "PeriodoAcademico");
                         mapProp("FechaAprobacion", "FechaAprobacion");
                         mapProp("FechaTerminacion", "FechaTerminacion");
+                        mapProp("ObjetivoGeneral", "ObjetivoGeneral");
+                        mapProp("objetivo_general", "ObjetivoGeneral");
 
                         // Extraer EstudiantesEvaluaciones si existe
                         JsonElement estArray = default;

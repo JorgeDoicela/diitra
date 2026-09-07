@@ -1,6 +1,7 @@
 import type { DocumentBlock } from '../../types';
 import { DEFAULT_FINAL_REPORT_WRITING_SUBSECTIONS } from '../../types';
 import { COLORS, headerBg } from './generatorStyles';
+import { resolveHeaderColor, getContrastFg } from '../../components/properties/SharedColorPicker';
 
 /**
  * Genera el HTML de Recursos y Presupuesto Detallado (Bloque: project_budget_section / resources)
@@ -861,7 +862,7 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
         const title = sub.title || key;
         const prefix = sub.numberPrefix ? `${sub.numberPrefix} ` : '';
-        html += `
+    html += `
   <div style="margin-top: 25px; page-break-inside: avoid;">
     <h2 style="color: #002060; font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 6px; font-family: Arial, sans-serif;">
       ${prefix}${title}
@@ -879,7 +880,12 @@ export const generateFinalReportWritingHtml = (block: DocumentBlock): string => 
 /**
  * Genera el HTML Handlebars para la Ficha de Identificación del Plan de Aprendizaje
  */
-export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string => {
+export const generateLearningPlanHeaderHtml = (block?: DocumentBlock): string => {
+    const c: any = block?.config || {};
+    const headerColor = resolveHeaderColor(c.learningPlanHeaderColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+    const showObj = c.showObjetivoGeneral !== false;
+
     return `
   <!-- CABECERA INSTITUCIONAL ISTPET Y PLAN DE APRENDIZAJE -->
   <div style="margin-top: 5px; page-break-inside: avoid; font-family: Arial, sans-serif;">
@@ -889,7 +895,7 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
           {{#if theme.brand.logo_url}}
             <img src="{{theme.brand.logo_url}}" style="max-height: 45px; max-width: 180px;" alt="ISTPET" />
           {{else}}
-            <div style="font-size: 16pt; font-weight: bold; color: #222c57; letter-spacing: 1px;">ISTPET</div>
+            <div style="font-size: 16pt; font-weight: bold; color: ${headerColor}; letter-spacing: 1px;">ISTPET</div>
             <div style="font-size: 6.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">INSTITUTO TRAVERSARI</div>
           {{/if}}
         </td>
@@ -903,12 +909,12 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
 
     <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="6" style="padding: 6px 8px; text-align: center; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000; letter-spacing: 0.5px;">
             PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
           </th>
         </tr>
-        <tr style="background-color: #f1f5f9; color: #000000;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="6" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             1. IDENTIFICACIÓN DEL PROYECTO
           </th>
@@ -952,10 +958,11 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
       </tbody>
     </table>
 
+    ${showObj ? `
     <div style="margin-top: 10px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
         <thead>
-          <tr style="background-color: #f1f5f9; color: #000000;">
+          <tr style="background-color: ${headerColor}; color: ${headerFg};">
             <th style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
               2. OBJETIVO GENERAL DEL PROYECTO DE INVESTIGACIÓN
             </th>
@@ -969,20 +976,24 @@ export const generateLearningPlanHeaderHtml = (_block?: DocumentBlock): string =
           </tr>
         </tbody>
       </table>
-    </div>
+    </div>` : ''}
   </div>`;
 };
 
 /**
  * Genera el HTML Handlebars para los Parámetros de Evaluación (Escala Cualitativa ISTPET)
  */
-export const generateLearningPlanEvalParametersHtml = (_block?: DocumentBlock): string => {
+export const generateLearningPlanEvalParametersHtml = (block?: DocumentBlock): string => {
+    const c: any = block?.config || {};
+    const headerColor = resolveHeaderColor(c.learningPlanHeaderColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+
     return `
   <!-- BLOQUE: 2. PARÁMETROS DE EVALUACIÓN CUALITATIVA -->
   <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="3" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             2. PARÁMETROS DE EVALUACIÓN
           </th>
@@ -1030,6 +1041,8 @@ export const generateLearningPlanEvalParametersHtml = (_block?: DocumentBlock): 
 export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const isEvaluacion = c.learningPlanMode === 'evaluacion';
+    const headerColor = resolveHeaderColor(c.learningPlanHeaderColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
 
     if (isEvaluacion) {
         return `
@@ -1037,7 +1050,7 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
   <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #f1f5f9; color: #000000;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="10" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
           </th>
@@ -1090,7 +1103,7 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
   <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #f1f5f9; color: #000000;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="2" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
           </th>
@@ -1142,6 +1155,12 @@ export const generateLearningPlanPrerequisitesHtml = (block: DocumentBlock): str
 export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string => {
     const c: any = block.config || {};
     const isEvaluacion = c.learningPlanMode === 'evaluacion';
+    const headerColor = resolveHeaderColor(c.learningPlanHeaderColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+    const showLinea = c.showLineaInvestigacion !== false;
+    const showRda = c.showResultadosAprendizaje !== false;
+    const showHoras = c.showHorasTrabajo !== false;
+    const showObs = c.showObservaciones !== false;
 
     if (isEvaluacion) {
         return `
@@ -1149,7 +1168,7 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
   <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #f1f5f9; color: #000000;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="10" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             4. PLAN DE APRENDIZAJE (EVALUACIÓN DE ACTIVIDADES EJECUTADAS)
           </th>
@@ -1196,28 +1215,32 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
   </div>`;
     }
 
+    // Calcular cantidad total de columnas dinámicas
+    const totalCols = 1 + (showLinea ? 1 : 0) + 1 + (showRda ? 1 : 0) + 2 + (showHoras ? 1 : 0) + (showObs ? 1 : 0);
+    const actSubCols = 2 + (showHoras ? 1 : 0);
+
     return `
   <!-- BLOQUE: 4. MATRIZ DEL PLAN DE APRENDIZAJE APE -->
   <div style="margin-top: 10px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #f1f5f9; color: #000000;">
-          <th colspan="8" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
+          <th colspan="${totalCols}" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             4. PLAN DE APRENDIZAJE
           </th>
         </tr>
         <tr style="background-color: #f1f5f9; color: #000000; font-weight: bold; text-align: center; font-size: 7.2pt;">
           <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 17%;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
-          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">LÍNEA DE INVESTIGACIÓN</th>
+          ${showLinea ? '<th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">LÍNEA DE INVESTIGACIÓN</th>' : ''}
           <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">ASIGNATURA</th>
-          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
-          <th colspan="3" style="padding: 3px; border: 1px solid #000000;">ACTIVIDADES A EJECUTAR</th>
-          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 10%;">OBSERVACIONES</th>
+          ${showRda ? '<th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>' : ''}
+          <th colspan="${actSubCols}" style="padding: 3px; border: 1px solid #000000;">ACTIVIDADES A EJECUTAR</th>
+          ${showObs ? '<th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 10%;">OBSERVACIONES</th>' : ''}
         </tr>
         <tr style="background-color: #f8fafc; color: #000000; font-weight: bold; text-align: center; font-size: 6.8pt;">
           <th style="padding: 3px; border: 1px solid #000000; width: 18%;">ACTIVIDAD</th>
           <th style="padding: 3px; border: 1px solid #000000; width: 7%;">FECHA</th>
-          <th style="padding: 3px; border: 1px solid #000000; width: 7%;">HORAS DE TRABAJO</th>
+          ${showHoras ? '<th style="padding: 3px; border: 1px solid #000000; width: 7%;">HORAS DE TRABAJO</th>' : ''}
         </tr>
       </thead>
       <tbody>
@@ -1225,18 +1248,18 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
           {{#each ActividadesPlan}}
             <tr style="color: #000000;">
               <td style="padding: 4px; border: 1px solid #000000;">{{this.objetivoProyecto}}</td>
-              <td style="padding: 4px; border: 1px solid #000000;">{{this.lineaInvestigacion}}</td>
+              ${showLinea ? '<td style="padding: 4px; border: 1px solid #000000;">{{this.lineaInvestigacion}}</td>' : ''}
               <td style="padding: 4px; border: 1px solid #000000;">{{this.asignatura}}</td>
-              <td style="padding: 4px; border: 1px solid #000000;">{{this.resultadoAprendizaje}}</td>
+              ${showRda ? '<td style="padding: 4px; border: 1px solid #000000;">{{this.resultadoAprendizaje}}</td>' : ''}
               <td style="padding: 4px; border: 1px solid #000000;">{{this.actividad}}</td>
               <td style="padding: 4px; border: 1px solid #000000; text-align: center;">{{this.fecha}}</td>
-              <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">{{this.horasTrabajo}}</td>
-              <td style="padding: 4px; border: 1px solid #000000;">{{this.observaciones}}</td>
+              ${showHoras ? '<td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">{{this.horas}}</td>' : ''}
+              ${showObs ? '<td style="padding: 4px; border: 1px solid #000000;">{{this.observaciones}}</td>' : ''}
             </tr>
           {{/each}}
         {{else}}
           <tr>
-            <td colspan="8" style="padding: 8px; text-align: center; color: #94a3b8; font-style: italic; border: 1px solid #000000;">
+            <td colspan="${totalCols}" style="padding: 8px; text-align: center; color: #94a3b8; font-style: italic; border: 1px solid #000000;">
               No se han registrado actividades del plan de aprendizaje aún.
             </td>
           </tr>
@@ -1249,13 +1272,17 @@ export const generateLearningPlanActivitiesHtml = (block: DocumentBlock): string
 /**
  * Genera el HTML Handlebars para los Resultados Generales y Dictamen (5. RESULTADOS GENERALES)
  */
-export const generateLearningPlanEvaluationHtml = (_block?: DocumentBlock): string => {
+export const generateLearningPlanEvaluationHtml = (block?: DocumentBlock): string => {
+    const c: any = block?.config || {};
+    const headerColor = resolveHeaderColor(c.learningPlanHeaderColor || '#222c57');
+    const headerFg = getContrastFg(headerColor);
+
     return `
   <!-- BLOQUE: 5. RESULTADOS GENERALES DE LA EVALUACIÓN -->
   <div style="margin-top: 15px; page-break-inside: avoid;">
     <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
       <thead>
-        <tr style="background-color: #002060; color: #FFFFFF;">
+        <tr style="background-color: ${headerColor}; color: ${headerFg};">
           <th colspan="2" style="padding: 6px 8px; text-align: left; font-size: 9pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
             5. RESULTADOS GENERALES
           </th>

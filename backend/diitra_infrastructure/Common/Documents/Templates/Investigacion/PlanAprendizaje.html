@@ -1,288 +1,451 @@
+<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay1wbGFuLTEiLCJ0eXBlIjoibGVhcm5pbmdfcGxhbl9oZWFkZXJfc2VjdGlvbiIsInRpdGxlIjoiMS4gSWRlbnRpZmljYWNpw7NuIGRlbCBQcm95ZWN0byAmIEVzdHVkaWFudGUiLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7ImxlYXJuaW5nUGxhbkhlYWRlckNvbG9yIjoibmF2eSIsInNob3dPYmpldGl2b0dlbmVyYWwiOnRydWUsImFsbG93TXVsdGlwbGVFc3R1ZGlhbnRlcyI6dHJ1ZX19LHsiaWQiOiJibG9jay1wbGFuLTIiLCJ0eXBlIjoibGVhcm5pbmdfcGxhbl9wcmVyZXF1aXNpdGVzX3NlY3Rpb24iLCJ0aXRsZSI6IjIuIFByZXJyZXF1aXNpdG9zIFByZXZpb3MgKENvZ25pdGl2b3MgeSBQcm9jZWRpbWVudGFsZXMpIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJsZWFybmluZ1BsYW5IZWFkZXJDb2xvciI6Im5hdnkiLCJtaW5Db2duaXRpdm9zIjozLCJtaW5Qcm9jZWRpbWVudGFsZXMiOjV9fSx7ImlkIjoiYmxvY2stcGxhbi0zIiwidHlwZSI6ImxlYXJuaW5nX3BsYW5fYWN0aXZpdGllc19zZWN0aW9uIiwidGl0bGUiOiIzLiBQbGFuIGRlIEFwcmVuZGl6YWplIChBY3RpdmlkYWRlcyBBUEUpIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJsZWFybmluZ1BsYW5IZWFkZXJDb2xvciI6Im5hdnkiLCJzaG93SG9yYXNUcmFiYWpvIjp0cnVlLCJzaG93UmVzdWx0YWRvc0FwcmVuZGl6YWplIjp0cnVlfX0seyJpZCI6ImJsb2NrLXNpZ25hdHVyZXMtMTc4ODgxODIyODY5NyIsInR5cGUiOiJzaWduYXR1cmVzIiwidGl0bGUiOiJGaXJtYXMgZGUgUmVzcG9uc2FiaWxpZGFkIHkgVHJhemFiaWxpZGFkIiwiaXNBY3RpdmUiOnRydWUsImNvbmZpZyI6eyJzaWduYXRvcmllcyI6W3sibGFiZWwiOiJFbGFib3JhZG8gcG9yOiIsIm5hbWUiOiJJbmcuIHt7ZGlyZWN0b3JfcHJveWVjdG99fSIsInJvbGUiOiJEaXJlY3RvciBkZWwgUHJveWVjdG8ifSx7ImxhYmVsIjoiUmV2aXNhZG8gcG9yOiIsIm5hbWUiOiJNU2MuIENocmlzdGlhbiBDYXN0cm8iLCJyb2xlIjoiQ29vcmRpbmFkb3IgZGUgbGEgVW5pZGFkIGRlIEludmVzdGlnYWNpw7NuIn1dfX1d -->
 <style>
   * { box-sizing: border-box; }
   
   @page {
-      margin-top: 2cm;
-      margin-bottom: 2cm;
-      margin-left: 2cm;
-      margin-right: 2cm;
+      margin-top: {{default theme.layout.margin_top "2.5cm"}};
+      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
+      margin-left: {{default theme.layout.margin_left "2cm"}};
+      margin-right: {{default theme.layout.margin_right "2cm"}};
   }
 
-  .plan-container {
-      font-family: 'Geist', 'Segoe UI', Arial, sans-serif;
-      font-size: 9pt;
-      color: #1a202c;
-      line-height: 1.4;
+  /* Reset y Core del Documento con Tematización Dinámica */
+  .doc-container { 
+      font-family: {{ theme.typography.font_family }}; 
+      font-size: {{default theme.typography.base_size "10pt"}};
+      color: {{ theme.colors.text }}; 
+      line-height: {{ theme.typography.line_height }};
+      padding: 0; 
+      background: transparent; 
+  }
+  
+  /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
+  .doc-watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 210mm;
+      height: 0;
+      line-height: 0;
+      font-size: 0;
+      z-index: -1;
+      pointer-events: none;
+      {{#if theme.brand.background_image}}
+      background-image: url('{{ theme.brand.background_image }}');
+      background-size: {{default theme.brand.background_fit "contain"}};
+      background-position: center center;
+      background-repeat: no-repeat;
+      opacity: {{default theme.brand.background_opacity "0.12"}};
+      {{/if}}
+  }
+  
+  /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
+  .cover-page {
+      font-family: {{ theme.typography.font_family }};
+      position: relative;
+      width: 210mm;
+      height: 296.5mm;
+      min-height: 296.5mm;
+      max-height: 296.5mm;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      {{#if portada_base64}}
+      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      {{/if}}
+      color: {{ theme.colors.primary }};
+      z-index: 1000;
+      overflow: hidden;
+      page-break-inside: avoid;
+      page-break-after: always;
   }
 
-  .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
-  }
-
-  .header-table td {
-      border: 1px solid #1B365D;
-      padding: 6px 10px;
-      vertical-align: middle;
-  }
-
-  .doc-title-bar {
-      background-color: #1B365D;
-      color: #ffffff;
+  .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 3cm 2cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
+      justify-content: space-around;
+  }
+
+  .main-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 24pt;
       font-weight: bold;
+      color: {{ theme.colors.secondary }};
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0;
+      width: 100%;
+  }
+
+  .project-theme {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 16pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin: 1.5cm 0;
+      line-height: 1.3;
+      width: 100%;
+      word-wrap: break-word;
+  }
+
+  .career-container {
+      margin: 1cm 0;
+      text-align: center;
+      width: 100%;
+  }
+
+  .career-label {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: bold;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+  }
+
+  .career-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 12pt;
+      font-weight: normal;
+      color: {{ theme.colors.primary }};
+      text-transform: uppercase;
+      margin-top: 4px;
+  }
+
+  .period-container {
+      width: 100%;
+      margin-top: 1cm;
+      text-align: center;
+  }
+
+  .period-label {
+      font-family: {{ theme.typography.font_family }};
       font-size: 11pt;
-      padding: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 14px;
-      border: 1px solid #1B365D;
-  }
-
-  .section-header {
       font-weight: bold;
-      font-size: 9.5pt;
-      background-color: #f1f5f9;
-      color: #0f172a;
-      padding: 5px 8px;
-      border: 1px solid #94a3b8;
-      margin-top: 14px;
-      margin-bottom: 0;
       text-transform: uppercase;
+      color: {{ theme.colors.primary }};
   }
 
-  .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
+  .period-value {
+      font-family: {{ theme.typography.font_family }};
+      font-size: 11pt;
+      font-weight: normal;
+      text-transform: uppercase;
+      color: {{ theme.colors.primary }};
+      margin-top: 2px;
   }
 
-  .data-table td, .data-table th {
-      border: 1px solid #94a3b8;
-      padding: 5px 8px;
-      font-size: 8.5pt;
+  /* Títulos de sección */
+  .title-h1 { 
+      font-size: 16pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.primary "#222c57"}}; 
+      margin-top: 35px; 
+      text-transform: uppercase; 
   }
-
-  .data-table th {
-      background-color: #f8fafc;
-      font-weight: bold;
+  .title-h2 { 
+      font-size: 10pt; 
+      font-weight: 800; 
+      background: {{default theme.colors.table_header_bg "#222c57"}}; 
+      color: {{default theme.colors.table_header_color "#ffffff"}} !important; 
+      padding: 6px 12px; 
+      margin-top: 25px; 
+      text-transform: uppercase; 
+  }
+  .title-h3 { 
+      font-size: 9.5pt; 
+      font-weight: bold; 
+      color: {{default theme.colors.secondary "#c4a857"}}; 
+      margin-top: 15px; 
+      text-transform: uppercase; 
+  }
+  
+  /* Tablas generales compactas con bordes negros (formato premium original) */
+  .info-table, .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 12px; 
+      font-size: 9pt; 
+      background: #ffffff; 
+  }
+  .info-table td, .info-table th, .data-table td, .data-table th { 
+      border: 1px solid #000000; 
+      padding: 0 8px; 
+      height: 0.6cm;
+      vertical-align: middle; 
+      color: #000000;
+  }
+  .info-table th, .data-table th { 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
+      background: {{ theme.colors.table_header_bg }};
+      color: {{ theme.colors.table_header_color }};
       text-align: center;
   }
-
-  .label-cell {
-      background-color: #f8fafc;
-      font-weight: bold;
-      color: #334155;
-      width: 22%;
+  .label-cell { 
+      font-weight: bold; 
+      background: {{ theme.colors.table_header_bg }}; 
+      color: {{ theme.colors.table_header_color }};
+      width: 35%; 
+      text-transform: uppercase; 
+      font-size: 8.5pt; 
   }
-
-  .text-center { text-align: center; }
-  .text-right { text-align: right; }
-  .font-bold { font-weight: bold; }
-
-  .signature-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 40px;
+  
+  /* Texto enriquecido */
+  .rich-content { 
+      font-size: 9.5pt; 
+      text-align: justify; 
+      color: #000000; 
+      margin-top: 10px; 
+      line-height: 1.4; 
   }
-
-  .signature-table td {
-      border: none;
-      width: 50%;
-      text-align: center;
-      vertical-align: top;
-      padding: 0 20px;
-  }
-
-  .signature-line {
-      width: 80%;
-      margin: 0 auto 6px auto;
-      border-top: 1px solid #334155;
-  }
+  .rich-content p { margin: 6px 0; }
+  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
+  .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
+  .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
+  
+  /* Dos columnas */
+  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
+  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
+  
+  /* Salto de página */
+  .page-break { page-break-after: always; height: 0; }
+  
+  /* Firmas y Trazabilidad */
+  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
+  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+  .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
+  .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
 </style>
 
-<div class="plan-container">
-    <!-- Encabezado Institucional -->
-    <table class="header-table">
-        <tr>
-            <td style="width: 25%; text-align: center;">
-                <strong style="font-size: 13pt; color: #1B365D;">ISTPET</strong><br/>
-                <span style="font-size: 7.5pt; color: #64748b;">INSTITUTO TRAVERSARI</span>
-            </td>
-            <td style="width: 75%; text-align: center;">
-                <strong style="font-size: 11pt; color: #1B365D;">UNIDAD DE INVESTIGACIÓN</strong>
-            </td>
-        </tr>
+<div class="doc-container">
+  <!-- CABECERA INSTITUCIONAL ISTPET Y PLAN DE APRENDIZAJE -->
+  <div style="margin-top: 5px; page-break-inside: avoid; font-family: Arial, sans-serif;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+      <tr>
+        <td style="width: 28%; vertical-align: middle; text-align: left;">
+          {{#if theme.brand.logo_url}}
+            <img src="{{theme.brand.logo_url}}" style="max-height: 45px; max-width: 180px;" alt="ISTPET" />
+          {{else}}
+            <div style="font-size: 16pt; font-weight: bold; color: #222c57; letter-spacing: 1px;">ISTPET</div>
+            <div style="font-size: 6.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">INSTITUTO TRAVERSARI</div>
+          {{/if}}
+        </td>
+        <td style="width: 72%; text-align: center; vertical-align: middle;">
+          <div style="font-size: 13pt; font-weight: bold; color: #000000; letter-spacing: 0.5px; text-transform: uppercase;">
+            UNIDAD DE INVESTIGACIÓN
+          </div>
+        </td>
+      </tr>
     </table>
 
-    <div class="doc-title-bar">
-        INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #002060; color: #FFFFFF;">
+          <th colspan="6" style="padding: 6px 8px; text-align: center; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000; letter-spacing: 0.5px;">
+            PLAN DE APRENDIZAJE DE LOS ESTUDIANTES
+          </th>
+        </tr>
+        <tr style="background-color: #222c57; color: #ffffff;">
+          <th colspan="6" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            1. IDENTIFICACIÓN DEL PROYECTO
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="width: 22%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">NOMBRE DEL PROYECTO</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000; font-weight: bold;">{{default NombreProyecto Titulo title ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">LÍNEA DE INVESTIGACIÓN</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default LineaInvestigacion linea ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">SUBLÍNEA DE INVESTIGACIÓN</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default SublineaInvestigacion sublinea ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">CARRERA</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000;">{{default Carrera carrera ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">DIRECTOR DEL PROYECTO</td>
+          <td colspan="2" style="padding: 4px 6px; border: 1px solid #000000;">{{default DirectorProyecto director_proyecto ""}}</td>
+          <td colspan="2" style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000; font-size: 7.5pt;">NÚMERO DE ESTUDIANTES QUE PARTICIPAN EN EL PROYECTO DE INVESTIGACIÓN</td>
+          <td style="width: 10%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default NumeroEstudiantes "1"}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">FECHA DE APROBACIÓN</td>
+          <td style="width: 16%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default FechaAprobacion "N/A"}}</td>
+          <td style="width: 18%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">FECHA DE TERMINACIÓN</td>
+          <td style="width: 16%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default FechaTerminacion "N/A"}}</td>
+          <td style="width: 16%; font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">PERIODO ACADÉMICO</td>
+          <td style="width: 14%; padding: 4px 6px; border: 1px solid #000000; text-align: center;">{{default PeriodoAcademico periodo ""}}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background-color: #f8fafc; padding: 4px 6px; border: 1px solid #000000;">NOMBRE DEL ESTUDIANTE</td>
+          <td colspan="5" style="padding: 4px 6px; border: 1px solid #000000; font-weight: bold;">{{default NombreEstudiante "[ESTUDIANTE SELECCIONADO]"}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 10px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+        <thead>
+          <tr style="background-color: #222c57; color: #ffffff;">
+            <th style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+              2. OBJETIVO GENERAL DEL PROYECTO DE INVESTIGACIÓN
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 10px; border: 1px solid #000000; line-height: 1.4; color: #000000;">
+              {{{default ObjetivoGeneral objetivo_general "[Objetivo General no definido]"}}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-
-    <!-- 1. IDENTIFICACIÓN DEL PROYECTO -->
-    <div class="section-header">1. IDENTIFICACIÓN DEL PROYECTO</div>
-    <table class="data-table">
-        <tr>
-            <td class="label-cell">NOMBRE DEL PROYECTO</td>
-            <td colspan="3">{{default NombreProyecto TituloProyecto}}</td>
+  </div>
+  <!-- BLOQUE: 3. PRERREQUISITOS PREVIOS A LA VINCULACIÓN -->
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #222c57; color: #ffffff;">
+          <th colspan="2" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO
+          </th>
         </tr>
-        <tr>
-            <td class="label-cell">LÍNEA DE INVESTIGACIÓN</td>
-            <td colspan="3">{{LineaInvestigacion}}</td>
+        <tr style="background-color: #f8fafc; font-size: 7.2pt; color: #1e293b;">
+          <td colspan="2" style="padding: 5px 8px; border: 1px solid #000000; line-height: 1.35;">
+            <strong>Cognitivos:</strong> Conocimientos generales sobre el área de estudio, capacidad de análisis y síntesis, habilidades de investigación, conocimiento básico de la profesión, Comunicación oral y escrita, y pensamiento analítico (mínimo tres).<br/>
+            <strong>Procedimentales:</strong> Capacidad de trabajar en un equipo interdisciplinar, capacidad de aplicar los conocimientos en la práctica, capacidad de aprender, Capacidad crítica y autocrítica, compromiso ético, responsabilidad social y compromiso ciudadano, Capacidad para plantear, identificar y resolver problemas, y Capacidad para organizar y planificar el tiempo. (mínimo cinco)
+          </td>
         </tr>
-        <tr>
-            <td class="label-cell">SUBLÍNEA DE INVESTIGACIÓN</td>
-            <td colspan="3">{{SublineaInvestigacion}}</td>
+        <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+          <td style="width: 50%; padding: 4px; border: 1px solid #000000;">COGNITIVOS</td>
+          <td style="width: 50%; padding: 4px; border: 1px solid #000000;">PROCEDIMENTALES</td>
         </tr>
+      </thead>
+      <tbody>
         <tr>
-            <td class="label-cell">CARRERA</td>
-            <td colspan="3">{{Carrera}}</td>
+          <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
+            {{#if PrerrequisitosCognitivos}}
+              <ol style="margin: 0; padding-left: 16px;">
+                {{#each PrerrequisitosCognitivos}}
+                  <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
+                {{/each}}
+              </ol>
+            {{else}}
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Conocimientos generales sobre el área de estudio<br/>2. Capacidad de análisis y síntesis<br/>3. Habilidades de investigación</p>
+            {{/if}}
+          </td>
+          <td style="padding: 6px 8px; border: 1px solid #000000; vertical-align: top;">
+            {{#if PrerrequisitosProcedimentales}}
+              <ol style="margin: 0; padding-left: 16px;">
+                {{#each PrerrequisitosProcedimentales}}
+                  <li style="margin-bottom: 3px;">{{this.descripcion}}</li>
+                {{/each}}
+              </ol>
+            {{else}}
+              <p style="color: #94a3b8; font-style: italic; margin: 0;">1. Capacidad de trabajar en un equipo interdisciplinar<br/>2. Capacidad de aplicar los conocimientos en la práctica<br/>3. Capacidad de aprender<br/>4. Compromiso ético y responsabilidad social<br/>5. Capacidad para organizar y planificar el tiempo</p>
+            {{/if}}
+          </td>
         </tr>
-        <tr>
-            <td class="label-cell">DIRECTOR DEL PROYECTO</td>
-            <td>{{DirectorProyecto}}</td>
-            <td class="label-cell">N° ESTUDIANTES PARTICIPANTES</td>
-            <td>{{NumeroEstudiantes}}</td>
-        </tr>
-        <tr>
-            <td class="label-cell">FECHA DE APROBACIÓN</td>
-            <td>{{FechaAprobacion}}</td>
-            <td class="label-cell">PERIODO ACADÉMICO</td>
-            <td>{{PeriodoAcademico}}</td>
-        </tr>
-        <tr>
-            <td class="label-cell">NOMBRE DEL ESTUDIANTE</td>
-            <td colspan="3"><strong>{{NombreEstudiante}}</strong></td>
-        </tr>
+      </tbody>
     </table>
-
-    <!-- 2. PARÁMETROS DE EVALUACIÓN -->
-    <div class="section-header">2. PARÁMETROS DE EVALUACIÓN</div>
-    <p style="font-size: 8pt; color: #475569; margin: 4px 0 8px 0; text-align: justify;">
-        La evaluación de la participación del estudiante en el proyecto de investigación tiene un enfoque cualitativo y se centra en identificar los resultados de aprendizaje de las actividades que los estudiantes deben realizar en conjunto con las asignaturas asociadas.
-    </p>
-    <table class="data-table">
-        <tr>
-            <th style="width: 8%;">ESCALA</th>
-            <th style="width: 22%;">VALORACIÓN</th>
-            <th>DESCRIPCIÓN</th>
+  </div>
+  <!-- BLOQUE: 4. MATRIZ DEL PLAN DE APRENDIZAJE APE -->
+  <div style="margin-top: 10px; page-break-inside: avoid;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; font-family: Arial, sans-serif; border: 1.5px solid #000000;">
+      <thead>
+        <tr style="background-color: #222c57; color: #ffffff;">
+          <th colspan="8" style="padding: 5px 8px; text-align: left; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border: 1px solid #000000;">
+            4. PLAN DE APRENDIZAJE
+          </th>
         </tr>
-        <tr>
-            <td class="text-center font-bold">4</td>
-            <td class="font-bold" style="color: #059669;">MUY ADECUADO</td>
-            <td>El estudiante ha superado ampliamente las expectativas, mostrando un rendimiento excepcional en todas las actividades asignadas.</td>
+        <tr style="background-color: #f1f5f9; color: #000000; font-weight: bold; text-align: center; font-size: 7.2pt;">
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 17%;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">LÍNEA DE INVESTIGACIÓN</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 13%;">ASIGNATURA</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 15%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
+          <th colspan="3" style="padding: 3px; border: 1px solid #000000;">ACTIVIDADES A EJECUTAR</th>
+          <th rowspan="2" style="padding: 4px; border: 1px solid #000000; width: 10%;">OBSERVACIONES</th>
         </tr>
-        <tr>
-            <td class="text-center font-bold">3</td>
-            <td class="font-bold" style="color: #2563eb;">ADECUADO</td>
-            <td>El estudiante ha cumplido con las expectativas, mostrando un buen rendimiento en la mayoría de las actividades, con algunos aspectos a mejorar.</td>
+        <tr style="background-color: #f8fafc; color: #000000; font-weight: bold; text-align: center; font-size: 6.8pt;">
+          <th style="padding: 3px; border: 1px solid #000000; width: 18%;">ACTIVIDAD</th>
+          <th style="padding: 3px; border: 1px solid #000000; width: 7%;">FECHA</th>
+          <th style="padding: 3px; border: 1px solid #000000; width: 7%;">HORAS DE TRABAJO</th>
         </tr>
-        <tr>
-            <td class="text-center font-bold">2</td>
-            <td class="font-bold" style="color: #d97706;">POCO ADECUADO</td>
-            <td>El estudiante ha cumplido parcialmente con las expectativas, mostrando un rendimiento inconsistente y necesitando mejoras significativas.</td>
-        </tr>
-        <tr>
-            <td class="text-center font-bold">1</td>
-            <td class="font-bold" style="color: #dc2626;">NO ADECUADO</td>
-            <td>El estudiante no ha cumplido con las expectativas, mostrando un rendimiento insatisfactorio en la mayoría de las actividades.</td>
-        </tr>
-    </table>
-
-    <!-- 3. PRERREQUISITOS -->
-    <div class="section-header">3. PRERREQUISITOS QUE DEBE CUMPLIR EL ESTUDIANTE PREVIO A LA VINCULACIÓN AL PROYECTO</div>
-    <table class="data-table">
-        <tr>
-            <th rowspan="2" style="width: 32%;">COGNITIVOS</th>
-            <th colspan="4" style="width: 18%;">NIVEL DE CUMPLIMIENTO</th>
-            <th rowspan="2" style="width: 32%;">PROCEDIMENTALES</th>
-            <th colspan="4" style="width: 18%;">NIVEL DE CUMPLIMIENTO</th>
-        </tr>
-        <tr>
-            <th>4</th><th>3</th><th>2</th><th>1</th>
-            <th>4</th><th>3</th><th>2</th><th>1</th>
-        </tr>
-        {{#each PrerrequisitosFilas}}
-        <tr>
-            <td>{{this.cognitivoDesc}}</td>
-            <td class="text-center font-bold">{{#if this.cog4}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.cog3}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.cog2}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.cog1}}X{{/if}}</td>
-            <td>{{this.procedimentalDesc}}</td>
-            <td class="text-center font-bold">{{#if this.proc4}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.proc3}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.proc2}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.proc1}}X{{/if}}</td>
-        </tr>
-        {{/each}}
-    </table>
-
-    <!-- 4. PLAN DE APRENDIZAJE -->
-    <div class="section-header">4. PLAN DE APRENDIZAJE</div>
-    <table class="data-table">
-        <tr>
-            <th rowspan="2" style="width: 20%;">OBJETIVOS DEL PROYECTO DE INVESTIGACIÓN</th>
-            <th rowspan="2" style="width: 15%;">ASIGNATURA</th>
-            <th rowspan="2" style="width: 20%;">RESULTADOS DE APRENDIZAJE ASOCIADO</th>
-            <th colspan="2" style="width: 20%;">ACTIVIDAD EJECUTADA</th>
-            <th colspan="4" style="width: 15%;">NIVEL DE CUMPLIMIENTO</th>
-            <th rowspan="2" style="width: 10%;">OBSERVACIONES</th>
-        </tr>
-        <tr>
-            <th>ACTIVIDAD</th>
-            <th>FECHA</th>
-            <th>4</th><th>3</th><th>2</th><th>1</th>
-        </tr>
-        {{#each ActividadesPlanFilas}}
-        <tr>
-            <td>{{this.objetivoProyecto}}</td>
-            <td>{{this.asignatura}}</td>
-            <td>{{this.resultadoAprendizaje}}</td>
-            <td>{{this.actividad}}</td>
-            <td class="text-center">{{this.fecha}}</td>
-            <td class="text-center font-bold">{{#if this.lvl4}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.lvl3}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.lvl2}}X{{/if}}</td>
-            <td class="text-center font-bold">{{#if this.lvl1}}X{{/if}}</td>
-            <td>{{this.observaciones}}</td>
-        </tr>
-        {{/each}}
-    </table>
-
-    <!-- 5. RESULTADOS GENERALES -->
-    <div class="section-header">5. RESULTADOS GENERALES</div>
-    <table class="data-table" style="width: 50%;">
-        <tr>
-            <td class="label-cell">COGNITIVOS</td>
-            <td class="text-center font-bold">{{PromedioCognitivos}}</td>
-        </tr>
-        <tr>
-            <td class="label-cell">PROCEDIMENTALES</td>
-            <td class="text-center font-bold">{{PromedioProcedimentales}}</td>
-        </tr>
-        <tr>
-            <td class="label-cell">ACTIVIDADES DE APRENDIZAJE</td>
-            <td class="text-center font-bold">{{PromedioActividades}}</td>
-        </tr>
-    </table>
-
-    <!-- 6. FIRMAS DE RESPONSABILIDAD -->
-    <table class="signature-table">
-        <tr>
-            <td>
-                <p style="font-size: 8pt; color: #64748b; margin-bottom: 35px;">Elaborado por:</p>
-                <div class="signature-line"></div>
-                <strong>{{default FirmasResponsabilidad.DirectorNombre DirectorProyecto}}</strong><br/>
-                <span style="font-size: 8pt; color: #64748b;">Director del Proyecto</span>
+      </thead>
+      <tbody>
+        {{#if ActividadesPlan}}
+          {{#each ActividadesPlan}}
+            <tr style="color: #000000;">
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.objetivoProyecto}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.lineaInvestigacion}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.asignatura}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.resultadoAprendizaje}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.actividad}}</td>
+              <td style="padding: 4px; border: 1px solid #000000; text-align: center;">{{this.fecha}}</td>
+              <td style="padding: 4px; border: 1px solid #000000; text-align: center; font-weight: bold;">{{this.horasTrabajo}}</td>
+              <td style="padding: 4px; border: 1px solid #000000;">{{this.observaciones}}</td>
+            </tr>
+          {{/each}}
+        {{else}}
+          <tr>
+            <td colspan="8" style="padding: 8px; text-align: center; color: #94a3b8; font-style: italic; border: 1px solid #000000;">
+              No se han registrado actividades del plan de aprendizaje aún.
             </td>
-            <td>
-                <p style="font-size: 8pt; color: #64748b; margin-bottom: 35px;">Revisado por:</p>
-                <div class="signature-line"></div>
-                <strong>{{default FirmasResponsabilidad.CoordinadorNombre "MSc. Christian Castro"}}</strong><br/>
-                <span style="font-size: 8pt; color: #64748b;">Coordinador de la Unidad de Investigación</span>
-            </td>
-        </tr>
+          </tr>
+        {{/if}}
+      </tbody>
     </table>
+  </div>
+  <!-- BLOQUE: FIRMAS DE RESPONSABILIDAD Y TRAZABILIDAD DINÁMICAS -->
+  <table style="width: 100%; border-collapse: collapse; margin-top: 40px; border: none; page-break-inside: avoid;">
+    <tbody>
+      <tr>
+        
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">DIRECTOR DEL PROYECTO</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default director_proyecto DirectorProyecto }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Director de Proyecto</div>
+        </td>
+        {{#each investigadores}}
+          {{#if (and (not (eq this.rol "DIRECTOR")) (not (eq this.rol "ESTUDIANTE")) (not (eq this.rol "AUXILIAR")))}}
+          <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+            <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+            <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">DOCENTE INVESTIGADOR</div>
+            <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default this.nombre this.Nombre }}</div>
+            <div style="color: #64748b; font-size: 8.5pt;">{{ default this.carrera this.Carrera "Docente Investigador" }}</div>
+          </td>
+          {{/if}}
+        {{/each}}
+        <td style="vertical-align: top; text-align: center; padding: 15px; border: none;">
+          <div style="border-top: 1px solid #000000; width: 85%; margin: 0 auto 6px auto;"></div>
+          <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 4px;">COORDINACIÓN DE CARRERA</div>
+          <div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 25px;">{{ default coordinador_carrera CoordinadorCarrera "[Coordinador de Carrera]" }}</div>
+          <div style="color: #64748b; font-size: 8.5pt;">Coordinador de Carrera</div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

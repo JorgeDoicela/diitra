@@ -33,10 +33,12 @@ interface PrerrequisitoItem {
 interface ActividadPlanItem {
     id: string;
     objetivoProyecto: string;
+    lineaInvestigacion?: string;
     asignatura: string;
     resultadoAprendizaje: string;
     actividad: string;
     fecha: string;
+    horas?: number | string;
     nivel: 1 | 2 | 3 | 4 | null;
     observaciones: string;
 }
@@ -75,10 +77,12 @@ const DEFAULT_PROCEDIMENTALES: PrerrequisitoItem[] = [
 const DEFAULT_ACTIVIDAD: ActividadPlanItem = {
     id: 'act_1',
     objetivoProyecto: '',
+    lineaInvestigacion: '',
     asignatura: '',
     resultadoAprendizaje: '',
     actividad: '',
     fecha: '',
+    horas: '40',
     nivel: 3,
     observaciones: ''
 };
@@ -96,6 +100,15 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
     const effectiveReadOnly = readOnly || blockReadOnly || cowork.session.readOnly;
     const isEvaluationMode = templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || formData?.isEvaluationMode === true;
     const estadoAprobacion = formData.EstadoAprobacion || 'Pendiente';
+
+    // Toggles de configuración del bloque / plantilla
+    const minCog = formData.minCognitivos ?? 3;
+    const minProc = formData.minProcedimentales ?? 5;
+    const showLinea = formData.showLineaInvestigacion !== false;
+    const showRda = formData.showResultadosAprendizaje !== false;
+    const showHoras = formData.showHorasTrabajo !== false;
+    const showObs = formData.showObservaciones !== false;
+    const showObj = formData.showObjetivoGeneral !== false;
 
     // Control de visibilidad por pestaña desacoplada / navegación de secciones
     const isAll = !activeTab || activeTab === 'plan_aprendizaje' || activeTab === 'evaluacion_plan_aprendizaje';
@@ -268,10 +281,12 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
         currentActs.push({
             id: `act_${Date.now()}`,
             objetivoProyecto: '',
+            lineaInvestigacion: '',
             asignatura: '',
             resultadoAprendizaje: '',
             actividad: '',
             fecha: '',
+            horas: '40',
             nivel: 3,
             observaciones: ''
         });
@@ -586,6 +601,20 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                             className="input-vercel text-xs w-full font-semibold border-brand/40 focus:border-brand"
                         />
                     </div>
+
+                    {showObj && (
+                        <div className="md:col-span-2 lg:col-span-3 space-y-1.5 pt-2">
+                            <label className="section-label">Objetivo General del Proyecto de Investigación</label>
+                            <textarea
+                                rows={2}
+                                value={formData.ObjetivoGeneral || formData.objetivo_general || ''}
+                                disabled={effectiveReadOnly || isEvaluationMode}
+                                onChange={(e) => onUpdate?.('ObjetivoGeneral', e.target.value)}
+                                placeholder="Objetivo general del proyecto articulado con la formación práctica (APE)..."
+                                className="input-vercel text-xs w-full font-medium resize-y"
+                            />
+                        </div>
+                    )}
                 </div>
             </section>
             )}
@@ -657,7 +686,16 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                     {/* Columna Cognitivos */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <span className="section-label">Prerrequisitos Cognitivos</span>
+                            <div className="flex items-center gap-2">
+                                <span className="section-label">Prerrequisitos Cognitivos</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                                    activeEstudiante.prerrequisitosCognitivos.length >= minCog
+                                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                }`}>
+                                    {activeEstudiante.prerrequisitosCognitivos.length} / mín. {minCog}
+                                </span>
+                            </div>
                             {!effectiveReadOnly && !isEvaluationMode && (
                                 <button
                                     type="button"
@@ -721,7 +759,16 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                     {/* Columna Procedimentales */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <span className="section-label">Prerrequisitos Procedimentales</span>
+                            <div className="flex items-center gap-2">
+                                <span className="section-label">Prerrequisitos Procedimentales</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                                    activeEstudiante.prerrequisitosProcedimentales.length >= minProc
+                                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                }`}>
+                                    {activeEstudiante.prerrequisitosProcedimentales.length} / mín. {minProc}
+                                </span>
+                            </div>
                             {!effectiveReadOnly && !isEvaluationMode && (
                                 <button
                                     type="button"
@@ -834,6 +881,20 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                                     />
                                 </div>
 
+                                {showLinea && (
+                                    <div className="space-y-1.5">
+                                        <label className="section-label">Línea de Investigación</label>
+                                        <input
+                                            type="text"
+                                            value={act.lineaInvestigacion || ''}
+                                            disabled={effectiveReadOnly || isEvaluationMode}
+                                            onChange={(e) => handleUpdateActividad(idx, 'lineaInvestigacion', e.target.value)}
+                                            placeholder="Línea temática asociada..."
+                                            className="input-vercel text-xs w-full"
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="space-y-1.5">
                                     <label className="section-label">Asignatura</label>
                                     <input
@@ -846,17 +907,19 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                                     />
                                 </div>
 
-                                <div className="space-y-1.5">
-                                    <label className="section-label">Resultados de Aprendizaje (RdA)</label>
-                                    <textarea
-                                        rows={2}
-                                        value={act.resultadoAprendizaje}
-                                        disabled={effectiveReadOnly || isEvaluationMode}
-                                        onChange={(e) => handleUpdateActividad(idx, 'resultadoAprendizaje', e.target.value)}
-                                        placeholder="RdA a verificar..."
-                                        className="input-vercel text-xs w-full resize-none custom-scrollbar"
-                                    />
-                                </div>
+                                {showRda && (
+                                    <div className="space-y-1.5">
+                                        <label className="section-label">Resultados de Aprendizaje (RdA)</label>
+                                        <textarea
+                                            rows={2}
+                                            value={act.resultadoAprendizaje}
+                                            disabled={effectiveReadOnly || isEvaluationMode}
+                                            onChange={(e) => handleUpdateActividad(idx, 'resultadoAprendizaje', e.target.value)}
+                                            placeholder="RdA a verificar..."
+                                            className="input-vercel text-xs w-full resize-none custom-scrollbar"
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="md:col-span-2 space-y-1.5">
                                     <label className="section-label">Actividad Planificada / Ejecutada</label>
@@ -879,6 +942,35 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                                         placeholder="dd/mm/aaaa"
                                     />
                                 </div>
+
+                                {showHoras && !isEvaluationMode && (
+                                    <div className="space-y-1.5">
+                                        <label className="section-label">Horas de Trabajo</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={act.horas || ''}
+                                            disabled={effectiveReadOnly || isEvaluationMode}
+                                            onChange={(e) => handleUpdateActividad(idx, 'horas', e.target.value)}
+                                            placeholder="Ej: 40"
+                                            className="input-vercel text-xs w-full font-mono"
+                                        />
+                                    </div>
+                                )}
+
+                                {showObs && !isEvaluationMode && (
+                                    <div className="col-span-full space-y-1.5">
+                                        <label className="section-label">Observaciones</label>
+                                        <input
+                                            type="text"
+                                            value={act.observaciones || ''}
+                                            disabled={effectiveReadOnly}
+                                            onChange={(e) => handleUpdateActividad(idx, 'observaciones', e.target.value)}
+                                            placeholder="Observaciones o directrices adicionales..."
+                                            className="input-vercel text-xs w-full"
+                                        />
+                                    </div>
+                                )}
 
                                 {isEvaluationMode && (
                                     <>

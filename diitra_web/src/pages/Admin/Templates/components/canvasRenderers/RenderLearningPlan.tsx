@@ -143,6 +143,8 @@ export const RenderLearningPlanPrerequisitesSection: React.FC<{
     const headerColorMode = c.learningPlanHeaderColor || 'navy';
     const headerPair = getHeaderStylePair(headerColorMode);
     const isEvaluacion = c.learningPlanMode === 'evaluacion';
+    const minCog = c.minCognitivos ?? 3;
+    const minProc = c.minProcedimentales ?? 5;
 
     return (
         <div className="w-full text-slate-900 font-sans my-2">
@@ -162,9 +164,9 @@ export const RenderLearningPlanPrerequisitesSection: React.FC<{
                         <table className="w-full text-left text-[9px] bg-white border-collapse">
                             <thead>
                                 <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-center">
-                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '28%' }}>COGNITIVOS</th>
+                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '28%' }}>COGNITIVOS (Mín. {minCog})</th>
                                     <th className="p-1 border-r border-slate-300" colSpan={4} style={{ width: '22%' }}>NIVEL DE CUMPLIMIENTO</th>
-                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '28%' }}>PROCEDIMENTALES</th>
+                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '28%' }}>PROCEDIMENTALES (Mín. {minProc})</th>
                                     <th className="p-1" colSpan={4} style={{ width: '22%' }}>NIVEL DE CUMPLIMIENTO</th>
                                 </tr>
                                 <tr className="bg-slate-50 text-[8px] text-slate-600 font-semibold border-b border-slate-300 text-center">
@@ -200,7 +202,7 @@ export const RenderLearningPlanPrerequisitesSection: React.FC<{
                     <div className="grid grid-cols-2 divide-x divide-slate-200 bg-white text-[10px]">
                         <div className="p-2 space-y-1.5">
                             <div className="font-bold text-[9px] text-slate-700 uppercase tracking-wider text-center bg-slate-100 py-1 rounded">
-                                COGNITIVOS (Mín. 3)
+                                COGNITIVOS (Mín. {minCog})
                             </div>
                             <div className="p-1.5 border border-dashed border-slate-200 rounded text-slate-500 italic">
                                 1. Conocimientos fundamentales en el área temática
@@ -212,7 +214,7 @@ export const RenderLearningPlanPrerequisitesSection: React.FC<{
 
                         <div className="p-2 space-y-1.5">
                             <div className="font-bold text-[9px] text-slate-700 uppercase tracking-wider text-center bg-slate-100 py-1 rounded">
-                                PROCEDIMENTALES (Mín. 5)
+                                PROCEDIMENTALES (Mín. {minProc})
                             </div>
                             <div className="p-1.5 border border-dashed border-slate-200 rounded text-slate-500 italic">
                                 1. Trabajo colaborativo interdisciplinar
@@ -237,6 +239,10 @@ export const RenderLearningPlanActivitiesSection: React.FC<{
     const headerColorMode = c.learningPlanHeaderColor || 'navy';
     const headerPair = getHeaderStylePair(headerColorMode);
     const isEvaluacion = c.learningPlanMode === 'evaluacion';
+    const showLinea = c.showLineaInvestigacion !== false;
+    const showRda = c.showResultadosAprendizaje !== false;
+    const showHoras = c.showHorasTrabajo !== false;
+    const showObs = c.showObservaciones !== false;
 
     return (
         <div className="w-full text-slate-900 font-sans my-2">
@@ -256,38 +262,38 @@ export const RenderLearningPlanActivitiesSection: React.FC<{
                         <table className="w-full text-left text-[9px] bg-white border-collapse">
                             <thead>
                                 <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-center">
-                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '20%' }}>OBJETIVOS DEL PROYECTO</th>
+                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '22%' }}>OBJETIVOS DEL PROYECTO</th>
                                     <th className="p-2 border-r border-slate-300 text-left" style={{ width: '14%' }}>ASIGNATURA</th>
-                                    <th className="p-2 border-r border-slate-300 text-left" style={{ width: '16%' }}>RdA ASOCIADO</th>
+                                    {showRda && <th className="p-2 border-r border-slate-300 text-left" style={{ width: '16%' }}>RdA ASOCIADO</th>}
                                     <th className="p-1 border-r border-slate-300" colSpan={2} style={{ width: '22%' }}>ACTIVIDAD EJECUTADA</th>
                                     <th className="p-1 border-r border-slate-300" colSpan={4} style={{ width: '16%' }}>NIVEL DE CUMPLIMIENTO</th>
-                                    <th className="p-2 text-left" style={{ width: '12%' }}>OBSERVACIONES</th>
+                                    {showObs && <th className="p-2 text-left" style={{ width: '12%' }}>OBSERVACIONES</th>}
                                 </tr>
                                 <tr className="bg-slate-50 text-[8px] text-slate-600 font-semibold border-b border-slate-300 text-center">
                                     <th className="border-r border-slate-300"></th>
                                     <th className="border-r border-slate-300"></th>
-                                    <th className="border-r border-slate-300"></th>
+                                    {showRda && <th className="border-r border-slate-300"></th>}
                                     <th className="p-1 border-r border-slate-200">ACTIVIDAD</th>
                                     <th className="p-1 border-r border-slate-300">FECHA</th>
                                     <th className="p-1 border-r border-slate-200">MUY (4)</th>
                                     <th className="p-1 border-r border-slate-200">ADEC (3)</th>
                                     <th className="p-1 border-r border-slate-200">POCO (2)</th>
                                     <th className="p-1 border-r border-slate-300">NO (1)</th>
-                                    <th></th>
+                                    {showObs && <th></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 text-slate-700 font-mono text-[8.5px]">
                                 <tr>
                                     <td className="p-1.5 border-r border-slate-200 italic">[Obj. Específico 1]</td>
                                     <td className="p-1.5 border-r border-slate-200 font-sans font-medium">[Asignatura]</td>
-                                    <td className="p-1.5 border-r border-slate-200 italic">[RdA Vinculado]</td>
+                                    {showRda && <td className="p-1.5 border-r border-slate-200 italic">[RdA Vinculado]</td>}
                                     <td className="p-1.5 border-r border-slate-200 font-sans">[Tarea ejecutada]</td>
                                     <td className="p-1.5 border-r border-slate-200 text-center">[DD/MM/AA]</td>
                                     <td className="p-1 border-r border-slate-200 text-center font-bold text-emerald-600">X</td>
                                     <td className="p-1 border-r border-slate-200 text-center text-slate-300">-</td>
                                     <td className="p-1 border-r border-slate-200 text-center text-slate-300">-</td>
                                     <td className="p-1 border-r border-slate-300 text-center text-slate-300">-</td>
-                                    <td className="p-1.5 italic font-sans">[Cumplió a cabalidad]</td>
+                                    {showObs && <td className="p-1.5 italic font-sans">[Cumplió a cabalidad]</td>}
                                 </tr>
                             </tbody>
                         </table>
@@ -296,25 +302,25 @@ export const RenderLearningPlanActivitiesSection: React.FC<{
                             <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[9px]">
                                 <tr>
                                     <th className="p-2 border-r border-slate-300">Objetivo del Proyecto</th>
-                                    <th className="p-2 border-r border-slate-300">Línea</th>
+                                    {showLinea && <th className="p-2 border-r border-slate-300">Línea</th>}
                                     <th className="p-2 border-r border-slate-300">Asignatura</th>
-                                    <th className="p-2 border-r border-slate-300">RdA Asociado</th>
+                                    {showRda && <th className="p-2 border-r border-slate-300">RdA Asociado</th>}
                                     <th className="p-2 border-r border-slate-300">Actividad</th>
                                     <th className="p-2 border-r border-slate-300">Fecha</th>
-                                    <th className="p-2 border-r border-slate-300">Horas</th>
-                                    <th className="p-2">Observaciones</th>
+                                    {showHoras && <th className="p-2 border-r border-slate-300">Horas</th>}
+                                    {showObs && <th className="p-2">Observaciones</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 text-slate-600 font-mono text-[8.5px]">
                                 <tr>
                                     <td className="p-2 border-r border-slate-200 italic">[Obj. Específico 1]</td>
-                                    <td className="p-2 border-r border-slate-200 italic">[Línea 1]</td>
+                                    {showLinea && <td className="p-2 border-r border-slate-200 italic">[Línea 1]</td>}
                                     <td className="p-2 border-r border-slate-200 font-sans font-medium">[Asignatura]</td>
-                                    <td className="p-2 border-r border-slate-200 italic">[RdA Vinculado]</td>
+                                    {showRda && <td className="p-2 border-r border-slate-200 italic">[RdA Vinculado]</td>}
                                     <td className="p-2 border-r border-slate-200 font-sans">[Actividad APE]</td>
                                     <td className="p-2 border-r border-slate-200">[DD/MM/AAAA]</td>
-                                    <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-900">40h</td>
-                                    <td className="p-2 italic">[Observaciones]</td>
+                                    {showHoras && <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-900">40h</td>}
+                                    {showObs && <td className="p-2 italic">[Observaciones]</td>}
                                 </tr>
                             </tbody>
                         </table>

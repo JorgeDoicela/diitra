@@ -636,10 +636,34 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
+                                    <div className="grid grid-cols-2 gap-3 pt-1">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Mínimo Cognitivos</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={20}
+                                                value={activeBlock.config.minCognitivos ?? 3}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'minCognitivos', parseInt(e.target.value, 10) || 1)}
+                                                className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main font-mono"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Mínimo Procedimentales</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={20}
+                                                value={activeBlock.config.minProcedimentales ?? 5}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'minProcedimentales', parseInt(e.target.value, 10) || 1)}
+                                                className="w-full text-xs p-2 bg-bg-main border border-border-thin rounded-lg text-text-main font-mono"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
                                         <p className="font-bold text-teal-600 dark:text-teal-400">Reglas CACES / ISTPET:</p>
-                                        <p>• Mínimo 3 prerrequisitos Cognitivos requeridos.</p>
-                                        <p>• Mínimo 5 prerrequisitos Procedimentales requeridos.</p>
+                                        <p>• Mínimo {activeBlock.config.minCognitivos ?? 3} prerrequisitos Cognitivos requeridos.</p>
+                                        <p>• Mínimo {activeBlock.config.minProcedimentales ?? 5} prerrequisitos Procedimentales requeridos.</p>
                                     </div>
                                 </div>
                             )}
@@ -662,6 +686,49 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         value={activeBlock.config.learningPlanHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'learningPlanHeaderColor', val)}
                                     />
+                                    <div className="space-y-2 border-t border-border-thin/20 pt-3">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block mb-1">Columnas Visibles en la Matriz</label>
+                                        
+                                        <div className="flex items-center justify-between py-1">
+                                            <span className="text-xs text-text-main">Mostrar Línea de Investigación</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.showLineaInvestigacion !== false}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'showLineaInvestigacion', e.target.checked)}
+                                                className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between py-1">
+                                            <span className="text-xs text-text-main">Mostrar Resultados de Aprendizaje (RdA)</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.showResultadosAprendizaje !== false}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'showResultadosAprendizaje', e.target.checked)}
+                                                className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between py-1">
+                                            <span className="text-xs text-text-main">Mostrar Horas de Trabajo</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.showHorasTrabajo !== false}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'showHorasTrabajo', e.target.checked)}
+                                                className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between py-1">
+                                            <span className="text-xs text-text-main">Mostrar Observaciones</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={activeBlock.config.showObservaciones !== false}
+                                                onChange={(e) => onUpdateConfig(activeBlock.id, 'showObservaciones', e.target.checked)}
+                                                className="rounded border-border-thin text-brand focus:ring-0 cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-text-dim space-y-1">
                                         <p className="font-bold text-blue-600 dark:text-blue-400">Matriz APE:</p>
                                         <p>Articula cada actividad con los Resultados de Aprendizaje (RdA), horas o nivel de desempeño cualitativo.</p>

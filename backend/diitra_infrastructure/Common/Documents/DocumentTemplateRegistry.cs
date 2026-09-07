@@ -66,7 +66,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"NumeroEstudiantes\", \"FechaAprobacion\", \"FechaTerminacion\", \"PeriodoAcademico\", \"NombreEstudiante\", \"ObjetivoGeneral\", \"PrerrequisitosCognitivos\", \"PrerrequisitosProcedimentales\", \"ActividadesPlan\", \"FirmasResponsabilidad\"]",
-                version: 200);
+                version: 201);
 
             // 4. INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE (REVISIÓN ADMINISTRADOR)
             yield return DocumentTemplate.Create(
