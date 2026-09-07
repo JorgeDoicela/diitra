@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, UserPlus, Trash2, ShieldCheck, Clock, Award, AlertCircle, X, ChevronRight } from 'lucide-react';
+import { Users, UserPlus, Trash2, ShieldCheck, Award, AlertCircle, ChevronRight } from 'lucide-react';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { MemberSearchSelector, type SelectedMemberResult, formatNombre } from '../../Common/MemberSearchSelector';
 
@@ -25,7 +25,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
     onUpdate,
     onUpdateItem,
     readOnly = false,
-    carreras = [],
+    carreras: _carreras = [],
     investigadoresReales = []
 }) => {
     const isAssociative = formData?.GrupoInvestigacionTipo === 'SI';

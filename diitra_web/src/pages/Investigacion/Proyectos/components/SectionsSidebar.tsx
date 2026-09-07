@@ -2,7 +2,6 @@ import React from 'react';
 import {
     ChevronLeft,
     BookOpen,
-    MessageSquare,
     CheckCircle2,
     AlertCircle,
     FileText,
@@ -61,7 +60,7 @@ export const SectionsSidebar: React.FC<SectionsSidebarProps> = ({
     comments,
     templateBlocks,
     templateSections,
-    onOpenFinalizeModal
+    onOpenFinalizeModal: _onOpenFinalizeModal
 }) => {
     const getSectionCommentsCount = (secId: string): number => {
         let keys: string[] = [secId];

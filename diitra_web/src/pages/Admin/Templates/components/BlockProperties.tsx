@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Palette, Layout, Plus, Trash2, Image as ImageIcon, Type, Sparkles, Upload } from 'lucide-react';
+import { Settings, Palette, Plus, Trash2 } from 'lucide-react';
 import { type DocumentBlock, type DocumentTemplateDto, BLOCK_METADATA } from '../types';
 import { ColorPickerField } from './properties/SharedColorPicker';
 import { RichTextEditor } from './properties/RichTextEditor';
@@ -30,13 +30,6 @@ interface BlockPropertiesProps {
     onUpdateThemeConfig: (newThemeJson: string) => void;
     headerCollapsed?: boolean;
 }
-
-const HEADER_STYLE_OPTIONS = [
-    { value: 'blue', label: 'Azul Institucional' },
-    { value: 'gold', label: 'Dorado Acreditación' },
-    { value: 'gray', label: 'Gris Neutro' },
-    { value: 'none', label: 'Sin fondo de encabezado' },
-] as const;
 
 const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <div className="space-y-1.5">

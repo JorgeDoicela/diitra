@@ -418,6 +418,7 @@ export interface DocumentBlock {
 
         // ── project_technical_section ──────────────────────────────────────
         technicalSections?: TechnicalSubsection[];
+        technicalLayoutMode?: 'table_2col' | 'stacked' | string;
         technicalHeaderColor?: 'navy' | 'gold' | 'slate' | 'emerald' | string;
         technicalBorderStyle?: 'solid' | 'none' | string;
         showAntecedentes?: boolean;

@@ -3,13 +3,11 @@ import { ArrowUp, ArrowDown, Pencil, EyeOff, Plus, Check, X, Columns, RotateCcw 
 import type {
     ProgressHeaderField,
     ProgressActivityColumn,
-    ProgressStatusSubsection,
     ProgressActivityVariant
 } from '../../types';
 import {
     DEFAULT_PROGRESS_HEADER_FIELDS,
-    DEFAULT_ACTIVITY_COLUMNS,
-    DEFAULT_PROGRESS_STATUS_SUBSECTIONS
+    DEFAULT_ACTIVITY_COLUMNS
 } from '../../types';
 import { getHeaderStylePair } from './RenderCover';
 
@@ -79,6 +77,7 @@ export const RenderProgressHeaderSection: React.FC<{
             fieldKey: `custom_${Date.now()}`,
             enabled: true,
             colSpan: 1,
+            fieldType: 'text',
             readOnly: false,
             placeholder: 'Redactar información...'
         };
@@ -255,7 +254,7 @@ export const RenderProgressActivitySection: React.FC<{
     config: any;
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
-}> = ({ config, blockId, onUpdateConfig }) => {
+}> = ({ config }) => {
     const c = config || {};
     const variant: ProgressActivityVariant = c.activityVariant || 'ejecutadas';
     const rawColumns: ProgressActivityColumn[] = (c.activityColumns && Array.isArray(c.activityColumns) && c.activityColumns.length > 0)
@@ -735,8 +734,6 @@ export const RenderFinalReportHeaderSection: React.FC<{
 }> = ({ config, blockId, onUpdateConfig }) => {
     const c = config || {};
     const title = c.finalReportTitle || 'DATOS DEL PROYECTO DE INVESTIGACIÓN';
-    const headerColorKey = c.finalReportHeaderColor || 'navy';
-    const headerBg = headerColorKey === 'gold' ? '#c4a857' : headerColorKey === 'slate' ? '#334155' : '#222c57';
 
     const handleToggle = (key: string, currentVal: boolean = true) => {
         if (!onUpdateConfig || !blockId) return;

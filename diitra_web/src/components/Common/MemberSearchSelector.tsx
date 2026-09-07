@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2, Layers, RotateCcw } from 'lucide-react';
+import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircle, Loader2, RotateCcw } from 'lucide-react';
 import api from '../../api/axios_config';
 
 export interface SelectedMemberResult {
