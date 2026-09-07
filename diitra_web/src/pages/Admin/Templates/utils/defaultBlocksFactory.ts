@@ -350,7 +350,7 @@ export function generateDefaultBlocksForTemplate(
                 title: '7. CRONOGRAMA DE ACTIVIDADES',
                 isActive: true,
                 config: {
-                    ganttMonths: ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'],
+                    ganttMonths: ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Feb'],
                     ganttObjectives: [
                         {
                             id: `obj-${Date.now()}`,

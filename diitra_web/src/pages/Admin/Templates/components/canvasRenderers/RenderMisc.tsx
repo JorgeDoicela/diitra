@@ -288,24 +288,32 @@ export const RenderGantt: React.FC<{
 }> = ({ config, title, blockId, onUpdateConfig }) => {
     const c = config || {};
     const displayTitle = c.title || title || '7.  CRONOGRAMA DE ACTIVIDADES';
-    const totalMonths = c.totalMonths || 6;
-    const months = c.months || c.ganttMonths || ['Mes 1', 'Mes 2', 'Mes 3', 'Mes 4', 'Mes 5', 'Mes 6'].slice(0, totalMonths);
+    const totalMonths = c.totalMonths || 12;
+    const months = c.months || c.ganttMonths || [
+        'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+        'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Feb'
+    ].slice(0, totalMonths);
+
     const objectives: GanttObjective[] = c.objectives || c.ganttObjectives || [
         {
-            name: 'Objetivo 1: Diagnóstico y Fundamentación',
+            id: 'obj-default-1',
+            name: 'OBJETIVO N° 1',
             activities: [
-                { id: '1', name: 'Revisión sistemática de literatura', resources: 'Laptop, Papers IEEE/Scopus', startMonth: 0, startWeek: 0, endMonth: 1, endWeek: 2, color: '#3b82f6' },
-                { id: '2', name: 'Diseño de instrumentos metodológicos', resources: 'Encuestas, Guías de entrevista', startMonth: 1, startWeek: 1, endMonth: 2, endWeek: 3, color: '#6366f1' },
-            ]
-        },
-        {
-            name: 'Objetivo 2: Desarrollo y Experimentación',
-            activities: [
-                { id: '3', name: 'Implementación del prototipo / modelo', resources: 'Servidor, Entorno de pruebas', startMonth: 2, startWeek: 0, endMonth: 4, endWeek: 2, color: '#10b981' },
-                { id: '4', name: 'Pruebas de validación y métricas', resources: 'Población objetivo, Software estadístico', startMonth: 4, startWeek: 1, endMonth: 5, endWeek: 3, color: '#f59e0b' },
+                { id: '1', name: 'Especificar la actividad', resources: '', startMonth: 0, startWeek: 0, endMonth: 1, endWeek: 3, color: '#60a5fa' },
+                { id: '2', name: 'Especificar la actividad', resources: '', startMonth: 2, startWeek: 0, endMonth: 3, endWeek: 3, color: '#f97316' },
             ]
         }
     ];
+
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [titleText, setTitleText] = useState(displayTitle);
+
+    const handleSaveTitle = () => {
+        setIsEditingTitle(false);
+        if (onUpdateConfig && blockId) {
+            onUpdateConfig(blockId, 'title', titleText);
+        }
+    };
 
     const isInRange = (startMonth: number, startWeek: number, endMonth: number, endWeek: number, mIdx: number, wIdx: number): boolean => {
         const startGlobal = startMonth * 4 + startWeek;
@@ -315,72 +323,183 @@ export const RenderGantt: React.FC<{
     };
 
     return (
-        <div className="my-2 select-none">
-            {displayTitle && (
-                <div className="mb-2 ml-7 sm:ml-8">
-                    <p className="font-bold text-[10pt] uppercase tracking-wide font-sans text-[#222c57]">
-                        {displayTitle}
-                    </p>
-                </div>
-            )}
-            <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                <table className="w-full border-collapse text-[9px] min-w-[700px]">
-                <thead>
-                    <tr>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Objetivos</th>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>N°</th>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Actividades</th>
-                        <th className="border border-slate-300 p-1.5 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} rowSpan={2}>Recursos</th>
-                        {months.map((m: string, i: number) => (
-                            <th key={i} className="border border-slate-300 p-1 text-center font-bold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }} colSpan={4}>
-                                {m}
-                            </th>
-                        ))}
-                    </tr>
-                    <tr>
-                        {months.map((_, mIdx) =>
-                            [1, 2, 3, 4].map((w) => (
-                                <th key={`${mIdx}-${w}`} className="border border-slate-300 p-0.5 text-[7px] text-center font-semibold" style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}>
-                                    {w}
-                                </th>
-                            ))
+        <div className="my-3 select-none">
+            {/* Título de sección (con edición in-place y sangría institucional) */}
+            <div className="mb-2 ml-7 sm:ml-8">
+                {isEditingTitle ? (
+                    <div className="flex items-center gap-2 select-text" onClick={e => e.stopPropagation()}>
+                        <input
+                            type="text"
+                            value={titleText}
+                            onChange={e => setTitleText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveTitle();
+                                if (e.key === 'Escape') {
+                                    setTitleText(displayTitle);
+                                    setIsEditingTitle(false);
+                                }
+                            }}
+                            autoFocus
+                            className="text-[10pt] font-bold uppercase tracking-wide bg-white border border-indigo-400 px-2 py-0.5 rounded outline-none font-sans text-[#222c57] w-full max-w-md"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleSaveTitle}
+                            className="p-1 bg-emerald-600 text-white rounded text-[10px]"
+                            title="Guardar"
+                        >
+                            <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTitleText(displayTitle);
+                                setIsEditingTitle(false);
+                            }}
+                            className="p-1 bg-slate-400 text-white rounded text-[10px]"
+                            title="Cancelar"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                ) : (
+                    <div
+                        className="group/title flex items-center gap-2 cursor-pointer"
+                        onClick={() => {
+                            setTitleText(displayTitle);
+                            setIsEditingTitle(true);
+                        }}
+                        title="Clic para editar título"
+                    >
+                        <p className="font-bold text-[10pt] uppercase tracking-wide font-sans text-[#222c57]">
+                            {displayTitle}
+                        </p>
+                        {onUpdateConfig && blockId && (
+                            <Pencil className="w-3 h-3 opacity-0 group-hover/title:opacity-100 text-indigo-600 transition-opacity" />
                         )}
-                    </tr>
-                </thead>
-                <tbody>
-                    {objectives.map((obj, oIdx) => {
-                        const acts = obj.activities.length > 0 ? obj.activities : [{ id: '', name: '(sin actividades)', resources: '', startMonth: 0, startWeek: 0, endMonth: 0, endWeek: 0, color: '#64748b' as const }];
-                        return acts.map((act, aIdx) => (
-                            <tr key={act.id || aIdx} className="hover:bg-slate-50/50">
-                                {aIdx === 0 && (
-                                    <td
-                                        className="border border-slate-300 p-2 font-bold bg-slate-50/80 text-center align-middle text-[9px] w-8 uppercase text-slate-600"
-                                        rowSpan={acts.length}
-                                        style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }}
+                    </div>
+                )}
+            </div>
+
+            {/* Subtítulo institucional en cursiva */}
+            <div className="text-center mb-2">
+                <span className="italic font-bold text-[9pt] text-slate-800">
+                    Cronograma (Diagrama de Gantt)
+                </span>
+            </div>
+
+            {/* Contenedor apaisado (Landscape) con scroll horizontal fluido y badge identificador */}
+            <div className="border border-black bg-white rounded-sm overflow-hidden shadow-xs">
+                <div className="bg-slate-50 border-b border-slate-200 px-2.5 py-1 flex items-center justify-between text-[8px] text-slate-500 font-medium">
+                    <span className="inline-flex items-center gap-1 font-semibold text-indigo-700">
+                        <span>📄</span> Formato A4 Apaisado / Horizontal (297 × 210 mm)
+                    </span>
+                    <span>{months.length} meses · {months.length * 4} semanas</span>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-[8.5pt] min-w-[860px]">
+                        <thead>
+                            <tr>
+                                <th
+                                    className="border border-black p-1 text-center font-bold uppercase text-[8pt]"
+                                    style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor, width: '75px' }}
+                                    rowSpan={2}
+                                >
+                                    Objetivos
+                                </th>
+                                <th
+                                    className="border border-black p-1 text-center font-bold uppercase text-[8pt]"
+                                    style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor, width: '24px' }}
+                                    rowSpan={2}
+                                >
+                                    N°
+                                </th>
+                                <th
+                                    className="border border-black p-1 text-center font-bold uppercase text-[8pt]"
+                                    style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor, width: '24%' }}
+                                    rowSpan={2}
+                                >
+                                    Actividades
+                                </th>
+                                <th
+                                    className="border border-black p-1 text-center font-bold uppercase text-[8pt]"
+                                    style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor, width: '18%' }}
+                                    rowSpan={2}
+                                >
+                                    Recursos Necesarios
+                                </th>
+                                {months.map((m: string, i: number) => (
+                                    <th
+                                        key={i}
+                                        className="border border-black p-1 text-center font-bold text-[7.5pt]"
+                                        style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}
+                                        colSpan={4}
                                     >
-                                        OBJ {oIdx + 1}
-                                    </td>
-                                )}
-                                <td className="border border-slate-200 p-1 text-center font-bold text-slate-500">{aIdx + 1}</td>
-                                <td className="border border-slate-200 p-1.5 font-semibold text-slate-700">{act.name}</td>
-                                <td className="border border-slate-200 p-1 text-slate-400 text-[8px] leading-tight">{act.resources}</td>
+                                        {m}
+                                    </th>
+                                ))}
+                            </tr>
+                            <tr>
                                 {months.map((_, mIdx) =>
-                                    [0, 1, 2, 3].map((wIdx) => {
-                                        const filled = isInRange(act.startMonth, act.startWeek, act.endMonth, act.endWeek, mIdx, wIdx);
-                                        return (
-                                            <td
-                                                key={`${mIdx}-${wIdx}`}
-                                                className="border border-slate-200 p-0"
-                                                style={{ backgroundColor: filled ? act.color : 'transparent' }}
-                                            />
-                                        );
-                                    })
+                                    [1, 2, 3, 4].map((w) => (
+                                        <th
+                                            key={`${mIdx}-${w}`}
+                                            className="border border-black p-0.5 text-[6.5pt] text-center font-bold leading-tight"
+                                            style={{ backgroundColor: DYN_COLORS.tableHeaderBg, color: DYN_COLORS.tableHeaderColor }}
+                                        >
+                                            <span className="block text-[6px] opacity-80">S</span>
+                                            <span className="block text-[7px]">{w}</span>
+                                        </th>
+                                    ))
                                 )}
                             </tr>
-                        ));
-                    })}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            {objectives.map((obj, oIdx) => {
+                                const acts = obj.activities.length > 0 ? obj.activities : [{ id: '', name: '(sin actividades)', resources: '', startMonth: 0, startWeek: 0, endMonth: 0, endWeek: 0, color: '#64748b' as const }];
+                                return acts.map((act, aIdx) => (
+                                    <tr key={act.id || aIdx} className="hover:bg-slate-50/50">
+                                        {aIdx === 0 && (
+                                            <td
+                                                className="border border-black p-1.5 font-bold bg-white text-center align-middle text-[7.5pt] uppercase text-slate-900"
+                                                rowSpan={acts.length}
+                                            >
+                                                <div className="font-bold leading-tight">
+                                                    <span>OBJETIVO</span>
+                                                    <br />
+                                                    <span>N° {oIdx + 1}</span>
+                                                </div>
+                                            </td>
+                                        )}
+                                        <td className="border border-black p-1 text-center font-bold text-slate-800 text-[8pt]">
+                                            {aIdx + 1}
+                                        </td>
+                                        <td className="border border-black p-1.5 text-slate-800 text-[8pt]">
+                                            {act.name}
+                                        </td>
+                                        <td className="border border-black p-1 text-slate-600 text-[7.5pt] leading-tight">
+                                            {act.resources}
+                                        </td>
+                                        {months.map((_, mIdx) =>
+                                            [0, 1, 2, 3].map((wIdx) => {
+                                                const filled = isInRange(act.startMonth, act.startWeek, act.endMonth, act.endWeek, mIdx, wIdx);
+                                                return (
+                                                    <td
+                                                        key={`${mIdx}-${wIdx}`}
+                                                        className="border border-black p-0"
+                                                        style={{ backgroundColor: filled ? act.color : 'transparent' }}
+                                                    />
+                                                );
+                                            })
+                                        )}
+                                    </tr>
+                                ));
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

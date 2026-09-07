@@ -9,7 +9,7 @@ interface Props {
 
 const MONTHS_DEFAULT = [
     'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
-    'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Febrero'
+    'Sept', 'Octubre', 'Nov', 'Dic', 'Enero', 'Feb'
 ];
 
 const GANTT_COLORS: { hex: GanttColor; label: string }[] = [

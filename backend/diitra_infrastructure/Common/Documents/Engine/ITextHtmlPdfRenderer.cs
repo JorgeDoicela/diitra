@@ -192,53 +192,40 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             string mergedCss = (string.IsNullOrEmpty(customCss) ? "" : customCss + "\n") + extractedStyles.ToString();
 
-            int landscapeStartIndex = cleanedHtmlContent.IndexOf("<div class=\"landscape-section\"", StringComparison.OrdinalIgnoreCase);
-            int bibliographyIndex = -1;
-            if (landscapeStartIndex != -1)
-            {
-                bibliographyIndex = cleanedHtmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFÍA", StringComparison.OrdinalIgnoreCase);
-                if (bibliographyIndex == -1)
-                {
-                    bibliographyIndex = cleanedHtmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFIA", StringComparison.OrdinalIgnoreCase);
-                }
-            }
-
-            if (landscapeStartIndex != -1 && bibliographyIndex > landscapeStartIndex)
+            // ── Segmentación dinámica desacoplada para secciones horizontales (Landscape) ──
+            var docParts = SplitDocumentParts(cleanedHtmlContent);
+            if (docParts.Any(p => p.IsLandscape))
             {
                 try
                 {
-                    Console.WriteLine("[DIITRA Renderer] Detected landscape section. Rendering in split mode.");
-                    
-                    // Split the HTML content
-                    string part1Html = cleanedHtmlContent.Substring(0, landscapeStartIndex) + "</div>";
-                    string part2Html = cleanedHtmlContent.Substring(landscapeStartIndex, bibliographyIndex - landscapeStartIndex);
-                    string part3Html = "<div class=\"doc-container\">" + cleanedHtmlContent.Substring(bibliographyIndex);
+                    Console.WriteLine($"[DIITRA Renderer] Detected {docParts.Count} document part(s) with landscape section(s). Rendering in dynamic multi-part mode.");
 
-                    // Render Part 1 (Portrait)
-                    byte[] pdfBytes1 = await RenderPartAsync(part1Html, PageSize.A4, metadata, mergedCss, 0);
-                    int pageCount1 = GetPageCount(pdfBytes1);
-                    Console.WriteLine($"[DIITRA Renderer] Part 1 (Portrait) rendered: {pageCount1} pages");
+                    var renderedParts = new List<byte[]>();
+                    int accumulatedPages = 0;
 
-                    // Render Part 2 (Landscape)
-                    byte[] pdfBytes2 = await RenderPartAsync(part2Html, PageSize.A4.Rotate(), metadata, mergedCss, pageCount1);
-                    int pageCount2 = GetPageCount(pdfBytes2);
-                    Console.WriteLine($"[DIITRA Renderer] Part 2 (Landscape) rendered: {pageCount2} pages");
+                    for (int pIdx = 0; pIdx < docParts.Count; pIdx++)
+                    {
+                        var part = docParts[pIdx];
+                        var partPageSize = part.IsLandscape ? PageSize.A4.Rotate() : PageSize.A4;
+                        string partName = part.IsLandscape ? "Landscape" : "Portrait";
 
-                    // Render Part 3 (Portrait)
-                    byte[] pdfBytes3 = await RenderPartAsync(part3Html, PageSize.A4, metadata, mergedCss, pageCount1 + pageCount2);
-                    int pageCount3 = GetPageCount(pdfBytes3);
-                    Console.WriteLine($"[DIITRA Renderer] Part 3 (Portrait) rendered: {pageCount3} pages");
+                        byte[] partBytes = await RenderPartAsync(part.Html, partPageSize, metadata, mergedCss, accumulatedPages);
+                        int partPages = GetPageCount(partBytes);
+                        Console.WriteLine($"[DIITRA Renderer] Part {pIdx + 1} ({partName}) rendered: {partPages} pages (offset: {accumulatedPages})");
 
-                    // Merge PDFs
+                        accumulatedPages += partPages;
+                        renderedParts.Add(partBytes);
+                    }
+
                     var merger = new PdfMergerService();
-                    var mergedPdfBytes = await merger.MergeAsync(new[] { pdfBytes1, pdfBytes2, pdfBytes3 });
-                    
-                    Console.WriteLine($"[DIITRA Renderer] Successfully merged split PDFs. Total pages: {pageCount1 + pageCount2 + pageCount3}");
+                    var mergedPdfBytes = await merger.MergeAsync(renderedParts.ToArray());
+
+                    Console.WriteLine($"[DIITRA Renderer] Successfully merged {renderedParts.Count} parts. Total pages: {accumulatedPages}");
                     return mergedPdfBytes;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[DIITRA Renderer] Error in split rendering: {ex.Message}. Falling back to standard rendering.");
+                    Console.WriteLine($"[DIITRA Renderer] Error in dynamic multi-part rendering: {ex.Message}. Falling back to standard rendering.");
                 }
             }
 
@@ -482,6 +469,99 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     </div>
 </body>
 </html>";
+        }
+
+        private struct HtmlDocumentPart
+        {
+            public string Html { get; set; }
+            public bool IsLandscape { get; set; }
+        }
+
+        private static List<HtmlDocumentPart> SplitDocumentParts(string cleanedHtmlContent)
+        {
+            var parts = new List<HtmlDocumentPart>();
+            int currentIndex = 0;
+
+            while (currentIndex < cleanedHtmlContent.Length)
+            {
+                int markerStart = cleanedHtmlContent.IndexOf("<!-- START_LANDSCAPE_SECTION -->", currentIndex, StringComparison.OrdinalIgnoreCase);
+                int tagStart = cleanedHtmlContent.IndexOf("<div class=\"landscape-section\"", currentIndex, StringComparison.OrdinalIgnoreCase);
+                if (tagStart == -1)
+                {
+                    tagStart = cleanedHtmlContent.IndexOf("<div class='landscape-section'", currentIndex, StringComparison.OrdinalIgnoreCase);
+                }
+
+                int landscapeStart = -1;
+                int landscapeContentStart = -1;
+
+                if (markerStart != -1 && (tagStart == -1 || markerStart <= tagStart))
+                {
+                    landscapeStart = markerStart;
+                    landscapeContentStart = markerStart;
+                }
+                else if (tagStart != -1)
+                {
+                    landscapeStart = tagStart;
+                    landscapeContentStart = tagStart;
+                }
+
+                if (landscapeStart == -1)
+                {
+                    string remaining = cleanedHtmlContent.Substring(currentIndex).Trim();
+                    if (!string.IsNullOrWhiteSpace(remaining))
+                    {
+                        if (currentIndex > 0 && !remaining.Contains("doc-container", StringComparison.OrdinalIgnoreCase) && cleanedHtmlContent.Contains("doc-container", StringComparison.OrdinalIgnoreCase))
+                        {
+                            remaining = $"<div class=\"doc-container\">{remaining}";
+                        }
+                        parts.Add(new HtmlDocumentPart { Html = remaining, IsLandscape = false });
+                    }
+                    break;
+                }
+
+                if (landscapeStart > currentIndex)
+                {
+                    string portraitPart = cleanedHtmlContent.Substring(currentIndex, landscapeStart - currentIndex).Trim();
+                    if (!string.IsNullOrWhiteSpace(portraitPart))
+                    {
+                        if (portraitPart.Contains("doc-container", StringComparison.OrdinalIgnoreCase) && !portraitPart.EndsWith("</div>", StringComparison.OrdinalIgnoreCase))
+                        {
+                            portraitPart = $"{portraitPart}</div>";
+                        }
+                        parts.Add(new HtmlDocumentPart { Html = portraitPart, IsLandscape = false });
+                    }
+                }
+
+                int markerEnd = cleanedHtmlContent.IndexOf("<!-- END_LANDSCAPE_SECTION -->", landscapeContentStart, StringComparison.OrdinalIgnoreCase);
+                int landscapeEnd = -1;
+
+                if (markerEnd != -1)
+                {
+                    landscapeEnd = markerEnd + "<!-- END_LANDSCAPE_SECTION -->".Length;
+                }
+                else
+                {
+                    int closeDiv = cleanedHtmlContent.IndexOf("</div>", landscapeContentStart, StringComparison.OrdinalIgnoreCase);
+                    if (closeDiv != -1)
+                    {
+                        landscapeEnd = closeDiv + 6;
+                    }
+                    else
+                    {
+                        landscapeEnd = cleanedHtmlContent.Length;
+                    }
+                }
+
+                string landscapePart = cleanedHtmlContent.Substring(landscapeStart, landscapeEnd - landscapeStart).Trim();
+                if (!string.IsNullOrWhiteSpace(landscapePart))
+                {
+                    parts.Add(new HtmlDocumentPart { Html = landscapePart, IsLandscape = true });
+                }
+
+                currentIndex = landscapeEnd;
+            }
+
+            return parts;
         }
     }
 
