@@ -159,9 +159,6 @@ export const useBuilderLayout = ({
             const comfortableWidth = 210;
             setLeftSidebarWidth(comfortableWidth);
             localStorage.setItem('left_sidebar_width', String(comfortableWidth));
-            if (leftSidebarRef.current) {
-                leftSidebarRef.current.style.width = `${comfortableWidth}px`;
-            }
         }
         setIsLeftSidebarOpenState(open);
     }, []);
@@ -172,9 +169,6 @@ export const useBuilderLayout = ({
             const comfortableWidth = 260;
             setRightSidebarWidth(comfortableWidth);
             localStorage.setItem('right_sidebar_width', String(comfortableWidth));
-            if (rightSidebarRef.current) {
-                rightSidebarRef.current.style.width = `${comfortableWidth}px`;
-            }
         }
         setIsSidebarOpenState(open);
     }, []);

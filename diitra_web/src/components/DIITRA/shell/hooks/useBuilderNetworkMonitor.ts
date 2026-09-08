@@ -61,9 +61,24 @@ export const useBuilderNetworkMonitor = ({
     }, [isOnline, addToast]);
 
     // ── Monitoreo de calidad/velocidad de red ──
+    const consecutiveSlowCountRef = useRef(0);
+
     useEffect(() => {
+        const isDev = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            Boolean(import.meta.env.DEV)
+        );
+
+        // En desarrollo local (localhost), la latencia de internet no aplica
+        if (isDev) {
+            setIsSlowConnection(false);
+            return;
+        }
+
         if (!isOnline) {
             setIsSlowConnection(false);
+            consecutiveSlowCountRef.current = 0;
             return;
         }
 
@@ -77,21 +92,31 @@ export const useBuilderNetworkMonitor = ({
                 const rtt = Date.now() - start;
 
                 if (rtt > 1500) {
-                    setIsSlowConnection(true);
-                    const now = Date.now();
-                    if (now - lastAlertTime > 60000) {
-                        addToast(
-                            'Señal de internet débil',
-                            `Hemos detectado que tu conexión es lenta (latencia de ${rtt}ms). La sincronización colaborativa podría experimentar retrasos.`,
-                            'warning'
-                        );
-                        lastAlertTime = now;
+                    consecutiveSlowCountRef.current += 1;
+                    // Solo marcar como señal débil si se confirma en al menos 2 comprobaciones consecutivas
+                    if (consecutiveSlowCountRef.current >= 2) {
+                        setIsSlowConnection(true);
+                        const now = Date.now();
+                        if (now - lastAlertTime > 60000) {
+                            addToast(
+                                'Señal de internet débil',
+                                `Hemos detectado que tu conexión es lenta (latencia de ${rtt}ms). La sincronización colaborativa podría experimentar retrasos.`,
+                                'warning'
+                            );
+                            lastAlertTime = now;
+                        }
                     }
                 } else {
+                    consecutiveSlowCountRef.current = 0;
                     setIsSlowConnection(false);
                 }
             } catch (err: any) {
-                if (isOnline) {
+                // Si la petición fue cancelada por navegación o recarga de módulo, ignorar
+                if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') {
+                    return;
+                }
+                consecutiveSlowCountRef.current += 1;
+                if (consecutiveSlowCountRef.current >= 2 && isOnline) {
                     setIsSlowConnection(true);
                 }
                 if (err?.code !== 'ECONNABORTED' && isOnline) {

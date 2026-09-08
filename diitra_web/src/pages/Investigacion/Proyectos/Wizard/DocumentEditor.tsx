@@ -147,14 +147,15 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             const localConfig = DocumentTemplateRegistry[templateCode];
 
             // 2. Lanzar peticiones de red
-            const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
+            const rawDocUuid = initialData?.Uuid || initialData?.uuid;
+            const needsInstanceFetch = !!(rawDocUuid && !rawDocUuid.startsWith('temp_'));
 
             const [configResult, instanceResult, carrerasRes, misCarrerasRes, programasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
                 needsInstanceFetch
-                    ? api.get(`/documents/instances/${initialData.Uuid}/ui-config`).catch(() => ({ data: null }))
+                    ? api.get(`/documents/instances/${rawDocUuid}/ui-config`).catch(() => ({ data: null }))
                     : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
                 needsInstanceFetch
-                    ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
+                    ? api.get(`/documents/instances/${rawDocUuid}`).catch(() => ({ data: null }))
                     : Promise.resolve({ data: null }),
                 getCachedOrFetch('carreras', () => api.get('/catalogs/carreras')),
                 getCachedOrFetch('mi-carrera', () => isAdmin ? Promise.resolve({ data: [] }) : api.get('/catalogs/mi-carrera')),
@@ -437,7 +438,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     const { addToast } = useNotifications();
     const [isUpgrading, setIsUpgrading] = useState(false);
     const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
-    const [visitedSections, setVisitedSections] = useState<Set<string>>(() => new Set());
+    const [visitedSections] = useState<Set<string>>(() => new Set());
 
     useEffect(() => {
         if (templateConfig?.has_template_update || templateConfig?.hasTemplateUpdate) {
@@ -479,7 +480,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         ...initialData
     }), [templateConfig, initialData, entityUuid]);
 
-    const documentId = initialData?.Uuid || `temp_${Math.random().toString(36).substring(2, 9)}`;
+    const documentId = React.useMemo(() => {
+        return initialData?.Uuid || initialData?.uuid || mergedInitial?.Uuid || mergedInitial?.uuid || 'temp_doc_default';
+    }, [initialData?.Uuid, initialData?.uuid, mergedInitial?.Uuid, mergedInitial?.uuid]);
 
     // ── 3. Instanciar CoWork (V1.0: se hace AQUÍ, en el padre del Shell) ──
     const coworkUser = React.useMemo(() => coworkUserFromAuth({
@@ -754,12 +757,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         >
             {(activeTab, coworkHandle) => {
                 if (activeTab && !visitedSections.has(activeTab)) {
-                    setVisitedSections(prev => {
-                        if (prev.has(activeTab)) return prev;
-                        const next = new Set(prev);
-                        next.add(activeTab);
-                        return next;
-                    });
+                    visitedSections.add(activeTab);
                 }
 
                 return (

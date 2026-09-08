@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Lock, Unlock, Shield, Award, Loader2, RefreshCw, X } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -94,6 +94,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
         }
     }, [hasTemplateUpdate]);
 
+    const allSectionIds = useMemo(() => sections.map(s => s.id), [sections]);
+    const sectionItemPairs = useMemo(() => sections.map(s => ({ id: s.id, label: s.label })), [sections]);
+    const handleCloseSidebar = useCallback(() => layout.setIsSidebarOpen(false), [layout.setIsSidebarOpen]);
+    const handleOpenSidebar = useCallback(() => layout.setIsSidebarOpen(true), [layout.setIsSidebarOpen]);
+
     return (
         <DocumentDataContext.Provider value={formData}>
             <DocumentMetadataContext.Provider value={{ readOnlyReason }}>
@@ -132,6 +137,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                         isDragging={layout.isDraggingNav}
                                         onMouseDown={layout.startDraggingNav}
                                         onTouchStart={layout.startDraggingNav}
+                                        onClick={() => layout.setIsLeftSidebarOpen(true)}
                                     />
                                 )}
 
@@ -145,6 +151,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                         isOnline={network.isOnline}
                                         onMouseDown={layout.startDraggingChat}
                                         onTouchStart={layout.startDraggingChat}
+                                        onClick={handleOpenSidebar}
                                     />
                                 )}
 
@@ -175,7 +182,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                 <div className="flex-1 bg-bg-deep overflow-hidden flex">
                                     {layout.activeTab !== 'output' ? (
                                         <div className="flex-1 pt-4 pb-8 px-3 sm:pt-6 sm:pb-12 sm:px-6 md:pt-8 md:pb-16 md:px-12 overflow-y-auto custom-scrollbar">
-                                            <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
+                                            <div className="w-full mx-auto max-w-[98%] sm:max-w-[94%]">
                                                 <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                     <div>
                                                         <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{layout.activeSectionLabel}</h3>
@@ -319,25 +326,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                         ref={layout.rightSidebarRef}
                                         style={{
                                             '--right-sidebar-width': `${layout.rightSidebarWidth}px`,
-                                            width: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                                ? undefined
-                                                : (layout.isSidebarOpen ? `${layout.rightSidebarWidth}px` : '0px'),
-                                            transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                                ? (layout.isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
-                                                : undefined,
-                                            transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                                ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
-                                                : 'width 300ms ease-in-out',
-                                            visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
-                                                ? (layout.isSidebarOpen ? 'visible' : 'hidden')
-                                                : 'visible'
+                                            width: layout.isSidebarOpen ? `${layout.rightSidebarWidth}px` : '0px',
+                                            transition: 'width 180ms cubic-bezier(0.16, 1, 0.3, 1)',
+                                            willChange: 'width'
                                         } as React.CSSProperties}
                                         className={`
-                                            overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
-                                            ${typeof window !== 'undefined' && window.innerWidth < 1024
-                                                ? 'absolute inset-y-0 right-0 top-0 bottom-0 z-[70] h-full border-l border-border-thin !w-[85vw] sm:!w-[320px]'
-                                                : (layout.isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
-                                            }
+                                            overflow-hidden shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
+                                            ${layout.isSidebarOpen ? 'flex border-l border-border-thin' : 'hidden lg:flex border-l-0 invisible pointer-events-none'}
                                         `}
                                     >
                                         <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
@@ -345,12 +340,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                 instanceUuid={cowork.session.documentId}
                                                 sectionName={layout.activeTab}
                                                 cowork={cowork}
-                                                allSections={sections.map(s => s.id)}
-                                                sectionItems={sections.map(s => ({ id: s.id, label: s.label }))}
+                                                allSections={allSectionIds}
+                                                sectionItems={sectionItemPairs}
                                                 entityUuid={entityUuid}
                                                 projectStatus={projectStatus}
                                                 templateCode={templateCode}
-                                                onClose={() => layout.setIsSidebarOpen(false)}
+                                                onClose={handleCloseSidebar}
                                                 sectionStatuses={layout.sectionStatuses}
                                                 onSectionStatusChange={layout.setSectionStatus}
                                             />

@@ -9,6 +9,7 @@ export interface BuilderFloatingTabProps {
     isOnline?: boolean;
     onMouseDown: (e: React.MouseEvent | React.TouchEvent) => void;
     onTouchStart: (e: React.MouseEvent | React.TouchEvent) => void;
+    onClick?: () => void;
 }
 
 export const BuilderFloatingTab: React.FC<BuilderFloatingTabProps> = ({
@@ -18,18 +19,20 @@ export const BuilderFloatingTab: React.FC<BuilderFloatingTabProps> = ({
     isDragging,
     isOnline = true,
     onMouseDown,
-    onTouchStart
+    onTouchStart,
+    onClick
 }) => {
     const isLeft = position === 'left';
 
     return (
         <button
+            onClick={onClick}
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
             style={{
                 top: `${topPercent}%`,
                 transform: `translateY(-50%) translateX(${isLeft ? `${xOffset}px` : `-${xOffset}px`})`,
-                transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease-out'
             }}
             className={`absolute ${isLeft ? 'left-0' : 'right-0'} z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${
                 isDragging || xOffset > 5

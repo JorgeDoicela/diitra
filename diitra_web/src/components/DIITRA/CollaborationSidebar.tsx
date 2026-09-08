@@ -147,10 +147,14 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     const [trazabilidad, setTrazabilidad] = useState<any[]>([]);
     const [isLoadingTrazabilidad, setIsLoadingTrazabilidad] = useState(false);
     const [projectDeadline, setProjectDeadline] = useState<string | null>(null);
+    const lastFetchedEntityUuidRef = useRef<string | null>(null);
 
     useEffect(() => {
+        if (!entityUuid) return;
+        if (lastFetchedEntityUuidRef.current === entityUuid) return;
+        lastFetchedEntityUuidRef.current = entityUuid;
+
         const fetchProjectDetails = async () => {
-            if (!entityUuid) return;
             setIsLoadingTrazabilidad(true);
             try {
                 const [traceRes, projectRes] = await Promise.all([
@@ -237,11 +241,17 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     }, [comments.length, activeTab, scrollToBottom]);
 
     // Cargar Pulso Inicial (Historial de comentarios y estados)
+    const lastFetchedPulseUuidRef = useRef<string | null>(null);
+
     useEffect(() => {
+        if (!instanceUuid) return;
+        const normalizedUuid = instanceUuid.toLowerCase().trim();
+        if (lastFetchedPulseUuidRef.current === normalizedUuid) return;
+        lastFetchedPulseUuidRef.current = normalizedUuid;
+
         const fetchInitialPulse = async () => {
             setIsLoadingPulse(true);
             try {
-                const normalizedUuid = instanceUuid?.toLowerCase().trim();
                 coworkLog('[TeamPulse] Fetching pulse for:', normalizedUuid);
                 const res = await api.get(`/collaboration/${normalizedUuid}/pulse`);
                 coworkLog('[TeamPulse] Response activities:', res.data.activities?.length, res.data.activities);
@@ -1302,4 +1312,4 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     );
 };
 
-export default CollaborationSidebar;
+export default React.memo(CollaborationSidebar);
