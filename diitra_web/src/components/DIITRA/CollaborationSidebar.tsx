@@ -13,7 +13,8 @@ import {
     XCircle,
     Edit3,
     Eye,
-    Shield
+    Shield,
+    Check
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
@@ -23,11 +24,30 @@ import { coworkLog } from '../../core/cowork/utils/log';
 import { AudioBubblePlayer } from '../../pages/Admin/components/AudioBubblePlayer';
 
 
+const toSentenceCase = (text: string, fallbackIdx?: number): string => {
+    if (!text) return '';
+    const match = text.match(/^(\d+[\.\-\)\s]*\s*)(.*)$/);
+    const prefix = match ? match[1] : (typeof fallbackIdx === 'number' ? `${fallbackIdx + 1}. ` : '');
+    const rawContent = match ? match[2].trim() : text.trim();
+
+    const rest = rawContent.toLowerCase();
+    let result = rest.charAt(0).toUpperCase() + rest.slice(1);
+
+    result = result
+        .replace(/\bgantt\b/gi, 'Gantt')
+        .replace(/\bi\+d\b/gi, 'I+D')
+        .replace(/\bape\b/gi, 'APE')
+        .replace(/\bsigafi\b/gi, 'SIGAFI');
+
+    return `${prefix}${result}`;
+};
+
 interface CollaborationSidebarProps {
     instanceUuid: string;
     sectionName: string;
     cowork: CoWorkHandle;
     allSections: string[];
+    sectionItems?: { id: string; label: string }[];
     entityUuid?: string;
     projectStatus?: string;
     templateCode?: string;
@@ -39,6 +59,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     sectionName,
     cowork,
     allSections,
+    sectionItems,
     entityUuid,
     projectStatus,
     templateCode,
@@ -46,6 +67,24 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 }) => {
     const { user } = useAuth();
     const confirm = useConfirm();
+
+    const currentSectionLabel = useMemo(() => {
+        const found = sectionItems?.find(s => s.id === sectionName);
+        if (found?.label) return toSentenceCase(found.label);
+        const FALLBACK_NAMES: Record<string, string> = {
+            identificacion: 'Identificación del proyecto',
+            equipo: 'Equipo humano',
+            tecnico: 'Especificación del proyecto',
+            recursos: 'Recursos, costo y financiamiento',
+            productos_esperados: 'Productos esperados',
+            impactos: 'Impacto del proyecto',
+            cronograma: 'Cronograma (Gantt)',
+            bibliography: 'Bibliografía',
+            bibliografia: 'Bibliografía'
+        };
+        const raw = FALLBACK_NAMES[sectionName] || (sectionName || '').replace(/_/g, ' ');
+        return toSentenceCase(raw);
+    }, [sectionItems, sectionName]);
 
     const parseAuditComment = (contenido: string) => {
         const match = contenido.match(/^\[(.*?)\]\s*\((.*?)\):\s*(.*)$/);
@@ -285,7 +324,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     new Date(a.timestamp).getTime() > twoMinutesAgo
                 );
                 if (isDuplicate) return prev;
-                
+
                 const normalized = {
                     userName,
                     action,
@@ -397,7 +436,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             if (contenido.trim().startsWith('{')) {
                 return JSON.parse(contenido);
             }
-        } catch (e) {}
+        } catch (e) { }
         return null;
     };
 
@@ -546,14 +585,12 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                     return (
                                                         <div
                                                             key={c.idComentario || c.uuid || i}
-                                                            className={`flex flex-col w-full max-w-[90%] ${
-                                                                isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                                                            } animate-fade-up`}
+                                                            className={`flex flex-col w-full max-w-[90%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                                } animate-fade-up`}
                                                         >
                                                             <div className="flex items-center gap-1.5 mb-0.5">
-                                                                <span className={`text-[8px] font-black uppercase tracking-wider ${
-                                                                    isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
-                                                                }`}>
+                                                                <span className={`text-[8px] font-black uppercase tracking-wider ${isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
+                                                                    }`}>
                                                                     {isMe ? 'Tú' : c.nombreUsuario}
                                                                 </span>
                                                                 <span className="text-[7px] text-text-dim font-mono">
@@ -584,13 +621,12 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                                 )}
                                                             </div>
 
-                                                            <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${
-                                                                isMe
+                                                            <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${isMe
                                                                     ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
                                                                     : isMsgFromAdmin
                                                                         ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
                                                                         : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
-                                                            }`}>
+                                                                }`}>
                                                                 {editingCommentId === c.idComentario ? (
                                                                     <div className="space-y-2">
                                                                         <textarea
@@ -726,40 +762,60 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                         {activeTab === 'status' && (
                             <div className="space-y-5">
                                 {sectionName !== 'output' && (
-                                    <div className="bg-surface border border-border-thin rounded-2xl p-5 shadow-sm">
-                                        <h4 className="text-[9px] font-black uppercase text-text-dim mb-3 tracking-widest">Mi Sección Actual</h4>
-                                        <p className="text-xs font-black text-text-main mb-4 capitalize">{(sectionName || '').replace(/_/g, ' ')}</p>
-                                        <div className="grid grid-cols-1 gap-2.5">
+                                    <div className="bg-bg-deep border border-border-thin rounded-2xl p-5 shadow-sm">
+                                        {/* Cabecera con nombre de sección */}
+                                        <div className="mb-4 px-0.5">
+                                            <h4 className="text-[9px] font-mono font-bold uppercase text-text-dim tracking-widest">Sección Actual</h4>
+                                            <p className="text-[13px] font-bold text-text-main mt-1 leading-snug">{currentSectionLabel}</p>
+                                        </div>
+
+                                        {/* Lista de estados Vercel Geist con mayor altura, target táctil y contraste en activo */}
+                                        <div className="space-y-2">
                                             {[
-                                                { label: 'Borrador', value: 'Borrador', desc: 'Edición activa por los redactores', icon: <Edit3 size={14} className="shrink-0" />, activeStyle: 'bg-surface border-border-hover text-text-main shadow-md font-bold' },
-                                                { label: 'Revisión', value: 'Revisión', desc: 'Lista para control de calidad', icon: <Eye size={14} className="shrink-0" />, activeStyle: 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-md font-bold' },
-                                                { label: 'Aprobado', value: 'Aprobado', desc: 'Sección consolidada y cerrada', icon: <CheckCircle size={14} className="shrink-0" />, activeStyle: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-md font-bold' }
+                                                {
+                                                    label: 'Borrador',
+                                                    value: 'Borrador',
+                                                    icon: <Edit3 size={17} className="shrink-0" />,
+                                                    activeColor: 'text-text-main',
+                                                    activeText: 'text-text-main font-bold'
+                                                },
+                                                {
+                                                    label: 'Revisión',
+                                                    value: 'Revisión',
+                                                    icon: <Eye size={17} className="shrink-0" />,
+                                                    activeColor: 'text-amber-500 dark:text-amber-400',
+                                                    activeText: 'text-amber-600 dark:text-amber-400 font-bold'
+                                                },
+                                                {
+                                                    label: 'Aprobado',
+                                                    value: 'Aprobado',
+                                                    icon: <CheckCircle size={17} className="shrink-0" />,
+                                                    activeColor: 'text-emerald-500 dark:text-emerald-400',
+                                                    activeText: 'text-emerald-600 dark:text-emerald-400 font-bold'
+                                                }
                                             ].map(s => {
                                                 const isActive = (sectionStatuses[sectionName] || 'Borrador') === s.value;
                                                 return (
                                                     <button
                                                         key={s.value}
                                                         onClick={() => handleUpdateStatus(s.value)}
-                                                        className={`w-full px-4 py-3 rounded-xl text-left border transition-all duration-300 flex items-center justify-between group ${
-                                                            isActive
-                                                                ? s.activeStyle
-                                                                : 'bg-bg-deep/50 border-border-thin/60 text-text-dim hover:text-text-main hover:bg-surface-hover hover:border-border-hover'
-                                                        }`}
+                                                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-[13px] border transition-all cursor-pointer ${isActive
+                                                                ? 'bg-surface border-border-thin shadow-xs'
+                                                                : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50 font-normal'
+                                                            }`}
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`p-1.5 rounded-lg transition-colors ${
-                                                                isActive 
-                                                                    ? (s.value === 'Aprobado' ? 'bg-emerald-500/20' : s.value === 'Revisión' ? 'bg-amber-500/20' : 'bg-surface-hover')
-                                                                    : 'bg-bg-deep group-hover:bg-surface'
-                                                            }`}>
+                                                        <div className="flex items-center gap-3.5">
+                                                            <span className={isActive ? s.activeColor : 'text-text-dim transition-colors'}>
                                                                 {s.icon}
-                                                            </div>
-                                                            <div className="text-left">
-                                                                <p className="text-[10px] font-black uppercase tracking-wider">{s.label}</p>
-                                                                <p className="text-[8px] text-text-dim font-semibold leading-none mt-0.5">{s.desc}</p>
-                                                            </div>
+                                                            </span>
+                                                            <span className={`tracking-wide ${isActive ? s.activeText : ''}`}>
+                                                                {s.label}
+                                                            </span>
                                                         </div>
-                                                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />}
+
+                                                        {isActive && (
+                                                            <Check size={16} strokeWidth={2.5} className={`shrink-0 ${s.activeColor}`} />
+                                                        )}
                                                     </button>
                                                 );
                                             })}
@@ -767,23 +823,96 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     </div>
                                 )}
 
-                                <div className="p-5 bg-surface border border-border-thin rounded-2xl space-y-4 shadow-sm hover:border-border-hover transition-all">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h4 className="text-[9px] font-black uppercase text-text-dim tracking-widest mb-0.5">Progreso de Redacción</h4>
-                                            <p className="text-[8px] text-text-dim uppercase leading-relaxed font-bold tracking-tight">
-                                                {allSections.filter(s => sectionStatuses[s] === 'Aprobado').length} de {allSections.length} secciones aprobadas
-                                            </p>
-                                        </div>
-                                        <span className="text-[14px] font-mono font-black text-text-main">{globalProgress}%</span>
-                                    </div>
-                                    <div className="w-full bg-bg-deep h-2 rounded-full overflow-hidden p-[1px] border border-border-thin/40">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-brand to-emerald-500 transition-all duration-700 ease-out rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                                            style={{ width: `${globalProgress}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const approvedCount = allSections.filter(s => sectionStatuses[s] === 'Aprobado').length;
+
+                                    const progressTheme = globalProgress < 35
+                                        ? { bar: 'from-red-500 to-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.35)]', text: 'text-rose-600 dark:text-rose-400' }
+                                        : globalProgress < 75
+                                            ? { bar: 'from-amber-500 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.35)]', text: 'text-amber-600 dark:text-amber-400' }
+                                            : { bar: 'from-emerald-500 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.35)]', text: 'text-emerald-600 dark:text-emerald-400' };
+
+                                    return (
+                                        <>
+                                            {/* Tarjeta de Progreso y Métricas de Alta Densidad */}
+                                            <div className="p-4 bg-bg-deep border border-border-thin rounded-2xl space-y-3.5 shadow-sm hover:border-border-hover transition-all">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h4 className="text-[9px] font-mono font-bold uppercase text-text-dim tracking-widest mb-0.5">Progreso</h4>
+                                                        <p className="text-[8px] text-text-dim uppercase leading-relaxed font-bold tracking-tight">
+                                                            {approvedCount} de {allSections.length} secciones aprobadas
+                                                        </p>
+                                                    </div>
+                                                    <span className={`text-[14px] font-mono font-black transition-colors ${progressTheme.text}`}>{globalProgress}%</span>
+                                                </div>
+
+                                                <div className="w-full bg-surface-hover h-1.5 rounded-full overflow-hidden p-[1px] border border-border-thin/40">
+                                                    <div
+                                                        className={`h-full bg-gradient-to-r ${progressTheme.bar} transition-all duration-700 ease-out rounded-full`}
+                                                        style={{ width: `${globalProgress}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Desglose de Secciones del Protocolo */}
+                                            {allSections.length > 0 && (
+                                                <div className="bg-bg-deep border border-border-thin rounded-2xl p-4 shadow-sm space-y-2.5">
+                                                    <div className="px-0.5">
+                                                        <h4 className="text-[9px] font-mono font-bold uppercase text-text-dim tracking-widest">
+                                                            Estado
+                                                        </h4>
+                                                    </div>
+
+                                                    <div className="divide-y divide-border-thin/30 max-h-[320px] overflow-y-auto custom-scrollbar pr-0.5">
+                                                        {allSections.map((secKey, idx) => {
+                                                            const st = sectionStatuses[secKey] || 'Borrador';
+                                                            const isCurrent = secKey === sectionName;
+                                                            const item = sectionItems?.find(s => s.id === secKey);
+                                                            let rawLabel = item?.label;
+                                                            if (!rawLabel) {
+                                                                const FALLBACK_NAMES: Record<string, string> = {
+                                                                    identificacion: 'Identificación del proyecto',
+                                                                    equipo: 'Equipo humano',
+                                                                    tecnico: 'Especificación del proyecto',
+                                                                    recursos: 'Recursos, costo y financiamiento',
+                                                                    productos_esperados: 'Productos esperados',
+                                                                    impactos: 'Impacto del proyecto',
+                                                                    cronograma: 'Cronograma (Gantt)',
+                                                                    bibliography: 'Bibliografía',
+                                                                    bibliografia: 'Bibliografía'
+                                                                };
+                                                                rawLabel = FALLBACK_NAMES[secKey] || secKey.replace(/^(sec-|custom-)/, '').replace(/_/g, ' ');
+                                                            }
+                                                            const formattedLabel = toSentenceCase(rawLabel, idx);
+
+                                                            return (
+                                                                <div
+                                                                    key={secKey}
+                                                                    className={`flex items-center justify-between py-2 px-2.5 rounded-lg transition-colors ${isCurrent ? 'bg-surface border border-border-thin/60 font-bold text-text-main shadow-xs' : 'text-text-dim hover:text-text-main hover:bg-surface-hover/40'
+                                                                        }`}
+                                                                >
+                                                                    <span className={`text-[11px] truncate tracking-tight pr-2 ${isCurrent ? 'font-bold text-text-main' : 'text-text-dim'
+                                                                        }`}>
+                                                                        {formattedLabel}
+                                                                    </span>
+
+                                                                    <span className={`text-[10px] font-mono shrink-0 ${st === 'Aprobado'
+                                                                            ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                                                                            : st === 'Revisión'
+                                                                                ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                                                                                : 'text-text-dim/70 font-medium'
+                                                                        }`}>
+                                                                        {st}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         )}
 
@@ -857,7 +986,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                             {comments.filter(c => parseAuditComment(c.contenido) !== null).length} Observaciones
                                         </span>
                                     </div>
-                                    
+
                                     {(() => {
                                         const auditItems = comments
                                             .map(c => ({ comment: c, audit: parseAuditComment(c.contenido) }))
@@ -885,11 +1014,10 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                                 <span className="text-[9px] font-black text-text-main uppercase tracking-wider truncate" title={item.audit.seccion}>
                                                                     {item.audit.seccion}
                                                                 </span>
-                                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
-                                                                    isAprobado 
-                                                                        ? 'bg-success/15 text-success border border-success/20' 
+                                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${isAprobado
+                                                                        ? 'bg-success/15 text-success border border-success/20'
                                                                         : 'bg-warning/15 text-warning border border-warning/20'
-                                                                }`}>
+                                                                    }`}>
                                                                     {item.audit.estado}
                                                                 </span>
                                                             </div>

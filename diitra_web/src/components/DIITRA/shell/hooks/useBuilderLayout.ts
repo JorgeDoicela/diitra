@@ -77,7 +77,8 @@ export const useBuilderLayout = ({
     // ── Dimensiones y Estado de Sidebars ──
     const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
         const saved = localStorage.getItem('left_sidebar_width');
-        return saved ? parseInt(saved, 10) : 320;
+        const parsed = saved ? parseInt(saved, 10) : 210;
+        return (parsed > 235 || parsed < 160) ? 210 : parsed;
     });
 
     const [rightSidebarWidth, setRightSidebarWidth] = useState<number>(() => {
@@ -106,7 +107,7 @@ export const useBuilderLayout = ({
     const setIsLeftSidebarOpen = useCallback((open: boolean) => {
         localStorage.setItem('left_sidebar_open', String(open));
         if (open) {
-            const comfortableWidth = 260;
+            const comfortableWidth = 210;
             setLeftSidebarWidth(comfortableWidth);
             localStorage.setItem('left_sidebar_width', String(comfortableWidth));
             if (leftSidebarRef.current) {
@@ -167,7 +168,7 @@ export const useBuilderLayout = ({
                 : startWidth;
 
             const clicked = maxDelta <= 4;
-            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 220;
+            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 120;
             const shouldCollapse = clicked || releasedInCollapseZone;
 
             if (leftSidebarRef.current) {
@@ -177,7 +178,7 @@ export const useBuilderLayout = ({
             if (shouldCollapse) {
                 setIsLeftSidebarOpen(false);
             } else {
-                const finalWidth = Math.max(200, Math.min(500, currentWidth));
+                const finalWidth = Math.max(130, Math.min(500, currentWidth));
                 setLeftSidebarWidth(finalWidth);
                 localStorage.setItem('left_sidebar_width', String(finalWidth));
                 if (leftSidebarRef.current) {

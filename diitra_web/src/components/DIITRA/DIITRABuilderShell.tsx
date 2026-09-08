@@ -345,6 +345,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                 sectionName={layout.activeTab}
                                                 cowork={cowork}
                                                 allSections={sections.map(s => s.id)}
+                                                sectionItems={sections.map(s => ({ id: s.id, label: s.label }))}
                                                 entityUuid={entityUuid}
                                                 projectStatus={projectStatus}
                                                 templateCode={templateCode}

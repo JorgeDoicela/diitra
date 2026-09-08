@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, FileText, Lock } from 'lucide-react';
+import { ChevronLeft, Lock } from 'lucide-react';
 import type { BuilderSection } from '../hooks/useBuilderLayout';
 import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
@@ -32,10 +32,10 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
 
     // Escala de densidad dinámica adaptativa según la cantidad de secciones de la plantilla
     const density = count <= 6
-        ? { itemPy: 'py-3.5', itemPx: 'px-4', textSize: 'text-xs', spaceY: 'space-y-2', iconClass: '[&>svg]:w-4.5 [&>svg]:h-4.5', rounded: 'rounded-xl', gap: 'gap-3' }
+        ? { itemPy: 'py-3.5', itemPx: 'px-2.5 sm:px-3', textSize: 'text-xs', spaceY: 'space-y-2', rounded: 'rounded-xl' }
         : count <= 9
-        ? { itemPy: 'py-3', itemPx: 'px-3.5', textSize: 'text-xs', spaceY: 'space-y-1.5', iconClass: '[&>svg]:w-4 [&>svg]:h-4', rounded: 'rounded-xl', gap: 'gap-3' }
-        : { itemPy: 'py-2.5', itemPx: 'px-3', textSize: 'text-[11px]', spaceY: 'space-y-1', iconClass: '[&>svg]:w-3.5 [&>svg]:h-3.5', rounded: 'rounded-lg', gap: 'gap-2.5' };
+            ? { itemPy: 'py-2.5 sm:py-3', itemPx: 'px-2.5 sm:px-3', textSize: 'text-xs', spaceY: 'space-y-1.5', rounded: 'rounded-xl' }
+            : { itemPy: 'py-2 sm:py-2.5', itemPx: 'px-2 sm:px-2.5', textSize: 'text-[11px]', spaceY: 'space-y-1', rounded: 'rounded-lg' };
 
     return (
         <div
@@ -57,14 +57,14 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
             className={`
                 overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
                 ${typeof window !== 'undefined' && window.innerWidth < 1024
-                    ? 'absolute inset-y-0 left-0 top-0 bottom-0 z-[70] h-full border-r border-border-thin !w-[85vw] sm:!w-[320px]'
+                    ? 'absolute inset-y-0 left-0 top-0 bottom-0 z-[70] h-full border-r border-border-thin !w-[85vw] sm:!w-[260px]'
                     : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
                 }
             `}
         >
-            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-4 sm:p-5 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden shrink-0">
+            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="px-2.5 py-4 sm:px-3 sm:py-5 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden shrink-0">
                 <div className="flex flex-col">
-                    <div className="flex justify-between items-center mb-3 lg:ml-1">
+                    <div className="flex justify-between items-center mb-3 px-1">
                         <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
                         <button
                             onClick={() => {
@@ -89,16 +89,12 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                                 <button
                                     key={section.id}
                                     onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                    className={`w-full flex items-center justify-between ${density.itemPx} ${density.itemPy} ${density.rounded} ${density.textSize} font-bold uppercase tracking-wider transition-all text-left ${
-                                        isActive 
-                                            ? 'bg-text-main text-bg-deep shadow-xl' 
-                                            : 'text-text-dim hover:bg-surface hover:text-text-main'
-                                    }`}
+                                    className={`w-full flex items-center justify-between ${density.itemPx} ${density.itemPy} ${density.rounded} ${density.textSize} font-bold uppercase tracking-wider transition-all text-left ${isActive
+                                        ? 'bg-text-main text-bg-deep shadow-xl'
+                                        : 'text-text-dim hover:bg-surface hover:text-text-main'
+                                        }`}
                                 >
-                                    <span className={`flex items-center ${density.gap} text-left min-w-0`}>
-                                        <span className={`shrink-0 flex items-center ${density.iconClass}`}>{section.icon}</span>
-                                        <span className="text-left leading-snug break-words">{dynamicLabel}</span>
-                                    </span>
+                                    <span className="text-left leading-snug break-words">{dynamicLabel}</span>
                                     {isBlocked && (
                                         <div className="flex items-center shrink-0 ml-2">
                                             <Lock size={13} className={isActive ? 'text-bg-deep' : 'text-amber-500'} />
@@ -113,16 +109,12 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                 <div className="pt-2 mt-2 shrink-0">
                     <button
                         onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                        className={`w-full flex items-center justify-between ${density.itemPx} ${density.itemPy} ${density.rounded} ${density.textSize} font-black uppercase tracking-widest transition-all border text-left ${
-                            activeTab === 'output' 
-                                ? 'bg-text-main text-bg-deep border-text-main shadow-xl' 
-                                : 'text-text-dim border-border-thin hover:bg-surface hover:text-text-main'
-                        }`}
+                        className={`w-full flex items-center justify-between ${density.itemPx} ${density.itemPy} ${density.rounded} ${density.textSize} font-black uppercase tracking-widest transition-all border text-left ${activeTab === 'output'
+                            ? 'bg-text-main text-bg-deep border-text-main shadow-xl'
+                            : 'text-text-dim border-border-thin hover:bg-surface hover:text-text-main'
+                            }`}
                     >
-                        <span className={`flex items-center ${density.gap} text-left min-w-0`}>
-                            <span className={`shrink-0 flex items-center ${density.iconClass}`}><FileText size={18} /></span>
-                            <span className="text-left leading-snug">Finalizar y Firmar</span>
-                        </span>
+                        <span className="text-left leading-snug">Finalizar y Firmar</span>
                     </button>
                 </div>
             </div>
