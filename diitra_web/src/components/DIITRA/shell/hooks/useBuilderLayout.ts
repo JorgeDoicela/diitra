@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CoWorkHandle } from '../../../../core/cowork/types';
+import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
 
@@ -73,6 +74,45 @@ export const useBuilderLayout = ({
             }
         }
     }, [cowork, activeTab, readOnly]);
+
+    // ── Estados de Secciones en Tiempo Real (Status Dots) ──
+    const [sectionStatuses, setSectionStatuses] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        const docId = cowork?.session?.documentId;
+        if (!docId) return;
+
+        const normalizedUuid = docId.toLowerCase().trim();
+        api.get(`/collaboration/${normalizedUuid}/pulse`)
+            .then(res => {
+                if (res.data?.statuses) {
+                    const mapped: Record<string, string> = {};
+                    Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
+                        mapped[key] = typeof val === 'string' ? val : (val?.estado || 'Borrador');
+                    });
+                    setSectionStatuses(mapped);
+                }
+            })
+            .catch(() => {});
+
+        if (cowork?.onSectionStatusUpdated) {
+            cowork.onSectionStatusUpdated((data: any) => {
+                if (data?.sectionName && data?.status) {
+                    setSectionStatuses(prev => ({
+                        ...prev,
+                        [data.sectionName]: data.status
+                    }));
+                }
+            });
+        }
+    }, [cowork]);
+
+    const setSectionStatus = useCallback((sectionName: string, status: string) => {
+        setSectionStatuses(prev => ({
+            ...prev,
+            [sectionName]: status
+        }));
+    }, []);
 
     // ── Dimensiones y Estado de Sidebars ──
     const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
@@ -401,6 +441,8 @@ export const useBuilderLayout = ({
         isSectionBlocked,
         isDirectorOrAdmin,
         setActiveTab,
+        sectionStatuses,
+        setSectionStatus,
         leftSidebarWidth,
         rightSidebarWidth,
         isLeftSidebarOpen,

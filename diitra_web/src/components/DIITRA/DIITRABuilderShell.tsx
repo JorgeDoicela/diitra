@@ -153,6 +153,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                     sections={sections}
                                     activeTab={layout.activeTab}
                                     formData={formData}
+                                    sectionStatuses={layout.sectionStatuses}
                                     isLeftSidebarOpen={layout.isLeftSidebarOpen}
                                     leftSidebarWidth={layout.leftSidebarWidth}
                                     showMobileSections={layout.showMobileSections}
@@ -350,6 +351,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                                 projectStatus={projectStatus}
                                                 templateCode={templateCode}
                                                 onClose={() => layout.setIsSidebarOpen(false)}
+                                                sectionStatuses={layout.sectionStatuses}
+                                                onSectionStatusChange={layout.setSectionStatus}
                                             />
                                         </div>
                                     </div>

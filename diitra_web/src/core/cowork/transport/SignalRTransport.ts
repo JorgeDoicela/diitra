@@ -14,6 +14,12 @@ export class SignalRTransport implements ICoWorkTransport {
     private _isConnected = false;
     private _operationQueue: Promise<any> = Promise.resolve();
     private _statusListeners: ((isConnected: boolean) => void)[] = [];
+    private _sectionActivityListeners = new Set<(data: any) => void>();
+    private _sectionStatusListeners = new Set<(data: any) => void>();
+    private _newCommentListeners = new Set<(data: any) => void>();
+    private _commentUpdatedListeners = new Set<(data: any) => void>();
+    private _commentDeletedListeners = new Set<(data: any) => void>();
+    private _commentsReadListeners = new Set<(data: any) => void>();
 
     constructor(...args: any[]) {
         const hubUrl = typeof args[0] === 'string' && args[0].startsWith('http') ? args[0] : COWORK_CONFIG.SIGNALR_HUB_URL;
@@ -37,6 +43,25 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.on('TemplatePublished', (data: any) => {
             console.info('[SignalR] Recibida notificación de plantilla publicada vía WebSocket:', data);
             notifyTemplatePublished(data || {});
+        });
+
+        this.connection.on('SectionActivity', (data: any) => {
+            this._sectionActivityListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+        });
+        this.connection.on('SectionStatusUpdated', (data: any) => {
+            this._sectionStatusListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+        });
+        this.connection.on('NewCommentReceived', (data: any) => {
+            this._newCommentListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+        });
+        this.connection.on('CommentUpdated', (data: any) => {
+            this._commentUpdatedListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+        });
+        this.connection.on('CommentDeleted', (data: any) => {
+            this._commentDeletedListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+        });
+        this.connection.on('CommentsReadUpdated', (data: any) => {
+            this._commentsReadListeners.forEach(fn => { try { fn(data); } catch(e) {} });
         });
 
         this.connection.onreconnecting(() => { 
@@ -228,27 +253,26 @@ export class SignalRTransport implements ICoWorkTransport {
     }
 
     onSectionActivity(handler: (data: any) => void): void {
-        this.connection.off('SectionActivity');
-        this.connection.on('SectionActivity', handler);
+        this._sectionActivityListeners.add(handler);
     }
 
     onSectionStatusUpdated(handler: (data: any) => void): void {
-        this.connection.off('SectionStatusUpdated');
-        this.connection.on('SectionStatusUpdated', handler);
+        this._sectionStatusListeners.add(handler);
     }
 
     onNewCommentReceived(handler: (data: any) => void): void {
-        this.connection.off('NewCommentReceived');
-        this.connection.on('NewCommentReceived', handler);
+        this._newCommentListeners.add(handler);
     }
 
     onCommentUpdated(handler: (data: any) => void): void {
-        this.connection.off('CommentUpdated');
-        this.connection.on('CommentUpdated', handler);
+        this._commentUpdatedListeners.add(handler);
     }
 
     onCommentDeleted(handler: (data: any) => void): void {
-        this.connection.off('CommentDeleted');
-        this.connection.on('CommentDeleted', handler);
+        this._commentDeletedListeners.add(handler);
+    }
+
+    onCommentsReadUpdated(handler: (data: any) => void): void {
+        this._commentsReadListeners.add(handler);
     }
 }

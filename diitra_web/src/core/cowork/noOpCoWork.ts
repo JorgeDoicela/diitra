@@ -61,5 +61,6 @@ export function createNoOpCoWork(documentId = 'noop'): CoWorkHandle {
         onNewCommentReceived: (_handler) => { /* no-op */ },
         onCommentUpdated: (_handler) => { /* no-op */ },
         onCommentDeleted: (_handler) => { /* no-op */ },
+        onCommentsReadUpdated: (_handler) => { /* no-op */ },
     };
 }

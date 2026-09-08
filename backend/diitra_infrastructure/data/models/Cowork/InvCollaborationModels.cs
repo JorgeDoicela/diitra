@@ -78,11 +78,50 @@ namespace diitra_infrastructure.data.models.Cowork
         [JsonPropertyName("idPadre")]
         public int? IdPadre { get; set; }
 
+        [Column("lecturas", TypeName = "json")]
+        [JsonPropertyName("lecturasJson")]
+        public string? LecturasJson { get; set; }
+
+        [NotMapped]
+        [JsonPropertyName("lecturas")]
+        public List<CollaborationCommentReadItem> Lecturas
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(LecturasJson)) return new List<CollaborationCommentReadItem>();
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<CollaborationCommentReadItem>>(LecturasJson) 
+                           ?? new List<CollaborationCommentReadItem>();
+                }
+                catch
+                {
+                    return new List<CollaborationCommentReadItem>();
+                }
+            }
+            set
+            {
+                LecturasJson = value != null ? System.Text.Json.JsonSerializer.Serialize(value) : null;
+            }
+        }
+
         [Column("creadoEn")]
         [JsonPropertyName("creadoEn")]
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 
         [ForeignKey(nameof(IdPadre))]
         public virtual InvCollaborationComment? Padre { get; set; }
+    }
+
+    public class CollaborationCommentReadItem
+    {
+        [JsonPropertyName("usuarioUuid")]
+        public string UsuarioUuid { get; set; } = string.Empty;
+
+        [JsonPropertyName("nombreUsuario")]
+        public string NombreUsuario { get; set; } = string.Empty;
+
+        [JsonPropertyName("leidoEn")]
+        public DateTime LeidoEn { get; set; } = DateTime.UtcNow;
     }
 }

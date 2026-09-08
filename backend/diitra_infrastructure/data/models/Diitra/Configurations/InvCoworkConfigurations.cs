@@ -60,5 +60,7 @@ public class InvCollaborationCommentConfiguration : IEntityTypeConfiguration<Inv
         entity.HasKey(e => e.IdComentario).HasName("PRIMARY");
         entity.ToTable("inv_collaboration_comments");
         entity.HasIndex(e => e.DocumentoUuid);
+        entity.Property(e => e.LecturasJson).HasColumnName("lecturas").HasColumnType("json");
+        entity.Ignore(e => e.Lecturas);
     }
 }

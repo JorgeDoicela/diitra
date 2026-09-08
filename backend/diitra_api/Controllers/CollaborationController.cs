@@ -101,11 +101,31 @@ namespace diitra_api.Controllers
                     }
                 }
 
-                var comments = await _db.InvCollaborationComments
+                var commentsEntities = await _db.InvCollaborationComments
+                    .AsNoTracking()
                     .Where(c => c.DocumentoUuid == instanceUuid)
                     .OrderByDescending(c => c.CreadoEn)
                     .Take(50)
                     .ToListAsync();
+
+                var comments = commentsEntities.Select(c => new
+                {
+                    idComentario = c.IdComentario,
+                    documentoUuid = c.DocumentoUuid,
+                    usuarioUuid = c.UsuarioUuid,
+                    nombreUsuario = c.NombreUsuario,
+                    contenido = c.Contenido,
+                    idPadre = c.IdPadre,
+                    creadoEn = c.CreadoEn,
+                    lecturas = c.Lecturas.Select(l => new
+                    {
+                        idLectura = 0,
+                        idComentario = c.IdComentario,
+                        usuarioUuid = l.UsuarioUuid,
+                        nombreUsuario = l.NombreUsuario,
+                        leidoEn = l.LeidoEn
+                    }).ToList()
+                }).ToList();
 
                 var statuses = await _db.InvDocumentosSeccionesMetadata
                     .Where(s => s.DocumentoUuid == instanceUuid)
@@ -292,7 +312,8 @@ namespace diitra_api.Controllers
                     nombreUsuario = comment.NombreUsuario,
                     contenido = comment.Contenido,
                     idPadre = comment.IdPadre,
-                    creadoEn = comment.CreadoEn
+                    creadoEn = comment.CreadoEn,
+                    lecturas = System.Array.Empty<object>()
                 });
 
                 return Ok(comment);
@@ -432,6 +453,81 @@ namespace diitra_api.Controllers
                 return StatusCode(500, new { message = "Error interno al eliminar la imagen", detail = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Registra la confirmación de lectura ("visto") de uno o más comentarios para el usuario autenticado.
+        /// </summary>
+        [HttpPost("comments/{instanceUuid}/read")]
+        public async Task<IActionResult> MarkCommentsAsRead(string instanceUuid, [FromBody] MarkCommentsReadRequest request)
+        {
+            if (request.CommentIds == null || !request.CommentIds.Any())
+                return Ok(new { markedCount = 0 });
+
+            try
+            {
+                var userUuid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                               ?? User.FindFirst("id")?.Value ?? "0";
+                var userName = User.FindFirst("nombre")?.Value 
+                               ?? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Usuario";
+
+                var targetComments = await _db.InvCollaborationComments
+                    .Where(c => c.DocumentoUuid == instanceUuid 
+                             && request.CommentIds.Contains(c.IdComentario) 
+                             && c.UsuarioUuid != userUuid)
+                    .ToListAsync();
+
+                if (!targetComments.Any())
+                    return Ok(new { markedCount = 0 });
+
+                var now = System.DateTime.UtcNow;
+                var updatedCommentIds = new List<int>();
+
+                foreach (var comment in targetComments)
+                {
+                    var lecturasList = comment.Lecturas;
+                    if (!lecturasList.Any(l => l.UsuarioUuid == userUuid))
+                    {
+                        lecturasList.Add(new CollaborationCommentReadItem
+                        {
+                            UsuarioUuid = userUuid,
+                            NombreUsuario = userName,
+                            LeidoEn = now
+                        });
+                        comment.Lecturas = lecturasList;
+                        updatedCommentIds.Add(comment.IdComentario);
+                    }
+                }
+
+                if (updatedCommentIds.Any())
+                {
+                    await _db.SaveChangesAsync();
+
+                    // Notificar en tiempo real vía SignalR a todos los clientes del documento
+                    await _hubContext.Clients.Group(instanceUuid.ToLower().Trim()).SendAsync("CommentsReadUpdated", new
+                    {
+                        commentIds = updatedCommentIds,
+                        reader = new
+                        {
+                            usuarioUuid = userUuid,
+                            nombreUsuario = userName,
+                            leidoEn = now
+                        }
+                    });
+                }
+
+                return Ok(new { markedCount = updatedCommentIds.Count });
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al marcar comentarios leídos: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al marcar comentarios como leídos", detail = ex.Message });
+            }
+        }
+    }
+
+    public class MarkCommentsReadRequest
+    {
+        public List<int> CommentIds { get; set; } = new List<int>();
     }
 
     public class UpdateCommentRequest

@@ -169,6 +169,12 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         transport.onCommentDeleted(handler);
     }, []);
 
+    const onCommentsReadUpdated = useCallback((handler: (data: any) => void) => {
+        const transport = activeTransportRef.current;
+        if (!transport) return;
+        transport.onCommentsReadUpdated?.(handler);
+    }, []);
+
     useEffect(() => {
         let isMounted = true;
 
@@ -402,12 +408,13 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         onSectionStatusUpdated,
         onNewCommentReceived,
         onCommentUpdated,
-        onCommentDeleted
+        onCommentDeleted,
+        onCommentsReadUpdated
     }), [
         session, ydoc, awareness,
         compact, submitFinalContent, disconnect,
         notifySectionActivity, updateSectionStatus, postComment,
         onSectionActivity, onSectionStatusUpdated, onNewCommentReceived,
-        onCommentUpdated, onCommentDeleted
+        onCommentUpdated, onCommentDeleted, onCommentsReadUpdated
     ]);
 }

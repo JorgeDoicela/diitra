@@ -500,7 +500,8 @@ namespace diitra_infrastructure.Collaboration
                 nombreUsuario = comment.NombreUsuario,
                 contenido = comment.Contenido,
                 idPadre = comment.IdPadre,
-                creadoEn = comment.CreadoEn
+                creadoEn = comment.CreadoEn,
+                lecturas = System.Array.Empty<object>()
             });
         }
 

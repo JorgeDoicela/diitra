@@ -115,4 +115,5 @@ export interface ICoWorkTransport {
     onNewCommentReceived(handler: (data: any) => void): void;
     onCommentUpdated(handler: (data: any) => void): void;
     onCommentDeleted(handler: (data: any) => void): void;
+    onCommentsReadUpdated?(handler: (data: any) => void): void;
 }

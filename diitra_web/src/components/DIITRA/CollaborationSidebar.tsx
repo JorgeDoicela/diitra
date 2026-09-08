@@ -14,7 +14,8 @@ import {
     Edit3,
     Eye,
     Shield,
-    Check
+    Check,
+    CheckCheck
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
@@ -52,6 +53,8 @@ interface CollaborationSidebarProps {
     projectStatus?: string;
     templateCode?: string;
     onClose: () => void;
+    sectionStatuses?: Record<string, string>;
+    onSectionStatusChange?: (sectionName: string, status: string) => void;
 }
 
 const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
@@ -63,7 +66,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     entityUuid,
     projectStatus,
     templateCode,
-    onClose
+    onClose,
+    sectionStatuses: sectionStatusesProp,
+    onSectionStatusChange
 }) => {
     const { user } = useAuth();
     const confirm = useConfirm();
@@ -116,7 +121,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     const [comment, setComment] = useState('');
     const [comments, setComments] = useState<any[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
-    const [sectionStatuses, setSectionStatuses] = useState<Record<string, string>>({});
+    const [localSectionStatuses, setLocalSectionStatuses] = useState<Record<string, string>>({});
+    // Single Source of Truth: si el shell provee sectionStatuses, actúa como controlado
+    const sectionStatuses = sectionStatusesProp || localSectionStatuses;
     const [isLoadingPulse, setIsLoadingPulse] = useState(true);
 
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
@@ -241,16 +248,17 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                         nombreUsuario: c.nombreUsuario ?? c.nombre_usuario ?? 'Usuario',
                         contenido: c.contenido ?? '',
                         idPadre: c.idPadre ?? c.id_padre ?? null,
-                        creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString()
+                        creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString(),
+                        lecturas: c.lecturas ?? c.Lecturas ?? []
                     }));
                     setComments(mappedComments.reverse());
                 }
-                if (res.data.statuses) {
+                if (res.data.statuses && !sectionStatusesProp) {
                     const mappedStatuses: Record<string, string> = {};
                     Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
                         mappedStatuses[key] = typeof val === 'string' ? val : (val?.estado || 'Borrador');
                     });
-                    setSectionStatuses(mappedStatuses);
+                    setLocalSectionStatuses(mappedStatuses);
                 }
                 if (res.data.activities) {
                     const mappedActivities = res.data.activities.map((a: any) => ({
@@ -284,13 +292,32 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 nombreUsuario: data.nombreUsuario ?? data.nombre_usuario ?? 'Usuario',
                 contenido: data.contenido ?? '',
                 idPadre: data.idPadre ?? data.id_padre ?? null,
-                creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString()
+                creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString(),
+                lecturas: data.lecturas ?? data.Lecturas ?? []
             };
             setComments(prev => {
                 const commentId = normalized.idComentario;
                 if (prev.some(c => c.idComentario === commentId)) return prev;
                 return [...prev, normalized].slice(-50);
             });
+        });
+
+        cowork.onCommentsReadUpdated?.((data: any) => {
+            const commentIds: number[] = data.commentIds || [];
+            const reader = data.reader;
+            if (!commentIds.length || !reader) return;
+
+            setComments(prev => prev.map(c => {
+                if (commentIds.includes(c.idComentario)) {
+                    const currentLecturas = c.lecturas || [];
+                    const alreadyRead = currentLecturas.some((l: any) => (l.usuarioUuid || l.usuario_uuid) === reader.usuarioUuid);
+                    return {
+                        ...c,
+                        lecturas: alreadyRead ? currentLecturas : [...currentLecturas, reader]
+                    };
+                }
+                return c;
+            }));
         });
 
         cowork.onCommentUpdated?.((data) => {
@@ -336,12 +363,36 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         });
 
         cowork.onSectionStatusUpdated((data) => {
-            setSectionStatuses(prev => ({
-                ...prev,
-                [data.sectionName]: data.status
-            }));
+            if (!sectionStatusesProp) {
+                setLocalSectionStatuses(prev => ({
+                    ...prev,
+                    [data.sectionName]: data.status
+                }));
+            }
         });
     }, [cowork]);
+
+    // Marcar automáticamente como leídos los comentarios ajenos cuando el usuario ve el chat
+    useEffect(() => {
+        if (activeTab !== 'comments' || !instanceUuid) return;
+        const currentUserId = user?.id_referencia || user?.id || '';
+        if (!currentUserId) return;
+
+        const unreadIds = comments
+            .filter(c => {
+                const isMe = c.usuarioUuid === currentUserId;
+                if (isMe) return false;
+                const lecturas = c.lecturas || [];
+                return !lecturas.some((l: any) => (l.usuarioUuid || l.usuario_uuid) === currentUserId);
+            })
+            .map(c => c.idComentario)
+            .filter(Boolean);
+
+        if (unreadIds.length === 0) return;
+
+        api.post(`/collaboration/comments/${instanceUuid}/read`, { commentIds: unreadIds })
+            .catch(err => console.error("[Collaboration] Error al marcar comentarios como leídos:", err));
+    }, [activeTab, comments, instanceUuid, user?.id_referencia, user?.id]);
 
     // Voice recording helpers
     const startRecording = async () => {
@@ -440,12 +491,19 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         return null;
     };
 
-    // Cálculo dinámico de progreso global basado en aprobaciones
+    // Función de normalización semántica (Opción 1: En redacción / Por revisar / Completado)
+    const normalizeSectionStatus = useCallback((status?: string): 'En redacción' | 'Por revisar' | 'Completado' => {
+        if (status === 'Completado' || status === 'Aprobado') return 'Completado';
+        if (status === 'Por revisar' || status === 'Revisión') return 'Por revisar';
+        return 'En redacción';
+    }, []);
+
+    // Cálculo dinámico de progreso global basado en secciones completadas
     const globalProgress = useMemo(() => {
         if (!allSections.length) return 0;
-        const approvedCount = allSections.filter(s => sectionStatuses[s] === 'Aprobado').length;
-        return Math.round((approvedCount / allSections.length) * 100);
-    }, [allSections, sectionStatuses]);
+        const completedCount = allSections.filter(s => normalizeSectionStatus(sectionStatuses[s]) === 'Completado').length;
+        return Math.round((completedCount / allSections.length) * 100);
+    }, [allSections, sectionStatuses, normalizeSectionStatus]);
 
     // Publicar comentario en tiempo real
     const handlePostComment = async () => {
@@ -482,8 +540,16 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         }
     };
 
-    // Actualizar estado de sección colaborativa
+    // Actualizar estado de sección colaborativa con actualización optimista inmediata
     const handleUpdateStatus = async (status: string) => {
+        if (onSectionStatusChange) {
+            onSectionStatusChange(sectionName, status);
+        } else {
+            setLocalSectionStatuses(prev => ({
+                ...prev,
+                [sectionName]: status
+            }));
+        }
         try {
             await cowork.updateSectionStatus(instanceUuid, sectionName, status);
         } catch (err) {
@@ -585,50 +651,54 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                     return (
                                                         <div
                                                             key={c.idComentario || c.uuid || i}
-                                                            className={`flex flex-col w-full max-w-[90%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                                                                } animate-fade-up`}
+                                                            className={`group relative flex flex-col max-w-[85%] ${
+                                                                isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                            } animate-fade-up`}
                                                         >
-                                                            <div className="flex items-center gap-1.5 mb-0.5">
-                                                                <span className={`text-[8px] font-black uppercase tracking-wider ${isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
-                                                                    }`}>
-                                                                    {isMe ? 'Tú' : c.nombreUsuario}
-                                                                </span>
-                                                                <span className="text-[7px] text-text-dim font-mono">
-                                                                    {formatTime(c.creadoEn)}
-                                                                </span>
-                                                                {isMe && (
-                                                                    <div className="flex items-center gap-1 ml-2 opacity-60 hover:opacity-100 transition-opacity">
-                                                                        {!parsed?.audioUrl && (
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    setEditingCommentId(c.idComentario);
-                                                                                    setEditingCommentText(parsed ? parsed.text : c.contenido);
-                                                                                }}
-                                                                                className="text-[8px] text-text-dim hover:text-text-main"
-                                                                                title="Editar"
-                                                                            >
-                                                                                <Edit2 size={10} />
-                                                                            </button>
-                                                                        )}
-                                                                        <button
-                                                                            onClick={() => handleDeleteComment(c.idComentario)}
-                                                                            className="text-[8px] text-text-dim hover:text-red-500"
-                                                                            title="Eliminar"
-                                                                        >
-                                                                            <XCircle size={10} />
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 w-full ${isMe
-                                                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
-                                                                    : isMsgFromAdmin
-                                                                        ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
-                                                                        : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
+                                                            {/* Nombre de remitente para mensajes de terceros */}
+                                                            {!isMe && (
+                                                                <span className={`text-[10px] font-semibold mb-1 px-1 tracking-tight ${
+                                                                    isMsgFromAdmin ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
                                                                 }`}>
+                                                                    {c.nombreUsuario}
+                                                                </span>
+                                                            )}
+
+                                                            {/* Acciones flotantes estilo WhatsApp Web (solo visibles al pasar el ratón) */}
+                                                            {isMe && !editingCommentId && (
+                                                                <div className="absolute -top-2.5 right-1 hidden group-hover:flex items-center gap-0.5 bg-surface border border-border-thin shadow-md rounded-full px-1.5 py-0.5 z-20 transition-all backdrop-blur-md">
+                                                                    {!parsed?.audioUrl && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingCommentId(c.idComentario);
+                                                                                setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                            }}
+                                                                            className="text-text-dim hover:text-text-main p-0.5 rounded transition-colors"
+                                                                            title="Editar mensaje"
+                                                                        >
+                                                                            <Edit2 size={10} />
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleDeleteComment(c.idComentario)}
+                                                                        className="text-text-dim hover:text-red-500 p-0.5 rounded transition-colors"
+                                                                        title="Eliminar mensaje"
+                                                                    >
+                                                                        <XCircle size={10} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Burbuja compacta auto-ajustable estilo WhatsApp */}
+                                                            <div className={`rounded-2xl px-3 py-2 shadow-sm select-text transition-all duration-200 w-fit ${
+                                                                isMe
+                                                                    ? 'bg-[#d9fdd3] dark:bg-[#005c4b]/80 border border-[#b2e8a6]/70 dark:border-[#007a63]/50 text-zinc-900 dark:text-zinc-100 rounded-tr-xs'
+                                                                    : isMsgFromAdmin
+                                                                        ? 'bg-amber-500/10 border border-amber-500/25 text-text-main rounded-tl-xs'
+                                                                        : 'bg-surface border border-border-thin text-text-main rounded-tl-xs'
+                                                            }`}>
                                                                 {editingCommentId === c.idComentario ? (
-                                                                    <div className="space-y-2">
+                                                                    <div className="space-y-2 min-w-[200px]">
                                                                         <textarea
                                                                             value={editingCommentText}
                                                                             onChange={(e) => setEditingCommentText(e.target.value)}
@@ -660,15 +730,103 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                                     </div>
                                                                 ) : parsed ? (
                                                                     <div className="space-y-2">
-                                                                        {parsed.text && <p className="text-xs text-text-main leading-relaxed select-text">{parsed.text}</p>}
+                                                                        {parsed.text && (
+                                                                            <p className="text-[12.5px] leading-relaxed select-text break-words">
+                                                                                {parsed.text}
+                                                                            </p>
+                                                                        )}
                                                                         {parsed.audioUrl && (
                                                                             <div className="mt-1">
                                                                                 <AudioBubblePlayer src={parsed.audioUrl} />
                                                                             </div>
                                                                         )}
+                                                                        <div className="flex items-center justify-end gap-1 mt-1 select-none">
+                                                                            <span className={`text-[9px] font-mono ${isMe ? 'text-zinc-600 dark:text-zinc-300/80' : 'text-text-dim'}`}>
+                                                                                {formatTime(c.creadoEn)}
+                                                                            </span>
+                                                                            {isMe && (() => {
+                                                                                const lecturas = c.lecturas || [];
+                                                                                const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
+                                                                                const isRead = readers.length > 0;
+
+                                                                                return (
+                                                                                    <div className="relative group/read flex items-center cursor-help">
+                                                                                        {isRead ? (
+                                                                                            <CheckCheck size={14} className="text-sky-500 stroke-[2.5]" />
+                                                                                        ) : (
+                                                                                            <CheckCheck size={14} className="text-zinc-500 dark:text-zinc-400 stroke-[2]" />
+                                                                                        )}
+
+                                                                                        <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
+                                                                                            <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
+                                                                                                <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
+                                                                                                <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
+                                                                                            </div>
+                                                                                            {isRead ? (
+                                                                                                <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
+                                                                                                    {readers.map((r: any, idx: number) => (
+                                                                                                        <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
+                                                                                                            <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
+                                                                                                            <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
+                                                                        </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
+                                                                    /* Texto plano con hora y palomitas inline compactas */
+                                                                    <div className="flex flex-wrap items-end justify-between gap-x-2.5 gap-y-0.5">
+                                                                        <p className="text-[12.5px] leading-relaxed select-text break-words">
+                                                                            {c.contenido}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-1 select-none shrink-0 self-end ml-auto pt-0.5">
+                                                                            <span className={`text-[9.5px] font-mono leading-none ${isMe ? 'text-zinc-600 dark:text-zinc-300/80' : 'text-text-dim'}`}>
+                                                                                {formatTime(c.creadoEn)}
+                                                                            </span>
+                                                                            {isMe && (() => {
+                                                                                const lecturas = c.lecturas || [];
+                                                                                const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
+                                                                                const isRead = readers.length > 0;
+
+                                                                                return (
+                                                                                    <div className="relative group/read flex items-center cursor-help">
+                                                                                        {isRead ? (
+                                                                                            <CheckCheck size={14} className="text-sky-500 stroke-[2.5]" />
+                                                                                        ) : (
+                                                                                            <CheckCheck size={14} className="text-zinc-500 dark:text-zinc-400 stroke-[2]" />
+                                                                                        )}
+
+                                                                                        {/* Tooltip profesional Vercel Geist / WhatsApp adaptado a tema Claro/Oscuro */}
+                                                                                        <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
+                                                                                            <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
+                                                                                                <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
+                                                                                                <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
+                                                                                            </div>
+                                                                                            {isRead ? (
+                                                                                                <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
+                                                                                                    {readers.map((r: any, idx: number) => (
+                                                                                                        <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
+                                                                                                            <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
+                                                                                                            <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
+                                                                        </div>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -769,43 +927,44 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                             <p className="text-[13px] font-bold text-text-main mt-1 leading-snug">{currentSectionLabel}</p>
                                         </div>
 
-                                        {/* Lista de estados Vercel Geist con mayor altura, target táctil y contraste en activo */}
-                                        <div className="space-y-2">
+                                        {/* Lista de estados con target vertical amplio para fácil selección */}
+                                        <div className="space-y-2.5">
                                             {[
                                                 {
-                                                    label: 'Borrador',
-                                                    value: 'Borrador',
-                                                    icon: <Edit3 size={17} className="shrink-0" />,
+                                                    label: 'En redacción',
+                                                    value: 'En redacción',
+                                                    icon: <Edit3 size={18} className="shrink-0" />,
                                                     activeColor: 'text-text-main',
                                                     activeText: 'text-text-main font-bold'
                                                 },
                                                 {
-                                                    label: 'Revisión',
-                                                    value: 'Revisión',
-                                                    icon: <Eye size={17} className="shrink-0" />,
+                                                    label: 'Por revisar',
+                                                    value: 'Por revisar',
+                                                    icon: <Eye size={18} className="shrink-0" />,
                                                     activeColor: 'text-amber-500 dark:text-amber-400',
                                                     activeText: 'text-amber-600 dark:text-amber-400 font-bold'
                                                 },
                                                 {
-                                                    label: 'Aprobado',
-                                                    value: 'Aprobado',
-                                                    icon: <CheckCircle size={17} className="shrink-0" />,
+                                                    label: 'Completado',
+                                                    value: 'Completado',
+                                                    icon: <CheckCircle size={18} className="shrink-0" />,
                                                     activeColor: 'text-emerald-500 dark:text-emerald-400',
                                                     activeText: 'text-emerald-600 dark:text-emerald-400 font-bold'
                                                 }
                                             ].map(s => {
-                                                const isActive = (sectionStatuses[sectionName] || 'Borrador') === s.value;
+                                                const currentNormalized = normalizeSectionStatus(sectionStatuses[sectionName]);
+                                                const isActive = currentNormalized === s.value;
                                                 return (
                                                     <button
                                                         key={s.value}
                                                         onClick={() => handleUpdateStatus(s.value)}
-                                                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-[13px] border transition-all cursor-pointer ${isActive
+                                                        className={`w-full flex items-center justify-between px-4.5 py-4 rounded-xl text-sm border transition-all cursor-pointer ${isActive
                                                                 ? 'bg-surface border-border-thin shadow-xs'
                                                                 : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50 font-normal'
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-3.5">
-                                                            <span className={isActive ? s.activeColor : 'text-text-dim transition-colors'}>
+                                                             <span className={isActive ? s.activeColor : 'text-text-dim transition-colors'}>
                                                                 {s.icon}
                                                             </span>
                                                             <span className={`tracking-wide ${isActive ? s.activeText : ''}`}>
@@ -814,7 +973,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                         </div>
 
                                                         {isActive && (
-                                                            <Check size={16} strokeWidth={2.5} className={`shrink-0 ${s.activeColor}`} />
+                                                            <Check size={17} strokeWidth={2.5} className={`shrink-0 ${s.activeColor}`} />
                                                         )}
                                                     </button>
                                                 );
@@ -824,7 +983,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                 )}
 
                                 {(() => {
-                                    const approvedCount = allSections.filter(s => sectionStatuses[s] === 'Aprobado').length;
+                                    const completedCount = allSections.filter(s => normalizeSectionStatus(sectionStatuses[s]) === 'Completado').length;
 
                                     const progressTheme = globalProgress < 35
                                         ? { bar: 'from-red-500 to-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.35)]', text: 'text-rose-600 dark:text-rose-400' }
@@ -835,15 +994,15 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     return (
                                         <>
                                             {/* Tarjeta de Progreso y Métricas de Alta Densidad */}
-                                            <div className="p-4 bg-bg-deep border border-border-thin rounded-2xl space-y-3.5 shadow-sm hover:border-border-hover transition-all">
+                                            <div className="p-4 bg-bg-deep border border-border-thin rounded-2xl space-y-3 shadow-sm hover:border-border-hover transition-all">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h4 className="text-[9px] font-mono font-bold uppercase text-text-dim tracking-widest mb-0.5">Progreso</h4>
-                                                        <p className="text-[8px] text-text-dim uppercase leading-relaxed font-bold tracking-tight">
-                                                            {approvedCount} de {allSections.length} secciones aprobadas
+                                                        <h4 className="text-[10px] font-mono font-bold uppercase text-text-dim tracking-wider mb-0.5">Progreso</h4>
+                                                        <p className="text-[10px] text-text-main/70 uppercase leading-relaxed font-semibold tracking-tight">
+                                                            {completedCount} de {allSections.length} secciones completadas
                                                         </p>
                                                     </div>
-                                                    <span className={`text-[14px] font-mono font-black transition-colors ${progressTheme.text}`}>{globalProgress}%</span>
+                                                    <span className={`text-sm font-mono font-black transition-colors ${progressTheme.text}`}>{globalProgress}%</span>
                                                 </div>
 
                                                 <div className="w-full bg-surface-hover h-1.5 rounded-full overflow-hidden p-[1px] border border-border-thin/40">
@@ -865,7 +1024,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
                                                     <div className="divide-y divide-border-thin/30 max-h-[320px] overflow-y-auto custom-scrollbar pr-0.5">
                                                         {allSections.map((secKey, idx) => {
-                                                            const st = sectionStatuses[secKey] || 'Borrador';
+                                                            const st = normalizeSectionStatus(sectionStatuses[secKey]);
                                                             const isCurrent = secKey === sectionName;
                                                             const item = sectionItems?.find(s => s.id === secKey);
                                                             let rawLabel = item?.label;
@@ -896,9 +1055,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                                         {formattedLabel}
                                                                     </span>
 
-                                                                    <span className={`text-[10px] font-mono shrink-0 ${st === 'Aprobado'
+                                                                    <span className={`text-[10px] font-mono shrink-0 ${st === 'Completado'
                                                                             ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-                                                                            : st === 'Revisión'
+                                                                            : st === 'Por revisar'
                                                                                 ? 'text-amber-600 dark:text-amber-400 font-semibold'
                                                                                 : 'text-text-dim/70 font-medium'
                                                                         }`}>

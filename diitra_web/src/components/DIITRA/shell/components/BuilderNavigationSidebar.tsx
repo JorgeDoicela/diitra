@@ -7,6 +7,7 @@ export interface BuilderNavigationSidebarProps {
     sections: BuilderSection[];
     activeTab: string;
     formData: any;
+    sectionStatuses?: Record<string, string>;
     isLeftSidebarOpen: boolean;
     leftSidebarWidth: number;
     showMobileSections: boolean;
@@ -20,6 +21,7 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
     sections,
     activeTab,
     formData,
+    sectionStatuses,
     isLeftSidebarOpen,
     leftSidebarWidth,
     showMobileSections,
@@ -84,6 +86,7 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                             const isBlocked = !!formData?.BlockedSections?.[section.id];
                             const isActive = activeTab === section.id;
                             const dynamicLabel = formatDynamicSectionLabel(section.label, idx);
+                            const sectionStatus = sectionStatuses?.[section.id] || 'Borrador';
 
                             return (
                                 <button
@@ -93,13 +96,37 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
                                         ? 'bg-text-main text-bg-deep shadow-xl'
                                         : 'text-text-dim hover:bg-surface hover:text-text-main'
                                         }`}
+                                    title={sectionStatus !== 'Borrador' ? `${dynamicLabel} — ${sectionStatus}` : dynamicLabel}
                                 >
-                                    <span className="text-left leading-snug break-words">{dynamicLabel}</span>
-                                    {isBlocked && (
-                                        <div className="flex items-center shrink-0 ml-2">
+                                    <span className="text-left leading-snug break-words flex-1 pr-1">{dynamicLabel}</span>
+                                    <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
+                                        {isBlocked && (
                                             <Lock size={13} className={isActive ? 'text-bg-deep' : 'text-amber-500'} />
-                                        </div>
-                                    )}
+                                        )}
+                                        {(() => {
+                                            const isCompleted = sectionStatus === 'Completado' || sectionStatus === 'Aprobado';
+                                            const isReview = sectionStatus === 'Por revisar' || sectionStatus === 'Revisión';
+
+                                            const dotColor = isCompleted
+                                                ? 'bg-emerald-500'
+                                                : isReview
+                                                    ? 'bg-amber-500'
+                                                    : (isActive ? 'bg-zinc-400' : 'bg-zinc-400/80 dark:bg-zinc-500');
+
+                                            const dotTitle = isCompleted
+                                                ? 'Sección Completada'
+                                                : isReview
+                                                    ? 'Sección Por revisar'
+                                                    : 'Sección En redacción';
+
+                                            return (
+                                                <span
+                                                    className={`w-[5px] h-[5px] rounded-full shrink-0 ${dotColor}`}
+                                                    title={dotTitle}
+                                                />
+                                            );
+                                        })()}
+                                    </div>
                                 </button>
                             );
                         })}
