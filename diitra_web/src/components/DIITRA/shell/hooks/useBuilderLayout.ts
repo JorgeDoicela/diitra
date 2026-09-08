@@ -66,37 +66,46 @@ export const useBuilderLayout = ({
     // Ref para evitar notificar la misma sección múltiples veces a CoWork
     const lastNotifiedTabRef = useRef<string | null>(null);
 
+    const docId = cowork?.session?.documentId;
+    const notifySectionActivity = cowork?.notifySectionActivity;
+    const onSectionStatusUpdated = cowork?.onSectionStatusUpdated;
+
     useEffect(() => {
-        if (cowork && cowork.notifySectionActivity && activeTab && !readOnly) {
+        if (notifySectionActivity && docId && activeTab && !readOnly) {
             if (lastNotifiedTabRef.current !== activeTab) {
                 lastNotifiedTabRef.current = activeTab;
-                cowork.notifySectionActivity(cowork.session.documentId, activeTab, "ha entrado a redactar");
+                notifySectionActivity(docId, activeTab, "ha entrado a redactar");
             }
         }
-    }, [cowork, activeTab, readOnly]);
+    }, [notifySectionActivity, docId, activeTab, readOnly]);
 
     // ── Estados de Secciones en Tiempo Real (Status Dots) ──
     const [sectionStatuses, setSectionStatuses] = useState<Record<string, string>>({});
+    const lastFetchedPulseDocIdRef = useRef<string | null>(null);
 
     useEffect(() => {
-        const docId = cowork?.session?.documentId;
         if (!docId) return;
 
         const normalizedUuid = docId.toLowerCase().trim();
-        api.get(`/collaboration/${normalizedUuid}/pulse`)
-            .then(res => {
-                if (res.data?.statuses) {
-                    const mapped: Record<string, string> = {};
-                    Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
-                        mapped[key] = typeof val === 'string' ? val : (val?.estado || 'Borrador');
-                    });
-                    setSectionStatuses(mapped);
-                }
-            })
-            .catch(() => {});
+        
+        // Ejecutar pulse inicial únicamente una sola vez por documento para no saturar la red
+        if (lastFetchedPulseDocIdRef.current !== normalizedUuid) {
+            lastFetchedPulseDocIdRef.current = normalizedUuid;
+            api.get(`/collaboration/${normalizedUuid}/pulse`)
+                .then(res => {
+                    if (res.data?.statuses) {
+                        const mapped: Record<string, string> = {};
+                        Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
+                            mapped[key] = typeof val === 'string' ? val : (val?.estado || 'Borrador');
+                        });
+                        setSectionStatuses(mapped);
+                    }
+                })
+                .catch(() => {});
+        }
 
-        if (cowork?.onSectionStatusUpdated) {
-            cowork.onSectionStatusUpdated((data: any) => {
+        if (onSectionStatusUpdated) {
+            onSectionStatusUpdated((data: any) => {
                 if (data?.sectionName && data?.status) {
                     setSectionStatuses(prev => ({
                         ...prev,
@@ -105,7 +114,7 @@ export const useBuilderLayout = ({
                 }
             });
         }
-    }, [cowork]);
+    }, [docId, onSectionStatusUpdated]);
 
     const setSectionStatus = useCallback((sectionName: string, status: string) => {
         setSectionStatuses(prev => ({

@@ -437,6 +437,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     const { addToast } = useNotifications();
     const [isUpgrading, setIsUpgrading] = useState(false);
     const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+    const [visitedSections, setVisitedSections] = useState<Set<string>>(() => new Set());
 
     useEffect(() => {
         if (templateConfig?.has_template_update || templateConfig?.hasTemplateUpdate) {
@@ -752,121 +753,139 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             isUpgrading={isUpgrading}
         >
             {(activeTab, coworkHandle) => {
-                const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);
-                if (!activeSectionConfig) return null;
-
-                const SectionComponent = activeSectionConfig.component;
-
-                // Props específicas de listas según la sección activa
-                let listProps: any = {};
-                if (activeTab === 'equipo') {
-                    listProps = {
-                        onAdd: (tpl?: any) => addItem('Investigadores', tpl || { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
-                        onRemove: (i: number) => removeItem('Investigadores', i),
-                        onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v),
-                        onUpdateItem: (_listName: string, i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
-                    };
-                } else if (activeTab === 'cronograma') {
-                    const getProjectWeeksCount = () => {
-                        const startStr = formData.FechaInicio || formData.FechaInicioEstimada;
-                        const endStr = formData.FechaFin || formData.FechaFinEstimada;
-                        if (startStr && endStr) {
-                            try {
-                                const start = new Date(startStr);
-                                const end = new Date(endStr);
-                                if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
-                                    const diffTime = end.getTime() - start.getTime();
-                                    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                                    return Math.ceil(totalDays / 7);
-                                }
-                            } catch (e) {
-                                console.error("Error calculating project weeks:", e);
-                            }
-                        }
-                        return 12;
-                    };
-                    listProps = {
-                        onAdd: () => addItem('Cronograma', { 
-                            Actividad: '', 
-                            Numero: (formData.Cronograma?.length || 0) + 1, 
-                            RecursosNecesarios: '', 
-                            Responsable: '',
-                            Entregable: '',
-                            IdObjetivo: 0,
-                            FechaInicioPrevista: '',
-                            FechaFinPrevista: '',
-                            Semanas: Array(getProjectWeeksCount()).fill(false) 
-                        }),
-                        onRemove: (i: number) => removeItem('Cronograma', i),
-                        onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v),
-                        onReorder: (fromIdx: number, toIdx: number) => reorderItem('Cronograma', fromIdx, toIdx)
-                    };
-                } else {
-                    listProps = {
-                        onAdd: (listName: string, templateObj: any) => addItem(listName, templateObj),
-                        onRemove: (listName: string, i: number) => removeItem(listName, i),
-                        onUpdateItem: (listName: string, i: number, f: string, v: any) => updateItem(listName, i, f, v)
-                    };
+                if (activeTab && !visitedSections.has(activeTab)) {
+                    setVisitedSections(prev => {
+                        if (prev.has(activeTab)) return prev;
+                        const next = new Set(prev);
+                        next.add(activeTab);
+                        return next;
+                    });
                 }
-
-                // Determinar si esta sección específica está bloqueada por el director
-                const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
-                const isDirectorOrAdmin = canSign || isAdmin;
-                
-                // Si la sección está bloqueada y el usuario NO es director/admin, forzar readOnly = true
-                const sectionReadOnly = readOnly || (isSectionBlocked && !isDirectorOrAdmin);
 
                 return (
                     <div className="pb-20">
-                        <SectionComponent
-                            readOnly={sectionReadOnly}
-                            formData={formData}
-                            cowork={coworkHandle}
-                            onUpdate={updateField}
-                            canSign={canSign}
-                            isAdmin={isAdmin}
-                            activeTab={activeTab}
-                            templateCode={templateCode}
-                            carreras={carreras}
-                            misCarreras={misCarreras}
-                            programas={programas}
-                            convocatorias={convocatorias}
-                            tiposProducto={tiposProducto}
-                            groups={groups}
-                            dominios={dominios}
-                            lineas={lineas}
-                            sublineas={sublineas}
-                            customCatalogs={customCatalogs}
-                            config={activeSectionConfig.config}
+                        {mappedSections.map((sec: any) => {
+                            const isRendered = visitedSections.has(sec.id) || activeTab === sec.id;
+                            if (!isRendered) return null;
 
-                            // Props de listas para compatibilidad con secciones existentes
-                            investigadores={formData?.Investigadores || []}
-                            investigadoresReales={initialData?.investigadores || initialData?.Investigadores || []}
-                            recursosDisponibles={formData?.RecursosDisponibles || []}
-                            recursosNecesarios={formData?.RecursosNecesarios || []}
-                            costoTotal={formData?.CostoTotal || 0}
-                            cronograma={formData?.Cronograma || []}
-                            productosEsperados={formData?.ProductosEsperados || []}
+                            const isSectionActive = activeTab === sec.id;
+                            const SectionComponent = sec.component;
+                            if (!SectionComponent) return null;
 
-                            // Handlers genéricos de listas
-                            onAdd={(list: string, tpl: any) => addItem(list, tpl)}
-                            onRemove={(list: string, i: number) => removeItem(list, i)}
-                            onUpdateItem={(list: string, i: number, f: string, v: any) => updateItem(list, i, f, v)}
+                            // Props específicas de listas según la sección
+                            let listProps: any = {};
+                            if (sec.id === 'equipo') {
+                                listProps = {
+                                    onAdd: (tpl?: any) => addItem('Investigadores', tpl || { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
+                                    onRemove: (i: number) => removeItem('Investigadores', i),
+                                    onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v),
+                                    onUpdateItem: (_listName: string, i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
+                                };
+                            } else if (sec.id === 'cronograma') {
+                                const getProjectWeeksCount = () => {
+                                    const startStr = formData.FechaInicio || formData.FechaInicioEstimada;
+                                    const endStr = formData.FechaFin || formData.FechaFinEstimada;
+                                    if (startStr && endStr) {
+                                        try {
+                                            const start = new Date(startStr);
+                                            const end = new Date(endStr);
+                                            if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+                                                const diffTime = end.getTime() - start.getTime();
+                                                const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                                                return Math.ceil(totalDays / 7);
+                                            }
+                                        } catch (e) {
+                                            console.error("Error calculating project weeks:", e);
+                                        }
+                                    }
+                                    return 12;
+                                };
+                                listProps = {
+                                    onAdd: () => addItem('Cronograma', { 
+                                        Actividad: '', 
+                                        Numero: (formData.Cronograma?.length || 0) + 1, 
+                                        RecursosNecesarios: '', 
+                                        Responsable: '',
+                                        Entregable: '',
+                                        IdObjetivo: 0,
+                                        FechaInicioPrevista: '',
+                                        FechaFinPrevista: '',
+                                        Semanas: Array(getProjectWeeksCount()).fill(false) 
+                                    }),
+                                    onRemove: (i: number) => removeItem('Cronograma', i),
+                                    onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v),
+                                    onReorder: (fromIdx: number, toIdx: number) => reorderItem('Cronograma', fromIdx, toIdx)
+                                };
+                            } else {
+                                listProps = {
+                                    onAdd: (listName: string, templateObj: any) => addItem(listName, templateObj),
+                                    onRemove: (listName: string, i: number) => removeItem(listName, i),
+                                    onUpdateItem: (listName: string, i: number, f: string, v: any) => updateItem(listName, i, f, v)
+                                };
+                            }
 
-                            // Handlers específicos para retrocompatibilidad
-                            onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: '1', Fuente: '' })}
-                            onRemoveDisponible={(i: number) => removeItem('RecursosDisponibles', i)}
-                            onUpdateDisponible={(i: number, f: string, v: any) => updateItem('RecursosDisponibles', i, f, v)}
-                            onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: '1', CostoUnitario: 0, CostoTotal: 0 })}
-                            onRemoveNecesario={(i: number) => removeItem('RecursosNecesarios', i)}
-                            onUpdateNecesario={(i: number, f: string, v: any) => updateItem('RecursosNecesarios', i, f, v)}
-                            onAddProducto={() => addItem('ProductosEsperados', { categoria: '', tipo: '', titulo: '', requiere_senadi: false, registro_senadi: '', trl: '', indicador: '', medio_verificacion: '', cantidad: '1', plazo: '' })}
-                            onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
-                            onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
-                            onUpdateImpacto={(t: string, v: any) => updateField('Impacto', (prev: any) => ({ ...(prev || {}), [t.toLowerCase()]: v }))}
+                            const isSectionBlocked = formData?.BlockedSections?.[sec.id] === true;
+                            const isDirectorOrAdmin = canSign || isAdmin;
+                            const sectionReadOnly = readOnly || (isSectionBlocked && !isDirectorOrAdmin);
 
-                            {...listProps}
-                        />
+                            return (
+                                <div
+                                    key={sec.id}
+                                    className={isSectionActive ? 'block min-w-0' : 'hidden'}
+                                    style={{ display: isSectionActive ? undefined : 'none' }}
+                                >
+                                    <SectionComponent
+                                        readOnly={sectionReadOnly}
+                                        formData={formData}
+                                        cowork={coworkHandle}
+                                        onUpdate={updateField}
+                                        canSign={canSign}
+                                        isAdmin={isAdmin}
+                                        activeTab={sec.id}
+                                        templateCode={templateCode}
+                                        carreras={carreras}
+                                        misCarreras={misCarreras}
+                                        programas={programas}
+                                        convocatorias={convocatorias}
+                                        tiposProducto={tiposProducto}
+                                        groups={groups}
+                                        dominios={dominios}
+                                        lineas={lineas}
+                                        sublineas={sublineas}
+                                        customCatalogs={customCatalogs}
+                                        config={sec.config}
+
+                                        // Props de listas para compatibilidad con secciones existentes
+                                        investigadores={formData?.Investigadores || []}
+                                        investigadoresReales={initialData?.investigadores || initialData?.Investigadores || []}
+                                        recursosDisponibles={formData?.RecursosDisponibles || []}
+                                        recursosNecesarios={formData?.RecursosNecesarios || []}
+                                        costoTotal={formData?.CostoTotal || 0}
+                                        cronograma={formData?.Cronograma || []}
+                                        productosEsperados={formData?.ProductosEsperados || []}
+
+                                        // Handlers genéricos de listas
+                                        onAdd={(list: string, tpl: any) => addItem(list, tpl)}
+                                        onRemove={(list: string, i: number) => removeItem(list, i)}
+                                        onUpdateItem={(list: string, i: number, f: string, v: any) => updateItem(list, i, f, v)}
+
+                                        // Handlers específicos para retrocompatibilidad
+                                        onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: '1', Fuente: '' })}
+                                        onRemoveDisponible={(i: number) => removeItem('RecursosDisponibles', i)}
+                                        onUpdateDisponible={(i: number, f: string, v: any) => updateItem('RecursosDisponibles', i, f, v)}
+                                        onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: '1', CostoUnitario: 0, CostoTotal: 0 })}
+                                        onRemoveNecesario={(i: number) => removeItem('RecursosNecesarios', i)}
+                                        onUpdateNecesario={(i: number, f: string, v: any) => updateItem('RecursosNecesarios', i, f, v)}
+                                        onAddProducto={() => addItem('ProductosEsperados', { categoria: '', tipo: '', titulo: '', requiere_senadi: false, registro_senadi: '', trl: '', indicador: '', medio_verificacion: '', cantidad: '1', plazo: '' })}
+                                        onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
+                                        onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
+                                        onUpdateImpacto={(t: string, v: any) => updateField('Impacto', (prev: any) => ({ ...(prev || {}), [t.toLowerCase()]: v }))}
+
+                                        {...listProps}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 );
             }}

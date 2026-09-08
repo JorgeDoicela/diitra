@@ -3,6 +3,7 @@ import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../../DIITRA/SectionBlockGuard';
 import api from '../../../api/axios_config';
+import { fetchCatalogCached } from '../../../api/catalogsCache';
 import {
     BookOpen,
     FileText,
@@ -60,10 +61,10 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     useEffect(() => {
         let isMounted = true;
         setLoadingOds(true);
-        api.get('/catalogs/ods')
-            .then(res => {
-                if (isMounted && Array.isArray(res.data)) {
-                    setOdsList(res.data);
+        fetchCatalogCached('ods', () => api.get('/catalogs/ods'))
+            .then(data => {
+                if (isMounted && Array.isArray(data)) {
+                    setOdsList(data);
                 }
             })
             .catch(err => console.error("Error al cargar ODS:", err))
@@ -136,9 +137,26 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
         return activeSubTabs[0]?.id || 'antecedentes';
     });
 
+    const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => {
+        const initial = activeSubTabs[0]?.id || 'antecedentes';
+        return new Set([initial]);
+    });
+
+    const handleSelectSubTab = React.useCallback((tabId: string) => {
+        setActiveSubTab(tabId);
+        setVisitedTabs(prev => {
+            if (prev.has(tabId)) return prev;
+            const next = new Set(prev);
+            next.add(tabId);
+            return next;
+        });
+    }, []);
+
     React.useEffect(() => {
         if (activeSubTabs.length > 0 && !activeSubTabs.some(t => t.id === activeSubTab)) {
-            setActiveSubTab(activeSubTabs[0].id);
+            const firstId = activeSubTabs[0].id;
+            setActiveSubTab(firstId);
+            setVisitedTabs(prev => new Set(prev).add(firstId));
         }
     }, [activeSubTabs, activeSubTab]);
 
@@ -159,7 +177,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveSubTab(tab.id)}
+                            onClick={() => handleSelectSubTab(tab.id)}
                             className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[11px] uppercase tracking-wider transition-all whitespace-normal text-left w-full min-w-0 ${
                                 isChild ? 'md:ml-4 pl-4 border-l-2 border-border-thin/40 font-bold' : 'font-black'
                             } ${
@@ -186,11 +204,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                 })}
             </div>
 
-            {/* Contenedor del editor */}
+            {/* Contenedor del editor con Keep-Alive para transiciones instantáneas */}
             <div className="flex-1 min-w-0">
-                {(() => {
-                    const currentTab = activeSubTabs.find(t => t.id === activeSubTab);
-                    if (!currentTab) return null;
+                {activeSubTabs.map((currentTab) => {
+                    if (!visitedTabs.has(currentTab.id)) return null;
+                    const isCurrentActive = activeSubTab === currentTab.id;
+
+                    const renderCurrentTab = () => {
 
                     const matchKey = (keys: string[]) => {
                         const idLower = (currentTab.id || '').toLowerCase();
@@ -771,7 +791,18 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             </div>
                         </SectionBlockGuard>
                     );
-                })()}
+                    };
+
+                    return (
+                        <div
+                            key={currentTab.id}
+                            className={isCurrentActive ? 'block min-w-0' : 'hidden'}
+                            style={{ display: isCurrentActive ? undefined : 'none' }}
+                        >
+                            {renderCurrentTab()}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

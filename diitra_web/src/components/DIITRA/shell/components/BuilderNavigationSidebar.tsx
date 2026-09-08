@@ -66,8 +66,8 @@ export const BuilderNavigationSidebar: React.FC<BuilderNavigationSidebarProps> =
         >
             <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="px-2.5 py-4 sm:px-3 sm:py-5 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden shrink-0">
                 <div className="flex flex-col">
-                    <div className="flex justify-between items-center mb-3 px-1">
-                        <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
+                    <div className="flex justify-between items-center mb-5 px-1">
+                        <p className="text-xs font-black text-text-dim uppercase tracking-wider">Navegación del Documento</p>
                         <button
                             onClick={() => {
                                 setShowMobileSections(false);

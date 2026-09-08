@@ -15,7 +15,9 @@ import {
     Eye,
     Shield,
     Check,
-    CheckCheck
+    CheckCheck,
+    Reply,
+    X
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
@@ -128,6 +130,8 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editingCommentText, setEditingCommentText] = useState('');
+    const [replyingToComment, setReplyingToComment] = useState<any | null>(null);
+    const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
     // Audio recording state & refs
     const [isRecording, setIsRecording] = useState(false);
@@ -375,7 +379,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     // Marcar automáticamente como leídos los comentarios ajenos cuando el usuario ve el chat
     useEffect(() => {
         if (activeTab !== 'comments' || !instanceUuid) return;
-        const currentUserId = user?.id_referencia || user?.id || '';
+        const currentUserId = user?.id_referencia || (user as any)?.id || '';
         if (!currentUserId) return;
 
         const unreadIds = comments
@@ -392,7 +396,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
         api.post(`/collaboration/comments/${instanceUuid}/read`, { commentIds: unreadIds })
             .catch(err => console.error("[Collaboration] Error al marcar comentarios como leídos:", err));
-    }, [activeTab, comments, instanceUuid, user?.id_referencia, user?.id]);
+    }, [activeTab, comments, instanceUuid, user?.id_referencia, (user as any)?.id]);
 
     // Voice recording helpers
     const startRecording = async () => {
@@ -466,11 +470,12 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
     const handleDeleteComment = async (id: number) => {
         const hasConfirmed = await confirm({
-            title: 'Eliminar Comentario',
-            message: '¿Está seguro de que desea eliminar este comentario? Esta acción eliminará también sus respuestas.',
+            title: 'Eliminar mensaje',
+            message: '¿Estás seguro de que deseas eliminar este mensaje? Esta acción no se puede deshacer.',
             variant: 'destructive',
             confirmText: 'Eliminar',
-            cancelText: 'Cancelar'
+            cancelText: 'Cancelar',
+            position: 'right'
         });
         if (!hasConfirmed) return;
 
@@ -529,8 +534,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 contentStr = comment.trim();
             }
 
-            await cowork.postComment(instanceUuid, contentStr);
+            await cowork.postComment(instanceUuid, contentStr, replyingToComment?.idComentario);
             setComment('');
+            setReplyingToComment(null);
             setAudioBlob(null);
             setAudioUrl('');
         } catch (err) {
@@ -616,7 +622,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className={`flex-1 ${activeTab === 'comments' ? 'overflow-hidden' : 'overflow-y-auto'} p-4 custom-scrollbar bg-bg-deep/10 flex flex-col`}>
+            <div className={`flex-1 ${activeTab === 'comments' ? 'overflow-hidden p-1' : 'overflow-y-auto p-4'} custom-scrollbar bg-bg-deep/10 flex flex-col`}>
                 {isLoadingPulse ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10 opacity-70">
                         <Loader size={24} className="animate-spin text-text-main" />
@@ -626,7 +632,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     <>
                         {activeTab === 'comments' && (
                             <div className="flex flex-col h-full flex-1 overflow-hidden">
-                                <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 custom-scrollbar">
+                                <div className="flex-1 overflow-y-auto space-y-3 mb-2 px-1 pt-3.5 pb-1 custom-scrollbar">
                                     {(() => {
                                         const chatComments = comments.filter(c => parseAuditComment(c.contenido) === null);
                                         if (chatComments.length === 0) {
@@ -642,192 +648,262 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         }
 
                                         return (
-                                            <div className="space-y-3 flex flex-col">
+                                            <div className="space-y-3 flex flex-col w-full min-w-0">
                                                 {chatComments.map((c, i) => {
                                                     const parsed = parseCommentContent(c.contenido);
                                                     const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
                                                     const isMe = c.usuarioUuid === user?.id_referencia;
 
+                                                    const isEditingThis = editingCommentId === c.idComentario;
+
                                                     return (
                                                         <div
                                                             key={c.idComentario || c.uuid || i}
-                                                            className={`group relative flex flex-col max-w-[85%] ${
+                                                            id={`comment-${c.idComentario}`}
+                                                            className={`group flex flex-col min-w-0 ${
+                                                                isEditingThis ? 'w-full max-w-full' : 'max-w-[85%]'
+                                                            } ${
                                                                 isMe ? 'ml-auto items-end' : 'mr-auto items-start'
                                                             } animate-fade-up`}
                                                         >
                                                             {/* Nombre de remitente para mensajes de terceros */}
                                                             {!isMe && (
-                                                                <span className={`text-[10px] font-semibold mb-1 px-1 tracking-tight ${
-                                                                    isMsgFromAdmin ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                                                                <span className={`text-[10px] font-semibold mb-1 px-1 tracking-tight truncate max-w-full ${
+                                                                    isMsgFromAdmin ? 'text-amber-500 dark:text-amber-400' : 'text-text-main dark:text-zinc-300'
                                                                 }`}>
                                                                     {c.nombreUsuario}
                                                                 </span>
                                                             )}
 
-                                                            {/* Acciones flotantes estilo WhatsApp Web (solo visibles al pasar el ratón) */}
-                                                            {isMe && !editingCommentId && (
-                                                                <div className="absolute -top-2.5 right-1 hidden group-hover:flex items-center gap-0.5 bg-surface border border-border-thin shadow-md rounded-full px-1.5 py-0.5 z-20 transition-all backdrop-blur-md">
-                                                                    {!parsed?.audioUrl && (
+                                                            {/* Wrapper relativo ceñido a la burbuja con padding superior para evitar corte */}
+                                                            <div className={`relative ${isEditingThis ? 'w-full' : 'w-fit'} max-w-full min-w-0 pt-2.5`}>
+                                                                {/* Acciones flotantes ARRIBA a la derecha de la burbuja */}
+                                                                {!isEditingThis && (
+                                                                    <div className="absolute top-0 right-2 hidden group-hover:flex items-center gap-0.5 bg-surface border border-border-thin shadow-md rounded-full px-1.5 py-0.5 z-30 transition-all backdrop-blur-md">
                                                                         <button
                                                                             onClick={() => {
-                                                                                setEditingCommentId(c.idComentario);
-                                                                                setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                                setReplyingToComment(c);
+                                                                                commentInputRef.current?.focus();
                                                                             }}
                                                                             className="text-text-dim hover:text-text-main p-0.5 rounded transition-colors"
-                                                                            title="Editar mensaje"
+                                                                            title="Responder mensaje"
                                                                         >
-                                                                            <Edit2 size={10} />
+                                                                            <Reply size={10} />
                                                                         </button>
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() => handleDeleteComment(c.idComentario)}
-                                                                        className="text-text-dim hover:text-red-500 p-0.5 rounded transition-colors"
-                                                                        title="Eliminar mensaje"
-                                                                    >
-                                                                        <XCircle size={10} />
-                                                                    </button>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Burbuja compacta auto-ajustable estilo WhatsApp */}
-                                                            <div className={`rounded-2xl px-3 py-2 shadow-sm select-text transition-all duration-200 w-fit ${
-                                                                isMe
-                                                                    ? 'bg-[#d9fdd3] dark:bg-[#005c4b]/80 border border-[#b2e8a6]/70 dark:border-[#007a63]/50 text-zinc-900 dark:text-zinc-100 rounded-tr-xs'
-                                                                    : isMsgFromAdmin
-                                                                        ? 'bg-amber-500/10 border border-amber-500/25 text-text-main rounded-tl-xs'
-                                                                        : 'bg-surface border border-border-thin text-text-main rounded-tl-xs'
-                                                            }`}>
-                                                                {editingCommentId === c.idComentario ? (
-                                                                    <div className="space-y-2 min-w-[200px]">
-                                                                        <textarea
-                                                                            value={editingCommentText}
-                                                                            onChange={(e) => setEditingCommentText(e.target.value)}
-                                                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-2 text-[11px] text-text-main focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
-                                                                        />
-                                                                        <div className="flex justify-end gap-1">
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    setEditingCommentId(null);
-                                                                                    setEditingCommentText('');
-                                                                                }}
-                                                                                className="px-2 py-0.5 rounded border border-border-thin bg-surface-hover hover:border-border-hover text-[8px] font-bold uppercase tracking-wider text-text-dim transition-all"
-                                                                            >
-                                                                                Cancelar
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    let updatedContent = editingCommentText;
-                                                                                    if (parsed) {
-                                                                                        updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
-                                                                                    }
-                                                                                    handleUpdateComment(c.idComentario, updatedContent);
-                                                                                }}
-                                                                                className="px-2 py-0.5 bg-emerald-500 text-bg-deep rounded text-[8px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md"
-                                                                            >
-                                                                                Guardar
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : parsed ? (
-                                                                    <div className="space-y-2">
-                                                                        {parsed.text && (
-                                                                            <p className="text-[12.5px] leading-relaxed select-text break-words">
-                                                                                {parsed.text}
-                                                                            </p>
+                                                                        {isMe && (
+                                                                            <>
+                                                                                {!parsed?.audioUrl && (
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            setEditingCommentId(c.idComentario);
+                                                                                            setEditingCommentText(parsed ? parsed.text : c.contenido);
+                                                                                        }}
+                                                                                        className="text-text-dim hover:text-text-main p-0.5 rounded transition-colors"
+                                                                                        title="Editar mensaje"
+                                                                                    >
+                                                                                        <Edit2 size={10} />
+                                                                                    </button>
+                                                                                )}
+                                                                                <button
+                                                                                    onClick={() => handleDeleteComment(c.idComentario)}
+                                                                                    className="text-text-dim hover:text-red-500 p-0.5 rounded transition-colors"
+                                                                                    title="Eliminar mensaje"
+                                                                                >
+                                                                                    <XCircle size={10} />
+                                                                                </button>
+                                                                            </>
                                                                         )}
-                                                                        {parsed.audioUrl && (
-                                                                            <div className="mt-1">
-                                                                                <AudioBubblePlayer src={parsed.audioUrl} />
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="flex items-center justify-end gap-1 mt-1 select-none">
-                                                                            <span className={`text-[9px] font-mono ${isMe ? 'text-zinc-600 dark:text-zinc-300/80' : 'text-text-dim'}`}>
-                                                                                {formatTime(c.creadoEn)}
-                                                                            </span>
-                                                                            {isMe && (() => {
-                                                                                const lecturas = c.lecturas || [];
-                                                                                const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
-                                                                                const isRead = readers.length > 0;
-
-                                                                                return (
-                                                                                    <div className="relative group/read flex items-center cursor-help">
-                                                                                        {isRead ? (
-                                                                                            <CheckCheck size={14} className="text-sky-500 stroke-[2.5]" />
-                                                                                        ) : (
-                                                                                            <CheckCheck size={14} className="text-zinc-500 dark:text-zinc-400 stroke-[2]" />
-                                                                                        )}
-
-                                                                                        <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
-                                                                                            <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
-                                                                                                <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
-                                                                                                <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
-                                                                                            </div>
-                                                                                            {isRead ? (
-                                                                                                <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
-                                                                                                    {readers.map((r: any, idx: number) => (
-                                                                                                        <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
-                                                                                                            <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
-                                                                                                            <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
-                                                                                                        </div>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })()}
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    /* Texto plano con hora y palomitas inline compactas */
-                                                                    <div className="flex flex-wrap items-end justify-between gap-x-2.5 gap-y-0.5">
-                                                                        <p className="text-[12.5px] leading-relaxed select-text break-words">
-                                                                            {c.contenido}
-                                                                        </p>
-                                                                        <div className="flex items-center gap-1 select-none shrink-0 self-end ml-auto pt-0.5">
-                                                                            <span className={`text-[9.5px] font-mono leading-none ${isMe ? 'text-zinc-600 dark:text-zinc-300/80' : 'text-text-dim'}`}>
-                                                                                {formatTime(c.creadoEn)}
-                                                                            </span>
-                                                                            {isMe && (() => {
-                                                                                const lecturas = c.lecturas || [];
-                                                                                const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
-                                                                                const isRead = readers.length > 0;
-
-                                                                                return (
-                                                                                    <div className="relative group/read flex items-center cursor-help">
-                                                                                        {isRead ? (
-                                                                                            <CheckCheck size={14} className="text-sky-500 stroke-[2.5]" />
-                                                                                        ) : (
-                                                                                            <CheckCheck size={14} className="text-zinc-500 dark:text-zinc-400 stroke-[2]" />
-                                                                                        )}
-
-                                                                                        {/* Tooltip profesional Vercel Geist / WhatsApp adaptado a tema Claro/Oscuro */}
-                                                                                        <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
-                                                                                            <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
-                                                                                                <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
-                                                                                                <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
-                                                                                            </div>
-                                                                                            {isRead ? (
-                                                                                                <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
-                                                                                                    {readers.map((r: any, idx: number) => (
-                                                                                                        <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
-                                                                                                            <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
-                                                                                                            <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
-                                                                                                        </div>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })()}
-                                                                        </div>
                                                                     </div>
                                                                 )}
+
+                                                                {/* Burbuja con tokens semánticos DIITRA / Vercel Geist */}
+                                                                <div className={`rounded-2xl px-3 py-2 shadow-xs select-text transition-all duration-200 min-w-0 max-w-full ${
+                                                                    isEditingThis ? 'w-full' : 'w-fit'
+                                                                } ${
+                                                                    isMe
+                                                                        ? 'bg-text-main text-bg-deep border border-transparent rounded-tr-xs shadow-sm'
+                                                                        : isMsgFromAdmin
+                                                                            ? 'bg-amber-500/10 border border-amber-500/25 text-text-main rounded-tl-xs'
+                                                                            : 'bg-surface border border-border-thin text-text-main rounded-tl-xs'
+                                                                }`}>
+                                                                    {/* Cita del mensaje original si es una respuesta */}
+                                                                    {c.idPadre && (() => {
+                                                                        const parent = comments.find(p => p.idComentario === c.idPadre);
+                                                                        const parentParsed = parent ? parseCommentContent(parent.contenido) : null;
+                                                                        const parentText = parent ? (parentParsed?.text || parent.contenido) : 'Mensaje original';
+                                                                        const parentAuthor = parent?.nombreUsuario || 'Colaborador';
+
+                                                                        return (
+                                                                            <div
+                                                                                onClick={() => {
+                                                                                    const el = document.getElementById(`comment-${c.idPadre}`);
+                                                                                    if (el) {
+                                                                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                                        el.classList.add('bg-text-main/10', 'rounded-xl');
+                                                                                        setTimeout(() => el.classList.remove('bg-text-main/10', 'rounded-xl'), 1500);
+                                                                                    }
+                                                                                }}
+                                                                                className={`mb-1.5 px-2.5 py-1.5 rounded-lg text-[10px] border cursor-pointer transition-all select-none w-full max-w-full min-w-0 overflow-hidden ${
+                                                                                    isMe
+                                                                                        ? 'bg-bg-deep/15 border-bg-deep/20 hover:bg-bg-deep/25 text-bg-deep'
+                                                                                        : 'bg-surface-hover/80 border-border-thin hover:bg-surface-hover text-text-main'
+                                                                                }`}
+                                                                                title="Clic para ir al mensaje original"
+                                                                            >
+                                                                                <div className="flex items-center gap-1 font-bold text-[9.5px] min-w-0 w-full overflow-hidden">
+                                                                                    <Reply size={9} className="opacity-70 rotate-180 shrink-0" />
+                                                                                    <span className="truncate block min-w-0 flex-1">{parentAuthor}</span>
+                                                                                </div>
+                                                                                <p className="opacity-75 truncate block min-w-0 text-[9px] mt-0.5">
+                                                                                    {parentText}
+                                                                                </p>
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+                                                                    {isEditingThis ? (
+                                                                        <div className="space-y-2 w-full">
+                                                                            <textarea
+                                                                                value={editingCommentText}
+                                                                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                                                                className={`w-full rounded-lg p-2.5 text-[11px] outline-none resize-none h-14 transition-colors custom-scrollbar font-medium ${
+                                                                                    isMe
+                                                                                        ? 'bg-bg-deep/15 border border-bg-deep/20 text-bg-deep placeholder:text-bg-deep/50 focus:border-bg-deep/40'
+                                                                                        : 'bg-bg-deep border border-border-thin text-text-main placeholder:text-text-dim/60 focus:border-text-main'
+                                                                                }`}
+                                                                            />
+                                                                            <div className="flex justify-end gap-1.5">
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setEditingCommentId(null);
+                                                                                        setEditingCommentText('');
+                                                                                    }}
+                                                                                    className={`px-2.5 py-1 rounded-lg text-[8.5px] font-bold uppercase tracking-wider transition-all active:scale-95 ${
+                                                                                        isMe
+                                                                                            ? 'border border-bg-deep/25 bg-bg-deep/10 text-bg-deep hover:bg-bg-deep/20'
+                                                                                            : 'border border-border-thin bg-surface hover:bg-surface-hover text-text-dim hover:text-text-main'
+                                                                                    }`}
+                                                                                >
+                                                                                    Cancelar
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        let updatedContent = editingCommentText;
+                                                                                        if (parsed) {
+                                                                                            updatedContent = JSON.stringify({ ...parsed, text: editingCommentText });
+                                                                                        }
+                                                                                        handleUpdateComment(c.idComentario, updatedContent);
+                                                                                    }}
+                                                                                    className={`px-3.5 py-1 rounded-lg text-[8.5px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 ${
+                                                                                        isMe
+                                                                                            ? 'bg-bg-deep text-text-main hover:opacity-90'
+                                                                                            : 'bg-text-main text-bg-deep hover:opacity-90'
+                                                                                    }`}
+                                                                                >
+                                                                                    Guardar
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : parsed ? (
+                                                                        <div className="space-y-2 min-w-0 max-w-full">
+                                                                            {parsed.text && (
+                                                                                <p className="text-[12.5px] leading-relaxed select-text break-words min-w-0">
+                                                                                    {parsed.text}
+                                                                                </p>
+                                                                            )}
+                                                                            {parsed.audioUrl && (
+                                                                                <div className="mt-1">
+                                                                                    <AudioBubblePlayer src={parsed.audioUrl} />
+                                                                                </div>
+                                                                            )}
+                                                                            <div className="flex items-center justify-end gap-1 mt-1 select-none">
+                                                                                <span className={`text-[9px] font-mono ${isMe ? 'opacity-70' : 'text-text-dim'}`}>
+                                                                                    {formatTime(c.creadoEn)}
+                                                                                </span>
+                                                                                {isMe && (() => {
+                                                                                    const lecturas = c.lecturas || [];
+                                                                                    const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
+                                                                                    const isRead = readers.length > 0;
+
+                                                                                    return (
+                                                                                        <div className="relative group/read flex items-center cursor-help">
+                                                                                            {isRead ? (
+                                                                                                <CheckCheck size={14} className="text-sky-400 stroke-[2.5]" />
+                                                                                            ) : (
+                                                                                                <CheckCheck size={14} className="opacity-50 stroke-[2]" />
+                                                                                            )}
+
+                                                                                            <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
+                                                                                                <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
+                                                                                                    <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
+                                                                                                    <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
+                                                                                                </div>
+                                                                                                {isRead ? (
+                                                                                                    <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
+                                                                                                        {readers.map((r: any, idx: number) => (
+                                                                                                            <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
+                                                                                                                <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
+                                                                                                                <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                ) : (
+                                                                                                    <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })()}
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        /* Texto plano con hora y palomitas inline compactas */
+                                                                        <div className="flex flex-wrap items-end justify-between gap-x-2.5 gap-y-0.5 min-w-0 max-w-full">
+                                                                            <p className="text-[12.5px] leading-relaxed select-text break-words min-w-0">
+                                                                                {c.contenido}
+                                                                            </p>
+                                                                            <div className="flex items-center gap-1 select-none shrink-0 self-end ml-auto pt-0.5">
+                                                                                <span className={`text-[9.5px] font-mono leading-none ${isMe ? 'opacity-70' : 'text-text-dim'}`}>
+                                                                                    {formatTime(c.creadoEn)}
+                                                                                </span>
+                                                                                {isMe && (() => {
+                                                                                    const lecturas = c.lecturas || [];
+                                                                                    const readers = lecturas.filter((l: any) => (l.usuarioUuid || l.usuario_uuid) !== user?.id_referencia);
+                                                                                    const isRead = readers.length > 0;
+
+                                                                                    return (
+                                                                                        <div className="relative group/read flex items-center cursor-help">
+                                                                                            {isRead ? (
+                                                                                                <CheckCheck size={14} className="text-sky-400 stroke-[2.5]" />
+                                                                                            ) : (
+                                                                                                <CheckCheck size={14} className="opacity-50 stroke-[2]" />
+                                                                                            )}
+
+                                                                                            {/* Tooltip profesional Vercel Geist adaptado a tema Claro/Oscuro */}
+                                                                                            <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/read:flex flex-col bg-surface text-text-main text-[10px] rounded-lg py-1.5 px-2.5 shadow-xl border border-border-thin whitespace-nowrap z-50 pointer-events-none transition-colors">
+                                                                                                <div className="flex items-center gap-1.5 pb-1 border-b border-border-thin font-bold text-text-main">
+                                                                                                    <CheckCheck size={12} className={isRead ? "text-sky-500 stroke-[2.5]" : "text-text-dim stroke-[2]"} />
+                                                                                                    <span>{isRead ? `Leído por (${readers.length})` : 'Entregado'}</span>
+                                                                                                </div>
+                                                                                                {isRead ? (
+                                                                                                    <div className="pt-1 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
+                                                                                                        {readers.map((r: any, idx: number) => (
+                                                                                                            <div key={idx} className="flex items-center justify-between gap-3 text-text-main">
+                                                                                                                <span className="font-semibold text-text-main truncate max-w-[140px]">{r.nombreUsuario || r.nombre_usuario || 'Colaborador'}</span>
+                                                                                                                <span className="text-text-dim font-mono text-[9px]">{formatTime(r.leidoEn || r.leido_en)}</span>
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                ) : (
+                                                                                                    <span className="pt-1 text-[9px] text-text-dim font-medium">Entregado al equipo</span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })()}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
@@ -837,7 +913,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     })()}
                                     <div ref={commentsEndRef} />
                                 </div>
-                                <div className="mt-auto pt-2 shrink-0 space-y-3">
+                                <div className="mt-auto pt-1 pb-1.5 px-1 shrink-0 space-y-2">
                                     {isRecording ? (
                                         <div className="flex items-center justify-between bg-red-500/5 border border-red-500/25 rounded-xl p-2 px-3 animate-pulse">
                                             <div className="flex items-center gap-2">
@@ -879,8 +955,34 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         </div>
                                     ) : null}
 
+                                    {/* Previsualización de respuesta a un mensaje específico */}
+                                    {replyingToComment && (
+                                        <div className="flex items-center justify-between bg-surface border border-border-thin/40 rounded-xl p-2 px-3 shadow-xs animate-fade-in text-[10.5px] mb-2 gap-2">
+                                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                <Reply size={13} className="text-text-dim shrink-0" />
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-semibold text-text-main truncate text-[10px] leading-tight">
+                                                        Respondiendo a <strong className="font-bold">{replyingToComment.nombreUsuario}</strong>
+                                                    </span>
+                                                    <span className="text-text-dim truncate text-[9px] leading-tight mt-0.5">
+                                                        {parseCommentContent(replyingToComment.contenido)?.text || replyingToComment.contenido}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReplyingToComment(null)}
+                                                className="text-text-dim hover:text-text-main p-1 rounded-md hover:bg-surface-hover transition-colors shrink-0"
+                                                title="Cancelar respuesta"
+                                            >
+                                                <X size={13} />
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <div className="relative">
                                         <textarea
+                                            ref={commentInputRef}
                                             value={comment}
                                             onChange={(e) => setComment(e.target.value)}
                                             onKeyDown={(e) => {
@@ -889,8 +991,8 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                     handlePostComment();
                                                 }
                                             }}
-                                            placeholder="Escribe un mensaje al equipo..."
-                                            className="w-full bg-surface border border-border-thin rounded-xl p-3 pr-20 text-xs focus:ring-2 focus:ring-text-main/10 focus:border-text-main outline-none resize-none h-20 transition-all custom-scrollbar placeholder:text-text-dim/60"
+                                            placeholder={replyingToComment ? `Respondiendo a ${replyingToComment.nombreUsuario}...` : "Escribe un mensaje al equipo..."}
+                                            className="w-full bg-surface border border-border-thin/40 rounded-xl p-3 pr-20 text-xs focus:!border-border-thin focus:!ring-1 focus:!ring-border-thin/40 focus:!shadow-none outline-none resize-none h-20 transition-all custom-scrollbar placeholder:text-text-dim/50 shadow-2xs"
                                         />
                                         <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
                                             {!audioUrl && !isRecording && (

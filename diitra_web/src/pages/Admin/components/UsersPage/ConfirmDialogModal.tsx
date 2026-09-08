@@ -14,9 +14,17 @@ export const ConfirmDialogModal: React.FC<ConfirmDialogModalProps> = ({
     if (!confirmDialog.isOpen) return null;
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-card animate-scale-up max-w-md">
-                <div className="modal-header !py-4">
+        <div 
+            className="fixed inset-0 z-[10005] flex justify-end"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                }
+            }}
+        >
+            <div className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm animate-fade-in" />
+            <div className="relative w-full max-w-md h-full bg-surface border-l border-border-thin flex flex-col z-10 shadow-2xl animate-slide-in-right">
+                <div className="modal-header border-b border-border-thin flex justify-between items-center py-4 px-6 bg-surface">
                     <div className="flex items-center gap-3">
                         <div className={`icon-circle ${confirmDialog.type === 'danger' ? 'icon-circle-error' :
                             confirmDialog.type === 'warning' ? 'icon-circle-warning' :
@@ -33,12 +41,12 @@ export const ConfirmDialogModal: React.FC<ConfirmDialogModalProps> = ({
                         </h3>
                     </div>
                 </div>
-                <div className="modal-body py-6">
+                <div className="modal-body flex-1 p-6 overflow-y-auto custom-scrollbar">
                     <div className="text-xs text-text-dim leading-relaxed font-medium whitespace-pre-wrap">
                         {confirmDialog.message}
                     </div>
                 </div>
-                <div className="modal-footer bg-surface/50 !py-3">
+                <div className="modal-footer border-t border-border-thin py-4 px-6 flex justify-end gap-2.5 bg-surface">
                     {confirmDialog.type === 'success' ? (
                         <button
                             onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}

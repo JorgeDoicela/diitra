@@ -388,9 +388,12 @@ namespace diitra_api.Controllers
                     return StatusCode(403, new { message = "No tienes permisos para eliminar este comentario." });
                 }
 
-                // Obtener e hijos si existen y borrarlos en cascada
+                // Si otros usuarios respondieron a este mensaje, desvincularlos para no borrar sus aportes
                 var children = await _db.InvCollaborationComments.Where(c => c.IdPadre == id).ToListAsync();
-                _db.InvCollaborationComments.RemoveRange(children);
+                foreach (var child in children)
+                {
+                    child.IdPadre = null;
+                }
                 _db.InvCollaborationComments.Remove(comment);
                 await _db.SaveChangesAsync();
 

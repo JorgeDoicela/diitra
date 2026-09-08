@@ -7,7 +7,7 @@ interface ConfirmOptions {
     confirmText?: string;
     cancelText?: string;
     variant?: 'primary' | 'destructive' | 'warning';
-    position?: 'center' | 'right';
+    position?: 'center' | 'right' | 'left';
 }
 
 interface ConfirmContextType {
@@ -22,7 +22,10 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const resolveRef = useRef<(value: boolean) => void>(() => {});
 
     const confirm = useCallback((opts: ConfirmOptions) => {
-        setOptions(opts);
+        setOptions({
+            position: 'right',
+            ...opts
+        });
         setIsOpen(true);
         return new Promise<boolean>((resolve) => {
             resolveRef.current = resolve;
@@ -63,12 +66,18 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return base;
     };
 
+    const position = options.position || 'right';
+
     return (
         <ConfirmContext.Provider value={{ confirm }}>
             {children}
             {isOpen && (
                 <div 
-                    className={`fixed inset-0 z-[999999] flex ${options.position === 'right' ? 'justify-end' : 'items-center justify-center'}`}
+                    className={`fixed inset-0 z-[999999] flex ${
+                        position === 'left' ? 'justify-start' :
+                        position === 'center' ? 'items-center justify-center' :
+                        'justify-end'
+                    }`}
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
                             handleCancel();
@@ -77,8 +86,10 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 >
                     <div className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm animate-fade-in" />
 
-                    {options.position === 'right' ? (
-                        <div className="relative w-full max-w-lg h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right shadow-2xl">
+                    {position === 'right' || position === 'left' ? (
+                        <div className={`relative w-full max-w-lg h-full bg-surface ${
+                            position === 'left' ? 'border-r animate-slide-in-from-left' : 'border-l animate-slide-in-right'
+                        } border-border-thin flex flex-col z-10 shadow-2xl`}>
                             {/* Header */}
                             <div className="modal-header border-b border-border-thin flex justify-between items-center py-4 px-6 bg-surface">
                                 <div className="flex items-center gap-2.5">

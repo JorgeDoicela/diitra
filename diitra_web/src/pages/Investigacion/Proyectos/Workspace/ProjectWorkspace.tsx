@@ -135,10 +135,23 @@ export const ProjectWorkspace: React.FC = () => {
     }, []);
 
     // Carga inicial o cuando cambia el documento activo/uuid
+    const lastSyncedDocRef = useRef<string | null>(null);
+    const lastSyncedProjectUuidRef = useRef<string | null>(null);
+
     useEffect(() => {
-        if (resolvedProjectUuid) {
-            triggerSync(false);
+        if (!resolvedProjectUuid) return;
+
+        // Evitar re-sincronizaciones masivas de todo el proyecto si ya se sincronizó este documento y proyecto
+        if (
+            lastSyncedDocRef.current === activeDocument && 
+            lastSyncedProjectUuidRef.current === resolvedProjectUuid
+        ) {
+            return;
         }
+
+        lastSyncedDocRef.current = activeDocument;
+        lastSyncedProjectUuidRef.current = resolvedProjectUuid;
+        triggerSync(false);
     }, [resolvedProjectUuid, activeDocument, triggerSync]);
 
     // Registro atómico de listeners nativos (se suscribe una sola vez al montar)
