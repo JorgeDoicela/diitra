@@ -211,8 +211,8 @@ export const RenderProjectGeneralSection: React.FC<{
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
         const rawLabel = c.customLabel_showTitulo || 'Nombre del Proyecto';
-        const labelDisplay = c.customLabel_showTitulo ? `${c.customLabel_showTitulo.trim()}:` : 'NOMBRE DEL PROYECTO:';
-        const req = c.req_showTitulo;
+        const labelDisplay = c.customLabel_showTitulo ? `${c.customLabel_showTitulo.trim()}:` : 'Nombre del Proyecto:';
+        const req = c.req_showTitulo || 'Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga. ';
 
         items.push({
             id: 'showTitulo',
@@ -243,8 +243,54 @@ export const RenderProjectGeneralSection: React.FC<{
                         )}
                         {renderDirectControlsPill('showTitulo', rawLabel, isFirst, isLast, variant, false, allKeys)}
                     </td>
-                    <td colSpan={6} className="p-2 text-slate-800 font-semibold bg-white align-middle">
-                        {req ? <span className="text-slate-500 italic">[{req}]</span> : <>&nbsp;</>}
+                    <td colSpan={6} className="p-2 text-slate-700 bg-white align-middle">
+                        <span className="text-slate-600 italic">[{req}]</span>
+                    </td>
+                </tr>
+            )
+        });
+    }
+
+    // 1.1 CÓDIGO DEL PROYECTO
+    if (c.showCodigo !== false) {
+        const variant = c.variant_showCodigo || 'standard';
+        const bg = resolveBg(variant);
+        const fg = getContrastFg(bg);
+        const rawLabel = c.customLabel_showCodigo || 'Código del Proyecto';
+        const labelDisplay = c.customLabel_showCodigo ? `${c.customLabel_showCodigo.trim()}:` : 'Código del Proyecto:';
+        const defaultCode = c.req_showCodigo || 'INV-PROY-26.27-01';
+
+        items.push({
+            id: 'showCodigo',
+            rawLabel,
+            variant,
+            render: (isFirst, isLast, allKeys) => (
+                <tr key="showCodigo" className={`${rowBorderCss} group/row relative`}>
+                    <td
+                        className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
+                        style={{ backgroundColor: bg, color: fg }}
+                    >
+                        {editingKey === 'showCodigo' ? (
+                            <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                                <input
+                                    type="text"
+                                    value={editingText}
+                                    onChange={e => setEditingText(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveLabelDirect('showCodigo'); if (e.key === 'Escape') setEditingKey(null); }}
+                                    autoFocus
+                                    className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold w-full"
+                                />
+                                <button type="button" onClick={() => handleSaveLabelDirect('showCodigo')} className="p-0.5 text-emerald-400 hover:text-emerald-300">
+                                    <Check className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ) : (
+                            <span>{labelDisplay}</span>
+                        )}
+                        {renderDirectControlsPill('showCodigo', rawLabel, isFirst, isLast, variant, false, allKeys)}
+                    </td>
+                    <td colSpan={6} className="p-2 text-slate-800 font-mono text-[8.5px] bg-white align-middle">
+                        {defaultCode}
                     </td>
                 </tr>
             )
@@ -257,8 +303,8 @@ export const RenderProjectGeneralSection: React.FC<{
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
         const rawLabel = c.customLabel_showPrograma || 'Programa';
-        const labelDisplay = c.customLabel_showPrograma ? `${c.customLabel_showPrograma.trim()}:` : 'PROGRAMA:';
-        const req = c.req_showPrograma;
+        const labelDisplay = c.customLabel_showPrograma ? `${c.customLabel_showPrograma.trim()}:` : 'Programa:';
+        const req = c.req_showPrograma || 'Elija un elemento.';
 
         items.push({
             id: 'showPrograma',
@@ -289,62 +335,7 @@ export const RenderProjectGeneralSection: React.FC<{
                         )}
                         {renderDirectControlsPill('showPrograma', rawLabel, isFirst, isLast, variant, false, allKeys)}
                     </td>
-                    <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                        {req ? <span className="text-slate-500 italic">[{req}]</span> : <>&nbsp;</>}
-                    </td>
-                </tr>
-            )
-        });
-    }
-
-    // 3. GRUPO DE INVESTIGACIÓN
-    if (c.showGrupo !== false) {
-        const variant = c.variant_showGrupo || 'standard';
-        const bg = resolveBg(variant);
-        const fg = getContrastFg(bg);
-        const rawLabel = c.customLabel_showGrupo || 'Grupo de Investigación';
-        const labelDisplay = c.customLabel_showGrupo ? `${c.customLabel_showGrupo.trim()}:` : 'GRUPO DE INVESTIGACIÓN:';
-        const req = c.req_showGrupo || '[Escriba el Nombre o borrar este título]';
-
-        items.push({
-            id: 'showGrupo',
-            rawLabel,
-            variant,
-            render: (isFirst, isLast, allKeys) => (
-                <tr key="showGrupo" className={`${rowBorderCss} group/row relative`}>
-                    <td
-                        className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
-                        style={{ backgroundColor: bg, color: fg }}
-                    >
-                        {editingKey === 'showGrupo' ? (
-                            <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
-                                <input
-                                    type="text"
-                                    value={editingText}
-                                    onChange={e => setEditingText(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveLabelDirect('showGrupo'); if (e.key === 'Escape') setEditingKey(null); }}
-                                    autoFocus
-                                    className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold w-full"
-                                />
-                                <button type="button" onClick={() => handleSaveLabelDirect('showGrupo')} className="p-0.5 text-emerald-400 hover:text-emerald-300">
-                                    <Check className="w-3 h-3" />
-                                </button>
-                            </div>
-                        ) : (
-                            <span>{labelDisplay}</span>
-                        )}
-                        {renderDirectControlsPill('showGrupo', rawLabel, isFirst, isLast, variant, false, allKeys)}
-                    </td>
-                    <td className={`font-bold text-[8px] text-center ${cellBorderCss} p-1.5 align-middle bg-white text-slate-800`}>
-                        NO
-                    </td>
-                    <td className={`text-center ${cellBorderCss} p-1.5 text-[8.5px] align-middle bg-white`}>
-                        &nbsp;
-                    </td>
-                    <td className={`font-bold text-[8px] text-center ${cellBorderCss} p-1.5 align-middle bg-white text-slate-800`}>
-                        SI
-                    </td>
-                    <td colSpan={3} className="p-1.5 text-slate-400 italic text-[8.5px] align-middle bg-white">
+                    <td colSpan={6} className="p-2 text-slate-600 italic bg-white align-middle">
                         {req}
                     </td>
                 </tr>
@@ -352,14 +343,78 @@ export const RenderProjectGeneralSection: React.FC<{
         });
     }
 
-    // 4. DOMINIO Y LÍNEA DE INVESTIGACIÓN
+    // 3. GRUPO DE INVESTIGACIÓN (LAYOUT OFICIAL CACES SUB-GRILLA SI/NO)
+    if (c.showGrupo !== false) {
+        const variant = c.variant_showGrupo || 'standard';
+        const bg = resolveBg(variant);
+        const fg = getContrastFg(bg);
+        const rawLabel = c.customLabel_showGrupo || 'Grupo de Investigación al que pertenece el Proyecto';
+        const labelDisplay = c.customLabel_showGrupo ? `${c.customLabel_showGrupo.trim()}:` : 'Grupo de Investigación al que pertenece el Proyecto:';
+        const req = c.req_showGrupo || 'Escriba el Nombre o N/A';
+
+        items.push({
+            id: 'showGrupo',
+            rawLabel,
+            variant,
+            render: (isFirst, isLast, allKeys) => (
+                <React.Fragment key="showGrupo">
+                    <tr className={`${rowBorderCss} group/row relative`}>
+                        <td
+                            rowSpan={2}
+                            className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
+                            style={{ backgroundColor: bg, color: fg }}
+                        >
+                            {editingKey === 'showGrupo' ? (
+                                <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                                    <input
+                                        type="text"
+                                        value={editingText}
+                                        onChange={e => setEditingText(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveLabelDirect('showGrupo'); if (e.key === 'Escape') setEditingKey(null); }}
+                                        autoFocus
+                                        className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold w-full"
+                                    />
+                                    <button type="button" onClick={() => handleSaveLabelDirect('showGrupo')} className="p-0.5 text-emerald-400 hover:text-emerald-300">
+                                        <Check className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <span>{labelDisplay}</span>
+                            )}
+                            {renderDirectControlsPill('showGrupo', rawLabel, isFirst, isLast, variant, false, allKeys)}
+                        </td>
+                        <td className={`font-bold text-[8px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800`}>
+                            SI
+                        </td>
+                        <td className={`text-center ${cellBorderCss} p-1 text-[8.5px] align-middle bg-white`}>
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                        <td rowSpan={2} colSpan={4} className="p-2 text-slate-600 italic text-[8.5px] align-middle bg-white">
+                            [{req}]
+                        </td>
+                    </tr>
+                    <tr className={rowBorderCss}>
+                        <td className={`font-bold text-[8px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800`}>
+                            NO
+                        </td>
+                        <td className={`text-center ${cellBorderCss} p-1 text-[8.5px] align-middle bg-white`}>
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                    </tr>
+                </React.Fragment>
+            )
+        });
+    }
+
+    // 4. LÍNEA Y SUBLÍNEA DE INVESTIGACIÓN (DOMINIO OPCIONAL)
     if (c.showLinea !== false) {
         const variant = c.variant_showLinea || 'standard';
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
         const rawLabel = c.customLabel_showLinea || 'Línea de Investigación';
-        const labelDisplay = c.customLabel_showLinea ? `${c.customLabel_showLinea.trim()}:` : 'LÍNEA DE INVESTIGACIÓN:';
-        const req = c.req_showLinea;
+        const labelDisplay = c.customLabel_showLinea ? `${c.customLabel_showLinea.trim()}:` : 'Línea de Investigación:';
+        const reqLinea = c.req_showLinea || ' Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente. ';
+        const reqSublinea = c.req_showSublinea || ' Especifica el enfoque particular dentro de la línea; deben escribir la sublínea que se relacione directamente con el tema. ';
 
         items.push({
             id: 'showLinea',
@@ -367,21 +422,22 @@ export const RenderProjectGeneralSection: React.FC<{
             variant,
             render: (isFirst, isLast, allKeys) => (
                 <React.Fragment key="showLinea">
+                    {c.showDominio === true && (
+                        <tr className={`${rowBorderCss} group/row relative`}>
+                            <td
+                                className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
+                                style={{ backgroundColor: bg, color: fg }}
+                            >
+                                DOMINIO:
+                            </td>
+                            <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                                [Área del conocimiento]
+                            </td>
+                        </tr>
+                    )}
                     <tr className={`${rowBorderCss} group/row relative`}>
                         <td
                             className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
-                            style={{ backgroundColor: bg, color: fg }}
-                        >
-                            DOMINIO:
-                            {renderDirectControlsPill('showLinea', rawLabel, isFirst, isLast, variant, false, allKeys)}
-                        </td>
-                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                            &nbsp;
-                        </td>
-                    </tr>
-                    <tr className={rowBorderCss}>
-                        <td
-                            className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle`}
                             style={{ backgroundColor: bg, color: fg }}
                         >
                             {editingKey === 'showLinea' ? (
@@ -401,9 +457,10 @@ export const RenderProjectGeneralSection: React.FC<{
                             ) : (
                                 <span>{labelDisplay}</span>
                             )}
+                            {renderDirectControlsPill('showLinea', rawLabel, isFirst, isLast, variant, false, allKeys)}
                         </td>
-                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                            {req ? <span className="text-slate-500 italic">[{req}]</span> : <>&nbsp;</>}
+                        <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                            [{reqLinea}]
                         </td>
                     </tr>
                     <tr className={rowBorderCss}>
@@ -411,10 +468,10 @@ export const RenderProjectGeneralSection: React.FC<{
                             className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle`}
                             style={{ backgroundColor: bg, color: fg }}
                         >
-                            SUBLÍNEA DE INVESTIGACIÓN:
+                            Sublínea de Investigación:
                         </td>
-                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                            &nbsp;
+                        <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                            [{reqSublinea}]
                         </td>
                     </tr>
                 </React.Fragment>
@@ -422,68 +479,79 @@ export const RenderProjectGeneralSection: React.FC<{
         });
     }
 
-    // 5. TIPO DE INVESTIGACIÓN
+    // 5. TIPO DE INVESTIGACIÓN (LAYOUT OFICIAL CACES 4 CASILLAS)
     if (c.showTipo !== false) {
         const variant = c.variant_showTipo || 'standard';
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
-        const rawLabel = c.customLabel_showTipo || 'Tipo de Investigación';
-        const labelDisplay = c.customLabel_showTipo ? `${c.customLabel_showTipo.trim()}:` : 'TIPO DE INVESTIGACIÓN (X):';
+        const rawLabel = c.customLabel_showTipo || 'Tipo de Investigación (X)';
+        const labelDisplay = c.customLabel_showTipo ? `${c.customLabel_showTipo.trim()}:` : 'Tipo de Investigación (X):';
 
         items.push({
             id: 'showTipo',
             rawLabel,
             variant,
             render: (isFirst, isLast, allKeys) => (
-                <tr key="showTipo" className={`${rowBorderCss} group/row relative`}>
-                    <td
-                        className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
-                        style={{ backgroundColor: bg, color: fg }}
-                    >
-                        {editingKey === 'showTipo' ? (
-                            <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
-                                <input
-                                    type="text"
-                                    value={editingText}
-                                    onChange={e => setEditingText(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveLabelDirect('showTipo'); if (e.key === 'Escape') setEditingKey(null); }}
-                                    autoFocus
-                                    className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold w-full"
-                                />
-                                <button type="button" onClick={() => handleSaveLabelDirect('showTipo')} className="p-0.5 text-emerald-400 hover:text-emerald-300">
-                                    <Check className="w-3 h-3" />
-                                </button>
-                            </div>
-                        ) : (
-                            <span>{labelDisplay}</span>
-                        )}
-                        {renderDirectControlsPill('showTipo', rawLabel, isFirst, isLast, variant, false, allKeys)}
-                    </td>
-                    <td className={`font-bold text-[7.5px] text-center ${cellBorderCss} p-1.5 align-middle bg-white text-slate-800`}>
-                        BÁSICA
-                    </td>
-                    <td className={`text-center ${cellBorderCss} p-1.5 text-[8.5px] align-middle bg-white`}>
-                        &nbsp;
-                    </td>
-                    <td className={`font-bold text-[7.5px] text-center ${cellBorderCss} p-1.5 align-middle bg-white text-slate-800`}>
-                        APLICADA
-                    </td>
-                    <td className={`text-center ${cellBorderCss} p-1.5 text-[8.5px] align-middle bg-white`}>
-                        &nbsp;
-                    </td>
-                    <td className={`font-bold text-[7px] text-center ${cellBorderCss} p-1.5 align-middle bg-white text-slate-800`}>
-                        DESARROLLO EXPERIMENTAL
-                    </td>
-                    <td className="text-center p-1.5 text-[8.5px] align-middle bg-white">
-                        &nbsp;
-                    </td>
-                </tr>
+                <React.Fragment key="showTipo">
+                    <tr className={`${rowBorderCss} group/row relative`}>
+                        <td
+                            rowSpan={2}
+                            className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle relative`}
+                            style={{ backgroundColor: bg, color: fg }}
+                        >
+                            {editingKey === 'showTipo' ? (
+                                <div className="flex items-center gap-1 select-text" onClick={e => e.stopPropagation()}>
+                                    <input
+                                        type="text"
+                                        value={editingText}
+                                        onChange={e => setEditingText(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveLabelDirect('showTipo'); if (e.key === 'Escape') setEditingKey(null); }}
+                                        autoFocus
+                                        className="bg-white text-slate-900 px-1 py-0.5 text-[8.5px] rounded outline-none font-bold w-full"
+                                    />
+                                    <button type="button" onClick={() => handleSaveLabelDirect('showTipo')} className="p-0.5 text-emerald-400 hover:text-emerald-300">
+                                        <Check className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <span>{labelDisplay}</span>
+                            )}
+                            {renderDirectControlsPill('showTipo', rawLabel, isFirst, isLast, variant, false, allKeys)}
+                        </td>
+                        <td className={`font-bold text-[7.5px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800 leading-tight`}>
+                            BÁSICA PURA
+                        </td>
+                        <td className={`text-center ${cellBorderCss} p-1 text-[8.5px] align-middle bg-white`}>
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                        <td rowSpan={2} className={`font-bold text-[7.5px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800`}>
+                            APLICADA
+                        </td>
+                        <td rowSpan={2} className={`text-center ${cellBorderCss} p-1 text-[8.5px] align-middle bg-white`}>
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                        <td rowSpan={2} className={`font-bold text-[7px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800 leading-tight`}>
+                            DESARROLLO EXPERIMENTAL
+                        </td>
+                        <td rowSpan={2} className="text-center p-1 text-[8.5px] align-middle bg-white">
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                    </tr>
+                    <tr className={rowBorderCss}>
+                        <td className={`font-bold text-[7.5px] text-center ${cellBorderCss} p-1 align-middle bg-white text-slate-800 leading-tight`}>
+                            BÁSICA ORIENTADA
+                        </td>
+                        <td className={`text-center ${cellBorderCss} p-1 text-[8.5px] align-middle bg-white`}>
+                            <span className="inline-block w-3.5 h-3.5 border border-slate-500 rounded-xs bg-slate-50/50"></span>
+                        </td>
+                    </tr>
+                </React.Fragment>
             )
         });
     }
 
-    // 6. CLASIFICACIÓN CACES / UNESCO
-    if (c.showCaces !== false) {
+    // 6. CLASIFICACIÓN CACES / UNESCO (OPCIONAL, OCULTO POR DEFECTO EN FORMATO OFICIAL)
+    if (c.showCaces === true) {
         const variant = c.variant_showCaces || 'standard';
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
@@ -552,14 +620,14 @@ export const RenderProjectGeneralSection: React.FC<{
         });
     }
 
-    // 7. CARRERA
+    // 7. CARRERA(S) / ÁREA
     if (c.showCarrera !== false) {
         const variant = c.variant_showCarrera || 'standard';
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
-        const rawLabel = c.customLabel_showCarrera || 'Carrera';
-        const labelDisplay = c.customLabel_showCarrera ? `${c.customLabel_showCarrera.trim()}:` : 'CARRERA:';
-        const req = c.req_showCarrera;
+        const rawLabel = c.customLabel_showCarrera || 'Carrera(s)/Área';
+        const labelDisplay = c.customLabel_showCarrera ? `${c.customLabel_showCarrera.trim()}:` : 'Carrera(s)/Área:';
+        const req = c.req_showCarrera || ' Indica la carrera(s) o área académica involucrada; deben escribir una o varias carreras relacionadas con el proyecto. ';
 
         items.push({
             id: 'showCarrera',
@@ -590,22 +658,23 @@ export const RenderProjectGeneralSection: React.FC<{
                         )}
                         {renderDirectControlsPill('showCarrera', rawLabel, isFirst, isLast, variant, false, allKeys)}
                     </td>
-                    <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                        Tecnología Superior en {req ? `[${req}]` : ''}
+                    <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                        [{req}]
                     </td>
                 </tr>
             )
         });
     }
 
-    // 8. CONVOCATORIA Y TIEMPO DE EJECUCIÓN
+    // 8. PERIODO ACADÉMICO DE CONVOCATORIA Y TIEMPO DE EJECUCIÓN
     if (c.showConvocatoria !== false) {
         const variant = c.variant_showConvocatoria || 'standard';
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
-        const rawLabel = c.customLabel_showConvocatoria || 'Convocatoria';
-        const labelDisplay = c.customLabel_showConvocatoria ? `${c.customLabel_showConvocatoria.trim()}:` : 'PERIODO ACADÉMICO DE CONVOCATORIA:';
-        const req = c.req_showConvocatoria;
+        const rawLabel = c.customLabel_showConvocatoria || 'Periodo y Convocatoria';
+        const labelDisplay = c.customLabel_showConvocatoria ? `${c.customLabel_showConvocatoria.trim()}:` : 'Periodo Académico de convocatoria:';
+        const reqConvocatoria = c.req_showConvocatoria || ' Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial. ';
+        const reqTiempo = c.req_showTiempo || ' Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas. ';
 
         items.push({
             id: 'showConvocatoria',
@@ -637,8 +706,8 @@ export const RenderProjectGeneralSection: React.FC<{
                             )}
                             {renderDirectControlsPill('showConvocatoria', rawLabel, isFirst, isLast, variant, false, allKeys)}
                         </td>
-                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                            {req ? <span className="text-slate-500 italic">[{req}]</span> : <>&nbsp;</>}
+                        <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                            [{reqConvocatoria}]
                         </td>
                     </tr>
                     <tr className={rowBorderCss}>
@@ -646,10 +715,10 @@ export const RenderProjectGeneralSection: React.FC<{
                             className={`p-2 font-bold text-[8.5px] uppercase ${cellBorderCss} align-middle`}
                             style={{ backgroundColor: bg, color: fg }}
                         >
-                            TIEMPO DE EJECUCIÓN:
+                            Tiempo de Ejecución:
                         </td>
-                        <td colSpan={6} className="p-2 text-slate-800 bg-white align-middle">
-                            &nbsp;
+                        <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                            [{reqTiempo}]
                         </td>
                     </tr>
                 </React.Fragment>
@@ -663,8 +732,8 @@ export const RenderProjectGeneralSection: React.FC<{
         const bg = resolveBg(variant);
         const fg = getContrastFg(bg);
         const rawLabel = c.customLabel_showDirector || 'Director del Proyecto';
-        const labelDisplay = c.customLabel_showDirector ? `${c.customLabel_showDirector.trim()}:` : 'DIRECTOR DEL PROYECTO:';
-        const req = c.req_showDirector || '[Título abreviado, Apellidos y Nombres Completos]';
+        const labelDisplay = c.customLabel_showDirector ? `${c.customLabel_showDirector.trim()}:` : 'Director del Proyecto:';
+        const req = c.req_showDirector || 'Título abreviado, Apellidos y Nombres Completos';
 
         items.push({
             id: 'showDirector',
@@ -695,15 +764,15 @@ export const RenderProjectGeneralSection: React.FC<{
                         )}
                         {renderDirectControlsPill('showDirector', rawLabel, isFirst, isLast, variant, false, allKeys)}
                     </td>
-                    <td colSpan={6} className="p-2 text-slate-500 italic bg-white align-middle">
-                        {req}
+                    <td colSpan={6} className="p-2 text-slate-600 italic text-[8.5px] bg-white align-middle">
+                        [{req}]
                     </td>
                 </tr>
             )
         });
     }
 
-    // 10. FECHAS (BANNER DORADO O PERSONALIZADO)
+    // 10. FECHAS (BANNER DORADO INSTITUCIONAL)
     if (c.showFechas !== false) {
         const variant = c.variant_showFechas || 'banner_gold';
         const bg = resolveBg(variant, '#c4a857');
@@ -718,17 +787,17 @@ export const RenderProjectGeneralSection: React.FC<{
                 <React.Fragment key="showFechas">
                     <tr className={`${rowBorderCss} group/row relative`}>
                         <td className={`p-1.5 font-bold text-[7.5px] text-center ${cellBorderCss} align-middle relative`} style={{ backgroundColor: bg, color: fg }}>
-                            FECHA DE PRESENTACIÓN DEL PROYECTO
+                            Fecha de presentación del Proyecto
                             {renderDirectControlsPill('showFechas', rawLabel, isFirst, isLast, variant, false, allKeys)}
                         </td>
                         <td colSpan={3} className={`p-1.5 font-bold text-[7.5px] text-center ${cellBorderCss} align-middle`} style={{ backgroundColor: bg, color: fg }}>
-                            FECHA PREVISTA DE INICIO DEL PROYECTO
+                            Fecha prevista de inicio del Proyecto
                         </td>
                         <td colSpan={3} className="p-1.5 font-bold text-[7.5px] text-center align-middle" style={{ backgroundColor: bg, color: fg }}>
-                            FECHA PREVISTA DE FINALIZACIÓN DEL PROYECTO
+                            Fecha prevista de finalización del Proyecto
                         </td>
                     </tr>
-                    <tr className={`${rowBorderCss} text-[8px] text-slate-500 italic bg-white text-center`}>
+                    <tr className={`${rowBorderCss} text-[8px] text-slate-600 italic bg-white text-center`}>
                         <td className={`p-1.5 ${cellBorderCss} align-middle`}>
                             [día/mes/año]
                         </td>

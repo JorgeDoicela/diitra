@@ -64,6 +64,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     const customFieldsList: IdentificationField[] = config?.customFields || [];
 
     const showTitulo = config?.showTitulo !== false;
+    const showCodigo = config?.showCodigo !== false;
     const showPrograma = config?.showPrograma !== false;
     const showGrupo = config?.showGrupo !== false;
     const showLinea = config?.showLinea !== false;
@@ -75,6 +76,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     const showDirector = config?.showDirector !== false;
 
     const labelTitulo = config?.customLabel_showTitulo || "Nombre del Proyecto / Tema de Investigación";
+    const labelCodigo = config?.customLabel_showCodigo || "Código del Proyecto";
     const labelPrograma = config?.customLabel_showPrograma || "Programa de Investigación";
     const labelGrupo = config?.customLabel_showGrupo || "Grupo de Investigación vinculante";
     const labelDirector = config?.customLabel_showDirector || "Director del Proyecto";
@@ -504,7 +506,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     };
 
     const fieldsOrder: string[] = config?.fieldsOrder || [];
-    const defaultCoreOrder = ['showTitulo', 'showPrograma', 'showGrupo', 'showLinea', 'showTipo', 'showCaces', 'showCarrera', 'showDirector', 'showFechas'];
+    const defaultCoreOrder = ['showTitulo', 'showCodigo', 'showPrograma', 'showGrupo', 'showLinea', 'showTipo', 'showCaces', 'showCarrera', 'showDirector', 'showFechas'];
 
     const activeOrder = fieldsOrder.length > 0
         ? fieldsOrder
@@ -526,6 +528,22 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             label={labelTitulo} 
                             onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
                             className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
+                            uppercase={true}
+                        />
+                    </div>
+                ) : null;
+
+            case 'showCodigo':
+                renderedCoreKeys.add('showCodigo');
+                return showCodigo ? (
+                    <div key="showCodigo" className="grid grid-cols-1 gap-4 sm:gap-6">
+                        <CoWorkField 
+                            name="CodigoProyecto" 
+                            cowork={cowork} 
+                            label={labelCodigo} 
+                            onValueChange={(v, meta) => onUpdate('CodigoProyecto', v, meta)}
+                            placeholder="INV-PROY-26.27-01"
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-2.5 sm:px-5 sm:py-3.5 text-xs sm:text-sm font-mono font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
                             uppercase={true}
                         />
                     </div>
@@ -698,7 +716,9 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 onValueChange={(val) => onUpdate('TipoInvestigacion', val)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold"
                             >
-                                <option value="BASICA">BÁSICA</option>
+                                <option value="BASICA PURA">BÁSICA PURA</option>
+                                <option value="BASICA ORIENTADA">BÁSICA ORIENTADA</option>
+                                <option value="BASICA">BÁSICA (GENERAL)</option>
                                 <option value="APLICADA">APLICADA</option>
                                 <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
                             </CoWorkField>

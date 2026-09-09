@@ -177,35 +177,47 @@ export const ProjectGeneralProperties: React.FC<ProjectGeneralPropertiesProps> =
 
     const handleResetDefaults = () => {
         onUpdateConfig(block.id, 'title', '1. IDENTIFICACIÓN DEL PROYECTO');
-        onUpdateConfig(block.id, 'headerColor', 'blue');
+        onUpdateConfig(block.id, 'headerColor', '#222c57');
         onUpdateConfig(block.id, 'borderStyle', 'solid');
         onUpdateConfig(block.id, 'identificationLayoutMode', 'table');
         onUpdateConfig(block.id, 'showTitulo', true);
-        onUpdateConfig(block.id, 'showDirector', true);
-        onUpdateConfig(block.id, 'showCarrera', true);
-        onUpdateConfig(block.id, 'showConvocatoria', true);
+        onUpdateConfig(block.id, 'req_showTitulo', 'Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga. ');
+        onUpdateConfig(block.id, 'showCodigo', true);
+        onUpdateConfig(block.id, 'req_showCodigo', 'INV-PROY-26.27-01');
         onUpdateConfig(block.id, 'showPrograma', true);
+        onUpdateConfig(block.id, 'req_showPrograma', 'Elija un elemento.');
         onUpdateConfig(block.id, 'showGrupo', true);
+        onUpdateConfig(block.id, 'req_showGrupo', 'Escriba el Nombre o N/A');
         onUpdateConfig(block.id, 'showLinea', true);
+        onUpdateConfig(block.id, 'req_showLinea', ' Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente. ');
+        onUpdateConfig(block.id, 'req_showSublinea', ' Especifica el enfoque particular dentro de la línea; deben escribir la sublínea que se relacione directamente con el tema. ');
         onUpdateConfig(block.id, 'showTipo', true);
-        onUpdateConfig(block.id, 'showCaces', true);
+        onUpdateConfig(block.id, 'showCaces', false); // Oculto por defecto en formato oficial
+        onUpdateConfig(block.id, 'showCarrera', true);
+        onUpdateConfig(block.id, 'req_showCarrera', ' Indica la carrera(s) o área académica involucrada; deben escribir una o varias carreras relacionadas con el proyecto. ');
+        onUpdateConfig(block.id, 'showConvocatoria', true);
+        onUpdateConfig(block.id, 'req_showConvocatoria', ' Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial. ');
+        onUpdateConfig(block.id, 'req_showTiempo', ' Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas. ');
+        onUpdateConfig(block.id, 'showDirector', true);
+        onUpdateConfig(block.id, 'req_showDirector', 'Título abreviado, Apellidos y Nombres Completos');
         onUpdateConfig(block.id, 'showFechas', true);
-        onUpdateConfig(block.id, 'fieldsOrder', []);
+        onUpdateConfig(block.id, 'fieldsOrder', ['showTitulo', 'showCodigo', 'showPrograma', 'showGrupo', 'showLinea', 'showTipo', 'showCarrera', 'showConvocatoria', 'showDirector', 'showFechas']);
     };
 
     const [editingCoreKey, setEditingCoreKey] = useState<string | null>(null);
 
     const CORE_ITEMS = [
         { key: 'showTitulo', labelKey: 'customLabel_showTitulo', scribanKey: 'customScriban_showTitulo', variantKey: 'variant_showTitulo', reqKey: 'req_showTitulo', defaultLabel: 'Nombre del Proyecto', defaultScriban: 'titulo', desc: 'Campo de texto en mayúsculas para el tema.' },
+        { key: 'showCodigo', labelKey: 'customLabel_showCodigo', scribanKey: 'customScriban_showCodigo', variantKey: 'variant_showCodigo', reqKey: 'req_showCodigo', defaultLabel: 'Código del Proyecto', defaultScriban: 'codigo_proyecto', desc: 'Identificador institucional del proyecto (ej: INV-PROY-26.27-01).' },
         { key: 'showPrograma', labelKey: 'customLabel_showPrograma', scribanKey: 'customScriban_showPrograma', variantKey: 'variant_showPrograma', reqKey: 'req_showPrograma', defaultLabel: 'Programa de Investigación', defaultScriban: 'programa', desc: 'Campo de texto/catálogo para clasificar el programa.' },
-        { key: 'showGrupo', labelKey: 'customLabel_showGrupo', scribanKey: 'customScriban_showGrupo', variantKey: 'variant_showGrupo', reqKey: 'req_showGrupo', defaultLabel: 'Grupo de Investigación', defaultScriban: 'grupo_investigacion', desc: 'Selectores de grupos aprobados con cascada a Dominio y Línea.' },
-        { key: 'showLinea', labelKey: 'customLabel_showLinea', scribanKey: 'customScriban_showLinea', variantKey: 'variant_showLinea', reqKey: 'req_showLinea', defaultLabel: 'Línea de Investigación', defaultScriban: 'linea_investigacion', desc: 'Dominios científicos, líneas y sublíneas.' },
-        { key: 'showTipo', labelKey: 'customLabel_showTipo', scribanKey: 'customScriban_showTipo', variantKey: 'variant_showTipo', reqKey: 'req_showTipo', defaultLabel: 'Tipo de Investigación', defaultScriban: 'tipo_investigacion', desc: 'Investigación básica, aplicada o experimental.' },
+        { key: 'showGrupo', labelKey: 'customLabel_showGrupo', scribanKey: 'customScriban_showGrupo', variantKey: 'variant_showGrupo', reqKey: 'req_showGrupo', defaultLabel: 'Grupo de Investigación al que pertenece el Proyecto', defaultScriban: 'grupo_investigacion', desc: 'Sub-grilla SI/NO con nombre del grupo aprobado.' },
+        { key: 'showLinea', labelKey: 'customLabel_showLinea', scribanKey: 'customScriban_showLinea', variantKey: 'variant_showLinea', reqKey: 'req_showLinea', defaultLabel: 'Línea de Investigación', defaultScriban: 'linea_investigacion', desc: 'Línea y sublínea de investigación institucional.' },
+        { key: 'showTipo', labelKey: 'customLabel_showTipo', scribanKey: 'customScriban_showTipo', variantKey: 'variant_showTipo', reqKey: 'req_showTipo', defaultLabel: 'Tipo de Investigación (X)', defaultScriban: 'tipo_investigacion', desc: 'Grilla CACES: Básica Pura, Básica Orientada, Aplicada o Experimental.' },
         { key: 'showCaces', labelKey: 'customLabel_showCaces', scribanKey: 'customScriban_showCaces', variantKey: 'variant_showCaces', reqKey: 'req_showCaces', defaultLabel: 'Clasificación UNESCO / CACES', defaultScriban: 'campo_detallado', desc: 'Clasificación de campo amplio, específico y detallado.' },
-        { key: 'showCarrera', labelKey: 'customLabel_showCarrera', scribanKey: 'customScriban_showCarrera', variantKey: 'variant_showCarrera', reqKey: 'req_showCarrera', defaultLabel: 'Carrera / Unidad Académica', defaultScriban: 'carrera', desc: 'Selector de la carrera vinculada del docente.' },
+        { key: 'showCarrera', labelKey: 'customLabel_showCarrera', scribanKey: 'customScriban_showCarrera', variantKey: 'variant_showCarrera', reqKey: 'req_showCarrera', defaultLabel: 'Carrera(s)/Área', defaultScriban: 'carrera', desc: 'Selector de la carrera vinculada del docente.' },
+        { key: 'showConvocatoria', labelKey: 'customLabel_showConvocatoria', scribanKey: 'customScriban_showConvocatoria', variantKey: 'variant_showConvocatoria', reqKey: 'req_showConvocatoria', defaultLabel: 'Periodo de Convocatoria y Tiempo', defaultScriban: 'convocatoria', desc: 'Periodo académico y tiempo de ejecución.' },
         { key: 'showDirector', labelKey: 'customLabel_showDirector', scribanKey: 'customScriban_showDirector', variantKey: 'variant_showDirector', reqKey: 'req_showDirector', defaultLabel: 'Director del Proyecto', defaultScriban: 'director_proyecto', desc: 'Campo para ingresar el nombre del director.' },
-        { key: 'showConvocatoria', labelKey: 'customLabel_showConvocatoria', scribanKey: 'customScriban_showConvocatoria', variantKey: 'variant_showConvocatoria', reqKey: 'req_showConvocatoria', defaultLabel: 'Convocatoria Activa', defaultScriban: 'convocatoria', desc: 'Selector de los plazos y convocatorias vigentes.' },
-        { key: 'showFechas', labelKey: 'customLabel_showFechas', scribanKey: 'customScriban_showFechas', variantKey: 'variant_showFechas', reqKey: 'req_showFechas', defaultLabel: 'Periodo, Tiempo y Fechas', defaultScriban: 'fechas', desc: 'Periodo de convocatoria, tiempo de ejecución y fechas previstas.' },
+        { key: 'showFechas', labelKey: 'customLabel_showFechas', scribanKey: 'customScriban_showFechas', variantKey: 'variant_showFechas', reqKey: 'req_showFechas', defaultLabel: 'Fechas de Proyecto (Banner Dorado)', defaultScriban: 'fechas', desc: 'Fechas de presentación, inicio y finalización.' },
     ];
 
     return (
