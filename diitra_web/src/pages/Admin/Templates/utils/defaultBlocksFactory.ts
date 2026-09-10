@@ -20,8 +20,11 @@ export function createBaseCoverBlock(
     title: string,
     options: {
         colorTitle?: 'navy' | 'gold' | string;
+        tituloItalica?: boolean;
         carrera?: string;
+        prefijoCarrera?: string;
         periodo?: string;
+        prefijoPeriodo?: string;
         themeColor?: string;
         showInstitution?: boolean;
     } = {}
@@ -33,34 +36,40 @@ export function createBaseCoverBlock(
         isActive: true,
         config: {
             tituloSuperior: title,
-            colorTituloSuperior: options.colorTitle || 'navy',
-            prefijoCarrera: 'TECNOLOGÍA SUPERIOR EN',
-            prefijoPeriodo: 'PERIODO ACADÉMICO',
+            colorTituloSuperior: options.colorTitle || 'gold',
+            tituloItalica: options.tituloItalica !== undefined ? options.tituloItalica : true,
+            placeholderTema: 'ESCRIBIR EL TEMA EN MAYÚSCULAS',
+            prefijoCarrera: options.prefijoCarrera || 'TECNOLOGÍA SUPERIOR EN',
+            carreraPorDefecto: options.carrera || '',
+            carreraItalica: false,
+            prefijoPeriodo: options.prefijoPeriodo || 'PERIODO ACADÉMICO',
+            periodoPorDefecto: options.periodo || 'Abril 2026 – Septiembre 2026',
+            periodoItalica: false,
             colorTema: options.themeColor || '#222c57',
             colorCarrera: '#222c57',
-            colorPeriodo: '#475569',
+            colorPeriodo: '#222c57',
             colorTemaProyecto: '#222c57',
             colorInstitution: '#222c57',
             institutionVariant: 'clean',
             institutionFontSize: 11,
             institutionItalica: false,
-            showInstitution: options.showInstitution !== undefined ? options.showInstitution : true,
+            showInstitution: options.showInstitution !== undefined ? options.showInstitution : false,
             textoInstitucion: 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI',
-            xLogo: 10,
+            xLogo: 30,
             yLogo: 3,
-            xInstitution: 10,
+            xInstitution: 30,
             yInstitution: 13,
             showTitle: true,
-            xTitle: 10,
-            yTitle: 32,
+            xTitle: 30,
+            yTitle: 29,
             showTemaProyecto: true,
-            xTema: 10,
+            xTema: 30,
             yTema: 46,
             showCarrera: true,
-            xCarrera: 10,
-            yCarrera: 70,
+            xCarrera: 30,
+            yCarrera: 60,
             showPeriodo: true,
-            xPeriodo: 10,
+            xPeriodo: 30,
             yPeriodo: 80
         }
     };
@@ -238,7 +247,7 @@ export function generateDefaultBlocksForTemplate(
     // B. PROTOCOLO DE INVESTIGACIÓN (I+D+i)
     if (code === 'PROTOCOLO_INVESTIGACION' || code === '1. FORMATO PROYECTO DE INVESTIGACIÓN') {
         return [
-            createBaseCoverBlock('PROYECTO DE INVESTIGACIÓN', { colorTitle: 'navy', showInstitution: false }),
+            createBaseCoverBlock('PROYECTO DE INVESTIGACIÓN', { colorTitle: 'gold', tituloItalica: true, showInstitution: false }),
             {
                 id: 'block-general',
                 type: 'project_general_section' as BlockType,

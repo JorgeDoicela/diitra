@@ -290,19 +290,24 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
-                // 3. HTML y CSS: Arquitectura Fallback (File-First Default + DB Customization Override)
-                //    - Si el Administrador personalizó la plantilla desde la web, usa el Override de la BD.
+                // 3. HTML y CSS: Arquitectura Fallback (En caliente > File-First Default > DB Customization Override)
+                //    - Si el usuario envía HTML/CSS personalizado en caliente (diseñador visual), tiene máxima prioridad.
                 //    - De lo contrario, lee directamente el archivo físico oficial de Git (desarrollador).
+                //    - Si no existe archivo físico, usa el Override de la BD.
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
-                var htmlToRender = !string.IsNullOrWhiteSpace(fileHtml) 
-                    ? fileHtml 
-                    : template.HtmlContent;
+                var htmlToRender = !string.IsNullOrWhiteSpace(request.CustomHtmlContent)
+                    ? request.CustomHtmlContent
+                    : (!string.IsNullOrWhiteSpace(fileHtml) 
+                        ? fileHtml 
+                        : template.HtmlContent);
 
-                var cssToUse = !string.IsNullOrWhiteSpace(fileCss)
-                    ? fileCss
-                    : template.CustomCss;
+                var cssToUse = !string.IsNullOrWhiteSpace(request.CustomCss)
+                    ? request.CustomCss
+                    : (!string.IsNullOrWhiteSpace(fileCss)
+                        ? fileCss
+                        : template.CustomCss);
 
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
@@ -376,47 +381,13 @@ namespace Diitra.Infrastructure.Common.Documents
                     };
                 }
 
-                // Aplicar Overrides por Plantilla (si existen)
-                if (!string.IsNullOrEmpty(template.ThemeConfigJson))
+                // Aplicar Overrides por Plantilla (si existen en BD)
+                MergeThemeOverrides(baseThemeDict, template.ThemeConfigJson, template.Code);
+
+                // Aplicar Overrides en Caliente (si se envían en el request de previsualización)
+                if (!string.IsNullOrWhiteSpace(request.CustomThemeConfigJson))
                 {
-                    try
-                    {
-                        var templateTheme = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(template.ThemeConfigJson);
-                        if (templateTheme != null)
-                        {
-                            // Mezclar categorías
-                            foreach (var categoryKey in templateTheme.Keys)
-                            {
-                                if (templateTheme[categoryKey] is System.Text.Json.JsonElement catVal && catVal.ValueKind == System.Text.Json.JsonValueKind.Object)
-                                {
-                                    var categoryDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(catVal.GetRawText()) ?? new Dictionary<string, object>();
-                                    
-                                    if (baseThemeDict.TryGetValue(categoryKey, out var existingCategory) && existingCategory is Dictionary<string, object> baseCatDict)
-                                    {
-                                        foreach (var kv in categoryDict)
-                                        {
-                                            baseCatDict[kv.Key] = kv.Value;
-                                        }
-                                    }
-                                    else if (baseThemeDict.TryGetValue(categoryKey, out var existingCategoryStrDict) && existingCategoryStrDict is Dictionary<string, string> baseCatStrDict)
-                                    {
-                                        foreach (var kv in categoryDict)
-                                        {
-                                            baseCatStrDict[kv.Key] = kv.Value?.ToString() ?? "";
-                                        }
-                                    }
-                                    else
-                                    {
-                                        baseThemeDict[categoryKey] = categoryDict;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al fusionar ThemeConfigJson para {Code}.", template.Code);
-                    }
+                    MergeThemeOverrides(baseThemeDict, request.CustomThemeConfigJson, template.Code);
                 }
 
                 extraImageVars["theme"] = baseThemeDict;
@@ -491,13 +462,16 @@ namespace Diitra.Infrastructure.Common.Documents
                     extraImageVars["portada_base64"] = coverBase64;
                 }
 
+                // Carga global de logotipos institucionales para todas las plantillas
+                var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
+                if (logoBase64 != null)
+                {
+                    extraImageVars["logo_base64"] = logoBase64;
+                    extraImageVars["logo_negro_base64"] = logoBase64;
+                }
+
                 if (template.Code == ProyectoInvestigacionTemplate.CODE)
                 {
-                    var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
-                    if (logoBase64 != null)
-                    {
-                        extraImageVars["logo_base64"] = logoBase64;
-                    }
 
                     ProyectoDto? projectDto = renderData as ProyectoDto;
                     if (projectDto == null && renderData != null)
@@ -616,12 +590,6 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
                 else if (template.Code == "OFICIO_APROBACION")
                 {
-                    var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
-                    if (logoBase64 != null)
-                    {
-                        extraImageVars["logo_base64"] = logoBase64;
-                    }
-
                     // 1. Intentar resolver UUID del proyecto desde la solicitud o payload
                     string? targetProjectUuid = !string.IsNullOrEmpty(request.EntityUuid) && !request.EntityUuid.StartsWith("temp_")
                         ? request.EntityUuid
@@ -1251,16 +1219,19 @@ namespace Diitra.Infrastructure.Common.Documents
                         _logger.LogWarning("DIITRA Forensic: Se intenta generar [{Code}] sin datos de origen. El snapshot será nulo, comprometiendo la resiliencia.", template.Code);
                     }
 
-                    var auditEntry = DocumentAuditEntry.Create(
-                        traceabilityCode, template.Code, template.Version, template.Category,
-                        request.RequestedBy ?? "sistema", request.IsBlindMode, fileName,
-                        request.ProjectUuid, request.EntityUuid, fileHash, snapshot);
-
-                    await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
-                    
-                    if (snapshot != null)
+                    if (!request.IsPreview)
                     {
-                        _logger.LogInformation("DIITRA Forensic: Snapshot inyectado para [{Code}]. Integridad vinculada a Hash {Hash}.", template.Code, fileHash);
+                        var auditEntry = DocumentAuditEntry.Create(
+                            traceabilityCode, template.Code, template.Version, template.Category,
+                            request.RequestedBy ?? "sistema", request.IsBlindMode, fileName,
+                            request.ProjectUuid, request.EntityUuid, fileHash, snapshot);
+
+                        await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
+                        
+                        if (snapshot != null)
+                        {
+                            _logger.LogInformation("DIITRA Forensic: Snapshot inyectado para [{Code}]. Integridad vinculada a Hash {Hash}.", template.Code, fileHash);
+                        }
                     }
                 }
                 catch (Exception ex) { _logger.LogError(ex, "DIITRA DocumentEngine: Error crítico en el log de auditoría forense."); }
@@ -1345,6 +1316,51 @@ namespace Diitra.Infrastructure.Common.Documents
             _logger.LogInformation(
                 "DIITRA DocumentEngine: Configuración de firma de plantilla [{Code}] actualizada por [{User}]: RequiresSignature={RequiresSignature}, Type={Type}.",
                 templateCode, updatedBy, requiresSignature, signatureType);
+        }
+
+        /// <summary>
+        /// Fusiona de manera recursiva/estructurada un JSON de tema sobre el diccionario base.
+        /// </summary>
+        private void MergeThemeOverrides(Dictionary<string, object> baseThemeDict, string? themeJson, string templateCode)
+        {
+            if (string.IsNullOrWhiteSpace(themeJson)) return;
+            try
+            {
+                var overrideDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(themeJson);
+                if (overrideDict != null)
+                {
+                    foreach (var categoryKey in overrideDict.Keys)
+                    {
+                        if (overrideDict[categoryKey] is System.Text.Json.JsonElement catVal && catVal.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            var categoryDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(catVal.GetRawText()) ?? new Dictionary<string, object>();
+                            
+                            if (baseThemeDict.TryGetValue(categoryKey, out var existingCategory) && existingCategory is Dictionary<string, object> baseCatDict)
+                            {
+                                foreach (var kv in categoryDict)
+                                {
+                                    baseCatDict[kv.Key] = kv.Value;
+                                }
+                            }
+                            else if (baseThemeDict.TryGetValue(categoryKey, out var existingCategoryStrDict) && existingCategoryStrDict is Dictionary<string, string> baseCatStrDict)
+                            {
+                                foreach (var kv in categoryDict)
+                                {
+                                    baseCatStrDict[kv.Key] = kv.Value?.ToString() ?? "";
+                                }
+                            }
+                            else
+                            {
+                                baseThemeDict[categoryKey] = categoryDict;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al fusionar ThemeConfigJson para {Code}.", templateCode);
+            }
         }
 
         /// <summary>

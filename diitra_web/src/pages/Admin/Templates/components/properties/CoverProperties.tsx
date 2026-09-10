@@ -23,12 +23,12 @@ interface CoverPropertiesProps {
 }
 
 const DEFAULT_POS: Record<string, { x: number; y: number }> = {
-    institution: { x: 10, y: 13 },
-    logo: { x: 10, y: 3 },
-    title: { x: 10, y: 32 },
-    tema: { x: 10, y: 46 },
-    carrera: { x: 10, y: 70 },
-    periodo: { x: 10, y: 80 },
+    institution: { x: 30, y: 13 },
+    logo: { x: 30, y: 3 },
+    title: { x: 30, y: 29 },
+    tema: { x: 30, y: 46 },
+    carrera: { x: 30, y: 60 },
+    periodo: { x: 30, y: 80 },
 };
 
 import { ColorPickerField } from './SharedColorPicker';
@@ -81,7 +81,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
     activeBlock,
     onUpdateConfig,
     inputCls,
-    selectCls
+    selectCls: _selectCls
 }) => {
     const config = (activeBlock.config || {}) as any;
     const [activeTab, setActiveTab] = useState<'institution' | 'title' | 'tema' | 'carrera' | 'periodo'>('institution');
@@ -225,8 +225,6 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                     const instImage = config.institutionImage || '';
                     const instLogoHeight = Number(config.institutionLogoHeight || 48);
                     const instLogoInvert = Boolean(config.institutionLogoInvert);
-                    const instVariant = config.institutionVariant || 'clean';
-                    const bgInstitution = config.bgInstitution || '#222c57';
                     const colorInstitution = config.colorInstitution || '#222c57';
                     const institutionFontSize = Number(config.institutionFontSize || 11);
                     const institutionItalica = Boolean(config.institutionItalica);
@@ -651,6 +649,17 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                         </div>
                                     </div>
 
+                                    {/* Texto de Carrera */}
+                                    <LabeledField label="Texto de Carrera (Opcional si es dinámico)">
+                                        <input
+                                            type="text"
+                                            className={inputCls}
+                                            value={config.carreraPorDefecto || ''}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'carreraPorDefecto', e.target.value)}
+                                            placeholder="Dejar vacío si solo se muestra el prefijo"
+                                        />
+                                    </LabeledField>
+
                                     {/* Color de Texto */}
                                     <ColorPickerField
                                         label="Color de Texto de Carrera"
@@ -694,7 +703,7 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                 {activeTab === 'periodo' && (() => {
                     const isVisible = config.showPeriodo !== false;
                     const prefijoPeriodo = config.prefijoPeriodo !== undefined ? config.prefijoPeriodo : 'PERIODO ACADÉMICO';
-                    const colorVal = config.colorPeriodo || '#475569';
+                    const colorVal = config.colorPeriodo || '#222c57';
                     const periodoFontSize = Number(config.periodoFontSize || 10);
                     const periodoItalica = Boolean(config.periodoItalica);
 
@@ -703,6 +712,12 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                         'SEMESTRE',
                         'PERIODO:',
                         ''
+                    ];
+
+                    const periodoPresets = [
+                        'Abril 2026 – Septiembre 2026',
+                        'Octubre 2026 – Marzo 2027',
+                        'Abril 2025 – Septiembre 2025'
                     ];
 
                     return (
@@ -748,11 +763,36 @@ export const CoverProperties: React.FC<CoverPropertiesProps> = ({
                                         </div>
                                     </div>
 
+                                    {/* Texto del Periodo */}
+                                    <div className="space-y-1.5">
+                                        <LabeledField label="Texto del Periodo">
+                                            <input
+                                                type="text"
+                                                className={inputCls}
+                                                value={config.periodoPorDefecto !== undefined ? config.periodoPorDefecto : 'Abril 2026 – Septiembre 2026'}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'periodoPorDefecto', e.target.value)}
+                                                placeholder="Ej. Abril 2026 – Septiembre 2026"
+                                            />
+                                        </LabeledField>
+                                        <div className="flex flex-wrap gap-1 pt-0.5">
+                                            {periodoPresets.map(p => (
+                                                <button
+                                                    key={p}
+                                                    type="button"
+                                                    onClick={() => onUpdateConfig(activeBlock.id, 'periodoPorDefecto', p)}
+                                                    className="text-[8px] px-1.5 py-0.5 rounded border border-border bg-surface hover:bg-surface-hover text-text-dim hover:text-foreground transition-all cursor-pointer truncate max-w-full"
+                                                >
+                                                    {p}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     {/* Color de Texto */}
                                     <ColorPickerField
                                         label="Color de Texto de Periodo"
                                         value={colorVal}
-                                        fallback="#475569"
+                                        fallback="#222c57"
                                         onChange={v => onUpdateConfig(activeBlock.id, 'colorPeriodo', v)}
                                         inputCls={inputCls}
                                     />

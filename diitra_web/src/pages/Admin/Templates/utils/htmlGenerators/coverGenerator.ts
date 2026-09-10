@@ -49,22 +49,22 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
     const radiusCss = instLogoRadius === 'full' ? 'border-radius:9999px;' : instLogoRadius === 'md' ? 'border-radius:8px;' : instLogoRadius === 'sm' ? 'border-radius:4px;' : '';
     const invertCss = instLogoInvert ? 'filter:brightness(0) invert(1);' : '';
 
-    const xLogo  = c.xLogo        ?? gCover.xLogo        ?? (instMode === 'image' ? (c.xInstitution ?? gCover.xInstitution ?? 10) : 10);
+    const xLogo  = c.xLogo        ?? gCover.xLogo        ?? (instMode === 'image' ? (c.xInstitution ?? gCover.xInstitution ?? 30) : 30);
     const yLogo  = c.yLogo        ?? gCover.yLogo        ?? (instMode === 'image' ? (c.yInstitution ?? gCover.yInstitution ?? 3) : 3);
-    const xInst  = c.xInstitution ?? gCover.xInstitution ?? 10; 
+    const xInst  = c.xInstitution ?? gCover.xInstitution ?? 30; 
     const yInst  = c.yInstitution ?? gCover.yInstitution ?? 13;
-    const xTitle = c.xTitle       ?? gCover.xTitle       ?? 10; 
-    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 32;
-    const xTema  = c.xTema        ?? gCover.xTema        ?? (c.xTitle ?? 10);
-    const yTema  = c.yTema        ?? gCover.yTema        ?? (c.yTitle !== undefined ? Math.min(95, c.yTitle + 14) : 46);
-    const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 70;
-    const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 70;
-    const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 10; 
+    const xTitle = c.xTitle       ?? gCover.xTitle       ?? 30; 
+    const yTitle = c.yTitle       ?? gCover.yTitle       ?? 29;
+    const xTema  = c.xTema        ?? gCover.xTema        ?? (c.xTitle ?? 30);
+    const yTema  = c.yTema        ?? gCover.yTema        ?? (c.yTitle !== undefined ? Math.min(95, c.yTitle + 16) : 46);
+    const xCar   = c.xCarrera     ?? gCover.xCarrera     ?? 30;
+    const yCar   = c.yCarrera     ?? gCover.yCarrera     ?? 60;
+    const xPer   = c.xPeriodo     ?? gCover.xPeriodo     ?? 30; 
     const yPer   = c.yPeriodo     ?? gCover.yPeriodo     ?? 80;
 
     const toMmX = (pct: number) => `${(pct * 2.1).toFixed(1)}mm`;
     const toMmY = (pct: number) => `${(Math.min(pct, 75) * 2.70).toFixed(1)}mm`;
-    const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 15).toFixed(1)}mm`;
+    const getWidthMm = (pctX: number) => `${Math.max(50, 210 - pctX * 2.1 - 12).toFixed(1)}mm`;
 
     const showLogo = showInst && (instMode === 'image' || instMode === 'hybrid') && Boolean(instImage);
     const showText = showInst && (instMode === 'text' || instMode === 'hybrid') && Boolean(textInst);
@@ -95,23 +95,31 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
 
     const carreraFontSize = Number(c.carreraFontSize || gCover.carreraFontSize || 10);
     const carreraItalica = Boolean(c.carreraItalica ?? gCover.carreraItalica);
+    const textCarreraDefecto = c.carreraPorDefecto || '';
 
     const carreraEl = showCarrera ? `
     <div style="position:absolute; left:${toMmX(xCar)}; top:${toMmY(yCar)}; width:${getWidthMm(xCar)}; text-align:center;">
       ${prefijoCarrera ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:${Math.max(8, Math.round(carreraFontSize * 0.85))}pt; font-weight:bold; color: ${colorCar}; text-transform:uppercase;">${prefijoCarrera}</div>` : ''}
+      {{#if carrera}}
       <div style="font-family: {{ theme.typography.font_family }}; font-size:${carreraFontSize}pt; font-weight:bold; ${carreraItalica ? 'font-style:italic;' : ''} color: ${colorCar}; text-transform:uppercase; margin-top:2px;">
-        {{default carrera "[NOMBRE DE LA CARRERA]"}}
+        {{carrera}}
       </div>
+      ${textCarreraDefecto ? `{{else}}
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${carreraFontSize}pt; font-weight:bold; ${carreraItalica ? 'font-style:italic;' : ''} color: ${colorCar}; text-transform:uppercase; margin-top:2px;">
+        ${textCarreraDefecto}
+      </div>` : ''}
+      {{/if}}
     </div>` : '';
 
     const periodoFontSize = Number(c.periodoFontSize || gCover.periodoFontSize || 9);
     const periodoItalica = Boolean(c.periodoItalica ?? gCover.periodoItalica);
+    const textPeriodoDefecto = c.periodoPorDefecto || 'Abril 2026 – Septiembre 2026';
 
     const periodoEl = showPeriodo ? `
     <div style="position:absolute; left:${toMmX(xPer)}; top:${toMmY(yPer)}; width:${getWidthMm(xPer)}; text-align:center;">
       ${prefijoPeriodo ? `<div style="font-family: {{ theme.typography.font_family }}; font-size:${Math.max(8, Math.round(periodoFontSize * 0.85))}pt; font-weight:bold; color: ${colorPer}; text-transform:uppercase;">${prefijoPeriodo}</div>` : ''}
-      <div style="font-family: {{ theme.typography.font_family }}; font-size:${periodoFontSize}pt; font-weight:normal; ${periodoItalica ? 'font-style:italic;' : ''} color: ${colorPer}; text-transform:uppercase; margin-top:2px;">
-        {{default periodo "[PERIODO ACADÉMICO ACTIVO]"}}
+      <div style="font-family: {{ theme.typography.font_family }}; font-size:${periodoFontSize}pt; font-weight:bold; ${periodoItalica ? 'font-style:italic;' : ''} color: ${colorPer}; text-transform:uppercase; margin-top:2px;">
+        {{default periodo "${textPeriodoDefecto}"}}
       </div>
     </div>` : '';
 

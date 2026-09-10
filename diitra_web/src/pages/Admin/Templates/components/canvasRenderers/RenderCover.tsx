@@ -46,12 +46,12 @@ export const getHeaderStylePair = (id?: string): HeaderStylePair => {
 };
 
 const DEFAULT_POSITIONS: Record<string, FreeFormPosition> = {
-    logo: { x: 10, y: 3 },
-    institution: { x: 10, y: 13 },
-    title: { x: 10, y: 32 },
-    tema: { x: 10, y: 46 },
-    carrera: { x: 10, y: 70 },
-    periodo: { x: 10, y: 80 },
+    logo: { x: 30, y: 3 },
+    institution: { x: 30, y: 13 },
+    title: { x: 30, y: 29 },
+    tema: { x: 30, y: 46 },
+    carrera: { x: 30, y: 60 },
+    periodo: { x: 30, y: 80 },
 };
 
 type CoverElementId = 'logo' | 'institution' | 'title' | 'tema' | 'carrera' | 'periodo';
@@ -83,7 +83,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const gCover = themeConfig?.brand?.coverConfig || {};
     const activeCoverImage = coverImage || config.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
 
-    const showInst = config.showInstitution !== undefined ? config.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : true);
+    const showInst = config.showInstitution !== undefined ? config.showInstitution : (gCover.showInstitution !== undefined ? gCover.showInstitution : false);
     const showTitle = config.showTitle !== undefined ? config.showTitle : (gCover.showTitle !== undefined ? gCover.showTitle : true);
     const showTema = config.showTemaProyecto !== undefined ? config.showTemaProyecto : (gCover.showTemaProyecto !== undefined ? gCover.showTemaProyecto : true);
     const showCarrera = config.showCarrera !== undefined ? config.showCarrera : (gCover.showCarrera !== undefined ? gCover.showCarrera : true);
@@ -92,15 +92,15 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const textInst = config.textoInstitucion !== undefined
         ? config.textoInstitucion
         : (gCover.textoInstitucion !== undefined ? gCover.textoInstitucion : 'INSTITUTO TECNOLÓGICO SUPERIOR MAYOR PEDRO TRAVERSARI');
-    const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'INFORME FINAL DEL PROYECTO DE INVESTIGACIÓN';
+    const textTitle = config.tituloSuperior || gCover.tituloSuperior || 'PROYECTO DE INVESTIGACIÓN';
     const placeholderTema = config.placeholderTema || gCover.placeholderTema || 'ESCRIBIR EL TEMA EN MAYÚSCULAS';
-    const textCarrera = config.carreraPorDefecto || gCover.carreraPorDefecto || 'TECNOLOGÍA SUPERIOR EN DESARROLLO DE SOFTWARE';
-    const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'PERIODO ACADÉMICO MARZO 2025 – SEPTIEMBRE 2025';
+    const textCarrera = config.carreraPorDefecto !== undefined ? config.carreraPorDefecto : (gCover.carreraPorDefecto !== undefined ? gCover.carreraPorDefecto : '');
+    const textPeriodo = config.periodoPorDefecto || gCover.periodoPorDefecto || 'Abril 2026 – Septiembre 2026';
 
-    const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'navy';
+    const colorTitleKey = config.colorTituloSuperior || gCover.colorTituloSuperior || 'gold';
     const titleColor = colorTitleKey === 'gold' ? '#c4a857' : colorTitleKey === 'white' ? '#ffffff' : colorTitleKey === 'slate' ? '#475569' : colorTitleKey === 'navy' ? '#222c57' : colorTitleKey;
     const tituloFontSize = Number(config.tituloFontSize || 20);
-    const tituloItalica = Boolean(config.tituloItalica);
+    const tituloItalica = config.tituloItalica !== undefined ? Boolean(config.tituloItalica) : true;
 
     const temaFontSize = Number(config.temaFontSize || 13);
     const temaItalica = Boolean(config.temaItalica);
@@ -124,15 +124,15 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     const colorInst = rawColorInst || (activeCoverImage ? '#ffffff' : '#222c57');
     const colorTema = rawColorTema || (activeCoverImage ? '#ffffff' : '#222c57');
     const colorCar = rawColorCar || (activeCoverImage ? '#ffffff' : '#222c57');
-    const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#475569');
+    const colorPer = rawColorPer || (activeCoverImage ? '#ffffff' : '#222c57');
 
     // Carrera
     const prefijoCarrera = config.prefijoCarrera !== undefined ? config.prefijoCarrera : 'TECNOLOGÍA SUPERIOR EN';
-    const displayCarrera = '[NOMBRE DE LA CARRERA]';
+    const displayCarrera = textCarrera;
 
     // Periodo
     const prefijoPeriodo = config.prefijoPeriodo !== undefined ? config.prefijoPeriodo : 'PERIODO ACADÉMICO';
-    const displayPeriodo = '[PERIODO ACADÉMICO ACTIVO]';
+    const displayPeriodo = textPeriodo;
 
     const instMode = config.institutionMode || gCover.institutionMode || 'text';
     const instImage = config.institutionImage || gCover.institutionImage || '';
@@ -205,7 +205,8 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
             flexDirection: 'column',
             alignItems: 'center',
             textAlign: 'center',
-            maxWidth: '80%'
+            width: pos.x >= 20 ? '65%' : '80%',
+            maxWidth: '70%'
         };
 
         const handlers = dragHandlers(id, pos);
@@ -333,18 +334,20 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 <div className="space-y-1" style={{ color: colorCar }}>
                     {prefijoCarrera && (
                         <div
-                            className="font-bold uppercase tracking-wider opacity-85"
+                            className="font-bold uppercase tracking-wider opacity-90"
                             style={{ fontSize: `${Math.max(10, Math.round(carreraFontSize * 1.1))}px` }}
                         >
                             {prefijoCarrera}
                         </div>
                     )}
-                    <div
-                        className={`font-extrabold uppercase tracking-wide ${carreraItalica ? 'italic' : ''}`}
-                        style={{ fontSize: `${carreraFontSize * 1.33}px` }}
-                    >
-                        {displayCarrera}
-                    </div>
+                    {displayCarrera && (
+                        <div
+                            className={`font-extrabold uppercase tracking-wide ${carreraItalica ? 'italic' : ''}`}
+                            style={{ fontSize: `${carreraFontSize * 1.33}px` }}
+                        >
+                            {displayCarrera}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -352,18 +355,20 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 <div className="space-y-1" style={{ color: colorPer }}>
                     {prefijoPeriodo && (
                         <div
-                            className="font-bold uppercase tracking-wider opacity-85"
+                            className="font-bold uppercase tracking-wider opacity-90"
                             style={{ fontSize: `${Math.max(10, Math.round(periodoFontSize * 1.1))}px` }}
                         >
                             {prefijoPeriodo}
                         </div>
                     )}
-                    <div
-                        className={`font-semibold uppercase tracking-wide ${periodoItalica ? 'italic' : ''}`}
-                        style={{ fontSize: `${periodoFontSize * 1.33}px` }}
-                    >
-                        {displayPeriodo}
-                    </div>
+                    {displayPeriodo && (
+                        <div
+                            className={`font-bold uppercase tracking-wide ${periodoItalica ? 'italic' : ''}`}
+                            style={{ fontSize: `${periodoFontSize * 1.33}px` }}
+                        >
+                            {displayPeriodo}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

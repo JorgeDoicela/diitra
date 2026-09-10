@@ -1,6 +1,5 @@
 import type { DocumentBlock, ImpactCategory } from '../../types';
 import { DEFAULT_IMPACT_CATEGORIES, DEFAULT_TECHNICAL_SUBSECTIONS } from '../../types';
-import { COLORS, headerBg } from './generatorStyles';
 
 import { resolveHeaderColor, getContrastFg } from '../../components/properties/SharedColorPicker';
 
@@ -37,13 +36,14 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         const fg = getContrastFg(bg);
         const label = c.customLabel_showTitulo ? `${c.customLabel_showTitulo.trim()}:` : 'NOMBRE DEL PROYECTO:';
         const sc = c.customScriban_showTitulo || 'titulo';
+        const req = c.req_showTitulo || 'Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga.';
         items.push({
             id: 'showTitulo',
             html: `
       <!-- 1. NOMBRE DEL PROYECTO -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} "[${req.trim()}]"}}</td>
       </tr>`
         });
     }
@@ -54,13 +54,14 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         const fg = getContrastFg(bg);
         const label = c.customLabel_showPrograma ? `${c.customLabel_showPrograma.trim()}:` : 'PROGRAMA:';
         const sc = c.customScriban_showPrograma || 'programa';
+        const req = c.req_showPrograma || 'INV-PROY-26.27-01';
         items.push({
             id: 'showPrograma',
             html: `
       <!-- 2. PROGRAMA -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} "${req.trim()}"}}</td>
       </tr>`
         });
     }
@@ -78,9 +79,9 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
         <td style="font-weight: bold; font-size: 8pt; text-align: center; ${cellBorder} padding: 5px 4px; vertical-align: middle;">NO</td>
-        <td style="text-align: center; ${cellBorder} padding: 5px 4px; font-size: 8.5pt; vertical-align: middle;">{{#unless ${sc}}}X{{/unless}}</td>
+        <td style="text-align: center; ${cellBorder} padding: 5px 4px; font-size: 8.5pt; vertical-align: middle;">{{#if (eq ${sc} "NO")}}X{{/if}}</td>
         <td style="font-weight: bold; font-size: 8pt; text-align: center; ${cellBorder} padding: 5px 4px; vertical-align: middle;">SI</td>
-        <td colspan="3" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{#if ${sc}}}{{${sc}}}{{/if}}</td>
+        <td colspan="3" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{#if ${sc}}}{{#unless (eq ${sc} "NO")}}{{${sc}}}{{/unless}}{{else}}[Escriba el Nombre o N/A]{{/if}}</td>
       </tr>`
         });
     }
@@ -91,23 +92,25 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         const fg = getContrastFg(bg);
         const label = c.customLabel_showLinea ? `${c.customLabel_showLinea.trim()}:` : 'LÍNEA DE INVESTIGACIÓN:';
         const sc = c.customScriban_showLinea || 'linea_investigacion';
+        const reqLinea = c.req_showLinea || 'Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente.';
+        const reqSublinea = c.req_showSublinea || 'Especifica el enfoque particular dentro de la línea; deben escribir la sublínea que se relacione directamente con el tema.';
         items.push({
             id: 'showLinea',
             html: `
       <!-- 4. DOMINIO -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">DOMINIO:</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default dominio ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default dominio "[Elija un elemento o escriba el Dominio]"}}</td>
       </tr>
       <!-- 5. LÍNEA DE INVESTIGACIÓN -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} "[${reqLinea.trim()}]"}}</td>
       </tr>
       <!-- 6. SUBLÍNEA DE INVESTIGACIÓN -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">SUBLÍNEA DE INVESTIGACIÓN:</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default sublinea_investigacion ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default sublinea_investigacion "[${reqSublinea.trim()}]"}}</td>
       </tr>`
         });
     }
@@ -146,17 +149,17 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
       <!-- 8. CAMPO AMPLIO -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">CAMPO AMPLIO:</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default campo_amplio ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default campo_amplio "[Escriba el Campo Amplio]"}}</td>
       </tr>
       <!-- 9. CAMPO ESPECÍFICO -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">CAMPO ESPECÍFICO:</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default campo_especifico ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default campo_especifico "[Escriba el Campo Específico]"}}</td>
       </tr>
       <!-- 10. CAMPO DETALLADO -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} "[Escriba el Campo Detallado]"}}</td>
       </tr>`
         });
     }
@@ -167,13 +170,14 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         const fg = getContrastFg(bg);
         const label = c.customLabel_showCarrera ? `${c.customLabel_showCarrera.trim()}:` : 'CARRERA:';
         const sc = c.customScriban_showCarrera || 'carrera';
+        const reqCarrera = c.req_showCarrera || 'Indica la carrera(s) o área académica involucrada; deben escribir una o varias carreras relacionadas con el proyecto.';
         items.push({
             id: 'showCarrera',
             html: `
       <!-- 11. CARRERA -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">Tecnología Superior en {{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{#if ${sc}}}{{${sc}}}{{else}}[${reqCarrera.trim()}]{{/if}}</td>
       </tr>`
         });
     }
@@ -184,18 +188,20 @@ export const generateProjectGeneralHtml = (block: DocumentBlock): string => {
         const fg = getContrastFg(bg);
         const label = c.customLabel_showConvocatoria ? `${c.customLabel_showConvocatoria.trim()}:` : 'PERIODO ACADÉMICO DE CONVOCATORIA:';
         const sc = c.customScriban_showConvocatoria || 'periodo';
+        const reqPeriodo = c.req_showConvocatoria || 'Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial.';
+        const reqTiempo = c.req_showTiempo || 'Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas.';
         items.push({
             id: 'showConvocatoria',
             html: `
       <!-- 12. PERIODO ACADÉMICO DE CONVOCATORIA -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">${label}</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default ${sc} "[${reqPeriodo.trim()}]"}}</td>
       </tr>
       <!-- 13. TIEMPO DE EJECUCIÓN -->
       <tr style="page-break-inside: avoid;">
         <td style="background-color: ${bg} !important; color: ${fg} !important; padding: 5px 8px; font-weight: bold; font-size: 8pt; text-transform: uppercase; ${cellBorder} vertical-align: middle;">TIEMPO DE EJECUCIÓN:</td>
-        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default tiempo_ejecucion meses_ejecucion ""}}</td>
+        <td colspan="6" style="padding: 5px 8px; font-size: 8.5pt; color: #000000; ${cellBorder} vertical-align: middle;">{{default tiempo_ejecucion meses_ejecucion "[${reqTiempo.trim()}]"}}</td>
       </tr>`
         });
     }
@@ -382,14 +388,16 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
             i++;
         } else if (colSpan === 1) {
             const nextSec = activeSections[i + 1];
+            const defaultText1 = sec.placeholder || (sec.requirementText ? `[${sec.requirementText}]` : 'Sin contenido redactado.');
+            const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} ${JSON.stringify(defaultText1)}}}}`;
+
             if (nextSec && nextSec.colSpan === 1 && !nextSec.isGroupHeader) {
                 const nextTitle = formatDisplayTitle(nextSec.numberPrefix, nextSec.title);
                 const nextVarName = sanitizeScribanVar(nextSec.scribanVariable, nextSec.fieldKey || nextSec.key);
                 const nextPascalVar = (nextSec.fieldKey || nextSec.key || '').trim();
                 const { bg: color2, fg: fontColor2 } = resolveVariantStyles(nextSec.variant);
-
-                const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
-                const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} "Sin contenido redactado."}}}`;
+                const defaultText2 = nextSec.placeholder || (nextSec.requirementText ? `[${nextSec.requirementText}]` : 'Sin contenido redactado.');
+                const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} ${JSON.stringify(defaultText2)}}}}`;
 
                 renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
@@ -414,7 +422,6 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
       </tr>`);
                 i += 2;
             } else {
-                const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
                 renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">
         <td colspan="2" style="padding: 0; border: 0;">
@@ -439,7 +446,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
                 i++;
             }
         } else {
-            const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} "Sin contenido redactado."}}}`;
+            const defaultText1 = sec.placeholder || (sec.requirementText ? `[${sec.requirementText}]` : 'Sin contenido redactado.');
+            const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} ${JSON.stringify(defaultText1)}}}}`;
             const textAlign = variant === 'banner_navy' ? 'center' : 'left';
             renderedRows.push(`
       <tr style="${avoidInside} ${breakBefore}">

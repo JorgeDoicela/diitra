@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Palette, PanelLeft, GripVertical, Sparkles, Award, FlaskConical, BarChart3 } from 'lucide-react';
+import { FileText, Palette, PanelLeft, GripVertical, Sparkles, Award, FlaskConical, BarChart3, Eye, Download } from 'lucide-react';
 import {
     DndContext,
     rectIntersection,
@@ -23,6 +23,8 @@ interface TemplateCatalogProps {
     templates: DocumentTemplateDto[];
     selectedTemplate: DocumentTemplateDto | null;
     onSelectTemplate: (tmpl: DocumentTemplateDto) => void;
+    onPreviewTemplate?: (tmpl: DocumentTemplateDto) => void;
+    onDownloadPdf?: (tmpl: DocumentTemplateDto) => void;
     isSidebarCollapsed?: boolean;
     onToggleSidebar?: () => void;
     headerCollapsed?: boolean;
@@ -57,6 +59,8 @@ interface TemplateItemProps {
     template: DocumentTemplateDto;
     isSelected: boolean;
     onSelect?: () => void;
+    onPreview?: (tmpl: DocumentTemplateDto) => void;
+    onDownload?: (tmpl: DocumentTemplateDto) => void;
     dragHandleProps?: any;
     isDragging?: boolean;
     isOverlay?: boolean;
@@ -66,6 +70,8 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
     template,
     isSelected,
     onSelect,
+    onPreview,
+    onDownload,
     dragHandleProps,
     isDragging,
     isOverlay
@@ -129,6 +135,34 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                     </div>
                 </div>
             </button>
+
+            {/* Acciones Rápidas: Previsualizar y Descargar directamente */}
+            {!isOverlay && (
+                <div className="flex items-center gap-0.5 pr-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPreview?.(template);
+                        }}
+                        title={`Previsualizar ${template.name}`}
+                        className="p-1.5 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDownload?.(template);
+                        }}
+                        title={`Descargar PDF oficial de ${template.name}`}
+                        className="p-1.5 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
+                    >
+                        <Download className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -137,12 +171,16 @@ interface SortableTemplateItemProps {
     template: DocumentTemplateDto;
     isSelected: boolean;
     onSelect: () => void;
+    onPreview?: (tmpl: DocumentTemplateDto) => void;
+    onDownload?: (tmpl: DocumentTemplateDto) => void;
 }
 
 const SortableTemplateItem: React.FC<SortableTemplateItemProps> = ({
     template,
     isSelected,
-    onSelect
+    onSelect,
+    onPreview,
+    onDownload
 }) => {
     const {
         attributes,
@@ -164,6 +202,8 @@ const SortableTemplateItem: React.FC<SortableTemplateItemProps> = ({
                 template={template}
                 isSelected={isSelected}
                 onSelect={onSelect}
+                onPreview={onPreview}
+                onDownload={onDownload}
                 dragHandleProps={{ ...attributes, ...listeners }}
                 isDragging={isDragging}
             />
@@ -175,6 +215,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
     templates,
     selectedTemplate,
     onSelectTemplate,
+    onPreviewTemplate,
+    onDownloadPdf,
     isSidebarCollapsed,
     onToggleSidebar,
     headerCollapsed,
@@ -318,6 +360,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                                 template={t}
                                                 isSelected={selectedTemplate?.code === t.code}
                                                 onSelect={() => onSelectTemplate(t)}
+                                                onPreview={onPreviewTemplate}
+                                                onDownload={onDownloadPdf}
                                             />
                                         ))}
                                     </div>
@@ -343,6 +387,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                                 template={t}
                                                 isSelected={selectedTemplate?.code === t.code}
                                                 onSelect={() => onSelectTemplate(t)}
+                                                onPreview={onPreviewTemplate}
+                                                onDownload={onDownloadPdf}
                                             />
                                         ))}
                                     </div>
@@ -368,6 +414,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                                 template={t}
                                                 isSelected={selectedTemplate?.code === t.code}
                                                 onSelect={() => onSelectTemplate(t)}
+                                                onPreview={onPreviewTemplate}
+                                                onDownload={onDownloadPdf}
                                             />
                                         ))}
                                     </div>
@@ -393,6 +441,8 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                                 template={t}
                                                 isSelected={selectedTemplate?.code === t.code}
                                                 onSelect={() => onSelectTemplate(t)}
+                                                onPreview={onPreviewTemplate}
+                                                onDownload={onDownloadPdf}
                                             />
                                         ))}
                                     </div>

@@ -80,6 +80,10 @@ export const useDocumentTemplatesPage = () => {
         return localStorage.getItem('sidebar_collapsed') === 'true';
     });
 
+    // Estados para previsualización y descarga de plantillas oficiales
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewingTemplate, setPreviewingTemplate] = useState<DocumentTemplateDto | null>(null);
+
     useEffect(() => {
         const handleStateChange = (e: Event) => {
             const customEvent = e as CustomEvent;
@@ -983,6 +987,67 @@ export const useDocumentTemplatesPage = () => {
         }
     };
 
+    /**
+     * Abre el modal institucional de previsualización (PDF y Web).
+     * Si no se especifica plantilla, utiliza la actualmente seleccionada.
+     */
+    const handleOpenPreview = (tmpl?: DocumentTemplateDto) => {
+        const target = tmpl || selectedTemplate;
+        if (!target) return;
+        setPreviewingTemplate(target);
+        setPreviewModalOpen(true);
+    };
+
+    /**
+     * Cierra el modal de previsualización.
+     */
+    const handleClosePreview = () => {
+        setPreviewModalOpen(false);
+        setPreviewingTemplate(null);
+    };
+
+    /**
+     * Descarga directamente el PDF institucional oficial sin abrir el visor.
+     * Si se descarga la plantilla actualmente en edición, envía los bloques en caliente para reflejar los cambios inmediatos sin publicar.
+     */
+    const handleQuickDownloadPdf = async (tmpl: DocumentTemplateDto) => {
+        if (!tmpl || tmpl.code === 'GLOBAL_THEME') return;
+        try {
+            addToast("Generando PDF", `Preparando descarga de "${tmpl.name}"...`, "info");
+            let response;
+            if (selectedTemplate && tmpl.code === selectedTemplate.code && blocks && blocks.length > 0) {
+                const mergedTheme = mergeWithDefaults(selectedTemplate.themeConfigJson);
+                const generatedHtml = generateHtmlFromBlocks(blocks, mergedTheme);
+                response = await api.post(
+                    `/admin/templates/${tmpl.code}/render-pdf?download=true`,
+                    {
+                        htmlContent: generatedHtml,
+                        customCss: selectedTemplate.customCss || null,
+                        themeConfigJson: JSON.stringify(mergedTheme)
+                    },
+                    { responseType: 'blob' }
+                );
+            } else {
+                response = await api.get(`/admin/templates/${tmpl.code}/render-pdf?download=true`, {
+                    responseType: 'blob'
+                });
+            }
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${tmpl.name.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g, '_')}_Oficial.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            addToast("Descarga Lista", `PDF de "${tmpl.name}" descargado con éxito.`, "success");
+        } catch (err: any) {
+            console.error('Error al descargar PDF oficial de plantilla:', err);
+            addToast("Error de Descarga", "No se pudo generar el PDF oficial. Verifique que la plantilla sea válida.", "error");
+        }
+    };
+
     return {
         templates,
         selectedTemplate,
@@ -1006,6 +1071,11 @@ export const useDocumentTemplatesPage = () => {
         toggleSidebar,
         sensors,
         activeBlock,
+        previewModalOpen,
+        previewingTemplate,
+        handleOpenPreview,
+        handleClosePreview,
+        handleQuickDownloadPdf,
         fetchTemplates,
         handleSelectTemplate,
         handleAddBlock,

@@ -18,7 +18,8 @@ import {
     Plus,
     ChevronDown,
     RefreshCw,
-    RotateCcw
+    RotateCcw,
+    Eye
 } from 'lucide-react';
 import { DndContext, rectIntersection } from '@dnd-kit/core';
 import type { BlockType } from './types';
@@ -26,7 +27,9 @@ import { TemplateCatalog } from './components/TemplateCatalog';
 import { BlockCanvas } from './components/BlockCanvas';
 import { BlockProperties } from './components/BlockProperties';
 import { BlockPalette } from './components/BlockPalette';
+import { TemplatePreviewModal } from './components/TemplatePreviewModal';
 import { useDocumentTemplatesPage } from './hooks/useDocumentTemplatesPage';
+import { mergeWithDefaults } from './utils/theme-schema';
 
 /** Tipos de bloques de los que solo se permite una única instancia por plantilla */
 const UNIQUE_BLOCK_TYPES: BlockType[] = [
@@ -44,11 +47,11 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
     'project_approval_notice',
     'arbitration_dictamen_section',
     'signatures',
-    'learning_plan_header',
-    'learning_plan_eval_parameters',
-    'learning_plan_prerequisites',
-    'learning_plan_activities',
-    'learning_plan_evaluation'
+    'learning_plan_header_section',
+    'learning_plan_eval_parameters_section',
+    'learning_plan_prerequisites_section',
+    'learning_plan_activities_section',
+    'learning_plan_evaluation_table'
 ];
 
 export const DocumentTemplatesPage: React.FC = () => {
@@ -73,6 +76,11 @@ export const DocumentTemplatesPage: React.FC = () => {
         toggleSidebar,
         sensors,
         activeBlock,
+        previewModalOpen,
+        previewingTemplate,
+        handleOpenPreview,
+        handleClosePreview,
+        handleQuickDownloadPdf,
         handleSelectTemplate,
         handleAddBlock,
         handleDuplicateBlock,
@@ -142,6 +150,17 @@ export const DocumentTemplatesPage: React.FC = () => {
                                         />
                                     )}
                                 </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenPreview()}
+                                    disabled={loading}
+                                    title="Previsualizar documento oficial en vivo (PDF / Web)"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Previsualizar</span>
+                                </button>
                             </>
                         )}
 
@@ -163,25 +182,36 @@ export const DocumentTemplatesPage: React.FC = () => {
             {selectedTemplate && headerCollapsed && (
                 <div className="absolute top-[13px] right-6 md:right-14 z-50 flex items-center gap-3 animate-fade-in">
                     {selectedTemplate.code !== 'GLOBAL_THEME' && (
-                        <div ref={paletteRef} className="relative">
+                        <>
+                            <div ref={paletteRef} className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPalette(p => !p)}
+                                    title="Agregar Bloque"
+                                    className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+
+                                {showPalette && (
+                                    <BlockPalette
+                                        blocks={blocks}
+                                        uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
+                                        onAddBlock={handleAddBlock}
+                                        onClose={() => setShowPalette(false)}
+                                    />
+                                )}
+                            </div>
+
                             <button
                                 type="button"
-                                onClick={() => setShowPalette(p => !p)}
-                                title="Agregar Bloque"
+                                onClick={() => handleOpenPreview()}
+                                title="Previsualizar Documento Oficial"
                                 className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Eye className="w-4 h-4" />
                             </button>
-
-                            {showPalette && (
-                                <BlockPalette
-                                    blocks={blocks}
-                                    uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
-                                    onAddBlock={handleAddBlock}
-                                    onClose={() => setShowPalette(false)}
-                                />
-                            )}
-                        </div>
+                        </>
                     )}
 
                     <button
@@ -236,6 +266,8 @@ export const DocumentTemplatesPage: React.FC = () => {
                             templates={templates}
                             selectedTemplate={selectedTemplate}
                             onSelectTemplate={handleSelectTemplate}
+                            onPreviewTemplate={handleOpenPreview}
+                            onDownloadPdf={handleQuickDownloadPdf}
                             isSidebarCollapsed={isSidebarCollapsed}
                             onToggleSidebar={toggleSidebar}
                             headerCollapsed={headerCollapsed}
@@ -283,6 +315,15 @@ export const DocumentTemplatesPage: React.FC = () => {
                     </div>
                 </DndContext>
             </div>
+
+            {/* Modal Institucional de Previsualización y Descarga en Vivo */}
+            <TemplatePreviewModal
+                isOpen={previewModalOpen}
+                onClose={handleClosePreview}
+                template={previewingTemplate || selectedTemplate}
+                blocks={(previewingTemplate?.code === selectedTemplate?.code || !previewingTemplate) ? blocks : undefined}
+                themeConfig={selectedTemplate?.themeConfigJson ? mergeWithDefaults(selectedTemplate.themeConfigJson) : undefined}
+            />
         </main>
     );
 };

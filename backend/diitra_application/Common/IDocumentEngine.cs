@@ -59,6 +59,27 @@ namespace Diitra.Application.Common.Documents
         /// UUID de la entidad origen (opcional, para auditoría).
         /// </summary>
         public string? EntityUuid { get; init; }
+
+        /// <summary>
+        /// Si se provee, el motor utiliza este HTML en lugar del archivo físico o base de datos.
+        /// Permite previsualización en vivo en caliente desde el diseñador visual antes de publicar.
+        /// </summary>
+        public string? CustomHtmlContent { get; init; }
+
+        /// <summary>
+        /// Si se provee, el motor utiliza este CSS en lugar del archivo físico o base de datos.
+        /// </summary>
+        public string? CustomCss { get; init; }
+
+        /// <summary>
+        /// Si se provee, el motor fusiona estas reglas de diseño sobre el tema institucional en caliente.
+        /// </summary>
+        public string? CustomThemeConfigJson { get; init; }
+
+        /// <summary>
+        /// Si true, indica que es una previsualización interactiva temporal en caliente (no emite registro de auditoría definitivo).
+        /// </summary>
+        public bool IsPreview { get; init; } = false;
     }
 
     /// <summary>
