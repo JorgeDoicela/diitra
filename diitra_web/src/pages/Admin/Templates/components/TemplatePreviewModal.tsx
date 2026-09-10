@@ -13,6 +13,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     X,
+    ChevronRight,
     FileText,
     Download,
     Printer
@@ -190,10 +191,13 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
     if (!isOpen || !template) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-6 bg-black/70 backdrop-blur-sm animate-fade-in">
-            <div className="absolute inset-0" onClick={onClose} />
+        <div className="fixed inset-0 z-[100] flex justify-end">
+            <div
+                className="absolute inset-0 bg-bg-deep/80 backdrop-blur-xs cursor-pointer animate-fade-in"
+                onClick={onClose}
+            />
 
-            <div className="relative w-full max-w-6xl h-[92vh] bg-surface border border-border-thin rounded-xl shadow-2xl flex flex-col z-10 overflow-hidden animate-scale-up">
+            <div className="relative w-full md:w-[52vw] lg:w-[54vw] xl:w-[55vw] h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
                 
                 {/* ── BARRA SUPERIOR VERCEL GEIST ── */}
                 <div className="relative flex items-center justify-between px-5 py-3 border-b border-border-thin bg-surface shrink-0">
@@ -238,10 +242,10 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="p-1.5 rounded-md text-black dark:text-white hover:bg-surface-hover transition-colors cursor-pointer"
-                            title="Cerrar vista previa (Esc)"
+                            className="p-1 rounded-md text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                            title="Cerrar panel (Esc)"
                         >
-                            <X className="w-4 h-4 text-black dark:text-white" />
+                            <ChevronRight className="w-5 h-5 text-text-main" />
                         </button>
                     </div>
                 </div>
@@ -263,7 +267,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                         {pdfUrl ? (
                             <iframe
                                 id="preview-pdf-iframe"
-                                src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+                                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                                 title={`Vista Previa: ${template.name}`}
                                 className="w-full h-full border-none bg-neutral-100 dark:bg-neutral-900"
                             />
