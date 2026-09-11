@@ -115,6 +115,49 @@ const INNOVATION_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = [
 const RESEARCH_TECHNICAL_SUBSECTIONS: TechnicalSubsection[] = DEFAULT_TECHNICAL_SUBSECTIONS;
 
 /**
+ * Configuración oficial de fábrica para el bloque de Identificación del Proyecto (CACES / ISTPET)
+ */
+export const DEFAULT_PROJECT_GENERAL_CONFIG = {
+    title: '1. IDENTIFICACIÓN DEL PROYECTO',
+    headerColor: '#222c57',
+    borderStyle: 'solid',
+    identificationLayoutMode: 'table',
+    showTitulo: true,
+    req_showTitulo: 'Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga. ',
+    showCodigo: true,
+    req_showCodigo: 'INV-PROY-26.27-01',
+    showPrograma: true,
+    req_showPrograma: 'Elija un elemento.',
+    showGrupo: true,
+    req_showGrupo: 'Escriba el Nombre o N/A',
+    showLinea: true,
+    req_showLinea: ' Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente. ',
+    req_showSublinea: ' Especifica el enfoque particular dentro de la línea; deben escribir la sublínea que se relacione directamente con el tema. ',
+    showTipo: true,
+    showCaces: false,
+    showCarrera: true,
+    req_showCarrera: ' Indica la carrera(s) o área académica involucrada; deben escribir una o varias carreras relacionadas con el proyecto. ',
+    showConvocatoria: true,
+    req_showConvocatoria: ' Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial. ',
+    req_showTiempo: ' Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas. ',
+    showDirector: true,
+    req_showDirector: 'Título abreviado, Apellidos y Nombres Completos',
+    showFechas: true,
+    fieldsOrder: [
+        'showTitulo',
+        'showCodigo',
+        'showPrograma',
+        'showGrupo',
+        'showLinea',
+        'showTipo',
+        'showCarrera',
+        'showConvocatoria',
+        'showDirector',
+        'showFechas'
+    ]
+};
+
+/**
  * Fábrica principal de bloques por defecto.
  */
 export function generateDefaultBlocksForTemplate(
@@ -137,16 +180,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'project_general_section' as BlockType,
                 title: '1. IDENTIFICACIÓN DEL PROYECTO',
                 isActive: true,
-                config: {
-                    showTitulo: true,
-                    showPrograma: true,
-                    showGrupo: true,
-                    showTipo: true,
-                    showLinea: true,
-                    showCaces: true,
-                    showDirector: true,
-                    showFechas: true
-                }
+                config: { ...DEFAULT_PROJECT_GENERAL_CONFIG }
             },
             {
                 id: 'block-researchers',
@@ -253,16 +287,7 @@ export function generateDefaultBlocksForTemplate(
                 type: 'project_general_section' as BlockType,
                 title: '1. IDENTIFICACIÓN DEL PROYECTO',
                 isActive: true,
-                config: {
-                    showTitulo: true,
-                    showPrograma: true,
-                    showGrupo: true,
-                    showTipo: true,
-                    showLinea: true,
-                    showCaces: true,
-                    showDirector: true,
-                    showFechas: true
-                }
+                config: { ...DEFAULT_PROJECT_GENERAL_CONFIG }
             },
             {
                 id: 'block-researchers',
@@ -729,12 +754,8 @@ export function generateDefaultBlocksForTemplate(
             title: '1. IDENTIFICACIÓN Y DATOS GENERALES',
             isActive: true,
             config: {
-                showTitulo: true,
-                showPrograma: true,
-                showGrupo: true,
-                showLinea: true,
-                showDirector: true,
-                showFechas: true
+                ...DEFAULT_PROJECT_GENERAL_CONFIG,
+                title: '1. IDENTIFICACIÓN Y DATOS GENERALES'
             }
         },
         {

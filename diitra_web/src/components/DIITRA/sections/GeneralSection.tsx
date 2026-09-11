@@ -718,7 +718,6 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             >
                                 <option value="BASICA PURA">BÁSICA PURA</option>
                                 <option value="BASICA ORIENTADA">BÁSICA ORIENTADA</option>
-                                <option value="BASICA">BÁSICA (GENERAL)</option>
                                 <option value="APLICADA">APLICADA</option>
                                 <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
                             </CoWorkField>

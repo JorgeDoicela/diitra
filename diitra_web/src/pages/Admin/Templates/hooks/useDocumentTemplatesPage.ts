@@ -33,7 +33,7 @@ import {
 } from '../types';
 import { mergeWithDefaults } from '../utils/theme-schema';
 import { generateHtmlFromBlocks } from '../utils/HtmlGenerator';
-import { generateDefaultBlocksForTemplate } from '../utils/defaultBlocksFactory';
+import { generateDefaultBlocksForTemplate, DEFAULT_PROJECT_GENERAL_CONFIG } from '../utils/defaultBlocksFactory';
 
 /** Sensor inteligente de puntero para evitar interrupciones al hacer clic en inputs o botones editables */
 class SmartPointerSensor extends PointerSensor {
@@ -337,18 +337,7 @@ export const useDocumentTemplatesPage = () => {
                     type,
                     title: BLOCK_METADATA.project_general_section.defaultTitle,
                     isActive: true,
-                    config: {
-                        showTitulo: true,
-                        showDirector: true,
-                        showCarrera: true,
-                        showConvocatoria: true,
-                        showPrograma: true,
-                        showGrupo: true,
-                        showLinea: true,
-                        showTipo: true,
-                        showCaces: true,
-                        showFechas: true
-                    }
+                    config: { ...DEFAULT_PROJECT_GENERAL_CONFIG }
                 };
                 break;
             case 'project_technical_section':

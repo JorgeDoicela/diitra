@@ -699,6 +699,15 @@ export interface DocumentBlock {
         showHorasTrabajo?: boolean;
         showResultadosAprendizaje?: boolean;
         allowMultipleEstudiantes?: boolean;
+
+        // ── extensiones dinámicas y atributos de bloque ────────────────────
+        placeholderTema?: string;
+        technicalBorderColor?: string;
+        guidelineText?: string;
+        institutionName?: string;
+        conferralText?: string;
+        cityText?: string;
+        [key: string]: any;
     };
 }
 
