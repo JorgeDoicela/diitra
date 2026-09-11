@@ -224,9 +224,8 @@ export const GeistSelect = <T extends string | number = string | number>({
                 className={`
                     w-full flex items-center justify-between text-left transition-all duration-200 outline-none
                     bg-bg-deep border border-border-thin rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium
-                    ${isInteractive ? 'cursor-pointer hover:border-text-main/50' : 'cursor-default select-none'}
+                    ${isInteractive ? 'cursor-pointer hover:border-text-main/50' : 'cursor-not-allowed select-none opacity-80 bg-surface/30'}
                     ${isOpen ? 'border-text-main' : ''}
-                    ${readOnly ? 'bg-surface/30 opacity-90' : ''}
                     ${className}
                 `}
             >
@@ -235,7 +234,7 @@ export const GeistSelect = <T extends string | number = string | number>({
                 </span>
 
                 <div className="shrink-0 flex items-center pointer-events-none ml-1.5">
-                    {readOnly ? (
+                    {!isInteractive ? (
                         <Lock className="w-4 h-4 text-text-dim/70" />
                     ) : (
                         <ChevronDown 

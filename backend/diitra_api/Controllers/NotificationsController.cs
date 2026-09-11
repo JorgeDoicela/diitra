@@ -79,6 +79,19 @@ namespace diitra_api.Controllers
             return Ok();
         }
 
+        [HttpPost("trigger-welcome")]
+        public async Task<IActionResult> TriggerWelcome()
+        {
+            var userIdStr = User.FindFirst("id_usuario")?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _notificationService.TriggerWelcomeNotificationAsync(userId);
+            return Ok(result);
+        }
+
         [HttpPost("test-push")]
         public async Task<IActionResult> TestPush([FromQuery] string title = "Prueba Profesional DIITRA", [FromQuery] string body = "¡Éxito! Esta es una notificación Web Push real en segundo plano.")
         {

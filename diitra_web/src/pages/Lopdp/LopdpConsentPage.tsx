@@ -36,7 +36,6 @@ const LopdpConsentPage: React.FC = () => {
             // Se registran ambos consentimientos de forma secuencial para evitar condiciones de carrera en base de datos
             await api.post('/lopdp/consentimiento', { version_politica: 'LOPDP_GENERAL' });
             await api.post('/lopdp/consentimiento', { version_politica: 'FIRMA_ELECTRONICA' });
-            addToast('Consentimientos Registrados', 'Ha aceptado la política de tratamiento de datos y los términos de uso de firma electrónica.', 'success');
             // Refresh user state so the guard lets the user proceed
             await refreshUser();
         } catch (err) {

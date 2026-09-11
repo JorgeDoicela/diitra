@@ -16,16 +16,9 @@ export const GroupDraftBanner: React.FC<GroupDraftBannerProps> = ({
     return (
         <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
             <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
-                    <FileText size={16} />
-                </div>
+                <FileText size={18} className="text-text-main shrink-0" />
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
-                        <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
-                            No guardado
-                        </span>
-                    </div>
+                    <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
                     <p className="text-xs text-text-dim">
                         Tienes un borrador sin guardar del grupo <span className="text-text-main font-medium">"{pendingDraft.groupName}"</span>.
                     </p>

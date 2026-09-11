@@ -347,20 +347,11 @@ export const useUsersPage = () => {
     };
 
     const handleDiscardUserDraft = () => {
-        setConfirmDialog({
-            isOpen: true,
-            title: 'Descartar Borrador de Perfil',
-            message: '¿Está seguro de descartar el borrador guardado del perfil de usuario? Esta acción no se puede deshacer.',
-            type: 'danger',
-            onConfirm: () => {
-                localStorage.removeItem('user_metadata_draft_metadata');
-                if (pendingUserDraft?.uuid) {
-                    localStorage.removeItem(`edit_user_metadata_draft_${pendingUserDraft.uuid}`);
-                }
-                setPendingUserDraft(null);
-                setConfirmDialog(p => ({ ...p, isOpen: false }));
-            }
-        });
+        localStorage.removeItem('user_metadata_draft_metadata');
+        if (pendingUserDraft?.uuid) {
+            localStorage.removeItem(`edit_user_metadata_draft_${pendingUserDraft.uuid}`);
+        }
+        setPendingUserDraft(null);
     };
 
     // External reviewer draft handlers
@@ -398,29 +389,20 @@ export const useUsersPage = () => {
     };
 
     const handleDiscardExternalDraft = () => {
-        setConfirmDialog({
-            isOpen: true,
-            title: 'Descartar Borrador de Evaluador',
-            message: '¿Está seguro de descartar el borrador del nuevo evaluador externo? Esta acción no se puede deshacer.',
-            type: 'danger',
-            onConfirm: () => {
-                localStorage.removeItem('new_external_form_draft');
-                localStorage.removeItem('external_draft_metadata');
-                setPendingExternalDraft(null);
-                setExternalForm({
-                    cedula: '',
-                    nombres: '',
-                    apellidos: '',
-                    email: '',
-                    especialidad: '',
-                    grado_academico: '',
-                    institucion: '',
-                    orcid_id: ''
-                });
-                setIsExternalDraftRestored(false);
-                setConfirmDialog(p => ({ ...p, isOpen: false }));
-            }
+        localStorage.removeItem('new_external_form_draft');
+        localStorage.removeItem('external_draft_metadata');
+        setPendingExternalDraft(null);
+        setExternalForm({
+            cedula: '',
+            nombres: '',
+            apellidos: '',
+            email: '',
+            especialidad: '',
+            grado_academico: '',
+            institucion: '',
+            orcid_id: ''
         });
+        setIsExternalDraftRestored(false);
     };
 
     const clearExternalDraft = () => {

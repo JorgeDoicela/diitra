@@ -18,12 +18,14 @@ namespace diitra_infrastructure.Common.Notifications
 
         public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
         {
+            var categoria = extraData != null && extraData.TryGetValue("Categoria", out var cat) ? cat : "SISTEMA";
             // En SignalR, el "recipient" es el ID del usuario
             await _hubContext.Clients.Group($"User_{recipient}").SendAsync("ReceiveNotification", new
             {
                 title,
                 body,
                 url,
+                categoria,
                 fecha = DateTime.UtcNow
             });
         }

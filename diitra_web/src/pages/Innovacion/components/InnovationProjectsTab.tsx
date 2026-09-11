@@ -421,7 +421,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                                         {p.director_nombre && (
                                              <div className="flex items-center gap-1.5 text-xs text-text-dim">
                                                 <User size={12} className="shrink-0 text-text-dim opacity-70" />
-                                                <span className="truncate">Director: <strong className="text-text-main font-medium">{p.director_nombre}</strong></span>
+                                                <span className="truncate">{p.estado?.toLowerCase() === 'prepropuesta' ? 'Postulante:' : 'Director:'} <strong className="text-text-main font-medium">{p.director_nombre}</strong></span>
                                             </div>
                                         )}
                                         {p.carrera && (

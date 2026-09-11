@@ -185,20 +185,12 @@ export function useGroupsPage() {
     };
 
     const handleDiscardDraft = () => {
-        setConfirmDialog({
-            isOpen: true,
-            title: 'Descartar Borrador',
-            message: '¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.',
-            type: 'danger',
-            onConfirm: () => {
-                localStorage.removeItem('groups_draft_metadata');
-                localStorage.removeItem('new_group_form_draft');
-                if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
-                    localStorage.removeItem(`edit_group_form_draft_${pendingDraft.uuid}`);
-                }
-                setPendingDraft(null);
-            }
-        });
+        localStorage.removeItem('groups_draft_metadata');
+        localStorage.removeItem('new_group_form_draft');
+        if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
+            localStorage.removeItem(`edit_group_form_draft_${pendingDraft.uuid}`);
+        }
+        setPendingDraft(null);
     };
 
     const handleOpenModal = (group?: Group, readOnly = false) => {

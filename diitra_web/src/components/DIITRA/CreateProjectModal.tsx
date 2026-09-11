@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, FileText, DollarSign, Sparkles, Lightbulb } from 'lucide-react';
+import { X, BookOpen, Lightbulb, Loader, FileText } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useConfirm } from '../../api/ConfirmContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
+import { GeistSelect } from '../Common/GeistSelect';
 
 interface CreateProjectModalProps {
     preselectedConvocatoriaId?: number | null;
     onClose: () => void;
+    onSuccess?: (targetUrl: string) => void;
     restoreDraftOnOpen?: boolean;
 }
 
@@ -27,8 +29,25 @@ const isPastDeadline = (fechaCierre: string) => {
     return now > deadline;
 };
 
-const formatCurrency = (val: string) => {
-    const num = parseFloat(val);
+const parseCurrencyInput = (val: string | number): number => {
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    if (!val) return 0;
+    let s = String(val).trim();
+    if (s.includes('.') && s.includes(',')) {
+        if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+            s = s.replace(/,/g, '');
+        }
+    } else if (s.includes(',')) {
+        s = s.replace(',', '.');
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+};
+
+const formatCurrency = (val: string | number) => {
+    const num = parseCurrencyInput(val);
     if (isNaN(num) || num <= 0) return '';
     return new Intl.NumberFormat('es-EC', {
         style: 'currency',
@@ -40,6 +59,7 @@ const formatCurrency = (val: string) => {
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     preselectedConvocatoriaId,
     onClose,
+    onSuccess,
     restoreDraftOnOpen = false
 }) => {
     const navigate = useNavigate();
@@ -54,12 +74,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const [idCarrera, setIdCarrera] = useState<number>(0);
     const [idConvocatoria, setIdConvocatoria] = useState<number>(preselectedConvocatoriaId || 0);
     const [careerLocked, setCareerLocked] = useState(false);
-
-    const [isOpenCarrera, setIsOpenCarrera] = useState(false);
-    const [isOpenConvocatoria, setIsOpenConvocatoria] = useState(false);
-
-    const carreraRef = useRef<HTMLDivElement>(null);
-    const convocatoriaRef = useRef<HTMLDivElement>(null);
 
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
@@ -116,20 +130,31 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         setPendingDraft(null);
     };
 
-    // Load draft metadata on mount
+    // Load draft metadata on mount & purge ghost drafts without content
     useEffect(() => {
-        if (restoreDraftOnOpen) {
-            handleRestoreDraft();
-            return;
-        }
-
+        const draftStr = localStorage.getItem('preproposal_form_draft');
         const metaStr = localStorage.getItem('preproposal_draft_metadata');
-        if (metaStr) {
+
+        if (metaStr && draftStr) {
             try {
-                setPendingDraft(JSON.parse(metaStr));
-                isInitializedRef.current = false;
+                const parsedDraft = JSON.parse(draftStr);
+                // Validar que el borrador contenga contenido sustancial (título o descripción)
+                if (!parsedDraft.titulo?.trim() && !parsedDraft.descripcion?.trim()) {
+                    // Borrador vacío detectado: purgar inmediatamente para evitar inconsistencias
+                    localStorage.removeItem('preproposal_form_draft');
+                    localStorage.removeItem('preproposal_draft_metadata');
+                    setPendingDraft(null);
+                    isInitializedRef.current = true;
+                } else if (restoreDraftOnOpen) {
+                    handleRestoreDraft();
+                } else {
+                    setPendingDraft(JSON.parse(metaStr));
+                    isInitializedRef.current = false;
+                }
             } catch (e) {
                 console.error("Error reading draft metadata", e);
+                localStorage.removeItem('preproposal_form_draft');
+                localStorage.removeItem('preproposal_draft_metadata');
                 isInitializedRef.current = true;
             }
         } else {
@@ -137,7 +162,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         }
     }, [restoreDraftOnOpen]);
 
-    // Auto-save draft on state changes
+    // Auto-save draft on state changes - el último borrador siempre es el que cuenta
     useEffect(() => {
         if (!isInitializedRef.current) return;
 
@@ -148,14 +173,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             return;
         }
 
-        const hasChanges =
-            titulo.trim() !== '' ||
-            descripcion.trim() !== '' ||
-            presupuestoEstimado.trim() !== '' ||
-            (!careerLocked && idCarrera !== 0) ||
-            (!preselectedConvocatoriaId && idConvocatoria !== 0);
+        // Solo se considera borrador activo si el docente ha redactado título o descripción
+        const hasContent = titulo.trim() !== '' || descripcion.trim() !== '';
 
-        if (hasChanges) {
+        if (hasContent) {
             const draftData = {
                 modalidad,
                 titulo,
@@ -168,7 +189,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             localStorage.setItem('preproposal_form_draft', JSON.stringify(draftData));
 
             const meta = {
-                titulo: titulo || 'Postulación sin título',
+                titulo: titulo.trim() || 'Postulación sin título',
                 timestamp: Date.now()
             };
             localStorage.setItem('preproposal_draft_metadata', JSON.stringify(meta));
@@ -176,26 +197,26 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             localStorage.removeItem('preproposal_form_draft');
             localStorage.removeItem('preproposal_draft_metadata');
         }
-    }, [titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria, careerLocked, preselectedConvocatoriaId]);
-
-    const handleDiscardDraft = async () => {
-        if (await confirm({
-            title: "Descartar Borrador",
-            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
-            confirmText: "Descartar",
-            cancelText: "Cancelar",
-            variant: "destructive"
-        })) {
-            clearDraft();
-            isInitializedRef.current = true;
-        }
-    };
+    }, [modalidad, titulo, descripcion, presupuestoEstimado, idCarrera, idConvocatoria]);
 
     const clearDraft = () => {
         localStorage.removeItem('preproposal_form_draft');
         localStorage.removeItem('preproposal_draft_metadata');
         setPendingDraft(null);
         setIsDraftRestored(false);
+    };
+
+    const handleDiscardDraft = () => {
+        clearDraft();
+        // Resetear todos los campos del formulario para garantizar limpieza absoluta
+        setTitulo('');
+        setDescripcion('');
+        setPresupuestoEstimado('');
+        if (!preselectedConvocatoriaId) {
+            setIdConvocatoria(0);
+        }
+        setModalidad('INVESTIGACION');
+        isInitializedRef.current = true;
     };
 
     // Tracking inputs for unsaved changes checks on close
@@ -290,42 +311,22 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     }, [preselectedConvocatoriaId, isDocente]);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (carreraRef.current && !carreraRef.current.contains(event.target as Node)) {
-                setIsOpenCarrera(false);
-            }
-            if (convocatoriaRef.current && !convocatoriaRef.current.contains(event.target as Node)) {
-                setIsOpenConvocatoria(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape' || isCreating) return;
-            if (isOpenCarrera) {
-                setIsOpenCarrera(false);
-                return;
+            if (e.key === 'Escape' && !isCreating) {
+                handleRequestClose();
             }
-            if (isOpenConvocatoria) {
-                setIsOpenConvocatoria(false);
-                return;
-            }
-            handleRequestClose();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isCreating, isOpenCarrera, isOpenConvocatoria]);
+    }, [isCreating]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
         if (!descripcion.trim()) return setError("La descripción de la prepropuesta es obligatoria.");
 
-        const parsedBudget = parseFloat(presupuestoEstimado);
-        if (isNaN(parsedBudget) || parsedBudget <= 0) {
+        const parsedBudget = parseCurrencyInput(presupuestoEstimado);
+        if (parsedBudget <= 0) {
             return setError("Debe ingresar un presupuesto estimado válido y mayor a cero.");
         }
         if (idCarrera === 0) {
@@ -417,19 +418,32 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             clearDraft();
 
+            const targetPath = isInnovacion 
+                ? '/innovacion' 
+                : (isAdmin ? '/investigacion' : '/investigacion/mis-proyectos');
+
+            const actionLabel = "Ver";
+
             addToast(
                 isInnovacion ? "Propuesta de Innovación Enviada" : "Prepropuesta de Investigación Enviada",
                 isInnovacion 
-                    ? "Su propuesta de innovación y transferencia ha sido enviada exitosamente a la Coordinación."
-                    : "Su prepropuesta de investigación ha sido registrada y enviada para revisión institucional.",
-                "success"
+                    ? "Su propuesta fue enviada exitosamente para revisión."
+                    : "Su prepropuesta fue registrada y enviada para revisión institucional.",
+                "success",
+                targetPath,
+                undefined,
+                actionLabel
             );
 
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-                navigate(isInnovacion ? '/innovacion' : '/investigacion/mis-proyectos', { replace: true });
-                onClose();
-            }, 800);
+                if (onSuccess) {
+                    onSuccess(targetPath);
+                } else {
+                    navigate(targetPath, { replace: true });
+                    onClose();
+                }
+            }, 600);
 
         } catch (err: any) {
             console.error("[DIITRA] Error creating proposal:", err);
@@ -455,14 +469,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
 
                 <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
-                    <div className="flex items-center gap-3">
-                        <div className="text-text-main">
-                            <Shield size={20} />
-                        </div>
-                        <div>
-                            <span className="section-label text-text-dim !gap-0">Nueva postulación</span>
-                            <h3 className="text-sm font-black text-text-main uppercase tracking-widest leading-none mt-1">Iniciar Nueva Postulación</h3>
-                        </div>
+                    <div>
+                        <h3 className="text-base font-semibold text-text-main tracking-tight">Iniciar Nueva Postulación</h3>
                     </div>
                     {!isCreating && (
                         <button
@@ -495,16 +503,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             {pendingDraft && (
                                 <div className="border border-border-thin bg-surface-hover rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in mb-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-bg-deep border border-border-thin flex items-center justify-center text-text-main shrink-0">
-                                            <FileText size={16} />
-                                        </div>
+                                        <FileText size={18} className="text-text-main shrink-0" />
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Borrador detectado</h4>
-                                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
-                                                    No guardado
-                                                </span>
-                                            </div>
+                                            <h4 className="text-xs font-bold text-text-main uppercase tracking-wider">Borrador detectado</h4>
                                             <p className="text-xs text-text-dim">
                                                 Tienes un borrador sin guardar de esta postulación.
                                             </p>
@@ -540,7 +541,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={clearDraft}
+                                        onClick={handleDiscardDraft}
                                         className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                                     >
                                         Descartar borrador
@@ -556,216 +557,184 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
                             {/* Selector de Modalidad: Investigación vs Innovación */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <Sparkles size={10} className="text-text-dim" />
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
                                     Modalidad de Postulación Institucional
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setModalidad('INVESTIGACION')}
-                                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                                        className={`p-4 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between gap-2.5 ${
                                             modalidad === 'INVESTIGACION'
-                                                ? 'bg-brand/[0.06] border-brand shadow-[0_0_12px_rgba(0,112,243,0.12)]'
-                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover'
+                                                ? 'bg-surface border-text-main shadow-xs'
+                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover/60'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between w-full">
                                             <div className="flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg ${modalidad === 'INVESTIGACION' ? 'bg-brand text-white' : 'bg-bg-deep text-text-dim'}`}>
-                                                    <BookOpen size={14} />
-                                                </div>
-                                                <span className="text-xs font-bold text-text-main">Investigación</span>
+                                                <BookOpen
+                                                    size={16}
+                                                    className={`transition-colors ${
+                                                        modalidad === 'INVESTIGACION' ? 'text-text-main' : 'text-text-dim'
+                                                    }`}
+                                                />
+                                                <span className="text-xs font-semibold text-text-main">Investigación Aplicada</span>
                                             </div>
-                                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
-                                                modalidad === 'INVESTIGACION' ? 'bg-brand/20 text-brand' : 'bg-bg-deep text-text-dim'
+                                            <span className={`text-[10px] font-mono transition-colors ${
+                                                modalidad === 'INVESTIGACION' ? 'text-text-main font-semibold' : 'text-text-dim font-medium'
                                             }`}>
-                                                I+D+i
+                                                I+D
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-text-dim leading-relaxed">
-                                            Proyectos científicos, marco teórico, ODS y metodología académica.
+                                        <p className="text-[11.5px] text-text-dim leading-relaxed">
+                                            Proyectos con rigor empírico, enfoque en ODS y solución de problemáticas sociales o productivas.
                                         </p>
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => setModalidad('INNOVACION')}
-                                        className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                                        className={`p-4 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between gap-2.5 ${
                                             modalidad === 'INNOVACION'
-                                                ? 'bg-amber-500/[0.08] border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover'
+                                                ? 'bg-surface border-text-main shadow-xs'
+                                                : 'bg-surface border-border-thin hover:border-border-hover hover:bg-surface-hover/60'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between w-full">
                                             <div className="flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg ${modalidad === 'INNOVACION' ? 'bg-amber-500 text-white' : 'bg-bg-deep text-text-dim'}`}>
-                                                    <Lightbulb size={14} />
-                                                </div>
-                                                <span className="text-xs font-bold text-text-main">Innovación</span>
+                                                <Lightbulb
+                                                    size={16}
+                                                    className={`transition-colors ${
+                                                        modalidad === 'INNOVACION' ? 'text-text-main' : 'text-text-dim'
+                                                    }`}
+                                                />
+                                                <span className="text-xs font-semibold text-text-main">Innovación Tecnológica</span>
                                             </div>
-                                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
-                                                modalidad === 'INNOVACION' ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400' : 'bg-bg-deep text-text-dim'
+                                            <span className={`text-[10px] font-mono transition-colors ${
+                                                modalidad === 'INNOVACION' ? 'text-text-main font-semibold' : 'text-text-dim font-medium'
                                             }`}>
-                                                i+TT
+                                                I+D+i / TT
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-text-dim leading-relaxed">
-                                            Prototipos, tipo de innovación (producto/proceso) y transferencia ISTPET.
+                                        <p className="text-[11.5px] text-text-dim leading-relaxed">
+                                            Desarrollo de prototipos, software, procesos técnicos o modelos transferibles al sector empresarial.
                                         </p>
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <BookOpen size={10} className="text-text-dim" />
-                                    {modalidad === 'INNOVACION' ? 'Tema / Proyecto de Innovación (Mayúsculas)' : 'Tema / Nombre del Proyecto (Mayúsculas)'}
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
+                                    Título Preliminar de la Propuesta
                                 </label>
                                 <textarea
                                     value={titulo}
                                     onChange={(e) => setTitulo(e.target.value)}
                                     placeholder={modalidad === 'INNOVACION'
-                                        ? "EJ: SISTEMA AUTOMATIZADO IOT PARA MONITOREO DE CULTIVOS HIDROPÓNICOS Y TRANSFERENCIA TECNOLÓGICA..."
-                                        : "EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN MEDIANTE PLATAFORMA DIGITAL..."
+                                        ? "Estructura sugerida: [Acción/Objetivo] + [Tecnología o tema] + [Sector o población beneficiaria]\n\nEj: Diseño e implementación de un sistema IoT para la optimización del consumo energético en talleres automotrices del DMQ"
+                                        : "Estructura sugerida: [Acción/Objetivo] + [Tecnología o tema] + [Sector o población beneficiaria]\n\nEj: Estudio empírico y modelo de gestión logística para la reducción de mermas en microempresas del sector textil"
                                     }
-                                    className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none !placeholder:text-text-dim/30"
+                                    className="input-vercel !h-28 !text-xs resize-none placeholder:!text-[10.5px] !placeholder:text-text-dim/50 leading-relaxed font-sans"
                                     required
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <FileText size={10} className="text-text-dim" />
-                                    Descripción / Justificación de la Idea (Prepropuesta)
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
+                                    Descripción y Justificación de la Prepropuesta
                                 </label>
                                 <textarea
                                     value={descripcion}
                                     onChange={(e) => setDescripcion(e.target.value)}
-                                    placeholder="Describa brevemente de qué se trata su propuesta de investigación, la problemática que resuelve y el impacto esperado..."
-                                    className="input-vercel !h-24 !text-xs resize-none !placeholder:text-text-dim/30"
+                                    placeholder={`Síntesis inicial de la idea para revisión de pertinencia por la comisión de DIITRA (LOES · CACES).\n\n1. Problema identificado:\n(Describa la necesidad, deficiencia o problemática concreta que busca atender)\n\n2. Solución propuesta u objetivo preliminar:\n(Qué se propone investigar, desarrollar o implementar tecnológicamente)\n\n3. Impacto y beneficiarios:\n(Estudiantes, comunidad, sector productivo o institución)`}
+                                    className="input-vercel !h-48 !text-xs resize-none placeholder:!text-[10.5px] !placeholder:text-text-dim/50 leading-relaxed font-sans"
                                     required
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <DollarSign size={10} className="text-text-dim" />
-                                    Presupuesto Estimado (USD)
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
+                                    Presupuesto Referencial Estimado (USD)
                                 </label>
                                 <div className="relative flex items-center">
                                     <span className="absolute left-3 text-xs font-bold text-text-dim/60 select-none">$</span>
                                     <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
+                                        type="text"
+                                        inputMode="decimal"
                                         value={presupuestoEstimado}
                                         onFocus={(e) => e.target.select()}
-                                        onChange={(e) => setPresupuestoEstimado(e.target.value)}
-                                        placeholder="15000.00"
-                                        className="input-vercel !pl-7 !text-xs !font-bold !placeholder:text-text-dim/30"
+                                        onKeyDown={(e) => {
+                                            if (
+                                                ['Backspace', 'Tab', 'Enter', 'Escape', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'].includes(e.key) ||
+                                                e.ctrlKey || e.metaKey
+                                            ) {
+                                                return;
+                                            }
+                                            if (!/^[0-9.,]$/.test(e.key)) {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                        onPaste={(e) => {
+                                            const pasteData = e.clipboardData.getData('text');
+                                            if (/[^0-9.,]/.test(pasteData)) {
+                                                e.preventDefault();
+                                                const cleaned = pasteData.replace(/[^0-9.,]/g, '');
+                                                if (cleaned) {
+                                                    const input = e.currentTarget;
+                                                    const start = input.selectionStart || 0;
+                                                    const end = input.selectionEnd || 0;
+                                                    const nextVal = presupuestoEstimado.slice(0, start) + cleaned + presupuestoEstimado.slice(end);
+                                                    setPresupuestoEstimado(nextVal.replace(/([.,]){2,}/g, '$1'));
+                                                }
+                                            }
+                                        }}
+                                        onChange={(e) => {
+                                            const cleaned = e.target.value.replace(/[^0-9.,]/g, '').replace(/([.,]){2,}/g, '$1');
+                                            setPresupuestoEstimado(cleaned);
+                                        }}
+                                        placeholder="500.00"
+                                        className="input-vercel !pl-7 !text-xs !font-bold !placeholder:text-text-dim/40"
                                         required
                                     />
                                 </div>
 
-                                {presupuestoEstimado && !isNaN(parseFloat(presupuestoEstimado)) && parseFloat(presupuestoEstimado) > 0 && (
-                                    <div className="text-[11px] font-medium text-text-dim/90 ml-1 mt-1.5 p-2 bg-bg-deep/80 border border-border-thin rounded animate-fade-in w-fit">
-                                        <span>Valor: {formatCurrency(presupuestoEstimado)} USD</span>
+                                {presupuestoEstimado && parseCurrencyInput(presupuestoEstimado) > 0 && (
+                                    <div className="text-[11px] font-medium text-text-dim/90 ml-1 mt-1 p-2 bg-surface-hover/80 border border-border-thin rounded-md animate-fade-in w-fit">
+                                        <span>Valor referencial: {formatCurrency(presupuestoEstimado)} USD</span>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="space-y-2" ref={carreraRef}>
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <Briefcase size={10} className="text-text-dim" />
-                                    Carrera / Unidad Solicitante
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
+                                    Carrera / Unidad Académica Solicitante
                                 </label>
-                                {careerLocked ? (
-                                    <div className="input-vercel !font-bold !text-xs text-left opacity-80 cursor-not-allowed">
-                                        {selectedCarreraName}
-                                    </div>
-                                ) : (
-                                    <div className="relative">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsOpenCarrera(!isOpenCarrera)}
-                                            className="input-vercel !font-bold !text-xs text-left cursor-pointer flex items-center justify-between"
-                                        >
-                                            <span className={idCarrera === 0 ? 'text-text-dim opacity-50' : ''}>
-                                                {selectedCarreraName}
-                                            </span>
-                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none' }} />
-                                        </button>
-
-                                        {isOpenCarrera && (
-                                            <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
-                                                {carreras.map(c => {
-                                                    const cid = getCarreraId(c);
-                                                    const cname = getCarreraName(c);
-                                                    return (
-                                                        <button
-                                                            key={cid}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setIdCarrera(cid);
-                                                                setIsOpenCarrera(false);
-                                                            }}
-                                                            className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idCarrera === cid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
-                                                        >
-                                                            <span>{cname}</span>
-                                                            {idCarrera === cid && <Check size={12} />}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                <GeistSelect
+                                    value={idCarrera || ''}
+                                    onChange={(val) => setIdCarrera(Number(val))}
+                                    placeholder="Seleccione la carrera asociada..."
+                                    disabled={careerLocked}
+                                    options={carreras.map(c => ({
+                                        value: getCarreraId(c),
+                                        label: getCarreraName(c)
+                                    }))}
+                                />
                             </div>
 
-                            <div className="space-y-2" ref={convocatoriaRef}>
-                                <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
-                                    <Award size={10} className="text-text-dim" />
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-text-main uppercase tracking-wider">
                                     Convocatoria Vinculada
                                 </label>
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => !preselectedConvocatoriaId && setIsOpenConvocatoria(!isOpenConvocatoria)}
-                                        disabled={!!preselectedConvocatoriaId}
-                                        className="input-vercel !font-bold !text-xs text-left disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-between"
-                                    >
-                                        <span className={idConvocatoria === 0 ? 'text-text-dim opacity-50' : ''}>
-                                            {selectedConvocatoriaLabel}
-                                        </span>
-                                        {!preselectedConvocatoriaId && (
-                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenConvocatoria ? 'rotate(180deg)' : 'none' }} />
-                                        )}
-                                    </button>
-
-                                    {isOpenConvocatoria && !preselectedConvocatoriaId && (
-                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
-                                            {convocatorias.map(c => {
-                                                const coid = getConvocatoriaId(c);
-                                                const coname = getConvocatoriaName(c);
-                                                return (
-                                                    <button
-                                                        key={coid}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setIdConvocatoria(coid);
-                                                            setIsOpenConvocatoria(false);
-                                                        }}
-                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idConvocatoria === coid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
-                                                    >
-                                                        <span>{coname}</span>
-                                                        {idConvocatoria === coid && <Check size={12} />}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
+                                <GeistSelect
+                                    value={idConvocatoria || ''}
+                                    onChange={(val) => setIdConvocatoria(Number(val))}
+                                    placeholder="Seleccione una convocatoria..."
+                                    disabled={!!preselectedConvocatoriaId}
+                                    options={convocatorias.map(c => ({
+                                        value: getConvocatoriaId(c),
+                                        label: getConvocatoriaName(c)
+                                    }))}
+                                />
                             </div>
 
                             <div className="pt-4 flex gap-3">

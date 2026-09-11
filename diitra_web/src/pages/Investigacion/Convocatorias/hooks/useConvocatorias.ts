@@ -348,22 +348,14 @@ export const useConvocatorias = () => {
         }
     };
 
-    const handleDiscardDraft = async () => {
-        if (await confirm({
-            title: "Descartar Borrador",
-            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
-            confirmText: "Descartar",
-            cancelText: "Cancelar",
-            variant: "destructive"
-        })) {
-            localStorage.removeItem('convocatoria_draft_metadata');
-            localStorage.removeItem('new_convocatoria_form_draft');
-            if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
-                localStorage.removeItem(`edit_convocatoria_form_draft_${pendingDraft.uuid}`);
-            }
-            setPendingDraft(null);
-            setIsDraftRestored(false);
+    const handleDiscardDraft = () => {
+        localStorage.removeItem('convocatoria_draft_metadata');
+        localStorage.removeItem('new_convocatoria_form_draft');
+        if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
+            localStorage.removeItem(`edit_convocatoria_form_draft_${pendingDraft.uuid}`);
         }
+        setPendingDraft(null);
+        setIsDraftRestored(false);
     };
 
     const handleNewConvocatoria = () => {

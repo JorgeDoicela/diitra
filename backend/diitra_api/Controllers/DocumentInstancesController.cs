@@ -226,7 +226,7 @@ namespace diitra_api.Controllers
                                         var participantsList = new List<string>();
                                         if (!string.IsNullOrEmpty(dto.DirectorProyecto))
                                         {
-                                            participantsList.Add($"{dto.DirectorProyecto} (Director)");
+                                            participantsList.Add($"{dto.DirectorProyecto} (Postulante)");
                                         }
                                         if (dto.Investigadores != null)
                                         {

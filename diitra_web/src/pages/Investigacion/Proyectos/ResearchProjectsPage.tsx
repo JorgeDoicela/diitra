@@ -72,14 +72,6 @@ const ResearchProjectsPage = () => {
     const [filterLinea, setFilterLinea] = useState<string>('todas');
     const [filterConvocatoria, setFilterConvocatoria] = useState<string>('todas');
     const [sortBy, setSortBy] = useState<string>('mi_actividad');
-    
-    const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
-    const [deletingTitle, setDeletingTitle] = useState<string>('');
-    const [deletionError, setDeletionError] = useState<string | null>(null);
-    const [rejectingProject, setRejectingProject] = useState<ProyectoResumen | null>(null);
-    const [rejectObservation, setRejectObservation] = useState('');
-    const [reviewError, setReviewError] = useState<string | null>(null);
-    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     const lastFetchRef = useRef<number>(0);
 
@@ -181,6 +173,12 @@ const ResearchProjectsPage = () => {
                     if (aPinned && !bPinned) return -1;
                     if (!aPinned && bPinned) return 1;
 
+                    // Las prepropuestas recién enviadas requieren revisión prioritaria del administrador
+                    const aIsPending = a.estado === 'Prepropuesta';
+                    const bIsPending = b.estado === 'Prepropuesta';
+                    if (aIsPending && !bIsPending) return -1;
+                    if (!aIsPending && bIsPending) return 1;
+
                     const aVisit = recentVisitsMap.get(a.uuid) || 0;
                     const bVisit = recentVisitsMap.get(b.uuid) || 0;
                     if (aVisit !== bVisit) {
@@ -193,10 +191,10 @@ const ResearchProjectsPage = () => {
                 }
                 if (sortBy === 'accion_requerida') {
                     const actionPriority: Record<string, number> = {
-                        'Enviado': 1,
-                        'Revisión Técnica': 2,
-                        'En Corrección': 3,
-                        'Prepropuesta': 4,
+                        'Prepropuesta': 1,
+                        'Enviado': 2,
+                        'Revisión Técnica': 3,
+                        'En Corrección': 4,
                         'En Dictamen': 5,
                         'Pendiente Firma': 6,
                         'Borrador': 7,
@@ -233,22 +231,21 @@ const ResearchProjectsPage = () => {
             });
     }, [proyectos, search, filterEstado, filterLinea, filterConvocatoria, sortBy, isPinned, recentVisitsMap]);
 
-    const confirmarEliminar = (uuid: string, titulo: string) => {
-        setDeletingUuid(uuid);
-        setDeletingTitle(titulo || 'PROYECTO SIN TÍTULO');
-        setDeletionError(null);
-    };
+    const confirmarEliminar = async (uuid: string, titulo: string) => {
+        const projectTitle = titulo || 'PROYECTO SIN TÍTULO';
+        const ok = await confirm({
+            title: "¿Eliminar propuesta de investigación?",
+            message: `Esta acción enviará la prepropuesta o borrador "${projectTitle}" a la papelera de reciclaje, donde se conservará por 30 días antes de eliminarse permanentemente de forma automática.`,
+            confirmText: "Confirmar y Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        });
 
-    const ejecutarEliminacion = async () => {
-        if (!deletingUuid) return;
-        const projectUuid = deletingUuid;
-        const projectTitle = deletingTitle;
+        if (!ok) return;
+
         try {
-            setDeletionError(null);
-            await api.delete(`/projects/${projectUuid}`);
-            setProyectos(prev => prev.filter(p => p.uuid !== projectUuid));
-            setDeletingUuid(null);
-            setDeletingTitle('');
+            await api.delete(`/projects/${uuid}`);
+            setProyectos(prev => prev.filter(p => p.uuid !== uuid));
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             addToast(
                 "Propuesta Eliminada",
@@ -257,7 +254,7 @@ const ResearchProjectsPage = () => {
                 undefined,
                 async () => {
                     try {
-                        await api.post(`/recyclebin/restore/project/${projectUuid}`);
+                        await api.post(`/recyclebin/restore/project/${uuid}`);
                         addToast("Acción Revertida", "La propuesta de investigación ha sido restaurada con éxito.", "success");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         loadProjects(true);
@@ -269,80 +266,7 @@ const ResearchProjectsPage = () => {
             );
         } catch (err: any) {
             console.error('[DIITRA Admin] Error al eliminar borrador:', err);
-            setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador del proyecto.');
-        }
-    };
-
-    const handleAprobarIdea = async (project: ProyectoResumen) => {
-        if (!await confirm({
-            title: "Aprobar Prepropuesta",
-            message: `¿Está seguro de aprobar la idea del proyecto "${project.titulo}"? Esto habilitará al docente para iniciar la formulación completa.`,
-            confirmText: "Aprobar",
-            cancelText: "Cancelar",
-            variant: "warning"
-        })) return;
-
-        try {
-            await api.post(`/projects/${project.uuid}/transition?newState=Borrador&observation=${encodeURIComponent("Idea de proyecto aprobada por Dirección de Investigación")}`);
-            addToast(
-                "Idea Aprobada",
-                "La prepropuesta ha sido aprobada con éxito. Se ha notificado al docente.",
-                "success",
-                undefined,
-                async () => {
-                    try {
-                        await api.post(`/projects/${project.uuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión: Cancelación de la aprobación de la prepropuesta.")}`);
-                        addToast("Acción Revertida", "La aprobación ha sido cancelada. La prepropuesta ha retornado a estado pendiente de revisión.", "info");
-                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-                        loadProjects();
-                    } catch (err: any) {
-                        console.error("[Undo Approval] Failed:", err);
-                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la aprobación de la prepropuesta.", "error");
-                    }
-                }
-            );
-            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-            loadProjects();
-        } catch (e: any) {
-            console.error("Error al aprobar prepropuesta", e);
-            addToast("Error", e.response?.data?.message || "Ocurrió un error al intentar aprobar la prepropuesta.", "error");
-        }
-    };
-
-    const handleRechazarIdeaSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!rejectObservation.trim() || !rejectingProject) return;
-        setIsSubmittingReview(true);
-        setReviewError(null);
-        try {
-            const projectUuid = rejectingProject.uuid;
-            await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta%20Rechazada&observation=${encodeURIComponent(rejectObservation.trim())}`);
-            addToast(
-                "Prepropuesta Devuelta",
-                "La prepropuesta ha sido devuelta al docente con sus observaciones.",
-                "success",
-                undefined,
-                async () => {
-                    try {
-                        await api.post(`/projects/${projectUuid}/transition?newState=Prepropuesta&observation=${encodeURIComponent("Reversión: Cancelación de la devolución de la prepropuesta.")}`);
-                        addToast("Acción Revertida", "La devolución ha sido cancelada. La prepropuesta ha retornado a estado pendiente de revisión.", "info");
-                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-                        loadProjects();
-                    } catch (err: any) {
-                        console.error("[Undo Return] Failed:", err);
-                        addToast("Error al Revertir", err.response?.data?.error || "No se pudo deshacer la devolución de la prepropuesta.", "error");
-                    }
-                }
-            );
-            setRejectingProject(null);
-            setRejectObservation('');
-            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
-            loadProjects();
-        } catch (e: any) {
-            console.error("Error al rechazar prepropuesta", e);
-            setReviewError(e.response?.data?.message || "Ocurrió un error al intentar rechazar la prepropuesta.");
-        } finally {
-            setIsSubmittingReview(false);
+            addToast("Error al Eliminar", err.response?.data?.message || 'No se pudo eliminar el borrador del proyecto.', "error");
         }
     };
 
@@ -540,7 +464,7 @@ const ResearchProjectsPage = () => {
                                             {p.director_nombre && (
                                                 <p className="text-[11px] text-text-dim font-medium truncate mt-1.5 flex items-center gap-1">
                                                     <User size={11} className="shrink-0 opacity-70" />
-                                                    <span>Director: <strong className="text-text-main font-semibold">{formatNombre(p.director_nombre)}</strong></span>
+                                                    <span>{p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada' ? 'Postulante:' : 'Director:'} <strong className="text-text-main font-semibold">{formatNombre(p.director_nombre)}</strong></span>
                                                 </p>
                                             )}
                                         </div>
@@ -594,26 +518,6 @@ const ResearchProjectsPage = () => {
                                         )}
                                     </div>
 
-                                    {p.estado === 'Prepropuesta' && (
-                                        <div className="flex gap-2 pt-1 relative z-20" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => handleAprobarIdea(p)}
-                                                className="btn-vercel-primary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider bg-brand text-white border-brand hover:bg-transparent hover:text-brand"
-                                            >
-                                                Aprobar Idea
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setRejectingProject(p);
-                                                    setRejectObservation('');
-                                                    setReviewError(null);
-                                                }}
-                                                className="btn-vercel-secondary !py-1 !px-2.5 !text-[10px] font-bold uppercase tracking-wider hover:bg-error/10 hover:text-error hover:border-error/30"
-                                            >
-                                                Devolver
-                                            </button>
-                                        </div>
-                                    )}
 
                                     {/* Métricas Integradas en una Sola Barra Limpia */}
                                     <div className="flex items-center justify-between py-1.5 px-3 bg-surface/50 rounded-lg border border-border-thin text-[11px] text-text-dim">
@@ -703,101 +607,6 @@ const ResearchProjectsPage = () => {
 
             {showWizard && <CreateProjectModal onClose={() => setShowWizard(false)} />}
 
-            {/* Modal de confirmación de borrado */}
-            {deletingUuid && (
-                <div className="modal-overlay animate-fade-in">
-                    <div className="modal-card animate-fade-up">
-                        <div className="modal-body">
-                            <div className="flex items-start gap-4">
-                                <div className="icon-circle-error !p-3 shrink-0">
-                                    <AlertCircle size={24} />
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="font-bold text-text-main text-base">¿Eliminar propuesta de investigación?</h4>
-                                    <p className="text-text-dim text-xs leading-relaxed">
-                                        Esta acción enviará la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong> a la papelera de reciclaje, donde se conservará por 30 días antes de eliminarse permanentemente de forma automática.
-                                    </p>
-                                    {deletionError && (
-                                        <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
-                                            {deletionError}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button
-                                onClick={() => {
-                                    setDeletingUuid(null);
-                                    setDeletingTitle('');
-                                    setDeletionError(null);
-                                }}
-                                className="btn-vercel-secondary py-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={ejecutarEliminacion}
-                                className="btn-brand !bg-error !border-error hover:!text-error hover:!bg-transparent py-2"
-                            >
-                                Confirmar y Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* Modal de confirmación de rechazo de prepropuesta */}
-            {rejectingProject && (
-                <div className="modal-overlay animate-fade-in">
-                    <form onSubmit={handleRechazarIdeaSubmit} className="modal-card animate-fade-up">
-                        <div className="modal-body">
-                            <div className="flex items-start gap-4">
-                                <div className="icon-circle-error !p-3 shrink-0">
-                                    <AlertCircle size={24} />
-                                </div>
-                                <div className="space-y-3 flex-1">
-                                    <h4 className="font-bold text-text-main text-base">Rechazar / Devolver Prepropuesta</h4>
-                                    <p className="text-text-dim text-xs leading-relaxed">
-                                        Indique detalladamente las observaciones o correcciones requeridas para el tema <strong className="text-text-main">"{rejectingProject.titulo}"</strong>. El docente recibirá esta notificación para poder realizar las correcciones respectivas.
-                                    </p>
-                                    <textarea
-                                        value={rejectObservation}
-                                        onChange={(e) => setRejectObservation(e.target.value)}
-                                        placeholder="Ingrese aquí las observaciones detalladas..."
-                                        className="input-vercel !h-28 !text-xs resize-none w-full"
-                                        required
-                                    />
-                                    {reviewError && (
-                                        <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
-                                            {reviewError}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setRejectingProject(null);
-                                    setRejectObservation('');
-                                    setReviewError(null);
-                                }}
-                                className="btn-vercel-secondary py-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmittingReview}
-                                className="btn-brand !bg-error !border-error hover:!text-error hover:!bg-transparent py-2"
-                            >
-                                {isSubmittingReview ? "Enviando..." : "Confirmar Devolución"}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
         </main>
     );
 };

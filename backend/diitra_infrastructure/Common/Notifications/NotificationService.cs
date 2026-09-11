@@ -50,6 +50,8 @@ namespace diitra_infrastructure.Common.Notifications
             var user = await _context.Users.FindAsync(userId);
             if (user != null)
             {
+                extraData ??= new Dictionary<string, string>();
+                if (!extraData.ContainsKey("Categoria")) extraData["Categoria"] = category;
                 var resolved = await ResolveUserEmailAndNameAsync(user);
                 DispatchToDriversBackground(userId, resolved.Email ?? "", resolved.Name, title, body, url, extraData);
             }
@@ -293,7 +295,7 @@ namespace diitra_infrastructure.Common.Notifications
             };
         }
 
-        private async Task EnsureWelcomeNotificationAsync(int userId)
+        public async Task<WelcomeNotificationResult> TriggerWelcomeNotificationAsync(int userId)
         {
             try
             {
@@ -306,7 +308,7 @@ namespace diitra_infrastructure.Common.Notifications
                         using var doc = System.Text.Json.JsonDocument.Parse(meta.Configuracion);
                         if (doc.RootElement.TryGetProperty("welcome_notif_sent", out var sentProp) && sentProp.GetBoolean())
                         {
-                            return; // Ya se envió y fue procesada/eliminada por el usuario. No recrear.
+                            return new WelcomeNotificationResult { Sent = false };
                         }
                     }
                     catch
@@ -321,13 +323,13 @@ namespace diitra_infrastructure.Common.Notifications
 
                 if (hasWelcome)
                 {
-                    // Si ya existe en la bandeja pero no estaba marcado en metadata, registrarlo para evitar recreaciones futuras al borrarlo
+                    // Si ya existe en la bandeja pero no estaba marcado en metadata, registrarlo para evitar recreaciones futuras
                     await MarkWelcomeSentInMetadataAsync(userId, meta);
                     await _context.SaveChangesAsync();
-                    return;
+                    return new WelcomeNotificationResult { Sent = false };
                 }
 
-                // 3. Crear notificación inicial de bienvenida por única vez
+                // 3. Crear notificación inicial de bienvenida por única vez y notificar al usuario
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
@@ -338,27 +340,35 @@ namespace diitra_infrastructure.Common.Notifications
                         primerNombre = char.ToUpper(primerNombre[0]) + primerNombre.Substring(1).ToLower();
                     }
 
-                    var welcomeNotif = new InvNotificacion
+                    var titulo = $"¡Bienvenido a DIITRA, {primerNombre}!";
+                    var mensaje = "Este es tu centro oficial de notificaciones. Aquí recibirás avisos sobre convocatorias, estados de tus proyectos, asignaciones de arbitraje y fechas límite institucionales.";
+                    var url = "/notificaciones";
+
+                    var extraData = new Dictionary<string, string>
                     {
-                        Uuid = Guid.NewGuid(),
-                        Destinatario = userId,
-                        Titulo = $"¡Bienvenido a DIITRA, {primerNombre}!",
-                        Mensaje = "Este es tu centro oficial de notificaciones. Aquí recibirás avisos sobre convocatorias, estados de tus proyectos, asignaciones de arbitraje y fechas límite institucionales.",
-                        Categoria = "SISTEMA",
-                        UrlAccion = "/notificaciones",
-                        FechaEnvio = DateTime.UtcNow,
-                        Leido = false
+                        { "SkipEmail", "true" },
+                        { "Categoria", "SISTEMA" }
                     };
 
-                    _context.InvNotificaciones.Add(welcomeNotif);
+                    await NotifyUserAsync(userId, titulo, mensaje, "SISTEMA", url, extraData);
                     await MarkWelcomeSentInMetadataAsync(userId, meta);
                     await _context.SaveChangesAsync();
+
+                    return new WelcomeNotificationResult
+                    {
+                        Sent = true,
+                        Titulo = titulo,
+                        Mensaje = mensaje,
+                        UrlAccion = url
+                    };
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "No se pudo procesar la notificación inicial de bienvenida para el usuario {UserId}", userId);
             }
+
+            return new WelcomeNotificationResult { Sent = false };
         }
 
         private async Task MarkWelcomeSentInMetadataAsync(int userId, InvUsuarioMetadata? meta)
@@ -398,8 +408,6 @@ namespace diitra_infrastructure.Common.Notifications
 
         public async Task<IEnumerable<object>> GetMyNotificationsAsync(int userId)
         {
-            await EnsureWelcomeNotificationAsync(userId);
-
             return await _context.InvNotificaciones
                 .Where(n => n.Destinatario == userId)
                 .OrderByDescending(n => n.FechaEnvio)

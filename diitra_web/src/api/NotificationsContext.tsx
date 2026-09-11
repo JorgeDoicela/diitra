@@ -138,14 +138,14 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
             }}
         >
             <div className={`toast-icon-wrapper toast-icon-${toastType} self-start mt-0.5`}>
-                <IconComponent size={14} />
+                <IconComponent size={16} />
             </div>
-            <div className="flex-1 min-w-0 pr-2">
+            <div className="flex-1 min-w-0 pr-2 space-y-0.5">
                 <h4 className="text-xs font-semibold text-text-main leading-snug">{toast.title}</h4>
-                <p className="text-[10px] text-text-dim leading-normal mt-0.5">{toast.body}</p>
+                <p className="text-[11px] text-text-dim leading-relaxed">{toast.body}</p>
             </div>
             {(toast.url || toast.onUndo) && (
-                <div className="w-px h-5 bg-border-thin shrink-0 ml-1.5 self-center" />
+                <div className="w-px h-6 bg-border-thin shrink-0 mx-1 self-center" />
             )}
             {toast.url && (
                 <button
@@ -155,9 +155,9 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                         navigate(toast.url!);
                         onDismiss(toast.id);
                     }}
-                    className="group/btn self-stretch -my-3 flex items-center justify-center px-3.5 bg-transparent border-0 cursor-pointer select-none"
+                    className="group/btn shrink-0 flex items-center justify-center px-2 py-1 bg-transparent border-0 cursor-pointer select-none self-center"
                 >
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-brand group-hover/btn:underline">
+                    <span className="text-[11px] font-sans font-semibold text-brand group-hover/btn:underline whitespace-nowrap">
                         {toast.actionLabel || 'Ver'}
                     </span>
                 </button>
@@ -179,16 +179,16 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
                             onDismiss(toast.id);
                         }
                     }}
-                    className="group/btn self-stretch -my-3 flex items-center justify-center px-3.5 bg-transparent border-0 cursor-pointer select-none disabled:opacity-50"
+                    className="group/btn shrink-0 flex items-center justify-center px-2 py-1 bg-transparent border-0 cursor-pointer select-none disabled:opacity-50 self-center"
                 >
-                    <span className="text-[10px] font-sans font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 group-hover/btn:underline">
+                    <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-amber-500 hover:text-amber-400 group-hover/btn:underline whitespace-nowrap">
                         {isUndoing ? "..." : "Deshacer"}
                     </span>
                 </button>
             )}
             <button 
                 type="button"
-                className="text-text-dim hover:text-text-main p-2 -mr-1 rounded hover:bg-surface-hover transition-colors cursor-pointer flex items-center justify-center self-center shrink-0"
+                className="text-text-dim hover:text-text-main p-1.5 -mr-1 rounded hover:bg-surface-hover transition-colors cursor-pointer flex items-center justify-center self-center shrink-0"
                 onClick={(e) => {
                     e.stopPropagation();
                     onDismiss(toast.id);
@@ -305,12 +305,21 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
+    const lastToastRef = useRef<{ key: string; time: number }>({ key: '', time: 0 });
+
     const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string, silent = false) => {
-        const id = Math.random().toString(36).substring(2, 9);
-        
         // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
         const cleanBody = body.replace(/<\/?[^>]+(>|$)/g, "");
-        
+
+        // Control defensivo de duplicación inmediata (evitar toasts idénticos concurrentes)
+        const toastKey = `${title}:::${cleanBody}`;
+        const now = Date.now();
+        if (lastToastRef.current.key === toastKey && now - lastToastRef.current.time < 1500) {
+            return;
+        }
+        lastToastRef.current = { key: toastKey, time: now };
+
+        const id = Math.random().toString(36).substring(2, 9);
         setToasts(prev => [...prev, { id, title, body: cleanBody, type, url, actionLabel, onUndo }]);
         
         // ==========================================

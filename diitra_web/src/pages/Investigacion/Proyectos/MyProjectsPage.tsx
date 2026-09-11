@@ -63,30 +63,26 @@ const MyProjectsPage: React.FC = () => {
     const [filterConvocatoria, setFilterConvocatoria] = useState<string>('todas');
     const [sortBy, setSortBy] = useState<string>('mi_actividad');
     const [showNewProject, setShowNewProject] = useState(false);
-    const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
-    const [deletingTitle, setDeletingTitle] = useState<string>('');
-    const [deletionError, setDeletionError] = useState<string | null>(null);
 
     // Draft external management states
     const [pendingDraft, setPendingDraft] = useState<{ titulo: string; timestamp: number } | null>(null);
     const [restoreDraftOnOpen, setRestoreDraftOnOpen] = useState(false);
 
-    const confirmarEliminar = (uuid: string, titulo: string) => {
-        setDeletingUuid(uuid);
-        setDeletingTitle(titulo || 'PROYECTO SIN TÍTULO');
-        setDeletionError(null);
-    };
+    const confirmarEliminar = async (uuid: string, titulo: string) => {
+        const projectTitle = titulo || 'PROYECTO SIN TÍTULO';
+        const ok = await confirm({
+            title: "¿Eliminar propuesta de investigación?",
+            message: `Esta acción enviará la prepropuesta o borrador "${projectTitle}" a la papelera de reciclaje, donde se conservará por 30 días antes de eliminarse permanentemente de forma automática.`,
+            confirmText: "Confirmar y Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        });
 
-    const ejecutarEliminacion = async () => {
-        if (!deletingUuid) return;
-        const projectUuid = deletingUuid;
-        const projectTitle = deletingTitle;
+        if (!ok) return;
+
         try {
-            setDeletionError(null);
-            await api.delete(`/projects/${projectUuid}`);
-            setProyectos(prev => prev.filter(p => p.uuid !== projectUuid));
-            setDeletingUuid(null);
-            setDeletingTitle('');
+            await api.delete(`/projects/${uuid}`);
+            setProyectos(prev => prev.filter(p => p.uuid !== uuid));
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             addToast(
                 "Propuesta Eliminada",
@@ -95,7 +91,7 @@ const MyProjectsPage: React.FC = () => {
                 undefined,
                 async () => {
                     try {
-                        await api.post(`/recyclebin/restore/project/${projectUuid}`);
+                        await api.post(`/recyclebin/restore/project/${uuid}`);
                         addToast("Acción Revertida", "La propuesta de investigación ha sido restaurada con éxito.", "success");
                         window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                         loadProjects(true);
@@ -107,7 +103,7 @@ const MyProjectsPage: React.FC = () => {
             );
         } catch (err: any) {
             console.error('[DIITRA] Error al eliminar borrador:', err);
-            setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador de investigación debido a un error del servidor.');
+            addToast("Error al Eliminar", err.response?.data?.message || 'No se pudo eliminar el borrador de investigación debido a un error del servidor.', "error");
         }
     };
 
@@ -139,11 +135,21 @@ const MyProjectsPage: React.FC = () => {
 
     const checkPendingDraft = () => {
         const metaStr = localStorage.getItem('preproposal_draft_metadata');
-        if (metaStr) {
+        const draftStr = localStorage.getItem('preproposal_form_draft');
+        if (metaStr && draftStr) {
             try {
-                setPendingDraft(JSON.parse(metaStr));
+                const parsedDraft = JSON.parse(draftStr);
+                if (!parsedDraft.titulo?.trim() && !parsedDraft.descripcion?.trim()) {
+                    localStorage.removeItem('preproposal_form_draft');
+                    localStorage.removeItem('preproposal_draft_metadata');
+                    setPendingDraft(null);
+                } else {
+                    setPendingDraft(JSON.parse(metaStr));
+                }
             } catch (e) {
                 console.error("Error reading draft metadata", e);
+                localStorage.removeItem('preproposal_form_draft');
+                localStorage.removeItem('preproposal_draft_metadata');
                 setPendingDraft(null);
             }
         } else {
@@ -156,19 +162,11 @@ const MyProjectsPage: React.FC = () => {
         setShowNewProject(true);
     };
 
-    const handleDiscardDraftExternal = async () => {
-        if (await confirm({
-            title: "Descartar Borrador",
-            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
-            confirmText: "Descartar",
-            cancelText: "Cancelar",
-            variant: "destructive"
-        })) {
-            localStorage.removeItem('preproposal_form_draft');
-            localStorage.removeItem('preproposal_draft_metadata');
-            setPendingDraft(null);
-            setRestoreDraftOnOpen(false);
-        }
+    const handleDiscardDraftExternal = () => {
+        localStorage.removeItem('preproposal_form_draft');
+        localStorage.removeItem('preproposal_draft_metadata');
+        setPendingDraft(null);
+        setRestoreDraftOnOpen(false);
     };
 
     useEffect(() => {
@@ -359,16 +357,9 @@ const MyProjectsPage: React.FC = () => {
             {pendingDraft && (
                 <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
-                            <FileText size={16} />
-                        </div>
+                        <FileText size={18} className="text-text-main shrink-0" />
                         <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
-                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
-                                    No guardado
-                                </span>
-                            </div>
+                            <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
                             <p className="text-xs text-text-dim">
                                 Tienes un borrador sin guardar de una postulación: <span className="text-text-main font-medium">"{pendingDraft.titulo}"</span>.
                             </p>
@@ -557,7 +548,7 @@ const MyProjectsPage: React.FC = () => {
                                         <div className="flex items-center gap-1 text-text-dim mt-2">
                                             <User size={12} className="text-text-dim opacity-70" />
                                             <span className="text-[11px] text-text-dim font-medium truncate">
-                                                Director: <span className="text-text-main font-semibold">{p.director_nombre}</span>
+                                                {p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada' ? 'Postulante:' : 'Director:'} <span className="text-text-main font-semibold">{p.director_nombre}</span>
                                             </span>
                                         </div>
                                     )}
@@ -683,52 +674,10 @@ const MyProjectsPage: React.FC = () => {
                     onClose={() => {
                         setShowNewProject(false);
                         setRestoreDraftOnOpen(false);
+                        checkPendingDraft();
                     }}
                     restoreDraftOnOpen={restoreDraftOnOpen}
                 />
-            )}
-
-            {deletingUuid && (
-                <div className="modal-overlay animate-fade-in">
-                    <div className="modal-card animate-fade-up">
-                        <div className="modal-body">
-                            <div className="flex items-start gap-4">
-                                <div className="icon-circle-error !p-3 shrink-0">
-                                    <AlertCircle size={24} />
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="font-bold text-text-main text-base">¿Eliminar propuesta de investigación?</h4>
-                                    <p className="text-text-dim text-xs leading-relaxed">
-                                        Esta acción enviará la prepropuesta o borrador <strong className="text-text-main">"{deletingTitle}"</strong> a la papelera de reciclaje, donde se conservará por 30 días antes de eliminarse permanentemente de forma automática.
-                                    </p>
-                                    {deletionError && (
-                                        <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
-                                            {deletionError}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button
-                                onClick={() => {
-                                    setDeletingUuid(null);
-                                    setDeletingTitle('');
-                                    setDeletionError(null);
-                                }}
-                                className="btn-vercel-secondary py-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={ejecutarEliminacion}
-                                className="btn-brand !bg-error !border-error hover:!text-error hover:!bg-transparent py-2"
-                            >
-                                Confirmar y Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
             )}
         </main>
     );
