@@ -117,6 +117,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [dominios, setDominios] = useState<any[]>([]);
     const [lineas, setLineas] = useState<any[]>([]);
     const [sublineas, setSublineas] = useState<any[]>([]);
+    const [tiposInvestigacion, setTiposInvestigacion] = useState<any[]>([]);
     const [customCatalogs, setCustomCatalogs] = useState<Record<string, any[]>>({});
 
     const [isInstanceSigned, setIsInstanceSigned] = useState<boolean>(false);
@@ -150,7 +151,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             const rawDocUuid = initialData?.Uuid || initialData?.uuid;
             const needsInstanceFetch = !!(rawDocUuid && !rawDocUuid.startsWith('temp_'));
 
-            const [configResult, instanceResult, carrerasRes, misCarrerasRes, programasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
+            const [configResult, instanceResult, carrerasRes, misCarrerasRes, programasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes, tiposInvRes] = await Promise.all([
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${rawDocUuid}/ui-config`).catch(() => ({ data: null }))
                     : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
@@ -166,6 +167,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 getCachedOrFetch('dominios', () => api.get('/catalogs/dominios')),
                 getCachedOrFetch('lineas', () => api.get('/Convocatorias/catalogos/lineas')),
                 getCachedOrFetch('sublineas', () => api.get('/catalogs/sublineas-investigacion')),
+                getCachedOrFetch('tipos-investigacion', () => api.get('/catalogs/tipos-investigacion')),
             ]);
 
             try {
@@ -328,6 +330,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 setDominios(Array.isArray(dominiosRes?.data) ? dominiosRes.data : []);
                 setLineas(Array.isArray(lineasRes?.data) ? lineasRes.data : []);
                 setSublineas(Array.isArray(sublineasRes?.data) ? sublineasRes.data : []);
+                setTiposInvestigacion(Array.isArray(tiposInvRes?.data) ? tiposInvRes.data : []);
             } catch (err) {
                 console.error('[DIITRA] Error inicializando DocumentEditor:', err);
             } finally {
@@ -374,6 +377,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             dominios={dominios}
             lineas={lineas}
             sublineas={sublineas}
+            tiposInvestigacion={tiposInvestigacion}
             customCatalogs={customCatalogs}
             onClose={onClose}
             readOnly={readOnly}
@@ -404,6 +408,7 @@ interface DocumentEditorCoreProps {
     dominios: any[];
     lineas: any[];
     sublineas: any[];
+    tiposInvestigacion?: any[];
     customCatalogs?: Record<string, any[]>;
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
@@ -426,6 +431,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     dominios,
     lineas,
     sublineas,
+    tiposInvestigacion = [],
     customCatalogs = {},
     onClose,
     readOnly = false,
@@ -850,6 +856,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                                         dominios={dominios}
                                         lineas={lineas}
                                         sublineas={sublineas}
+                                        tiposInvestigacion={tiposInvestigacion}
                                         customCatalogs={customCatalogs}
                                         config={sec.config}
 

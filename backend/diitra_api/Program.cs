@@ -370,7 +370,7 @@ using (var scope = app.Services.CreateScope())
         var dbContext = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
+
         await DocumentTemplateSeeder.SeedTemplatesAsync(dbContext, env, logger);
     }
     catch (Exception ex)

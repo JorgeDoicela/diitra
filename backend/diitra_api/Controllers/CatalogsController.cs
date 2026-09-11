@@ -463,6 +463,85 @@ namespace diitra_api.Controllers
                 .ToListAsync();
             return Ok(data);
         }
+
+        // --- Tipos de Investigación ---
+        [HttpGet("tipos-investigacion")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTiposInvestigacion()
+        {
+            var data = await _context.InvTiposInvestigacion
+                .AsNoTracking()
+                .Where(t => t.Activo == true || t.Activo == null)
+                .OrderBy(t => t.IdTipo)
+                .Select(t => new {
+                    idTipo = t.IdTipo,
+                    uuid = t.Uuid,
+                    nombre = t.Nombre,
+                    idTipoPadre = t.IdTipoPadre,
+                    activo = t.Activo
+                })
+                .ToListAsync();
+
+            return Ok(data);
+        }
+
+        [HttpPost("tipos-investigacion")]
+        public async Task<IActionResult> CreateTipoInvestigacion([FromBody] TipoInvestigacionDto model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Nombre)) return BadRequest("El nombre del tipo de investigación es requerido");
+            var entity = new InvTipoInvestigacion
+            {
+                Uuid = Guid.NewGuid().ToString(),
+                Nombre = model.Nombre.Trim(),
+                IdTipoPadre = model.IdTipoPadre,
+                Activo = model.Activo ?? true
+            };
+            _context.InvTiposInvestigacion.Add(entity);
+            await _context.SaveChangesAsync();
+            return Created($"/api/catalogs/tipos-investigacion/{entity.Uuid}", entity);
+        }
+
+        [HttpPut("tipos-investigacion/{uuid}")]
+        public async Task<IActionResult> UpdateTipoInvestigacion(string uuid, [FromBody] TipoInvestigacionDto model)
+        {
+            var existing = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => t.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(model.Nombre))
+            {
+                existing.Nombre = model.Nombre.Trim();
+            }
+            if (model.IdTipoPadre.HasValue)
+            {
+                existing.IdTipoPadre = model.IdTipoPadre;
+            }
+            if (model.Activo.HasValue)
+            {
+                existing.Activo = model.Activo;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("tipos-investigacion/{uuid}")]
+        public async Task<IActionResult> ToggleTipoInvestigacion(string uuid)
+        {
+            var existing = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => t.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            existing.Activo = !(existing.Activo ?? true);
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+    }
+
+    public class TipoInvestigacionDto
+    {
+        public string? Uuid { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public int? IdTipoPadre { get; set; }
+        public bool? Activo { get; set; }
     }
 }
 

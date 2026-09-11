@@ -15,6 +15,7 @@ const KNOWN_ALIASES: Record<string, string> = {
     'lineas': '/Convocatorias/catalogos/lineas',
     'sublineas': '/catalogs/sublineas-investigacion',
     'tipos-producto': '/catalogs/tipo-producto',
+    'tipos-investigacion': '/catalogs/tipos-investigacion',
     'niveles': '/catalogs/niveles',
     'departments': '/Admin/departments',
     'groups': '/groups',

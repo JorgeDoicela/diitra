@@ -1049,7 +1049,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- SECCIÓN: CATÁLOGOS INICIALES (SEED DATA)
 -- ============================================================
 
--- Limpieza de catálogos para evitar duplicados en re-ejecución (excluyendo ODS y tipos de investigación para conservar sus semillas completas)
+-- Limpieza de catálogos para evitar duplicados en re-ejecución (excluyendo ODS para conservar sus semillas completas)
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_SAFE_UPDATES = 0;
 
@@ -1057,6 +1057,7 @@ TRUNCATE TABLE inv_rubrica_criterios;
 TRUNCATE TABLE inv_rubricas;
 TRUNCATE TABLE inv_agendas_zonales;
 TRUNCATE TABLE inv_tipos_convocatoria;
+TRUNCATE TABLE inv_tipos_investigacion;
 TRUNCATE TABLE inv_lineas_investigacion;
 TRUNCATE TABLE inv_programas;
 TRUNCATE TABLE inv_dominios;
@@ -1170,7 +1171,16 @@ INSERT INTO inv_rubrica_criterios (idRubrica, nombre, descripcion, pesoPorcentaj
 (1, 'Viabilidad y Presupuesto', 'Coherencia de costos y recursos financieros y cronograma Gantt factible.', 25.00, 3),
 (1, 'Impacto Social y Tecnológico', 'Potencial de transferencia tecnológica, fomento de semilleros y aportes a indicadores CACES.', 25.00, 4);
 
--- 5. Tipos de Investigación (Se conservan los definidos al inicio del script para alineación con el Frontend: Básica, Aplicada, Desarrollo Experimental)
+-- 5. Tipos de Investigación (Catálogo CACES / SENESCYT con jerarquía)
+-- idTipoPadre permite anidar 'Básica Pura' y 'Básica Orientada' bajo 'Básica' (idTipo = 1)
+INSERT INTO inv_tipos_investigacion (idTipo, uuid, nombre, idTipoPadre, activo) VALUES
+(1, UUID(), 'Básica', NULL, 1),
+(2, UUID(), 'Aplicada', NULL, 1),
+(3, UUID(), 'Desarrollo Experimental', NULL, 1),
+(4, UUID(), 'Básica Pura', 1, 1),
+(5, UUID(), 'Básica Orientada', 1, 1)
+ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), idTipoPadre = VALUES(idTipoPadre), activo = VALUES(activo);
+
 -- 6. ODS (Se conservan los 17 ODS de la ONU y sus 5 ejes definidos al inicio del script)
 
 -- 7. Programas de Investigación (Ejemplos Institucionales)

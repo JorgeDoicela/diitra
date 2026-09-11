@@ -136,6 +136,20 @@ namespace diitra_infrastructure.Research.Subservices
                      t.Nombre.ToUpper().Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O").Replace("Ú", "U") == searchName) && 
                     t.Activo == true);
 
+                if (tip == null)
+                {
+                    if (searchName.Contains("BASICA"))
+                    {
+                        tip = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => 
+                            (t.Nombre.ToUpper().Contains("BASICA") || t.Nombre.ToUpper().Contains("BÁSICA")) && t.Activo == true);
+                    }
+                    else if (searchName.Contains("EXPERIMENTAL"))
+                    {
+                        tip = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => 
+                            t.Nombre.ToUpper().Contains("EXPERIMENTAL") && t.Activo == true);
+                    }
+                }
+
                 if (tip != null)
                 {
                     project.IdTipo = tip.IdTipo;

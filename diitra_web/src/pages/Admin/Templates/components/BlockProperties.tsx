@@ -546,7 +546,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     />
                                     <div className="space-y-2 pt-2 border-t border-border-thin/10">
                                         {[
-                                            { key: 'showTipoInvestigacion', label: 'Mostrar Tipo de Investigación', desc: 'Básica, Aplicada, Desarrollo Experimental (X)' },
+                                            { key: 'showTipoInvestigacion', label: 'Mostrar Tipo de Investigación', desc: 'Básica Pura, Básica Orientada, Aplicada, Desarrollo Experimental (X)' },
                                             { key: 'showAlcanceProyecto', label: 'Mostrar Alcance del Proyecto', desc: 'Institucional, Parroquial, Cantonal, Provincial, Nacional (X)' },
                                             { key: 'showFechasProyecto', label: 'Mostrar Cuadro de Fechas', desc: 'Presentación, Inicio, Fin Presentada y Fin Real' },
                                             { key: 'showTablaInvestigadores', label: 'Mostrar Tabla de Investigadores', desc: 'Nombre, Cédula, Email, Teléfono y Rol' }

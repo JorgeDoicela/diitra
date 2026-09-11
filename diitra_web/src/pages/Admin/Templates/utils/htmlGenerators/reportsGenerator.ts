@@ -750,12 +750,14 @@ export const generateFinalReportHeaderHtml = (block: DocumentBlock): string => {
           <td style="padding: 0; border: 1px solid #000000;" colspan="5">
             <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8pt; color: #000000; margin: 0;">
               <tr>
-                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">BÁSICA</td>
-                <td style="width: 13%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "BASICA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">BÁSICA PURA</td>
+                <td style="width: 5%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "BASICA PURA"}}(X){{else}}{{#if_eq TipoInvestigacion "BÁSICA PURA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA PURA"}}(X){{else}}{{#if_eq tipo_investigacion "BÁSICA PURA"}}(X){{else}}{{#if_eq TipoInvestigacion "BASICA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">BÁSICA ORIENTADA</td>
+                <td style="width: 5%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "BASICA ORIENTADA"}}(X){{else}}{{#if_eq TipoInvestigacion "BÁSICA ORIENTADA"}}(X){{else}}{{#if_eq tipo_investigacion "BASICA ORIENTADA"}}(X){{else}}{{#if_eq tipo_investigacion "BÁSICA ORIENTADA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}</td>
                 <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">APLICADA</td>
-                <td style="width: 13%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "APLICADA"}}(X){{else}}{{#if_eq tipo_investigacion "APLICADA"}}(X){{else}}( X ){{/if_eq}}{{/if_eq}}</td>
-                <td style="width: 24%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">DESARROLLO EXPERIMENTAL</td>
-                <td style="width: 10%; padding: 4px; border: none;">{{#if_eq TipoInvestigacion "EXPERIMENTAL"}}(X){{else}}{{#if_eq tipo_investigacion "EXPERIMENTAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 5%; padding: 4px; border: none; border-right: 1px solid #000000;">{{#if_eq TipoInvestigacion "APLICADA"}}(X){{else}}{{#if_eq tipo_investigacion "APLICADA"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}</td>
+                <td style="width: 20%; font-weight: bold; padding: 4px; border: none; border-right: 1px solid #000000;">DESARROLLO EXPERIMENTAL</td>
+                <td style="width: 5%; padding: 4px; border: none;">{{#if_eq TipoInvestigacion "DESARROLLO EXPERIMENTAL"}}(X){{else}}{{#if_eq tipo_investigacion "DESARROLLO EXPERIMENTAL"}}(X){{else}}{{#if_eq TipoInvestigacion "EXPERIMENTAL"}}(X){{else}}{{#if_eq tipo_investigacion "EXPERIMENTAL"}}(X){{else}}{{#if_eq TipoInvestigacion "DESARROLLO_EXPERIMENTAL"}}(X){{else}}( &nbsp; ){{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}{{/if_eq}}</td>
               </tr>
             </table>
           </td>

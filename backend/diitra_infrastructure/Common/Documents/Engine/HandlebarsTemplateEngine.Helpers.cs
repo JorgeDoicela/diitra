@@ -48,9 +48,23 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 if (arguments.Length >= 2)
                 {
-                    var val1 = arguments[0]?.ToString() ?? "";
-                    var val2 = arguments[1]?.ToString() ?? "";
+                    var val1 = arguments[0]?.ToString()?.Trim() ?? "";
+                    var val2 = arguments[1]?.ToString()?.Trim() ?? "";
                     if (string.Equals(val1, val2, StringComparison.OrdinalIgnoreCase))
+                    {
+                        options.Template(output, context);
+                        return;
+                    }
+
+                    // Normalización de tildes para resiliencia total
+                    string norm1 = val1.Normalize(NormalizationForm.FormD);
+                    string norm2 = val2.Normalize(NormalizationForm.FormD);
+                    var sb1 = new StringBuilder();
+                    var sb2 = new StringBuilder();
+                    foreach (var c in norm1) { if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) sb1.Append(c); }
+                    foreach (var c in norm2) { if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) sb2.Append(c); }
+
+                    if (string.Equals(sb1.ToString(), sb2.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
                         options.Template(output, context);
                     }

@@ -67,7 +67,7 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
             Dominio: '',
             LineaInvestigacion: '',
             SublineaInvestigacion: '',
-            TipoInvestigacion: 'APLICADA',       // 'BÁSICA' | 'APLICADA' | 'DESARROLLO EXPERIMENTAL'
+            TipoInvestigacion: 'APLICADA',       // 'BÁSICA PURA' | 'BÁSICA ORIENTADA' | 'APLICADA' | 'DESARROLLO EXPERIMENTAL'
             CampoAmplio: '',
             CampoEspecifico: '',
             CampoDetallado: '',

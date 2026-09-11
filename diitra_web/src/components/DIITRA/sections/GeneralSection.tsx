@@ -3,6 +3,14 @@ import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import type { IdentificationField } from '../../../pages/Admin/Templates/types';
 import { GeistSelect } from '../../Common/GeistSelect';
+import { fetchCatalogCached } from '../../../api/catalogsCache';
+
+const DEFAULT_TIPOS_INVESTIGACION = [
+    { idTipo: 1, nombre: 'BÁSICA PURA' },
+    { idTipo: 2, nombre: 'BÁSICA ORIENTADA' },
+    { idTipo: 3, nombre: 'APLICADA' },
+    { idTipo: 4, nombre: 'DESARROLLO EXPERIMENTAL' }
+];
 
 interface GeneralSectionProps {
     formData: any;
@@ -15,6 +23,7 @@ interface GeneralSectionProps {
     dominios?: any[];
     lineas?: any[];
     sublineas?: any[];
+    tiposInvestigacion?: any[];
     customCatalogs?: Record<string, any[]>;
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
     isAdmin?: boolean;
@@ -45,6 +54,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     dominios = [],
     lineas = [],
     sublineas = [],
+    tiposInvestigacion: initialTiposInvestigacion = [],
     customCatalogs = {},
     onUpdate,
     isAdmin = false,
@@ -52,6 +62,23 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 }) => {
     const [misCarreras, setMisCarreras] = React.useState<any[]>(initialMisCarreras);
     const [programas, setProgramas] = React.useState<any[]>(initialProgramas);
+    const [tiposInvestigacion, setTiposInvestigacion] = React.useState<any[]>(
+        initialTiposInvestigacion && initialTiposInvestigacion.length > 0 ? initialTiposInvestigacion : DEFAULT_TIPOS_INVESTIGACION
+    );
+
+    React.useEffect(() => {
+        if (initialTiposInvestigacion && initialTiposInvestigacion.length > 0) {
+            setTiposInvestigacion(initialTiposInvestigacion);
+        } else {
+            fetchCatalogCached('tipos-investigacion')
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        setTiposInvestigacion(data);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [initialTiposInvestigacion]);
 
     React.useEffect(() => {
         setMisCarreras(initialMisCarreras);
@@ -705,6 +732,10 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 
             case 'showTipo':
                 renderedCoreKeys.add('showTipo');
+                const rawTiposList = (tiposInvestigacion && tiposInvestigacion.length > 0) ? tiposInvestigacion : DEFAULT_TIPOS_INVESTIGACION;
+                // Si existen subtipos (hijos con idTipoPadre), omitir la categoría padre para selección específica
+                const parentIds = new Set(rawTiposList.map((t: any) => t.id_tipo_padre ?? t.idTipoPadre).filter(Boolean));
+                const tiposList = rawTiposList.filter((t: any) => !parentIds.has(t.id_tipo ?? t.idTipo));
                 return showTipo ? (
                     <div key="showTipo" className="grid grid-cols-1 gap-4 sm:gap-6">
                         <div className="w-full">
@@ -716,10 +747,18 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 onValueChange={(val) => onUpdate('TipoInvestigacion', val)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold"
                             >
-                                <option value="BASICA PURA">BÁSICA PURA</option>
-                                <option value="BASICA ORIENTADA">BÁSICA ORIENTADA</option>
-                                <option value="APLICADA">APLICADA</option>
-                                <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
+                                <option value="">Seleccione tipo...</option>
+                                {tiposList.map((t: any) => {
+                                    const val = t.nombre ?? t.Nombre ?? t;
+                                    return (
+                                        <option key={t.uuid || t.idTipo || val} value={val}>
+                                            {val}
+                                        </option>
+                                    );
+                                })}
+                                {formData.TipoInvestigacion && !tiposList.some((t: any) => (t.nombre ?? t.Nombre ?? t) === formData.TipoInvestigacion) && (
+                                    <option value={formData.TipoInvestigacion}>{formData.TipoInvestigacion}</option>
+                                )}
                             </CoWorkField>
                         </div>
                     </div>
@@ -792,7 +831,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 </CoWorkField>
                                 {!isAdmin && misCarreras.length > 1 && (
                                     <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold animate-fade-in">
-                                        <span>Perteneces a múltiples carreras. Por favor, selecciona una carrera principal para esta propuesta.</span>
+                                        <span>Selecciona una carrera para esta propuesta.</span>
                                     </div>
                                 )}
                                 {formData.GrupoInvestigacionTipo === 'SI' && coejecutoras.length > 0 && (

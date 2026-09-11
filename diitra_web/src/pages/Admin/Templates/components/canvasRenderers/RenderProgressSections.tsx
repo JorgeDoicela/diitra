@@ -812,13 +812,15 @@ export const RenderFinalReportHeaderSection: React.FC<{
                             <tr>
                                 <td className="p-1.5 border border-black font-bold uppercase text-black">TIPO DE INVESTIGACIÓN (X):</td>
                                 <td className="p-0 border border-black" colSpan={5}>
-                                    <div className="flex items-center text-[8pt] text-black">
-                                        <div className="w-[20%] p-1 border-r border-black font-bold text-center">BÁSICA</div>
-                                        <div className="w-[13%] p-1 border-r border-black text-center">( &nbsp; )</div>
+                                    <div className="flex items-center text-[7.5pt] text-black">
+                                        <div className="w-[20%] p-1 border-r border-black font-bold text-center">BÁSICA PURA</div>
+                                        <div className="w-[5%] p-1 border-r border-black text-center">( &nbsp; )</div>
+                                        <div className="w-[20%] p-1 border-r border-black font-bold text-center">BÁSICA ORIENTADA</div>
+                                        <div className="w-[5%] p-1 border-r border-black text-center">( &nbsp; )</div>
                                         <div className="w-[20%] p-1 border-r border-black font-bold text-center">APLICADA</div>
-                                        <div className="w-[13%] p-1 border-r border-black text-center font-bold">( X )</div>
-                                        <div className="w-[24%] p-1 border-r border-black font-bold text-center">DESARROLLO EXPERIMENTAL</div>
-                                        <div className="w-[10%] p-1 text-center">( &nbsp; )</div>
+                                        <div className="w-[5%] p-1 border-r border-black text-center font-bold">( X )</div>
+                                        <div className="w-[20%] p-1 border-r border-black font-bold text-center">DESARROLLO EXPERIMENTAL</div>
+                                        <div className="w-[5%] p-1 text-center">( &nbsp; )</div>
                                     </div>
                                 </td>
                             </tr>

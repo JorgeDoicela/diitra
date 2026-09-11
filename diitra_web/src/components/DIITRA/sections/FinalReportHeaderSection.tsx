@@ -1,6 +1,14 @@
 import React from 'react';
 import { BookOpen, Calendar, Users, Target, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import type { CoWorkHandle } from '../../../core/cowork/types';
+import { fetchCatalogCached } from '../../../api/catalogsCache';
+
+const DEFAULT_TIPOS_INVESTIGACION = [
+    { idTipo: 1, nombre: 'BÁSICA PURA' },
+    { idTipo: 2, nombre: 'BÁSICA ORIENTADA' },
+    { idTipo: 3, nombre: 'APLICADA' },
+    { idTipo: 4, nombre: 'DESARROLLO EXPERIMENTAL' }
+];
 
 interface FinalReportHeaderSectionProps {
     formData: any;
@@ -13,6 +21,7 @@ interface FinalReportHeaderSectionProps {
     dominios?: any[];
     lineas?: any[];
     sublineas?: any[];
+    tiposInvestigacion?: any[];
     config?: any;
     isAdmin?: boolean;
 }
@@ -24,8 +33,26 @@ export const FinalReportHeaderSection: React.FC<FinalReportHeaderSectionProps> =
     onAdd,
     onRemove,
     onUpdateItem,
+    tiposInvestigacion: initialTiposInvestigacion = [],
     config = {}
 }) => {
+    const [tiposInvestigacionList, setTiposInvestigacionList] = React.useState<any[]>(
+        initialTiposInvestigacion && initialTiposInvestigacion.length > 0 ? initialTiposInvestigacion : DEFAULT_TIPOS_INVESTIGACION
+    );
+
+    React.useEffect(() => {
+        if (initialTiposInvestigacion && initialTiposInvestigacion.length > 0) {
+            setTiposInvestigacionList(initialTiposInvestigacion);
+        } else {
+            fetchCatalogCached('tipos-investigacion')
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        setTiposInvestigacionList(data);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [initialTiposInvestigacion]);
     const isReadOnly = cowork?.session?.readOnly;
 
     const showTipoInvestigacion = config?.showTipoInvestigacion !== false;
@@ -211,37 +238,43 @@ export const FinalReportHeaderSection: React.FC<FinalReportHeaderSectionProps> =
                         />
                     </div>
 
-                    {/* TIPO DE INVESTIGACIÓN (BÁSICA / APLICADA / EXPERIMENTAL) */}
-                    {showTipoInvestigacion && (
-                        <div className="md:col-span-2 space-y-2 pt-3 border-t border-border-thin/20">
-                            <label className="text-xs font-semibold text-text-dim">TIPO DE INVESTIGACIÓN (X):</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {[
-                                    { value: 'BASICA', label: 'BÁSICA ()' },
-                                    { value: 'APLICADA', label: 'APLICADA (X)' },
-                                    { value: 'DESARROLLO_EXPERIMENTAL', label: 'DESARROLLO EXPERIMENTAL ()' }
-                                ].map((item) => {
-                                    const selected = (formData.TipoInvestigacion || formData.tipo_investigacion || 'APLICADA') === item.value;
-                                    return (
-                                        <button
-                                            type="button"
-                                            key={item.value}
-                                            disabled={isReadOnly}
-                                            onClick={() => onUpdate('TipoInvestigacion', item.value)}
-                                            className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                                                selected
-                                                    ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400 shadow-xs'
-                                                    : 'bg-bg-main border-border-thin text-text-dim hover:border-indigo-500/40'
-                                            }`}
-                                        >
-                                            <span>{item.label}</span>
-                                            {selected && <CheckCircle2 className="w-4 h-4 text-indigo-500" />}
-                                        </button>
-                                    );
-                                })}
+                    {/* TIPO DE INVESTIGACIÓN (DINÁMICO DEL CATÁLOGO) */}
+                    {showTipoInvestigacion && (() => {
+                        const parentIds = new Set(tiposInvestigacionList.map((t: any) => t.id_tipo_padre ?? t.idTipoPadre).filter(Boolean));
+                        const selectableTipos = tiposInvestigacionList.filter((t: any) => !parentIds.has(t.id_tipo ?? t.idTipo));
+
+                        return (
+                            <div className="md:col-span-2 space-y-2 pt-3 border-t border-border-thin/20">
+                                <label className="text-xs font-semibold text-text-dim">TIPO DE INVESTIGACIÓN (X):</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    {selectableTipos.map((item) => {
+                                        const tipoNombre = (item.nombre ?? item.Nombre ?? item).toString();
+                                        const currentTipo = (formData.TipoInvestigacion || formData.tipo_investigacion || 'APLICADA').toString().trim().toUpperCase();
+                                        const selected = currentTipo === tipoNombre.toUpperCase() || 
+                                            (tipoNombre.toUpperCase().includes("BÁSICA") && currentTipo === "BASICA") ||
+                                            (tipoNombre.toUpperCase().includes("EXPERIMENTAL") && (currentTipo === "EXPERIMENTAL" || currentTipo === "DESARROLLO_EXPERIMENTAL"));
+
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={item.uuid || item.idTipo || tipoNombre}
+                                                disabled={isReadOnly}
+                                                onClick={() => onUpdate('TipoInvestigacion', tipoNombre)}
+                                                className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                                                    selected
+                                                        ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400 shadow-xs'
+                                                        : 'bg-bg-main border-border-thin text-text-dim hover:border-indigo-500/40'
+                                                }`}
+                                            >
+                                                <span>{tipoNombre} {selected ? '(X)' : '( )'}</span>
+                                                {selected && <CheckCircle2 className="w-4 h-4 text-indigo-500" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                 </div>
             </div>
 

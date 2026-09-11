@@ -12,6 +12,14 @@ import {
 } from 'lucide-react';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
+import { fetchCatalogCached } from '../../../api/catalogsCache';
+
+const DEFAULT_TIPOS_INVESTIGACION = [
+    { idTipo: 1, nombre: 'BÁSICA PURA' },
+    { idTipo: 2, nombre: 'BÁSICA ORIENTADA' },
+    { idTipo: 3, nombre: 'APLICADA' },
+    { idTipo: 4, nombre: 'DESARROLLO EXPERIMENTAL' }
+];
 
 const toDisplayDate = (val?: string) => {
     if (!val) return '';
@@ -40,6 +48,7 @@ interface ProgressReportSectionProps {
     onAdd: (list: string, template: any) => void;
     onRemove: (list: string, index: number) => void;
     onUpdateItem: (list: string, index: number, field: string, value: any) => void;
+    tiposInvestigacion?: any[];
     config?: any;
 }
 
@@ -50,8 +59,27 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
     onAdd,
     onRemove,
     onUpdateItem,
+    tiposInvestigacion: initialTiposInvestigacion = [],
     config
 }) => {
+    const [tiposInvestigacionList, setTiposInvestigacionList] = React.useState<any[]>(
+        initialTiposInvestigacion && initialTiposInvestigacion.length > 0 ? initialTiposInvestigacion : DEFAULT_TIPOS_INVESTIGACION
+    );
+
+    React.useEffect(() => {
+        if (initialTiposInvestigacion && initialTiposInvestigacion.length > 0) {
+            setTiposInvestigacionList(initialTiposInvestigacion);
+        } else {
+            fetchCatalogCached('tipos-investigacion')
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        setTiposInvestigacionList(data);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [initialTiposInvestigacion]);
+
     const isReadOnly = cowork?.session?.readOnly;
 
     // Configuración dinámica enviada desde la maquetación (Plantilla Admin)
@@ -264,24 +292,33 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
 
                         <div className="p-4 border border-border-thin rounded-2xl bg-surface-hover/10 space-y-1">
                             <label className="text-[9px] font-black uppercase tracking-wider text-text-dim block">Tipo de Investigación</label>
-                            <div className="flex items-center gap-3 pt-1">
-                                {['BÁSICA', 'APLICADA', 'DESARROLLO EXPERIMENTAL'].map((tipo) => {
-                                    const currentTipo = (formData.TipoInvestigacion || formData.tipo_investigacion || config?.schema?.TipoInvestigacion || 'APLICADA').toString().toUpperCase();
-                                    const isChecked = currentTipo.includes(tipo.substring(0, 5));
-                                    return (
-                                        <label key={tipo} className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="tipo_inv"
-                                                checked={isChecked}
-                                                onChange={() => onUpdate('TipoInvestigacion', tipo)}
-                                                disabled={isReadOnly}
-                                                className="accent-amber-500"
-                                            />
-                                            <span className={isChecked ? 'font-bold text-text-main' : ''}>{tipo}</span>
-                                        </label>
-                                    );
-                                })}
+                            <div className="flex flex-wrap items-center gap-3 pt-1">
+                                {(() => {
+                                    const parentIds = new Set(tiposInvestigacionList.map((t: any) => t.id_tipo_padre ?? t.idTipoPadre).filter(Boolean));
+                                    const selectableTipos = tiposInvestigacionList.filter((t: any) => !parentIds.has(t.id_tipo ?? t.idTipo));
+
+                                    return selectableTipos.map((item) => {
+                                        const tipo = (item.nombre ?? item.Nombre ?? item).toString();
+                                        const currentTipo = (formData.TipoInvestigacion || formData.tipo_investigacion || config?.schema?.TipoInvestigacion || 'APLICADA').toString().trim().toUpperCase();
+                                        const isChecked = currentTipo === tipo.toUpperCase() || 
+                                            (tipo.toUpperCase().includes("BÁSICA") && currentTipo === "BASICA") ||
+                                            (tipo.toUpperCase().includes("EXPERIMENTAL") && (currentTipo === "EXPERIMENTAL" || currentTipo === "DESARROLLO_EXPERIMENTAL"));
+
+                                        return (
+                                            <label key={item.uuid || item.idTipo || tipo} className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="tipo_inv"
+                                                    checked={isChecked}
+                                                    onChange={() => onUpdate('TipoInvestigacion', tipo)}
+                                                    disabled={isReadOnly}
+                                                    className="accent-amber-500"
+                                                />
+                                                <span className={isChecked ? 'font-bold text-text-main' : ''}>{tipo}</span>
+                                            </label>
+                                        );
+                                    });
+                                })()}
                             </div>
                         </div>
 
