@@ -290,24 +290,29 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
-                // 3. HTML y CSS: Arquitectura Fallback (En caliente > File-First Default > DB Customization Override)
-                //    - Si el usuario envía HTML/CSS personalizado en caliente (diseñador visual), tiene máxima prioridad.
-                //    - De lo contrario, lee directamente el archivo físico oficial de Git (desarrollador).
-                //    - Si no existe archivo físico, usa el Override de la BD.
+                // 3. HTML y CSS: Arquitectura de Resolución de Plantillas
+                //    - Si se envía HTML/CSS personalizado en caliente (request.CustomHtmlContent), tiene máxima prioridad (modo diseñador/preview).
+                //    - Si la plantilla fue editada y guardada en BD por un administrador (template.HtmlContent personalizado), se respeta con máxima prioridad para reflejar fielmente los cambios.
+                //    - Si no ha sido editada en BD, se lee el archivo físico oficial de Git (desarrollador).
+                //    - Fallback final a template.HtmlContent original.
                 var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
                 var fileCss  = await _templateFileLoader.LoadCssAsync(template.Code);
 
+                bool isDbCustomized = !string.IsNullOrWhiteSpace(template.HtmlContent)
+                    && !template.HtmlContent.StartsWith("<!-- Cargado desde")
+                    && (template.HtmlContent.Contains("<!-- DIITRA_SECTIONS_JSON:") || template.Version >= 400 || (!string.IsNullOrWhiteSpace(template.UpdatedBy) && template.UpdatedBy != "SEED"));
+
                 var htmlToRender = !string.IsNullOrWhiteSpace(request.CustomHtmlContent)
                     ? request.CustomHtmlContent
-                    : (!string.IsNullOrWhiteSpace(fileHtml) 
-                        ? fileHtml 
-                        : template.HtmlContent);
+                    : (isDbCustomized
+                        ? template.HtmlContent
+                        : (!string.IsNullOrWhiteSpace(fileHtml) ? fileHtml : template.HtmlContent));
 
                 var cssToUse = !string.IsNullOrWhiteSpace(request.CustomCss)
                     ? request.CustomCss
-                    : (!string.IsNullOrWhiteSpace(fileCss)
-                        ? fileCss
-                        : template.CustomCss);
+                    : (!string.IsNullOrWhiteSpace(template.CustomCss)
+                        ? template.CustomCss
+                        : (!string.IsNullOrWhiteSpace(fileCss) ? fileCss : null));
 
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
@@ -349,8 +354,7 @@ namespace Diitra.Infrastructure.Common.Documents
                                 { "secondary", "#c4a857" },
                                 { "text", "#222c57" },
                                 { "tableHeaderBg", "#222c57" },
-                                { "tableHeaderColor", "#ffffff" },
-                                { "accent", "#9ad3de" }
+                                { "tableHeaderColor", "#ffffff" }
                             }
                         },
                         { "typography", new Dictionary<string, string>
@@ -365,19 +369,10 @@ namespace Diitra.Infrastructure.Common.Documents
                                 { "marginTop", "3cm" },
                                 { "marginBottom", "2cm" },
                                 { "marginLeft", "2cm" },
-                                { "marginRight", "2cm" },
-                                { "landscapeMarginTop", "1.8cm" },
-                                { "landscapeMarginBottom", "1.5cm" },
-                                { "landscapeMarginLeft", "1.2cm" },
-                                { "landscapeMarginRight", "1.2cm" }
+                                { "marginRight", "2cm" }
                             }
                         },
-                        { "brand", new Dictionary<string, object>
-                            {
-                                { "showCoverPage", true },
-                                { "logoScale", "100%" }
-                            }
-                        }
+                        { "brand", new Dictionary<string, object>() }
                     };
                 }
 
@@ -391,6 +386,9 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 extraImageVars["theme"] = baseThemeDict;
+                extraImageVars["traceability_code"] = traceabilityCode;
+                extraImageVars["codigo_verificacion"] = traceabilityCode;
+                extraImageVars["TraceabilityCode"] = traceabilityCode;
 
                 if (request.ExtraVariables != null)
                 {
@@ -460,6 +458,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 if (coverBase64 != null)
                 {
                     extraImageVars["portada_base64"] = coverBase64;
+                    extraImageVars["PortadaBase64"] = coverBase64;
                 }
 
                 // Carga global de logotipos institucionales para todas las plantillas
@@ -468,6 +467,48 @@ namespace Diitra.Infrastructure.Common.Documents
                 {
                     extraImageVars["logo_base64"] = logoBase64;
                     extraImageVars["logo_negro_base64"] = logoBase64;
+                }
+
+                // Extracción de Código Normativo del Formato (Document Code) en esquina superior derecha
+                string? documentCode = null;
+                if (baseThemeDict.TryGetValue("brand", out var brandDcObj) && brandDcObj != null)
+                {
+                    try
+                    {
+                        if (brandDcObj is JsonElement brandDcEl && brandDcEl.ValueKind == JsonValueKind.Object)
+                        {
+                            if (brandDcEl.TryGetProperty("documentCode", out var dcEl) || brandDcEl.TryGetProperty("document_code", out dcEl))
+                            {
+                                if (dcEl.ValueKind == JsonValueKind.String) documentCode = dcEl.GetString();
+                            }
+                        }
+                        else if (brandDcObj is Dictionary<string, object> brandDcDict)
+                        {
+                            if (brandDcDict.TryGetValue("documentCode", out var dcVal) || brandDcDict.TryGetValue("document_code", out dcVal))
+                            {
+                                documentCode = dcVal?.ToString();
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // Fallback institucional oficial ISTPET si no se configuró explícitamente en el tema
+                if (string.IsNullOrWhiteSpace(documentCode))
+                {
+                    documentCode = template.Code?.ToUpperInvariant() switch
+                    {
+                        "PROTOCOLO_INVESTIGACION" => "F – ISTPET – 001 – INDIV – ABR 2026",
+                        "PLAN_APRENDIZAJE" => "F – ISTPET – 002 – INDIV – ABR 2026",
+                        "EVALUACION_PLAN_APRENDIZAJE" or "RUBRICA_EVALUACION" => "F – ISTPET – 003 – INDIV – ABR 2026",
+                        _ => null
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(documentCode))
+                {
+                    extraImageVars["document_code"] = documentCode;
+                    extraImageVars["documentCode"] = documentCode;
                 }
 
                 if (template.Code == ProyectoInvestigacionTemplate.CODE)
@@ -1194,7 +1235,8 @@ namespace Diitra.Infrastructure.Common.Documents
                     IsDraft = request.IsDraftMode,
                     StationaryImageData = stationaryImage,
                     VerificationBaseUrl = verificationBaseUrl,
-                    IsBlindMode = request.IsBlindMode
+                    IsBlindMode = request.IsBlindMode,
+                    DocumentCode = documentCode
                 }, renderedCss);
 
                 // 6. Sello de Integridad (SHA-256)

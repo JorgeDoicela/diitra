@@ -1,252 +1,19 @@
-<!-- DIITRA_SECTIONS_JSON: W3siaWQiOiJibG9jay0xNzg2NzQ1NzMyOTU0IiwidHlwZSI6ImNlcnRpZmljYXRlX2hlYWRlciIsInRpdGxlIjoiRW5jYWJlemFkbyBkZSBDZXJ0aWZpY2FkbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsiY2VydGlmaWNhdGVUaXRsZSI6IkNFUlRJRklDQURPIERFIENPTVBMRVRBQ0nDk04iLCJjZXJ0aWZpY2F0ZVN1YnRpdGxlIjoiRElSRUNDScOTTiBERSBJTlZFU1RJR0FDScOTTiwgSU5OT1ZBQ0nDk04gWSBUUkFOU0ZFUkVOQ0lBIFRFQ05PTMOTR0lDQSAoRElJVFJBKSIsImNlcnRpZmljYXRlTnVtYmVyIjoiRElJVFJBLUNFUlQtMjAyNi1YWFhYIn19LHsiaWQiOiJibG9jay0xNzg2NzQ1NzM3MzEyIiwidHlwZSI6ImNlcnRpZmljYXRlX3JlY2lwaWVudF9iYWRnZSIsInRpdGxlIjoiRGVzdGluYXRhcmlvIHkgUm9sIGRlbCBDZXJ0aWZpY2FkbyIsImlzQWN0aXZlIjp0cnVlLCJjb25maWciOnsicmVjaXBpZW50TmFtZSI6Int7IFJlY2lwaWVudE5hbWUgfX0iLCJyZWNpcGllbnRSb2xlIjoie3sgUmVjaXBpZW50Um9sZSB9fSIsInJlY2lwaWVudENlZHVsYSI6Int7IFJlY2lwaWVudENlZHVsYSB9fSJ9fSx7ImlkIjoiYmxvY2stMTc4Njc0NTc0MDgyNSIsInR5cGUiOiJjZXJ0aWZpY2F0ZV9ib2R5IiwidGl0bGUiOiJDdWVycG8geSBMb2dybyBkZWwgQ2VydGlmaWNhZG8iLCJpc0FjdGl2ZSI6dHJ1ZSwiY29uZmlnIjp7InRleHRBY2hpZXZlbWVudCI6IlBvciBzdSBkZXN0YWNhZGEgeSBob25vcmFibGUgcGFydGljaXBhY2nDs24gZW4gZWwgcHJveWVjdG8gZGUgaW52ZXN0aWdhY2nDs24geSBkZXNhcnJvbGxvIHRlY25vbMOzZ2ljbyBpbnN0aXR1Y2lvbmFsLiIsInByb2plY3RUaXRsZSI6Int7IFByb2plY3RUaXRsZSB9fSIsImNvbXBsZXRpb25EYXRlIjoie3sgSXNzdWVEYXRlIH19In19XQ== -->
-<style>
-  * { box-sizing: border-box; }
-  
-  @page {
-      margin-top: {{default theme.layout.margin_top "2.5cm"}};
-      margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
-      margin-left: {{default theme.layout.margin_left "2cm"}};
-      margin-right: {{default theme.layout.margin_right "2cm"}};
-  }
-
-  /* Reset y Core del Documento con Tematización Dinámica */
-  .doc-container { 
-      font-family: {{ theme.typography.font_family }}; 
-      font-size: {{default theme.typography.base_size "10pt"}};
-      color: {{ theme.colors.text }}; 
-      line-height: {{ theme.typography.line_height }};
-      padding: 0; 
-      background: transparent; 
-  }
-  
-  /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */
-  .doc-watermark {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 210mm;
-      height: 0;
-      line-height: 0;
-      font-size: 0;
-      z-index: -1;
-      pointer-events: none;
-      {{#if theme.brand.background_image}}
-      background-image: url('{{ theme.brand.background_image }}');
-      background-size: {{default theme.brand.background_fit "contain"}};
-      background-position: center center;
-      background-repeat: no-repeat;
-      opacity: {{default theme.brand.background_opacity "0.12"}};
-      {{/if}}
-  }
-  
-  /* Portada (Cover Page) Full Bleed con Imagen de Fondo y Z-Index */
-  .cover-page {
-      font-family: {{ theme.typography.font_family }};
-      position: relative;
-      width: 210mm;
-      height: 296.5mm;
-      min-height: 296.5mm;
-      max-height: 296.5mm;
-      box-sizing: border-box;
-      padding: 0;
-      margin: 0;
-      {{#if portada_base64}}
-      background-image: url('data:image/jpeg;base64,{{portada_base64}}');
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-      {{/if}}
-      color: {{ theme.colors.primary }};
-      z-index: 1000;
-      overflow: hidden;
-      page-break-inside: avoid;
-      page-break-after: always;
-  }
-
-  .cover-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 3cm 2cm;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      justify-content: space-around;
-  }
-
-  .main-label {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 24pt;
-      font-weight: bold;
-      color: {{ theme.colors.secondary }};
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin: 0;
-      width: 100%;
-  }
-
-  .project-theme {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 16pt;
-      font-weight: bold;
-      color: {{ theme.colors.primary }};
-      text-transform: uppercase;
-      margin: 1.5cm 0;
-      line-height: 1.3;
-      width: 100%;
-      word-wrap: break-word;
-  }
-
-  .career-container {
-      margin: 1cm 0;
-      text-align: center;
-      width: 100%;
-  }
-
-  .career-label {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 12pt;
-      font-weight: bold;
-      color: {{ theme.colors.primary }};
-      text-transform: uppercase;
-  }
-
-  .career-value {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 12pt;
-      font-weight: normal;
-      color: {{ theme.colors.primary }};
-      text-transform: uppercase;
-      margin-top: 4px;
-  }
-
-  .period-container {
-      width: 100%;
-      margin-top: 1cm;
-      text-align: center;
-  }
-
-  .period-label {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 11pt;
-      font-weight: bold;
-      text-transform: uppercase;
-      color: {{ theme.colors.primary }};
-  }
-
-  .period-value {
-      font-family: {{ theme.typography.font_family }};
-      font-size: 11pt;
-      font-weight: normal;
-      text-transform: uppercase;
-      color: {{ theme.colors.primary }};
-      margin-top: 2px;
-  }
-
-  /* Títulos de sección */
-  .title-h1 { 
-      font-size: 16pt; 
-      font-weight: bold; 
-      color: {{default theme.colors.primary "#222c57"}}; 
-      margin-top: 35px; 
-      text-transform: uppercase; 
-  }
-  .title-h2 { 
-      font-size: 10pt; 
-      font-weight: 800; 
-      background: {{default theme.colors.table_header_bg "#222c57"}}; 
-      color: {{default theme.colors.table_header_color "#ffffff"}} !important; 
-      padding: 6px 12px; 
-      margin-top: 25px; 
-      text-transform: uppercase; 
-  }
-  .title-h3 { 
-      font-size: 9.5pt; 
-      font-weight: bold; 
-      color: {{default theme.colors.secondary "#c4a857"}}; 
-      margin-top: 15px; 
-      text-transform: uppercase; 
-  }
-  
-  /* Tablas generales compactas con bordes negros (formato premium original) */
-  .info-table, .data-table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin-bottom: 12px; 
-      font-size: 9pt; 
-      background: #ffffff; 
-  }
-  .info-table td, .info-table th, .data-table td, .data-table th { 
-      border: 1px solid #000000; 
-      padding: 0 8px; 
-      height: 0.6cm;
-      vertical-align: middle; 
-      color: #000000;
-  }
-  .info-table th, .data-table th { 
-      font-weight: bold; 
-      text-transform: uppercase; 
-      font-size: 8.5pt; 
-      background: {{ theme.colors.table_header_bg }};
-      color: {{ theme.colors.table_header_color }};
-      text-align: center;
-  }
-  .label-cell { 
-      font-weight: bold; 
-      background: {{ theme.colors.table_header_bg }}; 
-      color: {{ theme.colors.table_header_color }};
-      width: 35%; 
-      text-transform: uppercase; 
-      font-size: 8.5pt; 
-  }
-  
-  /* Texto enriquecido */
-  .rich-content { 
-      font-size: 9.5pt; 
-      text-align: justify; 
-      color: #000000; 
-      margin-top: 10px; 
-      line-height: 1.4; 
-  }
-  .rich-content p { margin: 6px 0; }
-  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
-  .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-  .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
-  .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
-  
-  /* Dos columnas */
-  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
-  .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
-  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
-  .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
-  
-  /* Salto de página */
-  .page-break { page-break-after: always; height: 0; }
-  
-  /* Firmas y Trazabilidad */
-  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
-  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
-  .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
-  .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
-</style>
-
+﻿<!-- DIITRA_SECTIONS_JSON: W3siY29uZmlnIjp7Imluc3RpdHV0aW9uTmFtZSI6IklOU1RJVFVUTyBTVVBFUklPUiBURUNOT0xPR0lDTyBNQVlPUiBQRURSTyBUUkFWRVJTQVJJIiwiY2VydGlmaWNhdGVTdWJ0aXRsZSI6IkRJUkVDQ0lPTiBERSBJTlZFU1RJR0FDSU9OLCBJTk5PVkFDSU9OIFkgVFJBTlNGRVJFTkNJQSBURUNOT0xPR0lDQSAoRElJVFJBKSIsImNlcnRpZmljYXRlVGl0bGUiOiJDRVJUSUZJQ0FETyBPRklDSUFMIERFIENVTE1JTkFDSU9OIERJSVRSQSAyMDI2In0sInRpdGxlIjoiRW5jYWJlemFkbyBPZmljaWFsIGRlbCBDZXJ0aWZpY2FkbyIsImlkIjoiYmxvY2stY2VydC1oZWFkZXIiLCJ0eXBlIjoiY2VydGlmaWNhdGVfaGVhZGVyIiwiaXNBY3RpdmUiOnRydWV9LHsiY29uZmlnIjp7InJlY2lwaWVudENlZHVsYSI6Int7ZGVzdGluYXRhcmlvX2NlZHVsYX19IiwicmVjaXBpZW50TmFtZSI6Int7ZGVzdGluYXRhcmlvX25vbWJyZX19IiwicmVjaXBpZW50Um9sZSI6Int7ZGVzdGluYXRhcmlvX3JvbH19IiwiY29uZmVycmFsVGV4dCI6IkNvbmZlcmlkbyBjb24gZGlzdGluY2lvbiBhOiJ9LCJ0aXRsZSI6Ikluc2lnbmlhIHkgRGF0b3MgZGVsIERlc3RpbmF0YXJpbyIsImlkIjoiYmxvY2stY2VydC1iYWRnZSIsInR5cGUiOiJjZXJ0aWZpY2F0ZV9yZWNpcGllbnRfYmFkZ2UiLCJpc0FjdGl2ZSI6dHJ1ZX0seyJjb25maWciOnsic2lnbmF0b3J5VGl0bGUiOiJEaXJlY2Npb24gZGUgSW52ZXN0aWdhY2lvbiBlIElubm92YWNpb24iLCJjaXR5VGV4dCI6ImVsIERpc3RyaXRvIE1ldHJvcG9saXRhbm8gZGUgUXVpdG8iLCJjb21wbGV0aW9uRGF0ZSI6Int7ZmVjaGFfZW1pc2lvbn19Iiwic2lnbmF0b3J5TmFtZSI6IkluZy4gRXN0ZWZhbmkgU2FuY2hleiBNZ3RyLiIsInRleHRBY2hpZXZlbWVudCI6IlBvciBoYWJlciBjdWxtaW5hZG8gY29uIGRpc3RpbmNpb24gYWNhZGVtaWNhIGUgaW52ZXN0aWdhdGl2YSBzdSB2YWxpb3NhIHBhcnRpY2lwYWNpb24gaW5zdGl0dWNpb25hbCBlbiBlbCBwcm95ZWN0bzoiLCJzaWduYXRvcnlJbnN0aXR1dGlvbiI6Ikluc3RpdHV0byBTdXBlcmlvciBUZWNub2xvZ2ljbyBNYXlvciBQZWRybyBUcmF2ZXJzYXJpIn0sInRpdGxlIjoiQ3VlcnBvIGRlbCBDZXJ0aWZpY2FkbyB5IEZpcm1hcyIsImlkIjoiYmxvY2stY2VydC1ib2R5IiwidHlwZSI6ImNlcnRpZmljYXRlX2JvZHkiLCJpc0FjdGl2ZSI6dHJ1ZX1d -->
 <div class="doc-container">
     <div style="text-align: center; margin-bottom: 20px;">
         <div style="font-size: 13pt; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #0f172a; margin-bottom: 4px;">
-            INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI
+            INSTITUTO SUPERIOR TECNOLOGICO MAYOR PEDRO TRAVERSARI
         </div>
         <div style="font-size: 8.5pt; color: #475569; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 14px;">
-            DIRECCIÓN DE INVESTIGACIÓN, INNOVACIÓN Y TRANSFERENCIA TECNOLÓGICA (DIITRA)
+            DIRECCION DE INVESTIGACION, INNOVACION Y TRANSFERENCIA TECNOLOGICA (DIITRA)
         </div>
         <div style="font-size: 22pt; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 3px; margin: 10px 0 6px 0;">
-            CERTIFICADO DE COMPLETACIÓN
+            CERTIFICADO OFICIAL DE CULMINACION DIITRA 2026
         </div>
     </div>
     
     <div style="text-align: center; margin: 14px 0;">
-        <div style="font-size: 10pt; color: #475569; margin-bottom: 4px;">Otorgado a:</div>
+        <div style="font-size: 10pt; color: #475569; margin-bottom: 4px;">Conferido con distincion a:</div>
         <div style="font-size: 20pt; font-weight: 800; color: #0f172a; border-bottom: 1.5px solid #0284c7; display: inline-block; padding-bottom: 3px; margin: 4px 0 8px 0;">
             {{default recipient_name data.recipient_name "Investigador / Participante"}}
         </div>
@@ -258,19 +25,24 @@
     
     <div style="text-align: center; margin: 12px 0;">
         <div style="font-size: 10pt; line-height: 1.5; color: #334155; max-width: 82%; margin: 0 auto 10px auto;">
-            Por su destacada y honorable participación en el proyecto de investigación y desarrollo tecnológico institucional.<br>
-            <strong style="font-style: italic; color: #0f172a;">"{{default project_title data.project_title certificate_title data.certificate_title group_name data.group_name "Proyecto de Investigación"}}"</strong>
+            Por haber culminado con distincion academica e investigativa su valiosa participacion institucional en el proyecto:<br>
+            <strong style="font-style: italic; color: #0f172a;">"{{default project_title certificate_title group_name data.project_title data.certificate_title data.group_name "Proyecto de Investigacion"}}"</strong>
         </div>
 
         <div style="font-size: 9.5pt; color: #475569; margin: 12px 0 18px 0;">
-            Dado y firmado en la ciudad de Quito, a los {{default completion_date data.completion_date issue_date data.issue_date}}.
+            Dado y firmado en el Distrito Metropolitano de Quito, a los {{default completion_date issue_date data.completion_date data.issue_date fecha_emision}}.
         </div>
 
         <div style="margin-top: 18px; text-align: center;">
             <div style="width: 220px; border-top: 1px solid #94a3b8; margin: 0 auto 4px auto;"></div>
-            <div style="font-size: 8.5pt; font-weight: 700; color: #1e293b;">Director(a) de Investigación y Transferencia Tecnológica</div>
-            <div style="font-size: 7.5pt; color: #64748b;">Instituto Superior Tecnológico Mayor Pedro Traversari</div>
+            <div style="font-size: 9pt; font-weight: 800; color: #0f172a; margin-bottom: 2px;">Ing. Estefani Sanchez Mgtr.</div>
+            <div style="font-size: 8.5pt; font-weight: 700; color: #1e293b;">Direccion de Investigacion e Innovacion</div>
+            <div style="font-size: 7.5pt; color: #64748b;">Instituto Superior Tecnologico Mayor Pedro Traversari</div>
+        </div>
+
+        <div style="margin-top: 22px; padding-top: 8px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 7pt; color: #94a3b8; font-family: monospace;">
+            <span>Codigo de Verificacion: <strong>{{default traceability_code data.traceability_code codigo_verificacion}}</strong></span>
+            <span>Validacion Oficial CACES & QR Institucional ISTPET · DIITRA</span>
         </div>
     </div>
-    
 </div>

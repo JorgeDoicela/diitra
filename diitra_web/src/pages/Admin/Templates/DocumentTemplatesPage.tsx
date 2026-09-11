@@ -117,52 +117,48 @@ export const DocumentTemplatesPage: React.FC = () => {
 
                 {selectedTemplate && !headerCollapsed && (
                     <div className="absolute bottom-1 right-0 flex items-center gap-2.5 z-30 animate-fade-in">
-                        {selectedTemplate.code !== 'GLOBAL_THEME' && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={handleResetToDefault}
-                                    disabled={loading || saving}
-                                    title="Restablecer la plantilla a la versión oficial de fábrica"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-muted hover:text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
-                                >
-                                    <RotateCcw className="w-3.5 h-3.5" />
-                                    <span>Restablecer a Fábrica</span>
-                                </button>
+                        <button
+                            type="button"
+                            onClick={handleResetToDefault}
+                            disabled={loading || saving}
+                            title="Restablecer la plantilla a la versión oficial de fábrica"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-muted hover:text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Restablecer a Fábrica</span>
+                        </button>
 
-                                <div ref={paletteRef} className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPalette(p => !p)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
-                                    >
-                                        <Plus className="w-3.5 h-3.5" />
-                                        Agregar Bloque
-                                        <ChevronDown className={`w-3 h-3 transition-transform ${showPalette ? 'rotate-180' : ''}`} />
-                                    </button>
+                        <div ref={paletteRef} className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setShowPalette(p => !p)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                Agregar Bloque
+                                <ChevronDown className={`w-3 h-3 transition-transform ${showPalette ? 'rotate-180' : ''}`} />
+                            </button>
 
-                                    {showPalette && (
-                                        <BlockPalette
-                                            blocks={blocks}
-                                            uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
-                                            onAddBlock={handleAddBlock}
-                                            onClose={() => setShowPalette(false)}
-                                        />
-                                    )}
-                                </div>
+                            {showPalette && (
+                                <BlockPalette
+                                    blocks={blocks}
+                                    uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
+                                    onAddBlock={handleAddBlock}
+                                    onClose={() => setShowPalette(false)}
+                                />
+                            )}
+                        </div>
 
-                                <button
-                                    type="button"
-                                    onClick={() => handleOpenPreview()}
-                                    disabled={loading}
-                                    title="Previsualizar documento oficial en vivo (PDF / Web)"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    <span>Previsualizar</span>
-                                </button>
-                            </>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => handleOpenPreview()}
+                            disabled={loading}
+                            title="Previsualizar documento oficial en vivo (PDF / Web)"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
+                        >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Previsualizar</span>
+                        </button>
 
                         <button
                             type="button"
@@ -181,44 +177,40 @@ export const DocumentTemplatesPage: React.FC = () => {
             {/* Botones Flotantes Circulares cuando la Cabecera está Colapsada */}
             {selectedTemplate && headerCollapsed && (
                 <div className="absolute top-[13px] right-6 md:right-14 z-50 flex items-center gap-3 animate-fade-in">
-                    {selectedTemplate.code !== 'GLOBAL_THEME' && (
-                        <>
-                            <div ref={paletteRef} className="relative">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPalette(p => !p)}
-                                    title="Agregar Bloque"
-                                    className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                </button>
+                    <div ref={paletteRef} className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setShowPalette(p => !p)}
+                            title="Agregar Bloque"
+                            className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
+                        >
+                            <Plus className="w-5 h-5" />
+                        </button>
 
-                                {showPalette && (
-                                    <BlockPalette
-                                        blocks={blocks}
-                                        uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
-                                        onAddBlock={handleAddBlock}
-                                        onClose={() => setShowPalette(false)}
-                                    />
-                                )}
-                            </div>
+                        {showPalette && (
+                            <BlockPalette
+                                blocks={blocks}
+                                uniqueBlockTypes={UNIQUE_BLOCK_TYPES}
+                                onAddBlock={handleAddBlock}
+                                onClose={() => setShowPalette(false)}
+                            />
+                        )}
+                    </div>
 
-                            <button
-                                type="button"
-                                onClick={() => handleOpenPreview()}
-                                title="Previsualizar Documento Oficial"
-                                className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
-                            >
-                                <Eye className="w-4 h-4" />
-                            </button>
-                        </>
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => handleOpenPreview()}
+                        title="Previsualizar Documento Oficial"
+                        className="w-10 h-10 rounded-full border border-border-thin text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
 
                     <button
                         type="button"
                         onClick={handleSaveTemplate}
                         disabled={saving || !isDirty}
-                        title={selectedTemplate.code === 'GLOBAL_THEME' ? 'Guardar Diseño Global' : `Guardar y Publicar v${selectedTemplate.version}`}
+                        title={`Guardar y Publicar v${selectedTemplate.version}`}
                         className="w-10 h-10 rounded-full bg-text-main text-bg-deep flex items-center justify-center hover:opacity-90 transition-all shadow-md disabled:opacity-40 cursor-pointer shrink-0"
                     >
                         {saving ? (
@@ -280,6 +272,7 @@ export const DocumentTemplatesPage: React.FC = () => {
                         <BlockCanvas
                             selectedTemplate={selectedTemplate}
                             templateName={selectedTemplate?.name}
+                            themeConfig={mergeWithDefaults(selectedTemplate?.themeConfigJson, selectedTemplate?.code)}
                             blocks={blocks}
                             activeBlockId={activeBlockId}
                             onSelectBlock={setActiveBlockId}

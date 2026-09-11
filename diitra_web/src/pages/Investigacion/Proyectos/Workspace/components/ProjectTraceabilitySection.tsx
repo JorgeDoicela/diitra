@@ -41,8 +41,14 @@ export const renderTrazabilidadObservation = (observationText: string) => {
     // Si solo hay observación general simple sin campos específicos
     if (parsed.general && specificList.length === 0) {
         return (
-            <div className="bg-bg-deep/70 p-2 rounded-lg border border-border-thin mt-1 text-[11px] text-text-main leading-snug whitespace-pre-wrap">
-                {parsed.general}
+            <div className="bg-bg-deep/70 p-2.5 rounded-lg border border-border-thin mt-1 space-y-0.5 text-[11px]">
+                <span className="text-[9px] font-bold text-error uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-error shrink-0" />
+                    Dictamen General
+                </span>
+                <p className="text-text-main leading-snug whitespace-pre-wrap pl-2.5">
+                    {parsed.general}
+                </p>
             </div>
         );
     }
@@ -52,10 +58,11 @@ export const renderTrazabilidadObservation = (observationText: string) => {
         <div className="bg-bg-deep/70 p-2.5 rounded-lg border border-border-thin mt-1 space-y-2 text-[11px]">
             {parsed.general && (
                 <div className="space-y-0.5">
-                    <span className="text-[8px] font-bold text-text-main uppercase tracking-wider block">
+                    <span className="text-[9px] font-bold text-error uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-error shrink-0" />
                         Dictamen General
                     </span>
-                    <p className="text-text-main leading-snug whitespace-pre-wrap pl-1">
+                    <p className="text-text-main leading-snug whitespace-pre-wrap pl-2.5">
                         {parsed.general}
                     </p>
                 </div>

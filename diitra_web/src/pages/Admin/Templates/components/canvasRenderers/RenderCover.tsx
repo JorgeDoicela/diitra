@@ -31,10 +31,41 @@ export const HEADER_STYLE_OPTIONS: HeaderStylePair[] = [
 ];
 
 export const getHeaderStylePair = (id?: string): HeaderStylePair => {
-    if (!id) return HEADER_STYLE_OPTIONS[0];
-    const match = HEADER_STYLE_OPTIONS.find(opt => opt.id.toLowerCase() === id.toLowerCase());
-    if (match) return match;
+    const clean = (id || 'blue').toLowerCase();
+    if (!id || clean === 'blue' || clean === 'default' || clean === 'navy') {
+        return {
+            id: 'blue',
+            label: 'Azul Institucional (Documento)',
+            bg: DYN_COLORS.tableHeaderBg || DYN_COLORS.blue || '#222c57',
+            fg: DYN_COLORS.tableHeaderColor || '#ffffff',
+        };
+    }
+    if (clean === 'gold') {
+        return {
+            id: 'gold',
+            label: 'Dorado Acreditación',
+            bg: DYN_COLORS.gold || '#c4a857',
+            fg: '#ffffff',
+        };
+    }
+    if (clean === 'gray' || clean === 'slate') {
+        return {
+            id: 'gray',
+            label: 'Gris Neutro',
+            bg: '#f1f5f9',
+            fg: '#1e293b',
+        };
+    }
+    if (clean === 'none' || clean === 'transparent') {
+        return {
+            id: 'none',
+            label: 'Sin fondo',
+            bg: 'transparent',
+            fg: '#1e293b',
+        };
+    }
 
+    // Color personalizado independiente del bloque (HEX, RGB, etc.)
     const bg = resolveHeaderColor(id);
     const fg = getContrastFg(bg);
     return {

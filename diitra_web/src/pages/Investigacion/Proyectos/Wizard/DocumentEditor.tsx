@@ -731,7 +731,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     return (
         <DIITRABuilderShell
             title={templateConfig.title}
-            subtitle={templateConfig.subtitle}
+            subtitle=""
             templateCode={templateCode}
             sections={mappedSections}
             formData={formData}

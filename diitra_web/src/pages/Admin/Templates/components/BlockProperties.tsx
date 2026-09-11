@@ -103,6 +103,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                     activeBlockId={activeBlock?.id}
                     activeBlockType={activeBlock?.type}
                     onUpdateConfig={onUpdateConfig}
+                    templateCode={selectedTemplate?.code}
                 />
             )}
 
@@ -825,6 +826,16 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
                                     <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Configuración del Encabezado</h5>
                                     <div className="space-y-3">
+                                        <LabeledField label="Nombre Institucional">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.institutionName || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'institutionName', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI"
+                                            />
+                                        </LabeledField>
+
                                         <LabeledField label="Título Principal del Certificado">
                                             <input
                                                 type="text"
@@ -852,9 +863,20 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             {activeBlock.type === 'certificate_recipient_badge' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
                                     <h5 className="text-[10px] font-black text-text-dim uppercase tracking-wider">Campos de Destinatario</h5>
-                                    <p className="text-[10px] text-text-dim leading-relaxed">
-                                        Estos campos se pueblan automáticamente desde la base de datos de docentes, estudiantes o miembros del grupo al emitir el certificado.
-                                    </p>
+                                    <div className="space-y-3">
+                                        <LabeledField label="Texto de Otorgamiento">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.conferralText || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'conferralText', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Otorgado a:"
+                                            />
+                                        </LabeledField>
+                                        <p className="text-[10px] text-text-dim leading-relaxed">
+                                            El nombre, rol y cédula se integran dinámicamente desde los registros de investigación, grupos o docentes al momento de la emisión.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
@@ -869,7 +891,47 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                 value={(activeBlock.config as any)?.textAchievement || ''}
                                                 onChange={e => onUpdateConfig(activeBlock.id, 'textAchievement', e.target.value)}
                                                 className={inputCls}
-                                                placeholder="Por haber culminado con éxito su participación..."
+                                                placeholder="Por haber culminado con éxito su participación y valiosos aportes..."
+                                            />
+                                        </LabeledField>
+
+                                        <LabeledField label="Ciudad de Emisión">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.cityText || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'cityText', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="la ciudad de Quito"
+                                            />
+                                        </LabeledField>
+
+                                        <LabeledField label="Cargo de la Autoridad Firmante">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.signatoryTitle || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'signatoryTitle', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Director(a) de Investigación y Transferencia Tecnológica"
+                                            />
+                                        </LabeledField>
+
+                                        <LabeledField label="Nombre de Autoridad (Opcional)">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.signatoryName || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'signatoryName', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Ej: Ing. Estefani Sánchez Mgtr."
+                                            />
+                                        </LabeledField>
+
+                                        <LabeledField label="Institución del Firmante">
+                                            <input
+                                                type="text"
+                                                value={(activeBlock.config as any)?.signatoryInstitution || ''}
+                                                onChange={e => onUpdateConfig(activeBlock.id, 'signatoryInstitution', e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Instituto Superior Tecnológico Mayor Pedro Traversari"
                                             />
                                         </LabeledField>
                                     </div>

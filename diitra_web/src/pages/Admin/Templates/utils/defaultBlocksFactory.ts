@@ -680,8 +680,9 @@ export function generateDefaultBlocksForTemplate(
                 title: 'Encabezado Oficial del Certificado',
                 isActive: true,
                 config: {
-                    certificateTitle: isCompletacion ? 'CERTIFICADO DE CULMINACIÓN' : 'CERTIFICADO DE PARTICIPACIÓN',
-                    certificateSubtitle: 'INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI'
+                    institutionName: 'INSTITUTO SUPERIOR TECNOLÓGICO MAYOR PEDRO TRAVERSARI',
+                    certificateTitle: isCompletacion ? 'CERTIFICADO DE COMPLETACIÓN' : 'CERTIFICADO DE RECONOCIMIENTO',
+                    certificateSubtitle: 'DIRECCIÓN DE INVESTIGACIÓN, INNOVACIÓN Y TRANSFERENCIA TECNOLÓGICA (DIITRA)'
                 }
             },
             {
@@ -690,6 +691,7 @@ export function generateDefaultBlocksForTemplate(
                 title: 'Insignia y Datos del Destinatario',
                 isActive: true,
                 config: {
+                    conferralText: 'Otorgado a:',
                     recipientName: '{{destinatario_nombre}}',
                     recipientRole: '{{destinatario_rol}}',
                     recipientCedula: '{{destinatario_cedula}}'
@@ -704,11 +706,11 @@ export function generateDefaultBlocksForTemplate(
                     textAchievement: isCompletacion
                         ? 'Por haber completado satisfactoriamente su participación en el proyecto de investigación titulado "{{proyecto_titulo}}", habiendo cumplido con todos los requisitos académicos y normativos establecidos por la institución.'
                         : 'Por su destacada y activa participación como miembro del Grupo de Investigación "{{grupo_nombre}}", contribuyendo al desarrollo científico y académico institucional.',
+                    cityText: 'la ciudad de Quito',
                     completionDate: '{{fecha_emision}}',
-                    signatories: [
-                        { label: 'Rectorado', name: 'Dra. Rectora', role: 'Rectora Institucional' },
-                        { label: 'Coordinación de Investigación', name: 'Ing. Estefani Sánchez Mgtr.', role: 'Coordinadora de Investigación' }
-                    ]
+                    signatoryTitle: isCompletacion ? 'Director(a) de Investigación y Transferencia Tecnológica' : 'Coordinador(a) de Grupos de Investigación',
+                    signatoryName: '',
+                    signatoryInstitution: 'Instituto Superior Tecnológico Mayor Pedro Traversari'
                 }
             }
         ];

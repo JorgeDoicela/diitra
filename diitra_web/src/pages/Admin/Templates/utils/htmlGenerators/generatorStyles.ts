@@ -1,4 +1,5 @@
-import type { TableSection } from '../types';
+import type { TableSection } from '../../types';
+import { resolveHeaderColor, getContrastFg } from '../../components/properties/SharedColorPicker';
 
 export const COLORS = {
     blue: '{{ theme.colors.primary }}',
@@ -10,16 +11,27 @@ export const COLORS = {
 };
 
 export const headerBg = (style?: string) => {
-    switch (style) {
-        case 'blue': 
-            return `background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;`;
-        case 'gold': 
-            return `background: {{default theme.colors.secondary "#c4a857"}}; color: #ffffff !important;`;
-        case 'gray': 
-            return `background: #f1f5f9; color: {{default theme.colors.text "#1a1a1a"}};`;
-        default: 
-            return `background: #ffffff; color: #000000;`;
+    if (!style) {
+        return `background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;`;
     }
+    const clean = style.trim().toLowerCase();
+    if (clean === 'blue' || clean === 'default' || clean === 'navy') {
+        return `background: {{default theme.colors.table_header_bg "#222c57"}}; color: {{default theme.colors.table_header_color "#ffffff"}} !important;`;
+    }
+    if (clean === 'gold') {
+        return `background: {{default theme.colors.secondary "#c4a857"}}; color: #ffffff !important;`;
+    }
+    if (clean === 'gray' || clean === 'slate') {
+        return `background: #f1f5f9; color: {{default theme.colors.text "#1a1a1a"}};`;
+    }
+    if (clean === 'none' || clean === 'transparent') {
+        return `background: transparent; color: {{default theme.colors.text "#1a1a1a"}};`;
+    }
+
+    // Color independiente configurado en el bloque (HEX, RGB, etc.)
+    const resolvedBg = resolveHeaderColor(style);
+    const fg = getContrastFg(resolvedBg);
+    return `background: ${resolvedBg}; color: ${fg} !important;`;
 };
 
 export const BASE_STYLES = `
@@ -167,6 +179,18 @@ export const BASE_STYLES = `
       text-transform: uppercase;
       color: {{ theme.colors.primary }};
       margin-top: 2px;
+  }
+  
+  /* Código normativo del formato (esquina superior derecha) */
+  .doc-normative-code {
+      width: 100%;
+      text-align: right;
+      font-size: 8.5pt;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
   }
 
   /* Títulos de sección */

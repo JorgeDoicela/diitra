@@ -1,7 +1,7 @@
 /**
  * @file BlockCanvas.tsx
  * @description Lienzo A4 interactivo de previsualización y maquetación visual de plantillas en DIITRA.
- * 
+ *
  * @architecture
  * Implementa el patrón **Renderer Registry / Component Delegation**.
  * En lugar de acumular el código de renderizado de cada tipo de bloque en este archivo monolítico,
@@ -16,7 +16,7 @@ import type { DocumentBlock } from '../types';
 import { SortableBlockItem } from './SortableBlockItem';
 import { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair } from './canvasRenderers/RenderCover';
 import type { HeaderStylePair } from './canvasRenderers/RenderCover';
-import { mergeWithDefaults } from '../utils/theme-schema';
+import { mergeWithDefaults, getOfficialDocumentCode } from '../utils/theme-schema';
 
 export { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair };
 export type { HeaderStylePair };
@@ -96,10 +96,10 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     const themeConfig = useMemo(() => {
         if (propsThemeConfig) return propsThemeConfig;
         if (selectedTemplate?.themeConfigJson) {
-            return mergeWithDefaults(selectedTemplate.themeConfigJson);
+            return mergeWithDefaults(selectedTemplate.themeConfigJson, selectedTemplate.code);
         }
-        return mergeWithDefaults(null);
-    }, [propsThemeConfig, selectedTemplate?.themeConfigJson]);
+        return mergeWithDefaults(null, selectedTemplate?.code);
+    }, [propsThemeConfig, selectedTemplate?.themeConfigJson, selectedTemplate?.code]);
 
     // Actualización de colores e identidad tipográfica del canvas en base a themeConfig
     if (themeConfig?.colors) {
@@ -108,7 +108,6 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         DYN_COLORS.gray = themeConfig.colors.text || '#475569';
         DYN_COLORS.tableHeaderBg = themeConfig.colors.tableHeaderBg || DYN_COLORS.blue;
         DYN_COLORS.tableHeaderColor = themeConfig.colors.tableHeaderColor || '#ffffff';
-        DYN_COLORS.accent = themeConfig.colors.accent || '#9ad3de';
     }
     if (themeConfig?.typography) {
         DYN_COLORS.fontFamily = themeConfig.typography.fontFamily || "'Calibri', 'Open Sans', Arial, sans-serif";
@@ -222,7 +221,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         <FileText className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">Sin plantilla seleccionada</h3>
                         <p className="text-[10px] text-slate-400 max-w-[230px] mt-1.5 leading-normal">
-                            Selecciona una plantilla o el "Diseño Global Institucional" del Catálogo (izquierda) para comenzar a trabajar.
+                            Selecciona una plantilla del Catálogo (a la izquierda) para comenzar a visualizar y editar sus bloques.
                         </p>
                     </div>
                 ) : blocks.length === 0 ? (
@@ -238,6 +237,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         <div className="space-y-8 flex flex-col items-center">
                             {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
+                                const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || getOfficialDocumentCode(selectedTemplate?.code);
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
                                 const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
                                 const bgFit = themeConfig?.brand?.backgroundFit || 'contain';
@@ -260,6 +260,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                             style={{
                                                 fontFamily: DYN_COLORS.fontFamily,
                                                 fontSize: DYN_COLORS.baseSize,
+                                                lineHeight: themeConfig?.typography?.lineHeight || '1.4',
                                                 paddingTop: isCoverPage ? '0' : marginTop,
                                                 paddingBottom: isCoverPage ? '0' : marginBottom,
                                                 paddingLeft: isCoverPage ? '0' : marginLeft,
@@ -279,6 +280,16 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                         opacity: bgOpacity,
                                                     }}
                                                 />
+                                            )}
+
+                                            {/* Código normativo en esquina superior derecha de la hoja (cabecera oficial no portada) */}
+                                            {!isCoverPage && docCode && (
+                                                <div
+                                                    className="absolute top-3.5 right-5 text-[8pt] md:text-[8.5pt] font-bold text-slate-500 select-none tracking-wider font-mono z-20 pointer-events-none"
+                                                    title="Código normativo oficial del formato (editable en la pestaña Estilos)"
+                                                >
+                                                    {docCode}
+                                                </div>
                                             )}
 
                                             {page.blocks.length === 0 ? (

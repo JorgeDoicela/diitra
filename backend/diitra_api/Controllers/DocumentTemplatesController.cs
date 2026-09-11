@@ -112,13 +112,17 @@ namespace diitra_api.Controllers
             var fileHtml = await fileLoader.LoadAsync(template.Code);
             var fileCss = await fileLoader.LoadCssAsync(template.Code);
 
-            var effectiveHtml = !string.IsNullOrWhiteSpace(fileHtml) && (string.IsNullOrWhiteSpace(template.HtmlContent) || template.HtmlContent.StartsWith("<!-- Cargado desde") || template.Version < 400)
-                ? fileHtml
-                : (!string.IsNullOrWhiteSpace(template.HtmlContent) ? template.HtmlContent : fileHtml);
+            bool isDbCustomized = !string.IsNullOrWhiteSpace(template.HtmlContent) 
+                && !template.HtmlContent.StartsWith("<!-- Cargado desde") 
+                && (template.HtmlContent.Contains("<!-- DIITRA_SECTIONS_JSON:") || template.Version >= 400 || (!string.IsNullOrWhiteSpace(template.UpdatedBy) && template.UpdatedBy != "SEED"));
 
-            var effectiveCss = !string.IsNullOrWhiteSpace(fileCss) && string.IsNullOrWhiteSpace(template.CustomCss)
-                ? fileCss
-                : template.CustomCss;
+            var effectiveHtml = isDbCustomized
+                ? template.HtmlContent
+                : (!string.IsNullOrWhiteSpace(fileHtml) ? fileHtml : template.HtmlContent);
+
+            var effectiveCss = !string.IsNullOrWhiteSpace(template.CustomCss)
+                ? template.CustomCss
+                : (!string.IsNullOrWhiteSpace(fileCss) ? fileCss : null);
 
             return Ok(new
             {
@@ -248,85 +252,6 @@ namespace diitra_api.Controllers
             var count = await _db.DocumentInstances
                 .CountAsync(i => i.TemplateCode == code && (int)i.State < 3, ct);
             return Ok(new { count });
-        }
-
-        /// <summary>
-        /// Obtiene el tema visual global de la institución.
-        /// </summary>
-        [HttpGet("global-theme")]
-        public async Task<IActionResult> GetGlobalTheme(CancellationToken ct)
-        {
-            var config = await _db.InvConfigsGenerales
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Clave == "Theme.GlobalConfigJson", ct);
-                
-            if (config == null || string.IsNullOrEmpty(config.Valor))
-            {
-                // Fallback por defecto institucional de Traversari
-                var fallbackTheme = new
-                {
-                    colors = new
-                    {
-                        primary = "#222c57",
-                        secondary = "#c4a857",
-                        text = "#1a1a1a",
-                        tableHeaderBg = "#222c57",
-                        tableHeaderColor = "#ffffff",
-                        accent = "#9ad3de"
-                    },
-                    typography = new
-                    {
-                        fontFamily = "'Calibri', 'Open Sans', Arial, sans-serif",
-                        baseSize = "10pt",
-                        lineHeight = "1.4"
-                    },
-                    layout = new
-                    {
-                        marginTop = "3cm",
-                        marginBottom = "2cm",
-                        marginLeft = "2cm",
-                        marginRight = "2cm",
-                        landscapeMarginTop = "1.8cm",
-                        landscapeMarginLeft = "1.2cm"
-                    },
-                    brand = new
-                    {
-                        showCoverPage = true,
-                        logoScale = "100%"
-                    }
-                };
-                return Ok(new { themeConfigJson = System.Text.Json.JsonSerializer.Serialize(fallbackTheme) });
-            }
-            
-            return Ok(new { themeConfigJson = config.Valor });
-        }
-
-        /// <summary>
-        /// Actualiza el tema visual global de la institución.
-        /// </summary>
-        [HttpPut("global-theme")]
-        public async Task<IActionResult> UpdateGlobalTheme([FromBody] UpdateGlobalThemeRequest request, CancellationToken ct)
-        {
-            var config = await _db.InvConfigsGenerales
-                .FirstOrDefaultAsync(c => c.Clave == "Theme.GlobalConfigJson", ct);
-
-            if (config == null)
-            {
-                config = new InvConfigGeneral
-                {
-                    Clave = "Theme.GlobalConfigJson",
-                    Valor = request.ThemeConfigJson ?? string.Empty,
-                    Descripcion = "Diseño y branding global institucional (colores, márgenes, tipografía)."
-                };
-                _db.InvConfigsGenerales.Add(config);
-            }
-            else
-            {
-                config.Valor = request.ThemeConfigJson ?? string.Empty;
-            }
-
-            await _db.SaveChangesAsync(ct);
-            return Ok(new { message = "Tema global institucional actualizado correctamente." });
         }
 
         /// <summary>
@@ -499,72 +424,72 @@ namespace diitra_api.Controllers
 
             return new
             {
-                titulo = "[Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga.]",
-                project_title = "[Es el título del proyecto; deben escribir un nombre claro, específico y relacionado con el problema o solución que se investiga.]",
-                carrera = "[Indica la carrera(s) o área académica involucrada; deben escribir una o varias carreras relacionadas con el proyecto.]",
-                periodo = "[Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial.]",
-                periodo_academico = "[Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial.]",
-                director_proyecto = "[Título abreviado, Apellidos y Nombres Completos]",
-                coordinador_carrera = "[Título abreviado, Apellidos y Nombres Completos]",
-                coordinador_investigacion = "[Título abreviado, Apellidos y Nombres Completos]",
-                coordinador_innovacion = "[Título abreviado, Apellidos y Nombres Completos]",
-                rector = "[Título abreviado, Apellidos y Nombres Completos]",
-                fecha = "[día/mes/año]",
-                fecha_emision = "[día/mes/año]",
-                fecha_presentacion = "[día/mes/año]",
-                fecha_inicio = "[día/mes/año]",
-                fecha_fin = "[día/mes/año]",
+                titulo = (string?)null,
+                project_title = (string?)null,
+                carrera = (string?)null,
+                periodo = "Abril 2026 – Septiembre 2026",
+                periodo_academico = "Abril 2026 – Septiembre 2026",
+                director_proyecto = "Ing. Docente Investigador, Mgtr.",
+                coordinador_carrera = "Ing. Coordinador de Carrera, Mgtr.",
+                coordinador_investigacion = "Ing. Estefani Sánchez Mgtr.",
+                coordinador_innovacion = "Ing. Estefani Sánchez Mgtr.",
+                rector = "Msc. Rector Institucional",
+                fecha = DateTime.Now.ToString("dd/MM/yyyy"),
+                fecha_emision = DateTime.Now.ToString("dd/MM/yyyy"),
+                fecha_presentacion = DateTime.Now.ToString("dd/MM/yyyy"),
+                fecha_inicio = "01/04/2026",
+                fecha_fin = "30/09/2026",
                 codigo = "INV-PROY-26.27-01",
-                tipo_proyecto = "[Tipo de Proyecto]",
-                linea_investigacion = "[Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente.]",
-                area_conocimiento = "[Define el área general del conocimiento del proyecto; deben escribir una línea institucional vigente.]",
-                sublinea_investigacion = "[Especifica el enfoque particular dentro de la línea; deben escribir la sublínea que se relacione directamente con el tema.]",
-                convocatoria = "[Señala el periodo en que se presentó o aprobó el proyecto; deben escribir el periodo académico oficial.]",
+                tipo_proyecto = "Investigación Aplicada",
+                linea_investigacion = "Innovación Tecnológica y Desarrollo de Software",
+                area_conocimiento = "Tecnologías de la Información y Comunicación",
+                sublinea_investigacion = "Sistemas Inteligentes y Automatización",
+                convocatoria = "Convocatoria Ordinaria I+D+i 2026",
                 programa = "INV-PROY-26.27-01",
                 grupo_investigacion = (string?)null,
-                tipo_investigacion = string.Empty,
-                tiempo_ejecucion = "[Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas.]",
-                duracion_meses = "[Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas.]",
-                meses_ejecucion = "[Indica la duración total del proyecto; deben escribir el número de meses o el rango de fechas.]",
-                presupuesto_total = "[Presupuesto total estimado]",
-                horas_semanales = "[Horas semanales]",
-                horas_totales = "[Horas totales]",
+                tipo_investigacion = "APLICADA",
+                tiempo_ejecucion = "6 meses",
+                duracion_meses = "6 meses",
+                meses_ejecucion = "6 meses",
+                presupuesto_total = "$ 5,000.00",
+                horas_semanales = "10",
+                horas_totales = "240",
                 investigadores = new[]
                 {
                     new
                     {
-                        nombres = "[Nombres Completos]",
-                        apellidos = "[Apellidos Completos]",
-                        nombre_completo = "[Título abreviado, Apellidos y Nombres Completos]",
-                        cedula = "[Número de Cédula]",
-                        email = "[correo@institucional.edu.ec]",
-                        telefono = "[Número de Teléfono]",
+                        nombres = "Juan Carlos",
+                        apellidos = "Pérez Gómez",
+                        nombre_completo = "Ing. Juan Carlos Pérez Gómez, Mgtr.",
+                        cedula = "1712345678",
+                        email = "docente.investigador@istpet.edu.ec",
+                        telefono = "0991234567",
                         rol = "Director de Proyecto",
                         es_director = true,
-                        carrera = "[Carrera]",
-                        nivel_academico = "[Nivel Académico]",
-                        grado_academico = "[Grado Académico]",
-                        horas_semanales = "[Horas]",
+                        carrera = "Desarrollo de Software",
+                        nivel_academico = "Magíster",
+                        grado_academico = "Cuarto Nivel",
+                        horas_semanales = "10",
                         tipo = "Docente Titular",
                         activo = true
                     }
                 },
-                antecedentes = "[Identificar y analizar estudios previos, datos relevantes y casos similares que evidencien la existencia y magnitud del problema abordado en el proyecto. Se debe incluir información contextual que respalde la necesidad de la propuesta, citando fuentes en formato APA 7ª edición. DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]",
-                descripcion_proyecto = "[Definir el propósito del proyecto, detallando qué se pretende lograr y cuál es su impacto esperado. Además, delimitar el alcance, especificando los límites, las áreas involucradas y los aspectos que serán abordados dentro de la ejecución del proyecto. DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]",
-                justificacion = "[Especificar en DOS PÁRRAFOS DE 5 A 9 LÍNEAS, de manera fluida y coherente, lo siguiente:\n1. Importancia científica, tecnológica, educativa, cultural y social del proyecto.\n2. Relación con otros proyectos que se estén realizando o se hayan realizado en la unidad académica, en el Instituto, en la comunidad.\n3. Relación con otros proyectos que dirija o haya dirigido en que haya participado como investigador.\n4. Impacto en la docencia.\n5. Relación del proyecto con la carrera o carreras del Instituto.\n6. Infraestructura con la que cuenta la unidad académica para la ejecución (laboratorios, oficinas, equipos, etc.)]\nCITAR USANDO NORMAS APA 7MA EDICIÓN",
-                objetivo_general = "• [Oraciones cortas, coherentes y concisas]\nVERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ? (+ PLAZO OPCIONAL)",
-                objetivos_especificos = "• [Oraciones cortas, coherentes y concisas]\n• [Oraciones cortas, coherentes y concisas]\n• [Oraciones cortas, coherentes y concisas]\nINFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO (+ PLAZO OPCIONAL)",
-                marco_teorico = "[Describir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto, incluyendo referencias a estudios previos, normativas o metodologías relacionadas. EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN]",
-                metodologia = "[Describir el enfoque metodológico, las etapas del proyecto si este las tuviera, detalle de los procedimientos DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS, recursos y el tiempo estimado para alcanzar los objetivos DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS]",
-                evaluacion = "[Describir los criterios e indicadores que se utilizarán para medir el cumplimiento de los objetivos, así como los métodos e instrumentos de evaluación. DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LINEAS, PARA PROFUNDIZAR LOS ASPECTOS RELACIONADOS CON INTRUMENTOS Y METODOLOGÍA]",
-                bibliografia = "[El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]",
-                ods = new[] { "[Los objetivos de desarrollo sostenible son 17 el proyecto de investigación debe estar alineado a algunos de los objetivos. https://www.un.org/sustainabledevelopment/es/objetivos-de-desarrollo-sostenible/ El proyecto se encuentra alineado bajo los siguientes objetivos:]" },
-                resultado_final = isArbitraje ? "[DICTAMEN FINAL]" : "[FAVORABLE / NO FAVORABLE]",
-                dictamen = isArbitraje ? "[DICTAMEN DE ARBITRAJE]" : "[CUMPLE / NO CUMPLE]",
-                promedio_criterios = "[0.00 / 100.00]",
+                antecedentes = "El presente proyecto surge ante la necesidad de optimizar los procesos de investigación y gestión institucional mediante el desarrollo de tecnologías aplicadas, identificando oportunidades de mejora en la sistematización de datos académicos.",
+                descripcion_proyecto = "Este proyecto de investigación aplicada tiene como propósito implementar un sistema integral de trazabilidad y gestión, delimitando su alcance a los procesos internos de acreditación institucional y articulación con la docencia.",
+                justificacion = "El desarrollo de esta investigación es de vital relevancia académica e institucional para el ISTPET, fortaleciendo la calidad de los programas académicos y promoviendo la transferencia tecnológica hacia la comunidad educativa.",
+                objetivo_general = "Desarrollar e implementar un sistema tecnológico institucional para optimizar la gestión y trazabilidad de los proyectos de investigación formativa y aplicada.",
+                objetivos_especificos = "• Realizar el levantamiento de requerimientos técnicos y metodológicos institucionales.\n• Diseñar la arquitectura de software y el modelo relacional de datos.\n• Validar el funcionamiento del sistema en un entorno de producción controlado.",
+                marco_teorico = "Los fundamentos conceptuales se sustentan en los estándares de calidad del CACES y las directrices metodológicas de gestión de la investigación en educación superior.",
+                metodologia = "Se implementará una metodología ágil y de investigación aplicada con entregables incrementales por fases, combinando análisis documental y desarrollo iterativo.",
+                evaluacion = "La evaluación se medirá a través de indicadores de cumplimiento técnico, adopción institucional y rigurosidad metodológica por cada hito planificado.",
+                bibliografia = "1. Hernández Sampieri, R. (2014). Metodología de la investigación. McGraw-Hill.\n2. Pressman, R. S. (2010). Software Engineering: A Practitioner's Approach. McGraw-Hill.",
+                ods = new[] { "Educación de Calidad", "Industria, Innovación e Infraestructura" },
+                resultado_final = isArbitraje ? "DICTAMEN FAVORABLE" : "FAVORABLE",
+                dictamen = isArbitraje ? "APROBADO" : "CUMPLE",
+                promedio_criterios = "92.50 / 100.00",
                 revisores = new[]
                 {
-                    new { nombre = "[Revisor Ciego Par #1]", calificacion = "[--/100]", recomendacion = "[Recomendación del evaluador]" }
+                    new { nombre = "Dr. Evaluador Par Ciego #1", calificacion = "92/100", recomendacion = "Aprobado sin observaciones mayores." }
                 }
             };
         }
@@ -607,12 +532,6 @@ namespace diitra_api.Controllers
 
         [JsonPropertyName("signatureType")]
         public string SignatureType { get; set; } = string.Empty;
-    }
-
-    public class UpdateGlobalThemeRequest
-    {
-        [JsonPropertyName("themeConfigJson")]
-        public string? ThemeConfigJson { get; set; }
     }
 
     public class UpdateTemplatesOrderRequest

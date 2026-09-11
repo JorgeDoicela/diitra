@@ -155,7 +155,7 @@ namespace Diitra.Infrastructure.Certificates
                     RecipientCedula = recipientCedula,
                     ProjectTitle = proyecto.Titulo,
                     ProjectCode = proyecto.CodigoInstitucional ?? proyecto.Uuid,
-                    CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
+                    CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")),
                     IssuerAuthority = "Dirección de Investigación y Transferencia Tecnológica",
                     InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
                 };
@@ -172,7 +172,8 @@ namespace Diitra.Infrastructure.Certificates
                         { "recipient_role", recipientRole },
                         { "recipient_cedula", recipientCedula },
                         { "project_title", proyecto.Titulo ?? "Proyecto de Investigación" },
-                        { "completion_date", DateTime.UtcNow.ToString("dd/MM/yyyy") }
+                        { "completion_date", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) },
+                        { "fecha_emision", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) }
                     }
                 };
 
@@ -259,7 +260,7 @@ namespace Diitra.Infrastructure.Certificates
                     RecipientCedula = recipientCedula,
                     GroupName = grupo.Nombre,
                     MilestoneTitle = milestoneTitle,
-                    CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
+                    CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")),
                     InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
                 };
 
@@ -274,7 +275,9 @@ namespace Diitra.Infrastructure.Certificates
                         { "recipient_role", recipientRole },
                         { "recipient_cedula", recipientCedula },
                         { "group_name", grupo.Nombre ?? "Grupo de Investigación" },
-                        { "milestone_title", milestoneTitle }
+                        { "milestone_title", milestoneTitle },
+                        { "completion_date", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) },
+                        { "fecha_emision", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) }
                     }
                 };
 
@@ -347,7 +350,8 @@ namespace Diitra.Infrastructure.Certificates
                 RecipientCedula = userCedula,
                 CertificateTitle = certificateTitle,
                 CertificateDescription = certificateDescription,
-                IssueDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy"),
+                IssueDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")),
+                CompletionDate = DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")),
                 InstitutionName = "Instituto Superior Tecnológico Mayor Pedro Traversari"
             };
 
@@ -364,7 +368,10 @@ namespace Diitra.Infrastructure.Certificates
                     { "recipient_role", recipientRole },
                     { "recipient_cedula", userCedula },
                     { "certificate_title", certificateTitle },
-                    { "certificate_description", certificateDescription }
+                    { "certificate_description", certificateDescription },
+                    { "issue_date", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) },
+                    { "completion_date", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) },
+                    { "fecha_emision", DateTime.UtcNow.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-EC")) }
                 }
             };
 

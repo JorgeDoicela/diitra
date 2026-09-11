@@ -35,6 +35,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly int _pageOffset;
         private readonly bool _isBlindMode;
         private readonly bool _hasCoverPage;
+        private readonly string? _documentCode;
 
         public DocumentEventHandler(
             string traceabilityCode,
@@ -47,7 +48,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             int cronogramaPage = 5,
             int pageOffset = 0,
             bool isBlindMode = false,
-            bool hasCoverPage = true)
+            bool hasCoverPage = true,
+            string? documentCode = null)
         {
             _pageOffset = pageOffset;
             _traceabilityCode = traceabilityCode;
@@ -56,6 +58,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _isDraft = isDraft;
             _isBlindMode = isBlindMode;
             _hasCoverPage = hasCoverPage;
+            _documentCode = documentCode;
             _verificationBaseUrl = string.IsNullOrWhiteSpace(verificationBaseUrl)
                 ? "https://diitra.ist.edu.ec"
                 : verificationBaseUrl.TrimEnd('/');
@@ -195,6 +198,25 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     catch (Exception ex)
                     {
                         Console.WriteLine($"[DIITRA EVENT] Error drawing blind notice: {ex.Message}");
+                    }
+                }
+
+                // 0.3 Código Normativo del Formato (Esquina superior derecha en páginas que no son portada)
+                if (!string.IsNullOrWhiteSpace(_documentCode))
+                {
+                    try
+                    {
+                        var fontBold = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+                        Paragraph pDocCode = new Paragraph(_documentCode)
+                            .SetFont(fontBold)
+                            .SetFontSize(8f)
+                            .SetFontColor(new iText.Kernel.Colors.DeviceRgb(100, 116, 139)); // Slate 500
+
+                        canvas.ShowTextAligned(pDocCode, pageSize.GetRight() - 56.7f, pageSize.GetTop() - 36f, TextAlignment.RIGHT);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DIITRA EVENT] Error drawing document code: {ex.Message}");
                     }
                 }
 

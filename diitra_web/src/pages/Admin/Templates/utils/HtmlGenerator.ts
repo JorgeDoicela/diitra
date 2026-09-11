@@ -52,8 +52,21 @@ export { renderSection };
 export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
     let html = `${BASE_STYLES}\n<div class="doc-container">`;
 
+    const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || '';
+    let isFirstNonCoverBlock = true;
+
     for (const block of blockList) {
         if (!block.isActive) continue;
+
+        if (block.type === 'cover') {
+            html += generateCoverHtml(block, themeConfig);
+            continue;
+        }
+
+        if (isFirstNonCoverBlock && docCode) {
+            html += `\n<div class="doc-normative-code">${docCode}</div>`;
+            isFirstNonCoverBlock = false;
+        }
 
         switch (block.type) {
             case 'cover':
@@ -76,6 +89,9 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
                 break;
             case 'page_break':
                 html += generatePageBreakHtml();
+                if (docCode) {
+                    html += `\n<div class="doc-normative-code">${docCode}</div>`;
+                }
                 break;
             case 'gantt':
                 html += generateGanttHtml(block);

@@ -17,7 +17,6 @@ export const THEME_SCHEMA: ThemeToken[] = [
     { key: 'text', camelKey: 'text', label: 'Color de Texto de Párrafos', type: 'color', category: 'colors', defaultValue: '#1a1a1a' },
     { key: 'table_header_bg', camelKey: 'tableHeaderBg', label: 'Fondo de Encabezados de Tabla', type: 'color', category: 'colors', defaultValue: '#222c57' },
     { key: 'table_header_color', camelKey: 'tableHeaderColor', label: 'Texto de Encabezados de Tabla', type: 'color', category: 'colors', defaultValue: '#ffffff' },
-    { key: 'accent', camelKey: 'accent', label: 'Color de Acento (Subíndices)', type: 'color', category: 'colors', defaultValue: '#9ad3de' },
     // TYPOGRAPHY
     {
         key: 'font_family', camelKey: 'fontFamily', label: 'Familia Tipográfica', type: 'select', category: 'typography', defaultValue: "'Calibri', 'Open Sans', Arial, sans-serif",
@@ -35,11 +34,8 @@ export const THEME_SCHEMA: ThemeToken[] = [
     { key: 'margin_bottom', camelKey: 'marginBottom', label: 'Margen Inferior', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
     { key: 'margin_left', camelKey: 'marginLeft', label: 'Margen Izquierdo', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
     { key: 'margin_right', camelKey: 'marginRight', label: 'Margen Derecho', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
-    { key: 'landscape_margin_top', camelKey: 'landscapeMarginTop', label: 'Margen Superior (Apaisado)', type: 'text', category: 'layout', defaultValue: '1.8cm', unit: 'cm' },
-    { key: 'landscape_margin_left', camelKey: 'landscapeMarginLeft', label: 'Margen Lateral (Apaisado)', type: 'text', category: 'layout', defaultValue: '1.2cm', unit: 'cm' },
     // BRAND
-    { key: 'show_cover_page', camelKey: 'showCoverPage', label: 'Mostrar Portada Institucional', type: 'toggle', category: 'brand', defaultValue: true },
-    { key: 'logo_scale', camelKey: 'logoScale', label: 'Escala del Logo (%)', type: 'text', category: 'brand', defaultValue: '100%' },
+    { key: 'document_code', camelKey: 'documentCode', label: 'Código Normativo del Formato', type: 'text', category: 'brand', defaultValue: '', description: 'Código normativo en esquina superior derecha (ej: F – ISTPET – 001 – INDIV – ABR 2026)' },
     { key: 'cover_image', camelKey: 'coverImage', label: 'Imagen de Portada (Personalizada)', type: 'image', category: 'brand', defaultValue: '' },
     { key: 'background_image', camelKey: 'backgroundImage', label: 'Imagen de Fondo de Hojas', type: 'image', category: 'brand', defaultValue: '' },
     {
@@ -71,25 +67,48 @@ export function buildDefaultTheme(): Record<string, Record<string, any>> {
     return theme;
 }
 
-export function mergeWithDefaults(partial: any): Record<string, Record<string, any>> {
-    const defaults = buildDefaultTheme();
-    if (!partial) return defaults;
+export function getOfficialDocumentCode(templateCode?: string): string {
+    if (!templateCode) return '';
+    const upper = templateCode.toUpperCase();
+    if (upper.includes('PROTOCOLO') || upper.includes('PROYECTO_INVESTIGACION') || upper.includes('INVESTIGACION') || upper === '1') {
+        return 'F – ISTPET – 001 – INDIV – ABR 2026';
+    }
+    if (upper.includes('PLAN_APRENDIZAJE')) {
+        return 'F – ISTPET – 002 – INDIV – ABR 2026';
+    }
+    if (upper.includes('RUBRICA') || upper.includes('EVALUACION')) {
+        return 'F – ISTPET – 003 – INDIV – ABR 2026';
+    }
+    return '';
+}
 
-    let parsed: any = {};
-    if (typeof partial === 'string') {
-        try {
-            parsed = JSON.parse(partial);
-        } catch {
-            return defaults;
+export function mergeWithDefaults(partial: any, templateCode?: string): Record<string, Record<string, any>> {
+    const defaults = buildDefaultTheme();
+    let result = defaults;
+
+    if (partial) {
+        let parsed: any = {};
+        if (typeof partial === 'string') {
+            try {
+                parsed = JSON.parse(partial);
+            } catch {
+                parsed = {};
+            }
+        } else {
+            parsed = partial;
         }
-    } else {
-        parsed = partial;
+
+        result = {
+            colors: { ...defaults.colors, ...(parsed.colors || {}) },
+            typography: { ...defaults.typography, ...(parsed.typography || {}) },
+            layout: { ...defaults.layout, ...(parsed.layout || {}) },
+            brand: { ...defaults.brand, ...(parsed.brand || {}) },
+        };
     }
 
-    return {
-        colors: { ...defaults.colors, ...(parsed.colors || {}) },
-        typography: { ...defaults.typography, ...(parsed.typography || {}) },
-        layout: { ...defaults.layout, ...(parsed.layout || {}) },
-        brand: { ...defaults.brand, ...(parsed.brand || {}) },
-    };
+    if (templateCode && !result.brand.documentCode && !result.brand.document_code) {
+        result.brand.documentCode = getOfficialDocumentCode(templateCode);
+    }
+
+    return result;
 }

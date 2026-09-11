@@ -343,7 +343,7 @@ export function usePreproposalState(
                     'Observación General'
                 ),
                 React.createElement('p', { className: 'text-xs text-text-dim leading-relaxed italic whitespace-pre-wrap' },
-                    `\u201C${adminObservation.trim()}\u201D`
+                    adminObservation.trim()
                 )
             ) : null,
 
@@ -358,7 +358,7 @@ export function usePreproposalState(
                                 item.label
                             ),
                             React.createElement('p', { className: 'text-text-dim italic leading-relaxed whitespace-pre-wrap' },
-                                `\u201C${item.text}\u201D`
+                                item.text
                             )
                         )
                     )

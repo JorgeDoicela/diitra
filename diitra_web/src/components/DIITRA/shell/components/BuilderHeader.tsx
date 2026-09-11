@@ -53,14 +53,9 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
 
                     {/* Identidad */}
                     <div className="min-w-0">
-                        <h2 className="text-xs md:text-sm font-black text-text-main tracking-tighter uppercase leading-none truncate max-w-[150px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[500px]" title={title}>
+                        <h2 className="text-sm md:text-base font-black text-text-main tracking-tight uppercase leading-none truncate max-w-[200px] xs:max-w-[280px] sm:max-w-[380px] md:max-w-[480px] lg:max-w-[650px]" title={title}>
                             {title}
                         </h2>
-                        {subtitle && (
-                            <p className="text-[8px] text-text-dim font-bold uppercase tracking-widest mt-0.5 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[500px]" title={subtitle}>
-                                {subtitle}
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>

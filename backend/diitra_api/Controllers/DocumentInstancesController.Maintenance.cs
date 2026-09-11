@@ -461,7 +461,7 @@ namespace diitra_api.Controllers
                 return Ok(new
                 {
                     title = template.Name,
-                    subtitle = template.Description ?? "Formulario de Colaboración Dinámico",
+                    subtitle = (string?)null,
                     signatureType = template.SignatureType,
                     schema = schemaDict,
                     lists = listsList.ToArray(),

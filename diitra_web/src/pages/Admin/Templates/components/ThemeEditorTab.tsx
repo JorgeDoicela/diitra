@@ -8,6 +8,7 @@ interface ThemeEditorTabProps {
     activeBlockId?: string;
     activeBlockType?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+    templateCode?: string;
 }
 
 const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -21,10 +22,10 @@ const inputCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/
 const selectCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 
 const CATEGORY_META = {
+    brand: { label: 'Identidad y Código Oficial', icon: Shield },
     colors: { label: 'Paleta de Colores', icon: Palette },
     typography: { label: 'Tipografía', icon: Type },
     layout: { label: 'Diseño y Márgenes', icon: Layout },
-    brand: { label: 'Marca e Identidad', icon: Shield },
 };
 
 export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
@@ -33,10 +34,11 @@ export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
     activeBlockId,
     activeBlockType,
     onUpdateConfig,
+    templateCode,
 }) => {
     const theme = React.useMemo(() => {
-        return mergeWithDefaults(themeConfigJson);
-    }, [themeConfigJson]);
+        return mergeWithDefaults(themeConfigJson, templateCode);
+    }, [themeConfigJson, templateCode]);
 
     const handleThemeChange = (category: string, key: string, val: any) => {
         const nextTheme = {
@@ -52,7 +54,7 @@ export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
         }
     };
 
-    const categories = ['colors', 'typography', 'layout', 'brand'] as const;
+    const categories = ['brand', 'colors', 'typography', 'layout'] as const;
 
     return (
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-28 custom-scrollbar">

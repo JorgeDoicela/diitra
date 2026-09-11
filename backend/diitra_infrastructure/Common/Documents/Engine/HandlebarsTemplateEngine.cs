@@ -416,6 +416,37 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             SyncKeyAlias("Anexos", "sec_anexos");
             SyncKeyAlias("anexos", "sec_anexos");
 
+            // Subsecciones de Certificados y Reconocimientos Oficiales
+            SyncKeyAlias("RecipientName", "recipient_name");
+            SyncKeyAlias("recipient_name", "destinatario_nombre");
+            SyncKeyAlias("recipient_name", "nombre_destinatario");
+            SyncKeyAlias("RecipientRole", "recipient_role");
+            SyncKeyAlias("recipient_role", "destinatario_rol");
+            SyncKeyAlias("recipient_role", "rol_destinatario");
+            SyncKeyAlias("RecipientCedula", "recipient_cedula");
+            SyncKeyAlias("recipient_cedula", "destinatario_cedula");
+            SyncKeyAlias("recipient_cedula", "cedula");
+            SyncKeyAlias("ProjectTitle", "project_title");
+            SyncKeyAlias("project_title", "proyecto_titulo");
+            SyncKeyAlias("project_title", "titulo_proyecto");
+            SyncKeyAlias("CertificateTitle", "certificate_title");
+            SyncKeyAlias("certificate_title", "titulo_certificado");
+            SyncKeyAlias("CertificateDescription", "certificate_description");
+            SyncKeyAlias("certificate_description", "descripcion_certificado");
+            SyncKeyAlias("GroupName", "group_name");
+            SyncKeyAlias("group_name", "nombre_grupo");
+            SyncKeyAlias("MilestoneTitle", "milestone_title");
+            SyncKeyAlias("milestone_title", "titulo_hito");
+            SyncKeyAlias("CompletionDate", "completion_date");
+            SyncKeyAlias("completion_date", "fecha_completacion");
+            SyncKeyAlias("IssueDate", "issue_date");
+            SyncKeyAlias("issue_date", "fecha_emision");
+            SyncKeyAlias("IssuerAuthority", "issuer_authority");
+            SyncKeyAlias("InstitutionName", "institution_name");
+            SyncKeyAlias("institution_name", "institucion_nombre");
+            SyncKeyAlias("TraceabilityCode", "traceability_code");
+            SyncKeyAlias("traceability_code", "codigo_verificacion");
+
             // Sincronización dinámica de alias para cualquier propiedad no listada explícitamente
             var currentKeys = dict.Keys.ToList();
             foreach (var key in currentKeys)
@@ -487,6 +518,14 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
             if (isBlindMode)
                 ApplyBlindMask(dict);
+
+            // Asegurar que dict["data"] sea un subdiccionario con acceso completo a todas las variables
+            var dataSubDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in dict)
+            {
+                dataSubDict[kv.Key] = kv.Value;
+            }
+            dict["data"] = dataSubDict;
 
             return dict;
         }

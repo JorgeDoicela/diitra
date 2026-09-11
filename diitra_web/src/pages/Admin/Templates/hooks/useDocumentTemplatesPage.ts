@@ -172,107 +172,13 @@ export const useDocumentTemplatesPage = () => {
             let fullData: any;
             let loadedBlocks: DocumentBlock[] = [];
 
-            if (tmpl.code === 'GLOBAL_THEME') {
-                const res = await api.get('/admin/templates/global-theme');
-                fullData = {
-                    id: 0,
-                    code: 'GLOBAL_THEME',
-                    name: 'Diseño Global Institucional',
-                    description: 'Configuración visual por defecto para todos los documentos de la institución.',
-                    category: 0,
-                    version: 1,
-                    isActive: true,
-                    requiresLopdpClause: false,
-                    supportsBlindMode: false,
-                    requiresElectronicSignature: false,
-                    signatureType: 'none',
-                    themeConfigJson: res.data.themeConfigJson,
-                    htmlContent: '',
-                    customCss: '',
-                    collaborativeFieldsJson: '',
-                    updatedAt: new Date().toISOString(),
-                    updatedBy: null
-                };
-                setSelectedTemplate(fullData);
+            const res = await api.get(`/admin/templates/${tmpl.code}`);
+            fullData = res.data;
+            setSelectedTemplate(fullData);
 
-                let parsedTheme: any = {};
-                if (res.data.themeConfigJson) {
-                    try {
-                        parsedTheme = JSON.parse(res.data.themeConfigJson);
-                    } catch {}
-                }
-                const savedCoverConfig = parsedTheme?.brand?.coverConfig || {};
-
-                loadedBlocks = [
-                    {
-                        id: "sample-cover",
-                        type: "cover" as const,
-                        title: "Previsualización: Portada Institucional",
-                        isActive: true,
-                        config: {
-                            tituloSuperior: "PORTADA DE PRUEBA DE IDENTIDAD VISUAL",
-                            carreraPorDefecto: "CARRERA / UNIDAD ACADÉMICA DE MUESTRA",
-                            periodoPorDefecto: "PERIODO ACADÉMICO DE PRUEBA",
-                            colorTema: "#222c57",
-                            showInstitution: true,
-                            textoInstitucion: "INSTITUTO TECNOLÓGICO SUPERIOR TRAVERSARI",
-                            posInstitution: "top",
-                            alignInstitution: "center",
-                            showTitle: true,
-                            posTitle: "middle",
-                            alignTitle: "center",
-                            showCarrera: true,
-                            posCarrera: "bottom",
-                            alignCarrera: "center",
-                            showPeriodo: true,
-                            posPeriodo: "bottom",
-                            alignPeriodo: "center",
-                            ...savedCoverConfig
-                        }
-                    },
-                    {
-                        id: "sample-title",
-                        type: "title" as const,
-                        title: "Previsualización: Títulos de Sección",
-                        isActive: true,
-                        config: {
-                            text: "1. EJEMPLO DE ENCABEZADO DE SECCIÓN",
-                            fontSize: "H2",
-                            color: "#222c57",
-                            alignment: "left"
-                        }
-                    },
-                    {
-                        id: "sample-text",
-                        type: "rich_text" as const,
-                        title: "Previsualización: Párrafos de Texto",
-                        isActive: true,
-                        config: {
-                            html: "<p>Este es un párrafo de ejemplo para previsualizar la tipografía, interlineado y colores del tema visual institucional. Todos los reportes generados heredarán estas propiedades a menos que tengan overrides individuales.</p>"
-                        }
-                    },
-                    {
-                        id: "sample-table",
-                        type: "advanced_table" as const,
-                        title: "Previsualización: Tablas Avanzadas",
-                        isActive: true,
-                        config: {
-                            headers: ["Elemento de Muestra", "Valor Configurado"],
-                            colWidths: ["50%", "50%"],
-                            rows: [
-                                { cells: ["Fila de prueba 1", "Valor de prueba A"] },
-                                { cells: ["Fila de prueba 2", "Valor de prueba B"] }
-                            ]
-                        }
-                    }
-                ];
-            } else {
-                const res = await api.get(`/admin/templates/${tmpl.code}`);
-                fullData = res.data;
-                setSelectedTemplate(fullData);
-
-                if (fullData.htmlContent) {
-                    const match = fullData.htmlContent.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
+                const rawHtml = fullData.htmlContent || fullData.html_content || '';
+                if (rawHtml) {
+                    const match = rawHtml.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
                     if (match && match[1]) {
                         try {
                             const decoded = decodeURIComponent(escape(atob(match[1])));
@@ -281,17 +187,17 @@ export const useDocumentTemplatesPage = () => {
                     }
                 }
 
-                if (loadedBlocks.length === 0 && fullData.collaborativeFieldsJson) {
+                const rawCollab = fullData.collaborativeFieldsJson || fullData.collaborative_fields_json;
+                if (loadedBlocks.length === 0 && rawCollab) {
                     try {
-                        const parsed = JSON.parse(fullData.collaborativeFieldsJson);
+                        const parsed = typeof rawCollab === 'string' ? JSON.parse(rawCollab) : rawCollab;
                         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
                             loadedBlocks = parsed;
                         }
                     } catch { }
                 }
-                if (loadedBlocks.length === 0) {
-                    loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
-                }
+            if (loadedBlocks.length === 0) {
+                loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
             }
 
             setBlocks(loadedBlocks);
@@ -312,6 +218,9 @@ export const useDocumentTemplatesPage = () => {
             const res = await api.get('/admin/templates');
             const data = res.data || [];
             setTemplates(data);
+            if (data.length > 0) {
+                handleSelectTemplate(data[0]);
+            }
         } catch (err: any) {
             console.error(err);
             addToast("Error al Cargar", "No se pudo obtener el catálogo de plantillas.", "error");
@@ -787,48 +696,6 @@ export const useDocumentTemplatesPage = () => {
     const handleSaveTemplate = async () => {
         if (!selectedTemplate) return;
 
-        if (selectedTemplate.code === 'GLOBAL_THEME') {
-            const ok = await confirm({
-                title: 'Guardar Estilos Globales',
-                message: '¿Estás seguro de que deseas actualizar los estilos y la identidad visual institucional global? Todos los nuevos reportes y documentos que no posean estilos específicos heredarán esta configuración.',
-                confirmText: 'Sí, guardar',
-                cancelText: 'Cancelar',
-                variant: 'primary'
-            });
-
-            if (!ok) return;
-
-            setSaving(true);
-            try {
-                const coverBlock = blocks.find(b => b.id === 'sample-cover');
-                let updatedThemeConfigJson = selectedTemplate.themeConfigJson || '{}';
-                if (coverBlock) {
-                    try {
-                        const parsed = JSON.parse(updatedThemeConfigJson);
-                        if (!parsed.brand) parsed.brand = {};
-                        parsed.brand.coverConfig = coverBlock.config;
-                        updatedThemeConfigJson = JSON.stringify(parsed);
-                    } catch (e) {
-                        console.error("Error parsing themeConfigJson during save:", e);
-                    }
-                }
-
-                await api.put('/admin/templates/global-theme', {
-                    themeConfigJson: updatedThemeConfigJson
-                });
-
-                setSelectedTemplate(prev => prev ? { ...prev, themeConfigJson: updatedThemeConfigJson } : null);
-                addToast("Diseño Global Guardado", "El tema visual institucional ha sido actualizado con éxito.", "success");
-                setIsDirty(false);
-            } catch (err) {
-                console.error(err);
-                addToast("Error al Guardar", "No se pudo actualizar el diseño global institucional.", "error");
-            } finally {
-                setSaving(false);
-            }
-            return;
-        }
-
         let usageMessage = `¿Estás seguro de que deseas publicar la plantilla '${selectedTemplate.name}'? Todos los nuevos documentos generados utilizarán esta versión.`;
         try {
             const usageRes = await api.get(`/admin/templates/${selectedTemplate.code}/usage-count`);
@@ -862,9 +729,13 @@ export const useDocumentTemplatesPage = () => {
 
             await api.put(`/admin/templates/${selectedTemplate.code}`, {
                 htmlContent: htmlWithEmbeddedJson,
-                customCss: selectedTemplate.customCss || null,
+                html_content: htmlWithEmbeddedJson,
+                customCss: selectedTemplate.customCss || (selectedTemplate as any).custom_css || null,
+                custom_css: selectedTemplate.customCss || (selectedTemplate as any).custom_css || null,
                 collaborativeFieldsJson,
-                themeConfigJson: selectedTemplate.themeConfigJson || null
+                collaborative_fields_json: collaborativeFieldsJson,
+                themeConfigJson: selectedTemplate.themeConfigJson || (selectedTemplate as any).theme_config_json || null,
+                theme_config_json: selectedTemplate.themeConfigJson || (selectedTemplate as any).theme_config_json || null
             });
 
             addToast("Plantilla Publicada", `La maqueta visual de la plantilla '${selectedTemplate.name}' ha sido publicada con éxito.`, "success");
@@ -880,8 +751,9 @@ export const useDocumentTemplatesPage = () => {
             const updated = resCatalog.data.find((t: any) => t.code === selectedTemplate.code);
             if (updated) {
                 let extractedBlocks = blocks;
-                if (updated.htmlContent) {
-                    const match = updated.htmlContent.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
+                const updatedHtml = updated.htmlContent || updated.html_content || '';
+                if (updatedHtml) {
+                    const match = updatedHtml.match(/<!-- DIITRA_SECTIONS_JSON: (.*?) -->/);
                     if (match && match[1]) {
                         try {
                             const decoded = decodeURIComponent(escape(atob(match[1])));
@@ -901,7 +773,7 @@ export const useDocumentTemplatesPage = () => {
     };
 
     const handleResetToDefault = async () => {
-        if (!selectedTemplate || selectedTemplate.code === 'GLOBAL_THEME') return;
+        if (!selectedTemplate) return;
         const ok = await confirm({
             title: 'Restablecer Plantilla a Fábrica',
             message: `¿Deseas restablecer la plantilla "${selectedTemplate.name}" a su estructura oficial institucional por defecto? Se cargarán todos los bloques y secciones estándar oficiales.`,
@@ -1011,7 +883,7 @@ export const useDocumentTemplatesPage = () => {
      * Si se descarga la plantilla actualmente en edición, envía los bloques en caliente para reflejar los cambios inmediatos sin publicar.
      */
     const handleQuickDownloadPdf = async (tmpl: DocumentTemplateDto) => {
-        if (!tmpl || tmpl.code === 'GLOBAL_THEME') return;
+        if (!tmpl) return;
         try {
             addToast("Generando PDF", `Preparando descarga de "${tmpl.name}"...`, "info");
             let response;
