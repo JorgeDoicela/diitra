@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserPlus, Search, X } from 'lucide-react';
 import { PageHeader } from '../../../../components/Common/PageHeader';
+import { GeistSelect } from '../../../../components/Common/GeistSelect';
 
 interface UsersHeaderProps {
     userType: 'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO';
@@ -9,8 +10,8 @@ interface UsersHeaderProps {
     setSoloConHoras: (val: boolean) => void;
     estadoEstudiante: 'ACTIVO' | 'GRADUADO' | 'TODOS';
     setEstadoEstudiante: (val: 'ACTIVO' | 'GRADUADO' | 'TODOS') => void;
-    origenEstudiante: 'INSTITUTO' | 'CONDUCCION' | 'TODOS';
-    setOrigenEstudiante: (val: 'INSTITUTO' | 'CONDUCCION' | 'TODOS') => void;
+    origenEstudiante?: 'INSTITUTO' | 'CONDUCCION' | 'TODOS';
+    setOrigenEstudiante?: (val: 'INSTITUTO' | 'CONDUCCION' | 'TODOS') => void;
     departamento: string;
     setDepartamento: (val: string) => void;
     availableDepartments?: string[];
@@ -29,8 +30,6 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
     setSoloConHoras,
     estadoEstudiante,
     setEstadoEstudiante,
-    origenEstudiante,
-    setOrigenEstudiante,
     departamento,
     setDepartamento,
     availableDepartments = [],
@@ -143,7 +142,7 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
                                 onClick={() => setSoloConHoras(true)}
                                 className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${soloConHoras ? 'bg-surface-hover text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'}`}
                             >
-                                Con Horas de Investigación (CACES)
+                                Con Horas de Investigación
                             </button>
                             <button
                                 type="button"
@@ -160,21 +159,22 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
                     <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border-thin/40 text-[11px]">
                         <div className="flex items-center gap-2">
                             <span className="text-text-dim font-medium">Departamento:</span>
-                            <div className="relative min-w-[260px]">
-                                <select
+                            <div className="relative min-w-[280px]">
+                                <GeistSelect<string>
                                     value={departamento}
-                                    onChange={(e) => setDepartamento(e.target.value)}
-                                    className="input-vercel !py-1.5 !px-3 !text-xs !bg-surface font-medium cursor-pointer w-full text-text-main border-border-thin focus:border-brand"
+                                    onChange={(val) => setDepartamento(val)}
+                                    placeholder={availableDepartments.length > 0 ? `Todos los Departamentos (${availableDepartments.length} disponibles)` : 'Cargando...'}
+                                    className="!rounded-lg !py-1.5 !px-3 !text-xs font-medium w-full"
                                 >
-                                    <option value="" className="bg-bg-deep text-text-main">
-                                        Todos los Departamentos ({availableDepartments.length > 0 ? `${availableDepartments.length} disponibles` : 'Cargando...'})
+                                    <option value="">
+                                        {availableDepartments.length > 0 ? `Todos los Departamentos (${availableDepartments.length} disponibles)` : 'Todos los Departamentos'}
                                     </option>
                                     {availableDepartments.map((dept) => (
-                                        <option key={dept} value={dept} className="bg-bg-deep text-text-main">
+                                        <option key={dept} value={dept}>
                                             {dept}
                                         </option>
                                     ))}
-                                </select>
+                                </GeistSelect>
                             </div>
                             {departamento && (
                                 <button
@@ -192,34 +192,6 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
 
                 {userType === 'ESTUDIANTE' && (
                     <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-border-thin/40 text-[11px]">
-                        {/* Dependencia */}
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-text-dim font-medium">Dependencia:</span>
-                            <div className="bg-surface border border-border-thin p-0.5 rounded-lg flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setOrigenEstudiante('INSTITUTO')}
-                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${origenEstudiante === 'INSTITUTO' ? 'bg-surface-hover text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'}`}
-                                >
-                                    Instituto ISTPET
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setOrigenEstudiante('CONDUCCION')}
-                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${origenEstudiante === 'CONDUCCION' ? 'bg-surface-hover text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'}`}
-                                >
-                                    Escuela de Conducción
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setOrigenEstudiante('TODOS')}
-                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${origenEstudiante === 'TODOS' ? 'bg-surface-hover text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'}`}
-                                >
-                                    Todos
-                                </button>
-                            </div>
-                        </div>
-
                         {/* Condición Académica */}
                         <div className="flex items-center gap-1.5">
                             <span className="text-text-dim font-medium">Condición:</span>
@@ -236,7 +208,7 @@ export const UsersHeader: React.FC<UsersHeaderProps> = ({
                                     onClick={() => setEstadoEstudiante('GRADUADO')}
                                     className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${estadoEstudiante === 'GRADUADO' ? 'bg-surface-hover text-text-main shadow-xs' : 'text-text-dim hover:text-text-main'}`}
                                 >
-                                    Graduados / Egresados
+                                    Graduados
                                 </button>
                                 <button
                                     type="button"

@@ -77,21 +77,21 @@ export const UserDetailPanel: React.FC<UserDetailPanelProps> = ({
                             <div className="divider-vercel !my-0" />
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="section-label text-text-dim mb-1">Horas Distributivo</p>
+                                    <p className="section-label text-text-dim mb-1">Horas de Investigación</p>
                                     <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
                                         <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
                                         {detailUser.horas_investigacion || 0}h
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="section-label text-text-dim mb-1">Horas Asignadas</p>
+                                    <p className="section-label text-text-dim mb-1">En Proyectos</p>
                                     <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
                                         <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
                                         {detailUser.horas_asignadas || 0}h
                                     </div>
                                 </div>
                                 <div className="col-span-2">
-                                    <p className="section-label text-text-dim mb-1">Horas Disponibles</p>
+                                    <p className="section-label text-text-dim mb-1">Cupo Disponible</p>
                                     <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
                                         <span className={`w-1.5 h-1.5 rounded-full ${((detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
                                         {Math.max(0, (detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0))}h

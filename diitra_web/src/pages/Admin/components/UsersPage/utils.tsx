@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const formatCarrera = (carrera: string | null | undefined): string => {
-    if (!carrera) return 'Sin carrera asignada';
+    if (!carrera || carrera.toLowerCase().trim() === 'docente') return 'Planta Institucional';
     return carrera
         .toLowerCase()
         .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase())

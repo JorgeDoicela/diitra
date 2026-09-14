@@ -900,7 +900,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 renderedCoreKeys.add('showFechas');
                 return showFechas ? (
                     <React.Fragment key="showFechas">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        {/* 1. Periodo Académico de la Convocatoria */}
+                        <div className="w-full">
                             <CoWorkField 
                                 name="Periodo" 
                                 cowork={cowork} 
@@ -910,31 +911,9 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 onValueChange={(v, meta) => onUpdate('Periodo', v, meta)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                             />
-                            <div className="w-full">
-                                <CoWorkField 
-                                    name="TiempoEjecucion" 
-                                    cowork={cowork} 
-                                    label="Tiempo Estimado de Ejecución" 
-                                    placeholder="Ej: 6 meses"
-                                    onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                                />
-
-                                {/* Sugerencia reactiva según FechaInicio y FechaFin */}
-                                {suggestedExecutionTime && (formData.TiempoEjecucion || '').trim().toLowerCase() !== suggestedExecutionTime.toLowerCase() && (
-                                    <div className="mt-2 px-2 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-text-dim animate-fade-in">
-                                        <span className="truncate">Sugerido por fechas: <strong className="text-text-main font-semibold">{suggestedExecutionTime}</strong></span>
-                                        <button
-                                            type="button"
-                                            onClick={() => onUpdate('TiempoEjecucion', suggestedExecutionTime)}
-                                            className="text-[10px] font-extrabold text-accent-vercel hover:text-text-main hover:underline transition-colors cursor-pointer uppercase tracking-wider shrink-0"
-                                        >
-                                            Aplicar
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
                         </div>
+
+                        {/* 2. Plazos y Fechas del Proyecto (Presentación, Inicio, Fin) */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                                 <CoWorkField 
@@ -1001,6 +980,32 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     </p>
                                 )}
                             </div>
+                        </div>
+
+                        {/* 3. Tiempo Estimado de Ejecución (Alimentado por las fechas inmediatamente anteriores) */}
+                        <div className="w-full">
+                            <CoWorkField 
+                                name="TiempoEjecucion" 
+                                cowork={cowork} 
+                                label="Tiempo Estimado de Ejecución" 
+                                placeholder="Ej: 6 meses"
+                                onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
+                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
+                            />
+
+                            {/* Sugerencia reactiva según FechaInicio y FechaFin justo debajo del campo */}
+                            {suggestedExecutionTime && (formData.TiempoEjecucion || '').trim().toLowerCase() !== suggestedExecutionTime.toLowerCase() && (
+                                <div className="mt-2 px-2 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-text-dim animate-fade-in">
+                                    <span className="truncate">Sugerido por fechas: <strong className="text-text-main font-semibold">{suggestedExecutionTime}</strong></span>
+                                    <button
+                                        type="button"
+                                        onClick={() => onUpdate('TiempoEjecucion', suggestedExecutionTime)}
+                                        className="text-[10px] font-extrabold text-accent-vercel hover:text-text-main hover:underline transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                                    >
+                                        Aplicar
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </React.Fragment>
                 ) : null;

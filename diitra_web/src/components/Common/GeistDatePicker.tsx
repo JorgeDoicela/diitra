@@ -14,6 +14,7 @@ export interface GeistDatePickerProps {
     maxDate?: string;
     className?: string;
     containerClassName?: string;
+    clearable?: boolean;
 }
 
 export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
@@ -27,7 +28,8 @@ export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
     minDate,
     maxDate,
     className = '',
-    containerClassName = ''
+    containerClassName = '',
+    clearable = true
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [popoverPlacement, setPopoverPlacement] = useState<{ vertical: 'top' | 'bottom'; horizontal: 'left' | 'right' }>({
@@ -96,6 +98,12 @@ export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
         onChange(formatted);
     };
 
+    const handleClear = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onChange('');
+        setIsOpen(false);
+    };
+
     return (
         <div ref={containerRef} className={`relative w-full ${containerClassName}`}>
             {label && (
@@ -105,14 +113,20 @@ export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
             )}
 
             {/* Selector interactivo de fecha (Trigger completo) */}
-            <button
-                type="button"
+            <div
+                role="button"
+                tabIndex={disabled || readOnly ? -1 : 0}
                 onClick={() => !disabled && !readOnly && setIsOpen(prev => !prev)}
-                disabled={disabled || readOnly}
+                onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && !disabled && !readOnly) {
+                        e.preventDefault();
+                        setIsOpen(prev => !prev);
+                    }
+                }}
                 className={`
-                    w-full flex items-center justify-between text-left transition-all duration-200 outline-none
+                    w-full flex items-center justify-between text-left transition-all duration-200 outline-none select-none
                     bg-bg-deep border border-border-thin rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium
-                    ${!disabled && !readOnly ? 'cursor-pointer hover:border-text-main/50' : 'cursor-default select-none'}
+                    ${!disabled && !readOnly ? 'cursor-pointer hover:border-text-main/50' : 'cursor-default'}
                     ${isOpen ? 'ring-2 ring-text-main/20 border-text-main shadow-sm' : ''}
                     ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
                     ${readOnly ? 'bg-surface/30 opacity-90' : ''}
@@ -124,10 +138,22 @@ export const GeistDatePicker: React.FC<GeistDatePickerProps> = ({
                     {value || placeholder}
                 </span>
 
-                <div className="shrink-0 flex items-center pointer-events-none ml-1.5 text-text-dim">
-                    <CalendarIcon className={`w-4 h-4 transition-colors ${isOpen ? 'text-text-main' : 'text-text-dim'}`} />
+                <div className="shrink-0 flex items-center gap-1 ml-1.5 text-text-dim">
+                    {clearable && Boolean(value) && !disabled && !readOnly && (
+                        <button
+                            type="button"
+                            onClick={handleClear}
+                            title="Borrar fecha"
+                            className="p-1 rounded-md text-text-dim hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                    <div className="pointer-events-none flex items-center">
+                        <CalendarIcon className={`w-4 h-4 transition-colors ${isOpen ? 'text-text-main' : 'text-text-dim'}`} />
+                    </div>
                 </div>
-            </button>
+            </div>
 
             {error && (
                 <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1.5 ml-1 animate-fade-in">

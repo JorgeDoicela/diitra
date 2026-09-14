@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
-import { Calendar, Lock } from 'lucide-react';
+import { Calendar, Lock, X } from 'lucide-react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
 import { DocumentDataContext, SectionGuardContext } from '../../documents/context/DocumentDataContext';
@@ -506,12 +506,18 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         }
     };
 
+    const handleClearDate = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        handleCalendarSelect('');
+        setIsCalendarOpen(false);
+    };
+
     const commonProps = {
         name,
         placeholder,
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
-            : `${className} ${isDateField ? 'pr-10 cursor-pointer select-none' : ''} ${isDateField && isCalendarOpen ? 'border-text-main' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:border-text-main focus:ring-0 outline-none`,
+            : `${className} ${isDateField ? (displayValue ? 'pr-16' : 'pr-10') + ' cursor-pointer select-none' : ''} ${isDateField && isCalendarOpen ? 'border-text-main' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:border-text-main focus:ring-0 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
         readOnly: isFieldReadOnly || isDateField,
         onClick: isDateField ? toggleCalendar : undefined,
@@ -602,18 +608,31 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                 
                 {mask === 'date' && (
                     <div>
-                        <button
-                            type="button"
-                            tabIndex={-1}
-                            onClick={toggleCalendar}
-                            disabled={cowork.session.readOnly || isFieldReadOnly}
-                            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer rounded-md ${
-                                isCalendarOpen ? 'text-text-main bg-surface-hover' : ''
-                            }`}
-                            title="Seleccionar fecha en calendario"
-                        >
-                            <Calendar className="w-4 h-4" />
-                        </button>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
+                            {Boolean(displayValue) && !cowork.session.readOnly && !isFieldReadOnly && (
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={handleClearDate}
+                                    className="p-1 text-text-dim hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer rounded-md"
+                                    title="Borrar fecha"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={toggleCalendar}
+                                disabled={cowork.session.readOnly || isFieldReadOnly}
+                                className={`p-1 text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer rounded-md ${
+                                    isCalendarOpen ? 'text-text-main bg-surface-hover' : ''
+                                }`}
+                                title="Seleccionar fecha en calendario"
+                            >
+                                <Calendar className="w-4 h-4" />
+                            </button>
+                        </div>
 
                         {isCalendarOpen && !cowork.session.readOnly && !isFieldReadOnly && (
                             <div className={`absolute ${popoverPlacement.horizontal === 'left' ? 'left-0' : 'right-0'} ${popoverPlacement.vertical === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} z-50 animate-fade-in`}>

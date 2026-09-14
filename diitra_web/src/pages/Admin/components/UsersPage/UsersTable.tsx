@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserIcon, Settings2, ShieldCheck, Activity } from 'lucide-react';
+import { User as UserIcon, Settings2 } from 'lucide-react';
 import type { ManagedUser, Role } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre, highlightText } from './utils';
 
@@ -14,13 +14,13 @@ interface UsersTableProps {
     totalCount: number;
     totalPages: number;
     loading: boolean;
-    updating: string | null;
+    updating?: string | null;
     detailUser: ManagedUser | null;
     setDetailUser: (user: ManagedUser | null) => void;
     lastActiveUserId: string | null;
     setLastActiveUserId: (id: string | null) => void;
     setSelectedUser: (user: ManagedUser | null) => void;
-    handleRoleToggle: (userId: string, userName: string, roleCode: string, roleName: string, hasRole: boolean) => void;
+    handleRoleToggle?: (userId: string, userName: string, roleCode: string, roleName: string, hasRole: boolean) => void;
     openedAtRef: React.MutableRefObject<number>;
 }
 
@@ -35,13 +35,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     totalCount,
     totalPages,
     loading,
-    updating,
     detailUser,
     setDetailUser,
     lastActiveUserId,
     setLastActiveUserId,
     setSelectedUser,
-    handleRoleToggle,
     openedAtRef
 }) => {
     return (
@@ -106,20 +104,20 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                     {u.type === 'DOCENTE' ? (
                                         <div className="space-y-1">
                                             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo (SIGAFI)">
+                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas de investigación asignadas en distributivo académico">
                                                     <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-text-dim/40'}`} />
-                                                    SIGAFI: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
+                                                    Horas de Investigación: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
                                                 </span>
-                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas Comprometidas en Proyectos (DIITRA)">
+                                                <span className="text-text-dim flex items-center gap-1.5" title="Horas comprometidas en proyectos activos de investigación">
                                                     <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
-                                                    Asig: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
+                                                    En Proyectos: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
                                                 </span>
                                             </div>
                                             <div className="text-[10px] text-text-dim font-medium tracking-wide">
                                                 <span className="truncate max-w-[210px] inline-block align-bottom" title={u.carrera}>
                                                     {highlightText(formatCarrera(u.carrera), search)}
                                                 </span>
-                                                {u.cargo_instituto && (
+                                                {u.cargo_instituto && !/profesor|docente/i.test(u.cargo_instituto) && (
                                                     <span className="text-[9px] text-text-dim/60 font-mono ml-1.5">
                                                         ({u.cargo_instituto})
                                                     </span>
@@ -149,15 +147,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                                 <span className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
                                                     {u.nivel || 'Nivel no definido'}
                                                 </span>
-                                                {u.es_instituto === false ? (
-                                                    <span className="badge-vercel badge-vercel-neutral !text-[8px] !py-0 !px-1.5">
-                                                        Conducción
-                                                    </span>
-                                                ) : (
-                                                    <span className="badge-vercel badge-vercel-neutral !text-[8px] !py-0 !px-1.5">
-                                                        ISTPET
-                                                    </span>
-                                                )}
+                                                <span className="badge-vercel badge-vercel-neutral !text-[8px] !py-0 !px-1.5">
+                                                    ISTPET
+                                                </span>
                                                 {u.es_graduado ? (
                                                     <span className="badge-vercel badge-vercel-warning !text-[8px] !py-0 !px-1.5">
                                                         Graduado

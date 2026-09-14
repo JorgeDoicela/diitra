@@ -59,13 +59,24 @@ export const GeistSelect = <T extends string | number = string | number>({
 
         const extracted: GeistSelectOption<T>[] = [];
 
+        const extractText = (node: React.ReactNode): string => {
+            if (typeof node === 'string') return node;
+            if (typeof node === 'number') return String(node);
+            if (Array.isArray(node)) return node.map(extractText).join('');
+            if (React.isValidElement(node) && (node.props as any)?.children) {
+                return extractText((node.props as any).children);
+            }
+            return '';
+        };
+
         const processChild = (child: React.ReactNode) => {
             if (!React.isValidElement(child)) return;
             if (child.type === 'option') {
                 const val = ((child.props as any).value !== undefined ? (child.props as any).value : (child.props as any).children) as T;
-                const lbl = typeof (child.props as any).children === 'string' 
-                    ? (child.props as any).children 
-                    : String(val);
+                const extractedText = extractText((child.props as any).children);
+                const lbl = extractedText.trim() !== '' 
+                    ? extractedText 
+                    : (val !== undefined && val !== null ? String(val) : '');
                 extracted.push({
                     value: val,
                     label: lbl,

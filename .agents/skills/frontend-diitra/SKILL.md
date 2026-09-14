@@ -38,12 +38,21 @@ description: Extiende la skill global de frontend con convenciones y patrones es
   - `getContrastFg(color)`: Calcula por luminancia si el texto del encabezado debe ser blanco (`#ffffff`) u oscuro (`#0f172a`), garantizando siempre legibilidad en exportaciones y previsualizaciones.
 * **Sincronización Bidireccional Canvas ↔ Propiedades:** Al hacer clic o arrastrar un elemento en el lienzo (`RenderCover`, etc.), debe emitirse `onUpdateConfig(blockId, '_activeCoverTab', targetTab)` para activar automáticamente la subpestaña correspondiente en el panel lateral de propiedades.
 
-## 6. Preservación Estricta de Interactividad en Canvas de Plantillas y Workspace
+## 6. Adaptación de Diseños de Fábrica a Producción: Interactividad Total y Expansión de Bloques
 
-* **PROHIBIDO VOLVER ESTÁTICOS LOS BLOQUES DEL DISEÑADOR:** Al estilizar, ajustar o alinear cualquier bloque del lienzo A4 (`canvasRenderers/` como `RenderProjectGeneralSection`, `RenderResearchersTable`, `RenderSections`, etc.) para igualar un formato oficial (Word / PDF / CACES), **queda estrictamente prohibido eliminar o reemplazar inputs, estados locales (`useState`), eventos (`onUpdateConfig`), botones de reordenamiento con flechas, selectores de variantes o controles interactivos por etiquetas HTML estáticas (`<p>`, `<span>`, `<div>` planos)**.
+* **Preservación Innegociable de Propiedades de Edición:**
+  Al modificar, estilizar, refinar o alinear cualquier bloque de fábrica (`canvasRenderers/` como `RenderProjectGeneralSection`, `RenderResearchersTable`, `RenderSections`, etc.) para llevarlo al diseño final de producción (cumplir con normativa institucional ISTPET, formatos CACES, PDF oficial o Word):
+  - **PROHIBIDO VOLVER ESTÁTICOS LOS BLOQUES:** Queda estrictamente prohibido eliminar, aplanar o reemplazar inputs, textareas, estados locales (`useState`), eventos (`onUpdateConfig`), botones de acción, flechas de reordenamiento, selectores de variantes, badges interactivos o modales por etiquetas HTML estáticas (`<p>`, `<span>`, `<div>` planos).
+  - Todas las capacidades interactivas, configuraciones reactivas y bindings bidireccionales deben conservarse al 100%.
+
+* **Regla de Expansión de Bloques (Expandirse Siempre, Nunca Reducirse):**
+  - **Expansión Vertical Flexible:** Si para acomodar el formato oficial de producción, nuevos campos, tablas complejas o requerimientos de edición se necesita más espacio, **el bloque DEBE EXPANDIRSE verticalmente tanto como sea necesario (`h-auto`, `min-h-fit`)**.
+  - **Prohibición Estricta de Encogimiento y Compresión:** Queda terminantemente prohibido forzar la reducción de un bloque con alturas rígidas fijas (`h-[400px]`, `max-h` asfixiante con scroll interno en el lienzo) o recortar/comprimir elementos para "hacerlos caber" en un espacio limitado.
+  - **Cero Eliminación de Controles por Espacio:** Jamás se deben omitir, ocultar o sacrificar campos o controles de edición con la excusa de falta de espacio. Si el contenido o las herramientas de edición crecen, **el bloque se expande hacia abajo; nunca se reduce**.
+
 * **Separación de Capas:**
-  1. **Lienzo A4 (`canvasRenderers/`):** Es 100% interactivo y configurable directamente en el canvas y desde el panel de propiedades.
-  2. **Workspace de Investigación (`components/DIITRA/sections/`):** Es 100% colaborativo y editable con campos `<CoWorkField>` conectados a Yjs.
-  3. **Motor PDF (`DocumentEngine` C#):** Es el único responsable de la emisión final estática con firmas electrónicas.
-* **Regla de Oro:** Todo cambio de apariencia visual debe realizarse por CSS, estilos o tokens (`themeConfig`), **preservando intactos todos los eventos, hooks y capacidades de edición**.
+  1. **Lienzo A4 (`canvasRenderers/`):** Es 100% interactivo, flexible en altura y configurable directamente en el lienzo y desde el panel de propiedades.
+  2. **Workspace de Investigación (`components/DIITRA/sections/`):** Es 100% colaborativo y editable con campos `<CoWorkField>` conectados a Yjs, con altura dinámica según el contenido redactado.
+  3. **Motor PDF (`DocumentEngine` C#):** Es el único responsable de la paginación formal y emisión final estática con firmas electrónicas.
+* **Regla de Oro:** Todo cambio de apariencia visual hacia producción debe realizarse por CSS, estilos limpios o tokens (`themeConfig`), **preservando intactos todos los eventos, hooks, capacidades de edición y permitiendo que el bloque se expanda holgadamente sin jamás comprimirse ni reducirse**.
 

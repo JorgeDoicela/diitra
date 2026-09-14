@@ -51,6 +51,11 @@ Esta skill documenta de forma exacta las convenciones de diseño del sistema DII
 * Prohibido el uso de emojis en cualquier parte de la interfaz.
 * Prohibidos los iconos SVG decorativos superfluos.
 
+### 1.8. Expansión Dinámica de Bloques (Permitir Crecer, Nunca Reducir ni Comprimir)
+* Los bloques de contenido y componentes estructurados deben fluir libremente con altura automática (`h-auto`, `min-h-fit`).
+* Si un bloque requiere alojar nuevos datos, tablas o controles de edición para producción, **debe expandirse hacia abajo todo lo necesario**.
+* Queda estrictamente prohibido aplicar alturas fijas forzadas (`h-[xxx]`), scrolls internos restrictivos o recortes que asfixien, compriman o reduzcan el bloque.
+
 ---
 
 ## 2. Paleta y Componentes Oficiales
@@ -75,3 +80,4 @@ Antes de dar por finalizado cualquier componente visual:
 - [ ] ¿El lenguaje es 100% del dominio académico (cero jerga de Git/DevOps/APIs)?
 - [ ] ¿Hay CERO emojis en títulos, tarjetas y modales?
 - [ ] ¿Los botones usan la geometría sobria de Vercel (Negro/Blanco sólido)?
+- [ ] ¿Los bloques y contenedores tienen libertad para expandirse en altura (`h-auto`) sin alturas fijas forzadas que los reduzcan o compriman?

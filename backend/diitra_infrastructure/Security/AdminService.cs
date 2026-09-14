@@ -63,16 +63,10 @@ public class AdminService : IAdminService
         {
             var query = _context.Alumnos.AsNoTracking().AsQueryable();
 
-            // Optimización de Alto Rendimiento: Resolver carreras y niveles objetivo previamente en memoria
-            var carrerasTargetQuery = _context.Carreras.AsNoTracking();
-            if (origenEstudiante == "INSTITUTO")
-            {
-                carrerasTargetQuery = carrerasTargetQuery.Where(car => car.EsInstituto == 1);
-            }
-            else if (origenEstudiante == "CONDUCCION")
-            {
-                carrerasTargetQuery = carrerasTargetQuery.Where(car => car.EsInstituto == 0 || car.EsInstituto == null);
-            }
+            // En DIITRA se gestiona exclusivamente la producción y personal del Instituto ISTPET.
+            // Excluimos Escuela de Conducción, pero preservamos inteligentemente a todo estudiante que
+            // tenga o haya tenido vinculación académica con ISTPET (incluso si tiene historial en Conducción).
+            var carrerasTargetQuery = _context.Carreras.AsNoTracking().Where(car => car.EsInstituto == 1);
 
             if (!string.IsNullOrEmpty(carrera))
             {
@@ -93,7 +87,11 @@ public class AdminService : IAdminService
 
             var targetNivelIds = await cursosTargetQuery.Select(c => c.IdNivel).Distinct().ToListAsync();
 
-            // Filtrar estudiantes con búsqueda directa sobre los niveles precalculados
+            // Filtrar estudiantes con búsqueda directa sobre los niveles precalculados de ISTPET:
+            // - ACTIVO: matriculado en el periodo académico vigente del Instituto ISTPET.
+            // - GRADUADO: no matriculado en el periodo actual, pero con historial de matrícula válida o nivel registrado en ISTPET.
+            // - TODOS: cualquier alumno con historial de matrícula o registro académico en el Instituto ISTPET.
+            // * Alumnos exclusivos de Escuela de Conducción quedan omitidos automáticamente de raíz.
             if (estadoEstudiante == "ACTIVO" && !string.IsNullOrEmpty(periodId))
             {
                 query = query.Where(a => _context.Matriculas.Any(m =>
@@ -109,7 +107,8 @@ public class AdminService : IAdminService
                     m.IdAlumno == a.IdAlumno &&
                     m.IdPeriodo == periodId &&
                     (m.Retirado == null || m.Retirado == false) &&
-                    m.Valida == 1) &&
+                    m.Valida == 1 &&
+                    targetNivelIds.Contains(m.IdNivel)) &&
                     (targetNivelIds.Contains(a.IdNivel ?? 0) ||
                      _context.Matriculas.Any(m => m.IdAlumno == a.IdAlumno && m.Valida == 1 && targetNivelIds.Contains(m.IdNivel))));
             }
@@ -149,15 +148,34 @@ public class AdminService : IAdminService
 
             var ids = students.Select(s => s.IdAlumno.Trim()).ToList();
 
-            // Obtener datos académicos extra de forma optimizada
+            // 1. Matrículas activas en el periodo vigente del Instituto ISTPET
             var currentMatriculas = await _context.Matriculas.AsNoTracking()
-                .Where(m => ids.Contains(m.IdAlumno) && (string.IsNullOrEmpty(periodId) || m.IdPeriodo == periodId) && m.Valida == 1)
+                .Where(m => ids.Contains(m.IdAlumno) && (string.IsNullOrEmpty(periodId) || m.IdPeriodo == periodId) && (m.Retirado == null || m.Retirado == false) && m.Valida == 1 && targetNivelIds.Contains(m.IdNivel))
                 .Select(m => new { m.IdAlumno, m.IdNivel })
                 .ToListAsync();
 
-            // Pre-cargar información de Cursos exclusivamente para los niveles presentes
-            var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
-                .Concat(students.Select(s => s.IdNivel))
+            // 2. Historial de matrículas ISTPET más recientes (para graduados o alumnos con nivel posterior de Escuela de Conducción)
+            var historicalIstpetMatriculas = await _context.Matriculas.AsNoTracking()
+                .Where(m => ids.Contains(m.IdAlumno) && m.Valida == 1 && targetNivelIds.Contains(m.IdNivel))
+                .OrderByDescending(m => m.IdMatricula)
+                .Select(m => new { m.IdAlumno, m.IdNivel })
+                .ToListAsync();
+
+            // Resolución inteligente: priorizar matrícula activa de ISTPET -> matrícula histórica de ISTPET -> nivel propio si pertenece a ISTPET
+            var resolvedStudentLevels = ids.ToDictionary(
+                id => id,
+                id => {
+                    var curr = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == id);
+                    if (curr != null) return curr.IdNivel;
+                    var hist = historicalIstpetMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == id);
+                    if (hist != null) return hist.IdNivel;
+                    var stud = students.FirstOrDefault(s => s.IdAlumno.Trim() == id);
+                    if (stud?.IdNivel != null && targetNivelIds.Contains(stud.IdNivel.Value)) return stud.IdNivel.Value;
+                    return (int?)null;
+                }
+            );
+
+            var levelIds = resolvedStudentLevels.Values
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .Distinct()
@@ -207,15 +225,14 @@ public class AdminService : IAdminService
                 var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
-                var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
-
-                // Lógica de descubrimiento de datos académicos vía tabla 'cursos'
-                var idNivelTarget = matricula?.IdNivel ?? s.IdNivel;
-                var cursoInfo = relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget);
+                var idNivelTarget = resolvedStudentLevels.TryGetValue(sId, out var rLevel) ? rLevel : null;
+                var cursoInfo = idNivelTarget.HasValue ? relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget.Value) : null;
 
                 var carreraObj = careers.FirstOrDefault(c => c.IdCarrera == cursoInfo?.IdCarrera);
                 var carreraNom = carreraObj?.Carrera1;
                 var nivelNom = cursoInfo?.Nivel;
+
+                var activeMatricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
 
                 return new UserManagementDto
                 {
@@ -229,10 +246,10 @@ public class AdminService : IAdminService
                     RoleCodes = roleInfo.Select(ur => ur.RoleCodigo).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
-                    Carrera = carreraNom ?? "No vinculada",
+                    Carrera = carreraNom ?? "Carrera ISTPET",
                     Nivel = nivelNom ?? "N/A",
-                    EsGraduado = matricula == null,
-                    EsInstituto = carreraObj?.EsInstituto == 1
+                    EsGraduado = activeMatricula == null,
+                    EsInstituto = true
                 };
             }).ToList();
         }
@@ -461,13 +478,18 @@ public class AdminService : IAdminService
         }
         else // DOCENTE
         {
-            // Planta docente: vinculados a Docencia, Carreras o Actividades Académicas
+            // Planta docente: vinculados a Docencia, Carreras o Actividades Académicas del Instituto ISTPET
             var query = _context.Profesores.AsNoTracking().Where(p => p.Activo == 1 &&
                 (_context.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) &&
                     ((c.DepartamentoNavigation != null && c.DepartamentoNavigation.NombreDepartamento == "DOCENCIA") ||
                      (c.CargoInstitutoNavigation != null && c.CargoInstitutoNavigation.Nombre != null && (c.CargoInstitutoNavigation.Nombre.ToLower().Contains("profesor") || c.CargoInstitutoNavigation.Nombre.ToLower().Contains("docente")))))
-                 || _context.ProfesoresCarrerasPeriodos.Any(pc => pc.IdProfesor == p.IdProfesor)
+                 || _context.ProfesoresCarrerasPeriodos.Any(pc => pc.IdProfesor == p.IdProfesor && (pc.IdCarreraNavigation == null || pc.IdCarreraNavigation.EsInstituto == 1))
                  || _context.ProfesoresActividades.Any(pa => pa.IdProfesor == p.IdProfesor)
+                ) &&
+                // Exclusión inteligente: si solo tiene asignación en Escuela de Conducción y ninguna en ISTPET, se excluye de DIITRA
+                !(_context.ProfesoresCarrerasPeriodos.Any(pc => pc.IdProfesor == p.IdProfesor && pc.IdCarreraNavigation != null && pc.IdCarreraNavigation.EsInstituto == 0) &&
+                  !_context.ProfesoresCarrerasPeriodos.Any(pc => pc.IdProfesor == p.IdProfesor && pc.IdCarreraNavigation != null && pc.IdCarreraNavigation.EsInstituto == 1) &&
+                  !_context.Contratos.Any(c => c.IdProfesor == p.IdProfesor && (c.EsActivo == 1 || c.EsActivo == null) && c.DepartamentoNavigation != null && c.DepartamentoNavigation.NombreDepartamento == "DOCENCIA")
                 ));
 
             // Filtrar por docentes que tengan actividades de investigación (idSubcategoria = researchSubcatId) en el periodo actual SOLO si soloConHoras es true
@@ -561,12 +583,13 @@ public class AdminService : IAdminService
                 .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
                 .ToListAsync();
 
-            // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación
+            // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación (priorizando siempre Instituto ISTPET)
             var profCareers = await _context.ProfesoresCarrerasPeriodos.AsNoTracking()
                 .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && (string.IsNullOrEmpty(periodId) || pc.IdPeriodo == periodId) && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
                 .Select(pc => new {
                     IdProfesor = pc.IdProfesor.Trim(),
-                    Carrera = pc.IdCarreraNavigation!.Carrera1
+                    Carrera = pc.IdCarreraNavigation!.Carrera1,
+                    EsInstituto = pc.IdCarreraNavigation.EsInstituto
                 })
                 .ToListAsync();
 
@@ -604,12 +627,11 @@ public class AdminService : IAdminService
                     ? assignedHoursList.Where(ah => ah.IdUsuario == firstUserId.Value).Sum(ah => ah.HorasSemanales ?? 0)
                     : 0;
 
-                var linkedCareers = profCareers
-                    .Where(pc => pc.IdProfesor == pId && !string.IsNullOrEmpty(pc.Carrera))
-                    .Select(pc => pc.Carrera!)
-                    .Distinct()
-                    .ToList();
-                var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+                var profCarList = profCareers.Where(pc => pc.IdProfesor == pId).ToList();
+                var istpetCarList = profCarList.Where(pc => pc.EsInstituto == 1).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                var nonConduccionList = profCarList.Where(pc => pc.EsInstituto != 0 && (pc.Carrera == null || !pc.Carrera.ToLower().Contains("conducci"))).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                var linkedCareers = istpetCarList.Any() ? istpetCarList : nonConduccionList.Any() ? nonConduccionList : new List<string> { "Planta Docente" };
+                var carreraNom = string.Join(", ", linkedCareers);
 
                 return new UserManagementDto
                 {
@@ -652,7 +674,7 @@ public class AdminService : IAdminService
     public async Task<List<string>> GetDepartmentsAsync()
     {
         var list = await _context.Departamentos.AsNoTracking()
-            .Where(d => !string.IsNullOrEmpty(d.NombreDepartamento) && d.NombreDepartamento != "DOCENCIA")
+            .Where(d => !string.IsNullOrEmpty(d.NombreDepartamento) && d.NombreDepartamento != "DOCENCIA" && !d.NombreDepartamento.ToUpper().Contains("CONDUCCION") && !d.NombreDepartamento.ToUpper().Contains("CONDUCCIÓN"))
             .Select(d => d.NombreDepartamento!.Trim())
             .Distinct()
             .OrderBy(d => d)
