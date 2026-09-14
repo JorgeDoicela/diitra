@@ -55,6 +55,7 @@ DROP TABLE IF EXISTS
     inv_cronograma,
     inv_impactos_proyecto,
     inv_cat_impactos,
+    inv_cat_roles,
     inv_proyectos_ods,
     inv_ods,
     inv_ods_ejes,
@@ -176,6 +177,21 @@ CREATE TABLE inv_cat_tipo_evidencia (
     extensiones      VARCHAR(50)  DEFAULT 'pdf,jpg,png,zip',
     activo           TINYINT(1)   DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- NÚCLEO PROFESIONAL: CATÁLOGO INSTITUCIONAL DE ROLES
+CREATE TABLE inv_cat_roles (
+    id_rol         INT AUTO_INCREMENT PRIMARY KEY,
+    uuid           VARCHAR(36) NOT NULL UNIQUE,
+    codigo         VARCHAR(50) NOT NULL UNIQUE,
+    nombre         VARCHAR(100) NOT NULL,
+    ambito         ENUM('PROYECTO', 'GRUPO', 'AMBOS') NOT NULL DEFAULT 'AMBOS',
+    tipo_persona   ENUM('DOCENTE', 'ESTUDIANTE', 'ADMINISTRATIVO', 'EXTERNO', 'TODOS') NOT NULL DEFAULT 'TODOS',
+    descripcion    VARCHAR(255) NULL,
+    es_director    TINYINT(1) NOT NULL DEFAULT 0,
+    activo         TINYINT(1) NOT NULL DEFAULT 1,
+    orden          INT NOT NULL DEFAULT 0,
+    fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo normalizado de roles para equipos de proyecto y grupos de investigación';
 
 -- NÚCLEO PROFESIONAL: ENTIDADES EXTERNAS (Empresas y Aliados)
 CREATE TABLE inv_entidades_externas (
@@ -2457,6 +2473,19 @@ SELECT
     0                                       AS recurrenciaAnual
 FROM inv_proyectos p
 WHERE (p.fechaLimiteInformeFinal IS NOT NULL OR p.fechaLimiteSubsanacionFinal IS NOT NULL);
+
+-- =============================================================================
+-- SEMILLAS: Catálogo de Roles Institucionales (Proyectos y Grupos de Investigación)
+-- =============================================================================
+INSERT IGNORE INTO inv_cat_roles (uuid, codigo, nombre, ambito, tipo_persona, descripcion, es_director, activo, orden) VALUES
+(UUID(), 'DIRECTOR_PROYECTO', 'Director de Proyecto', 'PROYECTO', 'DOCENTE', 'Docente responsable de la dirección científica, técnica y administrativa del proyecto', 1, 1, 1),
+(UUID(), 'CO_INVESTIGADOR', 'Co-Investigador', 'PROYECTO', 'DOCENTE', 'Docente con asignación de horas semanales de investigación en el proyecto', 0, 1, 2),
+(UUID(), 'SEMILLERISTA_PROYECTO', 'Semillerista', 'PROYECTO', 'ESTUDIANTE', 'Estudiante de pregrado participante en actividades de investigación formativa del proyecto', 0, 1, 3),
+(UUID(), 'COORDINADOR_GRUPO', 'Coordinador de Grupo', 'GRUPO', 'DOCENTE', 'Docente titular responsable de coordinar el grupo de investigación formal', 1, 1, 10),
+(UUID(), 'MIEMBRO_DOCENTE_GRUPO', 'Miembro Docente', 'GRUPO', 'DOCENTE', 'Docente adscrito como investigador activo del grupo formal', 0, 1, 11),
+(UUID(), 'SEMILLERISTA_GRUPO', 'Semillerista de Grupo', 'GRUPO', 'ESTUDIANTE', 'Estudiante vinculado a los semilleros del grupo formal', 0, 1, 12),
+(UUID(), 'APOYO_TECNICO_GRUPO', 'Personal de Apoyo Técnico', 'GRUPO', 'ADMINISTRATIVO', 'Personal técnico o administrativo de soporte a las actividades del grupo', 0, 1, 13),
+(UUID(), 'INVESTIGADOR_EXTERNO_GRUPO', 'Investigador Externo / Asesor', 'GRUPO', 'EXTERNO', 'Investigador asociado o asesor científico externo a la institución', 0, 1, 14);
 
 -- ATENCIÓN: ESTE BLOQUE DEBE IR SIEMPRE AL FINAL ABSOLUTO DEL SCRIPT SQL.
 -- Registra la migración inicial de EF Core para que no intente recrear las tablas.

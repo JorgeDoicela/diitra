@@ -53,7 +53,8 @@ namespace diitra_infrastructure.Research
                 .Select(i => i.Cedula!.Trim())
                 .ToHashSet();
 
-            if (!isFromWizard)
+            // Desactivar docentes o alumnos que ya no formen parte de la nómina activa enviada
+            if (!isFromWizard || activeCedulas.Count > 0)
             {
                 foreach (var prof in currentProfs)
                 {
@@ -62,14 +63,11 @@ namespace diitra_infrastructure.Research
                     {
                         prof.Activo = false;
                         prof.FechaFin = DateTime.Now;
-                        prof.MotivoCambio = "Retirado del equipo";
+                        prof.MotivoCambio = isFromWizard ? "Retirado del protocolo" : "Retirado del equipo";
                         prof.EsDirector = false;
                     }
                 }
-            }
 
-            if (!isFromWizard)
-            {
                 foreach (var alum in currentAlums)
                 {
                     var cedula = alum.IdUsuarioNavigation?.IdSigafi?.Trim();
@@ -77,12 +75,27 @@ namespace diitra_infrastructure.Research
                     {
                         alum.Activo = false;
                         alum.FechaFin = DateTime.Now;
-                        alum.MotivoCambio = "Retirado del equipo";
+                        alum.MotivoCambio = isFromWizard ? "Retirado del protocolo" : "Retirado del equipo";
                     }
                 }
             }
 
+            // Regla Institucional CACES: Si existen integrantes activos pero ninguno tiene asignado el rol de Director
+            // (por ejemplo, porque el Director fue eliminado), se transfiere automáticamente la dirección al primer integrante elegible (priorizando docentes).
+            var activeInvestigadores = investigadores.Where(i => i.Activo != false && !string.IsNullOrEmpty(i.Cedula)).ToList();
+            if (activeInvestigadores.Count > 0 && !activeInvestigadores.Any(i => diitra_domain.Research.ResearchRoles.IsProjectDirector(i.Rol) || i.EsDirector == true))
+            {
+                var candidate = activeInvestigadores.FirstOrDefault(i =>
+                    !string.Equals(i.NivelAcademico, "Pregrado", StringComparison.OrdinalIgnoreCase) &&
+                    !diitra_domain.Research.ResearchRoles.IsStudentRole(i.Rol))
+                    ?? activeInvestigadores.First();
+
+                candidate.Rol = diitra_domain.Research.ResearchRoles.Project.Director;
+                candidate.EsDirector = true;
+            }
+
             var investigatorsToNotify = new List<InvestigadorDto>();
+            bool hasAssignedDirector = false;
 
             foreach (var inv in investigadores)
             {
@@ -92,7 +105,20 @@ namespace diitra_infrastructure.Research
                 var persona = await _authService.GetOrProvisionUserByCedulaAsync(cedulaTrim);
                 if (persona == null) continue;
 
-                bool esDirector = inv.Rol?.Contains("Director") == true;
+                bool esDirector = inv.Activo != false && diitra_domain.Research.ResearchRoles.IsProjectDirector(inv.Rol);
+                if (esDirector)
+                {
+                    if (!hasAssignedDirector)
+                    {
+                        hasAssignedDirector = true;
+                    }
+                    else
+                    {
+                        // Regla Institucional CACES: Solo puede existir un único Director de Proyecto en el equipo
+                        esDirector = false;
+                        inv.Rol = diitra_domain.Research.ResearchRoles.Project.CoInvestigador;
+                    }
+                }
 
                 if (persona.TablaSigafi == "alumno")
                 {
@@ -103,12 +129,27 @@ namespace diitra_infrastructure.Research
                         {
                             existingAlum.Telefono = inv.Telefono;
                             existingAlum.HorasSemanales = inv.HorasSemanales;
+                            if (!string.IsNullOrWhiteSpace(inv.Rol))
+                            {
+                                existingAlum.Rol = ProjectHelper.NormalizeRole(inv.Rol, "ESTUDIANTE");
+                            }
+                            if (!string.IsNullOrWhiteSpace(inv.NivelAcademico))
+                            {
+                                existingAlum.NivelAcademico = inv.NivelAcademico;
+                            }
+                            if (existingAlum.Activo == false)
+                            {
+                                existingAlum.Activo = true;
+                                existingAlum.FechaInicio = DateTime.Now;
+                                existingAlum.FechaFin = null;
+                                existingAlum.MotivoCambio = null;
+                            }
                         }
                         else
                         {
                             bool wasActive = existingAlum.Activo != false;
                             string oldRol = existingAlum.Rol ?? "";
-                            string newRol = ProjectHelper.NormalizeRole(inv.Rol);
+                            string newRol = ProjectHelper.NormalizeRole(inv.Rol, "ESTUDIANTE");
 
                             existingAlum.Rol = newRol;
                             existingAlum.NivelAcademico = inv.NivelAcademico;
@@ -143,14 +184,14 @@ namespace diitra_infrastructure.Research
                             }
                         }
                     }
-                    else if (!isFromWizard)
+                    else
                     {
                         _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
                             TipoParticipante = "Alumno",
-                            Rol = ProjectHelper.NormalizeRole(inv.Rol),
+                            Rol = ProjectHelper.NormalizeRole(inv.Rol, "ESTUDIANTE"),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await ProjectHelper.GetUserPhoneFromCatalogAsync(_context, persona.IdSigafi, persona.TablaSigafi),
                             HorasSemanales = inv.HorasSemanales,
@@ -176,12 +217,28 @@ namespace diitra_infrastructure.Research
                         {
                             existingProf.Telefono = inv.Telefono;
                             existingProf.HorasSemanales = inv.HorasSemanales;
+                            if (!string.IsNullOrWhiteSpace(inv.Rol))
+                            {
+                                existingProf.Rol = ProjectHelper.NormalizeRole(inv.Rol, "DOCENTE");
+                                existingProf.EsDirector = esDirector;
+                            }
+                            if (!string.IsNullOrWhiteSpace(inv.NivelAcademico))
+                            {
+                                existingProf.NivelAcademico = inv.NivelAcademico;
+                            }
+                            if (existingProf.Activo == false)
+                            {
+                                existingProf.Activo = true;
+                                existingProf.FechaInicio = DateTime.Now;
+                                existingProf.FechaFin = null;
+                                existingProf.MotivoCambio = null;
+                            }
                         }
                         else
                         {
                             bool wasActive = existingProf.Activo != false;
                             string oldRol = existingProf.Rol ?? "";
-                            string newRol = ProjectHelper.NormalizeRole(inv.Rol);
+                            string newRol = ProjectHelper.NormalizeRole(inv.Rol, "DOCENTE");
 
                             existingProf.Rol = newRol;
                             existingProf.NivelAcademico = inv.NivelAcademico;
@@ -218,14 +275,14 @@ namespace diitra_infrastructure.Research
                             }
                         }
                     }
-                    else if (!isFromWizard)
+                    else
                     {
                         _context.InvProyectoParticipantes.Add(new InvProyectoParticipante
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
                             TipoParticipante = "Docente",
-                            Rol = ProjectHelper.NormalizeRole(inv.Rol),
+                            Rol = ProjectHelper.NormalizeRole(inv.Rol, "DOCENTE"),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await ProjectHelper.GetUserPhoneFromCatalogAsync(_context, persona.IdSigafi, persona.TablaSigafi),
                             EsDirector = esDirector,
@@ -275,18 +332,26 @@ namespace diitra_infrastructure.Research
                     coordHours = coordIncoming.HorasSemanales;
                 }
 
+                var existingProjectDirector = await _context.InvProyectoParticipantes
+                    .AnyAsync(pp => pp.IdProyecto == projectId && pp.EsDirector == true && pp.Activo != false);
+
+                var coordRole = diitra_domain.Research.ResearchRoles.MapGroupRoleToProjectRole(
+                    diitra_domain.Research.ResearchRoles.Group.Coordinador,
+                    "DOCENTE",
+                    existingProjectDirector);
+
                 participantes.Add(new InvestigadorDto
                 {
                     Nombre = group.IdCoordinadorNavigation.Nombre,
                     Cedula = coordSigafi,
                     Email = group.IdCoordinadorNavigation.EmailInstitucional ?? group.IdCoordinadorNavigation.IdSigafi ?? "",
-                    Rol = "Coordinador de Proyecto",
+                    Rol = coordRole,
                     NivelAcademico = "Tercer Nivel",
                     Telefono = phone,
                     Activo = true,
                     HorasSemanales = coordHours,
                     FechaInicio = DateTime.Now,
-                    EsDirector = false
+                    EsDirector = coordRole == diitra_domain.Research.ResearchRoles.Project.Director
                 });
             }
 
@@ -305,12 +370,15 @@ namespace diitra_infrastructure.Research
                     memberHours = memberIncoming.HorasSemanales;
                 }
 
+                var memberTipo = user.TablaSigafi == "alumno" ? "ESTUDIANTE" : "DOCENTE";
+                var mappedRole = diitra_domain.Research.ResearchRoles.MapGroupRoleToProjectRole(m.Rol, memberTipo, true);
+
                 participantes.Add(new InvestigadorDto
                 {
                     Nombre = user.Nombre,
                     Cedula = sigafiId,
                     Email = user.EmailInstitucional ?? user.IdSigafi ?? "",
-                    Rol = m.Rol ?? "Co-Investigador",
+                    Rol = mappedRole,
                     NivelAcademico = user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
                     Telefono = phone,
                     Activo = true,

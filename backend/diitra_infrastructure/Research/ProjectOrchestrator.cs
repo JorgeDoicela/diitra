@@ -54,6 +54,9 @@ namespace diitra_infrastructure.Research
         public Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null, bool? tieneGrupoInvestigacion = null)
             => _teamService.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion);
 
+        public Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion, bool? tieneGrupoInvestigacion, string? modalidadProyecto)
+            => _teamService.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion, modalidadProyecto);
+
         public Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request)
             => _teamService.TransferDirectorAsync(uuid, request);
 

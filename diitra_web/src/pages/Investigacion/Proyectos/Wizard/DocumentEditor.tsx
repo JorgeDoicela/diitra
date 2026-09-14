@@ -21,6 +21,8 @@ import { getDocumentSection, COMPONENT_MAP } from '../../../../core/documents/re
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../core/documents/templateUrl';
 import { formatDynamicSectionLabel } from '../../../../utils/sectionNumbering';
+import { PROJECT_ROLES, isProjectDirector } from '../../../../utils/roleCatalog';
+import { isStudentMember } from '../../../../components/DIITRA/sections/hooks/useDocenteDistributivo';
 
 /**
  * Mapa de nombres de íconos (string del Registry) → componentes Lucide.
@@ -255,66 +257,65 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     setDocInstanceData({});
                 }
 
-                // Auto-completar metadatos del proyecto para oficio de aprobación si faltan valores iniciales
-                if (entityUuid && entityUuid !== 'GLOBAL' && templateCode === 'OFICIO_APROBACION') {
+                // Sincronizar equipo del proyecto y metadatos actualizados desde BD institucional para cualquier documento de proyecto
+                if (entityUuid && entityUuid !== 'GLOBAL') {
                     try {
                         const projRes = await api.get(`/projects/${entityUuid}/detail`);
                         if (projRes.data) {
-                            const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
-                                inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
-                            );
-                            const directorNombre = directorObj
-                                ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
-                                : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
-                            const directorCarrera = projRes.data.carrera || '';
-                            const todaySpanish = new Date().toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
-
-                            setDocInstanceData((prev: any) => ({
-                                oficio_numero: prev?.oficio_numero || `01-ISTPET-INV-${new Date().getFullYear()}`,
-                                oficio_fecha: prev?.oficio_fecha || todaySpanish,
-                                director_nombre: prev?.director_nombre || directorNombre,
-                                director_carrera: prev?.director_carrera || directorCarrera,
-                                coordinador_nombre: prev?.coordinador_nombre || 'Ing. Estefani Sánchez Mgtr.',
-                                ...prev
-                            }));
-                        }
-                    } catch (e) {
-                        console.warn('[DIITRA] No se pudo autocompletar metadatos del proyecto:', e);
-                    }
-                }
-
-                // Auto-completar metadatos del proyecto para Plan de Aprendizaje / Evaluación si faltan valores iniciales
-                if (entityUuid && entityUuid !== 'GLOBAL' && (templateCode === 'PLAN_APRENDIZAJE' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE')) {
-                    try {
-                        const projRes = await api.get(`/projects/${entityUuid}/detail`);
-                        if (projRes.data) {
-                            const directorObj = (projRes.data.investigadores || []).find((inv: any) =>
+                            const dbInvs = Array.isArray(projRes.data.investigadores) ? projRes.data.investigadores : [];
+                            const directorObj = dbInvs.find((inv: any) =>
                                 inv.rol?.toLowerCase().includes('director') || inv.rol?.toLowerCase().includes('principal') || inv.es_director || inv.esDirector
                             );
                             const directorNombre = directorObj
                                 ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
                                 : (projRes.data.director_proyecto || projRes.data.directorProyecto || '');
 
-                            const docentes = (projRes.data.investigadores || []).map((inv: any) => ({
-                                cedula: inv.cedula || '',
-                                nombres: inv.nombres_completos || inv.nombresCompletos || `${inv.nombre || ''} ${inv.apellido || ''}`.trim(),
-                                rol: inv.rol || 'Coinvestigador'
-                            }));
+                            setDocInstanceData((prev: any) => {
+                                const currentInvs = prev?.Investigadores || prev?.investigadores || [];
+                                const effectiveInvs = dbInvs.length > 0 ? dbInvs : currentInvs;
+                                return {
+                                    ...prev,
+                                    Investigadores: effectiveInvs,
+                                    investigadores: effectiveInvs,
+                                    DirectorProyecto: prev?.DirectorProyecto || directorNombre,
+                                    DirectorNombre: prev?.DirectorNombre || directorNombre
+                                };
+                            });
 
-                            setDocInstanceData((prev: any) => ({
-                                NombreProyecto: prev?.NombreProyecto || projRes.data.titulo || '',
-                                TituloProyecto: prev?.TituloProyecto || projRes.data.titulo || '',
-                                LineaInvestigacion: prev?.LineaInvestigacion || projRes.data.linea || projRes.data.linea_investigacion || '',
-                                SublineaInvestigacion: prev?.SublineaInvestigacion || projRes.data.sublinea || projRes.data.sublinea_investigacion || '',
-                                Carrera: prev?.Carrera || projRes.data.carrera || '',
-                                PeriodoAcademico: prev?.PeriodoAcademico || projRes.data.periodo || projRes.data.periodo_convocatoria || '',
-                                DirectorProyecto: prev?.DirectorProyecto || directorNombre,
-                                DocentesParticipantes: (prev?.DocentesParticipantes && prev.DocentesParticipantes.length > 0) ? prev.DocentesParticipantes : docentes,
-                                ...prev
-                            }));
+                            // Casos específicos para plantillas de oficios y planes de aprendizaje
+                            if (templateCode === 'OFICIO_APROBACION') {
+                                const directorCarrera = projRes.data.carrera || '';
+                                const todaySpanish = new Date().toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
+                                setDocInstanceData((prev: any) => ({
+                                    oficio_numero: prev?.oficio_numero || `01-ISTPET-INV-${new Date().getFullYear()}`,
+                                    oficio_fecha: prev?.oficio_fecha || todaySpanish,
+                                    director_nombre: prev?.director_nombre || directorNombre,
+                                    director_carrera: prev?.director_carrera || directorCarrera,
+                                    coordinador_nombre: prev?.coordinador_nombre || 'Ing. Estefani Sánchez Mgtr.',
+                                    ...prev
+                                }));
+                            } else if (templateCode === 'PLAN_APRENDIZAJE' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE') {
+                                const docentes = dbInvs.map((inv: any) => ({
+                                    cedula: inv.cedula || '',
+                                    nombres: inv.nombres_completos || inv.nombresCompletos || `${inv.nombre || ''} ${inv.apellido || ''}`.trim(),
+                                    rol: inv.rol || 'Coinvestigador'
+                                }));
+
+                                setDocInstanceData((prev: any) => ({
+                                    NombreProyecto: prev?.NombreProyecto || projRes.data.titulo || '',
+                                    TituloProyecto: prev?.TituloProyecto || projRes.data.titulo || '',
+                                    LineaInvestigacion: prev?.LineaInvestigacion || projRes.data.linea || projRes.data.linea_investigacion || '',
+                                    SublineaInvestigacion: prev?.SublineaInvestigacion || projRes.data.sublinea || projRes.data.sublinea_investigacion || '',
+                                    Carrera: prev?.Carrera || projRes.data.carrera || '',
+                                    PeriodoAcademico: prev?.PeriodoAcademico || projRes.data.periodo || projRes.data.periodo_convocatoria || '',
+                                    DirectorProyecto: prev?.DirectorProyecto || directorNombre,
+                                    DocentesParticipantes: (prev?.DocentesParticipantes && prev.DocentesParticipantes.length > 0) ? prev.DocentesParticipantes : docentes,
+                                    ...prev
+                                }));
+                            }
                         }
                     } catch (e) {
-                        console.warn('[DIITRA] No se pudo autocompletar metadatos para Plan de Aprendizaje:', e);
+                        console.warn('[DIITRA] No se pudo autocompletar metadatos del proyecto desde detail:', e);
                     }
                 }
 
@@ -684,6 +685,12 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 if (returnedUuid && returnedUuid !== cleanedData.Uuid) {
                     setFormData((prev: any) => ({ ...prev, Uuid: returnedUuid }));
                 }
+                window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+                if (entityUuid && entityUuid !== 'GLOBAL') {
+                    window.dispatchEvent(new CustomEvent('diitra-project-team-updated', {
+                        detail: { projectUuid: entityUuid, team: cleanedData.Investigadores }
+                    }));
+                }
             } else {
                 const response = await api.post('/documents/instances', {
                     templateCode,
@@ -781,7 +788,31 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             if (sec.id === 'equipo') {
                                 listProps = {
                                     onAdd: (tpl?: any) => addItem('Investigadores', tpl || { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '', HorasSemanales: null }),
-                                    onRemove: (i: number) => removeItem('Investigadores', i),
+                                    onRemove: (i: number) => {
+                                        const currentList = Array.isArray(formData?.Investigadores) ? formData.Investigadores : [];
+                                        const target = currentList[i];
+                                        const wasDirector = target && (isProjectDirector(target.Rol || target.rol) || target.EsDirector || target.esDirector);
+                                        const remaining = currentList.filter((_: any, idx: number) => idx !== i);
+
+                                        removeItem('Investigadores', i);
+
+                                        if (remaining.length > 0) {
+                                            const hasOtherDirector = remaining.some((m: any) => isProjectDirector(m.Rol || m.rol) || m.EsDirector || m.esDirector);
+                                            if (!hasOtherDirector) {
+                                                let nextIdx = remaining.findIndex((m: any) => !isStudentMember(m));
+                                                if (nextIdx === -1) nextIdx = 0;
+                                                const promoted = remaining[nextIdx];
+                                                const promotedName = promoted?.Nombre || promoted?.nombre || 'el siguiente integrante';
+
+                                                updateItem('Investigadores', nextIdx, 'Rol', PROJECT_ROLES.DIRECTOR);
+                                                updateItem('Investigadores', nextIdx, 'EsDirector', true);
+                                                if (promotedName) {
+                                                    updateField('DirectorProyecto', promotedName, { source: 'system' });
+                                                }
+                                                addToast("Dirección Transferida", `Se removió al director. La dirección del proyecto fue transferida automáticamente a ${promotedName}.`, "info");
+                                            }
+                                        }
+                                    },
                                     onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v),
                                     onUpdateItem: (_listName: string, i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
                                 };

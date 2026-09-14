@@ -80,6 +80,7 @@ public partial class DiitraContext : DbContext
 
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
     public virtual DbSet<InvCatTipoEvidencia>  InvCatTipoEvidencias   { get; set; }
+    public virtual DbSet<InvCatRol>            InvCatRoles            { get; set; }
     public virtual DbSet<InvEntidadExterna>    InvEntidadesExternas   { get; set; }
     public virtual DbSet<InvConfigIndicador>   InvConfigIndicadores   { get; set; }
     public virtual DbSet<InvRubricaCriterio>   InvRubricaCriterios    { get; set; }

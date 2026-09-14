@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import api from '../../../../../api/axios_config';
 import { fetchCatalogCached } from '../../../../../api/catalogsCache';
 import { useAuth } from '../../../../../api/AuthContext';
 import { useNotifications } from '../../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../../api/ConfirmContext';
 import { mapInvestigador } from './useProjectCore';
+import { mapGroupRoleToProjectRole, isProjectDirector, PROJECT_ROLES } from '../../../../../utils/roleCatalog';
 
 export const formatCareerName = (name: string) => {
     if (!name) return '';
@@ -26,6 +27,7 @@ export function useProjectTeam(
     const confirm = useConfirm();
 
     const [investigadores, setInvestigadores] = useState<any[]>([]);
+    const [modalidadEquipo, setModalidadEquipo] = useState<'INDIVIDUAL' | 'EQUIPO' | 'GRUPO'>('EQUIPO');
     const [tieneGrupo, setTieneGrupo] = useState<boolean>(false);
     const [grupoInvestigacion, setGrupoInvestigacion] = useState<string>('');
     const [availableGroups, setAvailableGroups] = useState<any[]>([]);
@@ -318,16 +320,8 @@ export function useProjectTeam(
 
                     const exists = updatedMembers.some(inv => inv.cedula?.trim() === memberCedula);
                     if (!exists) {
-                        const groupRol = m.rol || "";
-                        let projectRol = "Co-Investigador";
-                        if (groupRol.toLowerCase().includes("coordinador") || groupRol.toLowerCase().includes("director")) {
-                            const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
-                            projectRol = hasDirector ? "Co-Investigador" : "Director de Proyecto";
-                        } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno") || groupRol.toLowerCase().includes("semillerista")) {
-                            projectRol = "Semillerista";
-                        } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
-                            projectRol = "Co-Investigador";
-                        }
+                        const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
+                        const projectRol = mapGroupRoleToProjectRole(m.rol, m.tipo, hasDirector);
 
                         const hoursData = memberHoursMap[memberCedula] || { horasDisponibles: 0, horasAsignadas: 0 };
 
@@ -414,7 +408,14 @@ export function useProjectTeam(
 
                 setCurrentProject((prev: any) => ({
                     ...prev,
+                    investigadores: updatedProjectRes.data.investigadores || [],
                     tieneGrupoInvestigacion: hasGroup
+                }));
+                window.dispatchEvent(new CustomEvent('diitra-project-team-updated', {
+                    detail: {
+                        projectUuid: currentProject.uuid,
+                        team: updatedProjectRes.data.investigadores || []
+                    }
                 }));
             } else {
                 addToast("Error de Transferencia", res.data.message || "Error al realizar la transferencia.", "error");
@@ -428,12 +429,56 @@ export function useProjectTeam(
         }
     };
 
+    const hasActiveDirector = useMemo(() => {
+        return investigadores.some(inv => isProjectDirector(inv.rol) || inv.esDirector);
+    }, [investigadores]);
+
     const handleUpdateMember = (cedula: string, field: string, value: any) => {
         if (tieneGrupo && field !== 'horasSemanales') {
             addToast("Acción no permitida", "En proyectos asociativos la edición del equipo se realiza únicamente en /grupos.", "warning");
             return;
         }
-        setInvestigadores(prev => prev.map(inv => inv.cedula === cedula ? { ...inv, [field]: value } : inv));
+        setInvestigadores(prev => {
+            const isSettingDirector = field === 'rol' && isProjectDirector(value);
+            const updated = prev.map(inv => {
+                if (inv.cedula === cedula) {
+                    return {
+                        ...inv,
+                        [field]: value,
+                        ...(field === 'rol' ? { esDirector: isSettingDirector } : {})
+                    };
+                }
+                // Regla Institucional / CACES: Solo puede existir un único Director de Proyecto en el equipo
+                if (isSettingDirector && (isProjectDirector(inv.rol) || inv.esDirector)) {
+                    return {
+                        ...inv,
+                        rol: PROJECT_ROLES.CO_INVESTIGADOR,
+                        esDirector: false
+                    };
+                }
+                return inv;
+            });
+
+            // Si se cambió el rol y no quedó ningún Director en el equipo, auto-promover al primer integrante elegible (docente)
+            if (field === 'rol' && !isSettingDirector) {
+                const hasActiveDir = updated.some(inv => (isProjectDirector(inv.rol) || inv.esDirector) && inv.activo !== false);
+                if (!hasActiveDir && updated.filter(inv => inv.activo !== false).length > 0) {
+                    const activeList = updated.filter(inv => inv.activo !== false);
+                    let candidateIdx = activeList.findIndex(inv => inv.cedula !== cedula && (inv.tipo || '').toUpperCase() !== 'ESTUDIANTE');
+                    if (candidateIdx === -1) candidateIdx = activeList.findIndex(inv => inv.cedula !== cedula);
+                    if (candidateIdx !== -1) {
+                        const candidateCedula = activeList[candidateIdx].cedula;
+                        return updated.map(inv => inv.cedula === candidateCedula ? { ...inv, rol: PROJECT_ROLES.DIRECTOR, esDirector: true } : inv);
+                    }
+                }
+            }
+
+            return updated;
+        });
+
+        if (field === 'rol' && isProjectDirector(value)) {
+            addToast("Dirección de Proyecto", "Se ha reasignado la dirección del proyecto. El director anterior pasa a Co-Investigador.", "info");
+        }
     };
 
     const handleRemoveMember = (cedula: string) => {
@@ -442,7 +487,57 @@ export function useProjectTeam(
             return;
         }
 
-        setInvestigadores(prev => prev.filter(inv => inv.cedula !== cedula));
+        const target = investigadores.find(inv => (inv.cedula || '').trim().toLowerCase() === cedula.trim().toLowerCase());
+        const wasDirector = target && (isProjectDirector(target.rol) || target.esDirector || target.EsDirector);
+        const remaining = investigadores.filter(inv => (inv.cedula || '').trim().toLowerCase() !== cedula.trim().toLowerCase());
+
+        let promotedMemberName: string | null = null;
+        if (remaining.length > 0) {
+            const hasOtherActiveDir = remaining.some(inv => isProjectDirector(inv.rol) || inv.esDirector || inv.EsDirector);
+            if (!hasOtherActiveDir) {
+                let nextIdx = remaining.findIndex(inv => {
+                    const cleanTipo = (inv.tipo || inv.TipoParticipante || '').toUpperCase();
+                    const nivel = (inv.nivelAcademico || inv.NivelAcademico || '').toLowerCase();
+                    return cleanTipo !== 'ESTUDIANTE' && cleanTipo !== 'ALUMNO' && nivel !== 'pregrado';
+                });
+                if (nextIdx === -1) nextIdx = 0;
+                promotedMemberName = remaining[nextIdx].nombre;
+            }
+        }
+
+        setInvestigadores(prev => {
+            const rem = prev.filter(inv => (inv.cedula || '').trim().toLowerCase() !== cedula.trim().toLowerCase());
+            if (rem.length === 0) return rem;
+
+            const hasActiveDir = rem.some(inv => isProjectDirector(inv.rol) || inv.esDirector || inv.EsDirector);
+            if (!hasActiveDir) {
+                let nextIdx = rem.findIndex(inv => {
+                    const cleanTipo = (inv.tipo || inv.TipoParticipante || '').toUpperCase();
+                    const nivel = (inv.nivelAcademico || inv.NivelAcademico || '').toLowerCase();
+                    return cleanTipo !== 'ESTUDIANTE' && cleanTipo !== 'ALUMNO' && nivel !== 'pregrado';
+                });
+                if (nextIdx === -1) nextIdx = 0;
+
+                return rem.map((inv, idx) => {
+                    if (idx === nextIdx) {
+                        return {
+                            ...inv,
+                            rol: PROJECT_ROLES.DIRECTOR,
+                            esDirector: true
+                        };
+                    }
+                    return inv;
+                });
+            }
+
+            return rem;
+        });
+
+        if (promotedMemberName) {
+            addToast("Dirección Transferida", `Se removió al director. La dirección del proyecto fue transferida automáticamente a ${promotedMemberName}.`, "info");
+        } else {
+            addToast("Integrante removido", "El integrante ha sido retirado del equipo del proyecto.", "success");
+        }
     };
 
     const handleSaveTeam = async () => {
@@ -466,29 +561,37 @@ export function useProjectTeam(
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload, {
                 params: {
                     grupoInvestigacion: grupoInvestigacion || null,
-                    tieneGrupoInvestigacion: tieneGrupo
+                    tieneGrupoInvestigacion: modalidadEquipo === 'GRUPO',
+                    modalidadProyecto: modalidadEquipo
                 }
             });
             if (res.data.success) {
-                addToast(
-                    tieneGrupo ? "Equipo de Trabajo" : "Personal del Proyecto",
-                    tieneGrupo ? "¡Equipo de trabajo guardado y sincronizado con éxito!" : "¡Personal del proyecto guardado con éxito!",
-                    "success"
-                );
+                const toastTitle = modalidadEquipo === 'GRUPO' 
+                    ? "Equipo Asociativo" 
+                    : (modalidadEquipo === 'INDIVIDUAL' ? "Proyecto Individual" : "Equipo de Proyecto");
+                const toastMsg = modalidadEquipo === 'GRUPO'
+                    ? "¡Equipo asociativo guardado y sincronizado con el grupo!"
+                    : (modalidadEquipo === 'INDIVIDUAL' ? "¡Datos de investigación individual guardados con éxito!" : "¡Equipo de proyecto guardado con éxito!");
+
+                addToast(toastTitle, toastMsg, "success");
 
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
-                setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
-
-                const groupUuid = refreshed.data.grupo_investigacion_uuid ?? refreshed.data.grupoInvestigacionUuid ?? refreshed.data.grupo_investigacion ?? refreshed.data.grupoInvestigacion ?? '';
-                const hasGroup = !!(refreshed.data.tiene_grupo_investigacion ?? refreshed.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
-                setTieneGrupo(hasGroup);
-                setGrupoInvestigacion(groupUuid);
+                if (refreshed.data) {
+                    populateTeamFromProject(refreshed.data);
+                }
 
                 setCurrentProject((prev: any) => ({
                     ...prev,
+                    investigadores: refreshed.data.investigadores || [],
                     tieneGrupoInvestigacion: hasGroup,
                     grupoInvestigacion: refreshed.data.grupo_investigacion ?? refreshed.data.grupoInvestigacion ?? null,
                     grupoInvestigacionUuid: refreshed.data.grupo_investigacion_uuid ?? refreshed.data.grupoInvestigacionUuid ?? null
+                }));
+                window.dispatchEvent(new CustomEvent('diitra-project-team-updated', {
+                    detail: {
+                        projectUuid: currentProject.uuid,
+                        team: refreshed.data.investigadores || []
+                    }
                 }));
                 await fetchTeamChangeRequests(currentProject.uuid);
             } else {
@@ -554,7 +657,17 @@ export function useProjectTeam(
                 addToast("Revisión completada", res.data.message || "Solicitud procesada.", "success");
                 await fetchTeamChangeRequests(currentProject.uuid);
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
-                setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
+                populateTeamFromProject(refreshed.data);
+                setCurrentProject((prev: any) => ({
+                    ...prev,
+                    investigadores: refreshed.data.investigadores || []
+                }));
+                window.dispatchEvent(new CustomEvent('diitra-project-team-updated', {
+                    detail: {
+                        projectUuid: currentProject.uuid,
+                        team: refreshed.data.investigadores || []
+                    }
+                }));
             } else {
                 addToast("Error de revisión", res.data?.message || "No se pudo revisar la solicitud.", "error");
             }
@@ -564,39 +677,160 @@ export function useProjectTeam(
         }
     };
 
-    const handleToggleTieneGrupo = async (val: boolean) => {
-        if (!val) {
-            const director = investigadores.find(inv => inv.rol?.toLowerCase().includes('director')) || investigadores[0];
-            if (investigadores.length > 1) {
-                if (await confirm({
-                    title: "Trabajo Individual",
-                    message: "Al cambiar a Trabajo Individual, se removerán los demás co-investigadores y estudiantes. ¿Deseas continuar?",
-                    confirmText: "Continuar",
-                    cancelText: "Cancelar",
-                    variant: "warning"
-                })) {
-                    setInvestigadores(director ? [director] : []);
-                    setTieneGrupo(false);
-                    setGrupoInvestigacion('');
-                    lastSyncedGroupRef.current = null;
-                }
-            } else {
-                setTieneGrupo(false);
-                setGrupoInvestigacion('');
-                lastSyncedGroupRef.current = null;
+    const handleSelectModalidad = async (newMod: 'INDIVIDUAL' | 'EQUIPO' | 'GRUPO') => {
+        if (newMod === modalidadEquipo) return;
+
+        if (newMod === 'INDIVIDUAL') {
+            const activeMembers = investigadores.filter(m => m.activo !== false);
+            if (activeMembers.length > 1) {
+                const confirmed = await confirm({
+                    title: "Cambiar a Modalidad Individual",
+                    message: "La modalidad Individual es unipersonal y admite exclusivamente al Director del Proyecto. Al cambiar a Individual se conservará al Director y se removerán los demás integrantes. ¿Deseas proceder?",
+                    confirmText: "Conservar solo Director y Cambiar",
+                    cancelText: "Cancelar"
+                });
+                if (!confirmed) return;
+
+                const dir = investigadores.find(i => (isProjectDirector(i.rol) || i.esDirector) && i.activo !== false) || investigadores[0];
+                setInvestigadores([{ ...dir, rol: PROJECT_ROLES.DIRECTOR, esDirector: true }]);
             }
-        } else {
-            setTieneGrupo(true);
+            setTieneGrupo(false);
+            setGrupoInvestigacion('');
+            lastSyncedGroupRef.current = null;
+            setModalidadEquipo('INDIVIDUAL');
+            addToast("Modalidad Individual", "Proyecto configurado en modalidad Individual (unipersonal).", "info");
+            return;
         }
+
+        if (newMod === 'EQUIPO') {
+            setTieneGrupo(false);
+            setGrupoInvestigacion('');
+            lastSyncedGroupRef.current = null;
+            setModalidadEquipo('EQUIPO');
+            addToast("Equipo de Proyecto", "Modalidad Equipo de Proyecto activada. Ahora puedes gestionar libremente directores, co-investigadores y semilleristas.", "info");
+            return;
+        }
+
+        if (newMod === 'GRUPO') {
+            setTieneGrupo(true);
+            setModalidadEquipo('GRUPO');
+            addToast("Modalidad Asociativa", "Modalidad Asociativa activada. Selecciona un grupo de investigación aprobado para sincronizar a sus miembros.", "info");
+            return;
+        }
+    };
+
+    const handleToggleTieneGrupo = async (val: boolean) => {
+        if (val) {
+            await handleSelectModalidad('GRUPO');
+        } else {
+            const activeCount = investigadores.filter(m => m.activo !== false).length;
+            await handleSelectModalidad(activeCount > 1 ? 'EQUIPO' : 'INDIVIDUAL');
+        }
+    };
+
+    const handleAddMember = async (newMember: any) => {
+        if (modalidadEquipo === 'GRUPO' || tieneGrupo) {
+            addToast("Acción no permitida", "En proyectos asociativos la nómina proviene del grupo de investigación institucional.", "warning");
+            return;
+        }
+
+        if (modalidadEquipo === 'INDIVIDUAL') {
+            const confirmed = await confirm({
+                title: "Cambiar a Equipo de Proyecto",
+                message: "El proyecto se encuentra en modalidad Individual (unipersonal). Para incorporar más investigadores o semilleristas, el proyecto cambiará a modalidad 'Equipo de Proyecto'. ¿Deseas continuar?",
+                confirmText: "Cambiar a Equipo y Añadir",
+                cancelText: "Cancelar"
+            });
+            if (!confirmed) return;
+            setModalidadEquipo('EQUIPO');
+        }
+
+        const cedula = (newMember.cedula || '').trim();
+        if (!cedula) return;
+
+        const exists = investigadores.some(inv => (inv.cedula || '').trim().toLowerCase() === cedula.toLowerCase());
+        if (exists) {
+            addToast("Ya registrado", "Esta persona ya forma parte del equipo de investigación.", "warning");
+            return;
+        }
+
+        const hasDirectorAlready = investigadores.some(inv => isProjectDirector(inv.rol) || inv.esDirector);
+        let adjusted = { ...newMember };
+        if (hasDirectorAlready && isProjectDirector(adjusted.rol)) {
+            adjusted.rol = PROJECT_ROLES.CO_INVESTIGADOR;
+            adjusted.esDirector = false;
+        }
+
+        setInvestigadores(prev => [...prev, adjusted]);
+        addToast("Integrante añadido", `${newMember.nombre} se incorporó al equipo del proyecto. Recuerda guardar los cambios.`, "success");
     };
 
     const populateTeamFromProject = useCallback((data: any) => {
         if (!data) return;
-        setInvestigadores((data.investigadores || []).map(mapInvestigador));
+        const mapped = (data.investigadores || []).map(mapInvestigador);
+
+        let hasAssignedDirector = false;
+        const normalized = mapped.map((inv: any) => {
+            const isStudent = (inv.tipo || '').toUpperCase() === 'ESTUDIANTE' ||
+                              (inv.tipo || '').toUpperCase() === 'ALUMNO' ||
+                              (inv.nivelAcademico || '').toLowerCase() === 'pregrado' ||
+                              (inv.rol || '').toLowerCase().includes('semillerista');
+
+            if (isStudent) {
+                return {
+                    ...inv,
+                    rol: PROJECT_ROLES.SEMILLERISTA,
+                    esDirector: false
+                };
+            }
+
+            const isDir = isProjectDirector(inv.rol) || inv.esDirector;
+            if (isDir) {
+                if (!hasAssignedDirector && inv.activo !== false) {
+                    hasAssignedDirector = true;
+                    return {
+                        ...inv,
+                        rol: PROJECT_ROLES.DIRECTOR,
+                        esDirector: true
+                    };
+                } else {
+                    return {
+                        ...inv,
+                        rol: PROJECT_ROLES.CO_INVESTIGADOR,
+                        esDirector: false
+                    };
+                }
+            }
+
+            return inv;
+        });
+
+        if (!hasAssignedDirector && normalized.some((i: any) => i.activo !== false)) {
+            const activeList = normalized.filter((i: any) => i.activo !== false);
+            let firstDocenteIdx = activeList.findIndex((i: any) => (i.nivelAcademico || '').toLowerCase() !== 'pregrado');
+            if (firstDocenteIdx === -1) firstDocenteIdx = 0;
+            const targetCedula = activeList[firstDocenteIdx].cedula;
+            setInvestigadores(normalized.map((i: any) => i.cedula === targetCedula ? { ...i, rol: PROJECT_ROLES.DIRECTOR, esDirector: true } : i));
+        } else {
+            setInvestigadores(normalized);
+        }
+
         const groupUuid = data.grupo_investigacion_uuid ?? data.grupoInvestigacionUuid ?? data.grupo_invest_uuid ?? data.grupoInvestigacion ?? '';
         const hasGroup = !!(data.tiene_grupo_investigacion ?? data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
         setTieneGrupo(hasGroup);
         setGrupoInvestigacion(groupUuid);
+
+        const rawMod = (data.modalidad_proyecto ?? data.modalidadProyecto ?? '').toUpperCase();
+        if (rawMod === 'INDIVIDUAL' || rawMod === 'EQUIPO' || rawMod === 'GRUPO') {
+            setModalidadEquipo(rawMod as any);
+        } else if (hasGroup) {
+            setModalidadEquipo('GRUPO');
+        } else if (normalized.filter((i: any) => i.activo !== false).length > 1) {
+            setModalidadEquipo('EQUIPO');
+        } else {
+            setModalidadEquipo('INDIVIDUAL');
+        }
+
         if (data.estado !== 'Prepropuesta' && data.estado !== 'Prepropuesta Rechazada') {
             fetchTeamChangeRequests(data.uuid);
         }
@@ -605,6 +839,7 @@ export function useProjectTeam(
     return {
         investigadores,
         setInvestigadores,
+        hasActiveDirector,
         tieneGrupo,
         setTieneGrupo,
         grupoInvestigacion,
@@ -664,9 +899,13 @@ export function useProjectTeam(
         handleConfirmTransfer,
         handleUpdateMember,
         handleRemoveMember,
+        handleAddMember,
         handleSaveTeam,
         handleCreateTeamChangeRequest,
         handleReviewTeamChangeRequest,
+        modalidadEquipo,
+        setModalidadEquipo,
+        handleSelectModalidad,
         handleToggleTieneGrupo,
         populateTeamFromProject,
         formatCareerName

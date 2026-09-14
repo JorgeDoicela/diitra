@@ -6,7 +6,8 @@ namespace Diitra.Application.Research
 {
     public interface IProjectTeamService
     {
-        Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null, bool? tieneGrupoInvestigacion = null);
+        Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion, bool? tieneGrupoInvestigacion);
+        Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion, bool? tieneGrupoInvestigacion, string? modalidadProyecto);
         Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request);
         Task<SyncResult> CreateTeamChangeRequestAsync(string projectUuid, string requesterSigafiId, TeamChangeRequestDto request);
         Task<List<TeamChangeRequestRecordDto>> GetTeamChangeRequestsAsync(string projectUuid);

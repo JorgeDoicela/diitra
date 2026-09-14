@@ -211,7 +211,8 @@ export function useProjectCore() {
                 fechaFin: res.data.fecha_fin || res.data.fechaFin || null,
                 fechaLimiteSubsanacion: res.data.fecha_limite_subsanacion || res.data.fechaLimiteSubsanacion || null,
                 fechaLimiteInformeFinal: res.data.fecha_limite_informe_final || res.data.fechaLimiteInformeFinal || null,
-                fechaLimiteSubsanacionFinal: res.data.fecha_limite_subsanacion_final || res.data.fechaLimiteSubsanacionFinal || null
+                fechaLimiteSubsanacionFinal: res.data.fecha_limite_subsanacion_final || res.data.fechaLimiteSubsanacionFinal || null,
+                investigadores: res.data.investigadores || []
             };
             setCurrentProject(projectData);
             if (resDocs && Array.isArray(resDocs.data)) {

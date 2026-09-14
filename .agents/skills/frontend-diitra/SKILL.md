@@ -38,21 +38,46 @@ description: Extiende la skill global de frontend con convenciones y patrones es
   - `getContrastFg(color)`: Calcula por luminancia si el texto del encabezado debe ser blanco (`#ffffff`) u oscuro (`#0f172a`), garantizando siempre legibilidad en exportaciones y previsualizaciones.
 * **Sincronización Bidireccional Canvas ↔ Propiedades:** Al hacer clic o arrastrar un elemento en el lienzo (`RenderCover`, etc.), debe emitirse `onUpdateConfig(blockId, '_activeCoverTab', targetTab)` para activar automáticamente la subpestaña correspondiente en el panel lateral de propiedades.
 
-## 6. Adaptación de Diseños de Fábrica a Producción: Interactividad Total y Expansión de Bloques
+## 6. Adaptación de Diseños de Fábrica a Producción: Interactividad Total y Expansión Obligatoria de Bloques
 
-* **Preservación Innegociable de Propiedades de Edición:**
-  Al modificar, estilizar, refinar o alinear cualquier bloque de fábrica (`canvasRenderers/` como `RenderProjectGeneralSection`, `RenderResearchersTable`, `RenderSections`, etc.) para llevarlo al diseño final de producción (cumplir con normativa institucional ISTPET, formatos CACES, PDF oficial o Word):
-  - **PROHIBIDO VOLVER ESTÁTICOS LOS BLOQUES:** Queda estrictamente prohibido eliminar, aplanar o reemplazar inputs, textareas, estados locales (`useState`), eventos (`onUpdateConfig`), botones de acción, flechas de reordenamiento, selectores de variantes, badges interactivos o modales por etiquetas HTML estáticas (`<p>`, `<span>`, `<div>` planos).
-  - Todas las capacidades interactivas, configuraciones reactivas y bindings bidireccionales deben conservarse al 100%.
+Al transformar, estilizar, refinar o alinear cualquier bloque de fábrica (`canvasRenderers/` como `RenderProjectGeneralSection`, `RenderResearchersTable`, `RenderSections`, etc.) para llevarlo al diseño final formal de producción (normativa institucional ISTPET, formatos CACES, PDF oficial o Word):
 
-* **Regla de Expansión de Bloques (Expandirse Siempre, Nunca Reducirse):**
-  - **Expansión Vertical Flexible:** Si para acomodar el formato oficial de producción, nuevos campos, tablas complejas o requerimientos de edición se necesita más espacio, **el bloque DEBE EXPANDIRSE verticalmente tanto como sea necesario (`h-auto`, `min-h-fit`)**.
-  - **Prohibición Estricta de Encogimiento y Compresión:** Queda terminantemente prohibido forzar la reducción de un bloque con alturas rígidas fijas (`h-[400px]`, `max-h` asfixiante con scroll interno en el lienzo) o recortar/comprimir elementos para "hacerlos caber" en un espacio limitado.
-  - **Cero Eliminación de Controles por Espacio:** Jamás se deben omitir, ocultar o sacrificar campos o controles de edición con la excusa de falta de espacio. Si el contenido o las herramientas de edición crecen, **el bloque se expande hacia abajo; nunca se reduce**.
+### 6.1. Preservación Innegociable de Propiedades y Controles de Edición
+* **PROHIBIDO VOLVER ESTÁTICOS LOS BLOQUES:** Queda terminantemente prohibido eliminar, aplanar o sustituir campos de edición activa por etiquetas HTML estáticas (`<p>`, `<span>`, `<div>` de texto plano hardcodeado).
+* **Conservación del 100% de la Reactividad:**
+  - Todo input (`<input>`, `<textarea>`, `<select>`, `<CoWorkField>`), estado local (`useState`), hook y callback (`onUpdateConfig`, `onChange`, `onBlur`) debe mantenerse plenamente operativo.
+  - Los botones de acción dinámicos (**+ Agregar fila/investigador/sección**, **Eliminar**, **Reordenar con flechas**, **Selector de variantes**, **Toggles**, **Modales** y **Popovers de configuración**) deben permanecer accesibles e interactivos en el lienzo/editor.
+  - Las propiedades de configuración (`config.xxx`) deben poderse seguir editando tanto desde el lienzo interactivo como desde el panel lateral de propiedades (`PropertiesPanel`).
+* **Regla para Salidas de Exportación/Impresión:**
+  - Si un botón de control no debe aparecer en el documento final impreso, debe ocultarse exclusivamente mediante clases de impresión (ej. `print:hidden`) o flags condicionales de exportación (`isExportingMode`), **NUNCA eliminándolo ni deshabilitándolo en el componente React del editor**.
 
-* **Separación de Capas:**
-  1. **Lienzo A4 (`canvasRenderers/`):** Es 100% interactivo, flexible en altura y configurable directamente en el lienzo y desde el panel de propiedades.
-  2. **Workspace de Investigación (`components/DIITRA/sections/`):** Es 100% colaborativo y editable con campos `<CoWorkField>` conectados a Yjs, con altura dinámica según el contenido redactado.
-  3. **Motor PDF (`DocumentEngine` C#):** Es el único responsable de la paginación formal y emisión final estática con firmas electrónicas.
-* **Regla de Oro:** Todo cambio de apariencia visual hacia producción debe realizarse por CSS, estilos limpios o tokens (`themeConfig`), **preservando intactos todos los eventos, hooks, capacidades de edición y permitiendo que el bloque se expanda holgadamente sin jamás comprimirse ni reducirse**.
+### 6.2. Regla Fundamental de Expansión (El Bloque Crece, Jamás se Reduce ni Comprime)
+* **Expansión Vertical Libre y Holgada (`h-auto`, `min-h-fit`):**
+  - Si para acomodar el formato oficial de producción, nuevas columnas, tablas institucionales complejas, metadatos o herramientas de edición se requiere más espacio, **el bloque DEBE EXPANDIRSE verticalmente hacia abajo todo lo necesario**.
+  - No hay límites artificiales de altura: el contenedor del bloque debe fluir de forma natural adaptándose al volumen del contenido y a sus herramientas de edición.
+* **Prohibición Estricta de Encogimiento, Asfixia y Compresión:**
+  - **Cero Alturas Rígidas o Fijas:** Queda prohibido forzar alturas arbitrarias (`h-[400px]`, `h-[500px]`) que encierren el contenido en un tamaño prefijado.
+  - **Cero Scroll Interno Asfixiante en Bloques:** Queda prohibido aplicar `max-h-[...] overflow-y-auto` en el cuerpo de los bloques del lienzo para "hacerlos caber". El lienzo completo es el que hace scroll; los bloques no deben ser cajas comprimidas con barras de scroll individuales que entorpezcan la edición.
+  - **Cero Reducción Artificial de Tipografía:** Prohibido reducir el tamaño de fuentes a escalas ilegibles (`text-[8px]`, `text-[9px]`, `text-[10px]`) con la excusa de hacer entrar más datos en menos espacio vertical. Los estándares de legibilidad se respetan y el bloque crece hacia abajo.
+  - **Cero Supresión de Márgenes o Paddings:** No comprimir los paddings (`py-1`, `gap-0.5`) para ahorrar píxeles. La ergonomía visual y la comodidad de interacción requieren márgenes de respiración adecuados (`py-3`, `gap-3` o superior).
+  - **Cero Truncamientos (`truncate`, `line-clamp`):** En áreas de edición activa, está estrictamente prohibido cortar texto con puntos suspensivos o `overflow: hidden`. El usuario debe ver y editar el contenido completo.
+* **Cero Eliminación de Controles por Falta de Espacio:**
+  - Jamás se debe omitir un campo, una columna o un botón con el pretexto de "falta de espacio". Si el bloque requiere más elementos, **el bloque se expande hacia abajo; nunca se reduce ni se mutila**.
+
+### 6.3. Separación de Capas y Manejo de Paginación
+1. **Lienzo de Edición (`canvasRenderers/`):** Es un entorno de trabajo 100% interactivo, reactivo y de altura libremente expansible. No debe forzarse a simular cortes de página rígidos que mutilen o compriman los componentes.
+2. **Workspace Colaborativo (`components/DIITRA/sections/`):** Colaboración en tiempo real con `<CoWorkField>` y Yjs, con altura dinámica según el volumen redactado por los investigadores.
+3. **Motor de Documentos (`DocumentEngine` C# / Print CSS):** Es el único responsable de la paginación formal A4, saltos de página y generación final estática de PDF/Word con firmas electrónicas.
+
+### 6.4. Matriz de Patrones: Anti-Patrón vs Patrón Correcto
+
+| Aspecto | Anti-Patrón (Prohibido) | Patrón Correcto (Obligatorio) |
+| :--- | :--- | :--- |
+| **Interactividad** | Convertir inputs a `<p>` o `<span>` para que "se vea como el PDF final". | Mantener inputs, textareas y bindings reactivos con estilo visual de alta fidelidad. |
+| **Botones de Acción** | Quitar "+ Agregar fila" o botones de borrado para "limpiar la vista". | Mantener todos los botones de acción en el canvas; usar `print:hidden` para ocultarlos al exportar. |
+| **Altura del Bloque** | Usar `h-[350px] overflow-y-auto` para que no ocupe mucho en el lienzo. | Usar `h-auto min-h-fit` permitiendo que el bloque se expanda naturalmente hacia abajo. |
+| **Densidad y Espacio** | Achicar fuentes a `text-[9px]` o quitar padding para que "quepa en una hoja". | Mantener tipografía legible y espaciado ergonómico; el bloque crece verticalmente. |
+| **Manejo de Textos** | Usar `truncate` o `line-clamp-2` ocultando texto del usuario en edición. | Mostrar todo el texto sin truncamientos, expandiendo la altura del campo automáticamente. |
+
+* **Regla de Oro:** Todo rediseño hacia producción se realiza mejorando el CSS, la tipografía y los tokens visuales, **garantizando que el bloque conserve intactas todas sus capacidades de edición y crezca holgadamente hacia abajo sin jamás comprimirse ni reducirse**.
 

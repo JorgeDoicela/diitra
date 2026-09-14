@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 import { coworkLog } from '../../cowork/utils/log';
+import { isProjectDirector, PROJECT_ROLES } from '../../../utils/roleCatalog';
 
 /**
  * Shallow-equal check: O(1) for primitives, falls back to JSON only for objects.
@@ -409,51 +410,130 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const currentArray = yarray.toArray() as any[];
             const dbInvestigadores = initialData.investigadores || initialData.Investigadores;
 
-            if (currentArray.length > 0) {
-                const enriched = currentArray.map((item: any, idx) => {
-                    if (item && typeof item === 'object' && !item.id) {
-                        return { ...item, id: `db_${idx}` };
+            if (listName === 'Investigadores') {
+                const targetArray = Array.isArray(dbInvestigadores) && dbInvestigadores.length > 0
+                    ? dbInvestigadores.map((dbInv: any, idx: number) => {
+                        const isStudent = (dbInv.NivelAcademico || dbInv.nivelAcademico || dbInv.nivel_academico) === 'Pregrado' ||
+                            (dbInv.Rol || dbInv.rol || '').toLowerCase().includes('semillerista') ||
+                            (dbInv.Rol || dbInv.rol || '').toLowerCase().includes('estudiante') ||
+                            (dbInv.Tipo || dbInv.tipo) === 'ESTUDIANTE' || (dbInv.Tipo || dbInv.tipo) === 'ALUMNO';
+                        let normalizedRole = dbInv.Rol || dbInv.rol || '';
+                        if (isStudent) {
+                            normalizedRole = 'Semillerista';
+                        }
+                        return {
+                            Nombre: dbInv.Nombre || dbInv.nombre || dbInv.nombres_completos || dbInv.nombresCompletos || '',
+                            Cedula: (dbInv.Cedula || dbInv.cedula || '').trim(),
+                            Email: dbInv.Email || dbInv.email || '',
+                            NivelAcademico: dbInv.NivelAcademico || dbInv.nivelAcademico || dbInv.nivel_academico || (isStudent ? 'Pregrado' : 'Tercer Nivel'),
+                            Rol: normalizedRole,
+                            id: dbInv.id || `db_${idx}`,
+                            Telefono: dbInv.Telefono || dbInv.telefono || '',
+                            HorasSemanales: dbInv.HorasSemanales !== undefined ? dbInv.HorasSemanales : (dbInv.horasSemanales !== undefined ? dbInv.horasSemanales : (dbInv.horas_semanales !== undefined ? dbInv.horas_semanales : null)),
+                            Carrera: dbInv.Carrera || dbInv.carrera || '',
+                            CarrerasDisponibles: dbInv.CarrerasDisponibles || dbInv.carrerasDisponibles || dbInv.carreras_disponibles || '',
+                            Activo: dbInv.Activo !== undefined ? dbInv.Activo : (dbInv.activo !== undefined ? dbInv.activo : true),
+                            EsDirector: !isStudent && (dbInv.EsDirector || dbInv.esDirector || normalizedRole.toLowerCase().includes('director'))
+                        };
+                    })
+                    : [];
+
+                if (currentArray.length === 0) {
+                    if (options.isHistoryLoaded && targetArray.length > 0) {
+                        coworkLog(`[DIITRA] Initializing Yjs list 'Investigadores' with ${targetArray.length} items from DB`);
+                        ydoc.transact(() => {
+                            yarray.push(targetArray);
+                        }, 'local-hook');
+                        setFormData(prev => ({ ...prev, [listName]: targetArray }));
                     }
-                    return item;
-                });
-                
-                const seen = new Set();
-                const uniqueEnriched = enriched.filter((item: any) => {
-                    const id = item?.id || item?.uuid || item?.Uuid;
-                    if (id) {
-                        if (seen.has(id)) return false;
-                        seen.add(id);
+                } else {
+                    // Reconciliación bidireccional Yjs <-> Base de Datos institucional
+                    const existingCedulas = new Set(
+                        currentArray
+                            .map((item: any) => (item?.Cedula || item?.cedula || '').trim().toLowerCase())
+                            .filter(Boolean)
+                    );
+
+                    // 1. Integrantes de la BD activos no presentes en Yjs (agregados desde Workspace)
+                    const missingFromYjs = targetArray.filter(
+                        target => target.Cedula && !existingCedulas.has(target.Cedula.toLowerCase()) && target.Activo !== false
+                    );
+
+                    if (missingFromYjs.length > 0) {
+                        coworkLog(`[DIITRA] Sincronizando integrantes de BD hacia Yjs: agregando ${missingFromYjs.length} integrantes faltantes`);
+                        ydoc.transact(() => {
+                            yarray.push(missingFromYjs);
+                        }, 'local-hook');
                     }
-                    return true;
-                });
 
-                setFormData(prev => {
-                    if (isEqualValue(prev[listName], uniqueEnriched)) return prev;
-                    return { ...prev, [listName]: uniqueEnriched };
-                });
-            } else if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(dbInvestigadores) && dbInvestigadores.length > 0) {
-                const targetArray = dbInvestigadores.map((dbInv: any, idx: number) => ({
-                    Nombre: dbInv.Nombre || dbInv.nombre || '',
-                    Cedula: dbInv.Cedula || dbInv.cedula || '',
-                    Email: dbInv.Email || dbInv.email || '',
-                    NivelAcademico: dbInv.NivelAcademico || dbInv.nivelAcademico || '',
-                    Rol: dbInv.Rol || dbInv.rol || '',
-                    id: dbInv.id || `db_${idx}`,
-                    Telefono: dbInv.Telefono || dbInv.telefono || '',
-                    HorasSemanales: dbInv.HorasSemanales !== undefined ? dbInv.HorasSemanales : (dbInv.horasSemanales !== undefined ? dbInv.horasSemanales : null),
-                    Carrera: dbInv.Carrera || dbInv.carrera || '',
-                    CarrerasDisponibles: dbInv.CarrerasDisponibles || dbInv.carrerasDisponibles || ''
-                }));
+                    // 2. Normalización de CACES e invariante de Dirección única y Roles de estudiantes
+                    const updatedArray = yarray.toArray() as any[];
+                    let seenDirector = false;
+                    const sanitizedArray = updatedArray.map((item: any, idx: number) => {
+                        const isStudent = (item.NivelAcademico || item.nivelAcademico) === 'Pregrado' ||
+                            (item.Rol || item.rol || '').toLowerCase().includes('semillerista') ||
+                            (item.Rol || item.rol || '').toLowerCase().includes('estudiante');
+                        let rol = item.Rol || item.rol || '';
+                        let esDirector = !isStudent && (item.EsDirector || item.esDirector || rol.toLowerCase().includes('director'));
 
-                coworkLog(`[DIITRA] Initializing Yjs list 'Investigadores' with ${targetArray.length} items from DB`);
-                ydoc.transact(() => {
-                    yarray.push(targetArray);
-                }, 'local-hook');
+                        if (isStudent) {
+                            rol = 'Semillerista';
+                            esDirector = false;
+                        } else if (esDirector) {
+                            if (!seenDirector) {
+                                seenDirector = true;
+                                rol = 'Director de Proyecto';
+                                esDirector = true;
+                            } else {
+                                rol = 'Co-Investigador';
+                                esDirector = false;
+                            }
+                        }
 
-                setFormData(prev => {
-                    if (isEqualValue(prev[listName], targetArray)) return prev;
-                    return { ...prev, [listName]: targetArray };
-                });
+                        // Preservar id único para reactividad de React
+                        const resolvedId = item.id || (item.Cedula ? `inv_${item.Cedula}` : `db_${idx}`);
+
+                        return {
+                            ...item,
+                            id: resolvedId,
+                            Rol: rol,
+                            EsDirector: esDirector
+                        };
+                    });
+
+                    // Si ningún integrante tiene rol Director, asignar al primer docente
+                    if (!seenDirector && sanitizedArray.length > 0) {
+                        const candidateIdx = sanitizedArray.findIndex((m: any) =>
+                            m.NivelAcademico !== 'Pregrado' && !m.Rol?.toLowerCase().includes('semillerista')
+                        );
+                        const targetIdx = candidateIdx !== -1 ? candidateIdx : 0;
+                        sanitizedArray[targetIdx].Rol = 'Director de Proyecto';
+                        sanitizedArray[targetIdx].EsDirector = true;
+                    }
+
+                    // Deduplicación por cédula
+                    const seenCedulasMap = new Set<string>();
+                    const deduplicated = sanitizedArray.filter((item: any) => {
+                        const c = (item.Cedula || item.cedula || '').trim().toLowerCase();
+                        if (c) {
+                            if (seenCedulasMap.has(c)) return false;
+                            seenCedulasMap.add(c);
+                        }
+                        return true;
+                    });
+
+                    if (JSON.stringify(updatedArray) !== JSON.stringify(deduplicated)) {
+                        ydoc.transact(() => {
+                            yarray.delete(0, yarray.length);
+                            yarray.push(deduplicated);
+                        }, 'local-hook');
+                    }
+
+                    setFormData(prev => {
+                        if (isEqualValue(prev[listName], deduplicated)) return prev;
+                        return { ...prev, [listName]: deduplicated };
+                    });
+                }
             } else if (currentArray.length > 0) {
                 const enriched = currentArray.map((item: any, idx) => {
                     if (item && typeof item === 'object' && !item.id) {

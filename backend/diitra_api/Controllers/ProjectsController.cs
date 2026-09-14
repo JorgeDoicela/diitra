@@ -382,7 +382,8 @@ namespace diitra_api.Controllers
             string uuid,
             [FromBody] System.Collections.Generic.List<InvestigadorDto> investigadores,
             [FromQuery] string? grupoInvestigacion = null,
-            [FromQuery] bool? tieneGrupoInvestigacion = null)
+            [FromQuery] bool? tieneGrupoInvestigacion = null,
+            [FromQuery] string? modalidadProyecto = null)
         {
             if (investigadores == null) return BadRequest("Lista de investigadores nula.");
 
@@ -391,7 +392,7 @@ namespace diitra_api.Controllers
                 return StatusCode(403, new { message = "No tienes permisos de escritura sobre este proyecto de investigación." });
             }
 
-            var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion);
+            var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion, modalidadProyecto);
             if (!result.Success)
             {
                 return BadRequest(new { success = false, message = result.Message });

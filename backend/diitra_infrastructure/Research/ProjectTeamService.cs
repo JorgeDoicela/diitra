@@ -40,7 +40,10 @@ namespace diitra_infrastructure.Research
             _logger = logger;
         }
 
-        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null, bool? tieneGrupoInvestigacion = null)
+        public Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion, bool? tieneGrupoInvestigacion)
+            => UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion, null);
+
+        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion, bool? tieneGrupoInvestigacion, string? modalidadProyecto)
         {
             var project = await _context.InvProyectos
                 .Include(p => p.InvProyectosCarreras)
@@ -52,7 +55,25 @@ namespace diitra_infrastructure.Research
 
             string beforeJson = project.MetadataCacesJson ?? "{}";
 
-            var isAssociativeRequested = tieneGrupoInvestigacion == true || (tieneGrupoInvestigacion == null && !string.IsNullOrWhiteSpace(grupoInvestigacion));
+            string resolvedModalidad;
+            if (!string.IsNullOrWhiteSpace(modalidadProyecto))
+            {
+                resolvedModalidad = modalidadProyecto.Trim().ToUpperInvariant();
+            }
+            else if (tieneGrupoInvestigacion == true || (!string.IsNullOrWhiteSpace(grupoInvestigacion) && tieneGrupoInvestigacion != false))
+            {
+                resolvedModalidad = "GRUPO";
+            }
+            else if (investigadores.Count > 1)
+            {
+                resolvedModalidad = "EQUIPO";
+            }
+            else
+            {
+                resolvedModalidad = "INDIVIDUAL";
+            }
+
+            var isAssociativeRequested = resolvedModalidad == "GRUPO";
             InvGrupoInvestigacion? approvedGroup = null;
             var effectiveInvestigadores = investigadores;
 
@@ -242,6 +263,9 @@ namespace diitra_infrastructure.Research
                     dto.TieneGrupoInvestigacion = true;
                     dto.GrupoInvestigacion = approvedGroup.Nombre;
                     dto.GrupoInvestigacionUuid = approvedGroup.Uuid;
+                    dto.GrupoInvestigacionNombre = approvedGroup.Nombre;
+                    dto.GrupoInvestigacionTipo = "SI";
+                    dto.ModalidadProyecto = "GRUPO";
                     dto.Investigadores = effectiveInvestigadores;
                 }
                 else
@@ -251,6 +275,9 @@ namespace diitra_infrastructure.Research
                     dto.TieneGrupoInvestigacion = false;
                     dto.GrupoInvestigacion = null;
                     dto.GrupoInvestigacionUuid = null;
+                    dto.GrupoInvestigacionNombre = null;
+                    dto.GrupoInvestigacionTipo = "NO";
+                    dto.ModalidadProyecto = resolvedModalidad == "INDIVIDUAL" ? "INDIVIDUAL" : "EQUIPO";
                     dto.Investigadores = investigadores;
                 }
 
@@ -260,37 +287,54 @@ namespace diitra_infrastructure.Research
                                        ?? project.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
                 await SyncProjectCarrerasAsync(project.IdProyecto, principalCarrera, dto.Investigadores);
 
+                var directorMember = dto.Investigadores?.FirstOrDefault(i => diitra_domain.Research.ResearchRoles.IsProjectDirector(i.Rol) || i.EsDirector == true);
+                if (directorMember != null && !string.IsNullOrEmpty(directorMember.Nombre))
+                {
+                    dto.DirectorProyecto = directorMember.Nombre;
+                }
+
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
 
-                var docInstance = await _context.DocumentInstances
-                    .FirstOrDefaultAsync(di => di.EntityUuid == project.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
-                if (docInstance != null && !string.IsNullOrEmpty(docInstance.DataSnapshotJson))
-                {
-                    try
-                    {
-                        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                        var snapshot = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(docInstance.DataSnapshotJson, options);
-                        if (snapshot != null)
-                        {
-                            var merged = new Dictionary<string, object>();
-                            foreach (var kvp in snapshot)
-                            {
-                                merged[kvp.Key] = kvp.Value;
-                            }
-                            merged["Investigadores"] = dto.Investigadores ?? new List<InvestigadorDto>();
-                            merged["GrupoInvestigacionTipo"] = project.TieneGrupo == true ? "SI" : "NO";
-                            merged["GrupoInvestigacionNombre"] = dto.GrupoInvestigacion ?? "";
-                            merged["GrupoInvestigacionUuid"] = dto.GrupoInvestigacionUuid ?? "";
-                            merged["TieneGrupoInvestigacion"] = project.TieneGrupo == true;
+                var docInstances = await _context.DocumentInstances
+                    .Where(di => di.EntityUuid == project.Uuid)
+                    .ToListAsync();
 
-                            var newSnapshot = System.Text.Json.JsonSerializer.Serialize(merged);
-                            docInstance.UpdateDataSnapshot(newSnapshot);
-                        }
-                    }
-                    catch (Exception ex)
+                foreach (var docInstance in docInstances)
+                {
+                    if (!string.IsNullOrEmpty(docInstance.DataSnapshotJson))
                     {
-                        _logger.LogError(ex, "Error al sincronizar instantánea de documento desde UpdateProjectTeamAsync para proyecto UUID: {Uuid}", uuid);
+                        try
+                        {
+                            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            var snapshot = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(docInstance.DataSnapshotJson, options);
+                            if (snapshot != null)
+                            {
+                                var merged = new Dictionary<string, object>();
+                                foreach (var kvp in snapshot)
+                                {
+                                    merged[kvp.Key] = kvp.Value;
+                                }
+                                merged["Investigadores"] = dto.Investigadores ?? new List<InvestigadorDto>();
+                                if (directorMember != null && !string.IsNullOrEmpty(directorMember.Nombre))
+                                {
+                                    merged["DirectorProyecto"] = directorMember.Nombre;
+                                    merged["DirectorNombre"] = directorMember.Nombre;
+                                }
+                                merged["ModalidadProyecto"] = dto.ModalidadProyecto ?? (project.TieneGrupo == true ? "GRUPO" : "EQUIPO");
+                                merged["GrupoInvestigacionTipo"] = project.TieneGrupo == true ? "SI" : "NO";
+                                merged["GrupoInvestigacionNombre"] = dto.GrupoInvestigacion ?? "";
+                                merged["GrupoInvestigacionUuid"] = dto.GrupoInvestigacionUuid ?? "";
+                                merged["TieneGrupoInvestigacion"] = project.TieneGrupo == true;
+
+                                var newSnapshot = System.Text.Json.JsonSerializer.Serialize(merged);
+                                docInstance.UpdateDataSnapshot(newSnapshot);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error al sincronizar instantánea de documento desde UpdateProjectTeamAsync para proyecto UUID: {Uuid}", uuid);
+                        }
                     }
                 }
 

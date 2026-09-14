@@ -234,3 +234,25 @@ public class InvPndObjetivoConfiguration : IEntityTypeConfiguration<InvPndObjeti
         entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
     }
 }
+
+public class InvCatRolConfiguration : IEntityTypeConfiguration<InvCatRol>
+{
+    public void Configure(EntityTypeBuilder<InvCatRol> entity)
+    {
+        entity.HasKey(e => e.IdRol).HasName("PRIMARY");
+        entity.ToTable("inv_cat_roles");
+        entity.Property(e => e.IdRol).HasColumnName("id_rol");
+        entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+        entity.HasIndex(e => e.Uuid).IsUnique();
+        entity.Property(e => e.Codigo).HasColumnName("codigo").HasMaxLength(50).IsRequired();
+        entity.HasIndex(e => e.Codigo).IsUnique();
+        entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
+        entity.Property(e => e.Ambito).HasColumnName("ambito").HasColumnType("enum('PROYECTO','GRUPO','AMBOS')").HasDefaultValue("AMBOS").IsRequired();
+        entity.Property(e => e.TipoPersona).HasColumnName("tipo_persona").HasColumnType("enum('DOCENTE','ESTUDIANTE','ADMINISTRATIVO','EXTERNO','TODOS')").HasDefaultValue("TODOS").IsRequired();
+        entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
+        entity.Property(e => e.EsDirector).HasColumnName("es_director").HasColumnType("tinyint(1)").HasDefaultValue(false);
+        entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValue(true);
+        entity.Property(e => e.Orden).HasColumnName("orden").HasDefaultValue(0);
+        entity.Property(e => e.FechaRegistro).HasColumnName("fecha_registro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+    }
+}

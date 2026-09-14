@@ -596,6 +596,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         
                         var estudiantes = projectDto.Investigadores?.Where(i => i != director && 
                             (i.Rol?.Contains("Estudiante", StringComparison.OrdinalIgnoreCase) == true || 
+                             i.Rol?.Contains("Semillerista", StringComparison.OrdinalIgnoreCase) == true || 
                              i.Rol?.Contains("Alumno", StringComparison.OrdinalIgnoreCase) == true || 
                              i.NivelAcademico == "Pregrado" || 
                              (docentes != null && !docentes.Contains(i)))).ToList();

@@ -5,6 +5,7 @@ import type { CoWorkHandle } from '../../../core/cowork/types';
 import { MemberSearchSelector, type SelectedMemberResult, formatNombre } from '../../Common/MemberSearchSelector';
 import { GeistSelect } from '../../Common/GeistSelect';
 import { useDocenteDistributivo, isStudentMember } from './hooks/useDocenteDistributivo';
+import { isProjectDirector } from '../../../utils/roleCatalog';
 
 interface TeamSectionProps {
     investigadores: any[];
@@ -31,8 +32,17 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
     investigadoresReales = []
 }) => {
     const isAssociative = formData?.GrupoInvestigacionTipo === 'SI';
+    const rawMod = (formData?.ModalidadProyecto || '').toUpperCase();
+    const modalidad = rawMod || (isAssociative ? 'GRUPO' : (investigadores.length > 1 ? 'EQUIPO' : 'INDIVIDUAL'));
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const repairedCedulasRef = useRef<Set<string>>(new Set());
+
+    const hasDirectorAlready = useMemo(() => {
+        return (investigadores || []).some(inv => {
+            const r = inv.Rol || inv.rol || '';
+            return isProjectDirector(r) || inv.EsDirector === true || inv.esDirector === true;
+        });
+    }, [investigadores]);
 
     // Hook desacoplado de lógica y sincronización de distributivo SIGAFI
     const {
@@ -47,6 +57,36 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             onUpdate(idx, field, value);
         } else if (onUpdateItem) {
             onUpdateItem('Investigadores', idx, field, value);
+        }
+    };
+
+    const handleRoleChange = (idx: number, newRole: string) => {
+        const isSettingDirector = isProjectDirector(newRole);
+        if (isSettingDirector) {
+            // Relevo automático: el nuevo integrante pasa a Director y cualquier director anterior pasa a Co-Investigador
+            investigadores.forEach((inv, otherIdx) => {
+                if (otherIdx !== idx && (isProjectDirector(inv.Rol || inv.rol) || inv.EsDirector || inv.esDirector)) {
+                    updateMemberField(otherIdx, 'Rol', 'Co-Investigador');
+                    updateMemberField(otherIdx, 'EsDirector', false);
+                }
+            });
+            updateMemberField(idx, 'Rol', newRole);
+            updateMemberField(idx, 'EsDirector', true);
+        } else {
+            updateMemberField(idx, 'Rol', newRole);
+            updateMemberField(idx, 'EsDirector', false);
+
+            // Si el integrante que cambió de rol era el director activo, transferir la dirección a otro miembro elegible
+            const currentTarget = investigadores[idx];
+            const wasDirector = currentTarget && (isProjectDirector(currentTarget.Rol || currentTarget.rol) || currentTarget.EsDirector || currentTarget.esDirector);
+            const otherMembers = investigadores.map((inv, i) => ({ inv, i })).filter(x => x.i !== idx);
+            const hasOtherDirector = otherMembers.some(x => isProjectDirector(x.inv.Rol || x.inv.rol) || x.inv.EsDirector || x.inv.esDirector);
+
+            if (wasDirector && !hasOtherDirector && otherMembers.length > 0) {
+                const candidate = otherMembers.find(x => !isStudentMember(x.inv)) || otherMembers[0];
+                updateMemberField(candidate.i, 'Rol', 'Director de Proyecto');
+                updateMemberField(candidate.i, 'EsDirector', true);
+            }
         }
     };
 
@@ -68,27 +108,11 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             if (realInv) {
                 const invCarrera = inv.Carrera || inv.carrera || '';
                 const realCarrera = realInv.Carrera || realInv.carrera || '';
-                const realDisponibles = realInv.CarrerasDisponibles || realInv.carrerasDisponibles || '';
-                const invDisponibles = inv.CarrerasDisponibles || inv.carrerasDisponibles || '';
 
-                const isGeneric = !invCarrera || 
-                                  invCarrera.trim() === '' || 
-                                  invCarrera.trim() === 'Docente' || 
-                                  invCarrera.trim() === 'Estudiante';
-                
-                const hasRealCareer = realCarrera && 
-                                      realCarrera.trim() !== '' && 
-                                      realCarrera.trim() !== 'Docente' && 
-                                      realCarrera.trim() !== 'Estudiante';
-
-                if (isGeneric && hasRealCareer) {
-                    repairedCedulasRef.current.add(cedKey);
+                if (!invCarrera || invCarrera !== realCarrera) {
                     updateMemberField(idx, 'Carrera', realCarrera);
-                }
-
-                if (realDisponibles && invDisponibles !== realDisponibles) {
+                    updateMemberField(idx, 'CarrerasDisponibles', realCarrera);
                     repairedCedulasRef.current.add(cedKey);
-                    updateMemberField(idx, 'CarrerasDisponibles', realDisponibles);
                 }
             }
         });
@@ -110,7 +134,10 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
         }
 
         const isStudent = member.tipo === 'ESTUDIANTE';
-        const defaultRole = member.rol || (isStudent ? 'Semillerista' : 'Co-Investigador');
+        let defaultRole = member.rol || (isStudent ? 'Semillerista' : 'Co-Investigador');
+        if (hasDirectorAlready && isProjectDirector(defaultRole)) {
+            defaultRole = 'Co-Investigador';
+        }
         const defaultNivel = isStudent ? 'Pregrado' : 'Tercer Nivel';
 
         const newInvestigador = {
@@ -151,11 +178,9 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             .filter(Boolean);
     }, [investigadores]);
 
-    const allowedTypes = useMemo<('DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO')[]>(() => {
-        return !isAssociative 
-            ? ['DOCENTE', 'ESTUDIANTE'] 
-            : ['DOCENTE', 'ADMINISTRATIVO', 'ESTUDIANTE', 'EXTERNO'];
-    }, [isAssociative]);
+    const allowedTypes = useMemo<('DOCENTE' | 'ESTUDIANTE')[]>(() => {
+        return ['DOCENTE', 'ESTUDIANTE'];
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -191,10 +216,15 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
 
             {/* Cabecera de la Sección */}
             <div className="flex justify-between items-center px-2">
-                <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-text-main">
-                    <Users size={18} /> 2. Investigadores (Docentes y Estudiantes)
-                </h4>
-                {!isAssociative && !readOnly && (
+                <div className="flex items-center gap-2.5">
+                    <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-text-main">
+                        <Users size={18} /> 2. Investigadores (Docentes y Estudiantes)
+                    </h4>
+                    <span className="badge-vercel badge-vercel-neutral !text-[9px] !py-0.5 !px-2 font-semibold">
+                        {modalidad === 'INDIVIDUAL' ? 'Modalidad Individual' : (modalidad === 'GRUPO' ? 'Grupo Formal Asociativo' : 'Equipo de Proyecto')}
+                    </span>
+                </div>
+                {!isAssociative && !readOnly && modalidad !== 'INDIVIDUAL' && (
                     <button
                         type="button"
                         onClick={() => setIsAddModalOpen(true)}
@@ -276,7 +306,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                         </div>
                                     </div>
 
-                                    {!readOnly && !isAssociative && !isDirector && (
+                                    {!readOnly && !isAssociative && (
                                         <button
                                             type="button"
                                             onClick={() => onRemove?.(idx)}
@@ -366,7 +396,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     </div>
 
                                     <div className="md:col-span-3">
-                                        {isAssociative || readOnly || isDirector ? (
+                                        {isAssociative || readOnly ? (
                                             <input
                                                 type="text"
                                                 className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold text-text-main outline-none"
@@ -376,14 +406,12 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                         ) : (
                                             <GeistSelect<string>
                                                 value={rol}
-                                                onChange={(val) => updateMemberField(idx, 'Rol', val)}
+                                                onChange={(val) => handleRoleChange(idx, val)}
                                                 className="!py-2.5 !rounded-xl !text-xs !font-bold"
                                             >
+                                                <option value="Director de Proyecto">Director de Proyecto</option>
                                                 <option value="Co-Investigador">Co-Investigador</option>
                                                 <option value="Semillerista">Semillerista</option>
-                                                <option value="Auxiliar de Investigación">Auxiliar de Investigación</option>
-                                                <option value="Personal de Apoyo Técnico">Personal de Apoyo Técnico</option>
-                                                <option value="Investigador Asociado">Investigador Asociado</option>
                                             </GeistSelect>
                                         )}
                                         <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
@@ -558,9 +586,11 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                 existingCedulas={existingCedulas}
                                 allowedTypes={allowedTypes}
                                 defaultType="DOCENTE"
-                                soloConHorasDocentes={!isAssociative}
-                                estadoEstudiante={!isAssociative ? 'ACTIVO' : 'TODOS'}
+                                soloConHorasDocentes={true}
+                                estadoEstudiante="ACTIVO"
                                 variant="embedded"
+                                context="PROJECT"
+                                hasDirector={hasDirectorAlready}
                             />
                         </div>
                     </div>

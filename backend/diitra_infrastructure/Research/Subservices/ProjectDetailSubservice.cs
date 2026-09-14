@@ -524,6 +524,23 @@ namespace diitra_infrastructure.Research.Subservices
                 dto.TieneGrupoInvestigacion = dto.TieneGrupoInvestigacion ?? false;
                 dto.GrupoInvestigacionTipo = dto.GrupoInvestigacionTipo ?? "NO";
             }
+
+            if (string.IsNullOrWhiteSpace(dto.ModalidadProyecto))
+            {
+                if (p.TieneGrupo == true || p.IdGrupo.HasValue || dto.TieneGrupoInvestigacion == true)
+                {
+                    dto.ModalidadProyecto = "GRUPO";
+                }
+                else if (investigadoresList.Count > 1)
+                {
+                    dto.ModalidadProyecto = "EQUIPO";
+                }
+                else
+                {
+                    dto.ModalidadProyecto = "INDIVIDUAL";
+                }
+            }
+
             dto.CostoTotal = p.InvPresupuestoItems.Any()
                 ? p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad)
                 : p.PresupuestoEstimado ?? 0;

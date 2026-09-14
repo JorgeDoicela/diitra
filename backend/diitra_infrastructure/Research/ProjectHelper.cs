@@ -67,16 +67,9 @@ namespace diitra_infrastructure.Research
             return null;
         }
 
-        public static string NormalizeRole(string? role)
+        public static string NormalizeRole(string? role, string? tipoPersona = null)
         {
-            if (string.IsNullOrWhiteSpace(role))
-                return "Co-Investigador";
-
-            var r = role.Trim().ToLowerInvariant();
-            if (r.Contains("director") || r.Contains("principal")) return "Director de Proyecto";
-            if (r.Contains("semillerista") || r.Contains("estudiante") || r.Contains("alumno")) return "Semillerista";
-
-            return "Co-Investigador";
+            return diitra_domain.Research.ResearchRoles.NormalizeProjectRole(role, tipoPersona);
         }
 
         public static List<bool> GetSemanasCalculadas(DateOnly? pStart, DateOnly? pEnd, DateOnly? aStart, DateOnly? aEnd)

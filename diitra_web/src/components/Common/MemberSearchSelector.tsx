@@ -3,6 +3,8 @@ import { Search, UserPlus, X, Briefcase, GraduationCap, Globe, Check, AlertCircl
 import api from '../../api/axios_config';
 import { GeistSelect } from './GeistSelect';
 import { fetchCatalogCached } from '../../api/catalogsCache';
+import { type CatRol, PROJECT_ROLES, GROUP_ROLES, isProjectDirector } from '../../utils/roleCatalog';
+export type { CatRol };
 
 export interface SelectedMemberResult {
     id_usuario: number;
@@ -35,6 +37,8 @@ interface MemberSearchSelectorProps {
     soloConHorasDocentes?: boolean;
     estadoEstudiante?: string;
     variant?: 'card' | 'embedded';
+    context?: 'PROJECT' | 'GROUP';
+    hasDirector?: boolean;
 }
 
 export const formatNombre = (nombre: string | null | undefined) => {
@@ -52,16 +56,22 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     existingCedulas = [],
     allowedTypes = ['DOCENTE', 'ADMINISTRATIVO', 'ESTUDIANTE', 'EXTERNO'],
     defaultType = 'DOCENTE',
-    title = 'Añadir Integrante al Grupo',
-    subtitle = 'Busque y seleccione personal docente, administrativo, estudiantes o colaboradores externos.',
+    title,
+    subtitle,
     excludeCoordinatorCedula,
     isCoordinatorSelectorOnly = false,
     onSelectCoordinator,
     selectedCoordinatorCedula,
     soloConHorasDocentes = false,
     estadoEstudiante = 'TODOS',
-    variant = 'card'
+    variant = 'card',
+    context = 'GROUP',
+    hasDirector = false
 }) => {
+    const defaultTitle = title || (context === 'PROJECT' ? 'Añadir Integrante al Proyecto' : 'Añadir Integrante al Grupo');
+    const defaultSubtitle = subtitle || (context === 'PROJECT' 
+        ? 'Busque y seleccione docentes o estudiantes para el equipo de investigación.'
+        : 'Busque y seleccione personal docente, administrativo, estudiantes o colaboradores externos.');
     const [selectedType, setSelectedType] = useState<'DOCENTE' | 'ADMINISTRATIVO' | 'ESTUDIANTE' | 'EXTERNO'>(defaultType);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCarrera, setSelectedCarrera] = useState<string>('');
@@ -70,6 +80,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     const [carrerasList, setCarrerasList] = useState<any[]>([]);
     const [nivelesList, setNivelesList] = useState<string[]>([]);
     const [deptosList, setDeptosList] = useState<string[]>([]);
+    const [rolesList, setRolesList] = useState<CatRol[]>([]);
     const [results, setResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -82,33 +93,65 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
     // Cargar catálogos institucionales para filtros con deduplicación y caché en memoria
     useEffect(() => {
         let isMounted = true;
+        const ambitoParam = context === 'PROJECT' ? 'PROYECTO' : 'GRUPO';
+
         Promise.all([
             fetchCatalogCached('/catalogs/carreras', () => api.get('/catalogs/carreras')),
             fetchCatalogCached('/catalogs/niveles', () => api.get('/catalogs/niveles')),
-            fetchCatalogCached('/Admin/departments', () => api.get('/Admin/departments'))
-        ]).then(([carreras, niveles, deptos]) => {
+            fetchCatalogCached('/Admin/departments', () => api.get('/Admin/departments')),
+            fetchCatalogCached(`/catalogs/roles?ambito=${ambitoParam}`, () => api.get(`/catalogs/roles?ambito=${ambitoParam}`))
+        ]).then(([carreras, niveles, deptos, roles]) => {
             if (!isMounted) return;
             if (Array.isArray(carreras)) setCarrerasList(carreras);
             if (Array.isArray(niveles)) setNivelesList(niveles);
             if (Array.isArray(deptos)) setDeptosList(deptos);
+            if (Array.isArray(roles)) setRolesList(roles);
         }).catch(err => console.error('[MemberSearchSelector] Error cargando catálogos:', err));
 
         return () => { isMounted = false; };
-    }, []);
+    }, [context]);
 
-    // Ajustar el rol por defecto cuando cambia el tipo de candidato seleccionado
+    // Ajustar el rol cuando cambia el tipo de candidato seleccionado basándose en inv_cat_roles
     const getSuggestedRoles = (type: string) => {
+        const cleanType = (type || '').trim().toUpperCase();
+
+        if (cleanType === 'ESTUDIANTE' || cleanType === 'ALUMNO') {
+            return [PROJECT_ROLES.SEMILLERISTA];
+        }
+
+        if (rolesList && rolesList.length > 0) {
+            let matching = rolesList.filter(r => !r.tipo_persona || r.tipo_persona.toUpperCase() === cleanType);
+            if (context === 'PROJECT' && hasDirector) {
+                matching = matching.filter(r => !r.es_director && !isProjectDirector(r.nombre));
+            }
+            if (matching.length > 0) {
+                return matching.map(r => r.nombre);
+            }
+        }
+
+        // Fallback institucional en caso de retraso en red
+        if (context === 'PROJECT') {
+            switch (cleanType) {
+                case 'DOCENTE':
+                    return hasDirector ? [PROJECT_ROLES.CO_INVESTIGADOR] : [PROJECT_ROLES.DIRECTOR, PROJECT_ROLES.CO_INVESTIGADOR];
+                case 'ESTUDIANTE':
+                    return [PROJECT_ROLES.SEMILLERISTA];
+                default:
+                    return [PROJECT_ROLES.CO_INVESTIGADOR];
+            }
+        }
+
         switch (type) {
             case 'DOCENTE':
-                return ['Co-Investigador', 'Director de Proyecto', 'Investigador Principal', 'Colaborador Docente'];
+                return [GROUP_ROLES.COORDINADOR, GROUP_ROLES.MIEMBRO_DOCENTE];
             case 'ADMINISTRATIVO':
-                return ['Personal de Apoyo Técnico', 'Gestor Administrativo', 'Co-Investigador Técnico'];
+                return [GROUP_ROLES.APOYO_TECNICO];
             case 'ESTUDIANTE':
-                return ['Semillerista', 'Auxiliar de Investigación', 'Investigador Egresado/Graduado'];
+                return [GROUP_ROLES.SEMILLERISTA];
             case 'EXTERNO':
-                return ['Investigador Asociado', 'Asesor Científico', 'Evaluador Externo'];
+                return [GROUP_ROLES.INVESTIGADOR_EXTERNO];
             default:
-                return ['Co-Investigador', 'Semillerista', 'Personal de Apoyo'];
+                return [GROUP_ROLES.MIEMBRO_DOCENTE, GROUP_ROLES.SEMILLERISTA];
         }
     };
 
@@ -225,7 +268,12 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
         }
 
         if (existingCedulas.some(c => c.trim() === cedula)) {
-            setStatusMessage({ type: 'error', text: 'Esta persona ya está registrada como integrante del grupo.' });
+            setStatusMessage({ 
+                type: 'error', 
+                text: context === 'PROJECT' 
+                    ? 'Esta persona ya está registrada como integrante del proyecto.' 
+                    : 'Esta persona ya está registrada como integrante del grupo.' 
+            });
             return;
         }
 
@@ -272,9 +320,9 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h5 className="text-[11px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
-                        <UserPlus size={13} className="text-text-main" /> {title}
+                        <UserPlus size={13} className="text-text-main" /> {defaultTitle}
                     </h5>
-                    <p className="text-[10px] text-text-dim mt-0.5">{subtitle}</p>
+                    <p className="text-[10px] text-text-dim mt-0.5">{defaultSubtitle}</p>
                 </div>
 
                 {/* Tabs de tipo de personal */}
@@ -646,7 +694,7 @@ export const MemberSearchSelector: React.FC<MemberSearchSelectorProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border-thin/40">
                         <div>
                             <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block mb-1">
-                                Rol Funcional en el Grupo
+                                {context === 'PROJECT' ? 'Rol en el Proyecto' : 'Rol Funcional en el Grupo'}
                             </label>
                             <GeistSelect<string>
                                 value={memberRole}

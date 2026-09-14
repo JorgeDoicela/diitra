@@ -21,6 +21,7 @@ public partial class DiitraContext
         modelBuilder.ApplyConfiguration(new InvCatImpactoConfiguration());
         modelBuilder.ApplyConfiguration(new InvCatTipoProductoConfiguration());
         modelBuilder.ApplyConfiguration(new InvCatTipoEvidenciaConfiguration());
+        modelBuilder.ApplyConfiguration(new InvCatRolConfiguration());
         modelBuilder.ApplyConfiguration(new InvEntidadExternaConfiguration());
         modelBuilder.ApplyConfiguration(new InvPndObjetivoConfiguration());
 

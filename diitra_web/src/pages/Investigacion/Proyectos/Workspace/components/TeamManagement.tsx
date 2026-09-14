@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
-    Users, AlertCircle, ExternalLink, RefreshCw, X,
-    Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp, AlertTriangle
+    Users, User, Layers, Info, AlertCircle, ExternalLink, RefreshCw, X,
+    Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp, AlertTriangle, ChevronRight
 } from 'lucide-react';
 import { GeistSelect } from '../../../../../components/Common/GeistSelect';
+import { MemberSearchSelector, type SelectedMemberResult } from '../../../../../components/Common/MemberSearchSelector';
+import { normalizeProjectRole } from '../../../../../utils/roleCatalog';
 
 const formatNombre = (nombre: string | null | undefined) => {
     if (!nombre) return '';
@@ -13,11 +16,7 @@ const formatNombre = (nombre: string | null | undefined) => {
 };
 
 const normalizeRole = (role: string | null | undefined): string => {
-    if (!role) return "Co-Investigador";
-    const r = role.toLowerCase().trim();
-    if (r.includes("director") || r.includes("principal")) return "Director de Proyecto";
-    if (r.includes("semillerista") || r.includes("estudiante") || r.includes("alumno")) return "Semillerista";
-    return "Co-Investigador";
+    return normalizeProjectRole(role);
 };
 
 interface TeamManagementProps {
@@ -65,14 +64,17 @@ interface TeamManagementProps {
     setIsHistoryExpanded: (val: boolean) => void;
     isChangeRequestsExpanded: boolean;
     setIsChangeRequestsExpanded: (val: boolean) => void;
+    modalidad?: 'INDIVIDUAL' | 'EQUIPO' | 'GRUPO';
+    onSelectModalidad?: (val: 'INDIVIDUAL' | 'EQUIPO' | 'GRUPO') => void;
     onToggleTieneGrupo: (val: boolean) => void;
     onSetGrupoInvestigacion: (val: string) => void;
     onSaveTeam: () => void;
     onCreateTeamChangeRequest: () => void;
-    onReviewTeamChangeRequest: (requestUuid: string, aprobar: boolean) => void;
+    onReviewTeamChangeRequest: (requestUuid: string, almacenar: boolean) => void;
     onOpenTransferModal: (member: any) => void;
     onUpdateMember: (cedula: string, field: string, value: any) => void;
     onRemoveMember: (cedula: string) => void;
+    onAddMember?: (member: any) => void;
     onOpenGroupDetail: (groupUuid: string) => void;
 }
 
@@ -105,6 +107,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     setIsHistoryExpanded,
     isChangeRequestsExpanded,
     setIsChangeRequestsExpanded,
+    modalidad: propModalidad,
+    onSelectModalidad,
     onToggleTieneGrupo,
     onSetGrupoInvestigacion,
     onSaveTeam,
@@ -113,8 +117,67 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     onOpenTransferModal,
     onUpdateMember,
     onRemoveMember,
+    onAddMember,
     onOpenGroupDetail
 }) => {
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    const activeModalidad: 'INDIVIDUAL' | 'EQUIPO' | 'GRUPO' = propModalidad ?? (tieneGrupo ? 'GRUPO' : (investigadores.filter((m: any) => m.activo !== false).length > 1 ? 'EQUIPO' : 'INDIVIDUAL'));
+
+    const handleSwitchModalidad = (target: 'INDIVIDUAL' | 'EQUIPO' | 'GRUPO') => {
+        if (onSelectModalidad) {
+            onSelectModalidad(target);
+        } else {
+            onToggleTieneGrupo(target === 'GRUPO');
+        }
+    };
+
+    const hasActiveDirector = useMemo(() => {
+        return (investigadores || []).some((inv: any) => {
+            const r = inv.rol || inv.Rol || '';
+            return r.toLowerCase().includes('director') || inv.esDirector === true || inv.EsDirector === true;
+        });
+    }, [investigadores]);
+
+    const existingCedulas = useMemo(() => {
+        return investigadores
+            .map((i: any) => (i.cedula || i.Cedula || '').trim())
+            .filter(Boolean);
+    }, [investigadores]);
+
+    const handleAddMemberFromSearch = (member: SelectedMemberResult) => {
+        if (!member) return;
+        const cedula = (member.cedula || '').trim();
+        if (!cedula) return;
+
+        const isStudent = member.tipo === 'ESTUDIANTE';
+        let defaultRole = member.rol || (isStudent ? 'Semillerista' : 'Co-Investigador');
+        if (hasActiveDirector && defaultRole.toLowerCase().includes('director')) {
+            defaultRole = 'Co-Investigador';
+        }
+        const defaultNivel = isStudent ? 'Pregrado' : 'Tercer Nivel';
+
+        const newInvestigador = {
+            nombre: formatNombre(member.nombre_completo),
+            cedula: cedula,
+            email: member.email || '',
+            telefono: member.telefono || '',
+            nivelAcademico: defaultNivel,
+            rol: defaultRole,
+            horasSemanales: member.horas_investigacion ?? (isStudent ? 0 : 5),
+            horasDisponibles: member.horas_investigacion ?? 0,
+            horasAsignadas: member.horas_asignadas ?? 0,
+            carrera: member.carrera || '',
+            carrerasDisponibles: member.carrera || '',
+            activo: true,
+            esDirector: false
+        };
+
+        if (onAddMember) {
+            onAddMember(newInvestigador);
+        }
+        setIsAddModalOpen(false);
+    };
 
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">
@@ -122,39 +185,66 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 <div className="flex items-center gap-2.5 mb-1.5">
                     <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                     <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">
-                        {tieneGrupo ? 'Equipo Adscrito a Grupo Institucional' : 'Equipo de Investigación del Proyecto'}
+                        {activeModalidad === 'GRUPO' 
+                            ? 'Equipo Adscrito a Grupo Institucional' 
+                            : (activeModalidad === 'INDIVIDUAL' ? 'Investigación Individual (Unipersonal)' : 'Equipo de Investigación del Proyecto')}
                     </h3>
                 </div>
                 <p className="text-xs text-text-dim font-normal leading-relaxed">
-                    {tieneGrupo 
-                        ? 'Gestión del talento humano vinculado al grupo de investigación formal' 
-                        : 'Gestión ágil de docentes investigadores, semilleristas y colaboradores del proyecto'}
+                    {activeModalidad === 'GRUPO' 
+                        ? 'Gestión del talento humano vinculado al grupo de investigación formal institucional' 
+                        : (activeModalidad === 'INDIVIDUAL' 
+                            ? 'Gestión del docente director a cargo de la investigación unipersonal' 
+                            : 'Gestión ágil de docentes investigadores, semilleristas y colaboradores del proyecto')}
                 </p>
             </div>
 
             <div className="mt-6 space-y-4">
-                {/* Toggle Individual / Equipo vs Asociativo */}
-                <div className="flex bg-surface-hover rounded-md border border-border-thin overflow-hidden">
-                    <button
-                        type="button"
-                        disabled={currentProject.puedeEditar === false}
-                        onClick={() => onToggleTieneGrupo(false)}
-                        className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
-                    >
-                        Equipo de Proyecto / Individual
-                    </button>
-                    <button
-                        type="button"
-                        disabled={currentProject.puedeEditar === false}
-                        onClick={() => onToggleTieneGrupo(true)}
-                        className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 border-l border-border-thin ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep border-l-transparent' : 'text-text-dim hover:text-text-main'}`}
-                    >
-                        Asociativo (Grupo Formal)
-                    </button>
+                {/* Selector de Modalidad de Proyecto (INDIVIDUAL | EQUIPO | GRUPO FORMAL) */}
+                <div className="space-y-2">
+                    <div className="flex bg-surface-hover/80 p-1 rounded-lg border border-border-thin gap-1">
+                        <button
+                            type="button"
+                            disabled={currentProject.puedeEditar === false}
+                            onClick={() => handleSwitchModalidad('INDIVIDUAL')}
+                            className={`flex-1 py-2 px-2.5 rounded-md text-[10px] font-semibold tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${activeModalidad === 'INDIVIDUAL' ? 'bg-bg-deep text-text-main shadow-xs border border-border-thin font-bold' : 'text-text-dim hover:text-text-main hover:bg-surface-hover'}`}
+                        >
+                            <User size={12} className={activeModalidad === 'INDIVIDUAL' ? 'text-brand' : 'opacity-70'} />
+                            <span>Individual</span>
+                        </button>
+                        <button
+                            type="button"
+                            disabled={currentProject.puedeEditar === false}
+                            onClick={() => handleSwitchModalidad('EQUIPO')}
+                            className={`flex-1 py-2 px-2.5 rounded-md text-[10px] font-semibold tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${activeModalidad === 'EQUIPO' ? 'bg-bg-deep text-text-main shadow-xs border border-border-thin font-bold' : 'text-text-dim hover:text-text-main hover:bg-surface-hover'}`}
+                        >
+                            <Users size={12} className={activeModalidad === 'EQUIPO' ? 'text-brand' : 'opacity-70'} />
+                            <span>Equipo de Proyecto</span>
+                        </button>
+                        <button
+                            type="button"
+                            disabled={currentProject.puedeEditar === false}
+                            onClick={() => handleSwitchModalidad('GRUPO')}
+                            className={`flex-1 py-2 px-2.5 rounded-md text-[10px] font-semibold tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${activeModalidad === 'GRUPO' ? 'bg-bg-deep text-text-main shadow-xs border border-border-thin font-bold' : 'text-text-dim hover:text-text-main hover:bg-surface-hover'}`}
+                        >
+                            <Layers size={12} className={activeModalidad === 'GRUPO' ? 'text-brand' : 'opacity-70'} />
+                            <span>Grupo Formal</span>
+                        </button>
+                    </div>
+
+                    {/* Explicación contextual de la modalidad activa */}
+                    <div className="px-3 py-2 rounded-lg bg-surface-hover/40 border border-border-thin/50 flex items-center gap-2 text-[11px] text-text-dim">
+                        <Info size={13} className="text-brand shrink-0" />
+                        <span>
+                            {activeModalidad === 'INDIVIDUAL' && 'Modalidad Unipersonal: Proyecto liderado exclusivamente por 1 Director de Proyecto. No requiere co-investigadores ni semilleristas.'}
+                            {activeModalidad === 'EQUIPO' && 'Equipo Multidisciplinario: 1 Director de Proyecto al frente de un equipo libre de docentes co-investigadores y semilleristas.'}
+                            {activeModalidad === 'GRUPO' && 'Modalidad Asociativa: Adscrito a un Grupo de Investigación formal aprobado. La nómina base procede de los miembros del grupo.'}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Selector de Grupo de Investigación Adscrito */}
-                {tieneGrupo && (
+                {activeModalidad === 'GRUPO' && (
                     <div className="space-y-1.5 animate-fade-in">
                         <div className="flex items-center justify-between">
                             <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Grupo de Investigación Adscrito</label>
@@ -199,8 +289,6 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     </div>
                 )}
 
-
-
                 {/* Modo Solo Lectura Banner */}
                 {currentProject.puedeEditar === false && !currentProject.puedeSolicitarCambioEquipo && (
                     <div className="callout-vercel callout-vercel-warning animate-fade-in mb-4 w-full">
@@ -210,18 +298,45 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
                 {/* Lista de Integrantes */}
                 <div className="space-y-3">
-                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
-                        {tieneGrupo ? 'Integrantes Activos' : 'Investigador Activo'} ({investigadores.filter((m: any) => m.activo !== false).length})
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
+                                {activeModalidad === 'GRUPO' 
+                                    ? 'Integrantes Activos del Grupo' 
+                                    : (activeModalidad === 'INDIVIDUAL' ? 'Investigador Principal' : 'Integrantes del Equipo')} ({investigadores.filter((m: any) => m.activo !== false).length})
+                            </label>
+                            {activeModalidad === 'INDIVIDUAL' && (
+                                <span className="badge-vercel badge-vercel-neutral !text-[9px] !py-0.5 !px-1.5 font-medium">
+                                    Unipersonal
+                                </span>
+                            )}
+                        </div>
+                        {currentProject.puedeEditar !== false && activeModalidad !== 'GRUPO' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (activeModalidad === 'INDIVIDUAL') {
+                                        handleSwitchModalidad('EQUIPO');
+                                    }
+                                    setIsAddModalOpen(true);
+                                }}
+                                className="btn-vercel-primary !py-1 !px-2.5 !text-[10px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                title={activeModalidad === 'INDIVIDUAL' ? "Convertir a Equipo y Añadir Integrante" : "Añadir Docente o Estudiante al Equipo"}
+                            >
+                                <UserPlus size={12} />
+                                <span>{activeModalidad === 'INDIVIDUAL' ? 'Convertir a Equipo y Añadir' : 'Añadir Integrante'}</span>
+                            </button>
+                        )}
+                    </div>
 
                     {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
                         <div className="p-6 rounded-xl border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider font-mono">
-                            {tieneGrupo ? 'Sin investigadores activos' : 'Sin investigador asignado'}
+                            {tieneGrupo ? 'Sin investigadores activos' : 'Sin integrantes registrados en el equipo'}
                         </div>
                     ) : (
                         <div className="space-y-3">
                             {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
-                                const isDirector = member.rol?.toLowerCase().includes('director');
+                                const isDirector = member.rol?.toLowerCase().includes('director') || member.esDirector === true || member.EsDirector === true;
                                 
                                 // Normalized variables to support both camelCase and snake_case API data
                                 const nivelAcademico = member.nivelAcademico ?? member.nivel_academico ?? 'Tercer Nivel';
@@ -256,12 +371,12 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                         }`}>
                                                         {member.rol}
                                                     </span>
-                                                    {isDirector && currentProject.puedeEditar !== false && tieneGrupo && grupoInvestigacion && (
+                                                    {isDirector && currentProject.puedeEditar !== false && (
                                                         <button
                                                             type="button"
                                                             onClick={() => onOpenTransferModal(member)}
                                                             className="btn-vercel-secondary !py-0.5 !px-2 !text-[9px] !h-auto flex items-center gap-1 transition-all"
-                                                            title="Transferir Dirección"
+                                                            title="Transferir Dirección formalmente"
                                                         >
                                                             <RefreshCw size={8} /> Relevo
                                                         </button>
@@ -339,9 +454,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                             onChange={(val) => onUpdateMember(member.cedula, 'rol', val)}
                                                             className="!py-2 !rounded-lg !text-xs"
                                                         >
-                                                            <option value="Director de Proyecto">Director de Proyecto</option>
-                                                            <option value="Co-Investigador">Co-Investigador</option>
-                                                            <option value="Semillerista">Semillerista</option>
+                                                            {isEstudiante ? (
+                                                                <option value="Semillerista">Semillerista</option>
+                                                            ) : (
+                                                                <>
+                                                                    <option value="Director de Proyecto">Director de Proyecto</option>
+                                                                    <option value="Co-Investigador">Co-Investigador</option>
+                                                                </>
+                                                            )}
                                                         </GeistSelect>
                                                     </div>
 
@@ -385,12 +505,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                     </div>
                                                 </div>
 
-                                                {currentProject.puedeEditar !== false && !tieneGrupo && !isDirector && (
+                                                {currentProject.puedeEditar !== false && activeModalidad !== 'GRUPO' && (
                                                     <button
                                                         type="button"
+                                                        disabled={activeModalidad === 'INDIVIDUAL'}
                                                         onClick={() => onRemoveMember(member.cedula)}
-                                                        className="p-2 text-text-dim hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-all self-end md:self-end md:mb-[3px] shrink-0"
-                                                        title="Remover"
+                                                        className={`p-2 rounded-lg transition-all self-end md:self-end md:mb-[3px] shrink-0 ${activeModalidad === 'INDIVIDUAL' ? 'opacity-25 cursor-not-allowed text-text-dim' : 'text-text-dim hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 cursor-pointer'}`}
+                                                        title={activeModalidad === 'INDIVIDUAL' ? "En modalidad Individual el Director es obligatorio. Use Relevo o cambie a Equipo." : "Remover Integrante"}
                                                     >
                                                         <Trash2 size={13} />
                                                     </button>
@@ -557,7 +678,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                             }}
                                                             className="!py-2 !rounded-md !text-xs"
                                                         >
-                                                            <option value="Director de Proyecto">Director de Proyecto</option>
+                                                            <option value="Director de Proyecto" disabled={hasActiveDirector}>
+                                                                {hasActiveDirector ? "Director de Proyecto (Usar relevo de Director)" : "Director de Proyecto"}
+                                                            </option>
                                                             <option value="Co-Investigador">Co-Investigador</option>
                                                             <option value="Semillerista">Semillerista</option>
                                                         </GeistSelect>
@@ -805,6 +928,60 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Drawer Lateral a la Derecha para Añadir Integrantes (Estilo Vercel Geist DIITRA) */}
+            {isAddModalOpen && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-bg-deep/80 backdrop-blur-xs cursor-pointer animate-fade-in"
+                        onClick={() => setIsAddModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl md:max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden shadow-2xl">
+                        {/* Header del Drawer */}
+                        <div className="modal-header border-b border-border-thin px-6 py-5 flex items-center justify-between shrink-0 bg-surface">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                                    <UserPlus size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-text-main tracking-tight uppercase">
+                                        Añadir Integrante al Equipo
+                                    </h3>
+                                    <p className="text-[11px] text-text-dim mt-0.5">
+                                        Docentes con horas de investigación y estudiantes con matrícula activa (SIGAFI)
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsAddModalOpen(false)}
+                                className="text-text-dim hover:text-text-main transition-colors p-2 rounded-lg hover:bg-surface-hover cursor-pointer"
+                                title="Cerrar panel"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+
+                        {/* Contenido del Drawer */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <MemberSearchSelector
+                                title="Búsqueda de Personal"
+                                subtitle="Filtrado en tiempo real con SIGAFI por carga horaria y matrícula vigente."
+                                onAddMember={handleAddMemberFromSearch}
+                                existingCedulas={existingCedulas}
+                                allowedTypes={['DOCENTE', 'ESTUDIANTE']}
+                                defaultType="DOCENTE"
+                                soloConHorasDocentes={true}
+                                estadoEstudiante="ACTIVO"
+                                variant="embedded"
+                                context="PROJECT"
+                                hasDirector={hasActiveDirector}
+                            />
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

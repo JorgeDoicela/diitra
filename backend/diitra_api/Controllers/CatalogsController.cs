@@ -534,6 +534,36 @@ namespace diitra_api.Controllers
             await _context.SaveChangesAsync();
             return Ok(existing);
         }
+
+        [HttpGet("roles")]
+        public async Task<IActionResult> GetRoles([FromQuery] string? ambito, [FromQuery] string? tipoPersona, [FromQuery] bool? soloActivos = true)
+        {
+            var query = _context.InvCatRoles.AsNoTracking().AsQueryable();
+
+            if (soloActivos ?? true)
+            {
+                query = query.Where(r => r.Activo);
+            }
+
+            if (!string.IsNullOrWhiteSpace(ambito))
+            {
+                var cleanAmbito = ambito.Trim().ToUpper();
+                query = query.Where(r => r.Ambito.ToUpper() == cleanAmbito);
+            }
+
+            if (!string.IsNullOrWhiteSpace(tipoPersona))
+            {
+                var cleanTipo = tipoPersona.Trim().ToUpper();
+                query = query.Where(r => r.TipoPersona == null || r.TipoPersona.ToUpper() == cleanTipo);
+            }
+
+            var roles = await query
+                .OrderBy(r => r.Orden)
+                .ThenBy(r => r.Nombre)
+                .ToListAsync();
+
+            return Ok(roles);
+        }
     }
 
     public class TipoInvestigacionDto

@@ -94,7 +94,11 @@ export const ProjectWorkspace: React.FC = () => {
     }, [currentProject?.uuid, currentProject?.titulo, (currentProject as any)?.codigo_institucional, touchProject]);
 
     const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
-    const preloadedData = React.useMemo(() => ({ Uuid: editorUuid }), [editorUuid]);
+    const preloadedData = React.useMemo(() => ({
+        Uuid: editorUuid,
+        investigadores: currentProject?.investigadores || team?.investigadores || [],
+        Investigadores: currentProject?.investigadores || team?.investigadores || []
+    }), [editorUuid, currentProject?.investigadores, team?.investigadores]);
 
     // ── Sincronización Silenciosa y Throttling Enterprise (10/10) ──
     const FOCUS_THROTTLE_MS = 15000; // Cooldown mínimo de 15s entre revalidaciones por foco/visibilidad
@@ -158,7 +162,7 @@ export const ProjectWorkspace: React.FC = () => {
     useEffect(() => {
         // Evento explícito de DIITRA (tras guardar, firmar o revertir) -> Inmediato sin cooldown
         const onCustomEvent = () => {
-            triggerSync(true);
+            triggerSync(false);
         };
 
         // Eventos del navegador (enfoque de ventana o cambio de pestaña) -> Throttled a 15s
@@ -171,11 +175,13 @@ export const ProjectWorkspace: React.FC = () => {
         };
 
         window.addEventListener('diitra-projects-changed', onCustomEvent);
+        window.addEventListener('diitra-project-team-updated', onCustomEvent);
         window.addEventListener('focus', onWindowFocusOrVisible);
         document.addEventListener('visibilitychange', onWindowFocusOrVisible);
 
         return () => {
             window.removeEventListener('diitra-projects-changed', onCustomEvent);
+            window.removeEventListener('diitra-project-team-updated', onCustomEvent);
             window.removeEventListener('focus', onWindowFocusOrVisible);
             document.removeEventListener('visibilitychange', onWindowFocusOrVisible);
         };
@@ -244,6 +250,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleCloseEditor = () => {
         setActiveDocument(null);
+        triggerSync(false);
     };
 
     if (activeDocument) {
@@ -442,6 +449,8 @@ export const ProjectWorkspace: React.FC = () => {
                                 setIsHistoryExpanded={team.setIsHistoryExpanded}
                                 isChangeRequestsExpanded={team.isChangeRequestsExpanded}
                                 setIsChangeRequestsExpanded={team.setIsChangeRequestsExpanded}
+                                modalidad={team.modalidadEquipo}
+                                onSelectModalidad={team.handleSelectModalidad}
                                 onToggleTieneGrupo={team.handleToggleTieneGrupo}
                                 onSetGrupoInvestigacion={team.setGrupoInvestigacion}
                                 onSaveTeam={team.handleSaveTeam}
@@ -450,6 +459,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 onOpenTransferModal={team.handleOpenTransferModal}
                                 onUpdateMember={team.handleUpdateMember}
                                 onRemoveMember={team.handleRemoveMember}
+                                onAddMember={team.handleAddMember}
                                 onOpenGroupDetail={team.handleOpenGroupDetail}
                             />
                         </div>

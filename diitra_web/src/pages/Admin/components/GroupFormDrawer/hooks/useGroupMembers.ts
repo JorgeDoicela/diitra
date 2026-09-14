@@ -1,6 +1,7 @@
 import { useState, Dispatch, SetStateAction } from 'react';
 import type { GroupMember, Career, GroupFormData } from '../types';
 import type { SelectedMemberResult } from '../../../../../components/Common/MemberSearchSelector';
+import { normalizeGroupRole } from '../../../../../utils/roleCatalog';
 
 interface UseGroupMembersProps {
     carreras: Career[];
@@ -82,7 +83,7 @@ export function useGroupMembers({
             id_usuario: member.id_usuario || 0,
             cedula: cedula,
             nombre_completo: member.nombre_completo,
-            rol: member.rol || 'Co-Investigador',
+            rol: normalizeGroupRole(member.rol, member.tipo),
             activo: true,
             carrera: member.carrera || member.departamento || '',
             telefono_contacto: member.telefono || ''
