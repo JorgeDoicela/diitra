@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, FileText, Eye, Scale, History, Download, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, FileText, Eye, Scale, History, Download, Sun, Moon, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 
 interface RevisionHeaderProps {
@@ -161,6 +161,16 @@ export const RevisionHeader: React.FC<RevisionHeaderProps> = ({
                     ) : (
                         <Moon size={13} className="text-text-main hover:-rotate-12 transition-transform" />
                     )}
+                </button>
+
+                {/* Botón Reportar Problema */}
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                    className="p-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border-thin text-text-dim hover:text-text-main shadow-2xs transition-all cursor-pointer flex items-center justify-center active:scale-95"
+                    title="Reportar problema o sugerencia"
+                    aria-label="Reportar problema o sugerencia"
+                >
+                    <MessageSquarePlus size={13} />
                 </button>
 
                 {/* Botón de Auditoría Activa */}

@@ -1,10 +1,10 @@
 import React from 'react';
-import { ArrowLeft, Save, Clock, CheckCircle, Shield, Sun, Moon } from 'lucide-react';
-import type { CoWorkUser } from '../../../../../core/cowork/types';
+import { ArrowLeft, Save, Clock, CheckCircle, Shield, Sun, Moon, MessageSquarePlus } from 'lucide-react';
+import type { CoWorkUser } from '../../../../core/cowork/types';
 
 export interface BuilderHeaderProps {
     title: string;
-    subtitle: string;
+    subtitle?: string;
     readOnly?: boolean;
     isSyncing: boolean;
     isDirty: boolean;
@@ -56,6 +56,11 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                         <h2 className="text-sm md:text-base font-black text-text-main tracking-tight uppercase leading-none truncate max-w-[200px] xs:max-w-[280px] sm:max-w-[380px] md:max-w-[480px] lg:max-w-[650px]" title={title}>
                             {title}
                         </h2>
+                        {subtitle && (
+                            <p className="text-[10px] text-text-dim truncate mt-0.5" title={subtitle}>
+                                {subtitle}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -132,6 +137,16 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                     aria-label="Cambiar tema claro/oscuro"
                 >
                     {isDarkMode ? <Sun size={14} className="text-warning animate-pulse" /> : <Moon size={14} className="text-indigo-400" />}
+                </button>
+
+                {/* 5. Botón de reporte de incidencia / sugerencia (al final) */}
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                    className="p-1.5 text-text-dim hover:text-text-main transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-90 bg-transparent border-0"
+                    title="Reportar problema o sugerencia"
+                    aria-label="Reportar problema o sugerencia"
+                >
+                    <MessageSquarePlus size={14} />
                 </button>
             </div>
         </div>

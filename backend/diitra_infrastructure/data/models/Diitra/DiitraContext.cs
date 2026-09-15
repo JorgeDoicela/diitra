@@ -77,6 +77,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvMagicLink>        InvMagicLinks          { get; set; }
     public virtual DbSet<InvConfigGeneral>    InvConfigsGenerales    { get; set; }
     public virtual DbSet<InvBackupLog>        InvBackupLogs          { get; set; }
+    public virtual DbSet<InvFeedbackReporte>  InvFeedbackReportes    { get; set; }
 
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
     public virtual DbSet<InvCatTipoEvidencia>  InvCatTipoEvidencias   { get; set; }

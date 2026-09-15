@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const {
         logout,
         isAdmin,
+        isSuperAdmin,
         user,
         roleDisplayName,
         navigate,
@@ -148,6 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         setIsUserMenuOpen={setIsUserMenuOpen}
                         logout={logout}
                         isAdmin={isAdmin}
+                        isSuperAdmin={isSuperAdmin}
                         user={user}
                         userInitials={userInitials}
                         username={username}

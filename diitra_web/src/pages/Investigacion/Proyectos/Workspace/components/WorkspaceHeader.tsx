@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, FileText, UploadCloud, ArrowLeft } from 'lucide-react';
+import { ChevronRight, FileText, UploadCloud, ArrowLeft, MessageSquarePlus } from 'lucide-react';
 import { useWorkflowStates, normalizeStateKey } from '../../../../../hooks/useWorkflowStates';
 
 interface WorkspaceHeaderProps {
@@ -92,25 +92,35 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 </div>
             </div>
 
-            {isAvancePhase && (
-                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end animate-fade-in">
-                    <button 
-                        onClick={onExportCaces}
-                        className="btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium cursor-pointer"
-                    >
-                        <FileText size={13} />
-                        <span>Exportar CACES</span>
-                    </button>
-                    <button 
-                        disabled={isPublishingDSpace}
-                        onClick={onPublishDSpace}
-                        className={`btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium cursor-pointer ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        <UploadCloud size={13} className={isPublishingDSpace ? "animate-pulse" : ""} />
-                        <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
-                    </button>
-                </div>
-            )}
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                {isAvancePhase && (
+                    <div className="flex items-center gap-2.5 animate-fade-in">
+                        <button 
+                            onClick={onExportCaces}
+                            className="btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium cursor-pointer"
+                        >
+                            <FileText size={13} />
+                            <span>Exportar CACES</span>
+                        </button>
+                        <button 
+                            disabled={isPublishingDSpace}
+                            onClick={onPublishDSpace}
+                            className={`btn-vercel-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 justify-center font-medium cursor-pointer ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <UploadCloud size={13} className={isPublishingDSpace ? "animate-pulse" : ""} />
+                            <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
+                        </button>
+                    </div>
+                )}
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                    className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer inline-flex items-center justify-center"
+                    title="Reportar problema o sugerencia"
+                    aria-label="Reportar problema o sugerencia"
+                >
+                    <MessageSquarePlus size={16} />
+                </button>
+            </div>
         </header>
     );
 };

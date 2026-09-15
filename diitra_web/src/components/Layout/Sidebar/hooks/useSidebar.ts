@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import api from '../../../../api/axios_config';
@@ -25,7 +25,7 @@ interface UseSidebarProps {
 }
 
 export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProps) => {
-    const { logout, hasPermission, roles, isAdmin, isDocente, isEstudiante, isRevisor, user, roleDisplayName } = useAuth();
+    const { logout, hasPermission, roles, isSuperAdmin, isAdmin, isDocente, isEstudiante, isRevisor, user, roleDisplayName } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -278,10 +278,12 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Plantillas', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
+        { name: 'Incidencias', icon: MessageSquarePlus, path: '/admin/feedback', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
     ];
 
     const menuItems = allMenuItems.filter(item => {
         if (item.path === '/investigacion/mis-proyectos' && isAdmin) return false;
+        if (item.path === '/admin/feedback' && !isSuperAdmin) return false;
 
         if (isAdmin) return true;
         if (item.permission) {
@@ -516,6 +518,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     return {
         logout,
         isAdmin,
+        isSuperAdmin,
         user,
         roleDisplayName,
         navigate,

@@ -246,6 +246,7 @@ builder.Services.AddScoped<diitra_application.Security.IMicrosoftAuthService, di
 builder.Services.AddScoped<diitra_application.Security.IPasswordRecoveryService, diitra_infrastructure.Security.PasswordRecoveryService>();
 builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();
 builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_infrastructure.Security.AdminService>();
+builder.Services.AddScoped<diitra_application.Feedback.IFeedbackService, diitra_infrastructure.Feedback.FeedbackService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectSecurityService, ProjectSecurityService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectWizardService, ProjectWizardService>();
@@ -385,6 +386,9 @@ using (var scope = app.Services.CreateScope())
 
     // 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
     app.UseCors("Diitra_policy");
+
+    // Servir archivos estáticos de wwwroot (uploads, plantillas, etc.)
+    app.UseStaticFiles();
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment() || true) // Habilitar Swagger siempre por ahora

@@ -50,6 +50,13 @@ const DocumentTemplatesPage   = lazy(() => import('./pages/Admin/Templates/Docum
 const MyCertificatesPage      = lazy(() => import('./pages/User/Certificates/MyCertificatesPage'));
 const InnovationPage          = lazy(() => import('./pages/Innovacion/InnovationPage'));
 const InnovationWorkspace     = lazy(() => import('./pages/Innovacion/Workspace/InnovationWorkspace'));
+const AdminFeedbackPage       = lazy(() => import('./pages/Admin/Feedback/AdminFeedbackPage').then(m => ({ default: m.AdminFeedbackPage })));
+const UserFeedbackPage        = lazy(() => import('./pages/Feedback/UserFeedbackPage').then(m => ({ default: m.UserFeedbackPage })));
+
+const FeedbackPageRouter = () => {
+    const { isSuperAdmin } = useAuth();
+    return isSuperAdmin ? <Navigate to="/admin/feedback" replace /> : <UserFeedbackPage />;
+};
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -96,6 +103,16 @@ const AuthenticatedRedirect = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
     if (isLoading) return null;
     if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    return <>{children}</>;
+};
+
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const { isAuthenticated, isLoading, isSuperAdmin } = useAuth();
+    if (isLoading) return null;
+
+    if (!isAuthenticated || !isSuperAdmin) {
+        return <Navigate to="/dashboard" replace />;
+    }
     return <>{children}</>;
 };
 
@@ -279,6 +296,8 @@ function App() {
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
                             <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
+                             <Route path="/admin/feedback" element={<SuperAdminRoute><AdminFeedbackPage /></SuperAdminRoute>} />
+                             <Route path="/sugerencias" element={<ProtectedRoute><FeedbackPageRouter /></ProtectedRoute>} />
                              <Route path="/admin/documentos" element={<AdminRoute><DocumentMaintenancePage /></AdminRoute>} />
                              <Route path="/plantillas" element={<AdminRoute><DocumentTemplatesPage /></AdminRoute>} />
                              <Route path="/admin/plantillas" element={<RedirectPreserveSearch to="/plantillas" />} />

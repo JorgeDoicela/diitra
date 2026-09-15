@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sun, Moon, Settings, Trash2, LogOut, Bell } from 'lucide-react';
+import { Sun, Moon, Settings, Trash2, LogOut, Bell, MessageSquarePlus } from 'lucide-react';
 
 const MoreHorizontalIcon = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
     <svg
@@ -28,6 +28,7 @@ interface SidebarFooterProps {
     setIsUserMenuOpen: (v: boolean) => void;
     logout: () => Promise<void>;
     isAdmin: boolean;
+    isSuperAdmin?: boolean;
     user: any;
     userInitials: string;
     username: string;
@@ -49,6 +50,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
     setIsUserMenuOpen,
     logout,
     isAdmin,
+    isSuperAdmin = false,
     user,
     userInitials,
     username,
@@ -90,6 +92,16 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                         >
                             <Settings size={14} />
                             <span>Configuración</span>
+                        </Link>
+                        <Link
+                            to={isSuperAdmin ? "/admin/feedback" : "/sugerencias"}
+                            onClick={() => {
+                                setIsUserMenuOpen(false);
+                            }}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
+                        >
+                            <MessageSquarePlus size={14} />
+                            <span>{isSuperAdmin ? 'Bandeja de Incidencias' : 'Incidencias y Sugerencias'}</span>
                         </Link>
                         {(isAdmin || user?.roles?.includes('DIITRA_DOCENTE')) && (
                             <Link

@@ -3,10 +3,11 @@ import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
-import { Menu, HelpCircle } from 'lucide-react';
+import { Menu, HelpCircle, MessageSquarePlus } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
 import { HelpModal } from './Help/HelpModal';
 import { WelcomeModal } from './WelcomeModal/WelcomeModal';
+import { FeedbackModal } from '../Feedback/FeedbackModal';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { StickyNotesFloatingButton } from '../Common/StickyNotesFloatingButton';
@@ -39,6 +40,8 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/evaluacion-pares') return 'Evaluación por Pares';
     if (pathname.startsWith('/evaluacion-pares/proyecto/')) return 'Evaluación por Pares de Proyecto';
     if (pathname === '/verificacion' || pathname.startsWith('/verificacion/')) return 'Verificación Documental';
+    if (pathname === '/sugerencias') return 'Sugerencias y Soporte';
+    if (pathname === '/admin/feedback') return 'Bandeja de Sugerencias';
     return '';
 };
 
@@ -49,6 +52,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const isWorkspace = location.pathname.includes('/workspace/');
     const isFullHeightPage = isWorkspace || location.pathname === '/plantillas' || location.pathname === '/admin/plantillas';
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showHeader, setShowHeader] = useState(true);
@@ -245,6 +249,12 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         return () => window.removeEventListener('diitra-topbar-collapse-change', handleTopbarCollapse);
     }, []);
 
+    useEffect(() => {
+        const handleOpenFeedback = () => setIsFeedbackOpen(true);
+        window.addEventListener('diitra-open-feedback', handleOpenFeedback);
+        return () => window.removeEventListener('diitra-open-feedback', handleOpenFeedback);
+    }, []);
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (isWorkspace) return;
         const currentScrollY = e.currentTarget.scrollTop;
@@ -316,7 +326,15 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 {getPageTitle(location.pathname)}
                             </div>
 
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={() => setIsFeedbackOpen(true)}
+                                    className="p-1.5 rounded-md text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                                    title="Reportar problema o sugerencia"
+                                    aria-label="Reportar problema o sugerencia"
+                                >
+                                    <MessageSquarePlus size={16} className="text-text-main" />
+                                </button>
                                 <button
                                     onClick={() => setIsHelpOpen(true)}
                                     className="p-1.5 rounded-md text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
@@ -351,6 +369,14 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         </Link>
                         <div className="flex items-center gap-1">
                             <button
+                                onClick={() => setIsFeedbackOpen(true)}
+                                className="p-2 text-text-main hover:bg-surface-hover rounded-md transition-colors cursor-pointer"
+                                title="Reportar problema o sugerencia"
+                                aria-label="Reportar problema o sugerencia"
+                            >
+                                <MessageSquarePlus size={20} className="text-accent-blue" />
+                            </button>
+                            <button
                                 onClick={() => setIsHelpOpen(true)}
                                 className="p-2 text-text-main hover:bg-surface-hover rounded-md transition-colors cursor-pointer"
                                 title="Guía Interactiva"
@@ -372,6 +398,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     </div>
                 </div>
             </div>
+
+            <FeedbackModal
+                isOpen={isFeedbackOpen}
+                onClose={() => setIsFeedbackOpen(false)}
+            />
 
             <HelpModal
                 isOpen={isHelpOpen}

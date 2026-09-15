@@ -80,5 +80,8 @@ public partial class DiitraContext
         // Configuraciones de Workflow e Indicadores
         modelBuilder.ApplyConfiguration(new InvConfigIndicadorConfiguration());
         modelBuilder.ApplyConfiguration(new InvConfigWorkflowConfiguration());
+
+        // Soporte y Feedback
+        modelBuilder.ApplyConfiguration(new InvFeedbackReporteConfiguration());
     }
 }

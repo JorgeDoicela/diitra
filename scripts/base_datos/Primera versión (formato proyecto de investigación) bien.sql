@@ -18,6 +18,7 @@ SET SQL_SAFE_UPDATES = 0;
 
 DROP TABLE IF EXISTS
     -- Grupo K (Seguridad y Notificaciones)
+    inv_feedback_reportes,
     inv_backup_logs,
     inv_lopdp_consentimientos,
     inv_lopdp_auditoria_datos,
@@ -986,6 +987,28 @@ CREATE TABLE inv_backup_logs (
     FOREIGN KEY (ejecutadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SEGURIDAD] Registro y trazabilidad de copias de seguridad (LOPDP Art. 47 & EGSI)';
 
+CREATE TABLE inv_feedback_reportes (
+    idFeedback          INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                VARCHAR(36)   NOT NULL UNIQUE,
+    idUsuario           INT(11)       NULL,
+    cedula              VARCHAR(20)   NULL,
+    nombreUsuario       VARCHAR(255)  NOT NULL,
+    rolUsuario          VARCHAR(50)   NOT NULL,
+    tipo                VARCHAR(30)   NOT NULL DEFAULT 'SUGERENCIA' COMMENT 'SUGERENCIA, ERROR, DUDA',
+    titulo              VARCHAR(200)  NOT NULL,
+    descripcion         TEXT          NOT NULL,
+    rutaOrigen          VARCHAR(255)  NULL,
+    archivosAdjuntosJson JSON         NULL COMMENT 'Array JSON de metadatos de evidencias multimedia adjuntas',
+    estado              VARCHAR(30)   NOT NULL DEFAULT 'PENDIENTE' COMMENT 'PENDIENTE, EN_REVISION, ATENDIDO, DESCARTADO',
+    observacionAdmin    TEXT          NULL COMMENT 'Respuesta o resolución emitida por el equipo de desarrollo/admin',
+    fechaCreacion       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion  TIMESTAMP     NULL ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_feedback_estado  (estado),
+    INDEX idx_feedback_tipo    (tipo),
+    INDEX idx_feedback_usuario (idUsuario),
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Canal directo de soporte, sugerencias e incidencias (v1.0)';
+
 DELIMITER $$
 CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
@@ -997,6 +1020,8 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 CREATE TRIGGER trg_lopdp_auditoria_uuid BEFORE INSERT ON inv_lopdp_auditoria_datos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_backup_logs_uuid BEFORE INSERT ON inv_backup_logs FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_feedback_reportes_uuid BEFORE INSERT ON inv_feedback_reportes FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 

@@ -62,6 +62,11 @@ export default defineConfig(({ command }) => {
               console.error('Proxy Hubs error:', err);
             });
           }
+        },
+        '/uploads': {
+          target: 'http://127.0.0.1:5175',
+          changeOrigin: true,
+          secure: false
         }
       }
     },

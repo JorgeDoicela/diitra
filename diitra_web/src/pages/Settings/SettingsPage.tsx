@@ -261,7 +261,7 @@ const SettingsPage: React.FC = () => {
     };
 
     return (
-        <div className="p-4 md:p-10 space-y-8 animate-fade-up">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto space-y-8 animate-fade-up">
             <PageHeader
                 kicker={
                     activeMainTab === 'parametros' ? 'Parámetros del Sistema'
@@ -652,7 +652,7 @@ const SettingsPage: React.FC = () => {
             ) : (
                 <DocumentMaintenancePage isEmbedded={true} />
             )}
-        </div>
+        </main>
     );
 };
 

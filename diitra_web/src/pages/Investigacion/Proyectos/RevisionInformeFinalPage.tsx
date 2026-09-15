@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AlertCircle, MessageSquare, Award, ArrowLeft, FileText, Eye, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, MessageSquare, Award, ArrowLeft, FileText, Eye, CheckCircle2, MessageSquarePlus } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
 import { useNotifications } from '../../../api/NotificationsContext';
@@ -303,6 +303,16 @@ export const RevisionInformeFinalPage: React.FC = () => {
                             En Auditoría por Coordinación
                         </span>
                     )}
+
+                    {/* Botón Reportar Problema */}
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                        className="p-1.5 rounded-xl hover:bg-surface-hover border border-border-thin text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center justify-center"
+                        title="Reportar problema o sugerencia"
+                        aria-label="Reportar problema o sugerencia"
+                    >
+                        <MessageSquarePlus size={15} />
+                    </button>
                 </div>
             </header>
 

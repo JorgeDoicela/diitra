@@ -35,6 +35,7 @@ import {
     User,
     FolderOpen,
     Sparkles,
+    MessageSquarePlus,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -224,6 +225,7 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'lopdp-admin', label: 'Panel LOPDP', description: 'Gestión de consentimientos y cumplimiento de protección de datos', category: 'Administración', icon: ShieldCheck, path: '/lopdp', roles: ['DIITRA_ADMIN'], keywords: ['lopdp', 'proteccion datos', 'consentimiento', 'rgpd'], boost: 4 },
         { id: 'plantillas', label: 'Editor de Plantillas', description: 'Diseñar y maquetar plantillas de documentos oficiales', category: 'Administración', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], keywords: ['plantillas', 'templates', 'formatos', 'editor', 'documentos'], boost: isAdmin ? 6 : 0 },
         { id: 'correos', label: 'Correos institucionales', description: 'Administrar y enviar plantillas de correo del sistema', category: 'Administración', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], keywords: ['correos', 'emails', 'plantillas', 'smtp'], boost: 4 },
+        { id: 'sugerencias-admin', label: 'Bandeja de Sugerencias', description: 'Consultar y atender sugerencias recibidas de usuarios', category: 'Administración', icon: MessageSquarePlus, path: '/sugerencias', roles: ['DIITRA_ADMIN'], keywords: ['sugerencias', 'soporte', 'feedback', 'buzon', 'reportes'], boost: isAdmin ? 7 : 0 },
         // ── Parámetros Normativos ───────────────────────────────────────
         { id: 'parametros-normativos', label: 'Parámetros Normativos', description: 'Líneas de investigación, períodos académicos e indicadores CACES', category: 'Parámetros Normativos', icon: Settings, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], keywords: ['parametros', 'normativos', 'caces', 'lineas', 'periodos', 'catalogos'], boost: isAdmin ? 6 : 0 },
         { id: 'config-lineas', label: 'Líneas de Investigación', description: 'Administrar líneas y áreas del conocimiento', category: 'Parámetros Normativos', icon: BookOpen, path: '/parametros-normativos?tab=lineas', roles: ['DIITRA_ADMIN'], keywords: ['lineas', 'areas', 'conocimiento', 'tematica'], boost: 3 },
@@ -233,6 +235,7 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'config-indicadores', label: 'Indicadores CACES', description: 'Configurar métricas de acreditación institucional', category: 'Parámetros Normativos', icon: Activity, path: '/parametros-normativos?tab=indicadores', roles: ['DIITRA_ADMIN'], keywords: ['indicadores', 'caces', 'acreditacion', 'metricas'], boost: 3 },
         { id: 'settings', label: 'Configuración', description: 'Preferencias de cuenta y ajustes personales', category: 'Configuración', icon: Settings, path: '/configuracion', roles: ['ANY'], keywords: ['perfil', 'cuenta', 'preferencias', 'personal', 'configuracion', 'settings'], boost: 4 },
         // ── Acciones Rápidas ──────────────────────────────────────────
+        { id: 'feedback-modal', label: 'Sugerencias y Soporte (v1.0)', description: 'Enviar reporte, sugerencia o contactar por WhatsApp al desarrollador', category: 'Acciones Rápidas', icon: MessageSquarePlus, action: () => window.dispatchEvent(new CustomEvent('diitra-open-feedback')), roles: ['ANY'], keywords: ['sugerencia', 'soporte', 'whatsapp', 'error', 'bug', 'reporte', 'feedback', 'ayuda'], boost: 10 },
         { id: 'new-project', label: 'Nuevo Proyecto de Investigación', description: 'Iniciar postulación para un nuevo proyecto I+D', category: 'Acciones Rápidas', icon: PlusCircle, shortcut: 'N', action: () => navigate(isAdmin ? '/investigacion' : '/investigacion/mis-proyectos'), roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], keywords: ['nuevo', 'crear', 'postular', 'iniciar', 'registrar', 'nueva investigacion'], boost: isDocente ? 10 : 5 },
         { id: 'export-analiticas', label: 'Exportar Reporte PDF', description: 'Descargar reporte completo de analíticas en PDF', category: 'Acciones Rápidas', icon: FileDown, shortcut: 'E', action: () => navigate('/analiticas'), roles: ['DIITRA_ADMIN'], keywords: ['exportar', 'pdf', 'descargar', 'reporte', 'informe'], boost: isAdmin ? 6 : 0 },
         { id: 'logout', label: 'Cerrar Sesión', description: 'Salir de la sesión actual de forma segura', category: 'Acciones Rápidas', icon: LogOut, action: () => navigate('/login'), roles: ['ANY'], keywords: ['salir', 'cerrar sesion', 'logout', 'desconectar'], boost: 0 },

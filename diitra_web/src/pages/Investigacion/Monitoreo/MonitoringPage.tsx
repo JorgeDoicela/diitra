@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
     ArrowLeft, Activity, DollarSign, Calendar, 
     CheckCircle2, TrendingUp, Wallet, 
-    Plus, Trash2, ArrowUpRight, BarChart3, X 
+    Plus, Trash2, ArrowUpRight, BarChart3, X, MessageSquarePlus 
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
@@ -185,21 +185,32 @@ export const MonitoringPage: React.FC = () => {
                     </div>
                 </div>
                 
-                {/* Switcher Bento de Tabs */}
-                <div className="flex bg-surface p-1 rounded-xl border border-border-thin w-full md:w-auto">
-                    <button 
-                        onClick={() => setActiveTab('cronograma')}
-                        className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'cronograma' ? 'bg-text-main text-bg-deep shadow' : 'text-text-dim hover:text-text-main'}`}
+                {/* Switcher Bento de Tabs & Report Button */}
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="flex bg-surface p-1 rounded-xl border border-border-thin flex-1 md:flex-none">
+                        <button 
+                            onClick={() => setActiveTab('cronograma')}
+                            className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'cronograma' ? 'bg-text-main text-bg-deep shadow' : 'text-text-dim hover:text-text-main'}`}
+                        >
+                            <Calendar size={14} />
+                            <span>Cronograma (Gantt)</span>
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('presupuesto')}
+                            className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'presupuesto' ? 'bg-text-main text-bg-deep shadow' : 'text-text-dim hover:text-text-main'}`}
+                        >
+                            <DollarSign size={14} />
+                            <span>Presupuesto (Libro Diario)</span>
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                        className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all cursor-pointer flex items-center justify-center"
+                        title="Reportar problema o sugerencia"
+                        aria-label="Reportar problema o sugerencia"
                     >
-                        <Calendar size={14} />
-                        <span>Cronograma (Gantt)</span>
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('presupuesto')}
-                        className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'presupuesto' ? 'bg-text-main text-bg-deep shadow' : 'text-text-dim hover:text-text-main'}`}
-                    >
-                        <DollarSign size={14} />
-                        <span>Presupuesto (Libro Diario)</span>
+                        <MessageSquarePlus size={16} />
                     </button>
                 </div>
             </header>

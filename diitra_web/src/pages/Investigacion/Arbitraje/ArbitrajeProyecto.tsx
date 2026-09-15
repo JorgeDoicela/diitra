@@ -4,7 +4,7 @@ import {
     ArrowLeft, Gavel, AlertTriangle,
     Loader2, Users, Building, GraduationCap, FileDown,
     CalendarDays, X, Trash2, Scale,
-    ExternalLink, RotateCw, UserPlus
+    ExternalLink, RotateCw, UserPlus, MessageSquarePlus
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -473,6 +473,15 @@ const ArbitrajeProyecto: React.FC = () => {
                             <span>Cerrar Evaluación</span>
                         </button>
                     )}
+
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                        className="p-2 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all cursor-pointer flex items-center justify-center shrink-0"
+                        title="Reportar problema o sugerencia"
+                        aria-label="Reportar problema o sugerencia"
+                    >
+                        <MessageSquarePlus size={15} />
+                    </button>
                 </div>
             </div>
 

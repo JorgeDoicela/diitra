@@ -4,7 +4,7 @@ import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
     RefreshCw, ChevronDown, ChevronUp, X, FileSignature, Activity,
-    Upload, Shield, ExternalLink
+    Upload, Shield, ExternalLink, MessageSquarePlus
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
@@ -333,6 +333,14 @@ const InformesAvancePage: React.FC = () => {
                         >
                             <Plus size={13} />
                             Nuevo Informe
+                        </button>
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('diitra-open-feedback'))}
+                            className="btn-vercel-secondary !p-2 flex items-center justify-center cursor-pointer text-text-dim hover:text-text-main"
+                            title="Reportar problema o sugerencia"
+                            aria-label="Reportar problema o sugerencia"
+                        >
+                            <MessageSquarePlus size={15} />
                         </button>
                     </div>
                 </PageHeader>
