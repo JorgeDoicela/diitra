@@ -21,6 +21,7 @@ public class AuthService : IAuthService
     private readonly IMicrosoftAuthService _microsoftAuthService;
     private readonly IPasswordRecoveryService _passwordRecoveryService;
     private readonly string _masterAdminId;
+    private readonly string _superAdminCedula;
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime? LockedUntil)> _userLockouts = new();
 
@@ -47,6 +48,7 @@ public class AuthService : IAuthService
         _microsoftAuthService = microsoftAuthService;
         _passwordRecoveryService = passwordRecoveryService;
         _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
+        _superAdminCedula = configuration["Security:SuperAdminCedula"] ?? "1725555377";
     }
 
 
@@ -297,6 +299,9 @@ public class AuthService : IAuthService
 
         var hasAcceptedLopdp = lastConsent != null && lastConsent.Estado == "Otorgado";
 
+        var isSuperAdmin = (user.IdSigafi == _superAdminCedula) || roleCodes.Contains("DIITRA_SUPER_ADMIN");
+        var isAdmin = isSuperAdmin || (user.IdSigafi == _masterAdminId) || user.Administrador || roleCodes.Contains("DIITRA_ADMIN");
+
         var response = new AuthResponse
         {
             IdReferencia = user.IdSigafi.Trim(),
@@ -309,7 +314,8 @@ public class AuthService : IAuthService
             RoleCodes = roleCodes,
             TipoUsuario = user.TablaSigafi,
             Permissions = permissions,
-            Administrador = (user.IdSigafi == _masterAdminId) || user.Administrador,
+            Administrador = isAdmin,
+            EsSuperAdmin = isSuperAdmin,
             Email = user.EmailInstitucional ?? "",
             Sistemas = systemsClaim,
             AceptoLopdp = hasAcceptedLopdp

@@ -217,6 +217,15 @@ export function useProjectCore() {
             setCurrentProject(projectData);
             if (resDocs && Array.isArray(resDocs.data)) {
                 setProjectDocuments(resDocs.data);
+                const docMap: Record<string, string> = {};
+                resDocs.data.forEach((d: any) => {
+                    const code = d.template_code || d.templateCode;
+                    const uuid = d.uuid || d.Uuid;
+                    if (code && uuid) {
+                        docMap[code] = uuid;
+                    }
+                });
+                setSubDocumentUuids(prev => ({ ...docMap, ...prev }));
             }
             setIsNotFound(false);
             if (onProjectFetched) {

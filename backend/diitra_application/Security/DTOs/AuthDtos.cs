@@ -20,6 +20,7 @@ public class AuthResponse
     public string? Email { get; set; }
     public string Sistemas { get; set; } = string.Empty;
     public bool Administrador { get; set; }
+    public bool EsSuperAdmin { get; set; }
     public int IdUsuario { get; set; }
     public string UserUuid { get; set; } = null!;
     public string Usuario { get; set; } = null!;

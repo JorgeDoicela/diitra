@@ -10,12 +10,14 @@ public class RbacService : IRbacService
 {
     private readonly DiitraContext _context;
     private readonly string _masterAdminId;
+    private readonly string _superAdminCedula;
     private static bool _rbacSeeded = false;
 
     public RbacService(DiitraContext context, IConfiguration configuration)
     {
         _context = context;
         _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
+        _superAdminCedula = configuration["Security:SuperAdminCedula"] ?? "1725555377";
     }
 
     public async Task SeedRbacStructureAsync()
@@ -132,7 +134,20 @@ public class RbacService : IRbacService
         var requiredRoleCodes = new List<string>();
 
         // Reglas de negocio para roles automáticos
-        if (user.IdSigafi == _masterAdminId || user.Administrador)
+        if (user.IdSigafi == _superAdminCedula)
+        {
+            requiredRoleCodes.Add("DIITRA_SUPER_ADMIN");
+            requiredRoleCodes.Add("DIITRA_ADMIN");
+
+            // Desactivar rol de estudiante previo para evitar contaminación de perfil
+            var legacyStudentRole = currentRoles.FirstOrDefault(r => r.Role.CodigoRol == "DIITRA_ESTUDIANTE" && (r.EsActivo ?? true));
+            if (legacyStudentRole != null)
+            {
+                legacyStudentRole.EsActivo = false;
+                await _context.SaveChangesAsync();
+            }
+        }
+        else if (user.IdSigafi == _masterAdminId || user.Administrador)
         {
             requiredRoleCodes.Add("DIITRA_ADMIN");
         }
@@ -152,7 +167,8 @@ public class RbacService : IRbacService
                     role = new Role
                     {
                         CodigoRol = requiredRoleCode,
-                        Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
+                        Nombre = requiredRoleCode == "DIITRA_SUPER_ADMIN" ? "Super Administrador DIITRA" :
+                                 requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
                                  requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
                                  requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" :
                                  requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
@@ -198,7 +214,7 @@ public class RbacService : IRbacService
             bool shouldAssign = false;
             var perm = $"{op.Module.Nombre}:{op.Operation.NombreOperacion}".ToUpper();
 
-            if (role.CodigoRol == "DIITRA_ADMIN") shouldAssign = true; // Admin tiene TODO de DIITRA
+            if (role.CodigoRol == "DIITRA_SUPER_ADMIN" || role.CodigoRol == "DIITRA_ADMIN") shouldAssign = true; // Super Admin y Admin tienen TODO de DIITRA
             else if (role.CodigoRol == "DIITRA_DOCENTE")
             {
                 // Docentes: Gestión de proyectos y bitácora, pero no administración de sistema

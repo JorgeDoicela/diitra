@@ -321,6 +321,401 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                             : 'Entrega';
                     }
 
+                    const effectiveProjectUuid = resolvedProjectUuid || currentProject?.uuid || '';
+
+                    // Determinar URL de destino para la fase
+                    let targetUrl: string | null = null;
+                    let isMultiAction = false;
+
+                    if (phase.id === 'Borrador') {
+                        if (isCurrent || isPast) {
+                            targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix);
+                        }
+                    } else if (phase.id === 'PlanAprendizaje') {
+                        if (isCurrent || isPast) {
+                            targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix);
+                        }
+                    } else if (phase.id === 'Enviado') {
+                        if (isCurrent || isPast) {
+                            if (isAdmin) {
+                                targetUrl = `/investigacion/revision-tecnica/${effectiveProjectUuid}`;
+                            } else if (currentProject.status === 'En Corrección') {
+                                targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix);
+                            }
+                        }
+                    } else if (phase.id === 'EvaluacionPlanAprendizaje') {
+                        if (isCurrent || isPast) {
+                            if (isAdmin || isPlanAprendizajeApproved) {
+                                targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix);
+                            }
+                        }
+                    } else if (phase.id === 'En Revisión') {
+                        if (isCurrent || isPast) {
+                            if (assignedRevisionUuid) {
+                                targetUrl = `/revisiones/${assignedRevisionUuid}`;
+                            } else if (isAdmin) {
+                                targetUrl = `/evaluacion-pares/proyecto/${effectiveProjectUuid}`;
+                            }
+                        }
+                    } else if (phase.id === 'Aprobado') {
+                        if (isCurrent || isPast) {
+                            targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix);
+                            if (isCurrentActive && currentProject.status === 'Aprobado' && isAdmin) {
+                                isMultiAction = true;
+                            }
+                        }
+                    } else if (phase.id === 'En Ejecución') {
+                        if (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') {
+                            targetUrl = `${urlPrefix}/informes-avance/${effectiveProjectUuid}`;
+                        }
+                    } else if (phase.id === 'InformeFinal') {
+                        if (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') {
+                            targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix);
+                        }
+                    } else if (phase.id === 'RevisionInformeFinal') {
+                        if (currentProject.status === 'Finalizado') {
+                            targetUrl = buildWorkspacePath(templateCode, effectiveProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix);
+                            if (currentProject.esParticipante) {
+                                isMultiAction = true;
+                            }
+                        } else if (isFinalReportSigned && currentProject.status === 'En Ejecución') {
+                            if (isAdmin) {
+                                targetUrl = `/investigacion/revision-informe-final/${effectiveProjectUuid}`;
+                            }
+                        }
+                    }
+
+                    const isClickable = Boolean(targetUrl);
+                    const cardClassName = `p-4 rounded-xl border transition-all duration-300 no-underline text-inherit ${isCurrentActive
+                        ? 'bg-surface border-text-dim/40 shadow-[0_2px_16px_rgba(0,0,0,0.06)] cursor-pointer ring-1 ring-text-dim/10'
+                        : showChecked
+                            ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
+                            : (isPast || (phase.id === 'InformeFinal' && currentProject.status === 'En Ejecución'))
+                                ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
+                                : isFuture
+                                    ? 'bg-transparent border-transparent opacity-30 select-none'
+                                    : isClickable
+                                        ? 'bg-transparent border-transparent hover:border-border-thin/40 hover:bg-surface-hover/10 cursor-pointer'
+                                        : 'bg-transparent border-transparent opacity-30 select-none'
+                        }`;
+
+                    const renderCardBody = () => (
+                        <>
+                            <div className="flex items-center justify-between gap-2">
+                                <h3 className={`text-xs font-bold tracking-wider uppercase ${isCurrentActive
+                                    ? 'text-text-main'
+                                    : showChecked || isPast
+                                        ? 'text-text-dim'
+                                        : 'text-text-dim/60'
+                                    }`}>
+                                    {phase.label}
+                                </h3>
+                                {deadlineDate && !showChecked && renderDeadlineBadge(deadlineDate, deadlinePrefix)}
+                            </div>
+                            <p className="text-xs text-text-dim mt-1.5 leading-relaxed font-normal">
+                                {phase.id === 'Borrador' && (
+                                    isInnovacion
+                                        ? 'Construcción colaborativa del proyecto de innovación y transferencia tecnológica.'
+                                        : 'Construcción colaborativa del protocolo de investigación por parte del equipo.'
+                                )}
+                                {phase.id === 'Enviado' && (
+                                    (currentProject.status === 'Prepropuesta' || currentProject.status === 'Prepropuesta Rechazada')
+                                        ? 'Validación y dictamen preliminar de la idea de proyecto por parte del Administrador.'
+                                        : 'Revisión formal de requisitos, carga horaria, firmas y presupuesto institucional.'
+                                )}
+                                {phase.id === 'PlanAprendizaje' && 'Articulación docencia-investigación (APE). Planificación de asignaturas vinculadas, estudiantes y tutorías.'}
+                                {phase.id === 'EvaluacionPlanAprendizaje' && 'Evaluación técnica, pertinencia académica y dictamen del Plan de Aprendizaje por parte del Administrador.'}
+                                {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
+                                {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
+                                {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
+                                {phase.id === 'InformeFinal' && 'Elaboración, consolidación de resultados, producción científica y firma digital del equipo.'}
+                                {phase.id === 'RevisionInformeFinal' && 'Auditoría técnica formal, verificación de cumplimiento de metas y dictamen de cierre institucional.'}
+                            </p>
+
+                            {/* 1. FORMULACIÓN */}
+                            {phase.id === 'Borrador' && (
+                                <div className="mt-4">
+                                    <span
+                                        className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                            ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                            : 'btn-vercel-secondary'
+                                            }`}
+                                    >
+                                        <FileText size={14} />
+                                        <span>
+                                            {(currentProject.puedeEditar === false || isPast)
+                                                ? (isInnovacion ? 'Ver Proyecto' : 'Ver Protocolo')
+                                                : (isInnovacion ? 'Editar Proyecto de Innovación' : 'Editar Protocolo')}
+                                        </span>
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* 2. REVISIÓN ADMINISTRADOR (PROTOCOLO) */}
+                            {phase.id === 'Enviado' && (isCurrent || isPast) && (
+                                <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                    {isAdmin ? (
+                                        <span
+                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                : 'btn-vercel-secondary'
+                                                }`}
+                                        >
+                                            <Shield size={14} />
+                                            <span>{isCurrentActive ? 'Iniciar Revisión Técnica' : 'Ver Revisión Técnica'}</span>
+                                        </span>
+                                    ) : currentProject.status === 'En Corrección' ? (
+                                        <span className="w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]">
+                                            <FileText size={14} />
+                                            <span>Atender Observaciones</span>
+                                        </span>
+                                    ) : (
+                                        <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                            <Clock size={14} className="text-brand animate-pulse" />
+                                            <span>En espera de dictamen institucional</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 2.5 PLAN DE APRENDIZAJE */}
+                            {phase.id === 'PlanAprendizaje' && (isCurrent || isPast) && (
+                                <div className="mt-4 animate-fade-in">
+                                    <span
+                                        className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                            ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                            : 'btn-vercel-secondary'
+                                            }`}
+                                    >
+                                        <GraduationCap size={14} />
+                                        <span>
+                                            {isPlanAprendizajeSigned || currentProject.status === 'Finalizado'
+                                                ? 'Ver Plan de Aprendizaje'
+                                                : 'Plan de Aprendizaje (Docencia - APE)'}
+                                        </span>
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* 2.6 EVALUACIÓN PLAN DE APRENDIZAJE */}
+                            {phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast) && (
+                                <div className="mt-4 animate-fade-in">
+                                    {isAdmin ? (
+                                        <span
+                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                : 'btn-vercel-secondary'
+                                                }`}
+                                        >
+                                            <Award size={14} />
+                                            <span>
+                                                {isCurrentActive
+                                                    ? 'Evaluar Plan de Aprendizaje'
+                                                    : 'Ver Evaluación del Plan'}
+                                            </span>
+                                        </span>
+                                    ) : isPlanAprendizajeApproved ? (
+                                        <span className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5">
+                                            <Award size={14} />
+                                            <span>Ver Evaluación del Plan</span>
+                                        </span>
+                                    ) : (
+                                        <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                            <Clock size={14} className="text-brand animate-pulse" />
+                                            <span>En espera de evaluación por el Administrador</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 3. EVALUACIÓN POR PARES */}
+                            {phase.id === 'En Revisión' && (isCurrent || isPast) && (
+                                <div className="mt-4 animate-fade-in flex flex-col gap-3 w-full">
+                                    <div className="flex flex-col gap-2.5 w-full">
+                                        {assignedRevisionUuid ? (
+                                            <span
+                                                className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${(isPast || assignedRevisionStatus === 'Completada')
+                                                    ? 'btn-vercel-secondary'
+                                                    : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    }`}
+                                            >
+                                                <CheckSquare size={14} />
+                                                <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
+                                            </span>
+                                        ) : isAdmin ? (
+                                            <span
+                                                className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${(isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null)
+                                                    ? 'btn-vercel-secondary'
+                                                    : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                    }`}
+                                            >
+                                                {(isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null) ? (
+                                                    <>
+                                                        <CheckSquare size={14} />
+                                                        <span>Ver Evaluación por Pares</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Settings size={14} />
+                                                        <span>Gestionar Evaluación por Pares</span>
+                                                    </>
+                                                )}
+                                            </span>
+                                        ) : isCurrent ? (
+                                            <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
+                                                <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
+                                                <span>
+                                                    El proyecto se encuentra en la etapa formal de evaluación anónima por pares.
+                                                    Por motivos de confidencialidad de la evaluación anónima (CACES), los evaluadores asignados
+                                                    y el desarrollo de sus rúbricas permanecen anónimos. Una vez concluido el arbitraje y
+                                                    emitido el dictamen final, el puntaje obtenido y la resolución legal se publicarán aquí.
+                                                </span>
+                                            </div>
+                                        ) : null}
+
+                                        {currentProject.puntajeEvaluacion !== null && currentProject.puntajeEvaluacion < 70 && (
+                                            <div className="badge-vercel badge-vercel-error !text-[11px] !py-2 flex items-center justify-center gap-1.5 font-semibold animate-fade-in w-full">
+                                                <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
+                                                <span className="text-text-dim">|</span>
+                                                <span className="text-[10px] uppercase font-mono">Desaprobado</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 4. APROBACIÓN LEGAL */}
+                            {phase.id === 'Aprobado' && (isCurrent || isPast) && (
+                                <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                    {currentProject.codigoInstitucional && (
+                                        <span className="badge-vercel badge-vercel-success !text-[11px] !py-2 font-mono w-full justify-center">
+                                            Código: {currentProject.codigoInstitucional}
+                                        </span>
+                                    )}
+                                    {isMultiAction ? (
+                                        <div className="flex flex-col gap-2">
+                                            <Link
+                                                to={targetUrl!}
+                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                            >
+                                                <FileSignature size={14} />
+                                                <span>Ver Oficio de Aprobación</span>
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleIniciarEjecucion();
+                                                }}
+                                                disabled={iniciandoEjecucion}
+                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)]"
+                                            >
+                                                <Settings size={14} />
+                                                <span>{iniciandoEjecucion ? 'Iniciando...' : 'Iniciar Ejecución'}</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span
+                                            className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${isCurrentActive
+                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
+                                                : 'btn-vercel-secondary'
+                                                }`}
+                                        >
+                                            <FileSignature size={14} />
+                                            <span>Ver Oficio de Aprobación</span>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 5. EJECUCIÓN Y AVANCE */}
+                            {phase.id === 'En Ejecución' && (
+                                (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
+                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                        <span className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5">
+                                            <BarChart size={14} />
+                                            <span>Informes de Avance</span>
+                                        </span>
+                                    </div>
+                                )
+                            )}
+
+                            {/* 6. INFORME FINAL (FORMULACIÓN / REDACCIÓN POR EL EQUIPO) */}
+                            {phase.id === 'InformeFinal' && (
+                                (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
+                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                        {isFinalReportSigned || currentProject.status === 'Finalizado' ? (
+                                            <span className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5">
+                                                <FileText size={14} />
+                                                <span>Ver Informe Final</span>
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)] ${resolvingDocument === finalReportTemplateCode ? 'pointer-events-none opacity-50' : ''}`}
+                                            >
+                                                <FileSignature size={14} />
+                                                <span>Elaborar y Firmar Informe Final</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                )
+                            )}
+
+                            {/* 7. REVISIÓN ADMINISTRADOR (INFORME FINAL / DICTAMEN DE CIERRE) */}
+                            {phase.id === 'RevisionInformeFinal' && (
+                                currentProject.status === 'Finalizado' ? (
+                                    <div className="mt-4 animate-fade-in space-y-2.5">
+                                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1">
+                                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                                                <Award size={15} /> Proyecto Culminado Oficialmente
+                                            </p>
+                                            <p className="text-[10px] text-text-dim">
+                                                El proyecto cuenta con cierre legal, acta institucional y certificados emitidos automáticamente.
+                                            </p>
+                                        </div>
+                                        {isMultiAction ? (
+                                            <div className="flex flex-col gap-2">
+                                                <Link
+                                                    to={targetUrl!}
+                                                    className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
+                                                >
+                                                    <FileSignature size={14} />
+                                                    <span>Ver Informe Final Oficial</span>
+                                                </Link>
+                                                <Link
+                                                    to="/mis-certificados"
+                                                    className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-brand/50 no-underline text-text-main"
+                                                >
+                                                    <Award size={14} className="text-brand" />
+                                                    <span>Ver Mis Certificados</span>
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            <span className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5">
+                                                <FileSignature size={14} />
+                                                <span>Ver Informe Final Oficial</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : isFinalReportSigned && currentProject.status === 'En Ejecución' ? (
+                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
+                                        {isAdmin ? (
+                                            <span className="btn-vercel-primary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.15)]">
+                                                <Shield size={14} />
+                                                <span>Auditar y Dictaminar Informe Final</span>
+                                            </span>
+                                        ) : (
+                                            <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
+                                                <Clock size={14} className="text-brand animate-pulse" />
+                                                <span>En espera de auditoría por Coordinación</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null
+                            )}
+                        </>
+                    );
+
                     return (
                         <div key={phase.id} className="relative group/step">
                             {/* Connector segment — verde sólido si está completado */}
@@ -347,369 +742,20 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
                                 )}
                             </div>
 
-                            {/* Card Content */}
-                            <div
-                                onClick={() => {
-                                    if (phase.id === 'Borrador' && (isCurrent || isPast)) {
-                                        if (templateCode === 'PROTOCOLO_INVESTIGACION') {
-                                            setActiveDocument('PROTOCOLO_INVESTIGACION');
-                                        } else {
-                                            resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
-                                        }
-                                    } else if (phase.id === 'Enviado' && (isCurrent || isPast)) {
-                                        if (isAdmin) {
-                                            navigate(`/investigacion/revision-tecnica/${resolvedProjectUuid}`);
-                                        } else if (currentProject.status === 'En Corrección') {
-                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix));
-                                        }
-                                    } else if (phase.id === 'PlanAprendizaje' && (isCurrent || isPast)) {
-                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix));
-                                    } else if (phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast)) {
-                                        if (isAdmin || isPlanAprendizajeApproved) {
-                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix));
-                                        }
-                                    } else if (phase.id === 'En Revisión' && (isCurrent || isPast)) {
-                                        if (assignedRevisionUuid) {
-                                            navigate(`/revisiones/${assignedRevisionUuid}`);
-                                        } else if (isAdmin) {
-                                            navigate(`/evaluacion-pares/proyecto/${resolvedProjectUuid}`);
-                                        }
-                                    } else if (phase.id === 'Aprobado' && (isCurrent || isPast)) {
-                                        if (isCurrentActive && currentProject.status === 'Aprobado' && isAdmin && !iniciandoEjecucion) {
-                                            handleIniciarEjecucion();
-                                        } else {
-                                            navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix));
-                                        }
-                                    } else if (phase.id === 'InformeFinal' && (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado')) {
-                                        navigate(buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix));
-                                    } else if (phase.id === 'RevisionInformeFinal' && (currentProject.status === 'Finalizado' || (currentProject.status === 'En Ejecución' && isFinalReportSigned))) {
-                                        navigate(`/investigacion/revision-informe-final/${resolvedProjectUuid}`);
-                                    }
-                                }}
-                                className={`p-4 rounded-xl border transition-all duration-300 ${isCurrentActive
-                                    ? 'bg-surface border-text-dim/40 shadow-[0_2px_16px_rgba(0,0,0,0.06)] cursor-pointer ring-1 ring-text-dim/10'
-                                    : showChecked
-                                        ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
-                                        : (isPast || (phase.id === 'InformeFinal' && currentProject.status === 'En Ejecución'))
-                                            ? 'bg-surface/20 border-border-thin cursor-pointer opacity-55 hover:opacity-80'
-                                            : isFuture
-                                                ? 'bg-transparent border-transparent opacity-30 select-none'
-                                                : 'bg-transparent border-transparent hover:border-border-thin/40 hover:bg-surface-hover/10'
-                                    }`}
-                            >
-                                <div className="flex items-center justify-between gap-2">
-                                    <h3 className={`text-xs font-bold tracking-wider uppercase ${isCurrentActive
-                                        ? 'text-text-main'
-                                        : showChecked || isPast
-                                            ? 'text-text-dim'
-                                            : 'text-text-dim/60'
-                                        }`}>
-                                        {phase.label}
-                                    </h3>
-                                    {deadlineDate && !showChecked && renderDeadlineBadge(deadlineDate, deadlinePrefix)}
+                            {/* Card Content: Si tiene targetUrl único, se renderiza como Link accesible con clic derecho / Ctrl+clic */}
+                            {targetUrl && !isMultiAction ? (
+                                <Link
+                                    to={targetUrl}
+                                    state={phase.id === 'En Revisión' && isAdmin ? { fromWorkspace: true } : undefined}
+                                    className={`block ${cardClassName}`}
+                                >
+                                    {renderCardBody()}
+                                </Link>
+                            ) : (
+                                <div className={cardClassName}>
+                                    {renderCardBody()}
                                 </div>
-                                <p className="text-xs text-text-dim mt-1.5 leading-relaxed font-normal">
-                                    {phase.id === 'Borrador' && (
-                                        isInnovacion
-                                            ? 'Construcción colaborativa del proyecto de innovación y transferencia tecnológica.'
-                                            : 'Construcción colaborativa del protocolo de investigación por parte del equipo.'
-                                    )}
-                                    {phase.id === 'Enviado' && (
-                                        (currentProject.status === 'Prepropuesta' || currentProject.status === 'Prepropuesta Rechazada')
-                                            ? 'Validación y dictamen preliminar de la idea de proyecto por parte del Administrador.'
-                                            : 'Revisión formal de requisitos, carga horaria, firmas y presupuesto institucional.'
-                                    )}
-                                    {phase.id === 'PlanAprendizaje' && 'Articulación docencia-investigación (APE). Planificación de asignaturas vinculadas, estudiantes y tutorías.'}
-                                    {phase.id === 'EvaluacionPlanAprendizaje' && 'Evaluación técnica, pertinencia académica y dictamen del Plan de Aprendizaje por parte del Administrador.'}
-                                    {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
-                                    {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
-                                    {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
-                                    {phase.id === 'InformeFinal' && 'Elaboración, consolidación de resultados, producción científica y firma digital del equipo.'}
-                                    {phase.id === 'RevisionInformeFinal' && 'Auditoría técnica formal, verificación de cumplimiento de metas y dictamen de cierre institucional.'}
-                                </p>
-
-                                {/* 1. FORMULACIÓN */}
-                                {phase.id === 'Borrador' && (
-                                    <div className="mt-4">
-                                        <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(templateCode)}`, urlPrefix)}
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
-                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                : 'btn-vercel-secondary'
-                                                }`}
-                                        >
-                                            <FileText size={14} />
-                                            <span>
-                                                {(currentProject.puedeEditar === false || isPast)
-                                                    ? (isInnovacion ? 'Ver Proyecto' : 'Ver Protocolo')
-                                                    : (isInnovacion ? 'Editar Proyecto de Innovación' : 'Editar Protocolo')}
-                                            </span>
-                                        </Link>
-                                    </div>
-                                )}
-
-                                {/* 2. REVISIÓN ADMINISTRADOR (PROTOCOLO) */}
-                                {phase.id === 'Enviado' && (isCurrent || isPast) && (
-                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        {isAdmin ? (
-                                            <Link
-                                                to={`/investigacion/revision-tecnica/${resolvedProjectUuid}`}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
-                                                    ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                    : 'btn-vercel-secondary'
-                                                    }`}
-                                            >
-                                                <Shield size={14} />
-                                                <span>{isCurrentActive ? 'Iniciar Revisión Técnica' : 'Ver Revisión Técnica'}</span>
-                                            </Link>
-                                        ) : (
-                                            <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
-                                                <Clock size={14} className="text-brand animate-pulse" />
-                                                <span>En espera de dictamen institucional</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* 2.5 PLAN DE APRENDIZAJE */}
-                                {phase.id === 'PlanAprendizaje' && (isCurrent || isPast) && (
-                                    <div className="mt-4 animate-fade-in">
-                                        <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('PLAN_APRENDIZAJE')}`, urlPrefix)}
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
-                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                : 'btn-vercel-secondary'
-                                                }`}
-                                        >
-                                            <GraduationCap size={14} />
-                                            <span>
-                                                {isPlanAprendizajeSigned || currentProject.status === 'Finalizado'
-                                                    ? 'Ver Plan de Aprendizaje'
-                                                    : 'Plan de Aprendizaje (Docencia - APE)'}
-                                            </span>
-                                        </Link>
-                                    </div>
-                                )}
-
-                                {/* 2.6 EVALUACIÓN PLAN DE APRENDIZAJE */}
-                                {phase.id === 'EvaluacionPlanAprendizaje' && (isCurrent || isPast) && (
-                                    <div className="mt-4 animate-fade-in">
-                                        {isAdmin ? (
-                                            <Link
-                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className={`w-full justify-center py-2.5 transition-all duration-300 font-semibold flex items-center gap-1.5 ${isCurrentActive
-                                                    ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                    : 'btn-vercel-secondary'
-                                                    }`}
-                                            >
-                                                <Award size={14} />
-                                                <span>
-                                                    {isCurrentActive
-                                                        ? 'Evaluar Plan de Aprendizaje'
-                                                        : 'Ver Evaluación del Plan'}
-                                                </span>
-                                            </Link>
-                                        ) : isPlanAprendizajeApproved ? (
-                                            <Link
-                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('EVALUACION_PLAN_APRENDIZAJE')}`, urlPrefix)}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <Award size={14} />
-                                                <span>Ver Evaluación del Plan</span>
-                                            </Link>
-                                        ) : (
-                                            <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
-                                                <Clock size={14} className="text-brand animate-pulse" />
-                                                <span>En espera de evaluación por el Administrador</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* 3. EVALUACIÓN POR PARES */}
-                                {phase.id === 'En Revisión' && (isCurrent || isPast) && (
-                                    <div className="mt-4 animate-fade-in flex flex-col gap-3 w-full">
-                                        <div className="flex flex-col gap-2.5 w-full">
-                                            {assignedRevisionUuid ? (
-                                                <Link
-                                                    to={`/revisiones/${assignedRevisionUuid}`}
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${(isPast || assignedRevisionStatus === 'Completada')
-                                                        ? 'btn-vercel-secondary'
-                                                        : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                        }`}
-                                                >
-                                                    <CheckSquare size={14} />
-                                                    <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
-                                                </Link>
-                                            ) : isAdmin ? (
-                                                <Link
-                                                    to={`/evaluacion-pares/proyecto/${resolvedProjectUuid}`}
-                                                    state={{ fromWorkspace: true }}
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${(isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null)
-                                                        ? 'btn-vercel-secondary'
-                                                        : 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                        }`}
-                                                >
-                                                    {(isPast || isRevisionDone || currentProject.puntajeEvaluacion !== null) ? (
-                                                        <>
-                                                            <CheckSquare size={14} />
-                                                            <span>Ver Evaluación por Pares</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Settings size={14} />
-                                                            <span>Gestionar Evaluación por Pares</span>
-                                                        </>
-                                                    )}
-                                                </Link>
-                                            ) : isCurrent ? (
-                                                <div className="flex items-start gap-2.5 bg-surface-hover/30 border border-border-thin rounded-lg p-3 text-text-dim text-[11px] leading-relaxed">
-                                                    <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
-                                                    <span>
-                                                        El proyecto se encuentra en la etapa formal de evaluación anónima por pares.
-                                                        Por motivos de confidencialidad de la evaluación anónima (CACES), los evaluadores asignados
-                                                        y el desarrollo de sus rúbricas permanecen anónimos. Una vez concluido el arbitraje y
-                                                        emitido el dictamen final, el puntaje obtenido y la resolución legal se publicarán aquí.
-                                                    </span>
-                                                </div>
-                                            ) : null}
-
-                                            {currentProject.puntajeEvaluacion !== null && currentProject.puntajeEvaluacion < 70 && (
-                                                <div className="badge-vercel badge-vercel-error !text-[11px] !py-2 flex items-center justify-center gap-1.5 font-semibold animate-fade-in w-full">
-                                                    <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
-                                                    <span className="text-text-dim">|</span>
-                                                    <span className="text-[10px] uppercase font-mono">Desaprobado</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 4. APROBACIÓN LEGAL */}
-                                {phase.id === 'Aprobado' && (isCurrent || isPast) && (
-                                    <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                        {currentProject.codigoInstitucional && (
-                                            <span className="badge-vercel badge-vercel-success !text-[11px] !py-2 font-mono w-full justify-center">
-                                                Código: {currentProject.codigoInstitucional}
-                                            </span>
-                                        )}
-                                        <Link
-                                            to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam('OFICIO_APROBACION')}`, urlPrefix)}
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className={`!py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 ${isCurrentActive
-                                                ? 'btn-vercel-primary shadow-[0_4px_12px_rgba(0,112,243,0.1)]'
-                                                : 'btn-vercel-secondary'
-                                                }`}
-                                        >
-                                            <FileSignature size={14} />
-                                            <span>Ver Oficio de Aprobación</span>
-                                        </Link>
-                                    </div>
-                                )}
-
-
-                                {/* 5. EJECUCIÓN Y AVANCE */}
-                                {phase.id === 'En Ejecución' && (
-                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
-                                        <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                            <Link
-                                                to={`${urlPrefix}/informes-avance/${currentProject.uuid}`}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <BarChart size={14} />
-                                                <span>Informes de Avance</span>
-                                            </Link>
-                                        </div>
-                                    )
-                                )}
-
-                                {/* 6. INFORME FINAL (FORMULACIÓN / REDACCIÓN POR EL EQUIPO) */}
-                                {phase.id === 'InformeFinal' && (
-                                    (currentProject.status === 'En Ejecución' || currentProject.status === 'Finalizado') && (
-                                        <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                            {isFinalReportSigned || currentProject.status === 'Finalizado' ? (
-                                                <Link
-                                                    to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className="btn-vercel-secondary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                                >
-                                                    <FileText size={14} />
-                                                    <span>Ver Informe Final</span>
-                                                </Link>
-                                            ) : (
-                                                <Link
-                                                    to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className={`btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.1)] ${resolvingDocument === finalReportTemplateCode ? 'pointer-events-none opacity-50' : ''}`}
-                                                >
-                                                    <FileSignature size={14} />
-                                                    <span>Elaborar y Firmar Informe Final</span>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    )
-                                )}
-
-                                {/* 7. REVISIÓN ADMINISTRADOR (INFORME FINAL / DICTAMEN DE CIERRE) */}
-                                {phase.id === 'RevisionInformeFinal' && (
-                                    currentProject.status === 'Finalizado' ? (
-                                        <div className="mt-4 animate-fade-in space-y-2.5">
-                                            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1">
-                                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
-                                                    <Award size={15} /> Proyecto Culminado Oficialmente
-                                                </p>
-                                                <p className="text-[10px] text-text-dim">
-                                                    El proyecto cuenta con cierre legal, acta institucional y certificados emitidos automáticamente.
-                                                </p>
-                                            </div>
-                                            <Link
-                                                to={buildWorkspacePath(templateCode, resolvedProjectUuid, `?edit=${templateCodeToEditParam(finalReportTemplateCode)}`, urlPrefix)}
-                                                onClick={(e) => { e.stopPropagation(); }}
-                                                className="btn-vercel-primary !py-2.5 w-full justify-center font-semibold flex items-center gap-1.5"
-                                            >
-                                                <FileSignature size={14} />
-                                                <span>Ver Informe Final Oficial</span>
-                                            </Link>
-                                            {currentProject.esParticipante && (
-                                                <Link
-                                                    to="/mis-certificados"
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className="btn-vercel-secondary !py-2 w-full justify-center text-xs font-bold flex items-center gap-1.5 hover:!border-brand/50 no-underline text-text-main"
-                                                >
-                                                    <Award size={14} className="text-brand" />
-                                                    <span>Ver Mis Certificados</span>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    ) : isFinalReportSigned && currentProject.status === 'En Ejecución' ? (
-                                        <div className="mt-4 animate-fade-in flex flex-col gap-2.5">
-                                            {isAdmin ? (
-                                                <Link
-                                                    to={`/investigacion/revision-informe-final/${resolvedProjectUuid}`}
-                                                    onClick={(e) => { e.stopPropagation(); }}
-                                                    className="btn-vercel-primary !py-2.5 w-full justify-center text-xs font-bold flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,112,243,0.15)]"
-                                                >
-                                                    <Shield size={14} />
-                                                    <span>Auditar y Dictaminar Informe Final</span>
-                                                </Link>
-                                            ) : (
-                                                <div className="w-full py-2.5 px-3 bg-surface/50 border border-border-thin rounded-xl text-center flex items-center justify-center gap-2 text-text-dim text-xs font-medium select-none">
-                                                    <Clock size={14} className="text-brand animate-pulse" />
-                                                    <span>En espera de auditoría por Coordinación</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : null
-                                )}
-                            </div>
+                            )}
                         </div>
                     );
                 })}

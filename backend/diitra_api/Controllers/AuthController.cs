@@ -323,7 +323,8 @@ public class AuthController : ControllerBase
             var nombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
             var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).Union(User.FindAll("roles").Select(c => c.Value)).Distinct().ToList();
             var tipo = User.FindFirst("tipo_usuario")?.Value;
-            var isAdmin = User.FindFirst("es_admin")?.Value == "true" || tipo == "ADMIN";
+            var isSuperAdmin = roles.Contains("DIITRA_SUPER_ADMIN") || User.FindFirst("es_super_admin")?.Value == "true";
+            var isAdmin = isSuperAdmin || User.FindFirst("es_admin")?.Value == "true" || tipo == "ADMIN" || roles.Contains("DIITRA_ADMIN");
             var permissions = User.FindAll("permission").Select(c => c.Value).ToList();
 
             var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
@@ -345,6 +346,7 @@ public class AuthController : ControllerBase
                 roles = roles,
                 tipo_usuario = tipo,
                 administrador = isAdmin,
+                es_super_admin = isSuperAdmin,
                 permissions = permissions,
                 acepto_lopdp = aceptoLopdp
             });

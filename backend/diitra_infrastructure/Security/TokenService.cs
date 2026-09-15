@@ -36,7 +36,8 @@ public class TokenService : ITokenService
             new Claim("sistemas", systemsClaim ?? ""),
             new Claim("id_usuario", user.IdUsuario.ToString()),
             new Claim("user_uuid", user.UserUuid ?? ""),
-            new Claim("es_admin", user.Administrador.ToString().ToLower())
+            new Claim("es_admin", user.Administrador.ToString().ToLower()),
+            new Claim("es_super_admin", user.EsSuperAdmin.ToString().ToLower())
         };
 
         foreach (var roleCode in user.RoleCodes)

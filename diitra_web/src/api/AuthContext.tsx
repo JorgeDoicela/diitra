@@ -8,6 +8,7 @@ interface User {
     tipo_usuario: string;
     permissions: string[];
     administrador: boolean;
+    es_super_admin?: boolean;
     roles: string[];
     usuario?: string;
     id_usuario?: number;
@@ -28,6 +29,7 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
     hasPermission: (module: string, operation: string) => boolean;
     roles: string[];
+    isSuperAdmin: boolean;
     isAdmin: boolean;
     isDocente: boolean;
     isEstudiante: boolean;
@@ -193,29 +195,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return rawRoles.map(r => r.toUpperCase());
     }, [user]);
 
-    const isAdmin = React.useMemo(() => {
-        return user?.administrador || roles.includes('DIITRA_ADMIN');
+    const isSuperAdmin = React.useMemo(() => {
+        return Boolean(user?.es_super_admin || roles.includes('DIITRA_SUPER_ADMIN'));
     }, [user, roles]);
+
+    const isAdmin = React.useMemo(() => {
+        return isSuperAdmin || user?.administrador || roles.includes('DIITRA_ADMIN');
+    }, [user, roles, isSuperAdmin]);
 
     const isDocente = React.useMemo(() => {
         return roles.includes('DIITRA_DOCENTE');
     }, [roles]);
 
     const isEstudiante = React.useMemo(() => {
+        if (isSuperAdmin || isAdmin) return false;
         return roles.includes('DIITRA_ESTUDIANTE') || roles.includes('ESTUDIANTE');
-    }, [roles]);
+    }, [roles, isSuperAdmin, isAdmin]);
 
     const isRevisor = React.useMemo(() => {
         return roles.includes('DIITRA_REVISOR_EXTERNO') || roles.includes('DIITRA_REVISOR') || roles.includes('DIITRA_EXTERNO');
     }, [roles]);
 
     const roleDisplayName = React.useMemo(() => {
+        if (isSuperAdmin) return 'Super Administrador';
         if (isAdmin) return 'Administrador';
         if (isDocente) return 'Investigador';
         if (isEstudiante) return 'Estudiante';
         if (isRevisor) return 'Revisor';
         return 'Usuario';
-    }, [isAdmin, isDocente, isEstudiante, isRevisor]);
+    }, [isSuperAdmin, isAdmin, isDocente, isEstudiante, isRevisor]);
 
     return (
         <AuthContext.Provider value={{
@@ -231,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             refreshUser,
             hasPermission,
             roles,
+            isSuperAdmin,
             isAdmin,
             isDocente,
             isEstudiante,

@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { FileSignature } from 'lucide-react';
 import { useWorkflowStates } from '../../../../../hooks/useWorkflowStates';
+import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
 interface WorkspaceTitleProps {
     currentProject: {
@@ -73,13 +75,13 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setActiveDocument(templateCode)}
-                        className="btn-vercel-primary py-3 px-6 text-xs w-full md:w-auto shrink-0 justify-center"
+                    <Link
+                        to={buildWorkspacePath(templateCode, currentProject.uuid, `?edit=${templateCodeToEditParam(templateCode)}`)}
+                        className="btn-vercel-primary py-3 px-6 text-xs w-full md:w-auto shrink-0 justify-center flex items-center gap-2"
                     >
                         <FileSignature size={14} />
                         <span>Continuar Editando</span>
-                    </button>
+                    </Link>
                 </div>
             )}
         </>

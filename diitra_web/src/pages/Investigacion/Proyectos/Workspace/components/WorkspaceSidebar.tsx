@@ -4,6 +4,7 @@ import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap, FileSignatu
 import api from '../../../../../api/axios_config';
 import { useAuth } from '../../../../../api/AuthContext';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
+import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
 interface WorkspaceSidebarProps {
     currentProject: {
@@ -190,16 +191,13 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                         </p>
                     </div>
                     <div className="mt-4">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (setActiveDocument) setActiveDocument('PROTOCOLO_INVESTIGACION');
-                            }}
-                            className="w-full btn-vercel-primary py-2 px-3 text-[10px] rounded-md flex items-center justify-center gap-1.5"
+                        <Link
+                            to={buildWorkspacePath(currentProject.template_code || 'PROTOCOLO_INVESTIGACION', resolvedProjectUuid || currentProject.uuid, `?edit=${templateCodeToEditParam(currentProject.template_code || 'PROTOCOLO_INVESTIGACION')}`)}
+                            className="w-full btn-vercel-primary py-2 px-3 text-[10px] rounded-md flex items-center justify-center gap-1.5 no-underline"
                         >
                             <FileText size={12} />
                             <span>Atender Observaciones</span>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             )}
