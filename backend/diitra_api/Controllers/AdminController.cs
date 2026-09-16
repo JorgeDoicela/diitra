@@ -185,9 +185,10 @@ public class AdminController : ControllerBase
     /// Lista el historial de copias de seguridad del sistema (Solo administradores).
     /// </summary>
     [HttpGet("backups")]
-    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetBackupLogs()
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         var destFolder = _configuration["BackupSettings:DestinationFolder"] ?? "backups";
         var rootDir = System.IO.Directory.GetCurrentDirectory();
         var destAbsPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(rootDir, destFolder));
@@ -218,9 +219,10 @@ public class AdminController : ControllerBase
     /// Desencadena manualmente una copia de seguridad local (Base de datos + Archivos).
     /// </summary>
     [HttpPost("backups/trigger")]
-    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> TriggerBackup()
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         try
         {
             // Ejecutar el respaldo de forma asíncrona en segundo plano para no bloquear la respuesta HTTP
@@ -241,9 +243,10 @@ public class AdminController : ControllerBase
     /// Descarga un archivo de copia de seguridad por su UUID de auditoría (Solo administradores).
     /// </summary>
     [HttpGet("backups/download/{uuid}")]
-    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> DownloadBackup(System.Guid uuid)
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         try
         {
             var log = await _context.InvBackupLogs.FirstOrDefaultAsync(l => l.Uuid == uuid);
@@ -281,6 +284,8 @@ public class AdminController : ControllerBase
     [HttpGet("backups/disk-info")]
     public IActionResult GetDiskInfo()
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         try
         {
             var destFolder = _configuration["BackupSettings:DestinationFolder"] ?? "backups";
@@ -317,6 +322,8 @@ public class AdminController : ControllerBase
     [HttpPost("backups/verify/{uuid}")]
     public async Task<IActionResult> VerifyBackupIntegrity(System.Guid uuid)
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         try
         {
             var log = await _context.InvBackupLogs.FirstOrDefaultAsync(l => l.Uuid == uuid);
@@ -369,6 +376,8 @@ public class AdminController : ControllerBase
     [HttpDelete("backups/{uuid}")]
     public async Task<IActionResult> PurgeBackupFile(System.Guid uuid)
     {
+        if (!IsCurrentUserSuperAdmin()) return Forbid();
+
         try
         {
             var log = await _context.InvBackupLogs.FirstOrDefaultAsync(l => l.Uuid == uuid);

@@ -23,7 +23,7 @@ interface PerfilData {
 
 const SettingsPage: React.FC = () => {
     const { addToast } = useNotifications();
-    const { logout, isRevisor, isAdmin } = useAuth();
+    const { logout, isRevisor, isAdmin, isSuperAdmin } = useAuth();
     const confirm = useConfirm();
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -36,11 +36,12 @@ const SettingsPage: React.FC = () => {
         ? 'parametros' 
         : (isAdmin && (tabParam === 'plantillas' || mainTabParam === 'plantillas')) 
             ? 'plantillas' 
-            : (isAdmin && (tabParam === 'almacenamiento' || mainTabParam === 'almacenamiento'))
+            : (isSuperAdmin && (tabParam === 'almacenamiento' || mainTabParam === 'almacenamiento'))
                 ? 'almacenamiento'
                 : 'perfil';
 
     const setActiveMainTab = (tab: 'perfil' | 'parametros' | 'plantillas' | 'almacenamiento') => {
+        if (tab === 'almacenamiento' && !isSuperAdmin) return;
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('mainTab', tab);
@@ -318,15 +319,17 @@ const SettingsPage: React.FC = () => {
                         <Shield size={14} />
                         <span>Firmas por Plantilla</span>
                     </button>
-                    <button
-                        onClick={() => setActiveMainTab('almacenamiento')}
-                        className={`tab-vercel-item flex items-center gap-2 ${
-                            activeMainTab === 'almacenamiento' ? 'active' : ''
-                        }`}
-                    >
-                        <HardDrive size={14} />
-                        <span>Almacenamiento</span>
-                    </button>
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => setActiveMainTab('almacenamiento')}
+                            className={`tab-vercel-item flex items-center gap-2 ${
+                                activeMainTab === 'almacenamiento' ? 'active' : ''
+                            }`}
+                        >
+                            <HardDrive size={14} />
+                            <span>Almacenamiento</span>
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -649,9 +652,9 @@ const SettingsPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            ) : (
+            ) : activeMainTab === 'almacenamiento' && isSuperAdmin ? (
                 <DocumentMaintenancePage isEmbedded={true} />
-            )}
+            ) : null}
         </main>
     );
 };

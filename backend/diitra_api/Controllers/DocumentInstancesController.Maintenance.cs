@@ -316,9 +316,24 @@ namespace diitra_api.Controllers
             return Ok(new { hasDynamicConfig = false, message = $"La instancia de la plantilla '{code}' utiliza componentes de diseño nativos oficiales." });
         }
 
+        private bool IsCurrentUserSuperAdmin()
+        {
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .Union(User.FindAll("roles").Select(c => c.Value))
+                .Distinct()
+                .ToList();
+
+            return roles.Contains("DIITRA_SUPER_ADMIN") 
+                || User.FindFirst("es_super_admin")?.Value == "true" 
+                || User.FindFirst("es_superadmin")?.Value == "true";
+        }
+
         [HttpGet("maintenance/diagnose")]
         public async Task<IActionResult> DiagnoseObsolete(CancellationToken ct)
         {
+            if (!IsCurrentUserSuperAdmin()) return Forbid();
+
             try
             {
                 var diagnosis = await _instanceService.GetObsoleteDocumentDiagnosisAsync(ct);
@@ -333,9 +348,11 @@ namespace diitra_api.Controllers
         [HttpPost("maintenance/purge-all")]
         public async Task<IActionResult> PurgeAllObsolete(CancellationToken ct)
         {
+            if (!IsCurrentUserSuperAdmin()) return Forbid();
+
             try
             {
-                var actor = User.Identity?.Name ?? "Administrador DIITRA";
+                var actor = User.Identity?.Name ?? "Super Administrador DIITRA";
                 int count = await _instanceService.PurgeAllObsoleteDocumentFilesAsync(actor, ct);
                 return Ok(new { success = true, message = $"Se depuraron exitosamente {count} archivos físicos obsoletos.", count });
             }
@@ -348,9 +365,11 @@ namespace diitra_api.Controllers
         [HttpPost("maintenance/purge/{uuid}")]
         public async Task<IActionResult> PurgeObsoleteFile(string uuid, CancellationToken ct)
         {
+            if (!IsCurrentUserSuperAdmin()) return Forbid();
+
             try
             {
-                var actor = User.Identity?.Name ?? "Administrador DIITRA";
+                var actor = User.Identity?.Name ?? "Super Administrador DIITRA";
                 bool success = await _instanceService.PurgeObsoleteFileByUuidAsync(uuid, actor, ct);
                 if (!success) return NotFound(new { success = false, message = "Instancia no encontrada." });
                 return Ok(new { success = true, message = "El archivo físico obsoleto ha sido purgado exitosamente." });
