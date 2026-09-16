@@ -2512,6 +2512,31 @@ INSERT IGNORE INTO inv_cat_roles (uuid, codigo, nombre, ambito, tipo_persona, de
 (UUID(), 'APOYO_TECNICO_GRUPO', 'Personal de Apoyo Técnico', 'GRUPO', 'ADMINISTRATIVO', 'Personal técnico o administrativo de soporte a las actividades del grupo', 0, 1, 13),
 (UUID(), 'INVESTIGADOR_EXTERNO_GRUPO', 'Investigador Externo / Asesor', 'GRUPO', 'EXTERNO', 'Investigador asociado o asesor científico externo a la institución', 0, 1, 14);
 
+-- =============================================================================
+-- SECCIÓN: SISTEMA DE INCIDENCIAS, RETROALIMENTACIÓN Y SOPORTE (DIITRA)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS inv_feedback_reportes (
+    idFeedback           INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                 VARCHAR(36)   NOT NULL UNIQUE,
+    idUsuario            INT           NULL,
+    cedula               VARCHAR(20)   NULL,
+    nombreUsuario        VARCHAR(255)  NOT NULL,
+    rolUsuario           VARCHAR(50)   NOT NULL,
+    tipo                 VARCHAR(30)   NOT NULL DEFAULT 'SUGERENCIA',
+    titulo               VARCHAR(200)  NOT NULL,
+    descripcion          TEXT          NOT NULL,
+    rutaOrigen           VARCHAR(255)  NULL,
+    archivosAdjuntosJson JSON          NULL,
+    conversacionJson     JSON          NULL COMMENT 'Array de mensajes bidireccionales del ticket',
+    estado               VARCHAR(30)   NOT NULL DEFAULT 'PENDIENTE',
+    observacionAdmin     TEXT          NULL,
+    fechaCreacion        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion   TIMESTAMP     NULL ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_feedback_usuario (idUsuario),
+    INDEX idx_feedback_tipo (tipo),
+    INDEX idx_feedback_estado (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Módulo de Soporte e Incidencias DIITRA';
+
 -- ATENCIÓN: ESTE BLOQUE DEBE IR SIEMPRE AL FINAL ABSOLUTO DEL SCRIPT SQL.
 -- Registra la migración inicial de EF Core para que no intente recrear las tablas.
 -- =================================================================================

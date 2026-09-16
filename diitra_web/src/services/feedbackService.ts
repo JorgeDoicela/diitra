@@ -19,6 +19,20 @@ export interface FeedbackAdjunto {
     tamanoBytes?: number;
 }
 
+export interface FeedbackMensaje {
+    id?: string;
+    id_usuario?: number;
+    idUsuario?: number;
+    es_admin?: boolean;
+    esAdmin?: boolean;
+    nombre_autor?: string;
+    nombreAutor?: string;
+    rol_autor?: string;
+    rolAutor?: string;
+    mensaje: string;
+    fecha?: string;
+}
+
 export interface FeedbackReporte {
     id_feedback?: number;
     idFeedback?: number;
@@ -38,11 +52,14 @@ export interface FeedbackReporte {
     metadata_navegador?: string;
     metadataNavegador?: string;
     archivos?: FeedbackAdjunto[];
+    conversacion?: FeedbackMensaje[];
     estado: 'PENDIENTE' | 'EN_REVISION' | 'ATENDIDO' | 'DESCARTADO' | string;
     observacion_admin?: string;
     observacionAdmin?: string;
     fecha_creacion?: string;
     fechaCreacion?: string;
+    fecha_actualizacion?: string;
+    fechaActualizacion?: string;
 }
 
 export const getSupportConfig = async (): Promise<SupportConfig> => {
@@ -103,6 +120,16 @@ export const updateUserFeedback = async (
 
 export const deleteFeedback = async (idFeedback: number): Promise<{ message: string }> => {
     const response = await api.delete(`/feedback/${idFeedback}`);
+    return response.data;
+};
+
+export const sendFeedbackMessage = async (
+    idFeedback: number,
+    mensaje: string
+): Promise<FeedbackReporte> => {
+    const response = await api.post(`/feedback/${idFeedback}/messages`, {
+        mensaje
+    });
     return response.data;
 };
 

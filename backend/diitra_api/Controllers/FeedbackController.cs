@@ -282,4 +282,51 @@ public class CreateFeedbackApiRequest
             return StatusCode(500, new { message = "Error al eliminar el reporte.", detalle = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Agrega un mensaje o respuesta al hilo JSON de conversación del reporte de feedback.
+    /// </summary>
+    [HttpPost("{id}/messages")]
+    [Authorize]
+    public async Task<IActionResult> AddMessage(int id, [FromBody] CreateFeedbackMensajeDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Mensaje))
+        {
+            return BadRequest(new { message = "El mensaje no puede estar vacío." });
+        }
+
+        int? idUsuario = null;
+        if (int.TryParse(User.FindFirst("id_usuario")?.Value, out var parsedId))
+        {
+            idUsuario = parsedId;
+        }
+
+        var cedula = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var nombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value ?? "Usuario";
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).Union(User.FindAll("roles").Select(c => c.Value)).Distinct().ToList();
+        var isSuperAdmin = roles.Contains("DIITRA_SUPER_ADMIN") || User.FindFirst("es_super_admin")?.Value == "true" || User.FindFirst("es_superadmin")?.Value == "true";
+        var rolPrincipal = roles.FirstOrDefault() ?? (isSuperAdmin ? "DIITRA_SUPER_ADMIN" : "USUARIO");
+
+        try
+        {
+            var updated = await _feedbackService.AddMessageAsync(id, dto, idUsuario, cedula, nombre, rolPrincipal, isSuperAdmin);
+            if (updated == null)
+            {
+                return NotFound(new { message = "Reporte no encontrado." });
+            }
+            return Ok(updated);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al enviar el mensaje.", detalle = ex.Message });
+        }
+    }
 }

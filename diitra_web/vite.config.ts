@@ -13,6 +13,7 @@ export default defineConfig(({ command }) => {
     server: {
       port: 3000,
       host: true,
+      allowedHosts: ['.trycloudflare.com', 'localhost'],
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:5175',

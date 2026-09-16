@@ -30,6 +30,22 @@ public class FeedbackAdjuntoDto
     public long TamanoBytes { get; set; }
 }
 
+public class FeedbackMensajeDto
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int? IdUsuario { get; set; }
+    public bool EsAdmin { get; set; }
+    public string NombreAutor { get; set; } = null!;
+    public string RolAutor { get; set; } = null!;
+    public string Mensaje { get; set; } = null!;
+    public DateTime Fecha { get; set; } = DateTime.Now;
+}
+
+public class CreateFeedbackMensajeDto
+{
+    public string Mensaje { get; set; } = null!;
+}
+
 public class FeedbackReporteDto
 {
     public int IdFeedback { get; set; }
@@ -46,6 +62,7 @@ public class FeedbackReporteDto
     public List<FeedbackAdjuntoDto> Archivos { get; set; } = new();
     public string Estado { get; set; } = null!;
     public string? ObservacionAdmin { get; set; }
+    public List<FeedbackMensajeDto> Conversacion { get; set; } = new();
     public DateTime FechaCreacion { get; set; }
     public DateTime? FechaActualizacion { get; set; }
 }

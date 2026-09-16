@@ -278,12 +278,12 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Plantillas', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
-        { name: 'Incidencias', icon: MessageSquarePlus, path: '/admin/feedback', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
+        { name: 'Incidencias', icon: MessageSquarePlus, path: '/admin/incidencias', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
     ];
 
     const menuItems = allMenuItems.filter(item => {
         if (item.path === '/investigacion/mis-proyectos' && isAdmin) return false;
-        if (item.path === '/admin/feedback' && !isSuperAdmin) return false;
+        if ((item.path === '/admin/incidencias' || item.path === '/admin/feedback') && !isSuperAdmin) return false;
 
         if (isAdmin) return true;
         if (item.permission) {

@@ -83,6 +83,18 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                             {currentTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
                             <span>{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
                         </div>
+                        {!isSuperAdmin && (
+                            <Link
+                                to="/incidencias"
+                                onClick={() => {
+                                    setIsUserMenuOpen(false);
+                                }}
+                                className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
+                            >
+                                <MessageSquarePlus size={14} />
+                                <span>Incidencias</span>
+                            </Link>
+                        )}
                         <Link
                             to="/configuracion"
                             onClick={() => {
@@ -92,16 +104,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                         >
                             <Settings size={14} />
                             <span>Configuración</span>
-                        </Link>
-                        <Link
-                            to={isSuperAdmin ? "/admin/incidencias" : "/incidencias"}
-                            onClick={() => {
-                                setIsUserMenuOpen(false);
-                            }}
-                            className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
-                        >
-                            <MessageSquarePlus size={14} />
-                            <span>{isSuperAdmin ? 'Bandeja de Incidencias' : 'Incidencias'}</span>
                         </Link>
                         {(isAdmin || user?.roles?.includes('DIITRA_DOCENTE')) && (
                             <Link

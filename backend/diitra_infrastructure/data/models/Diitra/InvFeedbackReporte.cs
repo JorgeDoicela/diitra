@@ -15,6 +15,7 @@ public partial class InvFeedbackReporte
     public string Descripcion { get; set; } = null!;
     public string? RutaOrigen { get; set; }
     public string? ArchivosAdjuntosJson { get; set; }
+    public string? ConversacionJson { get; set; }
     public string Estado { get; set; } = "PENDIENTE"; // PENDIENTE | EN_REVISION | ATENDIDO | DESCARTADO
     public string? ObservacionAdmin { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.Now;

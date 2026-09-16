@@ -301,6 +301,7 @@ function App() {
                               <Route path="/admin/sugerencias" element={<Navigate to="/admin/incidencias" replace />} />
                               <Route path="/incidencias" element={<ProtectedRoute><FeedbackPageRouter /></ProtectedRoute>} />
                               <Route path="/sugerencias" element={<Navigate to="/incidencias" replace />} />
+                              <Route path="/feedback" element={<Navigate to="/incidencias" replace />} />
                              <Route path="/admin/documentos" element={<AdminRoute><DocumentMaintenancePage /></AdminRoute>} />
                              <Route path="/plantillas" element={<AdminRoute><DocumentTemplatesPage /></AdminRoute>} />
                              <Route path="/admin/plantillas" element={<RedirectPreserveSearch to="/plantillas" />} />

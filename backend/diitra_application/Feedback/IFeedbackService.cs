@@ -12,5 +12,6 @@ public interface IFeedbackService
     Task<List<FeedbackReporteDto>> GetMyFeedbackAsync(int? idUsuario, string? cedula);
     Task<FeedbackReporteDto?> UpdateStatusAsync(int idFeedback, UpdateFeedbackStatusDto dto);
     Task<FeedbackReporteDto?> UpdateUserFeedbackAsync(int idFeedback, UpdateUserFeedbackDto dto, int? idUsuario, string? cedula, bool isSuperAdmin);
+    Task<FeedbackReporteDto?> AddMessageAsync(int idFeedback, CreateFeedbackMensajeDto dto, int? idUsuario, string? cedula, string nombreUsuario, string rolUsuario, bool isSuperAdmin);
     Task<bool> DeleteFeedbackAsync(int idFeedback, int? idUsuario, string? cedula, bool isSuperAdmin);
 }

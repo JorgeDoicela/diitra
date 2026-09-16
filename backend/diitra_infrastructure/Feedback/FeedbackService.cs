@@ -161,7 +161,7 @@ public class FeedbackService : IFeedbackService
             var tipoLabel = entidad.Tipo == "ERROR" ? "Algo no funciona" : (entidad.Tipo == "DUDA" ? "Falta una opción" : "Incidencia");
             var notifTitulo = $"Incidencia: {tipoLabel}";
             var notifMensaje = $"{entidad.NombreUsuario} ({entidad.RolUsuario}) reportó: {entidad.Titulo}";
-            var notifUrl = "/admin/feedback";
+            var notifUrl = "/admin/incidencias";
             var notifExtra = new Dictionary<string, string>
             {
                 { "Categoria", "SOPORTE" },
@@ -274,7 +274,7 @@ public class FeedbackService : IFeedbackService
                 var notifMensaje = !string.IsNullOrWhiteSpace(entidad.ObservacionAdmin)
                     ? $"Estado: {estadoLabel}. Respuesta de soporte: {entidad.ObservacionAdmin}"
                     : $"Tu reporte ha cambiado al estado '{estadoLabel}'.";
-                var notifUrl = "/feedback";
+                var notifUrl = "/incidencias";
                 var notifExtra = new Dictionary<string, string>
                 {
                     { "Categoria", "SOPORTE" },
@@ -336,6 +336,115 @@ public class FeedbackService : IFeedbackService
         entidad.FechaActualizacion = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        var (files, meta) = ParsePayload(entidad.ArchivosAdjuntosJson);
+        return MapToDto(entidad, files, meta);
+    }
+
+    public async Task<FeedbackReporteDto?> AddMessageAsync(
+        int idFeedback,
+        CreateFeedbackMensajeDto dto,
+        int? idUsuario,
+        string? cedula,
+        string nombreUsuario,
+        string rolUsuario,
+        bool isSuperAdmin)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Mensaje))
+        {
+            throw new ArgumentException("El mensaje no puede estar vacío.");
+        }
+
+        var entidad = await _context.InvFeedbackReportes.FirstOrDefaultAsync(f => f.IdFeedback == idFeedback);
+        if (entidad == null) return null;
+
+        bool esAutor = (idUsuario.HasValue && entidad.IdUsuario == idUsuario.Value)
+            || (!string.IsNullOrWhiteSpace(cedula) && string.Equals(entidad.Cedula, cedula, StringComparison.OrdinalIgnoreCase));
+
+        if (!esAutor && !isSuperAdmin)
+        {
+            throw new UnauthorizedAccessException("No tienes permiso para comentar en este reporte.");
+        }
+
+        var estadoNorm = entidad.Estado?.Trim().ToUpperInvariant() ?? "";
+        if (!isSuperAdmin && (estadoNorm == "DESCARTADO" || estadoNorm == "ATENDIDO" || estadoNorm == "CERRADO" || estadoNorm == "RESUELTO"))
+        {
+            throw new InvalidOperationException("No se pueden enviar mensajes en un ticket cerrado o resuelto.");
+        }
+
+        var mensajes = ParseConversacion(entidad.ConversacionJson);
+        var nuevoMensaje = new FeedbackMensajeDto
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            IdUsuario = idUsuario,
+            EsAdmin = isSuperAdmin,
+            NombreAutor = string.IsNullOrWhiteSpace(nombreUsuario) ? (isSuperAdmin ? "Soporte DIITRA" : "Usuario") : nombreUsuario.Trim(),
+            RolAutor = string.IsNullOrWhiteSpace(rolUsuario) ? (isSuperAdmin ? "DIITRA_SUPER_ADMIN" : "USUARIO") : rolUsuario.Trim().ToUpper(),
+            Mensaje = dto.Mensaje.Trim(),
+            Fecha = DateTime.Now
+        };
+
+        mensajes.Add(nuevoMensaje);
+        entidad.ConversacionJson = JsonSerializer.Serialize(mensajes);
+        entidad.FechaActualizacion = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+
+        // Notificación cruzada
+        try
+        {
+            if (isSuperAdmin)
+            {
+                if (entidad.IdUsuario.HasValue)
+                {
+                    var notifTitulo = $"Respuesta en tu incidencia: {entidad.Titulo}";
+                    var notifMensaje = $"{nuevoMensaje.NombreAutor}: {nuevoMensaje.Mensaje}";
+                    var notifUrl = "/incidencias";
+                    var notifExtra = new Dictionary<string, string>
+                    {
+                        { "Categoria", "SOPORTE" },
+                        { "Tipo", entidad.Tipo },
+                        { "FeedbackId", entidad.IdFeedback.ToString() },
+                        { "FeedbackUuid", entidad.Uuid }
+                    };
+
+                    await _notificationService.NotifyUserAsync(
+                        userId: entidad.IdUsuario.Value,
+                        title: notifTitulo,
+                        body: notifMensaje,
+                        category: "SOPORTE",
+                        url: notifUrl,
+                        extraData: notifExtra
+                    );
+                }
+            }
+            else
+            {
+                var notifTitulo = $"Nuevo mensaje en incidencia #{entidad.IdFeedback}";
+                var notifMensaje = $"{nuevoMensaje.NombreAutor}: {nuevoMensaje.Mensaje}";
+                var notifUrl = "/admin/incidencias";
+                var notifExtra = new Dictionary<string, string>
+                {
+                    { "Categoria", "SOPORTE" },
+                    { "Tipo", entidad.Tipo },
+                    { "FeedbackId", entidad.IdFeedback.ToString() },
+                    { "FeedbackUuid", entidad.Uuid }
+                };
+
+                await _notificationService.NotifyByRoleCodesAsync(
+                    title: notifTitulo,
+                    body: notifMensaje,
+                    roleCodes: new[] { "DIITRA_SUPER_ADMIN", "SUPERADMIN" },
+                    url: notifUrl,
+                    extraData: notifExtra,
+                    excludeUserId: idUsuario
+                );
+            }
+        }
+        catch (Exception exNotif)
+        {
+            _logger.LogWarning(exNotif, "No se pudo despachar la notificación de mensaje para el reporte {IdFeedback}", entidad.IdFeedback);
+        }
+
         var (files, meta) = ParsePayload(entidad.ArchivosAdjuntosJson);
         return MapToDto(entidad, files, meta);
     }
@@ -421,6 +530,20 @@ public class FeedbackService : IFeedbackService
         return (new List<FeedbackAdjuntoDto>(), null);
     }
 
+    private static List<FeedbackMensajeDto> ParseConversacion(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new List<FeedbackMensajeDto>();
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<FeedbackMensajeDto>>(json, options) ?? new List<FeedbackMensajeDto>();
+        }
+        catch
+        {
+            return new List<FeedbackMensajeDto>();
+        }
+    }
+
     private static void NormalizeUrls(List<FeedbackAdjuntoDto> list)
     {
         foreach (var item in list)
@@ -450,6 +573,7 @@ public class FeedbackService : IFeedbackService
             Archivos = adjuntos,
             Estado = entidad.Estado,
             ObservacionAdmin = entidad.ObservacionAdmin,
+            Conversacion = ParseConversacion(entidad.ConversacionJson),
             FechaCreacion = entidad.FechaCreacion,
             FechaActualizacion = entidad.FechaActualizacion
         };
